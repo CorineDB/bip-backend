@@ -1,0 +1,44 @@
+<?php
+
+namespace Tests\Unit\Repositories;
+
+use App\Models\{{ model }};
+use App\Repositories\{{ class }};
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class {{ class }}Test extends TestCase
+{
+    use RefreshDatabase;
+
+    protected {{ model }}Repository $repository;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new {{ model }}Repository(new {{ model }});
+    }
+
+    public function test_it_can_create_a_{{ model_variable }}(): void
+    {
+        $data = [
+            // Fill with attributes
+        ];
+
+        $created = $this->repository->create($data);
+
+        $this->assertDatabaseHas('{{ table }}', $data);
+        $this->assertNotNull($created);
+    }
+
+    public function test_it_can_create_a_model(): void
+    {
+        $repository = new {{ class }}(new {{ model }});
+        $data = {{ model }}::factory()->make()->toArray();
+        $model = $repository->create($data);
+
+        $this->assertDatabaseHas($model->getTable(), [
+            'id' => $model->id,
+        ]);
+    }
+}

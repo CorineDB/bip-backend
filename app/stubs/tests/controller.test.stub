@@ -1,0 +1,69 @@
+<?php
+
+namespace Tests\Feature\Http\Controllers;
+
+use Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\{{ model }};
+use Illuminate\Foundation\Testing\WithFaker;
+
+class {{ class }}Test extends TestCase
+{
+    use RefreshDatabase, WithFaker;
+
+    public function test_can_list_{{ table }}(): void
+    {
+        {{ model }}::factory()->count(3)->create();
+
+        $response = $this->getJson(route('{{ routePrefix }}.index'));
+
+        $response->assertOk()
+                 ->assertJsonStructure([ '*' => ['id'] ]);
+    }
+
+    public function test_can_show_single_{{ table }}(): void
+    {
+        ${{ variable }} = {{ model }}::factory()->create();
+
+        $response = $this->getJson(route('{{ routePrefix }}.show', ${{ variable }}->id));
+
+        $response->assertOk()
+                 ->assertJsonFragment(['id' => ${{ variable }}->id]);
+    }
+
+    public function test_can_create_{{ table }}(): void
+    {
+        $payload = [
+            // 'field' => $this->faker->word,
+        ];
+
+        $response = $this->postJson(route('{{ routePrefix }}.store'), $payload);
+
+        $response->assertCreated();
+        $this->assertDatabaseHas('{{ table }}', $payload);
+    }
+
+    public function test_can_update_{{ table }}(): void
+    {
+        ${{ variable }} = {{ model }}::factory()->create();
+
+        $payload = [
+            // 'field' => 'UpdatedValue',
+        ];
+
+        $response = $this->putJson(route('{{ routePrefix }}.update', ${{ variable }}->id), $payload);
+
+        $response->assertOk();
+        $this->assertDatabaseHas('{{ table }}', $payload);
+    }
+
+    public function test_can_delete_{{ table }}(): void
+    {
+        ${{ variable }} = {{ model }}::factory()->create();
+
+        $response = $this->deleteJson(route('{{ routePrefix }}.destroy', ${{ variable }}->id));
+
+        $response->assertNoContent();
+        $this->assertDatabaseMissing('{{ table }}', ['id' => ${{ variable }}->id]);
+    }
+}

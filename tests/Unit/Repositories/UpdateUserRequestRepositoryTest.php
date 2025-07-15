@@ -1,0 +1,44 @@
+<?php
+
+namespace Tests\Unit\Repositories;
+
+use App\Models\UpdateUserRequest;
+use App\Repositories\UpdateUserRequestRepository;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class UpdateUserRequestRepositoryTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected UpdateUserRequestRepository $repository;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->repository = new UpdateUserRequestRepository(new UpdateUserRequest);
+    }
+
+    public function test_it_can_create_a_updateuserrequest(): void
+    {
+        $data = [
+            // Fill with attributes
+        ];
+
+        $created = $this->repository->create($data);
+
+        $this->assertDatabaseHas('{{ table }}', $data);
+        $this->assertNotNull($created);
+    }
+
+    public function test_it_can_create_a_model(): void
+    {
+        $repository = new UpdateUserRequestRepository(new UpdateUserRequest);
+        $data = UpdateUserRequest::factory()->make()->toArray();
+        $model = $repository->create($data);
+
+        $this->assertDatabaseHas($model->getTable(), [
+            'id' => $model->id,
+        ]);
+    }
+}
