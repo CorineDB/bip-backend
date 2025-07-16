@@ -21,8 +21,6 @@ class MakeModelCommand extends Command
         $tableName = $tableOption ? $tableOption : Str::snake(Str::plural($name));
 
         $modelFilename = app_path("Models/{$name}.php");
-        $testClassName = Str::studly("{$name}Test");
-        $testFilename = base_path("tests/Unit/Models/{$name}Test.php");
 
         if (File::exists($modelFilename) && ! $force) {
             $this->warn("❗ Model already exists: {$modelFilename}. Use --force to overwrite.");
@@ -34,19 +32,6 @@ class MakeModelCommand extends Command
             File::put($modelFilename, $modelContent);
             $this->info("✅ Model created: {$modelFilename}");
         }
-
-        if (File::exists($testFilename) && ! $force) {
-            $this->warn("❗ Test already exists: {$testFilename}. Use --force to overwrite.");
-            //return self::FAILURE;
-        }
-        else{
-            $testStub = File::get(app_path('stubs/tests/model.test.stub'));
-            $testContent = str_replace('{{ class }}', $name, $testStub);
-            File::ensureDirectoryExists(dirname($testFilename));
-            File::put($testFilename, $testContent);
-            $this->info("🧪 Test created: {$testFilename}");
-        }
-
 
         if (!$this->migrationExists($tableName)) {
             $this->warn("❗La Migration for table '{$tableName}' not exists. ");
@@ -64,7 +49,24 @@ class MakeModelCommand extends Command
             ]);
         }
 
-        /* $this->call('test', [
+        /*
+
+        $testClassName = Str::studly("{$name}Test");
+        $testFilename = base_path("tests/Unit/Models/{$name}Test.php");
+
+        if (File::exists($testFilename) && ! $force) {
+            $this->warn("❗ Test already exists: {$testFilename}. Use --force to overwrite.");
+            //return self::FAILURE;
+        }
+        else{
+            $testStub = File::get(app_path('stubs/tests/model.test.stub'));
+            $testContent = str_replace('{{ class }}', $name, $testStub);
+            File::ensureDirectoryExists(dirname($testFilename));
+            File::put($testFilename, $testContent);
+            $this->info("🧪 Test created: {$testFilename}");
+        }
+
+        $this->call('test', [
             '--filter' => $testClassName,
         ]); */
 

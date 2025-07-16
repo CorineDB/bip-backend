@@ -8,30 +8,47 @@ use Illuminate\Support\Str;
 
 class MakeFormRequestCommand extends Command
 {
-    protected $signature = 'generate:form-request {name} {--module=?} {--force}';
+    protected $signature = 'generate:form-request {name} {--module=} {--force}';
 
-    protected $description = 'Generate a custom FormRequest class';
+    protected $description = 'Generate both Create and Update FormRequest classes';
 
     public function handle(): int
     {
-        $name = Str::studly($this->argument('name'));
-        $module = strtolower($this->option('module'));
+        $baseName = Str::studly($this->argument('name'));
+        $module = strtolower($this->option('module') ?? '');
         $force = $this->option('force');
 
-        $filename = app_path("Http/Requests/{$module}/{$name}.php");
+        $requestTypes = ['Store', 'Update'];
 
-        if (File::exists($filename) && !$force) {
-            $this->warn("❗ FormRequest already exists: {$filename}. Use --force to overwrite.");
-            return self::FAILURE;
+        foreach ($requestTypes as $type) {
+            $className = "{$type}{$baseName}Request";
+            $stubFile = app_path("stubs/" . strtolower($type) . "-form-request.stub");
+            $filePath = app_path("Http/Requests/" . ($module ? "{$module}/" : "") . "{$className}.php");
+
+            if (!File::exists($stubFile)) {
+                $this->error("❌ Missing stub: {$stubFile}");
+                continue;
+            }
+
+            if (File::exists($filePath) && !$force) {
+                $this->warn("⚠️ {$className} already exists at {$filePath}. Use --force to overwrite.");
+                continue;
+            }
+
+            $stub = File::get($stubFile);
+            $namespaceSuffix = $module ? '\\' . ucfirst($module) : '';
+
+            $content = str_replace(
+                ['{{ class }}', '{{ module_namespace }}'],
+                [$className, $namespaceSuffix],
+                $stub
+            );
+
+            File::ensureDirectoryExists(dirname($filePath));
+            File::put($filePath, $content);
+
+            $this->info("✅ {$className} generated at {$filePath}");
         }
-
-        $stub = File::get(app_path('stubs/form-request.stub'));
-        $content = str_replace(['{{ class }}', '{{ module }}'], [$name, $module], $stub);
-
-        File::ensureDirectoryExists(dirname($filename));
-        File::put($filename, $content);
-
-        $this->info("✅ FormRequest created: {$filename}");
 
         return self::SUCCESS;
     }

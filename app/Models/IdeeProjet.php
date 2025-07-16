@@ -8,14 +8,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class IdeeProjet extends Model
 {
-    use HasFactory, SoftDeletes, HasSecureIds;
+    use HasFactory, SoftDeletes/*, HasSecureIds*/;
 
     /**
      * The table associated with the model.
      *
      * @var string
      */
-    protected $table = 'idees_projet';
+    protected $table = 'idee_projets';
 
     /**
      * The attributes that should be mutated to dates.

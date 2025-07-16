@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Repositories\Contracts\BaseRepositoryInterface;
 use App\Services\Contracts\AbstractServiceInterface;
+use App\Http\Resources\Contracts\ApiResourceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
@@ -11,33 +12,32 @@ use Exception;
 abstract class BaseService implements AbstractServiceInterface
 {
     protected BaseRepositoryInterface $repository;
+    protected ApiResourceInterface $resource;
 
-    public function __construct(BaseRepositoryInterface $repository)
-    {
+    public function __construct(
+        BaseRepositoryInterface $repository, 
+        ApiResourceInterface $resource
+    ) {
         $this->repository = $repository;
+        $this->resource = $resource;
     }
 
     public function all(): JsonResponse
     {
         try {
             $data = $this->repository->all();
-            return response()->json([
-                'success' => true,
-                'data' => $data,
-            ]);
+            return $this->resource::collection($data)->response();
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
     }
 
+
     public function find(int|string $id): JsonResponse
     {
         try {
             $item = $this->repository->findOrFail($id);
-            return response()->json([
-                'success' => true,
-                'data' => $item,
-            ]);
+            return (new $this->resource($item))->response();
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
@@ -48,15 +48,15 @@ abstract class BaseService implements AbstractServiceInterface
         }
     }
 
+
     public function create(array $data): JsonResponse
     {
         try {
             $item = $this->repository->create($data);
-            return response()->json([
-                'success' => true,
-                'data' => $item,
-                'message' => 'Resource created successfully.',
-            ], 201);
+            return (new $this->resource($item))
+                ->additional(['message' => 'Resource created successfully.'])
+                ->response()
+                ->setStatusCode(201);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -75,11 +75,9 @@ abstract class BaseService implements AbstractServiceInterface
 
             $item = $this->repository->findOrFail($id);
 
-            return response()->json([
-                'success' => true,
-                'data' => $item,
-                'message' => 'Resource updated successfully.',
-            ]);
+            return (new $this->resource($item))
+                ->additional(['message' => 'Resource updated successfully.'])
+                ->response();
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,

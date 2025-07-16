@@ -6,16 +6,20 @@ use Illuminate\Http\JsonResponse;
 use Exception;
 use App\Services\BaseService;
 use App\Repositories\Contracts\BaseRepositoryInterface;
+use App\Http\Resources\Contracts\ApiResourceInterface;
 use App\Repositories\Contracts\{{ model }}RepositoryInterface;
 use App\Services\Contracts\{{ class }}Interface;
 
 class {{ class }} extends BaseService implements {{ class }}Interface
 {
     protected BaseRepositoryInterface $repository;
+    protected ApiResourceInterface $resource;
 
-    public function __construct({{ model }}RepositoryInterface $repository)
+    public function __construct(
+        {{ model }}RepositoryInterface $repository,
+        ApiResourceInterface $resource
+    )
     {
-        parent::__construct($repository);
-        $this->repository = $repository;
+        parent::__construct($repository, $resource);
     }
 }

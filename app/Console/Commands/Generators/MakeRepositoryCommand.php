@@ -51,6 +51,7 @@ class MakeRepositoryCommand extends Command
             $this->info("✅ Repository created: Repositories/{$repositoryClass}.php");
         }
 
+        /*
         // Test
         if (File::exists($testPath) && !$force) {
             $this->warn("❗ Test already exists: {$testPath}");
@@ -65,6 +66,7 @@ class MakeRepositoryCommand extends Command
             File::put($testPath, $content);
             $this->info("🧪 Test created: {$testPath}");
         }
+        */
 
         if (!File::exists(app_path("Models/{$model}.php"))) {
             $this->warn("❗Model not exists: {$model}.");

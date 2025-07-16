@@ -1,0 +1,31 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (!Schema::hasTable('arrondissements')) {
+            Schema::create('arrondissements', function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->unique();
+                $table->text('nom');
+                $table->string('slug')->unique()->index();
+                $table->bigInteger('communeId')->unsigned();
+                $table->foreign('communeId')->references('id')->on('communes')
+                            ->onDelete('cascade')
+                            ->onUpdate('cascade');
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('arrondissements');
+    }
+};

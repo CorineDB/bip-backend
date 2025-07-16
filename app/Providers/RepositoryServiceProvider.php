@@ -18,8 +18,6 @@ class RepositoryServiceProvider extends ServiceProvider
             \App\Repositories\Eloquent\BaseRepository::class
         );
 
-
-
         $contractPath = app_path('Repositories/Contracts');
         $implementationPath = app_path('Repositories');
 

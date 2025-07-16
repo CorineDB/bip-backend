@@ -59,15 +59,17 @@ class MakeServiceCommand extends Command
         File::put($interfacePath, $interfaceContent);
         $this->info("✅ Interface created: {$interfacePath}");
 
-        // Générer test
-        $testStub = File::get(app_path('stubs/tests/service.test.stub'));
-        $testContent = str_replace(
-            ['{{ class }}', '{{ repositoryInterface }}'],
-            [$serviceClass, $repositoryInterface],
-            $testStub
-        );
-        File::put($testPath, $testContent);
-        $this->info("🧪 Test created: {$testPath}");
+        /*
+            // Générer test
+            $testStub = File::get(app_path('stubs/tests/service.test.stub'));
+            $testContent = str_replace(
+                ['{{ class }}', '{{ repositoryInterface }}'],
+                [$serviceClass, $repositoryInterface],
+                $testStub
+            );
+            File::put($testPath, $testContent);
+            $this->info("🧪 Test created: {$testPath}");
+        */
 
         $repositoryClass = "{$name}Repository";
         $repositoryPath = app_path("Repositories/{$repositoryClass}.php");
@@ -80,6 +82,22 @@ class MakeServiceCommand extends Command
         }
         else{
             $this->call('generate:repository', [
+                'name' => $name,
+                '--force' => true
+            ]);
+        }
+
+        $resourceClass = "{$name}Resource";
+        $resourcePath = app_path("Resources/{$resourceClass}.php");
+
+        if (!File::exists(app_path("$resourcePath"))) {
+            $this->warn("❗Resource not exists: {$resourceClass}.");
+            $this->call('generate:resource', [
+                'name' => $name
+            ]);
+        }
+        else{
+            $this->call('generate:resource', [
                 'name' => $name,
                 '--force' => true
             ]);

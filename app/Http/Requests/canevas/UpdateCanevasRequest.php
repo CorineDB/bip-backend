@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Http\Requests\Canevas;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class UpdateCanevasRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            // TODO: add validation rules
+        ];
+    }
+}

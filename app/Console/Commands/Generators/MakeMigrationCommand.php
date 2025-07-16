@@ -52,31 +52,31 @@ class MakeMigrationCommand extends Command
             $this->info("✅ Migration created: {$migrationPath}");
         }
 
+        /*
+            stClassName = Str::studly("{$name}Migration");
+            $testPath = base_path("tests/Integration/Migrations/{$className}Test.php");
+            // ✅ Check if test file already exists
+            if (File::exists($testPath) && ! $force) {
+                $this->warn("❗ Test already exists: {$className}Test.php. Use --force to overwrite.");
+                return self::FAILURE;
+            }else{
+                // ✅ Create migration test file
+                $testStub = File::get(app_path('stubs/tests/migration.test.stub'));
+                $testContent = str_replace(
+                    ['{{ class }}', '{{ table }}', '{{ migrationPath }}'],
+                    [$testClassName, $tableName, "database/migrations/{$migrationFilename}"],
+                    $testStub
+                );
 
-        $testClassName = Str::studly("{$name}Migration");
-        $testPath = base_path("tests/Integration/Migrations/{$className}Test.php");
+                File::ensureDirectoryExists(dirname($testPath));
+                File::put($testPath, $testContent);
+                $this->info("🧪 Test created: {$testPath}");
+            }
 
-        // ✅ Check if test file already exists
-        if (File::exists($testPath) && ! $force) {
-            $this->warn("❗ Test already exists: {$className}Test.php. Use --force to overwrite.");
-            return self::FAILURE;
-        }else{
-            // ✅ Create migration test file
-            $testStub = File::get(app_path('stubs/tests/migration.test.stub'));
-            $testContent = str_replace(
-                ['{{ class }}', '{{ table }}', '{{ migrationPath }}'],
-                [$testClassName, $tableName, "database/migrations/{$migrationFilename}"],
-                $testStub
-            );
-
-            File::ensureDirectoryExists(dirname($testPath));
-            File::put($testPath, $testContent);
-            $this->info("🧪 Test created: {$testPath}");
-        }
-
-        /* $this->call('test', [
-            '--filter' => $testClassName,
-        ]); */
+            $this->call('test', [
+                '--filter' => $testClassName,
+            ]);
+        */
 
         return self::SUCCESS;
     }

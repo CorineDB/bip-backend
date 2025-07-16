@@ -22,7 +22,6 @@ class MakeControllerCommand extends Command
         $controllerClass = "{$name}Controller";
         $controllerPath = app_path("Http/Controllers/{$controllerClass}.php");
         $testClass = "{$controllerClass}Test";
-        $testPath = base_path("tests/Feature/Http/Controllers/{$testClass}.php");
 
         $model = $this->option('model') ?? Str::singular($name);
         $service = $this->option('service') ?? "{$name}Service";
@@ -39,7 +38,7 @@ class MakeControllerCommand extends Command
             $stub = File::get(app_path('stubs/controller.stub'));
             $content = str_replace(
                 ['{{ class }}', '{{ serviceInterface }}', '{{ model }}', '{{ module }}', '{{ service }}', '{{ variable }}', '{{ table }}', '{{ routePrefix }}'],
-                [$controllerClass, $service."Interface", $model, strtolower($model.'s'), $service, $variable, $table, $routePrefix],
+                [$controllerClass, $service."Interface", $model, ucfirst($model.'s'), $service, $variable, $table, $routePrefix],
                 $stub
             );
 
@@ -48,29 +47,34 @@ class MakeControllerCommand extends Command
             $this->info("✅ Controller created: {$controllerPath}");
         }
 
-        // 🧪 Generate Test
-        if (File::exists($testPath) && !$force) {
-            $this->warn("❗ Test already exists: {$testPath}");
-        } else {
-            $stub = File::get(app_path('stubs/tests/controller.test.stub'));
-            $content = str_replace(
-                ['{{ class }}', '{{ model }}', '{{ variable }}', '{{ table }}', '{{ routePrefix }}'],
-                [$controllerClass, $model, $variable, $table, $routePrefix],
-                $stub
-            );
+        /*
+            $testPath = base_path("tests/Feature/Http/Controllers/{$testClass}.php");
+            // 🧪 Generate Test
+            if (File::exists($testPath) && !$force) {
+                $this->warn("❗ Test already exists: {$testPath}");
+            } else {
+                $stub = File::get(app_path('stubs/tests/controller.test.stub'));
+                $content = str_replace(
+                    ['{{ class }}', '{{ model }}', '{{ variable }}', '{{ table }}', '{{ routePrefix }}'],
+                    [$controllerClass, $model, $variable, $table, $routePrefix],
+                    $stub
+                );
 
-            File::ensureDirectoryExists(dirname($testPath));
-            File::put($testPath, $content);
-            $this->info("🧪 Test created: {$testPath}");
-        }
+                File::ensureDirectoryExists(dirname($testPath));
+                File::put($testPath, $content);
+                $this->info("🧪 Test created: {$testPath}");
+            }
+        */
 
-            $this->call('generate:repository', [
-                'name' => "Store{$model}Request",
-                '--force' => true
-            ]);
 
-            $this->call('generate:repository', [
-                'name' => "Update{$model}Request",
+        $this->call('generate:service', [
+            'name' => ucfirst($model),
+            '--force' => true
+        ]);
+
+            $this->call('generate:form-request', [
+                'name' => $model,
+                '--module' => ucfirst($model.'s'),
                 '--force' => true
             ]);
         return self::SUCCESS;
