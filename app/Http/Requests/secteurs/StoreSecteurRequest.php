@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Secteurs;
+namespace App\Http\Requests\secteurs;
 
+use App\Enums\EnumTypeSecteur;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreSecteurRequest extends FormRequest
 {
@@ -14,7 +16,27 @@ class StoreSecteurRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // TODO: add validation rules
+            'nom' => 'required|string|max:65535|unique:secteurs,nom',
+            'description' => 'nullable|string|max:65535',
+            'type' => ['required', 'string', Rule::in(EnumTypeSecteur::values())],
+            'secteurId' => 'nullable|integer|exists:secteurs,id'
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'nom.required' => 'Le nom du secteur est obligatoire.',
+            'nom.string' => 'Le nom du secteur doit être une chaîne de caractères.',
+            'nom.max' => 'Le nom du secteur ne peut pas dépasser 65535 caractères.',
+            'nom.unique' => 'Ce secteur existe déjà.',
+            'description.string' => 'La description doit être une chaîne de caractères.',
+            'description.max' => 'La description ne peut pas dépasser 65535 caractères.',
+            'type.required' => 'Le type de secteur est obligatoire.',
+            'type.string' => 'Le type de secteur doit être une chaîne de caractères.',
+            'type.in' => 'Le type de secteur doit être: ' . implode(', ', EnumTypeSecteur::values()),
+            'secteurId.integer' => 'L\'identifiant du secteur parent doit être un nombre entier.',
+            'secteurId.exists' => 'Le secteur parent sélectionné n\'existe pas.'
         ];
     }
 }

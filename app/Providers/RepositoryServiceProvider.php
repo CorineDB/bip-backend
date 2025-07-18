@@ -13,17 +13,25 @@ class RepositoryServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Bind base repository interface
         $this->app->bind(
             \App\Repositories\Contracts\BaseRepositoryInterface::class,
             \App\Repositories\Eloquent\BaseRepository::class
         );
 
-        $contractPath = app_path('Repositories/Contracts');
-        $implementationPath = app_path('Repositories');
+        // Manual bindings for critical repositories
+        $this->app->bind(
+            \App\Repositories\Contracts\RoleRepositoryInterface::class,
+            \App\Repositories\RoleRepository::class
+        );
 
-         if (!File::exists($contractPath)) {
-            return;
-        }
+        $this->app->bind(
+            \App\Repositories\Contracts\PermissionRepositoryInterface::class,
+            \App\Repositories\PermissionRepository::class
+        );
+
+        $contractPath = app_path('Repositories/Contracts');
+
         if (!File::exists($contractPath) || !File::isDirectory($contractPath)) {
             return;
         }
@@ -31,11 +39,21 @@ class RepositoryServiceProvider extends ServiceProvider
         $contractFiles = File::files($contractPath);
 
         foreach ($contractFiles as $file) {
-            $interfaceName = $file->getFilenameWithoutExtension(); // e.g., UserRepositoryInterface
-            $model = Str::replaceLast('RepositoryInterface', '', $interfaceName); // e.g., User
+            $interfaceName = $file->getFilenameWithoutExtension();
+            
+            // Skip BaseRepositoryInterface as it's already bound
+            if ($interfaceName === 'BaseRepositoryInterface') {
+                continue;
+            }
 
+            $model = Str::replaceLast('RepositoryInterface', '', $interfaceName);
             $interface = "App\\Repositories\\Contracts\\{$interfaceName}";
-            $implementation = "App\\Repositories\\Eloquent\\{$model}Repository";
+            $implementation = "App\\Repositories\\{$model}Repository";
+
+            // Skip if manually bound above
+            if ($interfaceName === 'RoleRepositoryInterface') {
+                continue;
+            }
 
             if (interface_exists($interface) && class_exists($implementation)) {
                 $this->app->bind($interface, $implementation);

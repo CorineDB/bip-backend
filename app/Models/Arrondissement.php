@@ -30,7 +30,7 @@ class Arrondissement extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'code', 'nom', 'slug', 'communeId'
     ];
 
     /**
@@ -50,8 +50,32 @@ class Arrondissement extends Model
      * @var array
      */
     protected $hidden = [
-        // Exemple : 'programmeId', 'updated_at', 'deleted_at'
+        'communeId', 'updated_at', 'deleted_at'
     ];
+
+    /**
+     * Get the commune that owns the arrondissement.
+     */
+    public function commune()
+    {
+        return $this->belongsTo(Commune::class, 'communeId');
+    }
+
+    /**
+     * Get the villages for the arrondissement.
+     */
+    public function villages()
+    {
+        return $this->hasMany(Village::class, 'arrondissementId');
+    }
+
+    /**
+     * Get the departement through commune.
+     */
+    public function departement()
+    {
+        return $this->hasOneThrough(Departement::class, Commune::class, 'id', 'id', 'communeId', 'departementId');
+    }
 
     /**
      * The model's boot method.
@@ -62,12 +86,9 @@ class Arrondissement extends Model
 
         static::deleting(function ($model) {
             $model->update([
-                // Exemple : 'nom' => time() . '::' . $model->nom,
+                'code' => time() . '::' . $model->code,
+                'slug' => time() . '::' . $model->slug,
             ]);
-
-            if (method_exists($model, 'user')) {
-                // Exemple : $model->user()->delete();
-            }
         });
     }
 }

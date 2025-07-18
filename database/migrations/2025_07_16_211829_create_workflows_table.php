@@ -14,9 +14,9 @@ return new class extends Migration
         if (!Schema::hasTable('workflows')) {
             Schema::create('workflows', function (Blueprint $table) {
                 $table->id();
-                $table->enum('statut', StatutIdee::cases())->default(StatutIdee::BROUILLON);
-                $table->enum('phase', PhasesIdee::cases())->default(PhasesIdee::identification);
-                $table->enum('sous_phase', SousPhaseIdee::cases())->default(SousPhaseIdee::redaction);
+                $table->enum('statut', StatutIdee::values())->default(StatutIdee::BROUILLON->value);
+                $table->enum('phase', PhasesIdee::values())->default(PhasesIdee::identification->value);
+                $table->enum('sous_phase', SousPhaseIdee::values())->default(SousPhaseIdee::redaction->value);
                 $table->timestamp('date')->nullable();
                 $table->morphs('projetable');
                 $table->timestamps();

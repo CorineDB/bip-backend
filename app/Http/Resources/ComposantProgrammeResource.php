@@ -15,7 +15,19 @@ class ComposantProgrammeResource extends BaseApiResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            "id" => $this->id,
+            "code"=> $this->code,
+            "indice"=> $this->indice,
+            "intitule"=> $this->intitule,
+            "intitule"=> $this->intitule,
+            "programme_ou_composant"=> $this->when($this->typeProgramme, function() {
+                return [
+                    "id" => $this->typeProgramme->id,
+                    "type_programme"=> $this->typeProgramme->type_programme
+                ];
+            })
+        ];
     }
 
     /**

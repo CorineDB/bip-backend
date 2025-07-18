@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EnumTypeSecteur;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -30,7 +31,11 @@ class Secteur extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'nom',
+        'slug',
+        'description',
+        'type',
+        'secteurId'
     ];
 
     /**
@@ -39,6 +44,7 @@ class Secteur extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'type' => EnumTypeSecteur::class,
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -50,7 +56,7 @@ class Secteur extends Model
      * @var array
      */
     protected $hidden = [
-        // Exemple : 'programmeId', 'updated_at', 'deleted_at'
+        'secteurId', 'updated_at', 'deleted_at'
     ];
 
     /**
@@ -69,5 +75,64 @@ class Secteur extends Model
                 // Exemple : $model->user()->delete();
             }
         });
+    }
+
+    /**
+     * Get the parent secteur (self-referencing).
+     */
+    public function parent()
+    {
+        return $this->belongsTo(Secteur::class, 'secteurId');
+    }
+
+    /**
+     * Get the child secteurs.
+     */
+    public function children()
+    {
+        return $this->hasMany(Secteur::class, 'secteurId');
+    }
+
+    /**
+     * Get all types d'intervention for this secteur.
+     */
+    public function typesIntervention()
+    {
+        return $this->hasMany(TypeIntervention::class, 'secteurId');
+    }
+
+    /**
+     *
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setNomAttribute($value)
+    {
+        $this->attributes['nom'] = addslashes($value); // Escape value with backslashes
+        $this->attributes['slug'] = $this->generateUniqueSlug($value);
+    }
+
+    private function generateUniqueSlug($name)
+    {
+        $baseSlug = str_replace(' ', '-', strtolower($name));
+        $slug = $baseSlug;
+        $counter = 1;
+
+        while (static::where('slug', $slug)->where('id', '!=', $this->id ?? 0)->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
+
+    /**
+    *
+    * @param  string  $value
+    * @return string
+    */
+    public function getNomAttribute($value){
+        return ucfirst(str_replace('\\',' ',$value));
     }
 }

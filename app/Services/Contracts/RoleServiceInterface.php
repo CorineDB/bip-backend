@@ -2,7 +2,14 @@
 
 namespace App\Services\Contracts;
 
+use Illuminate\Http\JsonResponse;
+
 interface RoleServiceInterface extends AbstractServiceInterface
 {
-    // Define contract methods here
+    /**
+     * Get role permissions records.
+     *
+     * @return JsonResponse
+     */
+    public function permissions(int|string $id): JsonResponse;
 }

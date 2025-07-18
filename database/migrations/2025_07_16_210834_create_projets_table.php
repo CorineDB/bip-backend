@@ -14,32 +14,31 @@ return new class extends Migration
     {
         if (!Schema::hasTable('projets')) {
             Schema::create('projets', function (Blueprint $table) {
-                $table->uuid('id')->primary();
+                $table->id();
 
                 // Foreign keys
-                $table->uuid('idee_projet_id');
-                $table->uuid('secteur_id');
-                $table->uuid('categorie_id');
-                $table->uuid('responsable_id');
-                $table->uuid('demandeur_id');
-                $table->uuid('devise_id');
+                $table->bigInteger('ideeProjetId');
+
+                $table->bigInteger('secteurId')->unsigned();
+                $table->bigInteger('ministereId')->unsigned();
+                $table->bigInteger('categorieId')->unsigned();
+                $table->bigInteger('responsableId')->unsigned();
+                $table->bigInteger('demandeurId')->unsigned();
 
                 // Unique identifiers
                 $table->string('identifiant_bip')->nullable()->unique();
                 $table->string('identifiant_sigfp')->nullable()->unique();
 
                 // Status fields
-                $table->boolean('est_coherent')->default(false);
-                $table->enum('statut', StatutIdee::cases())->default(StatutIdee::BROUILLON);
-                $table->enum('phase', PhasesIdee::cases())->default(PhasesIdee::identification);
-                $table->enum('sous_phase', SousPhaseIdee::cases())->default(SousPhaseIdee::redaction);
+                $table->enum('statut', StatutIdee::values())->default(StatutIdee::BROUILLON->value);
+                $table->enum('phase', PhasesIdee::values())->default(PhasesIdee::identification->value);
+                $table->enum('sous_phase', SousPhaseIdee::values())->default(SousPhaseIdee::redaction->value);
                 $table->json('decision')->nullable();
 
                 // Basic info
-                $table->string('intitule');
-                $table->string('type_responsable');
-                $table->string('demandeur_type');
-                $table->enum('type_projet', TypesProjet::cases())->default(TypesProjet::simple);
+                $table->string('titre_projet');
+                $table->string('sigle');
+                $table->enum('type_projet', TypesProjet::values())->default(TypesProjet::simple->value);
 
                 // Long text fields
                 $table->longText('origine')->nullable();
@@ -74,14 +73,17 @@ return new class extends Migration
                 // Date fields
                 $table->timestamp('date_debut_etude')->nullable();
                 $table->timestamp('date_fin_etude')->nullable();
+                $table->timestamp('date_prevue_demarrage')->nullable();
+                $table->timestamp('date_effective_demarrage')->nullable();
 
                 // JSON fields
                 $table->json('duree')->nullable();
                 $table->json('cout_estimatif_projet')->nullable();
-                $table->json('fiche_idee');
+                $table->json('ficheIdee');
                 $table->json('parties_prenantes')->nullable();
                 $table->json('objectifs_specifiques')->nullable();
                 $table->json('resultats_attendus')->nullable();
+                $table->json('body_projet');
 
                 // Boolean field
                 $table->boolean('isdeleted')->default(false);
@@ -90,12 +92,12 @@ return new class extends Migration
                 $table->softDeletes();
 
                 // Foreign key constraints
-                $table->foreign('idees_projet_id')->references('id')->on('idees_projet')->onDelete('set null');
-                $table->foreign('secteur_id')->references('id')->on('secteurs')->onDelete('cascade');
-                $table->foreign('categorie_id')->references('id')->on('categories_projet')->onDelete('cascade');
-                $table->foreign('responsable_id')->references('id')->on('utilisateurs')->onDelete('cascade');
-                $table->foreign('demandeur_id')->references('id')->on('utilisateurs')->onDelete('cascade');
-                $table->foreign('devise_id')->references('id')->on('devises')->onDelete('cascade');
+                $table->foreign('ideeProjetId')->references('id')->on('idees_projet')->onDelete('set null');
+                $table->foreign('ministereId')->references('id')->on('organisations')->onDelete('set null');
+                $table->foreign('secteurId')->references('id')->on('secteurs')->onDelete('cascade');
+                $table->foreign('categorieId')->references('id')->on('categories_projet')->onDelete('cascade');
+                $table->foreign('responsableId')->references('id')->on('users')->onDelete('cascade');
+                $table->foreign('demandeurId')->references('id')->on('users')->onDelete('cascade');
             });
         }
     }

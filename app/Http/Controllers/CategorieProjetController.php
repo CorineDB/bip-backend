@@ -5,15 +5,15 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\CategoriesProjet\StoreCategorieProjetRequest;
-use App\FormRequest\CategoriesProjet\UpdateCategorieProjetRequest;
-use App\Services\Contracts\CategorieProjeterviceInterface;
+use App\Http\Requests\CategoriesProjet\UpdateCategorieProjetRequest;
+use App\Services\Contracts\CategorieProjetServiceInterface;
 use Illuminate\Http\JsonResponse;
 
 class CategorieProjetController extends Controller
 {
-    protected CategorieProjeterviceInterface $service;
+    protected CategorieProjetServiceInterface $service;
 
-    public function __construct(CategorieProjeterviceInterface $service)
+    public function __construct(CategorieProjetServiceInterface $service)
     {
         $this->service = $service;
     }

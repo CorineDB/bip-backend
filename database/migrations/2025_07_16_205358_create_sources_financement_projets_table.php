@@ -12,7 +12,7 @@ return new class extends Migration
             Schema::create('sources_financement_projets', function (Blueprint $table) {
                 $table->id();
                 $table->bigInteger('sourceId')->unsigned();
-                $table->foreign('sourceId')->references('id')->on('sources_financement')
+                $table->foreign('sourceId')->references('id')->on('financements')
                             ->onDelete('cascade')
                             ->onUpdate('cascade');
                 $table->morphs('projetable');

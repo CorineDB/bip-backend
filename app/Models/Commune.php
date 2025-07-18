@@ -30,7 +30,7 @@ class Commune extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'code', 'nom', 'slug', 'departementId'
     ];
 
     /**
@@ -50,8 +50,24 @@ class Commune extends Model
      * @var array
      */
     protected $hidden = [
-        // Exemple : 'programmeId', 'updated_at', 'deleted_at'
+        'departementId', 'updated_at', 'deleted_at'
     ];
+
+    /**
+     * Get the departement that owns the commune.
+     */
+    public function departement()
+    {
+        return $this->belongsTo(Departement::class, 'departementId');
+    }
+
+    /**
+     * Get the arrondissements for the commune.
+     */
+    public function arrondissements()
+    {
+        return $this->hasMany(Arrondissement::class, 'communeId');
+    }
 
     /**
      * The model's boot method.
@@ -62,12 +78,9 @@ class Commune extends Model
 
         static::deleting(function ($model) {
             $model->update([
-                // Exemple : 'nom' => time() . '::' . $model->nom,
+                'code' => time() . '::' . $model->code,
+                'slug' => time() . '::' . $model->slug,
             ]);
-
-            if (method_exists($model, 'user')) {
-                // Exemple : $model->user()->delete();
-            }
         });
     }
 }

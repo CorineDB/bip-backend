@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Requests\TypesIntervention\StoreTypeInterventionRequest;
-use App\FormRequest\TypesIntervention\UpdateTypeInterventionRequest;
+use App\Http\Requests\types_intervention\StoreTypeInterventionRequest;
+use App\Http\Requests\types_intervention\UpdateTypeInterventionRequest;
 use App\Services\Contracts\TypeInterventionServiceInterface;
 use Illuminate\Http\JsonResponse;
 

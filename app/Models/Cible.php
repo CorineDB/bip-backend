@@ -30,7 +30,7 @@ class Cible extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'cible', 'slug'
     ];
 
     /**
@@ -50,8 +50,34 @@ class Cible extends Model
      * @var array
      */
     protected $hidden = [
-        // Exemple : 'programmeId', 'updated_at', 'deleted_at'
+        'updated_at', 'deleted_at'
     ];
+
+    /**
+     * Get the projets that belong to the cible through cibles_projets pivot table.
+     */
+    public function projets()
+    {
+        return $this->morphedByMany(
+            'App\Models\Projet',
+            'projetable',
+            'cibles_projets',
+            'cibleId'
+        );
+    }
+
+    /**
+     * Get the idees projets that belong to the cible through cibles_projets pivot table.
+     */
+    public function ideesProjet()
+    {
+        return $this->morphedByMany(
+            'App\Models\IdeeProjet',
+            'projetable',
+            'cibles_projets',
+            'cibleId'
+        );
+    }
 
     /**
      * The model's boot method.
@@ -62,12 +88,30 @@ class Cible extends Model
 
         static::deleting(function ($model) {
             $model->update([
-                // Exemple : 'nom' => time() . '::' . $model->nom,
+                'cible' => time() . '::' . $model->cible,
+                'slug' => time() . '::' . $model->slug,
             ]);
-
-            if (method_exists($model, 'user')) {
-                // Exemple : $model->user()->delete();
-            }
         });
+    }
+
+    /**
+     *
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setCibleAttribute($value)
+    {
+        $this->attributes['cible'] = addslashes($value); // Escape value with backslashes
+        $this->attributes['slug'] = str_replace(' ', '-', strtolower($value));
+    }
+
+    /**
+    *
+    * @param  string  $value
+    * @return string
+    */
+    public function getCibleAttribute($value){
+        return ucfirst(str_replace('\\',' ',$value));
     }
 }

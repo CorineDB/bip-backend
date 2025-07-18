@@ -3,17 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Http\Requests\ComposantsProgramme\StoreComposantProgrammeRequest;
-use App\FormRequest\ComposantsProgramme\UpdateComposantProgrammeRequest;
-use App\Services\Contracts\ComposantsProgrammeerviceInterface;
+use App\Http\Requests\composants_programme\StoreComposantProgrammeRequest;
+use App\Http\Requests\composants_programme\UpdateComposantProgrammeRequest;
+use App\Services\Contracts\ComposantProgrammeServiceInterface;
 use Illuminate\Http\JsonResponse;
 
 class ComposantProgrammeController extends Controller
 {
-    protected ComposantsProgrammeerviceInterface $service;
+    protected ComposantProgrammeServiceInterface $service;
 
-    public function __construct(ComposantsProgrammeerviceInterface $service)
+    public function __construct(ComposantProgrammeServiceInterface $service)
     {
         $this->service = $service;
     }

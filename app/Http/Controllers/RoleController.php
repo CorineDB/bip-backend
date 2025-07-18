@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Http\Requests\Roles\StoreRoleRequest;
-use App\FormRequest\Roles\UpdateRoleRequest;
+use App\Http\Requests\roles\StoreRoleRequest;
+use App\Http\Requests\roles\UpdateRoleRequest;
 use App\Services\Contracts\RoleServiceInterface;
 use Illuminate\Http\JsonResponse;
 
@@ -42,4 +41,13 @@ class RoleController extends Controller
     {
         return $this->service->delete($id);
     }
+
+    /**
+     * Get all permissions for a specific role
+     */
+    public function getPermissions($id): JsonResponse
+    {
+        return $this->service->permissions($id);
+    }
+
 }

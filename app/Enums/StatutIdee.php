@@ -25,4 +25,31 @@ enum StatutIdee: string
     case VALIDATION_PROFIL = '03c_ValidationProfil';
     case R_VALIDATION_PROFIL_NOTE_AMELIORER = '03c_R_ValidationProfilNoteAameliorer';
     case TDR_PREFAISABILITE = '04a_TDR_Prefaisabilité';
+
+    /**
+     * Get all enum values
+     */
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
+
+    /**
+     * Get all enum names
+     */
+    public static function names(): array
+    {
+        return array_column(self::cases(), 'name');
+    }
+
+    /**
+     * Get key-value array
+     */
+    public static function options(): array
+    {
+        return array_combine(
+            array_column(self::cases(), 'name'),
+            array_column(self::cases(), 'value')
+        );
+    }
 }

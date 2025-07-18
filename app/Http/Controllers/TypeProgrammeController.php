@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Http\Requests\TypesProgramme\StoreTypeProgrammeRequest;
-use App\FormRequest\TypesProgramme\UpdateTypeProgrammeRequest;
+use App\Http\Requests\types_programme\StoreTypeProgrammeRequest;
+use App\Http\Requests\types_programme\UpdateTypeProgrammeRequest;
 use App\Services\Contracts\TypeProgrammeServiceInterface;
 use Illuminate\Http\JsonResponse;
 

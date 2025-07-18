@@ -12,7 +12,7 @@ return new class extends Migration
             Schema::create('composants_projet', function (Blueprint $table) {
                 $table->id();
                 $table->bigInteger('composantId')->nullable()->unsigned();
-                $table->foreign('composantId')->references('id')->on('composants')
+                $table->foreign('composantId')->references('id')->on('composants_programme')
                             ->onDelete('cascade')
                             ->onUpdate('cascade');
                 $table->morphs('projetable');

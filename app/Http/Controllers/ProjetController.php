@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\Projets\StoreProjetRequest;
-use App\FormRequest\Projets\UpdateProjetRequest;
+use App\Http\Requests\Projets\UpdateProjetRequest;
 use App\Services\Contracts\ProjetServiceInterface;
 use Illuminate\Http\JsonResponse;
 

@@ -1,0 +1,33 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (!Schema::hasTable('decisions')) {
+            Schema::create('decisions', function (Blueprint $table) {
+                $table->id();
+
+                $table->string('valeur');
+                $table->timestamp('date');
+                $table->longText('observations')->nullable();
+
+                $table->bigInteger('observateurId')->nullable()->unsigned();
+                $table->foreign('observateurId')->references('id')->on('personnes')
+                            ->onDelete('cascade')
+                            ->onUpdate('cascade');
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('decisions');
+    }
+};

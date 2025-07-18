@@ -30,7 +30,8 @@ class TypeIntervention extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'type_intervention',
+        'secteurId'
     ];
 
     /**
@@ -50,7 +51,7 @@ class TypeIntervention extends Model
      * @var array
      */
     protected $hidden = [
-        // Exemple : 'programmeId', 'updated_at', 'deleted_at'
+        'secteurId', 'updated_at', 'deleted_at'
     ];
 
     /**
@@ -64,10 +65,14 @@ class TypeIntervention extends Model
             $model->update([
                 // Exemple : 'nom' => time() . '::' . $model->nom,
             ]);
-
-            if (method_exists($model, 'user')) {
-                // Exemple : $model->user()->delete();
-            }
         });
+    }
+
+    /**
+     * Get the secteur that owns the type intervention.
+     */
+    public function secteur()
+    {
+        return $this->belongsTo(Secteur::class, 'secteurId');
     }
 }

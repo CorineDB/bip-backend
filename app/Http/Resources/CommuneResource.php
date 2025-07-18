@@ -15,7 +15,12 @@ class CommuneResource extends BaseApiResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'slug' => $this->slug,
+            'nom' => $this->nom,
+            'departementId' => $this->departementId
+        ];
     }
 
     /**

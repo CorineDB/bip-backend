@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Http\Requests\Secteurs\StoreSecteurRequest;
-use App\FormRequest\Secteurs\UpdateSecteurRequest;
+use App\Http\Requests\secteurs\StoreSecteurRequest;
+use App\Http\Requests\secteurs\UpdateSecteurRequest;
 use App\Services\Contracts\SecteurServiceInterface;
 use Illuminate\Http\JsonResponse;
 

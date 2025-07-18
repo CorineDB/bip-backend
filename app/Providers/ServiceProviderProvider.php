@@ -13,35 +13,52 @@ class ServiceProviderProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(
-            \App\Services\Contracts\AbstractServiceInterface::class,
-            \App\Services\BaseService::class
-        );
+        // AbstractServiceInterface is abstract, no binding needed
 
+        // All service bindings
+        $services = [
+            'RoleServiceInterface' => 'RoleService',
+            'PermissionServiceInterface' => 'PermissionService',
+            'OrganisationServiceInterface' => 'OrganisationService',
+            'UserServiceInterface' => 'UserService',
+            'PersonneServiceInterface' => 'PersonneService',
+            'DepartementServiceInterface' => 'DepartementService',
+            'CommuneServiceInterface' => 'CommuneService',
+            'ArrondissementServiceInterface' => 'ArrondissementService',
+            'VillageServiceInterface' => 'VillageService',
+            'SecteurServiceInterface' => 'SecteurService',
+            'CategorieProjetServiceInterface' => 'CategorieProjetService',
+            'IdeeProjetServiceInterface' => 'IdeeProjetService',
+            'ProjetServiceInterface' => 'ProjetService',
+            'DecisionServiceInterface' => 'DecisionService',
+            'CibleServiceInterface' => 'CibleService',
+            'TypeInterventionServiceInterface' => 'TypeInterventionService',
+            'TypeProgrammeServiceInterface' => 'TypeProgrammeService',
+            'ComposantProgrammeServiceInterface' => 'ComposantProgrammeService',
+            'WorkflowServiceInterface' => 'WorkflowService',
+            'FinancementServiceInterface' => 'FinancementService',
+            'OddServiceInterface' => 'OddService',
+            'CategorieDocumentServiceInterface' => 'CategorieDocumentService',
+            'TrackInfoServiceInterface' => 'TrackInfoService',
+            'DocumentServiceInterface' => 'DocumentService',
+            'ChampServiceInterface' => 'ChampService',
+            'EvaluationServiceInterface' => 'EvaluationService'
+        ];
+
+        foreach ($services as $interface => $implementation) {
+            $this->app->bind(
+                "App\\Services\\Contracts\\{$interface}",
+                "App\\Services\\{$implementation}"
+            );
+        }
 
         $contractPath = app_path('Services/Contracts');
-        $implementationPath = app_path('Services');
 
-         if (!File::exists($contractPath)) {
-            return;
-        }
         if (!File::exists($contractPath) || !File::isDirectory($contractPath)) {
             return;
         }
 
-        $contractFiles = File::files($contractPath);
-
-        foreach ($contractFiles as $file) {
-            $interfaceName = $file->getFilenameWithoutExtension(); // e.g., UserServiceInterface
-            $model = Str::replaceLast('ServiceInterface', '', $interfaceName); // e.g., User
-
-            $interface = "App\\Services\\Contracts\\{$interfaceName}";
-            $implementation = "App\\Services\\{$model}Service";
-
-            if (interface_exists($interface) && class_exists($implementation)) {
-                $this->app->bind($interface, $implementation);
-            }
-        }
+        // Auto-discovery is now replaced by manual bindings above
     }
 
     /**

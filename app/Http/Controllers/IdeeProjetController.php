@@ -4,16 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Requests\idees_projet\StoreIdeeProjetRequest;
-use App\FormRequest\idees_projet\UpdateIdeeProjetRequest;
-use App\Services\Contracts\idees_projeterviceInterface;
+use App\Http\Requests\IdeesProjet\StoreIdeeProjetRequest;
+use App\Http\Requests\IdeesProjet\UpdateIdeeProjetRequest;
+use App\Services\Contracts\IdeeProjetServiceInterface;
 use Illuminate\Http\JsonResponse;
 
 class IdeeProjetController extends Controller
 {
-    protected idees_projeterviceInterface $service;
+    protected IdeeProjetServiceInterface $service;
 
-    public function __construct(idees_projeterviceInterface $service)
+    public function __construct(IdeeProjetServiceInterface $service)
     {
         $this->service = $service;
     }

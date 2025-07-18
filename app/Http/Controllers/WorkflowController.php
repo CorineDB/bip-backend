@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\Workflows\StoreWorkflowRequest;
-use App\FormRequest\Workflows\UpdateWorkflowRequest;
+use App\Http\Requests\Workflows\UpdateWorkflowRequest;
 use App\Services\Contracts\WorkflowServiceInterface;
 use Illuminate\Http\JsonResponse;
 

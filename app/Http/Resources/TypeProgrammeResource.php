@@ -15,7 +15,16 @@ class TypeProgrammeResource extends BaseApiResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            "id" => $this->id,
+            "type_programme"=> $this->type_programme,
+            "programme_ou_composant"=> $this->when($this->parent, function() {
+                return [
+                    "id" => $this->parent->id,
+                    "type_programme"=> $this->parent->type_programme
+                ];
+            })
+        ];
     }
 
     /**

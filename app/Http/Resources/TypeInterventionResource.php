@@ -15,7 +15,17 @@ class TypeInterventionResource extends BaseApiResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            "id" => $this->id,
+            "type_intervention"=> $this->type_intervention,
+            "secteur"=> $this->when($this->secteur, function() {
+                return [
+                    "id" => $this->secteur->id,
+                    "nom"=> $this->secteur->nom,
+                    "type"=> $this->secteur->type
+                ];
+            })
+        ];
     }
 
     /**

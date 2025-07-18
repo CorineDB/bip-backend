@@ -15,7 +15,15 @@ class RoleResource extends BaseApiResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'nom' => $this->nom,
+
+            // Relations selon le contexte
+            'permissions' => $this->whenLoaded('permissions', function() {
+                return PermissionResource::collection($this->permissions);
+            }),
+        ];
     }
 
     /**

@@ -30,7 +30,10 @@ abstract class BaseApiResource extends JsonResource implements ApiResourceInterf
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            "id" => $this->id,
+            "nom"=> $this->nom
+        ];
     }
 
     /**

@@ -15,7 +15,18 @@ class SecteurResource extends BaseApiResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            "id" => $this->id,
+            "nom"=> $this->nom,
+            "type"=> $this->type,
+            "secteur"=> $this->when($this->parent, function() {
+                return [
+                    "id" => $this->parent->id,
+                    "nom"=> $this->parent->nom,
+                    "type"=> $this->parent->type
+                ];
+            })
+        ];
     }
 
     /**

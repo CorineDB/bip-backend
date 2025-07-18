@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Http\Requests\Cibles\StoreCibleRequest;
-use App\FormRequest\Cibles\UpdateCibleRequest;
+use App\Http\Requests\cibles\StoreCibleRequest;
+use App\Http\Requests\cibles\UpdateCibleRequest;
 use App\Services\Contracts\CibleServiceInterface;
 use Illuminate\Http\JsonResponse;
 

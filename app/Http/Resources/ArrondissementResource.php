@@ -15,7 +15,12 @@ class ArrondissementResource extends BaseApiResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'slug' => $this->slug,
+            'nom' => $this->nom,
+            'communeId' => $this->communeId
+        ];
     }
 
     /**

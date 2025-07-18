@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\TypesProgramme;
+namespace App\Http\Requests\types_programme;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -14,7 +14,20 @@ class StoreTypeProgrammeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // TODO: add validation rules
+            'type_programme' => 'required|string|unique:types_programme,type_programme',
+            'typeId' => 'sometimes|integer|exists:types_programme,id|different:id'
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'type_programme.required' => 'Le type de programme est obligatoire.',
+            'type_programme.string' => 'Le type de programme doit être une chaîne de caractères.',
+            'type_programme.unique' => 'Ce type de programme existe déjà.',
+            'typeId.integer' => 'L\'ID du type parent doit être un nombre entier.',
+            'typeId.exists' => 'Le type de programme parent sélectionné n\'existe pas.',
+            'typeId.different' => 'Un type de programme ne peut pas être son propre parent.'
         ];
     }
 }

@@ -54,6 +54,14 @@ class Permission extends Model
     ];
 
     /**
+     * The roles that belong to the permission.
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'role_permissions', 'permissionId', 'roleId');
+    }
+
+    /**
      * The model's boot method.
      */
     protected static function boot()

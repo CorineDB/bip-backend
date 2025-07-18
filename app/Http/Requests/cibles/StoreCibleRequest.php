@@ -14,7 +14,16 @@ class StoreCibleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // TODO: add validation rules
+            'cible' => 'required|string|unique:cibles,cible'
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'cible.required' => 'La cible est obligatoire.',
+            'cible.string' => 'La cible doit être une chaîne de caractères.',
+            'cible.unique' => 'Cette cible existe déjà.'
         ];
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Services\Contracts;
 
-interface ComposantsProgrammeerviceInterface extends AbstractServiceInterface
+interface ComposantProgrammeServiceInterface extends AbstractServiceInterface
 {
     // Define contract methods here
 }

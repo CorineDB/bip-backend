@@ -2,7 +2,7 @@
 
 namespace App\Services\Contracts;
 
-interface CategorieProjeterviceInterface extends AbstractServiceInterface
+interface CategorieProjetServiceInterface extends AbstractServiceInterface
 {
     // Define contract methods here
 }

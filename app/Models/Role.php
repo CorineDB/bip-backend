@@ -54,6 +54,30 @@ class Role extends Model
     ];
 
     /**
+     * Get the owning roleable model.
+     */
+    public function roleable()
+    {
+        return $this->morphTo();
+    }
+
+    /**
+     * The permissions that belong to the role.
+     */
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class, 'role_permissions', 'roleId', 'permissionId');
+    }
+
+    /**
+     * The users that belong to the role.
+     */
+    public function users()
+    {
+        return $this->hasMany(User::class, 'roleId');
+    }
+
+    /**
      * The model's boot method.
      */
     protected static function boot()
@@ -66,5 +90,40 @@ class Role extends Model
                 'slug' => time() . '::' . $model->slug,
             ]);
         });
+    }
+    
+    /**
+     *
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setNomAttribute($value)
+    {
+        $this->attributes['nom'] = addslashes($value); // Escape value with backslashes
+        $this->attributes['slug'] = $this->generateUniqueSlug($value);
+    }
+
+    private function generateUniqueSlug($name)
+    {
+        $baseSlug = str_replace(' ', '-', strtolower($name));
+        $slug = $baseSlug;
+        $counter = 1;
+
+        while (static::where('slug', $slug)->where('id', '!=', $this->id ?? 0)->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
+
+    /**
+    *
+    * @param  string  $value
+    * @return string
+    */
+    public function getNomAttribute($value){
+        return ucfirst(str_replace('\\',' ',$value));
     }
 }

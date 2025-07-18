@@ -13,8 +13,19 @@ class UpdateCibleRequest extends FormRequest
 
     public function rules(): array
     {
+        $cibleId = $this->route('cible') ? (is_string($this->route('cible')) ? $this->route('cible') : ($this->route('cible')->id)) : $this->route('id');
+
         return [
-            // TODO: add validation rules
+            'cible' => 'required|string|unique:cibles,cible,' . $cibleId
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'cible.required' => 'La cible est obligatoire.',
+            'cible.string' => 'La cible doit être une chaîne de caractères.',
+            'cible.unique' => 'Cette cible existe déjà.'
         ];
     }
 }

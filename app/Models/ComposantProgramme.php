@@ -30,7 +30,7 @@ class ComposantProgramme extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'indice', 'intitule', 'slug', 'typeId'
     ];
 
     /**
@@ -39,6 +39,7 @@ class ComposantProgramme extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'indice' => 'integer',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -50,8 +51,16 @@ class ComposantProgramme extends Model
      * @var array
      */
     protected $hidden = [
-        // Exemple : 'programmeId', 'updated_at', 'deleted_at'
+        'typeId', 'updated_at', 'deleted_at'
     ];
+
+    /**
+     * Get the type programme that owns the composant programme.
+     */
+    public function typeProgramme()
+    {
+        return $this->belongsTo(TypeProgramme::class, 'typeId');
+    }
 
     /**
      * The model's boot method.
@@ -62,12 +71,31 @@ class ComposantProgramme extends Model
 
         static::deleting(function ($model) {
             $model->update([
-                // Exemple : 'nom' => time() . '::' . $model->nom,
+                'intitule' => time() . '::' . $model->intitule,
+                'slug' => time() . '::' . $model->slug,
             ]);
-
-            if (method_exists($model, 'user')) {
-                // Exemple : $model->user()->delete();
-            }
         });
     }
+
+    /**
+     *
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setIntituleAttribute($value)
+    {
+        $this->attributes['intitule'] = addslashes($value); // Escape value with backslashes
+        $this->attributes['slug'] = str_replace(' ', '-', strtolower($value));
+    }
+
+    /**
+    *
+    * @param  string  $value
+    * @return string
+    */
+    public function getIntituleAttribute($value){
+        return ucfirst(str_replace('\\',' ',$value));
+    }
+
 }

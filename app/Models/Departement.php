@@ -30,7 +30,7 @@ class Departement extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'code', 'nom', 'slug'
     ];
 
     /**
@@ -50,8 +50,16 @@ class Departement extends Model
      * @var array
      */
     protected $hidden = [
-        // Exemple : 'programmeId', 'updated_at', 'deleted_at'
+        'updated_at', 'deleted_at'
     ];
+
+    /**
+     * Get the communes for the departement.
+     */
+    public function communes()
+    {
+        return $this->hasMany(Commune::class, 'departementId');
+    }
 
     /**
      * The model's boot method.
@@ -62,12 +70,9 @@ class Departement extends Model
 
         static::deleting(function ($model) {
             $model->update([
-                // Exemple : 'nom' => time() . '::' . $model->nom,
+                'code' => time() . '::' . $model->code,
+                'slug' => time() . '::' . $model->slug,
             ]);
-
-            if (method_exists($model, 'user')) {
-                // Exemple : $model->user()->delete();
-            }
         });
     }
 }

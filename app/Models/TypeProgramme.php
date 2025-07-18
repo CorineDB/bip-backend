@@ -15,7 +15,7 @@ class TypeProgramme extends Model
      *
      * @var string
      */
-    protected $table = 'type_programmes';
+    protected $table = 'types_programme';
 
     /**
      * The attributes that should be mutated to dates.
@@ -30,7 +30,7 @@ class TypeProgramme extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'type_programme', 'slug', 'typeId'
     ];
 
     /**
@@ -50,8 +50,32 @@ class TypeProgramme extends Model
      * @var array
      */
     protected $hidden = [
-        // Exemple : 'programmeId', 'updated_at', 'deleted_at'
+        'typeId', 'updated_at', 'deleted_at'
     ];
+
+    /**
+     * Get the parent type programme.
+     */
+    public function parent()
+    {
+        return $this->belongsTo(TypeProgramme::class, 'typeId');
+    }
+
+    /**
+     * Get the child types programme.
+     */
+    public function children()
+    {
+        return $this->hasMany(TypeProgramme::class, 'typeId');
+    }
+
+    /**
+     * Get the composants programme for the type programme.
+     */
+    public function composantsProgramme()
+    {
+        return $this->hasMany(ComposantProgramme::class, 'typeId');
+    }
 
     /**
      * The model's boot method.
@@ -62,12 +86,30 @@ class TypeProgramme extends Model
 
         static::deleting(function ($model) {
             $model->update([
-                // Exemple : 'nom' => time() . '::' . $model->nom,
+                'type_programme' => time() . '::' . $model->type_programme,
+                'slug' => time() . '::' . $model->slug,
             ]);
-
-            if (method_exists($model, 'user')) {
-                // Exemple : $model->user()->delete();
-            }
         });
+    }
+
+    /**
+     *
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setTypeProgrammeAttribute($value)
+    {
+        $this->attributes['type_programme'] = addslashes($value); // Escape value with backslashes
+        $this->attributes['slug'] = str_replace(' ', '-', strtolower($value));
+    }
+
+    /**
+    *
+    * @param  string  $value
+    * @return string
+    */
+    public function getTypeProgrammeAttribute($value){
+        return ucfirst(str_replace('\\',' ',$value));
     }
 }

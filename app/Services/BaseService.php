@@ -12,32 +12,35 @@ use Exception;
 abstract class BaseService implements AbstractServiceInterface
 {
     protected BaseRepositoryInterface $repository;
-    protected ApiResourceInterface $resource;
+    protected string $resourceClass;
 
     public function __construct(
-        BaseRepositoryInterface $repository, 
-        ApiResourceInterface $resource
+        BaseRepositoryInterface $repository
     ) {
         $this->repository = $repository;
-        $this->resource = $resource;
+        $this->resourceClass = $this->getResourceClass();
     }
+
+    /**
+     * Get the resource class for this service
+     */
+    abstract protected function getResourceClass(): string;
 
     public function all(): JsonResponse
     {
         try {
             $data = $this->repository->all();
-            return $this->resource::collection($data)->response();
+            return $this->resourceClass::collection($data)->response();
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
     }
 
-
     public function find(int|string $id): JsonResponse
     {
         try {
             $item = $this->repository->findOrFail($id);
-            return (new $this->resource($item))->response();
+            return (new $this->resourceClass($item))->response();
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
@@ -48,12 +51,11 @@ abstract class BaseService implements AbstractServiceInterface
         }
     }
 
-
     public function create(array $data): JsonResponse
     {
         try {
             $item = $this->repository->create($data);
-            return (new $this->resource($item))
+            return (new $this->resourceClass($item))
                 ->additional(['message' => 'Resource created successfully.'])
                 ->response()
                 ->setStatusCode(201);
@@ -75,7 +77,7 @@ abstract class BaseService implements AbstractServiceInterface
 
             $item = $this->repository->findOrFail($id);
 
-            return (new $this->resource($item))
+            return (new $this->resourceClass($item))
                 ->additional(['message' => 'Resource updated successfully.'])
                 ->response();
         } catch (ModelNotFoundException $e) {
