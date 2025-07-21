@@ -16,10 +16,10 @@ class StoreSecteurRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nom' => 'required|string|max:65535|unique:secteurs,nom',
+            'nom'=> ['required', 'string', Rule::unique('secteurs', 'nom')->whereNull('deleted_at')],
             'description' => 'nullable|string|max:65535',
             'type' => ['required', 'string', Rule::in(EnumTypeSecteur::values())],
-            'secteurId' => 'nullable|integer|exists:secteurs,id'
+            'secteurId' => ['sometimes', Rule::exists('secteurs', 'id')->whereNull('deleted_at')],
         ];
     }
 

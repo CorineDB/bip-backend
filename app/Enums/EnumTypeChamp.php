@@ -5,23 +5,24 @@ namespace App\Enums;
 enum EnumTypeChamp: string
 {
 
-    case    TEXT           = 'text';
-    case    TEXTAREA           = 'textarea';
-    case    NUMBER         = 'number';
-    case    DATE           = 'date';
-    case    BOOLEAN        = 'boolean';
-    case    SELECT         = 'select';
-    case    MULTISELECT    = 'multiselect';
-    case    FILE           = 'file';
-    case    GEOLOCATION    = 'geolocation';
-    case    RATING         = 'rating';
-    case    NUMBER_INPUT   = 'number-input';
-    case    CURRENCY_INPUT = 'currency-input';
-    case    RADIO_RATING         = 'radio-rating';
-
-    case    SLIDER_NUMBER = 'number_input';
-    case    MULTISELECT_CHECKBOX    = 'multiselect-checkbox';
-    case    MULTISELECT_FILE    = 'multiselect-file';
+    case    TEXT                    = 'text';
+    case    TEXTAREA                = 'textarea';
+    case    NUMBER                  = 'number';
+    case    DATE                    = 'date';
+    case    BOOLEAN                 = 'boolean';
+    case    SELECT                  = 'select';
+    case    MULTISELECT             = 'multiselect';
+    case    FILE                    = 'file';
+    case    GEOLOCATION             = 'geolocation';
+    case    RATING                  = 'rating';
+    case    NUMBER_INPUT            = 'number_input';
+    case    CURRENCY_INPUT          = 'currency_input';
+    case    PHONE_NUMBER_INPUT      = 'phone_number_input';
+    case    RADIO                   = 'radio';
+    case    RADIO_RATING            = 'radio_rating';
+    case    SLIDER_NUMBER           = 'slider_number';
+    case    MULTISELECT_CHECKBOX    = 'multiselect_checkbox';
+    case    MULTISELECT_FILE        = 'multiselect_file';
 
 
     /**

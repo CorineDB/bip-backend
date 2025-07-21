@@ -22,9 +22,9 @@ class UpdateTypeInterventionRequest extends FormRequest
                 'required',
                 'string',
                 'max:65535',
-                Rule::unique('types_intervention', 'type_intervention')->ignore($typeInterventionId)
+                Rule::unique('types_intervention', 'type_intervention')->ignore($typeInterventionId)->whereNull('deleted_at')
             ],
-            'secteurId' => 'sometimes|required|integer|exists:secteurs,id'
+            'secteurId' => ['sometimes', Rule::exists('secteurs', 'id')->whereNull('deleted_at')]
         ];
     }
 

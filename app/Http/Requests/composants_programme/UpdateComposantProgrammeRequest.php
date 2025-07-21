@@ -3,6 +3,7 @@
 namespace App\Http\Requests\composants_programme;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateComposantProgrammeRequest extends FormRequest
 {
@@ -17,8 +18,9 @@ class UpdateComposantProgrammeRequest extends FormRequest
 
         return [
             'indice' => 'required|integer|min:1',
-            'intitule' => 'required|string|unique:composants_programme,intitule,' . $composantProgrammeId,
-            'typeId' => 'required|integer|exists:types_programme,id'
+            'intitule'=> ['required', 'string', Rule::unique('composants_programme', 'intitule')->ignore($composantProgrammeId)->whereNull('deleted_at')],
+
+            'typeId' => ['required', Rule::exists('types_programme', 'id')->whereNull('deleted_at')],
         ];
     }
 

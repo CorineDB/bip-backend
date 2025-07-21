@@ -3,6 +3,7 @@
 namespace App\Http\Requests\types_programme;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreTypeProgrammeRequest extends FormRequest
 {
@@ -14,8 +15,8 @@ class StoreTypeProgrammeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type_programme' => 'required|string|unique:types_programme,type_programme',
-            'typeId' => 'sometimes|integer|exists:types_programme,id|different:id'
+            'type_programme'=> ['required', 'string', Rule::unique('types_programme', 'type_programme')->whereNull('deleted_at')],
+            'typeId' => ['required', Rule::exists('types_programme', 'id')->whereNull('deleted_at')],
         ];
     }
 

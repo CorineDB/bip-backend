@@ -19,11 +19,10 @@ return new class extends Migration
                 $table->boolean('is_required');
                 $table->string('default_value')->nullable();
                 $table->boolean('isEvaluated')->default(false);
-                $table->longText('commentaire')->nullable();
                 $table->integer('ordre_affichage')->default(0);
                 $table->enum('type_champ', EnumTypeChamp::values())->default(EnumTypeChamp::TEXT);
-                $table->bigInteger('secteurId')->nullable()->unsigned();
-                $table->foreign('secteurId')->references('id')->on('champs_sections')
+                $table->bigInteger('sectionId')->nullable()->unsigned();
+                $table->foreign('sectionId')->references('id')->on('champs_sections')
                             ->onDelete('cascade')
                             ->onUpdate('cascade');
                 $table->bigInteger('documentId')->nullable()->unsigned();
@@ -31,11 +30,9 @@ return new class extends Migration
                             ->onDelete('cascade')
                             ->onUpdate('cascade');
 
-                $table->unique(['attribut', 'secteurId', 'documentId']);
+                $table->unique(['attribut', 'sectionId', 'documentId']);
 
                 $table->jsonb('meta_options')->nullable();
-                $table->jsonb('champ_config')->nullable();
-                $table->jsonb('valeur_config')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
             });

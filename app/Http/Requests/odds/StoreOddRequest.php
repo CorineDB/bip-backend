@@ -3,6 +3,7 @@
 namespace App\Http\Requests\odds;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreOddRequest extends FormRequest
 {
@@ -14,7 +15,7 @@ class StoreOddRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'odd' => 'required|string|unique:odds,odd'
+            'odd'=> ['required', 'string', Rule::unique('odds', 'odd')->whereNull('deleted_at')]
         ];
     }
 

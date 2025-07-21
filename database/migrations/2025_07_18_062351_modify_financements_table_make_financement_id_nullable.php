@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('financements', function (Blueprint $table) {
-            $table->bigInteger('financementId')->nullable()->unsigned()->change();
+            if(Schema::hasColumn('financements', 'financementId')){
+                $table->bigInteger('financementId')->nullable()->unsigned()->change();
+            }
         });
     }
 
@@ -22,7 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('financements', function (Blueprint $table) {
-            $table->bigInteger('financementId')->nullable(false)->unsigned()->change();
+            if(Schema::hasColumn('financements', 'financementId')){
+                $table->bigInteger('financementId')->nullable(false)->unsigned()->change();
+            }
         });
     }
 };

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\odds;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateOddRequest extends FormRequest
 {
@@ -16,7 +17,7 @@ class UpdateOddRequest extends FormRequest
         $oddId = $this->route('odd') ? (is_string($this->route('odd')) ? $this->route('odd') : ($this->route('odd')->id)) : $this->route('id');
 
         return [
-            'odd' => 'required|string|unique:odds,odd,' . $oddId
+            'odd'=> ['required', 'string', Rule::unique('odds', 'odd')->ignore($oddId)->whereNull('deleted_at')]
         ];
     }
 

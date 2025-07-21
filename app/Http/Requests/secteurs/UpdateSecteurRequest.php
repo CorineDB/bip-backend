@@ -18,16 +18,11 @@ class UpdateSecteurRequest extends FormRequest
         $secteurId = $this->route('secteur') ? (is_string($this->route('secteur')) ? $this->route('secteur') : ($this->route('secteur')->id)) : $this->route('id');
 
         return [
-            'nom' => 'sometimes|required|string|max:65535',
+            'nom'=> ['required', 'string', Rule::unique('secteurs', 'nom')->ignore($secteurId)->whereNull('deleted_at')],
             'description' => 'sometimes|nullable|string|max:65535',
             'type' => ['sometimes', 'required', 'string', Rule::in(EnumTypeSecteur::values())],
-            'secteurId' => [
-                'sometimes',
-                'nullable',
-                'integer',
-                'exists:secteurs,id',
-                Rule::notIn([$secteurId])
-            ]
+
+            'secteurId' => ['sometimes', Rule::exists('secteurs', 'id')->whereNull('deleted_at'), 'different:' . $secteurId],
         ];
     }
 

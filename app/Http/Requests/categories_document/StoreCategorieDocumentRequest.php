@@ -3,6 +3,7 @@
 namespace App\Http\Requests\categories_document;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreCategorieDocumentRequest extends FormRequest
 {
@@ -14,7 +15,7 @@ class StoreCategorieDocumentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nom' => 'required|string|max:65535|unique:categories_document,nom',
+            'nom'=> ['required', 'string', Rule::unique('categories_document', 'nom')->whereNull('deleted_at')],
             'description' => 'nullable|string|max:65535',
             'format' => 'required|string|max:255'
         ];

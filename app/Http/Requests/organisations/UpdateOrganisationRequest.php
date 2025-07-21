@@ -18,10 +18,11 @@ class UpdateOrganisationRequest extends FormRequest
         $organisationId = $this->route('organisation') ? (is_string($this->route('organisation')) ? $this->route('organisation') : ($this->route('organisation')->id)) : $this->route('id');
 
         return [
-            'nom' => 'required|string|max:255|unique:organisations,nom,' . $organisationId,
+            'nom'=> ['required', 'string', 'max:255', Rule::unique('organisations', 'nom')->ignore($organisationId)->whereNull('deleted_at')],
+
             'description' => 'nullable|string',
             'type' => ['required', Rule::in(EnumTypeOrganisation::values())],
-            'parentId' => 'nullable|integer|exists:organisations,id|different:' . $organisationId
+            'parentId' => ['required', Rule::exists('organisations', 'id')->whereNull('deleted_at'), 'different:' . $organisationId]
         ];
     }
 

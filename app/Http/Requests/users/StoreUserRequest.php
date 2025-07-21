@@ -17,21 +17,22 @@ class StoreUserRequest extends FormRequest
         return [
             'provider' => 'required|string|max:255',
             'provider_user_id' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users,username',
             'email' => 'required|email|max:255|unique:users,email',
             'status' => ['required', Rule::in(['actif', 'suspendu', 'invité'])],
             'is_email_verified' => 'boolean',
             'email_verified_at' => 'nullable|date',
             'password' => 'required|string|min:8|confirmed',
-            'roleId' => 'required|integer|exists:roles,id',
+            'roleId'=> ['required', Rule::exists('roles', 'id')->whereNull('deleted_at')],
+
             'last_connection' => 'nullable|date',
             'ip_address' => 'nullable|ip',
-            
+
             // Attributs de personne
             'personne.nom' => 'required|string|max:255',
             'personne.prenom' => 'required|string|max:255',
             'personne.poste' => 'nullable|string|max:255',
-            'personne.organismeId' => 'required|integer|exists:organisations,id'
+            'personne.organismeId'=> ['required', Rule::exists('organisations', 'id')->whereNull('deleted_at')],
+
         ];
     }
 
@@ -65,7 +66,7 @@ class StoreUserRequest extends FormRequest
             'roleId.exists' => 'Le rôle sélectionné n\'existe pas.',
             'last_connection.date' => 'La dernière connexion doit être une date valide.',
             'ip_address.ip' => 'L\'adresse IP doit être valide.',
-            
+
             // Messages pour les attributs de personne
             'personne.nom.required' => 'Le nom de la personne est obligatoire.',
             'personne.nom.string' => 'Le nom de la personne doit être une chaîne de caractères.',

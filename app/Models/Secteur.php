@@ -68,7 +68,8 @@ class Secteur extends Model
 
         static::deleting(function ($model) {
             $model->update([
-                // Exemple : 'nom' => time() . '::' . $model->nom,
+                'nom' => time() . '::' . $model->nom,
+                'slug' => time() . '::' . $model->slug,
             ]);
 
             if (method_exists($model, 'user')) {

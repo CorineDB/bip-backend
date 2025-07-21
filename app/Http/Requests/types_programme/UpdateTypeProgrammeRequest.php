@@ -3,6 +3,7 @@
 namespace App\Http\Requests\types_programme;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateTypeProgrammeRequest extends FormRequest
 {
@@ -16,8 +17,8 @@ class UpdateTypeProgrammeRequest extends FormRequest
         $typeProgrammeId = $this->route('type_programme') ? (is_string($this->route('type_programme')) ? $this->route('type_programme') : ($this->route('type_programme')->id)) : $this->route('id');
 
         return [
-            'type_programme' => 'sometimes|string|unique:types_programme,type_programme,' . $typeProgrammeId,
-            'typeId' => 'sometimes|integer|exists:types_programme,id|different:' . $typeProgrammeId
+            'type_programme'=> ['required', 'string', Rule::unique('types_programme', 'type_programme')->ignore($typeProgrammeId)->whereNull('deleted_at')],
+            'typeId' => ['required', Rule::exists('types_programme', 'id')->whereNull('deleted_at'), "different:$typeProgrammeId"]
         ];
     }
 

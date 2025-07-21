@@ -12,6 +12,7 @@ return new class extends Migration
             Schema::create('champs_sections', function (Blueprint $table) {
                 $table->id();
                 $table->text('intitule');
+                $table->longText('description');
                 $table->string('slug');
                 $table->integer('ordre_affichage')->default(0);
                 $table->enum('type', ['entete', 'formulaire', 'table_matiere', 'tableau'])->default('formulaire');

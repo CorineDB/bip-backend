@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Cibles;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreCibleRequest extends FormRequest
 {
@@ -14,7 +15,7 @@ class StoreCibleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'cible' => 'required|string|unique:cibles,cible'
+            'cible'=> ['required', 'string', Rule::unique('cibles', 'cible')->whereNull('deleted_at')],
         ];
     }
 

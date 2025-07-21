@@ -30,7 +30,6 @@ return new class extends Migration
                 $table->foreign('roleId')->references('id')->on('roles')
                             ->onDelete('cascade')
                             ->onUpdate('cascade');
-
                 $table->timestamp('last_connection')->nullable();
                 $table->string('ip_address')->nullable();
                 $table->rememberToken();

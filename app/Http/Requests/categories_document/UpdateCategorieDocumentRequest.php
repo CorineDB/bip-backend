@@ -17,13 +17,7 @@ class UpdateCategorieDocumentRequest extends FormRequest
         $categorieId = $this->route('categorie_document') ?? $this->route('id');
 
         return [
-            'nom' => [
-                'sometimes',
-                'required',
-                'string',
-                'max:65535',
-                Rule::unique('categories_document', 'nom')->ignore($categorieId)
-            ],
+            'nom'=> ['sometimes', 'string', Rule::unique('categories_document', 'nom')->ignore($categorieId)->whereNull('deleted_at')],
             'description' => 'sometimes|nullable|string|max:65535',
             'format' => 'sometimes|required|string|max:255'
         ];

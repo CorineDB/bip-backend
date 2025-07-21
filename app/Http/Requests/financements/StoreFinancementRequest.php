@@ -16,10 +16,10 @@ class StoreFinancementRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nom' => 'required|string|unique:financements,nom',
+            'nom'=> ['required', 'string', Rule::unique('financements', 'nom')->whereNull('deleted_at')],
             'nom_usuel' => 'required|string',
             'type' => ['required', Rule::in(EnumTypeFinancement::values())],
-            'financementId' => 'sometimes|integer|exists:financements,id|different:id'
+            'financementId' => ['required', Rule::exists('financements', 'id')->whereNull('deleted_at')]
         ];
     }
 

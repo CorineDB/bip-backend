@@ -18,10 +18,10 @@ class UpdateFinancementRequest extends FormRequest
         $financementId = $this->route('financement') ? (is_string($this->route('financement')) ? $this->route('financement') : ($this->route('financement')->id)) : $this->route('id');
 
         return [
-            'nom' => 'required|string|unique:financements,nom,' . $financementId,
+            'nom'=> ['required', 'string', Rule::unique('financements', 'nom')->ignore($financementId)->whereNull('deleted_at')],
             'nom_usuel' => 'required|string',
             'type' => ['required', Rule::in(EnumTypeFinancement::values())],
-            'financementId' => 'sometimes|integer|exists:financements,id|different:' . $financementId
+            'financementId' => ['required', Rule::exists('financements', 'id')->whereNull('deleted_at'), 'different:' . $financementId]
         ];
     }
 

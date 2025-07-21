@@ -16,10 +16,10 @@ class StoreOrganisationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nom' => 'required|string|max:255|unique:organisations,nom',
+            'nom'=> ['required', 'string', Rule::unique('organisations', 'nom')->whereNull('deleted_at')],
             'description' => 'nullable|string',
             'type' => ['required', Rule::in(EnumTypeOrganisation::values())],
-            'parentId' => 'nullable|integer|exists:organisations,id|different:id'
+            'parentId' => ['required', Rule::exists('organisations', 'id')->whereNull('deleted_at'), 'different:id']
         ];
     }
 

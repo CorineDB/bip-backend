@@ -16,7 +16,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
 
     public function all(array $columns = ['*']): \Illuminate\Support\Collection
     {
-        return $this->model->all($columns);
+        return $this->model->orderByDesc('created_at')->get($columns);
     }
 
     public function find(int|string $id, array $columns = ['*']): ?Model

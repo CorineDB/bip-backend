@@ -8,12 +8,10 @@ use App\Services\BaseService;
 use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Services\Contracts\RoleServiceInterface;
 use App\Http\Resources\RoleResource;
-use App\Traits\ManagesForeignKeyConstraints;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class RoleService extends BaseService implements RoleServiceInterface
 {
-    use ManagesForeignKeyConstraints;
     public function __construct(RoleRepositoryInterface $repository)
     {
         parent::__construct($repository);

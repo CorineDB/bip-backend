@@ -71,6 +71,7 @@ class Departement extends Model
         static::deleting(function ($model) {
             $model->update([
                 'code' => time() . '::' . $model->code,
+                'nom' => time() . '::' . $model->nom,
                 'slug' => time() . '::' . $model->slug,
             ]);
         });

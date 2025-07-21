@@ -17,7 +17,9 @@ class OddResource extends BaseApiResource
     {
         return [
             "id" => $this->id,
-            "odd"=> $this->odd
+            "odd"=> $this->odd,
+            "created_at"=> $this->created_at,
+            "update_at"=> $this->update_at
         ];
     }
 

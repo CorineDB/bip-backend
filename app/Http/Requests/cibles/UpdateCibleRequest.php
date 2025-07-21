@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Cibles;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateCibleRequest extends FormRequest
 {
@@ -16,7 +17,7 @@ class UpdateCibleRequest extends FormRequest
         $cibleId = $this->route('cible') ? (is_string($this->route('cible')) ? $this->route('cible') : ($this->route('cible')->id)) : $this->route('id');
 
         return [
-            'cible' => 'required|string|unique:cibles,cible,' . $cibleId
+            'cible'=> ['required', 'string', Rule::unique('cibles', 'cible')->ignore($cibleId)->whereNull('deleted_at')],
         ];
     }
 

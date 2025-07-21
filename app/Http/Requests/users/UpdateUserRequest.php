@@ -17,13 +17,14 @@ class UpdateUserRequest extends FormRequest
         $userId = $this->route('user') ? (is_string($this->route('user')) ? $this->route('user') : ($this->route('user')->id)) : $this->route('id');
 
         return [
-            'email' => 'required|email|max:255|unique:users,email,' . $userId,
-            'roleId' => 'required|integer|exists:roles,id',
+
+            'roleId'=> ['required', Rule::exists('roles', 'id')->whereNull('deleted_at')],
+
             // Attributs de personne
             'personne.nom' => 'required|string|max:255',
             'personne.prenom' => 'required|string|max:255',
             'personne.poste' => 'nullable|string|max:255',
-            'personne.organismeId' => 'required|integer|exists:organisations,id'
+            'personne.organismeId'=> ['required', Rule::exists('organisations', 'id')->whereNull('deleted_at')]
         ];
     }
 
