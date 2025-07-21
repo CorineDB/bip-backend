@@ -15,6 +15,26 @@ class DocumentResource extends BaseApiResource
      */
     public function toArray(Request $request): array
     {
+        return [
+
+            'id'          => $this->id,
+            'nom'         => $this->nom,
+            'description' => $this->description,
+            'type'        => $this->type,
+            'categorie'   => new CategorieDocumentResource($this->categorie),
+            'metadata'    => $this->metadata,
+            'structure'   => $this->structure,
+
+            // Champs globaux (hors sections)
+            'champs'      => ChampResource::collection(
+                $this->champs
+            ),
+
+            // Sections avec leurs champs
+            'sections'    => ChampSectionResource::collection(
+                $this->sections
+            ),
+        ];
         return parent::toArray($request);
     }
 

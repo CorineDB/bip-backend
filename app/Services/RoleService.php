@@ -44,4 +44,71 @@ class RoleService extends BaseService implements RoleServiceInterface
             return $this->errorResponse($e);
         }
     }
+
+    /**
+     * Create a new role with permissions.
+     *
+     * @param array $data
+     * @return JsonResponse
+     */
+    public function create(array $data): JsonResponse
+    {
+        try {
+            $permissions = $data['permissions'] ?? [];
+            unset($data['permissions']);
+
+            $item = $this->repository->create($data);
+            
+            if (!empty($permissions)) {
+                $item->permissions()->sync($permissions);
+            }
+
+            return (new $this->resourceClass($item->load('permissions')))
+                ->additional(['message' => 'Role created successfully.'])
+                ->response()
+                ->setStatusCode(201);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Update a role with permissions.
+     *
+     * @param int|string $id
+     * @param array $data
+     * @return JsonResponse
+     */
+    public function update(int|string $id, array $data): JsonResponse
+    {
+        try {
+            $permissions = $data['permissions'] ?? [];
+            unset($data['permissions']);
+
+            $updated = $this->repository->update($id, $data);
+            if (!$updated) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Role not found or not updated.',
+                ], 404);
+            }
+
+            $item = $this->repository->findOrFail($id);
+            
+            if (!empty($permissions)) {
+                $item->permissions()->sync($permissions);
+            }
+
+            return (new $this->resourceClass($item->load('permissions')))
+                ->additional(['message' => 'Role updated successfully.'])
+                ->response();
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Role not found.',
+            ], 404);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
 }

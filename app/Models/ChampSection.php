@@ -90,4 +90,39 @@ class ChampSection extends Model
     {
         return $this->hasMany(Champ::class, 'secteurId');
     }
+
+    /**
+     *
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setIntituleAttribute($value)
+    {
+        $this->attributes['intitule'] = addslashes($value); // Escape value with backslashes
+        $this->attributes['slug'] = $this->generateUniqueSlug($value);
+    }
+
+    private function generateUniqueSlug($name)
+    {
+        $baseSlug = str_replace(' ', '-', strtolower($name));
+        $slug = $baseSlug;
+        $counter = 1;
+
+        while (static::where('slug', $slug)->where('id', '!=', $this->id ?? 0)->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
+
+    /**
+    *
+    * @param  string  $value
+    * @return string
+    */
+    public function getIntituleAttribute($value){
+        return ucfirst(str_replace('\\',' ',$value));
+    }
 }

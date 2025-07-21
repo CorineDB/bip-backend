@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 
-class CategorieDocumentResource extends BaseApiResource
+class ChampSectionResource extends BaseApiResource
 {
 
     /**
@@ -16,10 +16,11 @@ class CategorieDocumentResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
-            "nom"=> $this->nom,
-            "description"=> $this->description,
-            "format"=> $this->format
+            'id'               => $this->id,
+            'intitule'         => $this->intitule,
+            'ordre_affichage'  => $this->ordre_affichage,
+            'type'             => $this->type,
+            'champs'           => ChampResource::collection($this->champs),
         ];
     }
 
@@ -33,7 +34,7 @@ class CategorieDocumentResource extends BaseApiResource
     {
         return array_merge(parent::with($request), [
             'meta' => [
-                'type' => 'categoriedocument',
+                'type' => 'champ',
                 'version' => '1.0',
             ],
         ]);
