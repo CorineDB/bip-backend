@@ -91,7 +91,7 @@ return new class extends Migration
                 $table->softDeletes();
 
                 // Foreign key constraints
-                $table->foreign('ministereId')->references('id')->on('organisations')->onDelete('set null');
+                $table->foreign('ministereId')->references('id')->on('organisations')->onDelete('cascade');
                 $table->foreign('secteurId')->references('id')->on('secteurs')->onDelete('cascade');
                 $table->foreign('categorieId')->references('id')->on('categories_projet')->onDelete('cascade');
                 $table->foreign('responsableId')->references('id')->on('users')->onDelete('cascade');
