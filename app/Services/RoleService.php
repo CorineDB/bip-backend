@@ -8,10 +8,12 @@ use App\Services\BaseService;
 use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Services\Contracts\RoleServiceInterface;
 use App\Http\Resources\RoleResource;
+use App\Traits\ManagesForeignKeyConstraints;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class RoleService extends BaseService implements RoleServiceInterface
 {
+    use ManagesForeignKeyConstraints;
     public function __construct(RoleRepositoryInterface $repository)
     {
         parent::__construct($repository);
@@ -21,7 +23,7 @@ class RoleService extends BaseService implements RoleServiceInterface
     {
         return RoleResource::class;
     }
-    
+
     /**
      * Get role permissions records.
      *
@@ -58,7 +60,7 @@ class RoleService extends BaseService implements RoleServiceInterface
             unset($data['permissions']);
 
             $item = $this->repository->create($data);
-            
+
             if (!empty($permissions)) {
                 $item->permissions()->sync($permissions);
             }
@@ -94,7 +96,7 @@ class RoleService extends BaseService implements RoleServiceInterface
             }
 
             $item = $this->repository->findOrFail($id);
-            
+
             if (!empty($permissions)) {
                 $item->permissions()->sync($permissions);
             }

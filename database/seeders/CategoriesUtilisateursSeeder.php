@@ -2,15 +2,21 @@
 
 namespace Database\Seeders;
 
+use App\Traits\ForeignKeyConstraints;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class CategoriesUtilisateursSeeder extends Seeder
 {
+    use ForeignKeyConstraints;
+
     public function run(): void
     {
+        $this->disableForeignKeyChecks();
         // Supprimer les anciens rôles et créer les nouveaux
         DB::table('roles')->truncate();
+
+        $this->enableForeignKeyChecks();
 
         $roles = [
             [
@@ -83,8 +89,11 @@ class CategoriesUtilisateursSeeder extends Seeder
             ]);
         }
 
+        $this->disableForeignKeyChecks();
         // Créer les permissions spécifiques
         DB::table('permissions')->truncate();
+
+        $this->enableForeignKeyChecks();
 
         $permissions = [
             // Permissions pour Responsable Projet (DPAF/Ministère Sectoriel)
