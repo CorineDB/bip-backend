@@ -13,5 +13,16 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
         parent::__construct($model);
     }
 
-    // Add custom methods here
+    /**
+     * Get the unique fiche idée
+     */
+    public function getFicheIdee()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'fiche-idee');
+        })
+            ->where('type', 'formulaire')
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
 }

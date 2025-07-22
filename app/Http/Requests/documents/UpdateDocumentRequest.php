@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\documents;
 
+use App\Enums\EnumTypeChamp;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,20 +23,87 @@ class UpdateDocumentRequest extends FormRequest
                 'required',
                 'string',
                 'max:65535',
-                Rule::unique('documents', 'nom')->ignore($documentId)
+                Rule::unique('documents', 'nom')->whereNull('deleted_at')->ignore($documentId)
             ],
             'description' => 'sometimes|nullable|string|max:65535',
-            'categorieId' => 'sometimes|nullable|integer|exists:categories_document,id',
+            'categorieId' => ['sometimes', Rule::exists('categories_document', 'id')->whereNull('deleted_at')],
+
             'type' => ['sometimes', 'required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
             'metadata' => 'sometimes|nullable|array',
             'structure' => 'sometimes|nullable|array',
-            
+
+
+
+            // Sections
+            'sections' => 'sometimes|array|min:1',
+
+            'sections.*.id' => ['required', Rule::exists('champs_sections', 'id')->whereNull('deleted_at')],
+
+            'sections.*.intitule' => 'required|string|max:255',
+            'sections.*.description' => 'nullable|string',
+
+            'sections.*.ordre_affichage' => 'required|integer|min:1',
+            'sections.*.type' => 'nullable|string|max:100',
+            'sections.*.champs' => 'sometimes|array|min:1',
+
+            'sections.*.champs.*.id' => ['required', Rule::exists('champs', 'id')->whereNull('deleted_at')],
+            'sections.*.champs.*.label' => 'required|string|max:255',
+            'sections.*.champs.*.info' => 'nullable|string|max:65535',
+            'sections.*.champs.*.attribut' => 'required|string|max:255',
+            'sections.*.champs.*.placeholder' => 'nullable|string|max:255',
+            'sections.*.champs.*.is_required' => 'boolean',
+            'sections.*.champs.*.champ_standard' => 'boolean',
+            'sections.*.champs.*.default_value' => 'nullable|string|max:65535',
+            'sections.*.champs.*.isEvaluated' => 'boolean',
+            'sections.*.champs.*.ordre_affichage' => 'required|integer|min:1',
+            'sections.*.champs.*.type_champ' => ['required', 'string', Rule::in(EnumTypeChamp::values())/* , Rule::in(['text', 'textarea', 'select', 'checkbox', 'radio', 'date', 'number', 'email', 'file']) */],
+            'sections.*.champs.*.sectionId' => 'nullable|integer',
+            'sections.*.champs.*.meta_options' => 'required|array',
+            'sections.*.champs.*.meta_options.conditions' => 'required|array|min:3',
+            'sections.*.champs.*.meta_options.conditions.visible' => 'required|boolean:true',
+            'sections.*.champs.*.meta_options.conditions.disable' => 'required|boolean:true',
+            'sections.*.champs.*.meta_options.conditions.conditions' => 'nullable|array|min:0',
+
+            'sections.*.champs.*.meta_options.validations_rules' => 'required|array|min:1',
+            'sections.*.champs.*.meta_options.validations_rules.required' => 'required|boolean:true',
+            'sections.*.champs.*.meta_options.configs' => 'required|array|min:0',
+
+            // Champs
+
+            'champs' => 'sometimes|array|min:1',
+
+            'champs.*.id' => ['required', Rule::exists('champs', 'id')->whereNull('deleted_at')],
+            'champs.*.label' => 'required|string|max:255',
+            'champs.*.info' => 'nullable|string|max:65535',
+            'champs.*.attribut' => 'required|string|max:255',
+            'champs.*.placeholder' => 'nullable|string|max:255',
+            'champs.*.is_required' => 'boolean',
+            'champs.*.champ_standard' => 'boolean',
+            'champs.*.default_value' => 'nullable|string|max:65535',
+            'champs.*.isEvaluated' => 'boolean',
+            'champs.*.ordre_affichage' => 'required|integer|min:1',
+            'champs.*.type_champ' => ['required', 'string', Rule::in(EnumTypeChamp::values())/*  Rule::in(['text', 'textarea', 'select', 'checkbox', 'radio', 'date', 'number', 'email', 'file']) */],
+            'champs.*.sectionId' => 'nullable|integer',
+            'champs.*.meta_options' => 'required|array',
+            'champs.*.meta_options.conditions' => 'required|array|min:3',
+            'champs.*.meta_options.conditions.visible' => 'required|boolean:true',
+            'champs.*.meta_options.conditions.disable' => 'required|boolean:true',
+            'champs.*.meta_options.conditions.conditions' => 'nullable|array|min:0',
+
+            'champs.*.meta_options.validations_rules' => 'required|array|min:1',
+            'champs.*.meta_options.validations_rules.required' => 'required|boolean:true',
+            'champs.*.meta_options.configs' => 'required|array|min:0',
+
+            /**
+             *
+             */
+            /*
             // Sections
             'sections' => 'sometimes|nullable|array',
             'sections.*.intitule' => 'required|string|max:255',
             'sections.*.ordre_affichage' => 'required|integer|min:1',
             'sections.*.type' => 'nullable|string|max:100',
-            
+
             // Champs
             'champs' => 'sometimes|nullable|array',
             'champs.*.label' => 'required|string|max:255',
@@ -51,7 +119,7 @@ class UpdateDocumentRequest extends FormRequest
             'champs.*.secteurId' => 'nullable|integer',
             'champs.*.meta_options' => 'nullable|array',
             'champs.*.champ_config' => 'nullable|array',
-            'champs.*.valeur_config' => 'nullable|array'
+            'champs.*.valeur_config' => 'nullable|array'*/
         ];
     }
 
@@ -71,7 +139,7 @@ class UpdateDocumentRequest extends FormRequest
             'type.in' => 'Le type de document doit être: document, formulaire, grille ou checklist.',
             'metadata.array' => 'Les métadonnées doivent être un tableau.',
             'structure.array' => 'La structure doit être un tableau.',
-            
+
             // Messages pour les sections
             'sections.array' => 'Les sections doivent être un tableau.',
             'sections.*.intitule.required' => 'L\'intitulé de la section est obligatoire.',
@@ -82,7 +150,7 @@ class UpdateDocumentRequest extends FormRequest
             'sections.*.ordre_affichage.min' => 'L\'ordre d\'affichage de la section doit être au moins 1.',
             'sections.*.type.string' => 'Le type de section doit être une chaîne de caractères.',
             'sections.*.type.max' => 'Le type de section ne peut pas dépasser 100 caractères.',
-            
+
             // Messages pour les champs
             'champs.array' => 'Les champs doivent être un tableau.',
             'champs.*.label.required' => 'Le libellé du champ est obligatoire.',

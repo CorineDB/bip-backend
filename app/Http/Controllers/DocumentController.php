@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\documents\StoreDocumentRequest;
 use App\Http\Requests\documents\UpdateDocumentRequest;
+use App\Http\Requests\documents\fiches_idee\CreateOrUpdateFicheIdeeRequest;
 use App\Services\Contracts\DocumentServiceInterface;
 use Illuminate\Http\JsonResponse;
 
@@ -46,8 +47,13 @@ class DocumentController extends Controller
      * Fiche idees
      */
 
-    public function create_fiche_idee(StoreDocumentRequest $request): JsonResponse
+    public function ficheIdee(): JsonResponse
     {
-        return $this->service->createFicheIdee($request->all());
+        return $this->service->ficheIdee();
+    }
+
+    public function createOrUpdateFicheIdee(CreateOrUpdateFicheIdeeRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateFicheIdee($request->validated());
     }
 }

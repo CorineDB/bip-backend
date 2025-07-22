@@ -80,7 +80,8 @@ Route::apiResource('documents', DocumentController::class);
 
 Route::prefix('fiches-idee')->group(function () {
     // Public routes
-    Route::post('', [DocumentController::class, 'create_fiche_idee']);
+    Route::get('', [DocumentController::class, 'ficheIdee']);
+    Route::post('/create-or-update', [DocumentController::class, 'createOrUpdateFicheIdee']);
 });
 
 Route::apiResource('categories-document', CategorieDocumentController::class);

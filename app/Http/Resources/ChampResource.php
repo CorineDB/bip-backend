@@ -16,21 +16,21 @@ class ChampResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id'              => $this->id,
-            'label'           => $this->label,
-            'info'            => $this->info,
-            'attribut'        => $this->attribut,
-            'placeholder'     => $this->placeholder,
-            'is_required'     => $this->is_required,
-            'default_value'   => $this->default_value,
-            'isEvaluated'     => $this->isEvaluated,
-            'commentaire'     => $this->commentaire,
-            'ordre_affichage' => $this->ordre_affichage,
-            'type_champ'      => $this->type_champ,
-            'secteurId'       => $this->secteurId,
-            'meta_options'    => $this->meta_options,
-            'champ_config'    => $this->champ_config,
-            'valeur_config'   => $this->valeur_config,
+            'id'                => $this->id,
+            'label'             => $this->label,
+            'info'              => $this->info,
+            'attribut'          => $this->attribut,
+            'placeholder'       => $this->placeholder,
+            'is_required'       => $this->is_required,
+            'default_value'     => $this->default_value,
+            'isEvaluated'       => $this->isEvaluated,
+            'ordre_affichage'   => $this->ordre_affichage,
+            'type_champ'        => $this->type_champ,
+            'sectionId'         => $this->sectionId,
+            'meta_options'      => $this->meta_options,
+            "champ_standard"    => $this->champ_standard,
+            "startWithNewLine"  => $this->startWithNewLine
+
         ];
     }
 

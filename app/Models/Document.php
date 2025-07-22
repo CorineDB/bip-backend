@@ -70,13 +70,26 @@ class Document extends Model
 
         static::deleting(function ($model) {
             $model->update([
-                // Exemple : 'nom' => time() . '::' . $model->nom,
+                'nom' => time() . '::' . $model->nom,
+                'slug' => time() . '::' . $model->slug,
             ]);
 
             if (method_exists($model, 'user')) {
                 // Exemple : $model->user()->delete();
             }
         });
+
+        /*static::updating(function ($model) {
+            un
+            $model->update([
+                'nom' => time() . '::' . $model->nom,
+                'slug' => time() . '::' . $model->slug,
+            ]);
+
+            if (method_exists($model, 'user')) {
+                // Exemple : $model->user()->delete();
+            }
+        });*/
     }
 
     /**
@@ -127,7 +140,7 @@ class Document extends Model
      */
     public function sections()
     {
-        return $this->hasMany(ChampSection::class, 'documentId');
+        return $this->hasMany(ChampSection::class, 'documentId')->orderBy('ordre_affichage');
     }
 
     /**
@@ -135,6 +148,6 @@ class Document extends Model
      */
     public function champs()
     {
-        return $this->hasMany(Champ::class, 'documentId');
+        return $this->hasMany(Champ::class, 'documentId')->whereNull('sectionId')->orderBy('ordre_affichage');;
     }
 }

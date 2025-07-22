@@ -7,8 +7,7 @@ use Illuminate\Http\JsonResponse;
 interface DocumentServiceInterface extends AbstractServiceInterface
 {
     // Define contract methods here
+    public function ficheIdee(): JsonResponse;
 
-    public function createFicheIdee(array $data): JsonResponse;
-
-    //public function modifierFicheIdee(array $data): JsonResponse;
+    public function createOrUpdateFicheIdee(array $data): JsonResponse;
 }

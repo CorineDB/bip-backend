@@ -37,7 +37,7 @@ class AuthService
             }
 
             $url = $this->keycloakUrl . '/realms/' . $this->realm . '/protocol/openid-connect/userinfo';
-            
+
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
             ])->get($url);

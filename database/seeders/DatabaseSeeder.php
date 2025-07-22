@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Arrondissement;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -16,6 +17,10 @@ class DatabaseSeeder extends Seeder
         // Run all seeders in the correct order (respecting foreign key constraints)
         $this->call([
             // First, seed the base tables without foreign key dependencies
+            DepartementSeeder::class,
+            CommuneSeeder::class,
+            ArrondissementSeeder::class,
+            VillageSeeder::class,
             OrganisationsSeeder::class,
             PersonnesSeeder::class,
 
@@ -24,7 +29,7 @@ class DatabaseSeeder extends Seeder
             UpdateUsersWithCategoriesSeeder::class,
         ]);
 
-        
+
 
         $this->command->info('All seeders completed successfully!');
         $this->command->info('');

@@ -24,16 +24,9 @@ class DocumentResource extends BaseApiResource
             'categorie'   => new CategorieDocumentResource($this->categorie),
             'metadata'    => $this->metadata,
             'structure'   => $this->structure,
-
             // Champs globaux (hors sections)
-            'champs'      => ChampResource::collection(
-                $this->champs
-            ),
-
-            // Sections avec leurs champs
-            'sections'    => ChampSectionResource::collection(
-                $this->sections
-            ),
+            'champs'      => $this->when(count($this->champs), ChampResource::collection($this->champs)),
+            'sections'      => $this->when(count($this->sections), ChampSectionResource::collection($this->sections)),
         ];
         return parent::toArray($request);
     }

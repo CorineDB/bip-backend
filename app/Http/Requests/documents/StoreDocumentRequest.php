@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\documents;
 
+use App\Enums\EnumTypeChamp;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,7 +25,14 @@ class StoreDocumentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nom' => 'required|string|max:65535|unique:documents,nom',
+
+            // Document fields
+            'nom' => [
+                'required',
+                'string',
+                'max:65535',
+                Rule::unique('documents', 'nom')->whereNull('deleted_at')
+            ],
             'description' => 'nullable|string|max:65535',
 
             'categorieId' => ['sometimes', Rule::exists('categories_document', 'id')->whereNull('deleted_at')],
@@ -38,8 +46,6 @@ class StoreDocumentRequest extends FormRequest
 
             'sections.*.ordre_affichage' => 'required|integer|min:1',
             'sections.*.type' => 'nullable|string|max:100',
-
-
             'sections.*.champs' => 'sometimes|array|min:1',
             'sections.*.champs.*.label' => 'required|string|max:255',
             'sections.*.champs.*.info' => 'nullable|string|max:65535',
@@ -50,8 +56,7 @@ class StoreDocumentRequest extends FormRequest
             'sections.*.champs.*.default_value' => 'nullable|string|max:65535',
             'sections.*.champs.*.isEvaluated' => 'boolean',
             'sections.*.champs.*.ordre_affichage' => 'required|integer|min:1',
-            'sections.*.champs.*.type_champ' => ['required', 'string', Rule::in(['text', 'textarea', 'select', 'checkbox', 'radio', 'date', 'number', 'email', 'file'])],
-            'sections.*.champs.*.sectionId' => 'nullable|integer',
+            'sections.*.champs.*.type_champ' => ['required', 'string', Rule::in(EnumTypeChamp::values())],
             'sections.*.champs.*.meta_options' => 'required|array',
             'sections.*.champs.*.meta_options.conditions' => 'required|array|min:3',
             'sections.*.champs.*.meta_options.conditions.visible' => 'required|boolean:true',
@@ -74,7 +79,7 @@ class StoreDocumentRequest extends FormRequest
             'champs.*.default_value' => 'nullable|string|max:65535',
             'champs.*.isEvaluated' => 'boolean',
             'champs.*.ordre_affichage' => 'required|integer|min:1',
-            'champs.*.type_champ' => ['required', 'string', Rule::in(['text', 'textarea', 'select', 'checkbox', 'radio', 'date', 'number', 'email', 'file'])],
+            'champs.*.type_champ' => ['required', 'string', Rule::in(EnumTypeChamp::values())],
             'champs.*.sectionId' => 'nullable|integer',
             'champs.*.meta_options' => 'required|array',
             'champs.*.meta_options.conditions' => 'required|array|min:3',

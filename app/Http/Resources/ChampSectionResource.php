@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 
 class ChampSectionResource extends BaseApiResource
 {
-
     /**
      * Transform the resource into an array.
      *
@@ -20,7 +19,7 @@ class ChampSectionResource extends BaseApiResource
             'intitule'         => $this->intitule,
             'ordre_affichage'  => $this->ordre_affichage,
             'type'             => $this->type,
-            'champs'           => ChampResource::collection($this->champs),
+            'champs'           => ChampResource::collection($this->champs)
         ];
     }
 
