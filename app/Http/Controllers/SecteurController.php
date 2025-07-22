@@ -42,6 +42,11 @@ class SecteurController extends Controller
         return $this->service->delete($id);
     }
 
+    public function all_secteurs(): JsonResponse
+    {
+        return $this->service->all_secteurs();
+    }
+
     public function grands_secteurs(): JsonResponse
     {
         return $this->service->grands_secteurs();

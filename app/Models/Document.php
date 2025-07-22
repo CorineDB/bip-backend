@@ -150,4 +150,12 @@ class Document extends Model
     {
         return $this->hasMany(Champ::class, 'documentId')->whereNull('sectionId')->orderBy('ordre_affichage');;
     }
+
+    /**
+     * Get all champs for this document.
+     */
+    public function all_champs()
+    {
+        return $this->hasMany(Champ::class, 'documentId');;
+    }
 }

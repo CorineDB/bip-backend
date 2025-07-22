@@ -73,11 +73,13 @@ Route::prefix('roles/{role}')->group(function () {
 
 // Project Management Core
 Route::apiResource('idees-projet', IdeeProjetController::class);
+
 Route::apiResource('projets', ProjetController::class);
 Route::apiResource('categories-projet', CategorieProjetController::class);
 Route::apiResource('secteurs', SecteurController::class);
 
 Route::controller(SecteurController::class)->group(function () {
+    Route::get('all-secteurs', 'all_secteurs');
     Route::get('grands-secteurs', 'grands_secteurs');
     Route::get('grands-secteurs/{id}/secteurs', 'secteurs_grand_secteur');
     Route::get('secteurs-seul', 'secteurs');

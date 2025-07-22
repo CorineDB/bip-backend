@@ -104,6 +104,14 @@ class Champ extends Model
         return $this->belongsTo(Document::class, 'documentId');
     }
 
+    public function ideesDeProjet()
+    {
+        return $this->morphedByMany(IdeeProjet::class, 'projetable', 'champs_projet')
+            ->using(ChampProjet::class)
+            ->withPivot(['valeur', 'commentaire', 'id'])
+            ->withTimestamps();
+    }
+
     /**
      * Get all evaluations for this champ.
      */

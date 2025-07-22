@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Resources\DetailsSecteurResource;
 use Illuminate\Http\JsonResponse;
 use Exception;
 use App\Services\BaseService;
@@ -25,6 +26,17 @@ class SecteurService extends BaseService implements SecteurServiceInterface
     protected function getResourceClass(): string
     {
         return SecteurResource::class;
+    }
+
+
+    public function all_secteurs(): JsonResponse {
+        try {
+            $data = $this->repository->getModel()->where('type', 'grand-secteur')->get();
+
+            return DetailsSecteurResource::collection($data)->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
     }
 
     /**

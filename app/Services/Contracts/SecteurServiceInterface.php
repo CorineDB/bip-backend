@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 interface SecteurServiceInterface extends AbstractServiceInterface
 {
     // Define contract methods here
+    public function all_secteurs(): JsonResponse;
 
     public function grands_secteurs(): JsonResponse;
 

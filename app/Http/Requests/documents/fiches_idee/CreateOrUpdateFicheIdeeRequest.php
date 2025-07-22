@@ -78,6 +78,7 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
     private function getValidAttributs(): array
     {
         return [
+            "cout_estimatif_projet",
             "sigle",
             "type_projet",
             "parties_prenantes",

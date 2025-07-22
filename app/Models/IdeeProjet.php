@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\StatutIdee;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,6 +32,57 @@ class IdeeProjet extends Model
      */
     protected $fillable = [
         // Exemple : 'nom', 'programmeId'
+        "identifiant_bip",
+        "identifiant_sigfp",
+        "est_coherent",
+        "ficheIdee",
+        "statut",
+        "phase",
+        "sous_phase",
+        "decision",
+        "sigle",
+        "type_projet",
+        "parties_prenantes",
+        "objectifs_specifiques",
+        "resultats_attendus",
+        "isdeleted",
+        "body_projet",
+        "cout_dollar_americain",
+        "cout_euro",
+        "date_debut_etude",
+        "date_fin_etude",
+        "date_prevue_demarrage",
+        "date_effective_demarrage",
+        "cout_dollar_canadien",
+        "risques_immediats",
+        "sommaire",
+        "objectif_general",
+        "conclusions",
+        "description",
+        "constats_majeurs",
+        "public_cible",
+        "estimation_couts",
+        "description_decision",
+        "impact_environnement",
+        "aspect_organisationnel",
+        "description_extrants",
+        "caracteristiques",
+        "score_climatique",
+        "score_amc",
+        "duree",
+        "description_projet",
+        "origine",
+        "situation_desiree",
+        "situation_actuelle",
+        "contraintes",
+        "echeancier",
+        "fondement",
+        "secteurId",
+        "ministereId",
+        "categorieId",
+        "responsableId",
+        "demandeurId",
+        "titre_projet"
     ];
 
     /**
@@ -39,6 +91,7 @@ class IdeeProjet extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'statut'     => StatutIdee::class,
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -61,13 +114,22 @@ class IdeeProjet extends Model
         parent::boot();
 
         static::deleting(function ($model) {
-            $model->update([
-                // Exemple : 'nom' => time() . '::' . $model->nom,
-            ]);
-
-            if (method_exists($model, 'user')) {
-                // Exemple : $model->user()->delete();
-            }
         });
+    }
+
+    public function champs()
+    {
+        return $this->morphToMany(Champ::class, 'projetable', 'champs_projet')
+            ->using(ChampProjet::class)
+            ->withPivot(['valeur', 'commentaire', 'id'])
+            ->withTimestamps();
+    }
+
+    public function fiche_synthese()
+    {
+        return $this->morphToMany(Champ::class, 'projetable', 'champs_projet')
+            ->using(ChampProjet::class)
+            ->withPivot(['valeur', 'commentaire', 'id'])
+            ->withTimestamps();
     }
 }
