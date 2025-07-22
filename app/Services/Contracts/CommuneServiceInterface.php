@@ -2,7 +2,10 @@
 
 namespace App\Services\Contracts;
 
+use Illuminate\Http\JsonResponse;
+
 interface CommuneServiceInterface extends AbstractServiceInterface
 {
-    // Define contract methods here
+    // Define contract methods
+    public function arrondissements($idCommune): JsonResponse;
 }

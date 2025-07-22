@@ -79,7 +79,7 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
     {
         return [
             "sigle",
-            "type_projet",/*
+            "type_projet",
             "parties_prenantes",
             "objectifs_specifiques",
             "resultats_attendus",
@@ -102,7 +102,7 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
             "duree",
             "description_projet",
             "origine",
-            "situation_desiree", */
+            "situation_desiree",
             "situation_actuelle",
             "contraintes",
             "echeancier",
@@ -120,15 +120,6 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
     {
         return [
             // Document fields
-            /* 'nom' => [
-                'required',
-                'string',
-                'max:65535',
-                Rule::unique('documents', 'nom')->where(function($query){
-                    $query->join('categories_document', 'documents.categorieId', '=', 'categories_document.id')
-                          ->where('categories_document.slug', 'fiche-idee');
-                })->ignore($documentId),
-            ], */
             'nom' => [
                 'required', 'bail',
                 function ($attribute, $value, $fail) {

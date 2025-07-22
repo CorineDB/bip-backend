@@ -24,4 +24,9 @@ class DepartementController extends Controller
     {
         return $this->service->find($id);
     }
+
+    public function communes($id): JsonResponse
+    {
+        return $this->service->communes($id);
+    }
 }

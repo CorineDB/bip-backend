@@ -53,6 +53,10 @@ abstract class BaseRepository implements BaseRepositoryInterface
         return new $this->model($payload);
     }
 
+    public function getModel(): ?Model{
+        return $this->model;
+    }
+
     /**
      * Créer une instance d'un nouveau Model avec ces données.
      *
@@ -108,5 +112,27 @@ abstract class BaseRepository implements BaseRepositoryInterface
     public function paginate(int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         return $this->model->paginate($perPage);
+    }
+
+    /**
+     * Rechercher une occurence de donnée d'une table grâce à l'un des attributs de la table.
+     *
+     * @param string $attributName
+     * @param string $attributValue
+     * @param array $columns
+     * @param array $relations
+     * @param array $appends
+     * @return Model
+     */
+    public function findByAttribute(
+        string $attributName,
+        string $attributValue,
+        array $columns = ['*'],
+        array $relations = [],
+        array $appends = []
+    ): ?Model {
+        if($attributName == "id") return null;
+
+        return $this->model->select($columns)->where( $attributName, $attributValue )->first();
     }
 }

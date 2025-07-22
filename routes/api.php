@@ -45,6 +45,18 @@ Route::apiResource('communes', CommuneController::class)->only(['index', 'show']
 Route::apiResource('departements', DepartementController::class)->only(['index', 'show']);
 Route::apiResource('villages', VillageController::class)->only(['index', 'show']);
 
+Route::prefix('departements')->group(function () {
+    Route::get('{id}/communes', [DepartementController::class, 'communes']);
+});
+
+Route::prefix('communes')->group(function () {
+    Route::get('{id}/arrondissements', [CommuneController::class, 'arrondissements']);
+});
+
+Route::prefix('arrondissements')->group(function () {
+    Route::get('{id}/villages', [ArrondissementController::class, 'villages']);
+});
+
 // Organization & People Management
 Route::apiResource('organisations', OrganisationController::class);
 Route::apiResource('personnes', PersonneController::class);
@@ -64,6 +76,14 @@ Route::apiResource('idees-projet', IdeeProjetController::class);
 Route::apiResource('projets', ProjetController::class);
 Route::apiResource('categories-projet', CategorieProjetController::class);
 Route::apiResource('secteurs', SecteurController::class);
+
+Route::controller(SecteurController::class)->group(function () {
+    Route::get('grands-secteurs', 'grands_secteurs');
+    Route::get('grands-secteurs/{id}/secteurs', 'secteurs_grand_secteur');
+    Route::get('secteurs-seul', 'secteurs');
+    Route::get('secteurs/{id}/sous-secteurs', 'sous_secteurs_secteur');
+    Route::get('sous-secteurs', 'sous_secteurs');
+});
 
 // Project Configuration & Types
 Route::apiResource('cibles', CibleController::class);

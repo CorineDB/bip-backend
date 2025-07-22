@@ -20,4 +20,14 @@ class ArrondissementService extends BaseService implements ArrondissementService
     {
         return ArrondissementResource::class;
     }
+
+    public function villages($idArrondissement): JsonResponse
+    {
+        try {
+            $data = $this->repository->findOrFail($idArrondissement)->villages;
+            return $this->resourceClass::collection($data)->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
 }

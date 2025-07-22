@@ -25,4 +25,14 @@ class DepartementService extends BaseService implements DepartementServiceInterf
     {
         return DepartementResource::class;
     }
+
+    public function communes($idDepartement): JsonResponse
+    {
+        try {
+            $data = $this->repository->findOrFail($idDepartement)->communes;
+            return $this->resourceClass::collection($data)->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
 }

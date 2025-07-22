@@ -20,4 +20,14 @@ class CommuneService extends BaseService implements CommuneServiceInterface
     {
         return CommuneResource::class;
     }
+
+    public function arrondissements($idCommune): JsonResponse
+    {
+        try {
+            $data = $this->repository->findOrFail($idCommune)->arrondissements;
+            return $this->resourceClass::collection($data)->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
 }

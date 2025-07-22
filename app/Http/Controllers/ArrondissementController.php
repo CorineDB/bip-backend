@@ -24,4 +24,9 @@ class ArrondissementController extends Controller
     {
         return $this->service->find($id);
     }
+
+    public function villages($id): JsonResponse
+    {
+        return $this->service->villages($id);
+    }
 }

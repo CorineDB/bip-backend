@@ -24,4 +24,9 @@ class CommuneController extends Controller
     {
         return $this->service->find($id);
     }
+
+    public function arrondissements($id): JsonResponse
+    {
+        return $this->service->arrondissements($id);
+    }
 }
