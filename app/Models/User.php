@@ -27,14 +27,21 @@ class User extends Authenticatable
     protected $dates = ['created_at', 'updated_at', 'deleted_at'];
 
     /**
+     * The attributes that should be mutated to dates.
+     *
+     * @var array
+     */
+    protected $default = ['provider' => 'keycloack'];
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
     protected $fillable = [
-        'provider', 'provider_user_id', 'username', 'email', 'status', 
-        'is_email_verified', 'email_verified_at', 'password', 'personneId', 
-        'roleId', 'last_connection', 'ip_address'
+        'provider', 'provider_user_id', 'username', 'email', 'status',
+        'is_email_verified', 'email_verified_at', 'password', 'personneId',
+        'roleId', 'last_connection', 'ip_address', 'settings', 'person', 'keycloak_id'
     ];
 
     /**
@@ -46,6 +53,7 @@ class User extends Authenticatable
         'is_email_verified' => 'boolean',
         'email_verified_at' => 'timestamp',
         'last_connection' => 'timestamp',
+        'settings' => 'array', 'person' => 'array',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -57,7 +65,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token', 'personneId', 'roleId', 'updated_at', 'deleted_at'
+        'password', 'remember_token', 'updated_at', 'deleted_at', 'settings' => 'array', 'person' => 'array',
     ];
 
     /**

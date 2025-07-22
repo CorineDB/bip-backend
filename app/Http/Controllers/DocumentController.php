@@ -41,4 +41,13 @@ class DocumentController extends Controller
     {
         return $this->service->delete($id);
     }
+
+    /**
+     * Fiche idees
+     */
+
+    public function create_fiche_idee(StoreDocumentRequest $request): JsonResponse
+    {
+        return $this->service->createFicheIdee($request->all());
+    }
 }

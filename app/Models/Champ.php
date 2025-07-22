@@ -38,14 +38,12 @@ class Champ extends Model
         'is_required',
         'default_value',
         'isEvaluated',
-        'commentaire',
         'ordre_affichage',
         'type_champ',
-        'secteurId',
+        'sectionId',
         'documentId',
         'meta_options',
-        'champ_config',
-        'valeur_config'
+        'champ_standard'
     ];
 
     /**
@@ -58,8 +56,6 @@ class Champ extends Model
         'isEvaluated' => 'boolean',
         'type_champ' => EnumTypeChamp::class,
         'meta_options' => 'array',
-        'champ_config' => 'array',
-        'valeur_config' => 'array',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -71,7 +67,7 @@ class Champ extends Model
      * @var array
      */
     protected $hidden = [
-        'secteurId', 'documentId', 'updated_at', 'deleted_at'
+        'sectionId', 'documentId', 'updated_at', 'deleted_at'
     ];
 
     /**
@@ -97,7 +93,7 @@ class Champ extends Model
      */
     public function section()
     {
-        return $this->belongsTo(ChampSection::class, 'secteurId');
+        return $this->belongsTo(ChampSection::class, 'sectionId');
     }
 
     /**

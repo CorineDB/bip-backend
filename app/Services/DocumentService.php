@@ -35,10 +35,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             // Extraire les données relationnelles avant création
             $sectionsData = $data['sections'] ?? [];
             $champsData = $data['champs'] ?? [];
-            
+
             // Nettoyer les données du document principal
             $documentData = collect($data)->except(['sections', 'champs'])->toArray();
-            
+
             // Créer le document principal
             $document = $this->repository->create($documentData);
 
@@ -76,6 +76,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         foreach ($sectionsData as $sectionData) {
             $section = $document->sections()->create([
                 'intitule' => $sectionData['intitule'],
+                'description' => $sectionData['description'],
                 'ordre_affichage' => $sectionData['ordre_affichage'],
                 'type' => $sectionData['type'] ?? null
             ]);
@@ -103,7 +104,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     throw new Exception("Section avec ID {$champData['secteurId']} introuvable pour ce document");
                 }
             }
-            
+
             $this->createChamp($champData, $document, $section);
         }
     }
@@ -119,16 +120,15 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             'attribut' => $champData['attribut'] ?? null,
             'placeholder' => $champData['placeholder'] ?? null,
             'is_required' => $champData['is_required'] ?? false,
+            'champ_standard' => $champData['champ_standard'] ?? false,
             'isEvaluated' => $champData['isEvaluated'] ?? false,
             'default_value' => $champData['default_value'] ?? null,
             'commentaire' => $champData['commentaire'] ?? null,
             'ordre_affichage' => $champData['ordre_affichage'],
             'type_champ' => $champData['type_champ'],
             'meta_options' => $champData['meta_options'] ?? [],
-            'champ_config' => $champData['champ_config'] ?? [],
-            'valeur_config' => $champData['valeur_config'] ?? [],
             'documentId' => $document->id,
-            'secteurId' => $section ? $section->id : null
+            'sectionId' => $section ? $section->id : null
         ];
 
         // Créer le champ via la relation appropriée
@@ -136,6 +136,24 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             $section->champs()->create($champAttributes);
         } else {
             $document->champs()->create($champAttributes);
+        }
+    }
+
+    public function createFicheIdee(array $data): JsonResponse{
+        try {
+            DB::beginTransaction();
+            return parent::create($data);
+
+            DB::commit();
+
+            /*return (new $this->resourceClass($document))
+                ->additional(['message' => 'Fiche idée créé avec succès.'])
+                ->response()
+                ->setStatusCode(201);*/
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
         }
     }
 }

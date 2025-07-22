@@ -21,7 +21,7 @@ class UpdateFinancementRequest extends FormRequest
             'nom'=> ['required', 'string', Rule::unique('financements', 'nom')->ignore($financementId)->whereNull('deleted_at')],
             'nom_usuel' => 'required|string',
             'type' => ['required', Rule::in(EnumTypeFinancement::values())],
-            'financementId' => ['required', Rule::exists('financements', 'id')->whereNull('deleted_at'), 'different:' . $financementId]
+            'financementId' => ['sometimes', Rule::exists('financements', 'id')->whereNull('deleted_at'), 'different:' . $financementId]
         ];
     }
 

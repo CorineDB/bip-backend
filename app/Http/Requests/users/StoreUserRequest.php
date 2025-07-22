@@ -15,17 +15,8 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'provider' => 'required|string|max:255',
-            'provider_user_id' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
-            'status' => ['required', Rule::in(['actif', 'suspendu', 'invité'])],
-            'is_email_verified' => 'boolean',
-            'email_verified_at' => 'nullable|date',
-            'password' => 'required|string|min:8|confirmed',
             'roleId'=> ['required', Rule::exists('roles', 'id')->whereNull('deleted_at')],
-
-            'last_connection' => 'nullable|date',
-            'ip_address' => 'nullable|ip',
 
             // Attributs de personne
             'personne.nom' => 'required|string|max:255',

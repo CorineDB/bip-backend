@@ -11,7 +11,6 @@ use App\Http\Controllers\ChampController;
 use App\Http\Controllers\CibleController;
 use App\Http\Controllers\CommuneController;
 use App\Http\Controllers\ComposantProgrammeController;
-use App\Http\Controllers\DecisionController;
 use App\Http\Controllers\DepartementController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\EvaluationController;
@@ -24,12 +23,12 @@ use App\Http\Controllers\PersonneController;
 use App\Http\Controllers\ProjetController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SecteurController;
-use App\Http\Controllers\TrackInfoController;
 use App\Http\Controllers\TypeInterventionController;
 use App\Http\Controllers\TypeProgrammeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VillageController;
 use App\Http\Controllers\WorkflowController;
+use App\Http\Controllers\AuthController;
 
 // Get authenticated user
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -78,12 +77,16 @@ Route::apiResource('composants-programme', ComposantProgrammeController::class)
 
 // Document Management
 Route::apiResource('documents', DocumentController::class);
+
+Route::prefix('fiches-idee')->group(function () {
+    // Public routes
+    Route::post('', [DocumentController::class, 'create_fiche_idee']);
+});
+
 Route::apiResource('categories-document', CategorieDocumentController::class);
 
 // Workflow & Process Management
 Route::apiResource('workflows', WorkflowController::class);
-Route::apiResource('decisions', DecisionController::class);
-Route::apiResource('track-infos', TrackInfoController::class);
 
 // Financial & Evaluation
 Route::apiResource('financements', FinancementController::class);
@@ -144,14 +147,33 @@ Route::prefix('enums')->group(function () {
 });
 
 // =============================================================================
-// AUTHENTICATION ROUTES (Laravel Sanctum)
+// AUTHENTICATION ROUTES (Keycloak)
 // =============================================================================
 
 Route::prefix('auth')->group(function () {
-    Route::post('/login', [UserController::class, 'login']);
-    Route::post('/register', [UserController::class, 'register']);
-    Route::middleware('auth:sanctum')->post('/logout', [UserController::class, 'logout']);
-    Route::middleware('auth:sanctum')->get('/profile', [UserController::class, 'profile']);
-    Route::middleware('auth:sanctum')->put('/profile', [UserController::class, 'updateProfile']);
-    Route::middleware('auth:sanctum')->put('/change-password', [UserController::class, 'changePassword']);
+    // Public routes
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/refresh', [AuthController::class, 'refresh']);
+
+    // Protected routes with Keycloak middleware
+    Route::middleware('keycloak')->group(function () {
+        Route::get('/profile', [AuthController::class, 'profile']);
+        Route::put('/profile', [AuthController::class, 'updateProfile']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::post('/introspect', [AuthController::class, 'introspect']);
+
+
+        /*
+            // Routes spécifiques aux rôles
+            Route::middleware(['role:DPAF'])->prefix('projets')->group(function () {
+                Route::get('/saisie-fiche', [ProjetController::class, 'createFiche'])
+                    ->name('projets.create-fiche');
+            });
+
+            Route::middleware(['role:DGPD'])->prefix('analyse')->group(function () {
+                Route::get('/multi-criteres', [AnalyseController::class, 'multiCriteres'])
+                    ->name('analyse.multi-criteres');
+            });
+        */
+    });
 });

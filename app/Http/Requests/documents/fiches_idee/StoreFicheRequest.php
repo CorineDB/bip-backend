@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Requests\documents;
+namespace App\Http\Requests\documents\fiches_idee;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreDocumentRequest extends FormRequest
+class StoreFicheRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -27,12 +27,11 @@ class StoreDocumentRequest extends FormRequest
             'nom' => 'required|string|max:65535|unique:documents,nom',
             'description' => 'nullable|string|max:65535',
 
-            'categorieId' => ['sometimes', Rule::exists('categories_document', 'id')->whereNull('deleted_at')],
-
             'type' => ['required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
 
             // Sections
             'sections' => 'sometimes|array|min:1',
+            'sections.*.intitule' => 'required|string|max:255',
             'sections.*.intitule' => 'required|string|max:255',
             'sections.*.description' => 'nullable|string',
 
@@ -61,30 +60,6 @@ class StoreDocumentRequest extends FormRequest
             'sections.*.champs.*.meta_options.validations_rules' => 'required|array|min:1',
             'sections.*.champs.*.meta_options.validations_rules.required' => 'required|boolean:true',
             'sections.*.champs.*.meta_options.configs' => 'required|array|min:0',
-
-            // Champs
-
-            'champs' => 'sometimes|array|min:1',
-            'champs.*.label' => 'required|string|max:255',
-            'champs.*.info' => 'nullable|string|max:65535',
-            'champs.*.attribut' => 'required|string|max:255',
-            'champs.*.placeholder' => 'nullable|string|max:255',
-            'champs.*.is_required' => 'boolean',
-            'champs.*.champ_standard' => 'boolean',
-            'champs.*.default_value' => 'nullable|string|max:65535',
-            'champs.*.isEvaluated' => 'boolean',
-            'champs.*.ordre_affichage' => 'required|integer|min:1',
-            'champs.*.type_champ' => ['required', 'string', Rule::in(['text', 'textarea', 'select', 'checkbox', 'radio', 'date', 'number', 'email', 'file'])],
-            'champs.*.sectionId' => 'nullable|integer',
-            'champs.*.meta_options' => 'required|array',
-            'champs.*.meta_options.conditions' => 'required|array|min:3',
-            'champs.*.meta_options.conditions.visible' => 'required|boolean:true',
-            'champs.*.meta_options.conditions.disable' => 'required|boolean:true',
-            'champs.*.meta_options.conditions.conditions' => 'nullable|array|min:0',
-
-            'champs.*.meta_options.validations_rules' => 'required|array|min:1',
-            'champs.*.meta_options.validations_rules.required' => 'required|boolean:true',
-            'champs.*.meta_options.configs' => 'required|array|min:0'
         ];
     }
 
@@ -139,7 +114,7 @@ class StoreDocumentRequest extends FormRequest
             'champs.*.type_champ.required' => 'Le type de champ est obligatoire.',
             'champs.*.type_champ.string' => 'Le type de champ doit être une chaîne de caractères.',
             'champs.*.type_champ.in' => 'Le type de champ doit être: text, textarea, select, checkbox, radio, date, number, email ou file.',
-            'champs.*.sectionId.integer' => 'L\'identifiant de la section doit être un nombre entier.',
+            'champs.*.secteurId.integer' => 'L\'identifiant de la section doit être un nombre entier.',
             'champs.*.meta_options.array' => 'Les options méta du champ doivent être un tableau.',
             'champs.*.champ_config.array' => 'La configuration du champ doit être un tableau.',
             'champs.*.valeur_config.array' => 'La configuration de valeur du champ doit être un tableau.'

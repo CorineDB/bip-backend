@@ -31,6 +31,7 @@ class ChampSection extends Model
      */
     protected $fillable = [
         'intitule',
+        'description',
         'slug',
         'ordre_affichage',
         'type',
@@ -88,7 +89,7 @@ class ChampSection extends Model
      */
     public function champs()
     {
-        return $this->hasMany(Champ::class, 'secteurId');
+        return $this->hasMany(Champ::class, 'sectionId');
     }
 
     /**

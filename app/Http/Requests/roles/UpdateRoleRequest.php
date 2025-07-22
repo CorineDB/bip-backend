@@ -18,9 +18,8 @@ class UpdateRoleRequest extends FormRequest
 
         return [
             'nom' => ['required', Rule::unique('roles', 'nom')->ignore($roleId)->whereNull('deleted_at')],
-
             'description' => 'nullable|string|max:1000',
-            'permissions' => ['array', 'min:1'],
+            'permissions' => ['sometimes', 'array', 'min:1'],
             'permissions.*' => ['required', 'distinct', Rule::exists('permissions', 'id')->whereNull('deleted_at')],
         ];
     }
@@ -33,11 +32,7 @@ class UpdateRoleRequest extends FormRequest
             'nom.max' => 'Le nom du rôle ne peut pas dépasser 255 caractères.',
             'nom.unique' => 'Ce nom de rôle existe déjà.',
             'description.string' => 'La description doit être une chaîne de caractères.',
-            'description.max' => 'La description ne peut pas dépasser 1000 caractères.',
-            'roleable_type.string' => 'Le type roleable doit être une chaîne de caractères.',
-            'roleable_type.max' => 'Le type roleable ne peut pas dépasser 255 caractères.',
-            'roleable_id.integer' => 'L\'ID roleable doit être un nombre entier.',
-            'roleable_id.min' => 'L\'ID roleable doit être supérieur à 0.'
+            'description.max' => 'La description ne peut pas dépasser 1000 caractères.'
         ];
     }
 }

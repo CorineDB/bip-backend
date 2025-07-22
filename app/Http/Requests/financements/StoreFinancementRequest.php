@@ -19,7 +19,7 @@ class StoreFinancementRequest extends FormRequest
             'nom'=> ['required', 'string', Rule::unique('financements', 'nom')->whereNull('deleted_at')],
             'nom_usuel' => 'required|string',
             'type' => ['required', Rule::in(EnumTypeFinancement::values())],
-            'financementId' => ['required', Rule::exists('financements', 'id')->whereNull('deleted_at')]
+            'financementId' => ['sometimes', Rule::exists('financements', 'id')->whereNull('deleted_at')]
         ];
     }
 

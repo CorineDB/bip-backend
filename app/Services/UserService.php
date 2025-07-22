@@ -9,19 +9,26 @@ use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Contracts\PersonneRepositoryInterface;
 use App\Services\Contracts\UserServiceInterface;
 use App\Http\Resources\UserResource;
+use App\Traits\GenerateTemporaryPassword;
+use App\Services\AuthService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 
 class UserService extends BaseService implements UserServiceInterface
 {
+    use GenerateTemporaryPassword;
+
     protected PersonneRepositoryInterface $personneRepository;
+    protected AuthService $authService;
 
     public function __construct(
         UserRepositoryInterface $repository,
-        PersonneRepositoryInterface $personneRepository
+        PersonneRepositoryInterface $personneRepository,
+        AuthService $authService
     ) {
         parent::__construct($repository);
         $this->personneRepository = $personneRepository;
+        $this->authService = $authService;
     }
 
     protected function getResourceClass(): string
@@ -37,22 +44,43 @@ class UserService extends BaseService implements UserServiceInterface
             // Extraction des données de la personne
             $personneData = $data['personne'] ?? [];
 
-            // Hash du mot de passe
-            if (isset($data['password'])) {
-                $data['password'] = Hash::make($data['password']);
-            }
+            $data['password'] = Hash::make($this->generateSimpleTemporaryPassword());
 
             // Création de la personne
             $personne = $this->personneRepository->create($personneData);
 
             // Attribution de l'ID de la personne à l'utilisateur
             $data['personneId'] = $personne->id;
+            $data['provider_user_id'] = $data['email'];
+            $data['username'] = $data['email'];
 
             // Suppression des données de personne du tableau de données utilisateur
             unset($data['personne']);
 
             // Création de l'utilisateur
             $user = $this->repository->create($data);
+
+            // Créer l'utilisateur dans Keycloak aussi
+
+            $keycloakId = $this->authService->createKeycloakUser([
+                'email' => $user->email,
+                'username' => $user->username,
+                'first_name' => $personne->prenom ?? '',
+                'last_name' => $personne->nom ?? '',
+                'password' => $$data['password']
+            ]);
+
+            // Mettre à jour l'utilisateur avec le keycloak_id
+            if ($keycloakId) {
+                $user->update(['keycloak_id' => $keycloakId]);
+            } else {
+                // Log warning but don't fail the user creation
+                \Log::warning('User created in Laravel but failed to create in Keycloak', [
+                    'user_id' => $user->id,
+                    'email' => $user->email
+                ]);
+                DB::rollBack();
+            }
 
             DB::commit();
 
@@ -77,7 +105,7 @@ class UserService extends BaseService implements UserServiceInterface
 
             // Extraction des données de la personne
             $personneData = $data['personne'] ?? [];
-            
+
             // Hash du mot de passe si fourni
             if (isset($data['password'])) {
                 $data['password'] = Hash::make($data['password']);
