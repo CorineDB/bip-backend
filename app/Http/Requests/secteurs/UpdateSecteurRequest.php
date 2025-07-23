@@ -3,6 +3,7 @@
 namespace App\Http\Requests\secteurs;
 
 use App\Enums\EnumTypeSecteur;
+use App\Models\Secteur;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,7 +23,29 @@ class UpdateSecteurRequest extends FormRequest
             'description' => 'sometimes|nullable|string|max:65535',
             'type' => ['sometimes', 'required', 'string', Rule::in(EnumTypeSecteur::values())],
 
-            'secteurId' => ['sometimes', Rule::exists('secteurs', 'id')->whereNull('deleted_at'), 'different:' . $secteurId],
+            'secteurId' => [Rule::requiredIf($this->input("type") != "grand-secteur"),
+
+                function ($attribute, $value, $fail) {
+                    $exists = Secteur::where("secteurId", $value)->when($this->input("type") == "secteur", function($query){
+
+                        $query->whereHas('parent', function ($query) {
+                            $query->where('type', 'grand-secteur');
+                        });
+                    })->when($this->input("type") == "sous-secteur", function($query){
+
+                        $query->whereHas('parent', function ($query) {
+                            $query->where('type', 'secteur');
+                        });
+                    })->whereNull('deleted_at')->exists();
+
+                    if (!$exists && $this->input("type") == "secteur") {
+                        $fail('Le grand secteur est inconnu');
+                    }
+                    else if (!$exists && $this->input("type") == "sous-secteur") {
+                        $fail('Le Secteur est inconnu');
+                    }
+                }
+            ]
         ];
     }
 
