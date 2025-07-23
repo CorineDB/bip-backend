@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bip-backend-app
+    restart: unless-stopped
+    working_dir: /var/www
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www
+      - ./storage:/var/www/storage
+    networks:
+      - bip-network
+    depends_on:
+      - db
+      - keycloak
+    environment:
+      - DB_HOST=db
+      - DB_DATABASE=bip_db
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - KEYCLOAK_SERVER_URL=http://keycloak:8080
+
+  db:
+    image: postgres:15
+    container_name: bip-backend-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bip_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - bip-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: bip-keycloak
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+    ports:
+      - "8080:8080"
+    networks:
+      - bip-network
+    depends_on:
+      - keycloak-db
+    command: start-dev
+
+  keycloak-db:
+    image: postgres:15
+    container_name: bip-keycloak-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    volumes:
+      - keycloak_data:/var/lib/postgresql/data
+    networks:
+      - bip-network
+
+  redis:
+    image: redis:alpine
+    container_name: bip-backend-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    networks:
+      - bip-network
+
+  init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bip-backend-init
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    networks:
+      - bip-network
+    depends_on:
+      - db
+      - keycloak-db
+    environment:
+      - DB_HOST=db
+      - DB_DATABASE=bip_db
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+    command: ["/var/www/.docker/scripts/init.sh"]
+    restart: "no"
+
+volumes:
+  postgres_data:
+  keycloak_data:
+
+networks:
+  bip-network:
+    driver: bridge
