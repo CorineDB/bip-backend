@@ -42,7 +42,9 @@ class ServiceProviderProvider extends ServiceProvider
             'TrackInfoServiceInterface' => 'TrackInfoService',
             'DocumentServiceInterface' => 'DocumentService',
             'ChampServiceInterface' => 'ChampService',
-            'EvaluationServiceInterface' => 'EvaluationService'
+            'EvaluationServiceInterface' => 'EvaluationService',
+            "PassportOAuthServiceInterface" => "PassportOAuthService"
+
         ];
 
         foreach ($services as $interface => $implementation) {

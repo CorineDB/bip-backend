@@ -44,7 +44,7 @@ class UserService extends BaseService implements UserServiceInterface
             // Extraction des données de la personne
             $personneData = $data['personne'] ?? [];
 
-            $data['password'] = Hash::make($this->generateSimpleTemporaryPassword());
+            $data['password'] = Hash::make("Password"/* $this->generateSimpleTemporaryPassword() */);
 
             // Création de la personne
             $personne = $this->personneRepository->create($personneData);
@@ -62,7 +62,7 @@ class UserService extends BaseService implements UserServiceInterface
 
             // Créer l'utilisateur dans Keycloak aussi
 
-            $keycloakId = $this->authService->createKeycloakUser([
+            /*$keycloakId = $this->authService->createKeycloakUser([
                 'email' => $user->email,
                 'username' => $user->username,
                 'first_name' => $personne->prenom ?? '',
@@ -80,7 +80,7 @@ class UserService extends BaseService implements UserServiceInterface
                     'email' => $user->email
                 ]);
                 DB::rollBack();
-            }
+            }*/
 
             DB::commit();
 

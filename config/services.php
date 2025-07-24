@@ -42,4 +42,9 @@ return [
         'realms' => env('KEYCLOAK_REALM'),
     ],
 
+    'passport' => [
+        'token_url' => env('PASSPORT_TOKEN_URL', 'http://localhost:8000/oauth/token'),
+    ],
+
+
 ];

@@ -2,7 +2,6 @@
 
 namespace App\Services\Traits;
 
-use App\Models\LieuIntervention;
 use Illuminate\Database\Eloquent\Model;
 
 trait ProjetRelationsTrait

@@ -36,6 +36,10 @@ return new class extends Migration
                 if (Schema::hasColumn('idees_projet', 'demandeurId')) {
                     $table->bigInteger('demandeurId')->nullable()->unsigned()->change();
                 }
+
+                if (Schema::hasColumn('idees_projet', 'sigle')) {
+                    $table->string('sigle')->nullable()->change();
+                }
             });
         }
     }
@@ -68,6 +72,10 @@ return new class extends Migration
 
                 if (Schema::hasColumn('idees_projet', 'demandeurId')) {
                     $table->bigInteger('demandeurId')->unsigned()->change();
+                }
+
+                if (Schema::hasColumn('idees_projet', 'sigle')) {
+                    $table->string('sigle')->nullable()->change();
                 }
             });
         }

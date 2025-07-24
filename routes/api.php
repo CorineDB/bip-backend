@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Import all controllers
@@ -29,12 +28,66 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VillageController;
 use App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\OAuthController;
+
 
 // Get authenticated user
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+/* Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
-});
+}); */
+/*
+Route::prefix("auths")->group(['middleware' => ['auth:sanctum']], function () {
 
+    Route::get('confirmation-de-compte/{email}', [AuthController::class, 'confirmationDeCompte'])->name('confirmationDeCompte');
+
+    Route::get('activation-de-compte/{token}', [AuthController::class, 'activationDeCompte'])->name('activationDeCompte');
+
+
+    Route::get('reinitialisation-de-mot-de-passe/{email}', [AuthController::class, 'verificationEmailReinitialisationMotDePasse'])->name('verificationEmailReinitialisationMotDePasse');
+
+    Route::get('verification-de-compte/{token}', [AuthController::class, 'verificationDeCompte'])->name('verificationDeCompte');
+
+    Route::post('reinitialisation-de-mot-de-passe', [AuthController::class, 'reinitialisationDeMotDePasse'])->name('reinitialisationDeMotDePasse');
+
+    Route::post('authentification', [AuthController::class, 'authentification'])->name('auth.authentification'); // Route d'authentification
+
+});
+*/
+
+
+Route::group(['middleware' => []], function () {
+
+
+    Route::group(['prefix' => 'passport-auths', 'as' => 'auths.'], function () {
+
+        Route::post('authentification', [OAuthController::class, 'authentification'])->name('authentification');
+
+        Route::get('confirmation-de-compte/{email}', [OAuthController::class, 'confirmationDeCompte'])->name('auths.confirmationDeCompte');
+
+        Route::get('activation-de-compte/{token}', [OAuthController::class, 'activationDeCompte'])->name('activationDeCompte');
+
+        Route::get('reinitialisation-de-mot-de-passe/{email}', [OAuthController::class, 'verificationEmailReinitialisationMotDePasse'])->name('verificationEmailReinitialisationMotDePasse');
+
+        Route::get('verification-de-compte/{token}', [OAuthController::class, 'verificationDeCompte'])->name('verificationDeCompte');
+
+        Route::post('reinitialisation-de-mot-de-passe', [OAuthController::class, 'reinitialisationDeMotDePasse'])->name('reinitialisationDeMotDePasse');
+
+        Route::group(['middleware' => ['auth:sanctum']], function () {
+            Route::controller('App\Http\Controllers\OAuthController')->group(function () {
+
+                Route::post('/deconnexion', 'deconnexion')->name('deconnexion'); // Route de déconnexion
+
+                Route::get('/utilisateur-connecte', 'utilisateurConnecte')->name('utilisateurConnecte');
+
+                Route::get('/refresh-token', 'refresh_token')->name('refreshToken');
+
+                Route::post('reinitialisation-de-mot-de-passe', 'modificationDeMotDePasse')->name('modificationDeMotDePasse');
+
+                Route::get('/{id}/debloquer', 'debloquer')->name('debloquer');
+            });
+        });
+    });
+});
 // =============================================================================
 // API RESOURCE ROUTES - Full CRUD Controllers (23 controllers)
 // =============================================================================
@@ -188,7 +241,7 @@ Route::prefix('enums')->group(function () {
 // AUTHENTICATION ROUTES (Keycloak)
 // =============================================================================
 
-Route::prefix('auth')->group(function () {
+Route::prefix('keycloak-auths')->group(function () {
     // Public routes
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/refresh', [AuthController::class, 'refresh']);

@@ -2,27 +2,35 @@
 
 namespace Database\Seeders;
 
+use App\Traits\ForeignKeyConstraints;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class PermissionSeeder extends Seeder
 {
+    use ForeignKeyConstraints;
+
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
 
+        //$this->disableForeignKeyChecks();
+        // Supprimer les anciens rôles et créer les nouveaux
+        DB::table('roles')->truncate();
         DB::table('permissions')->truncate();
+
+        //$this->enableForeignKeyChecks();
 
         $espaces = ["administration-general", "dpaf", "dgpb", "dgb", "ministere", "institution"];
 
         $roles_par_espace = [
-            "administration-general" => ["Super Administrateur"],
+            "administration-general" => ["Super Admin"],
             "dpaf" => ["Responsable Projet", "Responsable Hierachique"],
-            "dgpb" => ["Responsable DGPB", "Planificateur", "Analyste DGPD"],
-            "ministere" => ["Ministere"]/*,
+            "dgpb" => ["Responsable DGPB", "Analyste DGPD"]/*
+            "ministere" => ["Ministere"],
             "institution" => ["Président Institution", "Secrétaire Exécutif", "Coordonnateur Projet"]*/
         ];
 
@@ -42,6 +50,8 @@ class PermissionSeeder extends Seeder
             // Entités géographiques
             "voir-departements", "gerer-departements", "voir-communes", "gerer-communes",
             "voir-arrondissements", "gerer-arrondissements", "voir-villages", "gerer-villages",
+            "recevoir-une-notification-validation-idee-projet",
+            "recevoir-une-notification-resultat-idee",
 
             // Secteurs d'intervention
             "voir-grands-secteurs", "voir-secteurs", "gerer-secteurs",
@@ -65,7 +75,7 @@ class PermissionSeeder extends Seeder
 
             // Notes conceptuelles
             "rediger-note-conception", "voir-note-conception", "modifier-note-conception",
-            "evaluer-note-conception", "valider-note-conception", "approuver-note-conception",
+            "evaluer-note-conception", "valider-note-conception", "approuver-note-conception", "recevoir-une-notification-nouvelle-idee-projet",
 
             // Évaluations et validations
             "voir-evaluations", "creer-evaluation", "modifier-evaluation", "soumettre-evaluation",
@@ -92,46 +102,55 @@ class PermissionSeeder extends Seeder
 
         $permissions_par_role = [
             // Administration Générale
-            "Super Administrateur" => $permissions_base,
+            "Super Admin" => $permissions_base,
 
             // DPAF
-            "DPAF" => [
-                "redaction-note-conceptuelle", "analyse-etude", "soumettre-rapport-prefaisabilite", "evaluer-note-conception",
-                "voir-idees-projet", "gerer-idees-projet", "valider-idee-projet", "voir-evaluations",
-                "creer-evaluation", "modifier-evaluation", "valider-tdr-faisabilite", "valider-tdr-prefaisabilite",
-                "voir-rapports-etude", "valider-rapport-faisabilite", "valider-rapport-prefaisabilite",
-                "generer-rapports", "suivre-progression", "voir-axes-pag", "voir-piliers-pag", "voir-actions-pag", "voir-orientations-pnd", "voir-objectifs-pnd", "voir-resultats-pnd", "voir-types-financement", "voir-sources-financement", "voir-sources-financement",
-                "soumettre-tdr-prefaisabilite",
-            ],
-            // DPAF
             "Responsable Projet" => [
-                "voir-idees-projet", "gerer-idees-projet", "voir-evaluations", "voir-canevas-fiche-idee",
-                "remplir-canevas-idee-projet", "creer", "voir-evaluations", "obtenir-score-climatique",
+                "voir-idees-projet","voir-details-idee-projet", "gerer-idees-projet", "voir-evaluations", "voir-canevas-fiche-idee",
+                "remplir-canevas-idee-projet", "modifier-une-idee-projet", "supprimer-une-idee-projet", "creer-une-idee-projet", "obtenir-score-climatique",
+                "recevoir-notification-resultats-validation-idee",
                 "voir-axes-pag", "voir-piliers-pag", "voir-actions-pag", "voir-orientations-pnd", "voir-objectifs-pnd", "voir-resultats-pnd", "voir-types-financement", "voir-sources-financement", "voir-sources-financement",
 
                 "creer-evaluation", "voir-cible", "voir-odd", "voir-grands-secteurs", "voir-secteurs", "voir-sous-secteurs"
             ],
             "Responsable Hierachique" => [
-                "voir-idees-projet", "gerer-idees-projet", "valider-idee-projet", "voir-evaluations",
-                "voir-rapports-etude", "valider-rapport-faisabilite", "valider-rapport-prefaisabilite",
-                "generer-rapports", "suivre-progression", "voir-types-financement", "voir-sources-financement"
+                "voir-idees-projet", "consulter-une-fiche-synthese-idee", "telecharger-une-fiche-synthese-idee", "valider-idee-projet", "emettre-commentaire", "attacher-fichier", "voir-fichier", "partager-fichier",
+                "recevoir-une-notification-nouvelle-idee-projet", "transferer-idee-projet",
             ],
             "Analyste DGPD" => [
-                "voir-idees-projet", "voir-evaluations", "creer-evaluation", "modifier-evaluation",
+                "voir-idees-projet", "voir-grille-evaluation-amc",
+                "remplir-grille-amc", "enregistrer-fiche-synthese-amc", "modifier-fiche-synthese-amc", "emettre-commentaire", "rejeter-idee-idee", "recevoir-notification-validation-idee", "voir-historique-amc", "telecharger-fiche-synthese-amc",
+                "voir-types-financement", "voir-sources-financement", "apprecier-tdr-faisabilite",
+                "soumettre-rapport-faisabilite", "voir-rapports-etude"
+            ],
+            "Responsable DGPD" => [
+                "voir-idees-projet", "voir-grille-evaluation-amc",
+                "remplir-grille-amc", "enregistrer-fiche-synthese-amc", "modifier-fiche-synthese-amc", "emettre-commentaire", "rejeter-idee-idee", "recevoir-notification-validation-idee", "voir-historique-amc", "telecharger-fiche-synthese-amc",
                 "voir-types-financement", "voir-sources-financement", "apprecier-tdr-faisabilite",
                 "soumettre-rapport-faisabilite", "voir-rapports-etude"
             ],
 
-            // DGPB
-            "DGPB" => [
-                "voir-idees-projet", "gerer-idees-projet", "creer-idee-projet", "modifier-idee-projet",
-                "valider-idee-projet", "voir-types-programme", "gerer-types-programme",
-                "voir-composants-programme", "gerer-composants-programme", "rediger-note-conception",
-                "voir-note-conception", "modifier-note-conception", "valider-note-conception",
-                "creer-tdr", "modifier-tdr", "soumettre-tdr-faisabilite", "soumettre-tdr-prefaisabilite",
-                "generer-rapports", "suivre-progression"
-            ],
 
+            // DPAF
+            "DPAF" => [
+
+                "voir-idees-projet", "gerer-idees-projet", "voir-evaluations", "voir-canevas-fiche-idee",
+                "remplir-canevas-idee-projet", "creer-une-note-projet", "obtenir-score-climatique",
+                "recevoir-notification-resultats-validation-idee",
+                "voir-axes-pag", "voir-piliers-pag", "voir-actions-pag", "voir-orientations-pnd", "voir-objectifs-pnd", "voir-resultats-pnd", "voir-types-financement", "voir-sources-financement", "voir-sources-financement",
+
+                "creer-evaluation", "voir-cible", "voir-odd", "voir-grands-secteurs", "voir-secteurs", "voir-sous-secteurs",
+
+                "voir-notes-conceptuelle", "rediger-note-conceptuelle", "consulter-canevas-redaction-note-conceptuelle", "voir-commentaires-note-conceptuelle", "telecharger-note-conceptuelle", "televerser-note-conceptuelle", "attacher-fichier-note-conceptuelle", "enregistrer-une-note-conceptuelle", "transferer-une-note-conceptuelle", "evaluer-note-conception",
+                "voir-details-idee-projet","voir-projets","voir-details-projets"
+            ]
+
+        ];
+
+        $groupes_utilisateurs = [
+            "Coordination ministérielle", "Cellule planification" => [
+                "recevoir-notification-demande-validation-note-conceptuelle",
+            ]
         ];
 
         // Créer les permissions

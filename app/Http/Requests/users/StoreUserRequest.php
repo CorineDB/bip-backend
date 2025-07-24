@@ -22,7 +22,7 @@ class StoreUserRequest extends FormRequest
             'personne.nom' => 'required|string|max:255',
             'personne.prenom' => 'required|string|max:255',
             'personne.poste' => 'nullable|string|max:255',
-            'personne.organismeId'=> ['required', Rule::exists('organisations', 'id')->whereNull('deleted_at')],
+            //'personne.organismeId'=> ['required', Rule::exists('organisations', 'id')->whereNull('deleted_at')],
 
         ];
     }

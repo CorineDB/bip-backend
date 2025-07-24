@@ -119,12 +119,14 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
     /**
      * Remplir l'idée de projet avec les données des champs
      */
-    private function fillIdeeFromChamps(IdeeProjet $idee, array $champsData): void
+    private function fillIdeeFromChamps(IdeeProjet $idee, array $champsData)
     {
         $fillableAttributes = $this->getFillableAttributesFromChamps($champsData);
 
         // Ajouter les valeurs par défaut pour les colonnes JSON obligatoires si elles ne sont pas définies
         $this->setDefaultJsonValues($fillableAttributes);
+
+        $idee->cout_estimatif_projet = $fillableAttributes['cout_estimatif_projet'];
 
         $idee->fill($fillableAttributes);
     }
@@ -201,23 +203,24 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                 $value = $champsData[$key];
                 // Traitement spécial pour les colonnes JSON
                 if (in_array($key, $jsonColumns)) {
-                    if ($key == "cout_estimatif_projet") {
-                        if (!is_array($value)) {
+                    $attributes[$key] = $this->prepareJsonValue($value);
+
+                    /* if ($key == "cout_estimatif_projet") {
+                        if(!is_array($value)){
                             $data = json_encode(["montant" => $value, "devise" => "FCFA"]);
                             $attributes[$key] = $data;
-                        } else {
+                        }
+                        else {
                             $attributes[$key] = $this->prepareJsonValue($value);
                         }
                     } else {
                         $attributes[$key] = $this->prepareJsonValue($value);
-                    }
+                    } */
                 } else {
                     $attributes[$key] = $this->sanitizeAttributeValue($value);
                 }
             }
         }
-
-        //dd($attributes);
 
         return $attributes;
     }
@@ -375,10 +378,10 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
     private function syncLieuxIntervention(IdeeProjet $idee, array $relations): void
     {
         $idee->lieuxIntervention()->create([
-            'departementId' => $relations["departements"][0],
-            'communeId' => $relations["communes"][0],
-            'arrondissementId' => $relations["arrondissements"][0],
-            'villageId' => $relations["villages"][0]
+            'departementId' => $relations["departements"] ? $relations["departements"][0] : null,
+            'communeId' => $relations["communes"] ? $relations["communes"][0] : null,
+            'arrondissementId' => $relations["arrondissements"] ? $relations["arrondissements"][0] : null,
+            'villageId' => $relations["villages"] ? $relations["villages"][0] : null,
         ]);
 
         /*$lieuxTypes = [
@@ -841,22 +844,22 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
         try {
             DB::beginTransaction();
 
+            $idee = $this->repository->findOrFail($id);
             $champsData = $data['champs'] ?? [];
             $relations = $this->extractRelationsFromChamps($champsData);
-
-            // Créer ou récupérer l'idée de projet
-            $idee = $this->getOrCreateIdeeProjet($data);
 
             // Remplir les attributs de base
             $this->fillIdeeFromChamps($idee, $champsData);
 
             $idee->update($champsData);
 
-            // Sauvegarder les champs dynamiques
-            $this->saveDynamicFields($idee, $champsData);
-
             $idee->save();
 
+            // Synchroniser les relations
+            $this->syncAllRelations($idee, $relations);
+
+            // Sauvegarder les champs dynamiques
+            $this->saveDynamicFields($idee, $champsData);
 
             $idee->refresh();
 
@@ -870,5 +873,43 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             DB::rollBack();
             return $this->errorResponse($e);
         }
+        /*{
+        try {
+            DB::beginTransaction();
+
+            $idee = $this->repository->findOrFail($id);
+            $champsData = $data['champs'] ?? [];
+            $relations = $this->extractRelationsFromChamps($champsData);
+
+            // Sauvegarder l'état précédent pour comparaison
+            $previousStats = $this->calculateProjectStats($idee);
+
+            // Mettre à jour les attributs de base
+            $this->fillIdeeFromChamps($idee, $champsData);
+            $idee->save();
+
+            // Synchroniser les relations
+            $this->syncAllRelations($idee, $relations);
+
+            // Sauvegarder les champs dynamiques
+            $this->saveDynamicFields($idee, $champsData);
+
+            // Calculer les nouvelles statistiques
+            $newStats = $this->calculateProjectStats($idee);
+
+            DB::commit();
+
+            return (new $this->resourceClass($idee))
+                ->additional([
+                    'message' => 'Idée de projet mise à jour avec succès.',
+                    'stats' => $newStats,
+                    'progression_change' => $newStats['progression'] - $previousStats['progression']
+                ])
+                ->response();
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }*/
     }
 }

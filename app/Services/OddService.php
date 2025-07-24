@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Http\JsonResponse;
-use Exception;
 use App\Services\BaseService;
 use App\Repositories\Contracts\BaseRepositoryInterface;
 use App\Http\Resources\OddResource;

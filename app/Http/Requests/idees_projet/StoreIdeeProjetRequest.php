@@ -256,19 +256,22 @@ class StoreIdeeProjetRequest extends FormRequest
                 'required',
                 Rule::exists('cibles', 'id')->whereNull('deleted_at'),
             ],
-            'departements' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
+            'departements' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['array', 'min:0'],
             'departements.*' => [
                 'required',
                 Rule::exists('departements', 'id')->whereNull("deleted_at")
             ],
+            'communes' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['array', 'min:0'],
             'communes.*' => [
                 'required',
                 Rule::exists('communes', 'id')->whereNull("deleted_at")
             ],
+            'arrondissements' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['array', 'min:0'],
             'arrondissements.*' => [
                 'required',
                 Rule::exists('arrondissements', 'id')->whereNull("deleted_at")
             ],
+            'villages' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['array', 'min:0'],
             'villages.*' => [
                 'required',
                 Rule::exists('villages', 'id')->whereNull("deleted_at")
