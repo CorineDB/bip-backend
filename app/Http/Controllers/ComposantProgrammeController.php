@@ -41,4 +41,34 @@ class ComposantProgrammeController extends Controller
     {
         return $this->service->delete($id);
     }
+
+    public function axesPag(): JsonResponse
+    {
+        return $this->service->axes_pag();
+    }
+
+    public function piliersPag(): JsonResponse
+    {
+        return $this->service->piliers_pag();
+    }
+
+    public function actionsPag(): JsonResponse
+    {
+        return $this->service->actions_pag();
+    }
+
+    public function orientationsStrategiquesPnd(): JsonResponse
+    {
+        return $this->service->orientations_strategiques_pnd();
+    }
+
+    public function objectifsStrategiquesPnd(): JsonResponse
+    {
+        return $this->service->objectifs_strategiques_pnd();
+    }
+
+    public function resultatsStrategiquesPnd(): JsonResponse
+    {
+        return $this->service->resultats_strategiques_pnd();
+    }
 }

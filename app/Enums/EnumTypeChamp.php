@@ -16,8 +16,10 @@ enum EnumTypeChamp: string
     case    GEOLOCATION             = 'geolocation';
     case    RATING                  = 'rating';
     case    NUMBER_INPUT            = 'number_input';
+    case    EMAIL                   = 'email';
     case    CURRENCY_INPUT          = 'currency_input';
     case    PHONE_NUMBER_INPUT      = 'phone_number_input';
+    case    CHECKBOX                = 'checkbox';
     case    RADIO                   = 'radio';
     case    RADIO_RATING            = 'radio_rating';
     case    SLIDER_NUMBER           = 'slider_number';

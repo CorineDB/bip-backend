@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Http\Requests\IdeesProjet\StoreIdeeProjetRequest;
-use App\Http\Requests\IdeesProjet\UpdateIdeeProjetRequest;
+use App\Http\Requests\idees_projet\StoreIdeeProjetRequest;
+use App\Http\Requests\idees_projet\UpdateIdeeProjetRequest;
 use App\Services\Contracts\IdeeProjetServiceInterface;
 use Illuminate\Http\JsonResponse;
 

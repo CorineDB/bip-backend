@@ -20,4 +20,25 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
     {
         return OrganisationResource::class;
     }
+
+
+    public function ministeres(): JsonResponse
+    {
+        try {
+            $data = $this->repository->getModel()->where("type", "ministere")->whereNull("parentId")->get();
+            return $this->resourceClass::collection($data)->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function organismes_de_tutelle($idMinistere): JsonResponse
+    {
+        try {
+            $data = $this->repository->findOrFail($idMinistere)->children;
+            return $this->resourceClass::collection($data)->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
 }

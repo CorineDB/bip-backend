@@ -16,6 +16,7 @@ class ChampSectionResource extends BaseApiResource
     {
         return [
             'id'               => $this->id,
+            'key'              => $this->slug,
             'intitule'         => $this->intitule,
             'ordre_affichage'  => $this->ordre_affichage,
             'type'             => $this->type,

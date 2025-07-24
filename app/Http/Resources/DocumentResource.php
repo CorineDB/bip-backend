@@ -25,8 +25,8 @@ class DocumentResource extends BaseApiResource
             'metadata'    => $this->metadata,
             'structure'   => $this->structure,
             // Champs globaux (hors sections)
-            'champs'      => $this->when(count($this->champs), ChampResource::collection($this->champs)),
-            'sections'      => $this->when(count($this->sections), ChampSectionResource::collection($this->sections)),
+            'champs'      => $this->whenLoaded("champs", ChampResource::collection($this->champs)),
+            'sections'      => $this->when("sections", ChampSectionResource::collection($this->sections)),
         ];
         return parent::toArray($request);
     }

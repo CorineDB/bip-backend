@@ -30,7 +30,7 @@ class CategorieProjet extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'categorie', 'slug'
     ];
 
     /**
@@ -62,12 +62,30 @@ class CategorieProjet extends Model
 
         static::deleting(function ($model) {
             $model->update([
-                // Exemple : 'nom' => time() . '::' . $model->nom,
+                'categorie' => time() . '::' . $model->categorie,
+                'slug' => time() . '::' . $model->slug,
             ]);
-
-            if (method_exists($model, 'user')) {
-                // Exemple : $model->user()->delete();
-            }
         });
+    }
+
+    /**
+     *
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setNomAttribute($value)
+    {
+        $this->attributes['categorie'] = addslashes($value); // Escape value with backslashes
+        $this->attributes['slug'] = str_replace(' ', '-', strtolower($value));
+    }
+
+    /**
+    *
+    * @param  string  $value
+    * @return string
+    */
+    public function getCategorieAttribute($value){
+        return ucfirst(str_replace('\\',' ',$value));
     }
 }

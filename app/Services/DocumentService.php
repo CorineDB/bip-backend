@@ -11,16 +11,20 @@ use App\Http\Resources\DocumentResource;
 use App\Models\CategorieDocument;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Services\Contracts\DocumentServiceInterface;
+use App\Services\DocumentStructureService;
 
 class DocumentService extends BaseService implements DocumentServiceInterface
 {
     protected BaseRepositoryInterface $repository;
+    protected DocumentStructureService $structureService;
 
     public function __construct(
-        DocumentRepositoryInterface $repository
+        DocumentRepositoryInterface $repository,
+        DocumentStructureService $structureService
     )
     {
         parent::__construct($repository);
+        $this->structureService = $structureService;
     }
 
     protected function getResourceClass(): string
@@ -54,7 +58,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             }
 
             // Recharger le document avec ses relations
-            $document->load(['sections.champs', 'champs']);
+            $document->load(['sections.champs', 'champs', 'categorie']);
+
+            // Générer et sauvegarder la structure JSON resource
+            $this->structureService->generateAndSaveStructure($document);
 
             DB::commit();
 
@@ -266,9 +273,15 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     $this->updateChampsDirects($ficheIdee, $champsData);
                 }
 
+                $ficheIdee->refresh();
+
+                // Recharger avec toutes les relations et générer la structure
+                //$ficheIdee->load(['sections.champs', 'champs', 'categorie']);
+                //$this->structureService->generateAndSaveStructure($ficheIdee);
+
                 DB::commit();
 
-                return (new $this->resourceClass($ficheIdee->fresh(['sections.champs', 'champs'])))
+                return (new $this->resourceClass($ficheIdee))
                     ->additional(['message' => 'Fiche idée mise à jour avec succès.'])
                     ->response()
                     ->setStatusCode(200);
@@ -291,8 +304,12 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
                 // Traiter les champs directs (sans section)
                 if (!empty($champsData)) {
-                    $this->createChampsDirects($document, $champsData);
+                    $this->createDirectChamps($document, $champsData);
                 }
+
+                // Recharger avec toutes les relations et générer la structure
+                $document->load(['sections.champs', 'champs', 'categorie']);
+                $this->structureService->generateAndSaveStructure($document);
 
                 DB::commit();
 

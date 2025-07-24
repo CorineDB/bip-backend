@@ -19,7 +19,12 @@ class DetailsSecteurResource extends BaseApiResource
             "id" => $this->id,
             "nom"=> $this->nom,
             "type"=> $this->type,
-            "secteurs"=> $this->when(count($this->children), DetailsSecteurResource::collection($this->children))
+            "secteurs"=> $this->when($this->type->value == "grand-secteur", function(){
+                return DetailsSecteurResource::collection($this->children->where("type", "secteur"));
+            }),
+            "sous_secteurs"=> $this->when($this->type->value == "secteur", function(){
+                return DetailsSecteurResource::collection($this->children->where("type", "sous-secteur"));
+            })
         ];
     }
 

@@ -20,9 +20,11 @@ class RoleResource extends BaseApiResource
             'nom' => $this->nom,
 
             // Relations selon le contexte
-            'permissions' => $this->whenLoaded('permissions', function() {
+            'permissions' => PermissionResource::collection($this->permissions),
+            // Relations selon le contexte
+            /*'permissions' => $this->whenLoaded('permissions', function() {
                 return PermissionResource::collection($this->permissions);
-            }),
+            }),*/
         ];
     }
 

@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\PhasesIdee;
+use App\Enums\SousPhaseIdee;
 use App\Enums\StatutIdee;
+use App\Enums\TypesProjet;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,7 +19,7 @@ class IdeeProjet extends Model
      *
      * @var string
      */
-    protected $table = 'idee_projets';
+    protected $table = 'idees_projet';
 
     /**
      * The attributes that should be mutated to dates.
@@ -32,6 +35,7 @@ class IdeeProjet extends Model
      */
     protected $fillable = [
         // Exemple : 'nom', 'programmeId'
+        "est_soumise",
         "identifiant_bip",
         "identifiant_sigfp",
         "est_coherent",
@@ -92,6 +96,17 @@ class IdeeProjet extends Model
      */
     protected $casts = [
         'statut'     => StatutIdee::class,
+        'phase'     => PhasesIdee::class,
+        'sous_phase'     => SousPhaseIdee::class,
+        'type_projet'     => TypesProjet::class,
+        // Seules les vraies colonnes JSON selon la migration
+        'decision' => 'array',
+        'cout_estimatif_projet' => 'array',
+        'ficheIdee' => 'array',
+        'parties_prenantes' => 'array',
+        'objectifs_specifiques' => 'array',
+        'resultats_attendus' => 'array',
+        'body_projet' => 'array',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -107,6 +122,19 @@ class IdeeProjet extends Model
     ];
 
     /**
+     * The attributes excluded from the model's JSON form.
+     *
+     * @var array
+     */
+    protected $default = [
+        "type_projet"   => TypesProjet::simple,
+        "phase"         => PhasesIdee::identification,
+        "sous_phase"    => SousPhaseIdee::redaction,
+        "statut"        => StatutIdee::BROUILLON,
+        // Exemple : 'programmeId', 'updated_at', 'deleted_at'
+    ];
+
+    /**
      * The model's boot method.
      */
     protected static function boot()
@@ -115,11 +143,69 @@ class IdeeProjet extends Model
 
         static::deleting(function ($model) {
         });
+
+        static::saving(function ($model) {
+            // Nettoyer les valeurs JSON vides avant la sauvegarde
+            $model->cleanJsonAttributes();
+        });
+    }
+
+    /**
+     * Nettoyer les attributs JSON pour éviter les erreurs PostgreSQL
+     */
+    protected function cleanJsonAttributes(): void
+    {
+        $jsonColumns = [
+            'decision', 'cout_estimatif_projet', 'ficheIdee',
+            'parties_prenantes', 'objectifs_specifiques',
+            'duree', 'resultats_attendus', 'body_projet'
+        ];
+
+        foreach ($jsonColumns as $column) {
+            if (!isset($this->attributes[$column])) {
+                continue;
+            }
+
+            $value = $this->attributes[$column];
+
+            // Si la valeur est une chaîne vide, la convertir en null ou array vide
+            if ($value === '' || $value === null) {
+                // Pour les colonnes obligatoires, utiliser un array vide
+                if (in_array($column, ['ficheIdee', 'body_projet'])) {
+                    $this->attributes[$column] = '[]';
+                } else {
+                    $this->attributes[$column] = null;
+                }
+            }
+            // Si c'est déjà un array, l'encoder en JSON
+            elseif (is_array($value)) {
+                $this->attributes[$column] = json_encode($value);
+            }
+            // Si c'est une chaîne non vide qui n'est pas du JSON valide
+            elseif (is_string($value) && !$this->isValidJson($value)) {
+                // Tenter de convertir en array si ce n'est pas du JSON
+                if (trim($value) !== '') {
+                    $this->attributes[$column] = json_encode([$value]);
+                } else {
+                    $this->attributes[$column] = null;
+                }
+            }
+            // Si c'est déjà du JSON valide, le laisser tel quel
+        }
+    }
+
+    /**
+     * Vérifier si une chaîne est du JSON valide
+     */
+    private function isValidJson(string $string): bool
+    {
+        json_decode($string);
+        return json_last_error() === JSON_ERROR_NONE;
     }
 
     public function champs()
     {
-        return $this->morphToMany(Champ::class, 'projetable', 'champs_projet')
+        return $this->morphToMany(Champ::class, 'projetable', 'champs_projet', 'projetable_id', 'champId')
             ->using(ChampProjet::class)
             ->withPivot(['valeur', 'commentaire', 'id'])
             ->withTimestamps();
@@ -127,9 +213,128 @@ class IdeeProjet extends Model
 
     public function fiche_synthese()
     {
-        return $this->morphToMany(Champ::class, 'projetable', 'champs_projet')
+        return $this->morphToMany(Champ::class, 'projetable', 'champs_projet', 'projetable_id', 'champId')
             ->using(ChampProjet::class)
             ->withPivot(['valeur', 'commentaire', 'id'])
             ->withTimestamps();
+    }
+
+    public function secteur()
+    {
+        return $this->belongsTo(Secteur::class, 'secteurId')->where('type', "sous-secteur")->whereHas('parent', function($query){
+            $query->where('type', 'secteur');
+        })->get();
+    }
+
+    public function ministere()
+    {
+        return $this->belongsTo(Organisation::class, 'ministereId')->where('type', "ministere")->whereNull("parentId");
+    }
+
+    public function categorie()
+    {
+        return $this->belongsTo(CategorieProjet::class, 'categorieId');
+    }
+
+    public function responsable()
+    {
+        return $this->belongsTo(User::class, 'responsableId');
+    }
+
+    public function demandeur()
+    {
+        return $this->belongsTo(User::class, 'demandeurId');
+    }
+
+    public function financements()
+    {
+        return $this->morphToMany(Financement::class, 'projetable', 'sources_financement_projets', 'projetable_id', 'sourceId')
+            ->withTimestamps();
+    }
+
+    public function sources_de_financement()
+    {
+        return $this->morphToMany(Financement::class, 'projetable', 'sources_financement_projets', 'projetable_id', 'sourceId')->where("type", "source")
+            ->withTimestamps();
+    }
+
+    public function cibles()
+    {
+        return $this->morphToMany(Cible::class, 'projetable', 'cibles_projets', 'projetable_id', 'cibleId')
+            ->withTimestamps();
+    }
+
+    public function odds()
+    {
+        return $this->morphToMany(Odd::class, 'projetable', 'odds_projets', 'projetable_id', 'oddId')
+            ->withTimestamps();
+    }
+
+    public function typesIntervention()
+    {
+        return $this->morphToMany(TypeIntervention::class, 'projetable', 'types_intervention_projets', 'projetable_id', 'typeId')
+            ->withTimestamps();
+    }
+
+    public function lieuxIntervention()
+    {
+        return $this->morphMany(LieuIntervention::class, 'projetable');
+    }
+
+    public function composants()
+    {
+        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')
+            ->withTimestamps();
+    }
+
+    public function orientations_strategique_png()
+    {
+        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
+            $query->where('slug', 'orientation-strategique-pnd');
+        });
+    }
+
+    public function objectifs_strategique_png()
+    {
+        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
+            $query->where('slug', 'objectif-strategique-pnd');
+        });
+    }
+    public function resultats_strategique_png()
+    {
+        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
+            $query->where('slug', 'resultats-strategique-pnd');
+        });
+    }
+
+    public function axes_pag()
+    {
+        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
+            $query->where('slug', 'axe-pag');
+        });
+    }
+
+    public function actions_pag()
+    {
+        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
+            $query->where('slug', 'action-pag');
+        });
+    }
+
+    public function pilliers_pag()
+    {
+        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
+            $query->where('slug', 'pillier-pag');
+        });
+    }
+
+    public function documents()
+    {
+        return $this->morphOne(Document::class, 'documentable');
+    }
+
+    public function evaluations()
+    {
+        return $this->morphMany(Evaluation::class, 'evaluable');
     }
 }

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Requests\Evaluations\StoreEvaluationRequest;
-use App\Http\Requests\Evaluations\UpdateEvaluationRequest;
+use App\Http\Requests\evaluations\StoreEvaluationRequest;
+use App\Http\Requests\evaluations\UpdateEvaluationRequest;
 use App\Services\Contracts\EvaluationServiceInterface;
 use Illuminate\Http\JsonResponse;
 

@@ -59,6 +59,12 @@ Route::prefix('arrondissements')->group(function () {
 
 // Organization & People Management
 Route::apiResource('organisations', OrganisationController::class);
+
+Route::controller(OrganisationController::class)->group(function () {
+    Route::get('ministeres', 'ministeres');
+    Route::get('ministeres/{id}/organismes_tutelle', 'organismes_tutelle');
+});
+
 Route::apiResource('personnes', PersonneController::class);
 
 // User Management & Security (read-only permissions)
@@ -96,6 +102,15 @@ Route::apiResource('types-programme', TypeProgrammeController::class)
     ->parameters(['types-programme' => 'type_programme']);
 Route::apiResource('composants-programme', ComposantProgrammeController::class)
     ->parameters(['composants-programme' => 'composant_programme']);
+
+Route::controller(ComposantProgrammeController::class)->group(function () {
+    Route::get('axes-pag', 'axesPag');
+    Route::get('piliers-pag', 'piliersPag');
+    Route::get('actions-pag', 'actionsPag');
+    Route::get('orientations-strategiques-pnd', 'orientationsStrategiquesPnd');
+    Route::get('objectifs-strategiques-pnd', 'objectifsStrategiquesPnd');
+    Route::get('resultats-strategiques-pnd', 'resultatsStrategiquesPnd');
+});
 
 // Document Management
 Route::apiResource('documents', DocumentController::class);

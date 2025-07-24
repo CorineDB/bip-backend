@@ -81,6 +81,7 @@ class CategorieDocument extends Model
     {
         return $this->hasMany(Document::class, 'categorieId');
     }
+
     /**
      *
      *

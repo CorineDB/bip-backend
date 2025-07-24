@@ -66,6 +66,7 @@ class AuthController extends Controller
             if (!$tokenData) {
                 return response()->json([
                     'success' => false,
+                    "error"=>$tokenData,
                     'message' => 'Échec de l\'échange du code d\'autorisation'
                 ], 400);
             }

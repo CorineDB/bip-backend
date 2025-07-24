@@ -67,7 +67,7 @@ class UserService extends BaseService implements UserServiceInterface
                 'username' => $user->username,
                 'first_name' => $personne->prenom ?? '',
                 'last_name' => $personne->nom ?? '',
-                'password' => $$data['password']
+                'password' => $data['password']
             ]);
 
             // Mettre à jour l'utilisateur avec le keycloak_id

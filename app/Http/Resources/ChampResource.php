@@ -19,6 +19,7 @@ class ChampResource extends BaseApiResource
             'id'                => $this->id,
             'label'             => $this->label,
             'info'              => $this->info,
+            'key'               => $this->attribut,
             'attribut'          => $this->attribut,
             'placeholder'       => $this->placeholder,
             'is_required'       => $this->is_required,

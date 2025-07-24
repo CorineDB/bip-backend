@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable('champs_projet')) {
-            Schema::table('champs_projet', function (Blueprint $table) {
+        if (!Schema::hasTable('champs_projet')) {
+            Schema::create('champs_projet', function (Blueprint $table) {
                 $table->id();
                 $table->jsonb('valeur')->nullable();
                 $table->longText('commentaire')->nullable();
@@ -32,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('champs_idee');
+        Schema::dropIfExists('champs_projet');
     }
 };

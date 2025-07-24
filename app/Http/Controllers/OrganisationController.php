@@ -42,4 +42,12 @@ class OrganisationController extends Controller
     {
         return $this->service->delete($id);
     }
+
+    public function ministeres(): JsonResponse{
+        return $this->service->ministeres();
+    }
+
+    public function organismes_de_tutelle($idMinistere): JsonResponse{
+        return $this->service->organismes_de_tutelle($idMinistere);
+    }
 }

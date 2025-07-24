@@ -19,7 +19,7 @@ class StoreOrganisationRequest extends FormRequest
             'nom'=> ['required', 'string', Rule::unique('organisations', 'nom')->whereNull('deleted_at')],
             'description' => 'nullable|string',
             'type' => ['required', Rule::in(EnumTypeOrganisation::values())],
-            'parentId' => ['required', Rule::exists('organisations', 'id')->whereNull('deleted_at'), 'different:id']
+            'parentId' => [Rule::requiredIf($this->type == 'ministere'), Rule::exists('organisations', 'id')->whereNull('deleted_at')]
         ];
     }
 

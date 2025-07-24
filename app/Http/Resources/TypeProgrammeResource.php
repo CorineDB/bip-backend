@@ -18,6 +18,7 @@ class TypeProgrammeResource extends BaseApiResource
         return [
             "id" => $this->id,
             "type_programme"=> $this->type_programme,
+            "slug"=> $this->slug,
             "programme_ou_composant"=> $this->when($this->parent, function() {
                 return [
                     "id" => $this->parent->id,

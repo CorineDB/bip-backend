@@ -20,14 +20,14 @@ class CategoriesUtilisateursSeeder extends Seeder
 
         $roles = [
             [
-                'nom' => 'Responsable Projet (DPAF/Ministère Sectoriel)',
+                'nom' => 'Responsable Projet',
                 'slug' => 'responsable_projet_dpaf',
                 'description' => 'Responsable de projet au niveau DPAF ou ministère sectoriel - Peut créer des fiches idées de projet, obtenir le score climatique et soumettre des rapports de faisabilité',
                 'roleable_type' => null,
                 'roleable_id' => null
             ],
             [
-                'nom' => 'Responsable Hiérarchique (Ministère)',
+                'nom' => 'Responsable Hiérarchique',
                 'slug' => 'responsable_hierarchique_ministere',
                 'description' => 'Responsable hiérarchique au niveau ministériel - Valide et soumet les fiches d\'idées de projet',
                 'roleable_type' => null,
