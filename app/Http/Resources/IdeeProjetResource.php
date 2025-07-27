@@ -29,6 +29,7 @@ class IdeeProjetResource extends BaseApiResource
             'sous_phase' => $this->sous_phase?->value ?? $this->sous_phase,
             'type_projet' => $this->type_projet?->value ?? $this->type_projet,
             'est_coherent' => $this->est_coherent,
+            'est_soumise' => $this->est_soumise,
 
             // Descriptions et contenus principaux
             'description' => $this->description,
@@ -103,12 +104,12 @@ class IdeeProjetResource extends BaseApiResource
             'composants' => $this->composants->map(function ($composant) {
                     return [
                         'id' => $composant->id,
-                        'nom' => $composant->nom,
-                        'type_programme' => $composant->typeProgramme->nom ?? null
+                        'intitule' => $composant->intitule,
+                        'type_programme' => $composant->typeProgramme->id ?? null
                     ];
             }),
 
-            'lieux_intervention' => $this->lieuxIntervention,
+            'lieux_intervention' => LieuInterventionResource::collection($this->lieuxIntervention),
 
             'types_intervention' => $this->whenLoaded('typesIntervention', function () {
                 return $this->typesIntervention->map(function ($type) {

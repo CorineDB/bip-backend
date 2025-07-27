@@ -44,7 +44,6 @@ class LieuIntervention extends Pivot
      * @var array<string, string>
      */
     protected $casts = [
-        'coordonnees_gps' => 'array',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -75,19 +74,11 @@ class LieuIntervention extends Pivot
     }
 
     /**
-     * Get the specific location (polymorphic relation)
-     */
-    public function lieu()
-    {
-        return $this->morphTo('lieu', 'type_lieu', 'lieu_id');
-    }
-
-    /**
      * Get the departement when type is departement
      */
     public function departement()
     {
-        return $this->belongsTo(Departement::class, 'lieu_id')->where('type_lieu', 'departement');
+        return $this->belongsTo(Departement::class, 'departementId');
     }
 
     /**
@@ -95,7 +86,7 @@ class LieuIntervention extends Pivot
      */
     public function commune()
     {
-        return $this->belongsTo(Commune::class, 'lieu_id')->where('type_lieu', 'commune');
+        return $this->belongsTo(Commune::class, 'communeId');
     }
 
     /**
@@ -103,7 +94,7 @@ class LieuIntervention extends Pivot
      */
     public function arrondissement()
     {
-        return $this->belongsTo(Arrondissement::class, 'lieu_id')->where('type_lieu', 'arrondissement');
+        return $this->belongsTo(Arrondissement::class, 'arrondissementId');
     }
 
     /**
@@ -111,7 +102,7 @@ class LieuIntervention extends Pivot
      */
     public function village()
     {
-        return $this->belongsTo(Village::class, 'lieu_id')->where('type_lieu', 'village');
+        return $this->belongsTo(Village::class, 'villageId');
     }
 
     /**
@@ -130,51 +121,5 @@ class LieuIntervention extends Pivot
     {
         return $this->morphedByMany(Projet::class, 'projetable', 'lieux_intervention_projets')
             ->withTimestamps();
-    }
-
-    /**
-     * Scope to filter by administrative level
-     */
-    public function scopeNiveauAdministratif($query, $niveau)
-    {
-        return $query->where('niveau_administratif', $niveau);
-    }
-
-    /**
-     * Scope to filter by location type
-     */
-    public function scopeTypeLieu($query, $type)
-    {
-        return $query->where('type_lieu', $type);
-    }
-
-    /**
-     * Get the full administrative path
-     */
-    public function getCheminAdministratifAttribute()
-    {
-        $lieu = $this->lieu;
-
-        if (!$lieu) {
-            return $this->nom;
-        }
-
-        switch ($this->type_lieu) {
-            case 'village':
-                return $lieu->arrondissement->commune->departement->nom . ' > ' .
-                       $lieu->arrondissement->commune->nom . ' > ' .
-                       $lieu->arrondissement->nom . ' > ' .
-                       $lieu->nom;
-            case 'arrondissement':
-                return $lieu->commune->departement->nom . ' > ' .
-                       $lieu->commune->nom . ' > ' .
-                       $lieu->nom;
-            case 'commune':
-                return $lieu->departement->nom . ' > ' . $lieu->nom;
-            case 'departement':
-                return $lieu->nom;
-            default:
-                return $this->nom;
-        }
     }
 }

@@ -9,12 +9,14 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 
 use Laravel\Passport\Contracts\OAuthenticatable;
-//use Laravel\Passport\HasApiTokens;
+use Laravel\Passport\HasApiTokens;
 use Laravel\Sanctum\NewAccessToken;
+/*
 use Laravel\Sanctum\HasApiTokens;
+*/
 use Illuminate\Support\Str;
 
-class User extends Authenticatable
+class User extends Authenticatable implements OAuthenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 

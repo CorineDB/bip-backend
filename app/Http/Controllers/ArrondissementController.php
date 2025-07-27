@@ -15,23 +15,6 @@ class ArrondissementController extends Controller
         $this->service = $service;
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/arrondissements",
-     *     operationId="getArrondissementsList",
-     *     tags={"Arrondissements"},
-     *     summary="Get la liste des arrondissements",
-     *     description="Returns all arrondissements",
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successful operation",
-     *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(ref="#/components/schemas/Arrondissement")
-     *         )
-     *     )
-     * )
-     */
     public function index(): JsonResponse
     {
         return $this->service->all();
@@ -47,13 +30,3 @@ class ArrondissementController extends Controller
         return $this->service->villages($id);
     }
 }
-/**
- * @OA\Schema(
- *     schema="Arrondissement",
- *     type="object",
- *     title="Arrondissement",
- *     required={"id", "nom"},
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="nom", type="string", example="Abomey-Calavi")
- * )
- */

@@ -89,7 +89,7 @@ class ChampSection extends Model
      */
     public function champs()
     {
-        return $this->hasMany(Champ::class, 'sectionId');
+        return $this->hasMany(Champ::class, 'sectionId')->orderBy('ordre_affichage', 'asc');
     }
 
     /**

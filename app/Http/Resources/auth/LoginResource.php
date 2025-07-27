@@ -15,9 +15,11 @@ class LoginResource extends JsonResource
     public function toArray($request)
     {
         return [
-            "access_token" => $this['access_token'],
-            "expired_at" => $this['expired_at'],
-            "utilisateur" => new AuthResource($this['user'])
+            "access_token" => $this['accessToken'],
+            "expired_at" => $this['expiresIn'],
+            "utilisateur" => $this->when(auth()->check(), function(){
+                return new AuthResource(auth()->user());
+            })
         ];
     }
 }

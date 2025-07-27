@@ -140,7 +140,7 @@ class Document extends Model
      */
     public function sections()
     {
-        return $this->hasMany(ChampSection::class, 'documentId')->orderBy('ordre_affichage');
+        return $this->hasMany(ChampSection::class, 'documentId')->orderBy('ordre_affichage', 'asc');
     }
 
     /**
@@ -148,7 +148,7 @@ class Document extends Model
      */
     public function champs()
     {
-        return $this->hasMany(Champ::class, 'documentId')->whereNull('sectionId')->orderBy('ordre_affichage');;
+        return $this->hasMany(Champ::class, 'documentId')->whereNull('sectionId')->orderBy('ordre_affichage', 'asc');
     }
 
     /**

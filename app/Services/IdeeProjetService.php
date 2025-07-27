@@ -42,6 +42,10 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             // Créer ou récupérer l'idée de projet
             $idee = $this->getOrCreateIdeeProjet($data);
 
+            if(isset($data['est_soumise']) ){
+                $idee->est_soumise = $data["est_soumise"];
+            }
+
             // Remplir les attributs de base
             $this->fillIdeeFromChamps($idee, $champsData);
 
@@ -331,8 +335,12 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
         // Synchroniser les composants programme
         $this->syncComposantProgrammeRelations($idee, $relations);
 
-        // Synchroniser les lieux d'intervention
-        $this->syncLieuxIntervention($idee, $relations);
+
+        if((isset($relations["departements"]) && isset($relations["communes"]) && isset($relations["arrondissements"]) && isset($relations["villages"])) && (count($relations["departements"]) && count($relations["communes"]) && count($relations["arrondissements"]) && count($relations["villages"]))){
+
+            // Synchroniser les lieux d'intervention
+            $this->syncLieuxIntervention($idee, $relations);
+        }
     }
 
     /**
@@ -845,6 +853,9 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             DB::beginTransaction();
 
             $idee = $this->repository->findOrFail($id);
+            if(isset($data['est_soumise']) ){
+                $idee->est_soumise = $data["est_soumise"];
+            }
             $champsData = $data['champs'] ?? [];
             $relations = $this->extractRelationsFromChamps($champsData);
 

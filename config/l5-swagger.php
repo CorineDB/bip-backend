@@ -4,6 +4,7 @@ return [
     'default' => 'default',
     'annotations' => [
         base_path('app'), // ou autre dossier contenant vos annotations
+        base_path('app/Swagger') // <-- ajoute ceci si ce n’est pas déjà là
     ],
     'documentations' => [
         'default' => [

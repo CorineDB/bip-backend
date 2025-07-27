@@ -72,7 +72,7 @@ Route::group(['middleware' => []], function () {
 
         Route::post('reinitialisation-de-mot-de-passe', [OAuthController::class, 'reinitialisationDeMotDePasse'])->name('reinitialisationDeMotDePasse');
 
-        Route::group(['middleware' => ['auth:sanctum']], function () {
+        Route::group(['middleware' => ['auth:api']], function () {
             Route::controller('App\Http\Controllers\OAuthController')->group(function () {
 
                 Route::post('/deconnexion', 'deconnexion')->name('deconnexion'); // Route de déconnexion
