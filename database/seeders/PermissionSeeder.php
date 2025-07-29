@@ -28,7 +28,7 @@ class PermissionSeeder extends Seeder
 
         //$this->enableForeignKeyChecks();
 
-        $espaces = ["administration-general", "dpaf", "dgpb", "dgb", "organisation"];
+        $espaces = ["administration-general", "dpaf", "dgpb", "organisation"];
 
         $roles_par_espace = [
             "administration-general" => ["Super Admin"],
