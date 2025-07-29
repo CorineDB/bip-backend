@@ -2,10 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Models\Personne;
+use App\Models\Role;
+use App\Models\User;
 use App\Traits\ForeignKeyConstraints;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class PermissionSeeder extends Seeder
 {
@@ -24,12 +28,13 @@ class PermissionSeeder extends Seeder
 
         //$this->enableForeignKeyChecks();
 
-        $espaces = ["administration-general", "dpaf", "dgpb", "dgb", "ministere", "institution"];
+        $espaces = ["administration-general", "dpaf", "dgpb", "dgb", "organisation"];
 
         $roles_par_espace = [
             "administration-general" => ["Super Admin"],
-            "dpaf" => ["Responsable Projet", "Responsable Hierachique"],
-            "dgpb" => ["Responsable DGPB", "Analyste DGPD"]/*
+            "dpaf" => ["DPAF"],
+            "dgpb" => ["DGPD"],
+            "organisation" => ["Organisation"]/*
             "ministere" => ["Ministere"],
             "institution" => ["Président Institution", "Secrétaire Exécutif", "Coordonnateur Projet"]*/
         ];
@@ -113,6 +118,14 @@ class PermissionSeeder extends Seeder
 
                 "creer-evaluation", "voir-cible", "voir-odd", "voir-grands-secteurs", "voir-secteurs", "voir-sous-secteurs"
             ],
+            "Organisation" => [
+                "voir-idees-projet","voir-details-idee-projet", "gerer-idees-projet", "voir-evaluations", "voir-canevas-fiche-idee",
+                "remplir-canevas-idee-projet", "modifier-une-idee-projet", "supprimer-une-idee-projet", "creer-une-idee-projet", "obtenir-score-climatique",
+                "recevoir-notification-resultats-validation-idee",
+                "voir-axes-pag", "voir-piliers-pag", "voir-actions-pag", "voir-orientations-pnd", "voir-objectifs-pnd", "voir-resultats-pnd", "voir-types-financement", "voir-sources-financement", "voir-sources-financement",
+
+                "creer-evaluation", "voir-cible", "voir-odd", "voir-grands-secteurs", "voir-secteurs", "voir-sous-secteurs"
+            ],
             "Responsable Hierachique" => [
                 "voir-idees-projet", "consulter-une-fiche-synthese-idee", "telecharger-une-fiche-synthese-idee", "valider-idee-projet", "emettre-commentaire", "attacher-fichier", "voir-fichier", "partager-fichier",
                 "recevoir-une-notification-nouvelle-idee-projet", "transferer-idee-projet",
@@ -123,7 +136,7 @@ class PermissionSeeder extends Seeder
                 "voir-types-financement", "voir-sources-financement", "apprecier-tdr-faisabilite",
                 "soumettre-rapport-faisabilite", "voir-rapports-etude"
             ],
-            "Responsable DGPD" => [
+            "DGPD" => [
                 "voir-idees-projet", "voir-grille-evaluation-amc",
                 "remplir-grille-amc", "enregistrer-fiche-synthese-amc", "modifier-fiche-synthese-amc", "emettre-commentaire", "rejeter-idee-idee", "recevoir-notification-validation-idee", "voir-historique-amc", "telecharger-fiche-synthese-amc",
                 "voir-types-financement", "voir-sources-financement", "apprecier-tdr-faisabilite",
@@ -143,7 +156,7 @@ class PermissionSeeder extends Seeder
 
                 "voir-notes-conceptuelle", "rediger-note-conceptuelle", "consulter-canevas-redaction-note-conceptuelle", "voir-commentaires-note-conceptuelle", "telecharger-note-conceptuelle", "televerser-note-conceptuelle", "attacher-fichier-note-conceptuelle", "enregistrer-une-note-conceptuelle", "transferer-une-note-conceptuelle", "evaluer-note-conception",
                 "voir-details-idee-projet","voir-projets","voir-details-projets"
-            ]
+            ],
 
         ];
 
@@ -182,5 +195,44 @@ class PermissionSeeder extends Seeder
                 }
             }
         }
+
+
+        $adminPerson = Personne::create([
+            "nom" => "Admin",
+            "prenom" => "Admin",
+            "poste" => "Administrateur general"
+        ]);
+
+        // Supprimer les anciens utilisateurs et créer les nouveaux
+        DB::table('users')->truncate();
+
+        User::create([
+            'is_email_verified' => true,
+            'email_verified_at' => now(),
+            'password' => Hash::make('SuperAdmin123!'),
+            'personneId' => $adminPerson->id,
+            'roleId' => Role::where("slug", "super-admin")->first()->id,
+            'last_connection' => now()->subHours(2),
+            "provider" => "local",
+            "provider_user_id" => "jsognon8@gmail.com",
+            "username" => "jsognon8@gmail.com",
+            'email' => "jsognon8@gmail.com",
+            "status" => "actif",
+            "last_connection" =>  now()->subHours(2),
+            'ip_address' => '127.0.0.1',
+            "created_at" => now(),
+            "settings" => null,
+            "person" => null,
+            "keycloak_id" => null,
+            "type" => "super-admin",
+            "lastRequest" =>  now()->subHours(2),
+            "profilable_id" => null,
+            "profilable_type" => null,
+            "account_verification_request_sent_at" => null,
+            "password_update_at" => null,
+            "last_password_remember" => null,
+            "token" => null,
+            "link_is_valide" => false,
+        ]);
     }
 }

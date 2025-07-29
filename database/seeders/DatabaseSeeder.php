@@ -21,12 +21,15 @@ class DatabaseSeeder extends Seeder
             CommuneSeeder::class,
             ArrondissementSeeder::class,
             VillageSeeder::class,
+            PermissionSeeder::class,
+
+            /*
             OrganisationsSeeder::class,
             PersonnesSeeder::class,
 
             // Then, seed the new categorized users system
             CategoriesUtilisateursSeeder::class,
-            UpdateUsersWithCategoriesSeeder::class,
+            UpdateUsersWithCategoriesSeeder::class,*/
         ]);
 
 
