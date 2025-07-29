@@ -22,7 +22,7 @@ class CritereResource extends BaseApiResource
             'ponderation' => $this->ponderation,
             'commentaire' => $this->commentaire,
             'is_mandatory' => $this->is_mandatory,
-            'notations' => NotationResource::collection($this->whenLoaded('notations'))
+            'notations' => $this->whenLoaded('notations', NotationResource::collection($this->whenLoaded('notations')))
         ];
     }
 

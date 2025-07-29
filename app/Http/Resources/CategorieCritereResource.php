@@ -21,7 +21,7 @@ class CategorieCritereResource extends BaseApiResource
             'type' => $this->type,
             'slug' => $this->slug,
             'is_mandatory' => $this->is_mandatory,
-            'criteres' => CritereResource::collection($this->whenLoaded('criteres')),
+            'criteres' => CritereResource::collection($this->criteres),
             'notations' => NotationResource::collection($this->whenLoaded('notations')),
             'total_ponderation' => $this->whenLoaded('criteres', function () {
                 return $this->criteres->sum('ponderation');

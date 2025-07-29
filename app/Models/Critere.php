@@ -30,7 +30,7 @@ class Critere extends Model
      * @var array
      */
     protected $fillable = [
-        "intitule", "ponderation", "commentaire", "is_mandatory", "categorie_critere_id"
+        "intitule", "ponderation", "commentaire", "is_mandatory", "est_general", "categorie_critere_id"
     ];
 
     /**

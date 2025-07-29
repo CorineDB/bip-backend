@@ -2,7 +2,7 @@
 
 namespace App\Services\Contracts;
 
-interface DgpdServiceInterface
+interface DgpdServiceInterface extends AbstractServiceInterface
 {
 
 }

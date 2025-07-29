@@ -28,9 +28,10 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VillageController;
 use App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DgpdController;
+use App\Http\Controllers\DpafController;
 use App\Http\Controllers\GroupeUtilisateurController;
 use App\Http\Controllers\OAuthController;
-use App\Models\GroupeUtilisateur;
 
 // Get authenticated user
 /* Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -116,6 +117,8 @@ Route::group(['middleware' => [/* 'cors', */ 'json.response'], 'as' => 'api.'], 
 
         // Organization & People Management
         Route::apiResource('organisations', OrganisationController::class);
+        Route::apiResource('dpaf', DpafController::class)->except(['destroy']);
+        Route::apiResource('dgpd', DgpdController::class)->except(['destroy']);
 
         Route::controller(OrganisationController::class)->group(function () {
             Route::get('ministeres', 'ministeres');
@@ -126,7 +129,19 @@ Route::group(['middleware' => [/* 'cors', */ 'json.response'], 'as' => 'api.'], 
 
         // User Management & Security (read-only permissions)
         Route::apiResource('users', UserController::class);
-        Route::apiResource('groupes-utilisateur', GroupeUtilisateurController::class);
+        Route::apiResource('groupes-utilisateur', GroupeUtilisateurController::class)
+            ->parameters(['groupes-utilisateur' => 'groupe_utilisateur']);
+
+        // Routes additionnelles pour les groupes d'utilisateurs
+        Route::prefix('groupes-utilisateur/{groupe_utilisateur}')->group(function () {
+            Route::post('/assign-roles', [GroupeUtilisateurController::class, 'assignRoles']);
+            Route::delete('/detach-roles', [GroupeUtilisateurController::class, 'detachRoles']);
+            Route::post('/add-users', [GroupeUtilisateurController::class, 'addUsers']);
+            Route::delete('/remove-users', [GroupeUtilisateurController::class, 'removeUsers']);
+            Route::get('/roles', [GroupeUtilisateurController::class, 'getRoles']);
+            Route::get('/users', [GroupeUtilisateurController::class, 'getUsers']);
+            Route::post('/create-user', [GroupeUtilisateurController::class, 'createUserInGroup']);
+        });
         Route::apiResource('roles', RoleController::class);
         Route::apiResource('permissions', PermissionController::class)->only(['index', 'show']);
 
@@ -188,10 +203,11 @@ Route::group(['middleware' => [/* 'cors', */ 'json.response'], 'as' => 'api.'], 
         Route::apiResource('financements', FinancementController::class);
         Route::apiResource('evaluations', EvaluationController::class);
         Route::apiResource('champs', ChampController::class);
-        
+
         // Evaluation Criteria Management
-        Route::apiResource('categories-critere', \App\Http\Controllers\CategorieCritereController::class);
-        
+        Route::apiResource('categories-critere', \App\Http\Controllers\CategorieCritereController::class)
+            ->parameters(['categories-critere' => 'categorie_critere']);
+
         // Grille Evaluation Preliminaire des Impacts Climatique (Routes spécifiques)
         Route::prefix('grille-evaluation-preliminaire')->group(function () {
             Route::get('/', [\App\Http\Controllers\CategorieCritereController::class, 'getGrilleEvaluationPreliminaire'])

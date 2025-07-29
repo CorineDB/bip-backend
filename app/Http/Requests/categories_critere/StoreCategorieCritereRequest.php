@@ -3,6 +3,7 @@
 namespace App\Http\Requests\categories_critere;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreCategorieCritereRequest extends FormRequest
 {
@@ -23,11 +24,18 @@ class StoreCategorieCritereRequest extends FormRequest
             'notations.*.commentaire' => 'nullable|string',
 
             'criteres' => 'required|array|min:1',
-            'criteres.*.id' => 'sometimes|exists:criteres,id',
+
+            'criteres.*.id' => [
+                'sometimes',
+                Rule::exists('criteres', 'id')
+                    ->whereNull('categorie_critere_id')
+                    ->whereNull('deleted_at')
+            ],
             'criteres.*.intitule' => 'required|string',
             'criteres.*.ponderation' => 'required|numeric|min:0',
             'criteres.*.commentaire' => 'nullable|string',
             'criteres.*.is_mandatory' => 'boolean',
+            'criteres.*.est_general' => ['boolean'],
 
             'criteres.*.notations' => 'sometimes|array|min:1',
             'criteres.*.notations.*.libelle' => 'required_with:criteres.*.notations|string|max:255',
@@ -40,10 +48,10 @@ class StoreCategorieCritereRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $data = $validator->getData();
-            
+
             $hasNotationsCategorie = !empty($data['notations']);
             $hasNotationsCriteres = false;
-            
+
             if (!empty($data['criteres'])) {
                 foreach ($data['criteres'] as $critere) {
                     if (!empty($critere['notations'])) {
@@ -52,7 +60,7 @@ class StoreCategorieCritereRequest extends FormRequest
                     }
                 }
             }
-            
+
             if (!$hasNotationsCategorie && !$hasNotationsCriteres) {
                 $validator->errors()->add('notations', 'Au moins des notations au niveau de la catégorie ou des critères doivent être définies.');
             }

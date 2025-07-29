@@ -17,7 +17,7 @@ class UpdateUserRequest extends FormRequest
         $userId = $this->route('user') ? (is_string($this->route('user')) ? $this->route('user') : ($this->route('user')->id)) : $this->route('id');
 
         $profilable = auth()->user()->profilable;
-        $isRequired = $profilable ? (((get_class($profilable) == "App\\Models\\Dpaf") || (get_class($profilable) == "App\\Models\\Dpgd")) && !auth()->user()->personne->organismeId) : false;
+        $isRequired = $profilable ? (((get_class($profilable) == "App\\Models\\Dpaf") || (get_class($profilable) == "App\\Models\\dgpd")) && !auth()->user()->personne->organismeId) : false;
 
 
         return [

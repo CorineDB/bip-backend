@@ -14,8 +14,16 @@ class StoreRoleRequest extends FormRequest
 
     public function rules(): array
     {
+        $profilable = auth()->user()->profilable;
+
         return [
-            'nom' => ['required', Rule::unique('roles', 'nom')->whereNull('deleted_at')],
+            'nom' => ['required', Rule::unique('roles', 'nom')
+            ->when($profilable, function($query) use($profilable) {
+                $query->where('roleable_type', get_class($profilable))
+                ->where('roleable_id', $profilable->id);
+            })
+            ->whereNull('deleted_at')],
+
             'description' => 'nullable|string|max:1000',
             'permissions' => ['required', 'array', 'min:1'],
             'permissions.*' => ['required', 'distinct', Rule::exists('permissions', 'id')->whereNull('deleted_at')],

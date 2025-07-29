@@ -16,8 +16,14 @@ class UpdateRoleRequest extends FormRequest
     {
         $roleId = $this->route('role') ? (is_string($this->route('role')) ? $this->route('role') : ($this->route('role')->id)) : $this->route('id');
 
+        $profilable = auth()->user()->profilable;
+
         return [
-            'nom' => ['required', Rule::unique('roles', 'nom')->ignore($roleId)->whereNull('deleted_at')],
+            'nom' => ['required', Rule::unique('roles', 'nom')->ignore($roleId)
+            ->when($profilable, function($query) use($profilable) {
+                $query->where('roleable_type', get_class($profilable))
+                ->where('roleable_id', $profilable->id);
+            })->whereNull('deleted_at')],
             'description' => 'nullable|string|max:1000',
             'permissions' => ['sometimes', 'array', 'min:1'],
             'permissions.*' => ['required', 'distinct', Rule::exists('permissions', 'id')->whereNull('deleted_at')],

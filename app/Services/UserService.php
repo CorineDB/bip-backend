@@ -54,7 +54,7 @@ class UserService extends BaseService implements UserServiceInterface
 
             if (!($role = $this->roleRepository->findById($data["roleId"]))) throw new Exception("Role introuvable", 400);
 
-            if (!(auth()->user()->hasRole("administrateur", "super-admin", "super-administrateur", "organisation", "dpaf", "dpgd")))  throw new Exception("L'utilisateur a un rôle inconnu", 400);
+            if (!(auth()->user()->hasRole("administrateur", "super-admin", "super-administrateur", "organisation", "dpaf", "dgpd")))  throw new Exception("L'utilisateur a un rôle inconnu", 400);
 
             $password = $this->generateSimpleTemporaryPassword();
 

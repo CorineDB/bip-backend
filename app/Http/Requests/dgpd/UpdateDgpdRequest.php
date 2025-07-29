@@ -14,10 +14,10 @@ class UpdateDgpdRequest extends FormRequest
 
     public function rules(): array
     {
-        $dpgdId = $this->route('dpgd') ? (is_string($this->route('dpgd')) ? $this->route('dpgd') : ($this->route('dpgd')->id)) : $this->route('id');
+        $dgpdId = $this->route('dgpd') ? (is_string($this->route('dgpd')) ? $this->route('dgpd') : ($this->route('dgpd')->id)) : $this->route('id');
 
         return [
-            'nom' => ['required', 'string', Rule::unique('dpgd', 'nom')->ignore($dpgdId)->whereNull('deleted_at')],
+            'nom' => ['required', 'string', Rule::unique('dgpd', 'nom')->ignore($dgpdId)->whereNull('deleted_at')],
             'description' => 'nullable|string',
             "admin" => ["required"],
             // Attributs de personne

@@ -6,7 +6,6 @@ use Illuminate\Http\JsonResponse;
 use Exception;
 use App\Services\BaseService;
 use App\Repositories\Contracts\BaseRepositoryInterface;
-use App\Http\Resources\Contracts\ApiResourceInterface;
 use App\Repositories\Contracts\CategorieCritereRepositoryInterface;
 use App\Services\Contracts\CategorieCritereServiceInterface;
 use App\Http\Resources\CategorieCritereResource;
@@ -46,7 +45,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 foreach ($notationsCategorie as $notationData) {
                     $notationData['categorie_critere_id'] = $categorieCritere->id;
                     $notationData['critere_id'] = null;
-                    
+
                     Notation::create($notationData);
                 }
             }
@@ -54,7 +53,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             if (!empty($criteres)) {
                 foreach ($criteres as $critereData) {
                     $critereData['categorie_critere_id'] = $categorieCritere->id;
-                    
+
                     $notations = $critereData['notations'] ?? [];
                     unset($critereData['notations']);
 
@@ -64,7 +63,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                         foreach ($notations as $notationData) {
                             $notationData['critere_id'] = $critere->id;
                             $notationData['categorie_critere_id'] = $categorieCritere->id;
-                            
+
                             Notation::create($notationData);
                         }
                     }
@@ -89,7 +88,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             DB::beginTransaction();
 
             $categorieCritere = $this->repository->findOrFail($id);
-            
+
             $criteres = $data['criteres'] ?? [];
             $notationsCategorie = $data['notations'] ?? [];
             unset($data['criteres'], $data['notations']);
@@ -109,7 +108,9 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                         Notation::create($notationData);
                     }
                 }
-            } elseif (!empty($criteres)) {
+            }
+
+            if (!empty($criteres)) {
                 foreach ($criteres as $critereData) {
                     $notations = $critereData['notations'] ?? [];
                     unset($critereData['notations']);
@@ -122,14 +123,16 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                         $critere = Critere::create($critereData);
                     }
 
-                    foreach ($notations as $notationData) {
-                        if (isset($notationData['id']) && $notationData['id']) {
-                            $notation = Notation::findOrFail($notationData['id']);
-                            $notation->update($notationData);
-                        } else {
-                            $notationData['critere_id'] = $critere->id;
-                            $notationData['categorie_critere_id'] = $id;
-                            Notation::create($notationData);
+                    if (!empty($notations)) {
+                        foreach ($notations as $notationData) {
+                            if (isset($notationData['id']) && $notationData['id']) {
+                                $notation = Notation::findOrFail($notationData['id']);
+                                $notation->update($notationData);
+                            } else {
+                                $notationData['critere_id'] = $critere->id;
+                                $notationData['categorie_critere_id'] = $id;
+                                Notation::create($notationData);
+                            }
                         }
                     }
                 }
@@ -155,7 +158,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
     {
         try {
             $grille = $this->repository->findByType('Évaluation préliminaire multi projet de l\'impact climatique');
-            
+
             if (!$grille) {
                 return response()->json([
                     'success' => false,
@@ -177,7 +180,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
     {
         try {
             $grille = $this->repository->findByType('Évaluation préliminaire multi projet de l\'impact climatique');
-            
+
             if (!$grille) {
                 return response()->json([
                     'success' => false,

@@ -33,7 +33,6 @@ class CategorieCritere extends Model
         'type',
         'slug',
         'is_mandatory',
-        'grille_evaluation',
         'critere_paramatrable'
     ];
 
@@ -66,7 +65,7 @@ class CategorieCritere extends Model
 
         static::deleting(function ($model) {
             $model->update([
-                'type' => time() . '::' . $model->nom,
+                'type' => time() . '::' . $model->type,
                 'slug' => time() . '::' . $model->slug,
             ]);
 
@@ -81,7 +80,7 @@ class CategorieCritere extends Model
      * @param  string  $value
      * @return void
      */
-    public function setNomAttribute($value)
+    public function setTypeAttribute($value)
     {
         $this->attributes['type'] = addslashes($value); // Escape value with backslashes
         $this->attributes['slug'] = $this->generateUniqueSlug($value);
@@ -99,6 +98,15 @@ class CategorieCritere extends Model
         }
 
         return $slug;
+    }
+
+    /**
+    *
+    * @param  string  $value
+    * @return string
+    */
+    public function getTypeAttribute($value){
+        return ucfirst(str_replace('\\',' ',$value));
     }
 
     /**

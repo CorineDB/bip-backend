@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Http\Resources\DgpdResource;
 use App\Jobs\SendEmailJob;
+use App\Repositories\Contracts\BaseRepositoryInterface;
 use Illuminate\Http\JsonResponse;
 use App\Repositories\Contracts\DgpdRepositoryInterface;
 use App\Services\Contracts\DgpdServiceInterface;
@@ -17,11 +18,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-class DgpdService implements DgpdServiceInterface
+class DgpdService extends BaseService implements DgpdServiceInterface
 {
     use GenerateTemporaryPassword;
 
-    protected DgpdRepositoryInterface $repository;
+    protected BaseRepositoryInterface $repository;
     protected PersonneRepositoryInterface $personneRepository;
     protected RoleRepositoryInterface $roleRepository;
 
@@ -31,6 +32,7 @@ class DgpdService implements DgpdServiceInterface
         PersonneRepositoryInterface $personneRepository,
         RoleRepositoryInterface $roleRepository
     ) {
+        parent::__construct($repository);
         $this->repository = $repository;
         $this->roleRepository = $roleRepository;
         $this->personneRepository = $personneRepository;
@@ -66,7 +68,7 @@ class DgpdService implements DgpdServiceInterface
                     $dgpd->user->personne->save();
                 }
             }
-            else{
+        else{
 
                 $personneData = $attributs["admin"]['personne'] ?? [];
                 // Création de la personne
@@ -78,7 +80,7 @@ class DgpdService implements DgpdServiceInterface
 
                 $dgpd->user()->create(array_merge($attributs["admin"], ['password' => Hash::make($password), "username" => $attributs["admin"]['email'], "provider_user_id" => $attributs["admin"]['email'], "personneId" => $personne->id, "roleId" => $role->id, 'type' => $role->slug, 'profilable_type' => get_class($dgpd), 'profilable_id' => $dgpd->id]));
 
-                $dgpd->user->refresh();
+                $dgpd->refresh();
 
                 // Création de la personne
 
@@ -121,17 +123,17 @@ class DgpdService implements DgpdServiceInterface
 
     }
 
-    public function update($DgpdId, array $attributs) : JsonResponse
+    public function update($dgpdId, array $attributs) : JsonResponse
     {
         DB::beginTransaction();
         try {
 
-            if(is_string($DgpdId))
+            if(is_string($dgpdId))
             {
-                $dgpd = $this->repository->findById($DgpdId);
+                $dgpd = $this->repository->findById($dgpdId);
             }
             else{
-                $dgpd = $DgpdId;
+                $dgpd = $dgpdId;
             }
 
             unset($attributs["admin"]['email']);

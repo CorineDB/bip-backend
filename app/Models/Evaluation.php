@@ -30,7 +30,17 @@ class Evaluation extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'type_evaluation',
+        'date_debut_evaluation',
+        'date_fin_evaluation', 
+        'valider_le',
+        'projetable_type',
+        'projetable_id',
+        'evaluateur_id',
+        'valider_par',
+        'commentaire',
+        'evaluation',
+        'resultats_evaluation'
     ];
 
     /**
@@ -42,6 +52,11 @@ class Evaluation extends Model
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'date_debut_evaluation' => 'datetime',
+        'date_fin_evaluation' => 'datetime',
+        'valider_le' => 'datetime',
+        'evaluation' => 'array',
+        'resultats_evaluation' => 'array',
     ];
 
     /**
@@ -61,13 +76,39 @@ class Evaluation extends Model
         parent::boot();
 
         static::deleting(function ($model) {
-            $model->update([
-                // Exemple : 'nom' => time() . '::' . $model->nom,
-            ]);
-
-            if (method_exists($model, 'user')) {
-                // Exemple : $model->user()->delete();
-            }
+            // Clean up related data if needed
         });
+    }
+
+    /**
+     * Get the projetable entity that the evaluation belongs to.
+     */
+    public function projetable()
+    {
+        return $this->morphTo();
+    }
+
+    /**
+     * Get the evaluateur (evaluator).
+     */
+    public function evaluateur()
+    {
+        return $this->belongsTo(User::class, 'evaluateur_id');
+    }
+
+    /**
+     * Get the validator.
+     */
+    public function validator()
+    {
+        return $this->belongsTo(User::class, 'valider_par');
+    }
+
+    /**
+     * Get the evaluation criteria for this evaluation.
+     */
+    public function evaluationCriteres()
+    {
+        return $this->hasMany(EvaluationCritere::class, 'evaluation_id');
     }
 }

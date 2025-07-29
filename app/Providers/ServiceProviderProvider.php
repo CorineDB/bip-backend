@@ -45,7 +45,7 @@ class ServiceProviderProvider extends ServiceProvider
             'EvaluationServiceInterface' => 'EvaluationService',
             "PassportOAuthServiceInterface" => "PassportOAuthService",
             'DpafServiceInterface' => 'DpafService',
-            'DpgdServiceInterface' => 'DpgdService',
+            'DgpdServiceInterface' => 'DgpdService',
             'GroupeUtilisateurServiceInterface' => 'GroupeUtilisateurService',
             'CategorieCritereServiceInterface' => 'CategorieCritereService',
 

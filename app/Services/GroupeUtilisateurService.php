@@ -60,7 +60,7 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
 
         try {
             // Vérifier que le profil (DPAF/DGPD) existe
-            if (isset($data['profilable_type']) && isset($data['profilable_id'])) {
+            /* if (isset($data['profilable_type']) && isset($data['profilable_id'])) {
                 $profilableModel = $data['profilable_type'];
                 $profilableExists = $profilableModel::find($data['profilable_id']);
 
@@ -72,7 +72,10 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
                         'statutCode' => Response::HTTP_BAD_REQUEST
                     ], Response::HTTP_BAD_REQUEST);
                 }
-            }
+            } */
+
+            $data['profilable_id'] = Auth::user()->profilable_id;
+            $data['profilable_type'] = Auth::user()->profilable_type;
 
             // Créer le groupe
             $groupe = $this->repository->create($data);
@@ -151,20 +154,8 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
                 ], Response::HTTP_NOT_FOUND);
             }
 
-            // Vérifier que le profil (DPAF/DGPD) existe si modifié
-            if (isset($data['profilable_type']) && isset($data['profilable_id'])) {
-                $profilableModel = $data['profilable_type'];
-                $profilableExists = $profilableModel::find($data['profilable_id']);
-
-                if (!$profilableExists) {
-                    return response()->json([
-                        'statut' => 'error',
-                        'message' => 'Le profil spécifié n\'existe pas',
-                        'data' => null,
-                        'statutCode' => Response::HTTP_BAD_REQUEST
-                    ], Response::HTTP_BAD_REQUEST);
-                }
-            }
+            unset($data["profilable_id"]);
+            unset($data["profilable_type"]);
 
             // Extraire les relations avant la mise à jour
             $roles = $data['roles'] ?? null;

@@ -18,6 +18,7 @@ return new class extends Migration
                 $table->float('ponderation')->default(0);
                 $table->longText('commentaire')->nullable();
                 $table->boolean('is_mandatory')->default(false);
+                $table->boolean('est_general')->default(false);
 
                 $table->bigInteger('categorie_critere_id')->nullable()->unsigned();
                 $table->foreign('categorie_critere_id')->references('id')->on('categories_critere')

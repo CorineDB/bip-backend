@@ -4,7 +4,7 @@ namespace App\Services\Contracts;
 
 use Illuminate\Http\JsonResponse;
 
-interface DpafServiceInterface
+interface DpafServiceInterface extends AbstractServiceInterface
 {
     /**
      * Change the admin account for DPAF.

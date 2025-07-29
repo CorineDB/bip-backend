@@ -20,8 +20,10 @@ class AssignRolesRequest extends FormRequest
             'roles.*' => [
                 'integer',
                 Rule::exists('roles', 'id')
-                ->where('roleable_type', get_class($profilable))
-                ->where('roleable_id', $profilable->id)
+                ->when($profilable, function($query) use($profilable) {
+                    $query->where('roleable_type', get_class($profilable))
+                    ->where('roleable_id', $profilable->id);
+                })
                 ->whereNull('deleted_at')
             ],
         ];

@@ -9,6 +9,7 @@ use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Services\Contracts\RoleServiceInterface;
 use App\Http\Resources\RoleResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Auth;
 
 class RoleService extends BaseService implements RoleServiceInterface
 {
@@ -56,6 +57,9 @@ class RoleService extends BaseService implements RoleServiceInterface
         try {
             $permissions = $data['permissions'] ?? [];
             unset($data['permissions']);
+
+            $data['roleable_id'] = Auth::user()->profilable_id;
+            $data['roleable_type'] = Auth::user()->profilable_type;
 
             $item = $this->repository->create($data);
 

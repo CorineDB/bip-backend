@@ -4,15 +4,13 @@ namespace App\Services;
 
 use App\Http\Resources\DpafResource;
 use App\Jobs\SendEmailJob;
+use App\Repositories\Contracts\BaseRepositoryInterface;
 use Illuminate\Http\JsonResponse;
-use Exception;
 use App\Repositories\Contracts\DpafRepositoryInterface;
 use App\Services\Contracts\DpafServiceInterface;
-use App\Models\Dpaf;
-use App\Models\User;
-use App\Models\Role;
 use App\Repositories\Contracts\PersonneRepositoryInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
+use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Support\Facades\Hash;
 use App\Traits\GenerateTemporaryPassword;
 use Carbon\Carbon;
@@ -21,25 +19,28 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-class DpafService implements DpafServiceInterface
+class DpafService extends BaseService implements DpafServiceInterface
 {
     use GenerateTemporaryPassword;
 
-    protected DpafRepositoryInterface $repository;
-    protected PersonneRepositoryInterface $personneRepository;
+    protected BaseRepositoryInterface $repository;
+    protected UserRepositoryInterface $userRepository;
     protected RoleRepositoryInterface $roleRepository;
-
+    protected PersonneRepositoryInterface $personneRepository;
 
     public function __construct(
         DpafRepositoryInterface $repository,
-        PersonneRepositoryInterface $personneRepository,
-        RoleRepositoryInterface $roleRepository
+        UserRepositoryInterface $userRepository,
+        RoleRepositoryInterface $roleRepository,
+        PersonneRepositoryInterface $personneRepository
     ) {
+        parent::__construct($repository);
         $this->repository = $repository;
+        $this->userRepository = $userRepository;
         $this->roleRepository = $roleRepository;
         $this->personneRepository = $personneRepository;
-
     }
+
     protected function getResourceClass(): string
     {
         return DpafResource::class;
@@ -79,9 +80,9 @@ class DpafService implements DpafServiceInterface
 
                 $password = $this->generateSimpleTemporaryPassword();
 
-                $dpaf->user()->create(array_merge($attributs, ['password' => Hash::make($password), "username" => $attributs["admin"]['email'], "provider_user_id" => $attributs["admin"]['email'], "personneId" => $personne->id, "roleId" => $role->id, 'type' => $role->slug, 'profilable_type' => get_class($dpaf), 'profilable_id' => $dpaf->id]));
+                $dpaf->user()->create(array_merge($attributs["admin"], ['password' => Hash::make($password), "username" => $attributs["admin"]['email'], "provider_user_id" => $attributs["admin"]['email'], "personneId" => $personne->id, "roleId" => $role->id, 'type' => $role->slug, 'profilable_type' => get_class($dpaf), 'profilable_id' => $dpaf->id]));
 
-                $dpaf->user->refresh();
+                $dpaf->refresh();
 
                 // Création de la personne
 

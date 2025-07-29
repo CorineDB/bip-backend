@@ -15,7 +15,7 @@ class StoreDgpdRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nom' => ['required', 'string', Rule::unique('dpgd', 'nom')->whereNull('deleted_at')],
+            'nom' => ['required', 'string', Rule::unique('dgpd', 'nom')->whereNull('deleted_at')],
             'description' => 'nullable|string',
             "admin" => ["required"],
             'admin.email' => ["required", "email", "max:255", Rule::unique('users', 'email')->whereNull('deleted_at')],

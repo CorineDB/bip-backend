@@ -17,7 +17,7 @@ class StoreUserRequest extends FormRequest
 
         $profilable = auth()->user()->profilable;
 
-        $isRequired = $profilable ? (((get_class($profilable) == "App\\Models\\Dpaf") || (get_class($profilable) == "App\\Models\\Dpgd")) && !auth()->user()->personne->organismeId) : false;
+        $isRequired = $profilable ? (((get_class($profilable) == "App\\Models\\Dpaf") || (get_class($profilable) == "App\\Models\\dgpd")) && !auth()->user()->personne->organismeId) : false;
 
         return [
             'email' => ["required", "email", "max:255", Rule::unique('users', 'email')->whereNull('deleted_at')],
