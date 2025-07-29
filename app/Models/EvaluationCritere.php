@@ -30,7 +30,12 @@ class EvaluationCritere extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'note',
+        'evaluateur_id',
+        'notation_id',
+        'critere_id',
+        'categorie_critere_id',
+        'evaluation_id'
     ];
 
     /**
@@ -61,13 +66,47 @@ class EvaluationCritere extends Model
         parent::boot();
 
         static::deleting(function ($model) {
-            $model->update([
-                // Exemple : 'nom' => time() . '::' . $model->nom,
-            ]);
-
-            if (method_exists($model, 'user')) {
-                // Exemple : $model->user()->delete();
-            }
+            // Clean up related data if needed
         });
+    }
+
+    /**
+     * Get the evaluation that owns this critere evaluation.
+     */
+    public function evaluation()
+    {
+        return $this->belongsTo(Evaluation::class, 'evaluation_id');
+    }
+
+    /**
+     * Get the evaluateur (user) who made this evaluation.
+     */
+    public function evaluateur()
+    {
+        return $this->belongsTo(User::class, 'evaluateur_id');
+    }
+
+    /**
+     * Get the notation for this evaluation.
+     */
+    public function notation()
+    {
+        return $this->belongsTo(Notation::class, 'notation_id');
+    }
+
+    /**
+     * Get the critere being evaluated.
+     */
+    public function critere()
+    {
+        return $this->belongsTo(Critere::class, 'critere_id');
+    }
+
+    /**
+     * Get the categorie critere.
+     */
+    public function categorieCritere()
+    {
+        return $this->belongsTo(CategorieCritere::class, 'categorie_critere_id');
     }
 }

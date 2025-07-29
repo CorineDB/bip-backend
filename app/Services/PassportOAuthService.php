@@ -57,9 +57,6 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
 
         try {
 
-            // Rechercher l'utilisateur grâce à son email.
-
-
             // Si la variable utilisateur est null alors une exception sera déclenché notifiant que l'email renseigner ne correspond à aucun enregistrement de la table users
             if (!($utilisateur = $this->repository->findByAttribute('email', $identifiants['email']))) {
 
@@ -310,7 +307,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
             DB::commit();
 
             //Send verificiation email
-            //dispatch(new SendEmailJob($utilisateur, "confirmation-de-compte"))->delay(now()->addSeconds(15));
+            dispatch(new SendEmailJob($utilisateur, "confirmation-de-compte"))->delay(now()->addSeconds(15));
 
             // retourner une reponse avec les détails de l'utilisateur
             return response()->json(['statut' => 'success', 'message' => "E-Mail de d'activation de compte envoyé", 'data' => [], 'statutCode' => Response::HTTP_OK], Response::HTTP_OK);

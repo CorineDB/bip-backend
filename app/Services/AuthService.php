@@ -6,6 +6,8 @@ use App\Http\Resources\auth\AuthResource;
 use App\Http\Resources\auth\LoginResource;
 use Illuminate\Support\Facades\Http;
 use App\Http\Resources\OAuth2Resource;
+use App\Jobs\SendEmailJob;
+use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Services\Contracts\PassportOAuthServiceInterface;
 use App\Services\Traits\ConfigueTrait;
@@ -130,7 +132,7 @@ class AuthService extends BaseService implements PassportOAuthServiceInterface
 
             $data = ["access_token" => $user->createUnToken($this->hashID(8))->plainTextToken, 'expired_at' => now()->addHours(3), 'user' => $user];
 
-            //$utilisateur->lastRequest = date('Y-m-d H:i:s');
+            $utilisateur->lastRequest = date('Y-m-d H:i:s');
             $utilisateur->save();
 
             RateLimiter::clear($this->throttleKey());
@@ -323,7 +325,7 @@ class AuthService extends BaseService implements PassportOAuthServiceInterface
             DB::commit();
 
             //Send verificiation email
-            //dispatch(new SendEmailJob($utilisateur, "confirmation-de-compte"))->delay(now()->addSeconds(15));
+            dispatch(new SendEmailJob($utilisateur, "confirmation-de-compte"))->delay(now()->addSeconds(15));
 
             // retourner une reponse avec les détails de l'utilisateur
             return response()->json(['statut' => 'success', 'message' => "E-Mail de d'activation de compte envoyé", 'data' => [], 'statutCode' => Response::HTTP_OK], Response::HTTP_OK);

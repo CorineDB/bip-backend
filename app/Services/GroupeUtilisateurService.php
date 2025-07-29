@@ -550,7 +550,7 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
             DB::commit();
 
             // Envoyer l'email d'inscription
-            dispatch(new SendEmailJob($user, "confirmation-de-compte", $password))->delay(now()->addSeconds(15));
+            dispatch(new SendEmailJob($user, "confirmation-compte", $password))->delay(now()->addSeconds(15));
 
             $acteur = Auth::check() ? Auth::user()->nom . " " . Auth::user()->prenom : "Inconnu";
             $message = Str::ucfirst($acteur) . " a créé l'utilisateur {$user->username} dans le groupe {$groupe->nom}.";

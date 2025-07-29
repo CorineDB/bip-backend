@@ -111,4 +111,46 @@ class Evaluation extends Model
     {
         return $this->hasMany(EvaluationCritere::class, 'evaluation_id');
     }
+
+    /**
+     * Get all evaluateurs for this evaluation through evaluation_criteres.
+     */
+    public function evaluateurs()
+    {
+        return $this->belongsToMany(User::class, 'evaluation_criteres', 'evaluation_id', 'evaluateur_id')
+            ->withPivot('critere_id', 'note', 'notation_id', 'categorie_critere_id')
+            ->withTimestamps()
+            ->distinct();
+    }
+
+    /**
+     * Get evaluation criteres grouped by evaluateur.
+     */
+    public function getEvaluationsByUser()
+    {
+        return $this->evaluationCriteres()
+            ->with(['evaluateur', 'critere', 'notation', 'categorieCritere'])
+            ->get()
+            ->groupBy('evaluateur_id');
+    }
+
+    /**
+     * Calculate aggregated scores by critere.
+     */
+    public function getAggregatedScores()
+    {
+        return $this->evaluationCriteres()
+            ->with(['critere', 'notation'])
+            ->get()
+            ->groupBy('critere_id')
+            ->map(function ($critereEvaluations) {
+                $notes = $critereEvaluations->pluck('notation.valeur')->filter();
+                return [
+                    'critere' => $critereEvaluations->first()->critere,
+                    'moyenne' => $notes->average(),
+                    'total_evaluateurs' => $critereEvaluations->count(),
+                    'notes_individuelles' => $notes->toArray()
+                ];
+            });
+    }
 }

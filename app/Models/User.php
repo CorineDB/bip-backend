@@ -200,4 +200,39 @@ class User extends Authenticatable implements OAuthenticatable
                     ->withTimestamps()
                     ->withPivot('deleted_at');
     }
+
+    /**
+     * Get evaluations where this user is the main evaluateur.
+     */
+    public function evaluationsAsEvaluateur()
+    {
+        return $this->hasMany(Evaluation::class, 'evaluateur_id');
+    }
+
+    /**
+     * Get evaluations where this user validated.
+     */
+    public function evaluationsAsValidator()
+    {
+        return $this->hasMany(Evaluation::class, 'valider_par');
+    }
+
+    /**
+     * Get all evaluation criteres this user has evaluated.
+     */
+    public function evaluationCriteres()
+    {
+        return $this->hasMany(EvaluationCritere::class, 'evaluateur_id');
+    }
+
+    /**
+     * Get evaluations this user participated in through evaluation_criteres.
+     */
+    public function evaluationsParticipated()
+    {
+        return $this->belongsToMany(Evaluation::class, 'evaluation_criteres', 'evaluateur_id', 'evaluation_id')
+            ->withPivot('critere_id', 'note', 'notation_id', 'categorie_critere_id')
+            ->withTimestamps()
+            ->distinct();
+    }
 }

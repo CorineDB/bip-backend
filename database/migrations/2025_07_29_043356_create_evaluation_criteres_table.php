@@ -1,11 +1,14 @@
 <?php
 
+use App\Services\Traits\HelperTrait;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    use HelperTrait;
+
     public function up(): void
     {
         if (!Schema::hasTable('evaluation_criteres')) {
@@ -32,8 +35,20 @@ return new class extends Migration
                     ->onDelete('cascade')
                     ->onUpdate('cascade');
 
+                $table->bigInteger('evaluation_id')->unsigned();
+                $table->foreign('evaluation_id')->references('id')->on('evaluations')
+                    ->onDelete('cascade')
+                    ->onUpdate('cascade');
+
                 $table->timestamps();
                 $table->softDeletes();
+
+                // Suppression de l'ancienne contrainte unique si elle existe (à adapter selon ton cas)
+                $this->dropUniqueIfExists(table: 'evaluation_criteres', constraint: 'unique_user_evaluations');
+
+                // Contrainte unique composée
+                $table->unique(['notation_id', 'evaluateur_id', 'critere_id', 'evaluation_id'], 'unique_user_evaluations');
+
             });
         }
     }

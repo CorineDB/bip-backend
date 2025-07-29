@@ -209,7 +209,7 @@ class PermissionSeeder extends Seeder
         User::create([
             'is_email_verified' => true,
             'email_verified_at' => now(),
-            'password' => Hash::make('SuperAdmin123!'),
+            'password' => Hash::make("SuperAdmin123!"),
             'personneId' => $adminPerson->id,
             'roleId' => Role::where("slug", "super-admin")->first()->id,
             'last_connection' => now()->subHours(2),

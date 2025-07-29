@@ -97,7 +97,7 @@ class DgpdService extends BaseService implements DgpdServiceInterface
                 $utilisateur->save();
 
                 //Envoyer les identifiants de connexion à l'utilisateur via son email
-                dispatch(new SendEmailJob($dgpd->user, "confirmation-de-compte", $password))->delay(now()->addSeconds(15));
+                dispatch(new SendEmailJob($dgpd->user, "confirmation-compte", $password))->delay(now()->addSeconds(15));
 
             }
 

@@ -65,20 +65,20 @@ class UserService extends BaseService implements UserServiceInterface
 
             if (auth()->user()->profileable) {
                 if (get_class(auth()->user()->profileable) == "App\\Models\\Organisation") {
-                    $personneData["organismenId"] = auth()->user()->personne->organismenId;
+                    $personneData["organismeId"] = auth()->user()->personne->organismeId;
                 } else if ((get_class(auth()->user()->profileable) == "App\\Models\\Dpaf") || (get_class(auth()->user()->profileable) == "App\\Models\\Dgpd")) {
 
                     if (isset($personneData["organismeId"])) {
 
                         if (!($organisation = $this->organisationRepository->findById($personneData["organismeId"]))) throw new Exception("Organisation introuvable", 400);
 
-                        $personneData["organismenId"] = $organisation->id;
+                        $personneData["organismeId"] = $organisation->id;
                     } else if (auth()->user()->personne) {
-                        $personneData["organismenId"] = auth()->user()->personne?->organismenId;
+                        $personneData["organismeId"] = auth()->user()->personne?->organismeId;
                     }
                 }
             } else {
-                $personneData["organismenId"] = null;
+                $personneData["organismeId"] = null;
             }
 
             // Création de la personne
@@ -137,7 +137,7 @@ class UserService extends BaseService implements UserServiceInterface
             DB::commit();
 
             //Envoyer les identifiants de connexion à l'utilisateur via son email
-            dispatch(new SendEmailJob($user, "confirmation-de-compte", $password))->delay(now()->addSeconds(15));
+            dispatch(new SendEmailJob($user, "confirmation-compte", $password))->delay(now()->addSeconds(15));
 
             return (new $this->resourceClass($user))
                 ->additional(['message' => 'Utilisateur créé avec succès.'])

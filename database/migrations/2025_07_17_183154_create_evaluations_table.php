@@ -10,18 +10,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-
-        DB::table('evaluations')->truncate();
-
         if (!Schema::hasTable('evaluations')) {
             Schema::create('evaluations', function (Blueprint $table) {
                 $table->id();
-
                 $table->string('type_evaluation')->default("climatique");
 
-                $table->timestamps("date_debut_evaluation");
-                $table->timestamps("date_fin_evaluation")->nullable();
-                $table->timestamps("valider_le")->nullable();
+                $table->timestamp("date_debut_evaluation");
+                $table->timestamp("date_fin_evaluation")->nullable();
+                $table->timestamp("valider_le")->nullable();
 
                 $table->morphs("projetable");
                 $table->bigInteger('evaluateur_id')->nullable()->unsigned();
