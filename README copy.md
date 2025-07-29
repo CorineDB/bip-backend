@@ -446,7 +446,7 @@ GET /api/enums/{enum-name}             # Options pour dropdowns
 4. **UpdateUsersWithCategoriesSeeder** - 13 utilisateurs de test
 
 ### Données Générées
-- **31 organisations** (Ministères, DPAF, DGPD, DGB, ONG, Partenaires)
+- **31 organisations** (Ministères, DPAF, DGPD, DGB)
 - **34 personnes** (Ministres, Directeurs, Coordinateurs, etc.)
 - **8 rôles** avec permissions granulaires
 - **29 permissions** couvrant tout le workflow
@@ -483,6 +483,203 @@ php artisan test --filter {TestClass}
 # Avec couverture
 php artisan test --coverage
 ```
+
+## 🚀 Commandes de Développement Rapide
+
+Le système inclut des générateurs personnalisés pour accélérer le développement en créant automatiquement les fichiers nécessaires avec la structure appropriée.
+
+### Générateurs Disponibles
+
+#### 🎯 **Générateur de Feature Complète**
+```bash
+php artisan make:feature {Entity}
+```
+Génère automatiquement :
+- Model + Migration
+- Controller avec Service injection
+- Service + Interface
+- Repository + Interface  
+- Form Requests (Store/Update)
+- API Resource
+- Tests associés
+- Routes API
+
+**Exemple :**
+```bash
+php artisan make:feature Product
+# Crée ProductController, ProductService, ProductRepository, etc.
+```
+
+#### 🎮 **Générateur de Contrôleur**
+```bash
+php artisan generate:controller {Name} [--model=] [--service=] [--force]
+```
+Génère :
+- Contrôleur avec injection de service
+- Service + Interface (si pas existant)
+- Form Requests (Store/Update)
+- Repository associé
+
+**Options :**
+- `--model` : Spécifier le nom du modèle (par défaut : singulier du nom)
+- `--service` : Spécifier le nom du service (par défaut : {Name}Service)
+- `--force` : Écraser les fichiers existants
+
+**Exemple :**
+```bash
+php artisan generate:controller Category --model=Category --force
+```
+
+#### ⚙️ **Générateur de Service**
+```bash
+php artisan generate:service {Name} [--force]
+```
+Génère :
+- Service class étendant BaseService
+- Interface étendant AbstractServiceInterface
+- Repository associé (si pas existant)
+- Resource associée (si pas existante)
+- Tests unitaires
+
+**Exemple :**
+```bash
+php artisan generate:service User --force
+```
+
+#### 🗄️ **Générateur de Repository**
+```bash
+php artisan generate:repository {Name} [--force]
+```
+Génère :
+- Repository class étendant BaseRepository
+- Interface étendant BaseRepositoryInterface
+- Tests unitaires
+
+#### 📝 **Générateur de Form Request**
+```bash
+php artisan generate:form-request {Name} [--module=] [--force]
+```
+Génère :
+- StoreRequest avec validation
+- UpdateRequest avec validation
+- Tests associés
+
+#### 🎨 **Générateur de Resource**
+```bash
+php artisan generate:resource {Name} [--type=single] [--force]
+```
+Génère :
+- Resource simple, collection ou externe
+- Transformation des données automatique
+
+**Types disponibles :**
+- `single` : Resource individuelle (défaut)
+- `collection` : Resource de collection
+- `external` : Resource pour API externe
+
+#### 🗃️ **Générateur de Model**
+```bash
+php artisan generate:model {Name} [--force]
+```
+Génère :
+- Model avec traits de base
+- Migration associée
+- Factory pour les tests
+
+#### 🧪 **Générateur de Test**
+```bash
+php artisan generate:test {Name} [--type=feature] [--force]
+```
+Génère :
+- Tests Feature ou Unit
+- Structure de test appropriée
+
+#### 🛣️ **Générateur de Route API**
+```bash
+php artisan generate:api-route {Name} [--force]
+```
+Ajoute automatiquement les routes API au fichier routes/api.php
+
+### Workflow de Développement Rapide
+
+#### Créer une nouvelle entité complète :
+```bash
+# 1. Génération complète d'une feature
+php artisan make:feature Order
+
+# 2. Ou génération étape par étape
+php artisan generate:controller Order
+php artisan generate:service Order  
+php artisan generate:repository Order
+php artisan generate:form-request Order
+php artisan generate:resource Order --type=single
+php artisan generate:api-route Order
+
+# 3. Générer les tests
+php artisan generate:test Order --type=feature
+php artisan generate:test OrderService --type=unit
+```
+
+#### Ajouter une fonctionnalité à une entité existante :
+```bash
+# Ajouter une méthode spécifique au repository
+php artisan generate:repository Order --force
+
+# Régénérer le service avec nouvelles méthodes
+php artisan generate:service Order --force
+
+# Mettre à jour les tests
+php artisan generate:test Order --force
+```
+
+### Avantages des Générateurs
+
+#### ✅ **Gain de Temps**
+- Création automatique de tous les fichiers nécessaires
+- Structure cohérente respectée
+- Injection de dépendances configurée
+
+#### ✅ **Consistance**
+- Patterns architecturaux respectés
+- Conventions de nommage uniformes
+- Code template standardisé
+
+#### ✅ **Moins d'Erreurs**
+- Namespace automatiquement configurés
+- Relations correctement établies
+- Imports générés automatiquement
+
+#### ✅ **Productivity**
+- Focus sur la logique métier
+- Moins de code boilerplate
+- Développement accéléré
+
+### Stubs Personnalisés
+
+Les générateurs utilisent des templates (stubs) personnalisés situés dans `app/stubs/` :
+```
+app/stubs/
+├── controller.stub          # Template contrôleur
+├── service.stub            # Template service
+├── i_service.stub          # Template interface service
+├── repository.stub         # Template repository
+├── i_repository.stub       # Template interface repository
+├── form-request.stub       # Template form request
+├── update-form-request.stub # Template update request
+├── resource.stub           # Template resource
+├── resource-collection.stub # Template collection
+├── resource-external.stub   # Template resource externe
+├── model.stub              # Template model
+├── migration.stub          # Template migration
+├── dto.stub                # Template DTO
+└── tests/                  # Templates de tests
+    ├── controller.test.stub
+    ├── service.test.stub
+    ├── repository.test.stub
+    └── feature-test.stub
+```
+
+Ces templates peuvent être personnalisés selon les besoins du projet.
 
 ## 📁 Structure des Dossiers
 
@@ -608,18 +805,3 @@ git push origin hotfix/correction-bug
 - **Documentation** des nouvelles fonctionnalités
 - **Respect des patterns** existants
 - **Code Review** avant merge
-
----
-
-## 📞 Support
-
-Pour toute question ou assistance :
-- **Documentation** : Consulter RAPPORT_STRUCTURE_CODE.md
-- **Issues** : Créer un ticket sur le repository
-- **Contact** : Équipe de développement GDIZ
-
----
-
-**Version:** 1.0.0  
-**Dernière mise à jour:** 2025-01-17  
-**Environnement:** Laravel 10.x + PHP 8.1+
