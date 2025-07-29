@@ -13,7 +13,7 @@ class VillageSeeder extends Seeder
 
     {
         // Supprime toutes les lignes de la table
-        Village::truncate();
+        DB::table('villages')->truncate();
 
         $villages = [
             // Villages de Godomey

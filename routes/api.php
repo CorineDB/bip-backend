@@ -28,8 +28,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VillageController;
 use App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GroupeUtilisateurController;
 use App\Http\Controllers\OAuthController;
-
+use App\Models\GroupeUtilisateur;
 
 // Get authenticated user
 /* Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -55,7 +56,9 @@ Route::prefix("auths")->group(['middleware' => ['auth:sanctum']], function () {
 */
 
 
-Route::group(['middleware' => []], function () {
+Route::group(['middleware' => [/* 'cors', */ 'json.response'], 'as' => 'api.'], function () {
+
+    //Route::group(['middleware' => []], function () {
 
 
     Route::group(['prefix' => 'passport-auths', 'as' => 'auths.'], function () {
@@ -87,156 +90,170 @@ Route::group(['middleware' => []], function () {
             });
         });
     });
-});
-// =============================================================================
-// API RESOURCE ROUTES - Full CRUD Controllers (23 controllers)
-// =============================================================================
+    // =============================================================================
+    // API RESOURCE ROUTES - Full CRUD Controllers (23 controllers)
+    // =============================================================================
 
-// Geographic & Administrative Resources
-Route::apiResource('arrondissements', ArrondissementController::class)->only(['index', 'show']);
-Route::apiResource('communes', CommuneController::class)->only(['index', 'show']);
-Route::apiResource('departements', DepartementController::class)->only(['index', 'show']);
-Route::apiResource('villages', VillageController::class)->only(['index', 'show']);
 
-Route::prefix('departements')->group(function () {
-    Route::get('{id}/communes', [DepartementController::class, 'communes']);
-});
+    Route::group(['middleware' => ['auth:api']], function () {
+        // Geographic & Administrative Resources
+        Route::apiResource('arrondissements', ArrondissementController::class)->only(['index', 'show']);
+        Route::apiResource('communes', CommuneController::class)->only(['index', 'show']);
+        Route::apiResource('departements', DepartementController::class)->only(['index', 'show']);
+        Route::apiResource('villages', VillageController::class)->only(['index', 'show']);
 
-Route::prefix('communes')->group(function () {
-    Route::get('{id}/arrondissements', [CommuneController::class, 'arrondissements']);
-});
+        Route::prefix('departements')->group(function () {
+            Route::get('{id}/communes', [DepartementController::class, 'communes']);
+        });
 
-Route::prefix('arrondissements')->group(function () {
-    Route::get('{id}/villages', [ArrondissementController::class, 'villages']);
-});
+        Route::prefix('communes')->group(function () {
+            Route::get('{id}/arrondissements', [CommuneController::class, 'arrondissements']);
+        });
 
-// Organization & People Management
-Route::apiResource('organisations', OrganisationController::class);
+        Route::prefix('arrondissements')->group(function () {
+            Route::get('{id}/villages', [ArrondissementController::class, 'villages']);
+        });
 
-Route::controller(OrganisationController::class)->group(function () {
-    Route::get('ministeres', 'ministeres');
-    Route::get('ministeres/{id}/organismes_tutelle', 'organismes_tutelle');
-});
+        // Organization & People Management
+        Route::apiResource('organisations', OrganisationController::class);
 
-Route::apiResource('personnes', PersonneController::class);
+        Route::controller(OrganisationController::class)->group(function () {
+            Route::get('ministeres', 'ministeres');
+            Route::get('ministeres/{id}/organismes_tutelle', 'organismes_tutelle');
+        });
 
-// User Management & Security (read-only permissions)
-Route::apiResource('users', UserController::class);
-Route::apiResource('roles', RoleController::class);
-Route::apiResource('permissions', PermissionController::class)->only(['index', 'show']);
+        Route::apiResource('personnes', PersonneController::class);
 
-// Role-Permission Management
-Route::prefix('roles/{role}')->group(function () {
-    Route::get('/permissions', [RoleController::class, 'getPermissions']);
-});
+        // User Management & Security (read-only permissions)
+        Route::apiResource('users', UserController::class);
+        Route::apiResource('groupes-utilisateur', GroupeUtilisateurController::class);
+        Route::apiResource('roles', RoleController::class);
+        Route::apiResource('permissions', PermissionController::class)->only(['index', 'show']);
 
-// Project Management Core
-Route::apiResource('idees-projet', IdeeProjetController::class);
+        // Role-Permission Management
+        Route::prefix('roles/{role}')->group(function () {
+            Route::get('/permissions', [RoleController::class, 'getPermissions']);
+        });
 
-Route::apiResource('projets', ProjetController::class);
-Route::apiResource('categories-projet', CategorieProjetController::class);
-Route::apiResource('secteurs', SecteurController::class);
+        // Project Management Core
+        Route::apiResource('idees-projet', IdeeProjetController::class);
 
-Route::controller(SecteurController::class)->group(function () {
-    Route::get('all-secteurs', 'all_secteurs');
-    Route::get('grands-secteurs', 'grands_secteurs');
-    Route::get('grands-secteurs/{id}/secteurs', 'secteurs_grand_secteur');
-    Route::get('secteurs-seul', 'secteurs');
-    Route::get('secteurs/{id}/sous-secteurs', 'sous_secteurs_secteur');
-    Route::get('sous-secteurs', 'sous_secteurs');
-});
+        Route::apiResource('projets', ProjetController::class);
+        Route::apiResource('categories-projet', CategorieProjetController::class);
+        Route::apiResource('secteurs', SecteurController::class);
 
-// Project Configuration & Types
-Route::apiResource('cibles', CibleController::class);
-Route::apiResource('types-intervention', TypeInterventionController::class)
-    ->parameters(['types-intervention' => 'type_intervention']);
+        Route::controller(SecteurController::class)->group(function () {
+            Route::get('all-secteurs', 'all_secteurs');
+            Route::get('grands-secteurs', 'grands_secteurs');
+            Route::get('grands-secteurs/{id}/secteurs', 'secteurs_grand_secteur');
+            Route::get('secteurs-seul', 'secteurs');
+            Route::get('secteurs/{id}/sous-secteurs', 'sous_secteurs_secteur');
+            Route::get('sous-secteurs', 'sous_secteurs');
+        });
 
-Route::apiResource('types-programme', TypeProgrammeController::class)
-    ->parameters(['types-programme' => 'type_programme']);
-Route::apiResource('composants-programme', ComposantProgrammeController::class)
-    ->parameters(['composants-programme' => 'composant_programme']);
+        // Project Configuration & Types
+        Route::apiResource('cibles', CibleController::class);
+        Route::apiResource('types-intervention', TypeInterventionController::class)
+            ->parameters(['types-intervention' => 'type_intervention']);
 
-Route::controller(ComposantProgrammeController::class)->group(function () {
-    Route::get('axes-pag', 'axesPag');
-    Route::get('piliers-pag', 'piliersPag');
-    Route::get('actions-pag', 'actionsPag');
-    Route::get('orientations-strategiques-pnd', 'orientationsStrategiquesPnd');
-    Route::get('objectifs-strategiques-pnd', 'objectifsStrategiquesPnd');
-    Route::get('resultats-strategiques-pnd', 'resultatsStrategiquesPnd');
-});
+        Route::apiResource('types-programme', TypeProgrammeController::class)
+            ->parameters(['types-programme' => 'type_programme']);
+        Route::apiResource('composants-programme', ComposantProgrammeController::class)
+            ->parameters(['composants-programme' => 'composant_programme']);
 
-// Document Management
-Route::apiResource('documents', DocumentController::class);
+        Route::controller(ComposantProgrammeController::class)->group(function () {
+            Route::get('axes-pag', 'axesPag');
+            Route::get('piliers-pag', 'piliersPag');
+            Route::get('actions-pag', 'actionsPag');
+            Route::get('orientations-strategiques-pnd', 'orientationsStrategiquesPnd');
+            Route::get('objectifs-strategiques-pnd', 'objectifsStrategiquesPnd');
+            Route::get('resultats-strategiques-pnd', 'resultatsStrategiquesPnd');
+        });
 
-Route::prefix('fiches-idee')->group(function () {
-    // Public routes
-    Route::get('', [DocumentController::class, 'ficheIdee']);
-    Route::post('/create-or-update', [DocumentController::class, 'createOrUpdateFicheIdee']);
-});
+        // Document Management
+        Route::apiResource('documents', DocumentController::class);
 
-Route::apiResource('categories-document', CategorieDocumentController::class);
+        Route::prefix('fiches-idee')->group(function () {
+            // Public routes
+            Route::get('', [DocumentController::class, 'ficheIdee']);
+            Route::post('/create-or-update', [DocumentController::class, 'createOrUpdateFicheIdee']);
+        });
 
-// Workflow & Process Management
-Route::apiResource('workflows', WorkflowController::class);
+        Route::apiResource('categories-document', CategorieDocumentController::class);
 
-// Financial & Evaluation
-Route::apiResource('financements', FinancementController::class);
-Route::apiResource('evaluations', EvaluationController::class);
-Route::apiResource('champs', ChampController::class);
+        // Workflow & Process Management
+        Route::apiResource('workflows', WorkflowController::class);
 
-// SDG Integration
-Route::apiResource('odds', OddController::class);
+        // Financial & Evaluation
+        Route::apiResource('financements', FinancementController::class);
+        Route::apiResource('evaluations', EvaluationController::class);
+        Route::apiResource('champs', ChampController::class);
+        
+        // Evaluation Criteria Management
+        Route::apiResource('categories-critere', \App\Http\Controllers\CategorieCritereController::class);
+        
+        // Grille Evaluation Preliminaire des Impacts Climatique (Routes spécifiques)
+        Route::prefix('grille-evaluation-preliminaire')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CategorieCritereController::class, 'getGrilleEvaluationPreliminaire'])
+                ->name('grille-evaluation-preliminaire.get');
+            Route::put('/', [\App\Http\Controllers\CategorieCritereController::class, 'updateGrilleEvaluationPreliminaire'])
+                ->name('grille-evaluation-preliminaire.update');
+        });
 
-// =============================================================================
-// ENUM ROUTES - For Frontend Dropdown Options
-// =============================================================================
+        // SDG Integration
+        Route::apiResource('odds', OddController::class);
 
-Route::prefix('enums')->group(function () {
-    // Project Status & Workflow Enums
-    Route::get('/statut-idee', function () {
-        return response()->json(\App\Enums\StatutIdee::options());
+        // =============================================================================
+        // ENUM ROUTES - For Frontend Dropdown Options
+        // =============================================================================
+
+        Route::prefix('enums')->group(function () {
+            // Project Status & Workflow Enums
+            Route::get('/statut-idee', function () {
+                return response()->json(\App\Enums\StatutIdee::options());
+            });
+
+            Route::get('/phases-idee', function () {
+                return response()->json(\App\Enums\PhasesIdee::options());
+            });
+
+            Route::get('/sous-phase-idee', function () {
+                return response()->json(\App\Enums\SousPhaseIdee::options());
+            });
+
+            // Project composants & Configuration
+            Route::get('/composants-projet', function () {
+                return response()->json(\App\Enums\TypesProjet::options());
+            });
+
+            Route::get('/types-canevas', function () {
+                return response()->json(\App\Enums\TypesCanevas::options());
+            });
+
+            Route::get('/types-template', function () {
+                return response()->json(\App\Enums\TypesTemplate::options());
+            });
+
+            // Organization Types
+            Route::get('/types-organisation', function () {
+                return response()->json(\App\Enums\EnumTypeOrganisation::options());
+            });
+
+            // All enums endpoint for bulk loading
+            Route::get('/all', function () {
+                return response()->json([
+                    'statut_idee' => \App\Enums\StatutIdee::options(),
+                    'phases_idee' => \App\Enums\PhasesIdee::options(),
+                    'sous_phase_idee' => \App\Enums\SousPhaseIdee::options(),
+                    'types_projet' => \App\Enums\TypesProjet::options(),
+                    'types_canevas' => \App\Enums\TypesCanevas::options(),
+                    'types_template' => \App\Enums\TypesTemplate::options(),
+                    'types_organisation' => \App\Enums\EnumTypeOrganisation::options(),
+                ]);
+            });
+        });
     });
-
-    Route::get('/phases-idee', function () {
-        return response()->json(\App\Enums\PhasesIdee::options());
-    });
-
-    Route::get('/sous-phase-idee', function () {
-        return response()->json(\App\Enums\SousPhaseIdee::options());
-    });
-
-    // Project composants & Configuration
-    Route::get('/composants-projet', function () {
-        return response()->json(\App\Enums\TypesProjet::options());
-    });
-
-    Route::get('/types-canevas', function () {
-        return response()->json(\App\Enums\TypesCanevas::options());
-    });
-
-    Route::get('/types-template', function () {
-        return response()->json(\App\Enums\TypesTemplate::options());
-    });
-
-    // Organization Types
-    Route::get('/types-organisation', function () {
-        return response()->json(\App\Enums\EnumTypeOrganisation::options());
-    });
-
-    // All enums endpoint for bulk loading
-    Route::get('/all', function () {
-        return response()->json([
-            'statut_idee' => \App\Enums\StatutIdee::options(),
-            'phases_idee' => \App\Enums\PhasesIdee::options(),
-            'sous_phase_idee' => \App\Enums\SousPhaseIdee::options(),
-            'types_projet' => \App\Enums\TypesProjet::options(),
-            'types_canevas' => \App\Enums\TypesCanevas::options(),
-            'types_template' => \App\Enums\TypesTemplate::options(),
-            'types_organisation' => \App\Enums\EnumTypeOrganisation::options(),
-        ]);
-    });
 });
-
 // =============================================================================
 // AUTHENTICATION ROUTES (Keycloak)
 // =============================================================================

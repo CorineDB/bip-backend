@@ -8,7 +8,6 @@ trait HasPermissionTrait
 
     public function hasPermissionTo($permission)
     {
-
         return $this->hasPermissionThroughRole($permission) || $this->hasPermission($permission);
     }
 
@@ -77,6 +76,8 @@ trait HasPermissionTrait
      */
     public function roles()
     {
+        return $this->belongsToMany(Role::class, 'user_roles', 'userId', 'roleId')
+                    ->withTimestamps();
         return $this->belongsToMany(Role::class, 'role_users', 'userId', 'roleId')
                     ->withTimestamps();
     }

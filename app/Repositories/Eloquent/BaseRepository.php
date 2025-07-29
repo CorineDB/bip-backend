@@ -81,6 +81,39 @@ abstract class BaseRepository implements BaseRepositoryInterface
     {
         return $this->model->orderByDesc('created_at')->get($columns);
     }
+    public function first(array $columns = ['*']): ?Model
+    {
+        return $this->model->first($columns);
+    }
+
+    /**
+     * Rechercher une occurence de donnée d'une table grâce à l'attribut ID de la table.
+     *
+     * @param $modelId
+     * @param array $attribut
+     * @param array $relations
+     * @param array $appends
+     * @return Model
+     */
+    public function findById(
+         $modelId,
+        array $attribut = ['*'],
+        array $relations = [],
+        array $appends = []
+    ): ?Model {
+
+        if(is_object($modelId))
+            $model = $modelId;
+
+        else
+            $model = $this->model->where("id", $modelId)->select($attribut)->with($relations)->firstOrFail($modelId);
+            //$model = $this->model->select($attribut)->with($relations)->findByKeyOrFail($modelId);
+
+        if(!isset($model->id)) $model = null;
+
+        return $model;
+
+    }
 
     public function find(int|string $id, array $columns = ['*']): ?Model
     {

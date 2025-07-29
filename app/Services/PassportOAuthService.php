@@ -6,6 +6,8 @@ use App\Http\Resources\auth\AuthResource;
 use App\Http\Resources\auth\LoginResource;
 use Illuminate\Support\Facades\Http;
 use App\Http\Resources\OAuth2Resource;
+use App\Jobs\SendEmailJob;
+use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Services\Contracts\PassportOAuthServiceInterface;
 use App\Services\Traits\ConfigueTrait;
@@ -80,7 +82,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
 
             if ($utilisateur->statut !== "actif")
             {
-                if ($utilisateur->last_connection == null)
+                if ($utilisateur->lastRequest == null)
                 {
                     throw new Exception("Veuillez réinitialiser votre mot de passe", 403);
                 }
@@ -92,9 +94,9 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
                 }
             }
 
-            if($utilisateur->last_connection)
+            if($utilisateur->lastRequest)
             {
-                if((strtotime(date('Y-m-d h:i:s')) - strtotime($utilisateur->last_connection))/3600 >= 4)
+                if((strtotime(date('Y-m-d h:i:s')) - strtotime($utilisateur->lastRequest))/3600 >= 4)
                 {
                     $utilisateur->tokens()->delete();
                 }
@@ -115,7 +117,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
 
                 //$data = $this->createTokenCredentials($identifiants);
 
-                $utilisateur->last_connection = date('Y-m-d H:i:s');
+                $utilisateur->lastRequest = date('Y-m-d H:i:s');
                 $utilisateur->save();
 
             } else {
@@ -139,7 +141,6 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
             // Retourner le token
             return response()->json(['statut' => 'success', 'message' => 'Authentification réussi', 'data' => new LoginResource($token), 'statutCode' => Response::HTTP_OK], Response::HTTP_OK)/*->withCookie('XSRF-TOKEN', $data['access_token'], 60*3)*/;
         } catch (\Throwable $th) {
-
 
             //throw $th;
             return response()->json(['statut' => 'error', 'message' => $th->getMessage(), 'errors' => []], Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -300,7 +301,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
 
             $utilisateur->account_verification_request_sent_at = Carbon::now();
 
-            $utilisateur->token = str_replace(['/', '\\', '.'], '', Hash::make($utilisateur->secure_id . Hash::make($utilisateur->email) . Hash::make(Hash::make(strtotime($utilisateur->account_verification_request_sent_at)))));
+            $utilisateur->token = str_replace(['/', '\\', '.'], '', Hash::make($utilisateur->id . Hash::make($utilisateur->email) . Hash::make(Hash::make(strtotime($utilisateur->account_verification_request_sent_at)))));
 
             $utilisateur->link_is_valide = true;
 
@@ -423,7 +424,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
 
             $utilisateur->account_verification_request_sent_at = Carbon::now();
 
-            $utilisateur->token = str_replace(['/', '\\', '.'], '', Hash::make($utilisateur->secure_id . Hash::make($utilisateur->email) . Hash::make(Hash::make(strtotime($utilisateur->account_verification_request_sent_at)))));
+            $utilisateur->token = str_replace(['/', '\\', '.'], '', Hash::make($utilisateur->id . Hash::make($utilisateur->email) . Hash::make(Hash::make(strtotime($utilisateur->account_verification_request_sent_at)))));
 
             $utilisateur->link_is_valide = true;
 
@@ -432,7 +433,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
             DB::commit();
 
             //Send verificiation email
-            //dispatch(new SendEmailJob($utilisateur, "reinitialisation-mot-de-passe"))->delay(now()->addSeconds(15));
+            dispatch(new SendEmailJob($utilisateur, "reinitialisation-mot-de-passe"))->delay(now()->addSeconds(15));
 
             // retourner une reponse avec les détails de l'utilisateur
             return response()->json(['statut' => 'success', 'message' => "E-Mail de réinitialisation de mot de passe envoyé", 'data' => [], 'statutCode' => Response::HTTP_OK], Response::HTTP_OK);

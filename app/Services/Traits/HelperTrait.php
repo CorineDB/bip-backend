@@ -7,6 +7,8 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 trait HelperTrait
 {
@@ -179,5 +181,50 @@ trait HelperTrait
             $startDate->toDateString(),
             $endDate->toDateString()
         ];
+    }
+
+    /**
+     * Supprime une contrainte unique si elle existe sur une table donnée.
+     *
+     * @param string $table Nom de la table
+     * @param string|null $column Nom de la colonne
+     * @param string|null $constraint constraint
+     */
+    public function dropUniqueIfExists(string $table, string $column = null, string $constraint = null): void
+    {
+        if($constraint){
+            $constraint = DB::table('information_schema.table_constraints as tc')
+                ->join('information_schema.constraint_column_usage as ccu', 'tc.constraint_name', '=', 'ccu.constraint_name')
+                ->where('tc.constraint_type', 'UNIQUE')
+                ->where('tc.table_name', $table)
+                ->where('ccu.column_name', $column)
+                ->value('tc.constraint_name');
+        }
+
+        if ($constraint) {
+            DB::statement("ALTER TABLE \"$table\" DROP CONSTRAINT \"$constraint\"");
+        }
+    }
+}
+
+if (!function_exists('dropUniqueIfExists')) {
+    /**
+     * Supprime une contrainte unique si elle existe sur une table donnée.
+     *
+     * @param string $table Nom de la table
+     * @param string $column Nom de la colonne
+     */
+    function dropUniqueIfExists(string $table, string $column): void
+    {
+        $constraint = DB::table('information_schema.table_constraints as tc')
+            ->join('information_schema.constraint_column_usage as ccu', 'tc.constraint_name', '=', 'ccu.constraint_name')
+            ->where('tc.constraint_type', 'UNIQUE')
+            ->where('tc.table_name', $table)
+            ->where('ccu.column_name', $column)
+            ->value('tc.constraint_name');
+
+        if ($constraint) {
+            DB::statement("ALTER TABLE \"$table\" DROP CONSTRAINT \"$constraint\"");
+        }
     }
 }

@@ -18,11 +18,19 @@ class UpdateOrganisationRequest extends FormRequest
         $organisationId = $this->route('organisation') ? (is_string($this->route('organisation')) ? $this->route('organisation') : ($this->route('organisation')->id)) : $this->route('id');
 
         return [
-            'nom'=> ['required', 'string', 'max:255', Rule::unique('organisations', 'nom')->ignore($organisationId)->whereNull('deleted_at')],
+            'nom' => ['required', 'string', 'max:255', Rule::unique('organisations', 'nom')->ignore($organisationId)->whereNull('deleted_at')],
 
             'description' => 'nullable|string',
             'type' => ['required', Rule::in(EnumTypeOrganisation::values())],
-            'parentId' => ['required', Rule::exists('organisations', 'id')->whereNull('deleted_at'), 'different:' . $organisationId]
+            'parentId' => [Rule::requiredIf($this->type != 'ministere'), Rule::exists('organisations', 'id')->whereNull('deleted_at'), 'different:' . $organisationId],
+
+            "admin" => ["sometimes", "array", "min:1"],
+            'admin.email' => ["sometimes", "email", "max:255", Rule::unique('users', 'email')->whereNull('deleted_at')],
+
+            // Attributs de personne
+            'admin.personne.nom' => 'sometimes|string|max:255',
+            'admin.personne.prenom' => 'sometimes|string|max:255',
+            'admin.personne.poste' => 'nullable|string|max:255'
         ];
     }
 

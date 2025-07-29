@@ -12,7 +12,7 @@ class DepartementSeeder extends Seeder
     public function run(): void
     {
         // Supprime toutes les lignes de la table
-        Departement::truncate();
+        DB::table('departements')->truncate();
 
         $departements = [
             ['code' => 'AL', 'nom' => 'Alibori', 'slug' => 'alibori'],
@@ -20,14 +20,15 @@ class DepartementSeeder extends Seeder
             ['code' => 'AT', 'nom' => 'Atlantique', 'slug' => 'atlantique'],
             ['code' => 'BO', 'nom' => 'Borgou', 'slug' => 'borgou'],
             ['code' => 'CO', 'nom' => 'Collines', 'slug' => 'collines'],
-            ['code' => 'KO', 'nom' => 'Kouffo', 'slug' => 'kouffo'],
             ['code' => 'DO', 'nom' => 'Donga', 'slug' => 'donga'],
+            ['code' => 'KO', 'nom' => 'Kouffo', 'slug' => 'kouffo'],
             ['code' => 'LI', 'nom' => 'Littoral', 'slug' => 'littoral'],
             ['code' => 'MO', 'nom' => 'Mono', 'slug' => 'mono'],
             ['code' => 'OU', 'nom' => 'Ouémé', 'slug' => 'oueme'],
             ['code' => 'PL', 'nom' => 'Plateau', 'slug' => 'plateau'],
-            ['code' => 'ZO', 'nom' => 'Zou', 'slug' => 'zou'],
+            ['code' => 'ZO', 'nom' => 'Zou', 'slug' => 'zou']
         ];
+
 
         foreach ($departements as $dept) {
             DB::table('departements')->insert([

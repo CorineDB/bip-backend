@@ -14,16 +14,21 @@ class StoreUserRequest extends FormRequest
 
     public function rules(): array
     {
+
+        $profilable = auth()->user()->profilable;
+
+        $isRequired = $profilable ? (((get_class($profilable) == "App\\Models\\Dpaf") || (get_class($profilable) == "App\\Models\\Dpgd")) && !auth()->user()->personne->organismeId) : false;
+
         return [
-            'email' => 'required|email|max:255|unique:users,email',
-            'roleId'=> ['required', Rule::exists('roles', 'id')->whereNull('deleted_at')],
+            'email' => ["required", "email", "max:255", Rule::unique('users', 'email')->whereNull('deleted_at')],
+
+            'roleId' => ['required', Rule::exists('roles', 'id')->where("roleable_id", $profilable ? $profilable->id : null)->where("roleable_type", $profilable ? get_class($profilable) : null)->whereNull('deleted_at')],
 
             // Attributs de personne
             'personne.nom' => 'required|string|max:255',
             'personne.prenom' => 'required|string|max:255',
             'personne.poste' => 'nullable|string|max:255',
-            //'personne.organismeId'=> ['required', Rule::exists('organisations', 'id')->whereNull('deleted_at')],
-
+            'personne.organismeId'=> ["sometimes", Rule::requiredIf($isRequired), Rule::exists('organisations', 'id')->whereNull('deleted_at')]
         ];
     }
 

@@ -130,7 +130,10 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
         // Ajouter les valeurs par défaut pour les colonnes JSON obligatoires si elles ne sont pas définies
         $this->setDefaultJsonValues($fillableAttributes);
 
+        if(isset($fillableAttributes['cout_estimatif_projet'])){
+
         $idee->cout_estimatif_projet = $fillableAttributes['cout_estimatif_projet'];
+        }
 
         $idee->fill($fillableAttributes);
     }

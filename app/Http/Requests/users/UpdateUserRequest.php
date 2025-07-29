@@ -16,15 +16,18 @@ class UpdateUserRequest extends FormRequest
     {
         $userId = $this->route('user') ? (is_string($this->route('user')) ? $this->route('user') : ($this->route('user')->id)) : $this->route('id');
 
-        return [
+        $profilable = auth()->user()->profilable;
+        $isRequired = $profilable ? (((get_class($profilable) == "App\\Models\\Dpaf") || (get_class($profilable) == "App\\Models\\Dpgd")) && !auth()->user()->personne->organismeId) : false;
 
-            'roleId'=> ['required', Rule::exists('roles', 'id')->whereNull('deleted_at')],
+
+        return [
+            'roleId' => ['required', Rule::exists('roles', 'id')->where("roleable_id", $profilable ? $profilable->id : null)->where("roleable_type", $profilable ? get_class($profilable) : null)->whereNull('deleted_at')],
 
             // Attributs de personne
             'personne.nom' => 'required|string|max:255',
             'personne.prenom' => 'required|string|max:255',
             'personne.poste' => 'nullable|string|max:255',
-            'personne.organismeId'=> ['required', Rule::exists('organisations', 'id')->whereNull('deleted_at')]
+            'personne.organismeId'=> ["sometimes", Rule::requiredIf($isRequired), Rule::exists('organisations', 'id')->whereNull('deleted_at')]
         ];
     }
 

@@ -121,4 +121,17 @@ class Organisation extends Model
     public function getNomAttribute($value){
         return ucfirst(str_replace('\\',' ',$value));
     }
+
+    public function user()
+    {
+        return $this->morphOne(User::class, 'profilable');
+    }
+
+    /**
+     * Get the users that belong to this organisaiton (polymorphic).
+     */
+    public function membres()
+    {
+        return $this->morphMany(User::class, 'profilable');
+    }
 }

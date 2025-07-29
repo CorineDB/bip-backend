@@ -11,6 +11,15 @@ return new class extends Migration
         if (!Schema::hasTable('evaluations')) {
             Schema::create('evaluations', function (Blueprint $table) {
                 $table->id();
+
+                $table->bigInteger('evaluateur_id')->unsigned();
+                $table->foreign('evaluateur_id')->references('id')->on('users')
+                    ->onDelete('cascade')
+                    ->onUpdate('cascade');
+
+                $table->uuid('project_id');
+                $table->json('evaluation');
+                $table->text('observation')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
             });

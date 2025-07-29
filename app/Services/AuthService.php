@@ -314,7 +314,7 @@ class AuthService extends BaseService implements PassportOAuthServiceInterface
 
             $utilisateur->account_verification_request_sent_at = Carbon::now();
 
-            $utilisateur->token = str_replace(['/', '\\', '.'], '', Hash::make( $utilisateur->secure_id . Hash::make($utilisateur->email) . Hash::make(Hash::make(strtotime($utilisateur->account_verification_request_sent_at)))));
+            $utilisateur->token = str_replace(['/', '\\', '.'], '', Hash::make( $utilisateur->id . Hash::make($utilisateur->email) . Hash::make(Hash::make(strtotime($utilisateur->account_verification_request_sent_at)))));
 
             $utilisateur->link_is_valide = true;
 
@@ -440,7 +440,7 @@ class AuthService extends BaseService implements PassportOAuthServiceInterface
 
             $utilisateur->account_verification_request_sent_at = Carbon::now();
 
-            $utilisateur->token = str_replace(['/', '\\', '.'], '', Hash::make( $utilisateur->secure_id . Hash::make($utilisateur->email) . Hash::make(Hash::make(strtotime($utilisateur->account_verification_request_sent_at)))));
+            $utilisateur->token = str_replace(['/', '\\', '.'], '', Hash::make( $utilisateur->id . Hash::make($utilisateur->email) . Hash::make(Hash::make(strtotime($utilisateur->account_verification_request_sent_at)))));
 
             $utilisateur->link_is_valide = true;
 

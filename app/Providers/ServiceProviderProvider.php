@@ -43,7 +43,12 @@ class ServiceProviderProvider extends ServiceProvider
             'DocumentServiceInterface' => 'DocumentService',
             'ChampServiceInterface' => 'ChampService',
             'EvaluationServiceInterface' => 'EvaluationService',
-            "PassportOAuthServiceInterface" => "PassportOAuthService"
+            "PassportOAuthServiceInterface" => "PassportOAuthService",
+            'DpafServiceInterface' => 'DpafService',
+            'DpgdServiceInterface' => 'DpgdService',
+            'GroupeUtilisateurServiceInterface' => 'GroupeUtilisateurService',
+            'CategorieCritereServiceInterface' => 'CategorieCritereService',
+
 
         ];
 

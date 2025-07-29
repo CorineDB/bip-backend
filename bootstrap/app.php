@@ -25,5 +25,15 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        /*
+            $exceptions->render(function (Throwable $exception, Request $request) {
+
+                if ($request->expectsJson() || $request->wantsJson() || $request->isJson() || $request->is('api/*'))
+                {
+                    return $this->apiExceptions($request,$exception);
+                }
+                return response();
+            });
+        */
         //
     })->create();

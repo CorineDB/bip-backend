@@ -9,8 +9,13 @@ use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Contracts\PersonneRepositoryInterface;
 use App\Services\Contracts\UserServiceInterface;
 use App\Http\Resources\UserResource;
+use App\Jobs\SendEmailJob;
+use App\Repositories\Contracts\OrganisationRepositoryInterface;
+use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Traits\GenerateTemporaryPassword;
 use App\Services\AuthService;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 
@@ -18,16 +23,22 @@ class UserService extends BaseService implements UserServiceInterface
 {
     use GenerateTemporaryPassword;
 
+    protected OrganisationRepositoryInterface $organisationRepository;
     protected PersonneRepositoryInterface $personneRepository;
+    protected RoleRepositoryInterface $roleRepository;
     protected AuthService $authService;
 
     public function __construct(
         UserRepositoryInterface $repository,
+        OrganisationRepositoryInterface $organisationRepository,
         PersonneRepositoryInterface $personneRepository,
+        RoleRepositoryInterface $roleRepository,
         AuthService $authService
     ) {
         parent::__construct($repository);
+        $this->organisationRepository = $organisationRepository;
         $this->personneRepository = $personneRepository;
+        $this->roleRepository = $roleRepository;
         $this->authService = $authService;
     }
 
@@ -41,10 +52,34 @@ class UserService extends BaseService implements UserServiceInterface
         try {
             DB::beginTransaction();
 
+            if (!($role = $this->roleRepository->findById($data["roleId"]))) throw new Exception("Role introuvable", 400);
+
+            if (!(auth()->user()->hasRole("administrateur", "super-admin", "super-administrateur", "organisation", "dpaf", "dpgd")))  throw new Exception("L'utilisateur a un rôle inconnu", 400);
+
+            $password = $this->generateSimpleTemporaryPassword();
+
+            $data['password'] = Hash::make($password);
+
             // Extraction des données de la personne
             $personneData = $data['personne'] ?? [];
 
-            $data['password'] = Hash::make("Password"/* $this->generateSimpleTemporaryPassword() */);
+            if (auth()->user()->profileable) {
+                if (get_class(auth()->user()->profileable) == "App\\Models\\Organisation") {
+                    $personneData["organismenId"] = auth()->user()->personne->organismenId;
+                } else if ((get_class(auth()->user()->profileable) == "App\\Models\\Dpaf") || (get_class(auth()->user()->profileable) == "App\\Models\\Dgpd")) {
+
+                    if (isset($personneData["organismeId"])) {
+
+                        if (!($organisation = $this->organisationRepository->findById($personneData["organismeId"]))) throw new Exception("Organisation introuvable", 400);
+
+                        $personneData["organismenId"] = $organisation->id;
+                    } else if (auth()->user()->personne) {
+                        $personneData["organismenId"] = auth()->user()->personne?->organismenId;
+                    }
+                }
+            } else {
+                $personneData["organismenId"] = null;
+            }
 
             // Création de la personne
             $personne = $this->personneRepository->create($personneData);
@@ -57,8 +92,25 @@ class UserService extends BaseService implements UserServiceInterface
             // Suppression des données de personne du tableau de données utilisateur
             unset($data['personne']);
 
-            // Création de l'utilisateur
-            $user = $this->repository->create($data);
+            $profilable_id =  (auth()->user()->hasRole("administrateur", "super-admin", "super-administrateur")) ? null : Auth::user()->profilable_id;
+            $profilable_type =  (auth()->user()->hasRole("administrateur", "super-admin", "super-administrateur")) ? null : Auth::user()->profilable_type;
+
+            $user = $this->repository->create(array_merge($data, ["roleId" => $role->id, 'type' => $role->slug, 'profilable_type' => $profilable_type, 'profilable_id' => $profilable_id]));
+
+            // Création de la personne
+
+            $user->roles()->attach([$role->id]);
+
+            $user->refresh();
+
+            $user->account_verification_request_sent_at = Carbon::now();
+
+            $user->token = str_replace(['/', '\\', '.'], '', Hash::make($user->id . Hash::make($user->email) . Hash::make(Hash::make(strtotime($user->account_verification_request_sent_at)))));
+
+            $user->link_is_valide = true;
+
+            $user->save();
+
 
             // Créer l'utilisateur dans Keycloak aussi
 
@@ -84,11 +136,13 @@ class UserService extends BaseService implements UserServiceInterface
 
             DB::commit();
 
+            //Envoyer les identifiants de connexion à l'utilisateur via son email
+            dispatch(new SendEmailJob($user, "confirmation-de-compte", $password))->delay(now()->addSeconds(15));
+
             return (new $this->resourceClass($user))
                 ->additional(['message' => 'Utilisateur créé avec succès.'])
                 ->response()
                 ->setStatusCode(201);
-
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e);
@@ -138,7 +192,6 @@ class UserService extends BaseService implements UserServiceInterface
             return (new $this->resourceClass($updatedUser))
                 ->additional(['message' => 'Utilisateur mis à jour avec succès.'])
                 ->response();
-
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e);

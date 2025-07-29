@@ -5,9 +5,6 @@ namespace App\Enums;
 enum EnumTypeOrganisation: string
 {
     case MINISTERE = 'ministere';
-    case DPAF = 'dpaf';
-    case DGPD = 'dgpd';
-    case DGB = 'dgb';
     case ETATIQUE = 'etatique';
     case PARTENAIRE = 'partenaire';
 

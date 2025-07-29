@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Traits\HasPermissionTrait;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -18,7 +19,7 @@ use Illuminate\Support\Str;
 
 class User extends Authenticatable implements OAuthenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, HasPermissionTrait, SoftDeletes;
 
     /**
      * The table associated with the model.
@@ -49,7 +50,9 @@ class User extends Authenticatable implements OAuthenticatable
     protected $fillable = [
         'provider', 'provider_user_id', 'username', 'email', 'status',
         'is_email_verified', 'email_verified_at', 'password', 'personneId',
-        'roleId', 'last_connection', 'ip_address', 'settings', 'person', 'keycloak_id'
+        'roleId', 'last_connection', 'ip_address', 'settings', 'person', 'keycloak_id',
+        'type', 'profilable_id', 'profilable_type', 'account_verification_request_sent_at',
+        'password_update_at', 'last_password_remember', 'token', 'link_is_valide', 'lastRequest'
     ];
 
     /**
@@ -65,6 +68,10 @@ class User extends Authenticatable implements OAuthenticatable
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'link_is_valide' => 'boolean',
+        'account_verification_request_sent_at' => 'timestamp',
+        'password_update_at' => 'timestamp',
+        'lastRequest' => 'datetime',
     ];
 
     /**
@@ -174,5 +181,23 @@ class User extends Authenticatable implements OAuthenticatable
         ]);
 
         return new NewAccessToken($token, $token->getKey().'|'.$plainTextToken);
+    }
+
+    /**
+     * Get the profile entity (polymorphic relation).
+     */
+    public function profilable()
+    {
+        return $this->morphTo();
+    }
+
+    /**
+     * Get the user groups.
+     */
+    public function groupesUtilisateur()
+    {
+        return $this->belongsToMany(GroupeUtilisateur::class, 'groupe_utilisateur_users', 'userId', 'groupeUtilisateurId')
+                    ->withTimestamps()
+                    ->withPivot('deleted_at');
     }
 }

@@ -58,30 +58,6 @@ class StoreIdeeProjetRequest extends FormRequest
     }
 
     /**
-     * Obtenir le label d'un champ pour les messages d'erreur
-     */
-    private function getFieldLabel(string $attribut): string
-    {
-        $fieldLabels = [
-            'titre_projet' => 'Titre du projet',
-            'sigle' => 'Sigle',
-            'description' => 'Description',
-            'duree' => 'Durée',
-            'secteurId' => 'Secteur',
-            'ministereId' => 'Ministère',
-            'categorieId' => 'Catégorie',
-            'objectif_general' => 'Objectif général',
-            'situation_actuelle' => 'Situation actuelle',
-            'situation_desiree' => 'Situation désirée',
-            'contraintes' => 'Contraintes',
-            'description_projet' => 'Description du projet',
-            'estimation_couts' => 'Estimation des coûts',
-        ];
-
-        return $fieldLabels[$attribut] ?? ucfirst(str_replace('_', ' ', $attribut));
-    }
-
-    /**
      * Valider la complétude pour la soumission finale
      */
     private function validateSubmissionCompleteness(Validator $validator): void
@@ -140,10 +116,13 @@ class StoreIdeeProjetRequest extends FormRequest
      */
     public function rules(): array
     {
-
         $rules = [
             'est_soumise' => ['required', 'boolean'],
+            'champs' => ["required", "array", "min:1"],
+            'champs.titre_projet' => ['required', 'string', 'max:255', Rule::unique('idees_projet', 'titre_projet')->whereNull('deleted_at')],
         ];
+
+        //dd($this->ficheIdee->all_champs->pluck("attribut", "meta_options.validations_rules"));
 
         $allFieldRules = $this->getValidationRulesByAttribut();
         $champs = $this->input('champs', []);
@@ -158,6 +137,7 @@ class StoreIdeeProjetRequest extends FormRequest
                 if (isset($allFieldRules[$attribut])) {
                     $rules["champs.$attribut"] = $allFieldRules[$attribut];
                 }
+
                 // Ajouter aussi les sous-règles (ex: champs.*)
                 foreach ($allFieldRules as $key => $value) {
                     if (str_starts_with($key, "$attribut.")) {
@@ -197,9 +177,6 @@ class StoreIdeeProjetRequest extends FormRequest
 
         $baseRules = [
             'sigle' => ['required', 'string', 'max:50', Rule::unique('idees_projet', 'sigle')->whereNull('deleted_at')],
-
-            'titre_projet' => ['required', 'string', 'max:255', Rule::unique('idees_projet', 'titre_projet')->whereNull('deleted_at')],
-
             'duree' => ['required', 'array'],
             'duree.*' => ['numeric'],/*
             'duree' => ['required', 'array', 'min:2'],

@@ -57,7 +57,7 @@ class ChangePasswordRequest extends FormRequest
             'new_password.required' => 'Veuillez précisez votre nouveau mot de passe actuel',
             'new_password.min' => 'Le nouveau mot de passe doit contenir au moins 8 caractères',
             'new_password.max' => 'Le nouveau mot de passe doit contenir au maximun 12 caractères',
-            'new_password.confirmed' => 'Le mot de passe de confirmation doit correspondre au nouveau mot de passe',
+            //'new_password.confirmed' => 'Le mot de passe de confirmation doit correspondre au nouveau mot de passe',
         ];
     }
 }
