@@ -109,4 +109,97 @@ class EvaluationCritere extends Model
     {
         return $this->belongsTo(CategorieCritere::class, 'categorie_critere_id');
     }
+
+    /**
+     * Scope to filter by evaluation.
+     */
+    public function scopeForEvaluation($query, $evaluationId)
+    {
+        return $query->where('evaluation_id', $evaluationId);
+    }
+
+    /**
+     * Scope to filter by evaluateur.
+     */
+    public function scopeByEvaluateur($query, $evaluateurId)
+    {
+        return $query->where('evaluateur_id', $evaluateurId);
+    }
+
+    /**
+     * Scope to filter by critere.
+     */
+    public function scopeByCritere($query, $critereId)
+    {
+        return $query->where('critere_id', $critereId);
+    }
+
+    /**
+     * Scope to get completed evaluations only.
+     */
+    public function scopeCompleted($query)
+    {
+        return $query->whereNotNull('notation_id')
+                    ->where('note', '!=', 'En attente');
+    }
+
+    /**
+     * Scope to get pending evaluations only.
+     */
+    public function scopePending($query)
+    {
+        return $query->whereNull('notation_id')
+                    ->orWhere('note', 'En attente');
+    }
+
+    /**
+     * Check if this evaluation is completed.
+     */
+    public function isCompleted(): bool
+    {
+        return !is_null($this->notation_id) && $this->note !== 'En attente';
+    }
+
+    /**
+     * Check if this evaluation is pending.
+     */
+    public function isPending(): bool
+    {
+        return is_null($this->notation_id) || $this->note === 'En attente';
+    }
+
+    /**
+     * Get the numeric value from notation.
+     */
+    public function getNumericValue(): ?float
+    {
+        if (!$this->notation) {
+            return null;
+        }
+        
+        return is_numeric($this->notation->valeur) ? (float) $this->notation->valeur : null;
+    }
+
+    /**
+     * Mark this evaluation as completed with a notation.
+     */
+    public function markCompleted($notationId, $note = null, $commentaire = null): bool
+    {
+        return $this->update([
+            'notation_id' => $notationId,
+            'note' => $note ?? $this->note,
+        ]);
+    }
+
+    /**
+     * Get evaluation status as string.
+     */
+    public function getStatusAttribute(): string
+    {
+        if ($this->isCompleted()) {
+            return 'completed';
+        }
+        
+        return 'pending';
+    }
 }

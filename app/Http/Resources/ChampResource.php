@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 
 class ChampResource extends BaseApiResource
 {
-
     /**
      * Transform the resource into an array.
      *

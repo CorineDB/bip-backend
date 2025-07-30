@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EnumTypeOrganisation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -67,6 +68,18 @@ class Personne extends Model
     public function user()
     {
         return $this->hasOne(User::class, 'personneId');
+    }
+
+    /**
+     * Get the user's ministere de tutelle through organisation.
+     */
+    public function ministere()
+    {
+        if (!$this->organisation) {
+            return $this->belongsTo(Organisation::class, 'organismeId')->whereRaw('1 = 0');
+        }
+        
+        return $this->organisation->ministere();
     }
 
     /**

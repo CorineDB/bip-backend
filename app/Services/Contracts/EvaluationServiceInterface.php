@@ -2,6 +2,8 @@
 
 namespace App\Services\Contracts;
 
+use Illuminate\Http\JsonResponse;
+
 interface EvaluationServiceInterface extends AbstractServiceInterface
 {
     public function createEvaluationWithEvaluateurs(array $data): JsonResponse;

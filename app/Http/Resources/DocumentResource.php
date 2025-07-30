@@ -16,7 +16,6 @@ class DocumentResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-
             'id'          => $this->id,
             'nom'         => $this->nom,
             'description' => $this->description,
@@ -28,7 +27,6 @@ class DocumentResource extends BaseApiResource
             'champs'      => $this->whenLoaded("champs", ChampResource::collection($this->champs)),
             'sections'      => $this->when("sections", ChampSectionResource::collection($this->sections)),
         ];
-        return parent::toArray($request);
     }
 
     /**

@@ -48,11 +48,30 @@ class User extends Authenticatable implements OAuthenticatable
      * @var array
      */
     protected $fillable = [
-        'provider', 'provider_user_id', 'username', 'email', 'status',
-        'is_email_verified', 'email_verified_at', 'password', 'personneId',
-        'roleId', 'last_connection', 'ip_address', 'settings', 'person', 'keycloak_id',
-        'type', 'profilable_id', 'profilable_type', 'account_verification_request_sent_at',
-        'password_update_at', 'last_password_remember', 'token', 'link_is_valide', 'lastRequest'
+        'provider',
+        'provider_user_id',
+        'username',
+        'email',
+        'status',
+        'is_email_verified',
+        'email_verified_at',
+        'password',
+        'personneId',
+        'roleId',
+        'last_connection',
+        'ip_address',
+        'settings',
+        'person',
+        'keycloak_id',
+        'type',
+        'profilable_id',
+        'profilable_type',
+        'account_verification_request_sent_at',
+        'password_update_at',
+        'last_password_remember',
+        'token',
+        'link_is_valide',
+        'lastRequest'
     ];
 
     /**
@@ -64,7 +83,8 @@ class User extends Authenticatable implements OAuthenticatable
         'is_email_verified' => 'boolean',
         'email_verified_at' => 'timestamp',
         'last_connection' => 'timestamp',
-        'settings' => 'array', 'person' => 'array',
+        'settings' => 'array',
+        'person' => 'array',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -80,7 +100,12 @@ class User extends Authenticatable implements OAuthenticatable
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token', 'updated_at', 'deleted_at', 'settings' => 'array', 'person' => 'array',
+        'password',
+        'remember_token',
+        'updated_at',
+        'deleted_at',
+        'settings' => 'array',
+        'person' => 'array',
     ];
 
     /**
@@ -163,6 +188,17 @@ class User extends Authenticatable implements OAuthenticatable
         return Hash::check($password, $this->password);
     }
 
+    /**
+     * Get the user's ministry through personne (excludes super admin, DPAF, DGPD)
+     */
+    public function ministere()
+    {
+        if (in_array($this->role->slug, ['super_admin', 'super-admin', 'dpaf', 'dgpd'])) {
+            return null;
+        }
+
+        return $this->personne ? $this->personne->ministere() : null;
+    }
 
 
     /**
@@ -180,7 +216,7 @@ class User extends Authenticatable implements OAuthenticatable
             'abilities' => $abilities,
         ]);
 
-        return new NewAccessToken($token, $token->getKey().'|'.$plainTextToken);
+        return new NewAccessToken($token, $token->getKey() . '|' . $plainTextToken);
     }
 
     /**
@@ -197,8 +233,8 @@ class User extends Authenticatable implements OAuthenticatable
     public function groupesUtilisateur()
     {
         return $this->belongsToMany(GroupeUtilisateur::class, 'groupe_utilisateur_users', 'userId', 'groupeUtilisateurId')
-                    ->withTimestamps()
-                    ->withPivot('deleted_at');
+            ->withTimestamps()
+            ->withPivot('deleted_at');
     }
 
     /**

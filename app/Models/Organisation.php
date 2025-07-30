@@ -64,6 +64,29 @@ class Organisation extends Model
     }
 
     /**
+     * Get the ministere organisation (self if already ministry, or parent ministry).
+     */
+    public function ministere()
+    {
+        // Si cette organisation est déjà un ministère, se retourner elle-même
+        if ($this->type === EnumTypeOrganisation::MINISTERE) {
+            return $this->newQuery()->where('id', $this->id);
+        }
+        
+        // Sinon, chercher le ministère parent récursivement
+        $current = $this;
+        while ($current->parent) {
+            $current = $current->parent;
+            if ($current->type === EnumTypeOrganisation::MINISTERE) {
+                return $this->newQuery()->where('id', $current->id);
+            }
+        }
+        
+        // Aucun ministère trouvé
+        return $this->newQuery()->whereRaw('1 = 0');
+    }
+
+    /**
      * Get the child organisations.
      */
     public function children()

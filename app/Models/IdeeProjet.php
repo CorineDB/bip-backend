@@ -158,7 +158,7 @@ class IdeeProjet extends Model
         $jsonColumns = [
             'decision', 'cout_estimatif_projet', 'ficheIdee',
             'parties_prenantes', 'objectifs_specifiques',
-            'duree', 'resultats_attendus', 'body_projet'
+            'resultats_attendus', 'body_projet'
         ];
 
         foreach ($jsonColumns as $column) {

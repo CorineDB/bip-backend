@@ -1,7 +1,12 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Http\Resources\idees_projet;
 
+use App\Http\Resources\BaseApiResource;
+use App\Http\Resources\CibleResource;
+use App\Http\Resources\FinancementResource;
+use App\Http\Resources\LieuInterventionResource;
+use App\Http\Resources\OddResource;
 use Illuminate\Http\Request;
 
 class IdeeProjetResource extends BaseApiResource
@@ -75,7 +80,7 @@ class IdeeProjetResource extends BaseApiResource
             // Données JSON structurées
             'decision' => $this->decision ?? [],
             'cout_estimatif_projet' => $this->cout_estimatif_projet ?? [],
-            'ficheIdee' =>  [],
+            'ficheIdee' =>  $this->ficheIdee ?? [],
             'parties_prenantes' => $this->parties_prenantes ?? [],
             'objectifs_specifiques' => $this->objectifs_specifiques ?? [],
             'resultats_attendus' => $this->resultats_attendus ?? [],

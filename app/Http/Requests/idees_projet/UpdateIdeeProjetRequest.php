@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\idees_projet;
 
+use App\Models\ComposantProgramme;
 use App\Models\Document;
+use App\Models\Financement;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
+use Illuminate\Support\Str;
 
 class UpdateIdeeProjetRequest extends FormRequest
 {
@@ -25,8 +28,7 @@ class UpdateIdeeProjetRequest extends FormRequest
         // Charger la fiche idée pour la validation dynamique
         $this->ficheIdee = Document::whereHas('categorie', function ($query) {
             $query->where('slug', 'fiche-idee');
-        })
-            ->where('type', 'formulaire')
+        })->where('type', 'formulaire')
             ->orderBy('created_at', 'desc')
             ->first();
     }
@@ -38,7 +40,7 @@ class UpdateIdeeProjetRequest extends FormRequest
         }
 
         $modeFinal = $this->input('est_soumise');
-        $attributRules = $this->getValidationRulesByAttribut();
+        //$attributRules = $this->getValidationRulesByAttribut();
 
         // Si mode final, valider tous les champs pré-connus obligatoires
         if ($modeFinal) {
@@ -53,30 +55,6 @@ class UpdateIdeeProjetRequest extends FormRequest
     {
         return isset($champ->meta_options['validations_rules']['required'])
             && $champ->meta_options['validations_rules']['required'] === true;
-    }
-
-    /**
-     * Obtenir le label d'un champ pour les messages d'erreur
-     */
-    private function getFieldLabel(string $attribut): string
-    {
-        $fieldLabels = [
-            'titre_projet' => 'Titre du projet',
-            'sigle' => 'Sigle',
-            'description' => 'Description',
-            'duree' => 'Durée',
-            'secteurId' => 'Secteur',
-            'ministereId' => 'Ministère',
-            'categorieId' => 'Catégorie',
-            'objectif_general' => 'Objectif général',
-            'situation_actuelle' => 'Situation actuelle',
-            'situation_desiree' => 'Situation désirée',
-            'contraintes' => 'Contraintes',
-            'description_projet' => 'Description du projet',
-            'estimation_couts' => 'Estimation des coûts',
-        ];
-
-        return $fieldLabels[$attribut] ?? ucfirst(str_replace('_', ' ', $attribut));
     }
 
     /**
@@ -138,118 +116,208 @@ class UpdateIdeeProjetRequest extends FormRequest
      */
     public function rules(): array
     {
+        $idIdeeProjet = $this->route('idee_projet') ? (is_string($this->route('idee_projet')) ? $this->route('idee_projet') : ($this->route('idee_projet')->id)) : $this->route('id');
 
         $rules = [
             'est_soumise' => ['required', 'boolean'],
+            'champs' => ["required", "array", "min:1"],
+            'champs.titre_projet' => ['required', 'string', 'max:255', Rule::unique('idees_projet', 'titre_projet')->ignore($idIdeeProjet)->whereNull('deleted_at')],
         ];
 
-        $allFieldRules = $this->getValidationRulesByAttribut();
-        $champs = $this->input('champs', []);
+        /* if ($this->ficheIdee) {
+            $defaultRules = $this->getValidationRulesByAttribut($idIdeeProjet);
+            $validationRules = $this->ficheIdee->all_champs->mapWithKeys(function ($champ) use ($defaultRules) {
+                $attribut = $champ['attribut'];
+                $rulesArray = $champ['meta_options']['validations_rules'] ?? [];
 
-        // Extraire uniquement les attributs définis dans les règles
-        $attributsDemandes = array_keys($champs);
-        $isSubmissionMode = $this->boolean('est_soumise');
+                // Convert the validation_rules associative array to rule strings
+                $validationRules = collect($rulesArray)->map(function ($value, $key) {
+                    if (is_bool($value)) {
+                        return $value ? (($key == "required" && request("est_soumise")) ? $key : null) : null; // skip false rules
+                    }
 
-        if ($isSubmissionMode) {
-            // Valider tous les champs définis
-            foreach ($attributsDemandes as $attribut) {
-                if (isset($allFieldRules[$attribut])) {
-                    $rules["champs.$attribut"] = $allFieldRules[$attribut];
+                    if (is_array($value)) {
+                        return $key . ':' . implode(',', $value); // e.g. in:foo,bar
+                    }
+
+                    return "{$key}:{$value}";
+                })->filter()->values();
+
+                // Merge with fixed global rules (e.g., 'string', 'sometimes')
+                if (isset($defaultRules[$attribut])) {
+                    $validationRules = $validationRules->merge($defaultRules[$attribut]);
                 }
-                // Ajouter aussi les sous-règles (ex: champs.*)
-                foreach ($allFieldRules as $key => $value) {
-                    if (str_starts_with($key, "$attribut.")) {
-                        $rules["champs.$key"] = $value;
+
+                // Ajouter les règles sous la clé "champs.attribut"
+                $validationRules = ["champs.{$attribut}" => $validationRules->toArray()];
+
+                // Si des sous-règles existent, les ajouter aussi (ex: cibles.*)
+                if (isset($defaultRules["{$attribut}.*"])) {
+                    $validationRules["champs.{$attribut}.*"] = $defaultRules["{$attribut}.*"];
+                }
+
+                return $validationRules;
+
+                // ✅ prefix with champs.
+                return ["champs.{$attribut}" => $validationRules->toArray()];
+            })->toArray();
+
+            if(isset($validationRules["titre_projet"])){
+                $rules["champs.titre_projet"] = [...$rules["champs.titre_projet"], ...$validationRules["champs.titre_projet"]];
+            }
+        } */
+
+        if ($this->ficheIdee) {
+            $defaultRules = $this->getValidationRulesByAttribut($idIdeeProjet);
+            $validationRules = $this->ficheIdee->all_champs->mapWithKeys(function ($champ) use ($defaultRules) {
+                $attribut = $champ['attribut'];
+                $rulesArray = $champ['meta_options']['validations_rules'] ?? [];
+
+                // Convert the validation_rules associative array to rule strings
+                $validationRules = collect($rulesArray)->map(function ($value, $key) {
+                    if (is_bool($value)) {
+                        return $value ? (($key == "required" && request("est_soumise")) ? $key : null) : null; // skip false rules
+                    }
+
+                    if (is_array($value)) {
+                        return $key . ':' . implode(',', $value); // e.g. in:foo,bar
+                    }
+
+                    return "{$key}:{$value}";
+                })->filter()->values();
+
+                // Merge with fixed global rules (e.g., 'string', 'sometimes')
+                if (isset($defaultRules[$attribut])) {
+                    $validationRules = $validationRules->merge($defaultRules[$attribut]);
+                }
+
+                // Ajouter les règles sous la clé "champs.attribut"
+                $validationRules = ["champs.{$attribut}" => $validationRules->toArray()];
+
+                // Si des sous-règles existent, les ajouter aussi (ex: cibles.*)
+                //if (isset($defaultRules["{$attribut}."])) {
+
+                foreach ($defaultRules as $key => &$rule) {
+                    if (Str::startsWith($key, "{$attribut}.") && $key !== "{$attribut}") {
+                        //$rule = array_merge(['sometimes'], (array) $rule);
+                        $validationRules["champs.{$key}"] =  (array) $rule;
                     }
                 }
-            }
-        } else {
-            // Valider uniquement le premier champ trouvé
-            $firstAttribut = array_key_first($champs);
-            if ($firstAttribut && isset($allFieldRules[$firstAttribut])) {
-                $rules["champs.$firstAttribut"] = $allFieldRules[$firstAttribut];
 
-                // Sous-clés éventuelles (ex: champs.objectifs_specifiques.*)
-                foreach ($allFieldRules as $key => $value) {
-                    if (str_starts_with($key, "$firstAttribut.")) {
-                        $rules["champs.$key"] = $value;
-                    }
-                }
+                return $validationRules;
+
+                // ✅ prefix with champs.
+                return ["champs.{$attribut}" => $validationRules->toArray()];
+            })->toArray();
+
+            if (isset($validationRules["titre_projet"])) {
+
+                $rules["champs.titre_projet"] = array_merge(
+                    $rules["champs.titre_projet"] ?? [],
+                    $validationRules["titre_projet"]
+                );
             }
+
+            $rules = array_merge($validationRules, $rules);
         }
 
         return $rules;
     }
-
     /**
      * Get custom messages for validator errors.
      */
     public function messages(): array
     {
-        return $messages = [];
+        $messages = [];
+
+        if ($this->ficheIdee) {
+            foreach ($this->ficheIdee->all_champs as $champ) {
+                $key = "champs.{$champ->attribut}";
+
+                $messages["{$key}.required"] = "Le champ « {$champ->label} » est requis.";
+                $messages["{$key}.integer"] = "Le champ « {$champ->label} » doit etre un entier.";
+                $messages["{$key}.numeric"] = "Le champ « {$champ->label} » doit etre un nombre.";
+                $messages["{$key}.max"] = "Le champ « {$champ->label} » dépasse la taille maximale.";
+                $messages["{$key}.min"] = "Le champ « {$champ->label} » est trop court.";
+                $messages["{$key}.string"] = "Le champ « {$champ->label} » doit être une chaîne de caractères.";
+
+                $defaultRules = $this->getValidationRulesByAttribut($this->route("idee_projet"));
+
+                foreach ($defaultRules as $sub_key => &$rule) {
+                    $sub_key = "champs.{$sub_key}";
+                    if (Str::startsWith($sub_key, "{$key}.") && $sub_key !== $key) {
+
+                        //$rule = array_merge(['sometimes'], (array) $rule);
+                        $messages["{$sub_key}.required"] = "Le champ « {$champ->label} » est requis.";
+                        $messages["{$sub_key}.integer"] = "Le champ « {$champ->label} » doit etre un entier.";
+                        $messages["{$sub_key}.numeric"] = "Le champ « {$champ->label} » doit etre un nombre.";
+                        $messages["{$sub_key}.max"] = "Le champ « {$champ->label} » dépasse la taille maximale.";
+                        $messages["{$sub_key}.min"] = "Le champ « {$champ->label} » est trop court.";
+                        $messages["{$sub_key}.string"] = "Le champ « {$champ->label} » doit être une chaîne de caractères.";
+                    }
+                }
+            }
+        }
+
+        return $messages;
     }
 
-    private function getValidationRulesByAttribut(): array
+    private function getValidationRulesByAttribut($idee_projet): array
     {
         $isSubmissionMode = $this->input('est_soumise');
 
         $baseRules = [
-            'sigle' => ['required', 'string', 'max:50', Rule::unique('idees_projet', 'sigle')->whereNull('deleted_at')],
+            'sigle' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:50', Rule::unique('idees_projet', 'sigle')->ignore($idee_projet)->whereNull('deleted_at')],
+            'duree' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'array', 'min:0'],
+            'duree.*' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'integer', 'min:1'],/*
+            'duree.duree' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'integer', 'min:1'],
+            'duree.unite_mesure' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'in:an,mois,semaines'],*/
+            'description' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:65535'],
 
-            'titre_projet' => ['required', 'string', 'max:255', Rule::unique('idees_projet', 'titre_projet')->whereNull('deleted_at')],
+            'contraintes' => [ "nullable", 'string', 'max:65535'],
+            'description_projet' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:65535'],
+            'description_extrants' => [ "nullable", 'string', 'max:65535'],
+            'echeancier' => [ "nullable", 'string', 'max:65535'],
+            'caracteristiques_techniques' => [ "nullable", 'string', 'max:65535'],
+            'impact_environnement' => [ "nullable", 'string', 'max:65535'],
+            'aspect_organisationnel' => [ "nullable", 'string', 'max:65535'],
+            'estimation_couts' => [ "nullable", 'numeric', 'min:0', 'max:65535'],
+            'risques_immediats' => [ "nullable", 'string', 'max:65535'],
+            'conclusions' => [ "nullable", 'string', 'max:65535'],
+            'sommaire' => [ "nullable", 'string', 'max:65535'],
+            'constraintes' => [ "nullable", 'string', 'max:65535'],
+            'cout_estimatif_projet' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'array', 'min:2'],
+            'cout_estimatif_projet.montant' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'numeric', 'min:0'],
+            'cout_estimatif_projet.devise' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'in:FCFA'],
 
-            'duree' => ['required', 'array'],
-            'duree.*' => ['numeric'],/*
-            'duree' => ['required', 'array', 'min:2'],
-            'duree.duree' => ['required', 'numeric', 'min:1'],
-            'duree.unite_mesure' => ['required', 'string', 'in:an,mois,semaines'],*/
-            'description' => ['required', 'string', 'max:65535'],
+            'cout_dollar_americain' => ["nullable", 'numeric', 'min:0'],
+            'cout_dollar_canadien' => ["nullable", 'numeric', 'min:0'],
+            'cout_euro' => ["nullable", 'numeric', 'min:0'],
+            'situation_actuelle' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:65535'],
+            'situation_desiree' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:65535'],
+            'fondement' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:65535'],
+            'origine' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:65535'],
+            'objectif_general' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:65535'],
 
-            'contraintes' => ['required', 'string', 'max:65535'],
-            'description_projet' => ['required', 'string', 'max:65535'],
-            'description_extrants' => ['required', 'string', 'max:65535'],
-            'echeancier' => ['required', 'string', 'max:65535'],
-            'caracteristiques_techniques' => ['required', 'string', 'max:65535'],
-            'impact_environnement' => ['required', 'string', 'max:65535'],
-            'aspect_organisationnel' => ['required', 'string', 'max:65535'],
-            'estimation_couts' => ['required', 'string', 'max:65535'],
-            'risques_immediats' => ['required', 'string', 'max:65535'],
-            'conclusions' => ['required', 'string', 'max:65535'],
-            'sommaire' => ['required', 'string', 'max:65535'],
-            'constraintes' => ['required', 'string', 'max:65535'],
-            //'cout_estimatif_projet' => ['required', 'numeric', 'min:0'],
-            'cout_estimatif_projet' => ['required', 'array', 'min:2'],
-            'cout_estimatif_projet.montant' => ['required', 'numeric', 'min:0'],
-            'cout_estimatif_projet.devise' => ['required', 'string', 'in:FCFA'],
+            'objectifs_specifiques' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'array', 'min:0'],
+            'objectifs_specifiques.*' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:65535'],
 
-            'cout_dollar_americain' => ['required', 'numeric', 'min:0'],
-            'cout_dollar_canadien' => ['required', 'numeric', 'min:0'],
-            'cout_euro' => ['required', 'numeric', 'min:0'],
-            'situation_actuelle' => ['required', 'string', 'max:65535'],
-            'situation_desiree' => ['required', 'string', 'max:65535'],
-            'fondement' => ['required', 'string', 'max:65535'],
-            'origine' => ['required', 'string', 'max:65535'],
-            'objectif_general' => ['required', 'string', 'max:65535'],
+            'resultats_attendus' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'array', 'min:0'],
+            'resultats_attendus.*' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:65535'],
 
-            'objectifs_specifiques' => ['required', 'array', 'min:0'],
-            'objectifs_specifiques.*' => ['required', 'string', 'max:65535'],
+            'constats_majeurs' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:65535'],
+            'parties_prenantes' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'array', 'min:0'],
+            'parties_prenantes.*' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:65535'],
+            'public_cible' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:65535'],
 
-            'resultats_attendus' => ['required', 'array', 'min:0'],
-            'resultats_attendus.*' => ['required', 'string', 'max:65535'],
-
-            'constats_majeurs' => ['required', 'string', 'max:65535'],
-            'parties_prenantes' => ['required', 'array', 'min:0'],
-            'parties_prenantes.*' => ['required', 'string', 'max:65535'],
-            'public_cible' => ['required', 'string', 'max:65535'],
-
-            'categorieId' => ['required', Rule::exists('categories_projet', 'id')->whereNull('deleted_at')],
-            'secteurId' => ['required', Rule::exists('secteurs', 'id')->where("type", 'sous-secteur')->whereNull('deleted_at')],
-            'odds' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
+            'categorieId' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", Rule::exists('categories_projet', 'id')->whereNull('deleted_at')],
+            'secteurId' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", Rule::exists('secteurs', 'id')->where("type", 'sous-secteur')->whereNull('deleted_at')],
+            'odds' => $isSubmissionMode ? [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'array', 'min:1'] : ['nullable', 'array'],
             'odds.*' => [
-                'required',
+                Rule::requiredIf($isSubmissionMode),
                 Rule::exists('odds', 'id')->whereNull('deleted_at'),
             ],
-            'cibles' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
+            'cibles' => $isSubmissionMode ? [Rule::requiredIf($isSubmissionMode), 'array', 'min:1'] : ['nullable', 'array'],
             'cibles.*' => [
                 'required',
                 Rule::exists('cibles', 'id')->whereNull('deleted_at'),
@@ -274,7 +342,7 @@ class UpdateIdeeProjetRequest extends FormRequest
                 'required',
                 Rule::exists('villages', 'id')->whereNull("deleted_at")
             ],
-            'orientations_strategiques' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
+            'orientations_strategiques' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array', 'min:0'],
             'orientations_strategiques.*' => [
                 'required',
                 function ($attribute, $value, $fail) {
@@ -289,7 +357,7 @@ class UpdateIdeeProjetRequest extends FormRequest
                     }
                 }
             ],
-            'objectifs_strategiques' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
+            'objectifs_strategiques' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array', 'min:0'],
             'objectifs_strategiques.*' => [
                 'required',
                 function ($attribute, $value, $fail) {
@@ -304,7 +372,7 @@ class UpdateIdeeProjetRequest extends FormRequest
                     }
                 }
             ],
-            'resultats_strategiques' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
+            'resultats_strategiques' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array', 'min:0'],
             'resultats_strategiques.*' => [
                 'required',
                 function ($attribute, $value, $fail) {
@@ -320,7 +388,7 @@ class UpdateIdeeProjetRequest extends FormRequest
                 }
             ],
 
-            'sources_financement' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
+            'sources_financement' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array', 'min:0'],
             'sources_financement.*' => [
                 'required',
                 function ($attribute, $value, $fail) {
@@ -332,7 +400,7 @@ class UpdateIdeeProjetRequest extends FormRequest
                     }
                 }
             ],
-            'axes_pag' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
+            'axes_pag' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array', 'min:0'],
             'axes_pag.*' => [
                 'required',
                 function ($attribute, $value, $fail) {
@@ -347,7 +415,7 @@ class UpdateIdeeProjetRequest extends FormRequest
                     }
                 }
             ],
-            'actions_pag' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
+            'actions_pag' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array', 'min:0'],
             'actions_pag.*' => [
                 'required',
                 function ($attribute, $value, $fail) {
@@ -362,7 +430,7 @@ class UpdateIdeeProjetRequest extends FormRequest
                     }
                 }
             ],
-            'piliers_pag' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
+            'piliers_pag' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array', 'min:0'],
             'piliers_pag.*' => [
                 'required',
                 function ($attribute, $value, $fail) {
@@ -376,7 +444,7 @@ class UpdateIdeeProjetRequest extends FormRequest
                         $fail('Pilier du pag connu');
                     }
                 }
-            ],
+            ]
         ];
 
         return $baseRules;

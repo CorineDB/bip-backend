@@ -15,6 +15,7 @@ return new class extends Migration
             Schema::create('evaluation_criteres', function (Blueprint $table) {
                 $table->id();
                 $table->string('note');
+                $table->text('commentaire')->nullable();
                 $table->bigInteger('evaluateur_id')->unsigned();
                 $table->foreign('evaluateur_id')->references('id')->on('users')
                     ->onDelete('cascade')

@@ -25,7 +25,7 @@ class StoreSecteurRequest extends FormRequest
                 function ($attribute, $value, $fail) {
                     $exists = Secteur::where("secteurId", $value)->when($this->input("type") == "secteur", function($query){
 
-                        $query->whereHas('parent', function ($query) {
+                        $query->whereHasNot('parent', function ($query) {
                             $query->where('type', 'grand-secteur');
                         });
                     })->when($this->input("type") == "sous-secteur", function($query){

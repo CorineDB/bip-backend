@@ -32,6 +32,9 @@ use App\Http\Controllers\DgpdController;
 use App\Http\Controllers\DpafController;
 use App\Http\Controllers\GroupeUtilisateurController;
 use App\Http\Controllers\OAuthController;
+use App\Models\Village;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 // Get authenticated user
 /* Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -57,7 +60,7 @@ Route::prefix("auths")->group(['middleware' => ['auth:sanctum']], function () {
 */
 
 
-Route::group(['middleware' => [/* 'cors', */ 'json.response'], 'as' => 'api.'], function () {
+Route::group(['middleware' => [/* 'cors', */'json.response'], 'as' => 'api.'], function () {
 
     //Route::group(['middleware' => []], function () {
 
@@ -151,7 +154,8 @@ Route::group(['middleware' => [/* 'cors', */ 'json.response'], 'as' => 'api.'], 
         });
 
         // Project Management Core
-        Route::apiResource('idees-projet', IdeeProjetController::class);
+        Route::apiResource('idees-projet', IdeeProjetController::class)
+            ->parameters(['idees-projet' => 'idee_projet']);
 
         Route::apiResource('projets', ProjetController::class);
         Route::apiResource('categories-projet', CategorieProjetController::class);
@@ -203,6 +207,57 @@ Route::group(['middleware' => [/* 'cors', */ 'json.response'], 'as' => 'api.'], 
         Route::apiResource('financements', FinancementController::class);
         Route::apiResource('evaluations', EvaluationController::class);
         Route::apiResource('champs', ChampController::class);
+
+        // Routes spécifiques pour les évaluations
+        Route::prefix('evaluations')->group(function () {
+            Route::post('with-evaluateurs', [EvaluationController::class, 'createWithEvaluateurs'])
+                ->name('evaluations.create-with-evaluateurs');
+            Route::post('{id}/assign-evaluateurs', [EvaluationController::class, 'assignEvaluateurs'])
+                ->name('evaluations.assign-evaluateurs');
+            Route::get('{id}/progress', [EvaluationController::class, 'progress'])
+                ->name('evaluations.progress');
+            Route::post('{id}/finalize', [EvaluationController::class, 'finalize'])
+                ->name('evaluations.finalize');
+            Route::get('{id}/evaluateurs', [EvaluationController::class, 'evaluateurs'])
+                ->name('evaluations.evaluateurs');
+        });
+
+        // Routes pour l'évaluation climatique unique des idées de projet
+        Route::prefix('idees-projet/{ideeProjetId}/evaluation-climatique')->group(function () {
+            Route::post('/', [EvaluationController::class, 'createClimaticEvaluationForIdee'])
+                ->name('idees-projet.evaluation-climatique.create');
+            Route::get('/', [EvaluationController::class, 'getClimaticEvaluationForIdee'])
+                ->name('idees-projet.evaluation-climatique.show');
+            Route::get('/{evaluationId}/progress', [EvaluationController::class, 'updateClimaticEvaluationForIdee'])
+                ->name('idees-projet.evaluation-climatique.progress');
+            Route::post('/finalize', [EvaluationController::class, 'finalizeClimaticEvaluationForIdee'])
+                ->name('idees-projet.evaluation-climatique.finalize');
+            
+            // Routes pour soumettre les réponses
+            Route::post('/soumettre', [EvaluationController::class, 'soumettreEvaluationClimatique'])
+                ->name('idees-projet.evaluation-climatique.soumettre');
+            Route::put('/modifier', [EvaluationController::class, 'modifierEvaluationClimatique'])
+                ->name('idees-projet.evaluation-climatique.modifier');
+        });
+
+        // Routes pour les évaluations individuelles de critères
+        Route::prefix('evaluations/{evaluationId}/evaluateurs/{evaluateurId}')->group(function () {
+            Route::get('/criteres', [\App\Http\Controllers\EvaluationCritereIndividuelController::class, 'getEvaluateurCriteres'])
+                ->name('evaluations.evaluateur.criteres');
+            Route::post('/criteres/{critereId}/noter', [\App\Http\Controllers\EvaluationCritereIndividuelController::class, 'noterCritere'])
+                ->name('evaluations.evaluateur.noter-critere');
+            Route::get('/criteres/{critereId}', [\App\Http\Controllers\EvaluationCritereIndividuelController::class, 'getCritereEvaluateur'])
+                ->name('evaluations.evaluateur.critere');
+            Route::post('/terminer', [\App\Http\Controllers\EvaluationCritereIndividuelController::class, 'terminerEvaluationEvaluateur'])
+                ->name('evaluations.evaluateur.terminer');
+            Route::get('/stats', [\App\Http\Controllers\EvaluationCritereIndividuelController::class, 'getStatsEvaluateur'])
+                ->name('evaluations.evaluateur.stats');
+        });
+
+        // Routes pour l'analyse des critères par tous les évaluateurs
+        Route::get('evaluations/{evaluationId}/criteres/{critereId}/all-evaluateurs',
+            [\App\Http\Controllers\EvaluationCritereIndividuelController::class, 'getCritereAllEvaluateurs'])
+            ->name('evaluations.critere.all-evaluateurs');
 
         // Evaluation Criteria Management
         Route::apiResource('categories-critere', \App\Http\Controllers\CategorieCritereController::class)
@@ -300,4 +355,75 @@ Route::prefix('keycloak-auths')->group(function () {
             });
         */
     });
+});
+
+Route::get('/test-json', function () {
+    $json = file_get_contents(public_path('decoupage_territorial_benin.json'));
+    $data = json_decode($json, true);
+
+    $arrondissements = collect($data)
+        ->pluck('communes')
+        ->flatten(1)
+        ->pluck('arrondissements')
+        ->flatten(1);
+
+    DB::table("villages")->truncate();
+
+    // Générer tous les arrondissements basés sur les données du CommuneSeeder
+    foreach ($arrondissements as $arrondissement) {
+        // Récupérer l'ID de la commune
+        $arrondissementRecord = DB::table('arrondissements')->where('slug', Str::slug($arrondissement['lib_arrond']))->first();
+
+        if ($arrondissementRecord && isset($arrondissement['quartiers'])) {
+            foreach ($arrondissement['quartiers'] as $index => $quartier) {
+
+                $code = $arrondissementRecord->code . '-' . str_pad($index + 1, 2, '0', STR_PAD_LEFT);
+                $slug = Str::slug($quartier["lib_quart"]);
+
+                /*$count = DB::table('villages')->where('slug', $slug)->count();
+
+                if ($count) {
+                    $slug .= $count;
+                }*/
+
+                $baseSlug = Str::slug($quartier["lib_quart"]); // e.g., 'tankpe'
+
+                // Get all slugs that start with the baseSlug
+                $existingSlugs = DB::table('villages')
+                    ->where('slug', 'like', $baseSlug . '%')
+                    ->pluck('slug')
+                    ->toArray();
+
+                if (!in_array($baseSlug, $existingSlugs)) {
+                    $slug = $baseSlug; // first occurrence
+                } else {
+                    // Find the highest suffix number
+                    $max = 0;
+                    foreach ($existingSlugs as $existingSlug) {
+                        // Extract the number suffix, e.g., 'tankpe2' -> 2
+                        if (preg_match('/^' . preg_quote($baseSlug) . '(\d+)$/', $existingSlug, $matches)) {
+                            $num = intval($matches[1]);
+                            if ($num > $max) {
+                                $max = $num;
+                            }
+                        }
+                    }
+                    $slug = $baseSlug . ($max + 1);
+                }
+
+                DB::table('villages')->insert([
+                    'code' => $code,
+                    'nom' => Str::title($quartier["lib_quart"]),
+                    'slug' => $slug,
+                    'arrondissementId' => $arrondissementRecord->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+    }
+
+
+
+    return response()->json(Village::all());
 });

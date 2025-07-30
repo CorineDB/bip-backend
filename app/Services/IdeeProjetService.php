@@ -2,16 +2,19 @@
 
 namespace App\Services;
 
+use App\Http\Resources\DocumentResource;
 use Illuminate\Http\JsonResponse;
 use Exception;
 use App\Services\BaseService;
 use App\Repositories\Contracts\IdeeProjetRepositoryInterface;
 use App\Services\Contracts\IdeeProjetServiceInterface;
-use App\Http\Resources\IdeeProjetResource;
+use App\Http\Resources\idees_projet\IdeeProjetResource;
+use App\Http\Resources\idees_projet\IdeesProjetResource;
 use Illuminate\Support\Facades\DB;
 use App\Models\IdeeProjet;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Services\Traits\ProjetRelationsTrait;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class IdeeProjetService extends BaseService implements IdeeProjetServiceInterface
 {
@@ -28,7 +31,27 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
     protected function getResourceClass(): string
     {
+        return IdeesProjetResource::class;
+    }
+
+    protected function getResourcesClass(): string
+    {
         return IdeeProjetResource::class;
+    }
+
+    public function find(int|string $id): JsonResponse
+    {
+        try {
+            $item = $this->repository->findOrFail($id);
+            return (new IdeeProjetResource($item))->response();
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Idée de projet inconnue',
+            ], 404);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
     }
 
     public function create(array $data): JsonResponse
@@ -37,19 +60,24 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             DB::beginTransaction();
 
             $champsData = $data['champs'] ?? [];
+
             $relations = $this->extractRelationsFromChamps($champsData);
 
             // Créer ou récupérer l'idée de projet
             $idee = $this->getOrCreateIdeeProjet($data);
 
-            if(isset($data['est_soumise']) ){
+            $idee->ficheIdee = new DocumentResource($this->documentRepository->getFicheIdee());
+
+            if (isset($data['est_soumise'])) {
                 $idee->est_soumise = $data["est_soumise"];
             }
 
             // Remplir les attributs de base
             $this->fillIdeeFromChamps($idee, $champsData);
 
-            $idee->update($champsData);
+            $idee->demandeurId = auth()->id();
+            $idee->responsableId = auth()->id();
+            $idee->ministereId = auth()->user()->ministere()?->id;
 
             $idee->save();
 
@@ -113,7 +141,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
         $idee = $this->repository->getModel();
 
         // Initialiser ficheIdee avec la structure complète du formulaire dès la création
-        if (empty($idee->ficheIdee)) {
+        if (!$idee->ficheIdee || empty($idee->ficheIdee)) {
             $idee->ficheIdee = $this->initializeFicheIdeeStructure();
         }
 
@@ -130,9 +158,9 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
         // Ajouter les valeurs par défaut pour les colonnes JSON obligatoires si elles ne sont pas définies
         $this->setDefaultJsonValues($fillableAttributes);
 
-        if(isset($fillableAttributes['cout_estimatif_projet'])){
+        if (isset($fillableAttributes['cout_estimatif_projet'])) {
 
-        $idee->cout_estimatif_projet = $fillableAttributes['cout_estimatif_projet'];
+            $idee->cout_estimatif_projet = $fillableAttributes['cout_estimatif_projet'];
         }
 
         $idee->fill($fillableAttributes);
@@ -144,7 +172,6 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
     private function setDefaultJsonValues(array &$attributes): void
     {
         $requiredJsonColumns = [
-            'ficheIdee' => [],
             'body_projet' => []
         ];
 
@@ -211,18 +238,6 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                 // Traitement spécial pour les colonnes JSON
                 if (in_array($key, $jsonColumns)) {
                     $attributes[$key] = $this->prepareJsonValue($value);
-
-                    /* if ($key == "cout_estimatif_projet") {
-                        if(!is_array($value)){
-                            $data = json_encode(["montant" => $value, "devise" => "FCFA"]);
-                            $attributes[$key] = $data;
-                        }
-                        else {
-                            $attributes[$key] = $this->prepareJsonValue($value);
-                        }
-                    } else {
-                        $attributes[$key] = $this->prepareJsonValue($value);
-                    } */
                 } else {
                     $attributes[$key] = $this->sanitizeAttributeValue($value);
                 }
@@ -339,7 +354,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
         $this->syncComposantProgrammeRelations($idee, $relations);
 
 
-        if((isset($relations["departements"]) && isset($relations["communes"]) && isset($relations["arrondissements"]) && isset($relations["villages"])) && (count($relations["departements"]) && count($relations["communes"]) && count($relations["arrondissements"]) && count($relations["villages"]))){
+        if ((isset($relations["departements"]) && isset($relations["communes"]) && isset($relations["arrondissements"]) && isset($relations["villages"])) && (count($relations["departements"]) && count($relations["communes"]) && count($relations["arrondissements"]) && count($relations["villages"]))) {
 
             // Synchroniser les lieux d'intervention
             $this->syncLieuxIntervention($idee, $relations);
@@ -422,18 +437,6 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
     }
 
     /**
-     * Créer ou synchroniser les lieux d'intervention
-     */
-    /*private function createOrSyncLieuxIntervention(IdeeProjet $idee, array $lieuxData): void
-    {
-        $lieuxIds = $this->createLieuxInterventionFromGeoData($lieuxData);
-
-        if (!empty($lieuxIds)) {
-            $idee->lieuxIntervention()->sync($lieuxIds);
-        }
-    }*/
-
-    /**
      * Sauvegarder les champs dynamiques
      */
     private function saveDynamicFields(IdeeProjet $idee, array $champsData): void
@@ -508,7 +511,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             $sectionData = [
                 'id' => $section->id,
                 'nom' => $section->nom,
-                'ordre' => $section->ordre,
+                'ordre' => $section->ordre_affichage,
                 'champs' => []
             ];
 
@@ -520,7 +523,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                     'type_champ' => $champ->type_champ,
                     'attribut' => $champ->attribut,
                     'required' => $champ->meta_options['validations_rules']['required'] ?? false,
-                    'ordre' => $champ->ordre,
+                    'ordre' => $champ->ordre_affichage,
                     'valeur' => null,
                     'valeur_attribut' => null,
                     'relations' => []
@@ -595,7 +598,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                     'type_champ' => $champ->type_champ,
                     'attribut' => $champ->attribut,
                     'required' => $champ->meta_options['validations_rules']['required'] ?? false,
-                    'ordre' => $champ->ordre,
+                    'ordre' => $champ->ordre_affichage,
                     'valeur' => null,
                     'valeur_attribut' => null,
                     'relations' => []
@@ -670,7 +673,8 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             'document_nom' => $ficheIdee->nom ?? 'Fiche Idée de Projet',
             'document_version' => $ficheIdee->version ?? '1.0',
             'date_creation' => now()->toISOString(),
-            'date_remplissage' => null,
+            'date_remplissage' => now()->toISOString(),
+            'derniere_modification' => now()->toISOString(),
             'sections' => [],
             'champs_values' => [],
             'relations_values' => []
@@ -681,7 +685,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             $sectionData = [
                 'id' => $section->id,
                 'nom' => $section->nom,
-                'ordre' => $section->ordre,
+                'ordre' => $section->ordre_affichage,
                 'champs' => []
             ];
 
@@ -693,7 +697,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                     'type_champ' => $champ->type_champ,
                     'attribut' => $champ->attribut,
                     'required' => $champ->meta_options['validations_rules']['required'] ?? false,
-                    'ordre' => $champ->ordre,
+                    'ordre' => $champ->ordre_affichage,
                     'valeur' => null, // Vide à l'initialisation
                     'valeur_attribut' => null, // Vide à l'initialisation
                     'relations' => [] // Vide à l'initialisation
@@ -730,7 +734,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                     'type_champ' => $champ->type_champ,
                     'attribut' => $champ->attribut,
                     'required' => $champ->meta_options['validations_rules']['required'] ?? false,
-                    'ordre' => $champ->ordre,
+                    'ordre' => $champ->ordre_affichage,
                     'valeur' => null, // Vide à l'initialisation
                     'valeur_attribut' => null, // Vide à l'initialisation
                     'relations' => [] // Vide à l'initialisation
@@ -856,7 +860,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             DB::beginTransaction();
 
             $idee = $this->repository->findOrFail($id);
-            if(isset($data['est_soumise']) ){
+            if (isset($data['est_soumise'])) {
                 $idee->est_soumise = $data["est_soumise"];
             }
             $champsData = $data['champs'] ?? [];
@@ -864,8 +868,6 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             // Remplir les attributs de base
             $this->fillIdeeFromChamps($idee, $champsData);
-
-            $idee->update($champsData);
 
             $idee->save();
 
