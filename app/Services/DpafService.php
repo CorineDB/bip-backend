@@ -52,16 +52,9 @@ class DpafService extends BaseService implements DpafServiceInterface
 
         try {
 
-            $dpaf = $this->repository->first();
+            //$dpaf = $this->repository->first();
 
-            if($dpaf){
-                $dpaf = $dpaf->fill($attributs);
-            }
-            else{
-                $dpaf = $this->repository->fill($attributs);
-            }
-
-            $dpaf->save();
+            $dpaf = $this->repository->getModel()->firstOrCreate(['id_ministere' => $attributs['id_ministere']], $attributs);
 
             if($dpaf->user){
                 if($dpaf->user->personne){

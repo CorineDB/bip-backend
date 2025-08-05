@@ -23,6 +23,24 @@ class RoleService extends BaseService implements RoleServiceInterface
         return RoleResource::class;
     }
 
+    public function all(): JsonResponse
+    {
+        try {
+
+            $item = $this->repository->getModel()->where("roleable_id", Auth::user()->profilable_id)->where("roleable_type", Auth::user()->profilable_type)->get();
+
+            return ($this->resourceClass::collection($item->load('permissions')))->response();
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Role not found.',
+            ], 404);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
     /**
      * Get role permissions records.
      *

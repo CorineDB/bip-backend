@@ -111,8 +111,7 @@ abstract class BaseService implements AbstractServiceInterface
     }
 
     protected function errorResponse(Exception $e): JsonResponse
-    {
-        // Tu peux logger l'erreur ici si tu veux
+    {        // Tu peux logger l'erreur ici si tu veux
         return response()->json([
             'success' => false,
             'message' => 'An error occurred.',

@@ -49,7 +49,7 @@ class SendEmailJob implements ShouldQueue
             $details = [];
             $data = [];
 
-            $lien = config("app.url");
+            $lien = env("CLIENT_APP_URL") ?? config("app.url");
 
             if ($this->type == "confirmation-compte") {
                 $details['view'] = "emails.auth.confirmation_compte";

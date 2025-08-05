@@ -23,9 +23,11 @@ class AuthResource extends JsonResource
             "prenom"=> $this->personne->prenom,
             "email"=> $this->email,
             "poste"=> $this->personne->poste,
-            "organisation"=> $this->when($this->organisation, new OrganisationResource($this->organisation)),
+            "organisation"=> $this->whenLoaded('organisation', function(){
+                return new OrganisationResource($this->organisation);
+            }),
             "status"=> $this->status,
-            "role" => new RoleResource($this->role)
+            "role" => new RoleResource($this->role->load("permissions"))
         ];
     }
 }

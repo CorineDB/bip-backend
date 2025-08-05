@@ -20,12 +20,12 @@ class FinancementResource extends BaseApiResource
             "nom" => $this->nom,
             "nom_usuel" => $this->nom_usuel,
             "type" => $this->type,
-            "financemenet" => $this->when($this->parent, function () {
+            "financement" => $this->when($this->parent, function () {
                 return [
                     "id" => $this->parent->id,
                     "nom" => $this->parent->nom,
                     "nom_usuel" => $this->parent->nom_usuel,
-                    "type" => $this->type,
+                    "type" => $this->parent->type,
                 ];
             })
         ];

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Evaluationcriteres;
+namespace App\Http\Requests\evaluation_criteres;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreEvaluationCritereRequest extends FormRequest
+class UpdateEvaluationCritereRequest extends FormRequest
 {
     public function authorize(): bool
     {

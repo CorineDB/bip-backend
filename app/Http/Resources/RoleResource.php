@@ -18,13 +18,10 @@ class RoleResource extends BaseApiResource
         return [
             'id' => $this->id,
             'nom' => $this->nom,
-
             // Relations selon le contexte
-            'permissions' => PermissionResource::collection($this->permissions),
-            // Relations selon le contexte
-            /*'permissions' => $this->whenLoaded('permissions', function() {
+            "permissions" => $this->whenLoaded('permissions', function(){
                 return PermissionResource::collection($this->permissions);
-            }),*/
+            })
         ];
     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\organisations;
 
 use App\Enums\EnumTypeOrganisation;
+use App\Models\Organisation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -17,6 +18,10 @@ class UpdateOrganisationRequest extends FormRequest
     {
         $organisationId = $this->route('organisation') ? (is_string($this->route('organisation')) ? $this->route('organisation') : ($this->route('organisation')->id)) : $this->route('id');
 
+        $personneId = Organisation::find($organisationId)?->personnes()->whereHas("user", function ($query) {
+            $query->where("type", "organisation");
+        })->first()?->id;
+
         return [
             'nom' => ['required', 'string', 'max:255', Rule::unique('organisations', 'nom')->ignore($organisationId)->whereNull('deleted_at')],
 
@@ -25,7 +30,7 @@ class UpdateOrganisationRequest extends FormRequest
             'parentId' => [Rule::requiredIf($this->type != 'ministere'), Rule::exists('organisations', 'id')->whereNull('deleted_at'), 'different:' . $organisationId],
 
             "admin" => ["sometimes", "array", "min:1"],
-            'admin.email' => ["sometimes", "email", "max:255", Rule::unique('users', 'email')->whereNull('deleted_at')],
+            'admin.email' => ["sometimes", "email", "max:255", Rule::unique('users', 'email')->ignore($personneId)->whereNull('deleted_at')],
 
             // Attributs de personne
             'admin.personne.nom' => 'sometimes|string|max:255',

@@ -31,11 +31,14 @@ class EvaluationCritere extends Model
      */
     protected $fillable = [
         'note',
+        'commentaire',
         'evaluateur_id',
         'notation_id',
         'critere_id',
         'categorie_critere_id',
-        'evaluation_id'
+        'evaluation_id',
+        'is_auto_evaluation',
+        'est_archiver'
     ];
 
     /**
@@ -47,6 +50,8 @@ class EvaluationCritere extends Model
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'is_auto_evaluation' => 'boolean',
+        'est_archiver' => 'boolean',
     ];
 
     /**
@@ -176,7 +181,7 @@ class EvaluationCritere extends Model
         if (!$this->notation) {
             return null;
         }
-        
+
         return is_numeric($this->notation->valeur) ? (float) $this->notation->valeur : null;
     }
 
@@ -199,7 +204,71 @@ class EvaluationCritere extends Model
         if ($this->isCompleted()) {
             return 'completed';
         }
-        
+
         return 'pending';
+    }
+
+    /**
+     * Scope to filter auto evaluations.
+     */
+    public function scopeAutoEvaluation($query)
+    {
+        return $query->where('is_auto_evaluation', true);
+    }
+
+    /**
+     * Scope to filter manual evaluations.
+     */
+    public function scopeManualEvaluation($query)
+    {
+        return $query->where('is_auto_evaluation', false);
+    }
+
+    /**
+     * Scope to filter archived evaluations.
+     */
+    public function scopeArchived($query)
+    {
+        return $query->where('est_archiver', true);
+    }
+
+    /**
+     * Scope to filter active evaluations.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('est_archiver', false);
+    }
+
+    /**
+     * Check if this is an auto evaluation.
+     */
+    public function isAutoEvaluation(): bool
+    {
+        return $this->is_auto_evaluation === true;
+    }
+
+    /**
+     * Check if this evaluation is archived.
+     */
+    public function isArchived(): bool
+    {
+        return $this->est_archiver === true;
+    }
+
+    /**
+     * Archive this evaluation.
+     */
+    public function archive(): bool
+    {
+        return $this->update(['est_archiver' => true]);
+    }
+
+    /**
+     * Unarchive this evaluation.
+     */
+    public function unarchive(): bool
+    {
+        return $this->update(['est_archiver' => false]);
     }
 }

@@ -17,8 +17,10 @@ class UpdateDpafRequest extends FormRequest
         $dpafId = $this->route('dpaf') ? (is_string($this->route('dpaf')) ? $this->route('dpaf') : ($this->route('dpaf')->id)) : $this->route('id');
 
         return [
-            'nom' => ['required', 'string', Rule::unique('dpaf', 'nom')->ignore($dpafId)->whereNull('deleted_at')],
+            'nom' => ['required', 'string'],
             'description' => 'nullable|string',
+            'id_ministere' => [Rule::exists('organisations', 'id')->where("type", "ministere")->whereNull('deleted_at'), Rule::unique('dpaf', 'id_ministere')->ignore($dpafId)->whereNull('deleted_at')],
+
             "admin" => ["required"],
             // Attributs de personne
             'admin.personne.nom' => 'required|string|max:255',

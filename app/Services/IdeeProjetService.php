@@ -15,6 +15,9 @@ use App\Models\IdeeProjet;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Services\Traits\ProjetRelationsTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Events\IdeeProjetCree;
+use App\Models\Organisation;
+use App\Models\User;
 
 class IdeeProjetService extends BaseService implements IdeeProjetServiceInterface
 {
@@ -37,6 +40,16 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
     protected function getResourcesClass(): string
     {
         return IdeeProjetResource::class;
+    }
+
+    public function filterBy(array $filterParam): JsonResponse
+    {
+        try {
+            $data = $this->repository->getModel()->where("statut", $filterParam[0])->get();
+            return $this->resourceClass::collection($data)->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
     }
 
     public function find(int|string $id): JsonResponse
@@ -75,9 +88,10 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             // Remplir les attributs de base
             $this->fillIdeeFromChamps($idee, $champsData);
 
-            $idee->demandeurId = auth()->id();
+            //dd(auth()->user()->ministere->id);
+
             $idee->responsableId = auth()->id();
-            $idee->ministereId = auth()->user()->ministere()?->id;
+            $idee->ministereId = auth()->user()->ministere?->id;
 
             $idee->save();
 
@@ -90,6 +104,11 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             $idee->refresh();
 
             DB::commit();
+
+            // Déclencher l'event seulement si l'idée est soumise
+            if (isset($data['est_soumise']) && $data['est_soumise'] === true) {
+                event(new IdeeProjetCree($idee));
+            }
 
             return (new $this->resourceClass($idee))
                 ->additional(['message' => 'Idée de projet sauvegardée avec succès.'])
@@ -860,6 +879,10 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             DB::beginTransaction();
 
             $idee = $this->repository->findOrFail($id);
+
+            // Sauvegarder l'état précédent de est_soumise
+            $ancienEtatSoumise = $idee->est_soumise;
+
             if (isset($data['est_soumise'])) {
                 $idee->est_soumise = $data["est_soumise"];
             }
@@ -881,6 +904,15 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             DB::commit();
 
+            // Déclencher l'event seulement si l'idée passe de non-soumise à soumise
+            if (
+                isset($data['est_soumise']) &&
+                $data['est_soumise'] === true &&
+                $ancienEtatSoumise !== true
+            ) {
+                event(new IdeeProjetCree($idee));
+            }
+
             return (new $this->resourceClass($idee))
                 ->additional(['message' => 'Idée de projet sauvegardée avec succès.'])
                 ->response()
@@ -889,43 +921,41 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             DB::rollBack();
             return $this->errorResponse($e);
         }
-        /*{
+    }
+
+    public function demandeurs(): JsonResponse
+    {
         try {
-            DB::beginTransaction();
 
-            $idee = $this->repository->findOrFail($id);
-            $champsData = $data['champs'] ?? [];
-            $relations = $this->extractRelationsFromChamps($champsData);
+            /*$demandeurs["agences"] = Organisation::institutions()->get();
+            $demandeurs["employes"] = User::all();*/
 
-            // Sauvegarder l'état précédent pour comparaison
-            $previousStats = $this->calculateProjectStats($idee);
+            $demandeurs = collect();
 
-            // Mettre à jour les attributs de base
-            $this->fillIdeeFromChamps($idee, $champsData);
-            $idee->save();
+            Organisation::institutions()->get()->each(function ($organisation) use (&$demandeurs) {
+                $demandeurs->push([
+                    "id" => $organisation->id,
+                    "nom_complet" => $organisation->nom
+                ]);
+            });
 
-            // Synchroniser les relations
-            $this->syncAllRelations($idee, $relations);
+            User::all()->each(function ($user) use (&$demandeurs) {
+                $demandeurs->push([
+                    "id" => $user->id,
+                    "nom_complet" => $user->personne->nom . " " . $user->personne->prenom
+                ]);
+            });
 
-            // Sauvegarder les champs dynamiques
-            $this->saveDynamicFields($idee, $champsData);
+            $response = [
+                'success' => true,
+                'message'       => "",
+                'data'          => $demandeurs,
+                'statutCode'    => 200
+            ];
 
-            // Calculer les nouvelles statistiques
-            $newStats = $this->calculateProjectStats($idee);
-
-            DB::commit();
-
-            return (new $this->resourceClass($idee))
-                ->additional([
-                    'message' => 'Idée de projet mise à jour avec succès.',
-                    'stats' => $newStats,
-                    'progression_change' => $newStats['progression'] - $previousStats['progression']
-                ])
-                ->response();
-
+            return response()->json($response, 200);
         } catch (Exception $e) {
-            DB::rollBack();
             return $this->errorResponse($e);
-        }*/
+        }
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\categories_critere;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateCategorieCritereRequest extends FormRequest
 {
@@ -15,27 +16,62 @@ class UpdateCategorieCritereRequest extends FormRequest
     {
         return [
             'type' => 'sometimes|string',
-            'slug' => 'sometimes|string',
             'is_mandatory' => 'boolean',
 
             'notations' => 'sometimes|array|min:1',
-            'notations.*.id' => 'nullable|exists:notations,id',
+            'notations.*.id' => [
+                'sometimes',
+                Rule::exists('notations', 'id')
+                    ->whereNull('deleted_at')
+            ],
             'notations.*.libelle' => 'required_with:notations|string|max:255',
-            'notations.*.valeur' => 'required_with:notations|string|max:255',
+            'notations.*.valeur' => 'required_with:notations|numeric|max:255',
             'notations.*.commentaire' => 'nullable|string',
-            
-            'criteres' => 'sometimes|array|min:1',
-            'criteres.*.id' => 'nullable|exists:criteres,id',
+
+            'criteres' => 'required|array|min:1',
+
+            'criteres.*.id' => [
+                'sometimes',
+                Rule::exists('criteres', 'id')
+                    ->whereNull('deleted_at')
+            ],
+
             'criteres.*.intitule' => 'required_with:criteres|string',
             'criteres.*.ponderation' => 'required_with:criteres|numeric|min:0',
             'criteres.*.commentaire' => 'nullable|string',
             'criteres.*.is_mandatory' => 'boolean',
-            
+
             'criteres.*.notations' => 'sometimes|array|min:1',
-            'criteres.*.notations.*.id' => 'nullable|exists:notations,id',
+
+            'criteres.*.notations.*.id' => [
+                'sometimes',
+                Rule::exists('notations', 'id')
+                    ->whereNull('deleted_at')
+            ],
+
             'criteres.*.notations.*.libelle' => 'required_with:criteres.*.notations|string|max:255',
-            'criteres.*.notations.*.valeur' => 'required_with:criteres.*.notations|string|max:255',
+            'criteres.*.notations.*.valeur' => 'required_with:criteres.*.notations|numeric|max:255',
             'criteres.*.notations.*.commentaire' => 'nullable|string'
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $criteres = $this->input('criteres', []);
+            // Si on a bien des critères
+            if (is_array($criteres)) {
+                $totalPonderation = 0;
+
+                foreach ($criteres as $critere) {
+                    $ponderation = $critere['ponderation'] ?? 0;
+                    $totalPonderation += floatval($ponderation);
+                }
+
+                if ($totalPonderation !== 100.0) {
+                    $validator->errors()->add('criteres', 'La somme des pondérations doit être exactement égale à 100%. Actuellement: ' . $totalPonderation . '%.');
+                }
+            }
+        });
     }
 }

@@ -42,4 +42,29 @@ class FinancementController extends Controller
     {
         return $this->service->delete($id);
     }
+
+    public function types_de_financement(): JsonResponse
+    {
+        return $this->service->types_de_financement();
+    }
+
+    public function natures_type_de_financement($idTypeFinancement): JsonResponse
+    {
+        return $this->service->natures_type_de_financement($idTypeFinancement);
+    }
+
+    public function natures_de_financement(): JsonResponse
+    {
+        return $this->service->natures_de_financement();
+    }
+
+    public function sources_nature_de_financement($idNature): JsonResponse
+    {
+        return $this->service->sources_nature_de_financement($idNature);
+    }
+
+    public function sources_de_financement(): JsonResponse
+    {
+        return $this->service->sources_de_financement();
+    }
 }

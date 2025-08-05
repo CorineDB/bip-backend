@@ -60,7 +60,7 @@ Route::prefix("auths")->group(['middleware' => ['auth:sanctum']], function () {
 */
 
 
-Route::group(['middleware' => [/* 'cors', */'json.response'], 'as' => 'api.'], function () {
+Route::group(['middleware' => [/* 'cors', 'json.response'*/], 'as' => 'api.'], function () {
 
     //Route::group(['middleware' => []], function () {
 
@@ -157,6 +157,12 @@ Route::group(['middleware' => [/* 'cors', */'json.response'], 'as' => 'api.'], f
         Route::apiResource('idees-projet', IdeeProjetController::class)
             ->parameters(['idees-projet' => 'idee_projet']);
 
+
+        Route::controller(IdeeProjetController::class)->group(function () {
+            Route::get('demandeurs-idees-projet', 'demandeurs');
+            Route::get('?statut=', 'filterByStatut');
+        });
+
         Route::apiResource('projets', ProjetController::class);
         Route::apiResource('categories-projet', CategorieProjetController::class);
         Route::apiResource('secteurs', SecteurController::class);
@@ -205,6 +211,17 @@ Route::group(['middleware' => [/* 'cors', */'json.response'], 'as' => 'api.'], f
 
         // Financial & Evaluation
         Route::apiResource('financements', FinancementController::class);
+
+        Route::controller(FinancementController::class)->group(function () {
+            Route::get('types-financement', 'types_de_financement');
+            Route::get('types-financement/{idType}/natures', 'natures_type_de_financement');
+            Route::get('natures-financement', 'natures_de_financement');
+            Route::get('sources-financement', 'sources_de_financement');
+            Route::get('natures-financement/{idNature}/sources', 'sources_nature_de_financement');
+
+
+        });
+
         Route::apiResource('evaluations', EvaluationController::class);
         Route::apiResource('champs', ChampController::class);
 
@@ -224,22 +241,23 @@ Route::group(['middleware' => [/* 'cors', */'json.response'], 'as' => 'api.'], f
 
         // Routes pour l'évaluation climatique unique des idées de projet
         Route::prefix('idees-projet/{ideeProjetId}/evaluation-climatique')->group(function () {
-            Route::post('/', [EvaluationController::class, 'createClimaticEvaluationForIdee'])
+            Route::post('/', [EvaluationController::class, 'soumettreEvaluationClimatique'])
                 ->name('idees-projet.evaluation-climatique.create');
-            Route::get('/', [EvaluationController::class, 'getClimaticEvaluationForIdee'])
+            Route::get('/', [EvaluationController::class, 'getDashboardEvaluationClimatique'])
                 ->name('idees-projet.evaluation-climatique.show');
             Route::get('/{evaluationId}/progress', [EvaluationController::class, 'updateClimaticEvaluationForIdee'])
                 ->name('idees-projet.evaluation-climatique.progress');
-            Route::post('/finalize', [EvaluationController::class, 'finalizeClimaticEvaluationForIdee'])
+            Route::post('/valider-score', [EvaluationController::class, 'finalizeEvaluation'])
                 ->name('idees-projet.evaluation-climatique.finalize');
-            
+            Route::post('/reevaluer', [EvaluationController::class, 'refaireAutoEvaluationClimatique'])
+                ->name('idees-projet.evaluation-climatique.reevaluer');
+
             // Routes pour soumettre les réponses
             Route::post('/soumettre', [EvaluationController::class, 'soumettreEvaluationClimatique'])
                 ->name('idees-projet.evaluation-climatique.soumettre');
-            Route::put('/modifier', [EvaluationController::class, 'modifierEvaluationClimatique'])
-                ->name('idees-projet.evaluation-climatique.modifier');
         });
 
+        /*
         // Routes pour les évaluations individuelles de critères
         Route::prefix('evaluations/{evaluationId}/evaluateurs/{evaluateurId}')->group(function () {
             Route::get('/criteres', [\App\Http\Controllers\EvaluationCritereIndividuelController::class, 'getEvaluateurCriteres'])
@@ -257,7 +275,7 @@ Route::group(['middleware' => [/* 'cors', */'json.response'], 'as' => 'api.'], f
         // Routes pour l'analyse des critères par tous les évaluateurs
         Route::get('evaluations/{evaluationId}/criteres/{critereId}/all-evaluateurs',
             [\App\Http\Controllers\EvaluationCritereIndividuelController::class, 'getCritereAllEvaluateurs'])
-            ->name('evaluations.critere.all-evaluateurs');
+            ->name('evaluations.critere.all-evaluateurs');*/
 
         // Evaluation Criteria Management
         Route::apiResource('categories-critere', \App\Http\Controllers\CategorieCritereController::class)

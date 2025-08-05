@@ -19,22 +19,20 @@ class UpdateSecteurRequest extends FormRequest
         $secteurId = $this->route('secteur') ? (is_string($this->route('secteur')) ? $this->route('secteur') : ($this->route('secteur')->id)) : $this->route('id');
 
         return [
-            'nom'=> ['required', 'string', Rule::unique('secteurs', 'nom')->ignore($secteurId)->whereNull('deleted_at')],
+            'nom' => ['required', 'string', Rule::unique('secteurs', 'nom')->ignore($secteurId)->whereNull('deleted_at')],
             'description' => 'sometimes|nullable|string|max:65535',
             'type' => ['sometimes', 'required', 'string', Rule::in(EnumTypeSecteur::values())],
 
-            'secteurId' => [Rule::requiredIf($this->input("type") != "grand-secteur"),
+            'secteurId' => [
+                Rule::requiredIf($this->input("type") != "grand-secteur"),
 
                 function ($attribute, $value, $fail) {
-                    $exists = Secteur::where("secteurId", $value)->when($this->input("type") == "secteur", function($query){
-
-                        $query->whereHas('parent', function ($query) {
-                            $query->where('type', 'grand-secteur');
-                        });
+                    $exists = Secteur::where("id", $value)->when($this->input("type") == "secteur", function($query){
+                        $query->whereNull('secteurId')->where('type', 'grand-secteur');
                     })->when($this->input("type") == "sous-secteur", function($query){
 
-                        $query->whereHas('parent', function ($query) {
-                            $query->where('type', 'secteur');
+                        $query->where('type', 'secteur')->whereHas('parent', function ($query) {
+                            $query->where('type', 'grand-secteur');
                         });
                     })->whereNull('deleted_at')->exists();
 

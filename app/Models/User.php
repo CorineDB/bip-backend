@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\Traits\HasPermissionTrait;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -124,37 +125,22 @@ class User extends Authenticatable implements OAuthenticatable
         return $this->belongsTo(Role::class, 'roleId');
     }
 
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'user_roles', 'userId', 'roleId');
+    }
+
+    public function permissions()
+    {
+        return $this->roles()->get()->last()->permissions();
+    }
+
     /**
      * Get the user's organisation through personne.
      */
     public function organisation()
     {
         return $this->hasOneThrough(Organisation::class, Personne::class, 'id', 'id', 'personneId', 'organismeId');
-    }
-
-    /**
-     * Check if user has a specific permission.
-     */
-    public function hasPermission(string $permission): bool
-    {
-        return $this->role->permissions()->where('slug', $permission)->exists();
-    }
-
-    /**
-     * Check if user has any of the given permissions.
-     */
-    public function hasAnyPermission(array $permissions): bool
-    {
-        return $this->role->permissions()->whereIn('slug', $permissions)->exists();
-    }
-
-    /**
-     * Check if user has all of the given permissions.
-     */
-    public function hasAllPermissions(array $permissions): bool
-    {
-        $userPermissions = $this->role->permissions()->pluck('slug')->toArray();
-        return count(array_intersect($permissions, $userPermissions)) === count($permissions);
     }
 
     /**
@@ -189,15 +175,20 @@ class User extends Authenticatable implements OAuthenticatable
     }
 
     /**
-     * Get the user's ministry through personne (excludes super admin, DPAF, DGPD)
+     * Get the user's ministry through personne (excludes super admin, DGPD)
      */
     public function ministere()
     {
-        if (in_array($this->role->slug, ['super_admin', 'super-admin', 'dpaf', 'dgpd'])) {
+        if (in_array($this->role->slug, ['super_admin', 'super-admin', 'dgpd'])) {
             return null;
         }
 
         return $this->personne ? $this->personne->ministere() : null;
+    }
+
+    public function getMinistereAttribute()
+    {
+        return $this->personne->ministere()->first();
     }
 
 
@@ -270,5 +261,24 @@ class User extends Authenticatable implements OAuthenticatable
             ->withPivot('critere_id', 'note', 'notation_id', 'categorie_critere_id')
             ->withTimestamps()
             ->distinct();
+    }
+
+    /**
+     * Scope pour filtrer les utilisateurs rattachés à une organisation
+     * descendante d’un ministère donné.
+     *
+     * Ce scope utilise une relation avec le modèle `Personne`, puis applique
+     * à celui-ci le scope `ministeres`, qui filtre en fonction des descendants
+     * du ministère identifié par son ID.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int $idMinistere ID du ministère racine
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeMinisteres(Builder $query, $idMinistere)
+    {
+        return $query->whereHas("personne", function ($query) use ($idMinistere) {
+            $query->ministeres($idMinistere);
+        });
     }
 }

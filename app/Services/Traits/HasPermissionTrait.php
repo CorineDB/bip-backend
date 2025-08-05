@@ -78,8 +78,6 @@ trait HasPermissionTrait
     {
         return $this->belongsToMany(Role::class, 'user_roles', 'userId', 'roleId')
                     ->withTimestamps();
-        return $this->belongsToMany(Role::class, 'role_users', 'userId', 'roleId')
-                    ->withTimestamps();
     }
 
     protected function getAllPermissions()

@@ -9,7 +9,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::table('evaluation_champs')->truncate();
         if (!Schema::hasTable('evaluation_champs')) {
             Schema::create('evaluation_champs', function (Blueprint $table) {
                 $table->id();

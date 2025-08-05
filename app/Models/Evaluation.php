@@ -32,7 +32,7 @@ class Evaluation extends Model
     protected $fillable = [
         'type_evaluation',
         'date_debut_evaluation',
-        'date_fin_evaluation', 
+        'date_fin_evaluation',
         'valider_le',
         'projetable_type',
         'projetable_id',
@@ -40,7 +40,9 @@ class Evaluation extends Model
         'valider_par',
         'commentaire',
         'evaluation',
-        'resultats_evaluation'
+        'resultats_evaluation',
+        'statut',
+        'id_evaluation'
     ];
 
     /**
@@ -49,14 +51,15 @@ class Evaluation extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'created_at' => 'datetime:Y-m-d',
-        'updated_at' => 'datetime:Y-m-d H:i:s',
-        'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'created_at'            => 'datetime:Y-m-d',
+        'updated_at'            => 'datetime:Y-m-d H:i:s',
+        'deleted_at'            => 'datetime:Y-m-d H:i:s',
         'date_debut_evaluation' => 'datetime',
-        'date_fin_evaluation' => 'datetime',
-        'valider_le' => 'datetime',
-        'evaluation' => 'array',
-        'resultats_evaluation' => 'array',
+        'date_fin_evaluation'   => 'datetime',
+        'valider_le'            => 'datetime',
+        'evaluation'            => 'array',
+        'resultats_evaluation'  => 'array',
+        'statut'                => 'integer'
     ];
 
     /**
@@ -105,6 +108,22 @@ class Evaluation extends Model
     }
 
     /**
+     * Get the parent evaluation (if this is a sub-evaluation).
+     */
+    public function parentEvaluation()
+    {
+        return $this->belongsTo(Evaluation::class, 'id_evaluation');
+    }
+
+    /**
+     * Get child evaluations (sub-evaluations).
+     */
+    public function childEvaluations()
+    {
+        return $this->hasMany(Evaluation::class, 'id_evaluation');
+    }
+
+    /**
      * Get the evaluation criteria for this evaluation.
      */
     public function evaluationCriteres()
@@ -135,22 +154,90 @@ class Evaluation extends Model
     }
 
     /**
-     * Calculate aggregated scores by critere.
+     * Calculate aggregated scores by critere with ponderation.
      */
     public function getAggregatedScores()
     {
         return $this->evaluationCriteres()
-            ->with(['critere', 'notation'])
+            ->with(['critere', 'notation', 'evaluateur'])
             ->get()
             ->groupBy('critere_id')
             ->map(function ($critereEvaluations) {
                 $notes = $critereEvaluations->pluck('notation.valeur')->filter();
+                $critere = $critereEvaluations->first()->critere;
+                $moyenne_evaluateurs = $notes->average();
+
                 return [
                     'critere' => $critereEvaluations->first()->critere,
-                    'moyenne' => $notes->average(),
+                    'ponderation' => $critere->ponderation,
+                    'ponderation_pct' => $critere->ponderation . '%',
+                    'moyenne_evaluateurs' => $moyenne_evaluateurs,
+                    'score_pondere' => $moyenne_evaluateurs * ($critere->ponderation / 100),
                     'total_evaluateurs' => $critereEvaluations->count(),
-                    'notes_individuelles' => $notes->toArray()
+                    'notes_individuelles' => $notes->toArray(),
+                    'evaluateurs' => $critereEvaluations->pluck('evaluateur.nom')->filter()->toArray()
                 ];
             });
+    }
+
+    /**
+     * Get evaluation status based on the statut field.
+     */
+    public function getStatutTextAttribute(): string
+    {
+        return match($this->statut) {
+            -1 => 'En attente',
+            0 => 'En cours',
+            1 => 'Terminée',
+            default => 'Inconnu'
+        };
+    }
+
+    /**
+     * Check if evaluation is pending.
+     */
+    public function isPending(): bool
+    {
+        return $this->statut === -1;
+    }
+
+    /**
+     * Check if evaluation is in progress.
+     */
+    public function isInProgress(): bool
+    {
+        return $this->statut === 0;
+    }
+
+    /**
+     * Check if evaluation is completed.
+     */
+    public function isCompleted(): bool
+    {
+        return $this->statut === 1;
+    }
+
+    /**
+     * Mark evaluation as in progress.
+     */
+    public function markInProgress(): bool
+    {
+        return $this->update(['statut' => 0]);
+    }
+
+    /**
+     * Mark evaluation as completed.
+     */
+    public function markCompleted(): bool
+    {
+        return $this->update(['statut' => 1]);
+    }
+
+    /**
+     * Mark evaluation as pending.
+     */
+    public function markPending(): bool
+    {
+        return $this->update(['statut' => -1]);
     }
 }

@@ -34,9 +34,7 @@ class PermissionSeeder extends Seeder
             "administration-general" => ["Super Admin"],
             "dpaf" => ["DPAF"],
             "dgpb" => ["DGPD"],
-            "organisation" => ["Organisation"]/*
-            "ministere" => ["Ministere"],
-            "institution" => ["Président Institution", "Secrétaire Exécutif", "Coordonnateur Projet"]*/
+            "organisation" => ["Organisation"]
         ];
 
         $permissions_base = [
@@ -74,7 +72,7 @@ class PermissionSeeder extends Seeder
             "creer-idee-projet", "modifier-idee-projet", "supprimer-idee-projet", "valider-idee-projet",
 
             // Documents et TDR
-            "voir-documents", "telecharger-canevas-analyse-idee", "modifier-canevas-analyse-idee", "voir-canevas-fiche-idee", "modifier-canevas-fiche-idee", "telecharger-canevas-fiche-idee", "modifier-canevas-grille-evaluation-climatique", "modifier-canevas-grille-evaluation-amc", "modifier-canevas-note-idee", "gerer-documents", "telecharger-documents", "creer-tdr", "modifier-tdr", "obtenir-score-climatique",
+            "voir-documents", "telecharger-canevas-analyse-idee", "modifier-canevas-analyse-idee", "voir-canevas-fiche-idee", "modifier-canevas-fiche-idee", "telecharger-canevas-fiche-idee", "modifier-canevas-grille-evaluation-climatique", "modifier-canevas-grille-evaluation-amc", "modifier-canevas-note-idee", "gerer-documents", "telecharger-documents", "creer-tdr", "modifier-tdr", "obtenir-score-climatique", "effectuer-evaluation-climatique-idee-projet",
             "voir-tdr-prefaisabilite", "voir-tdr-faisabilite", "telecharger-tdr-prefaisabilite",
             "telecharger-tdr-faisabilite", "soumettre-tdr-faisabilite", "soumettre-tdr-prefaisabilite",
 
@@ -113,7 +111,7 @@ class PermissionSeeder extends Seeder
             "Responsable Projet" => [
                 "voir-idees-projet","voir-details-idee-projet", "gerer-idees-projet", "voir-evaluations", "voir-canevas-fiche-idee",
                 "remplir-canevas-idee-projet", "modifier-une-idee-projet", "supprimer-une-idee-projet", "creer-une-idee-projet", "obtenir-score-climatique",
-                "recevoir-notification-resultats-validation-idee",
+                "recevoir-notification-resultats-validation-idee", "effectuer-evaluation-climatique-idee-projet",
                 "voir-axes-pag", "voir-piliers-pag", "voir-actions-pag", "voir-orientations-pnd", "voir-objectifs-pnd", "voir-resultats-pnd", "voir-types-financement", "voir-sources-financement", "voir-sources-financement",
 
                 "creer-evaluation", "voir-cible", "voir-odd", "voir-grands-secteurs", "voir-secteurs", "voir-sous-secteurs"

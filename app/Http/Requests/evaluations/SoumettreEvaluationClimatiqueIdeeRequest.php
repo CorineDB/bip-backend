@@ -89,19 +89,20 @@ class SoumettreEvaluationClimatiqueIdeeRequest extends FormRequest
         }
 
         // Vérifier que l'évaluateur est assigné à ce critère dans cette évaluation
-        $existsInEvaluation = EvaluationCritere::where('evaluation_id', $this->evaluation->id)
+        /*$existsInEvaluation = EvaluationCritere::where('evaluation_id', $this->evaluation->id)
             ->where('critere_id', $critereId)
             ->where('evaluateur_id', $evaluateurId)
             ->exists();
 
         if (!$existsInEvaluation) {
             $fail('Ce critère n\'est pas assigné à votre évaluation ou vous n\'êtes pas autorisé à l\'évaluer.');
-        }
+        }*/
 
         // Vérifier que le critère appartient à la bonne catégorie pour l'évaluation climatique
         if ($this->categorieCritere) {
             $critere = \App\Models\Critere::find($critereId);
-            if ($critere && $critere->categorie_critere_id !== $this->categorieCritere->id) {
+
+            if (($critere && (($critere->categorie_critere_id !== $this->categorieCritere->id)))) {
                 $fail('Ce critère n\'appartient pas à la catégorie d\'évaluation climatique.');
             }
         }
@@ -136,15 +137,48 @@ class SoumettreEvaluationClimatiqueIdeeRequest extends FormRequest
         $notationExists = \App\Models\Notation::where('id', $notationId)
             ->where(function ($query) use ($critereId, $critere) {
                 $query->where('critere_id', $critereId) // Notation spécifique au critère
-                      ->orWhere(function ($subQuery) use ($critere) {
-                          $subQuery->where('categorie_critere_id', $critere->categorie_critere_id)
-                                   ->whereNull('critere_id'); // Notation générale de la catégorie
-                      });
+                    ->orWhere(function ($subQuery) use ($critere) {
+                        $subQuery->where('categorie_critere_id', $critere->categorie_critere_id)
+                            ->whereNull('critere_id'); // Notation générale de la catégorie
+                    });
             })
             ->exists();
 
         if (!$notationExists) {
             $fail('La notation sélectionnée n\'est pas compatible avec ce critère.');
         }
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if (!$this->categorieCritere) {
+                $validator->errors()->add('reponses', 'Catégorie de critères introuvable.');
+                return;
+            }
+
+            $reponses = $this->input('reponses', []);
+
+            // Récupérer tous les critères attendus (id => titre)
+            $criteresAttendus = \App\Models\Critere::where('categorie_critere_id', $this->categorieCritere->id)
+                ->orWhere(function ($query) {
+                    $query->whereNull('categorie_critere_id')->where('is_mandatory', true);
+                })
+                ->pluck('intitule', 'id') // id => intitule
+                ->toArray();
+
+            // IDs soumis
+            $criteresSoumis = collect($reponses)->pluck('critere_id')->filter()->unique()->toArray();
+
+            // Critères manquants
+            $manquants = array_diff_key($criteresAttendus, array_flip($criteresSoumis));
+
+            if (count($manquants) > 0) {
+                $validator->errors()->add(
+                    'reponses',
+                    'Tous les critères obligatoires doivent être évalués. Il manque : ' . implode(', ', $manquants)
+                );
+            }
+        });
     }
 }

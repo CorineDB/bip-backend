@@ -20,6 +20,10 @@ return new class extends Migration
                 $table->foreign('evaluateur_id')->references('id')->on('users')
                     ->onDelete('cascade')
                     ->onUpdate('cascade');
+                $table->bigInteger('evaluation_evaluateur_id')->nullable()->unsigned();
+                $table->foreign('evaluation_evaluateur_id')->references('id')->on('evaluation_evaluateurs')
+                    ->onDelete('cascade')
+                    ->onUpdate('cascade');
 
                 $table->bigInteger('notation_id')->unsigned();
                 $table->foreign('notation_id')->references('id')->on('notations')

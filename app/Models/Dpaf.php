@@ -30,7 +30,7 @@ class Dpaf extends Model
      * @var array
      */
     protected $fillable = [
-        'nom', 'slug', 'description'
+        'nom', 'slug', 'description', 'id_ministere'
     ];
 
     /**
@@ -99,6 +99,11 @@ class Dpaf extends Model
     public function user()
     {
         return $this->morphOne(User::class, 'profilable');
+    }
+
+    public function ministere()
+    {
+        return $this->belongsTo(Organisation::class, 'id_ministere');
     }
 
     /**

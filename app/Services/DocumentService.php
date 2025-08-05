@@ -163,7 +163,9 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Mettre à jour section existante
                 $section = $document->sections()->find($sectionId);
                 if ($section) {
-                    $section->update($sectionAttributes);
+                    $section->fill($sectionAttributes);
+                    $section->save();
+                    //$section->update($sectionAttributes);
                 } else {
                     // Section n'existe pas, la créer
                     $section = $document->sections()->create($sectionAttributes);
@@ -196,7 +198,9 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Mettre à jour champ existant
                 $champ = $section->champs()->find($champId);
                 if ($champ) {
-                    $champ->update($champAttributes);
+                    $champ->fill($champAttributes);
+                    $champ->save();
+                    //$champ->update($champAttributes);
                 } else {
                     // Champ n'existe pas, le créer
                     $section->champs()->create($champAttributes);
@@ -223,6 +227,8 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Mettre à jour champ existant
                 $champ = $document->champs()->find($champId);
                 if ($champ) {
+                    $champ->fill($champAttributes);
+                    $champ->save();
                     $champ->update($champAttributes);
                 } else {
                     // Champ n'existe pas, le créer
@@ -293,6 +299,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
                 // Nettoyer les données du document principal
                 $documentData = collect($data)->except(['sections', 'champs', 'id'])->toArray();
+
 
                 // Créer le document principal
                 $document = $this->repository->create($documentData);

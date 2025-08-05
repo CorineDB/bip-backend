@@ -23,15 +23,12 @@ class StoreSecteurRequest extends FormRequest
             'secteurId' => [Rule::requiredIf($this->input("type") != "grand-secteur"),
 
                 function ($attribute, $value, $fail) {
-                    $exists = Secteur::where("secteurId", $value)->when($this->input("type") == "secteur", function($query){
-
-                        $query->whereHasNot('parent', function ($query) {
-                            $query->where('type', 'grand-secteur');
-                        });
+                    $exists = Secteur::where("id", $value)->when($this->input("type") == "secteur", function($query){
+                        $query->whereNull('secteurId')->where('type', 'grand-secteur');
                     })->when($this->input("type") == "sous-secteur", function($query){
 
-                        $query->whereHas('parent', function ($query) {
-                            $query->where('type', 'secteur');
+                        $query->where('type', 'secteur')->whereHas('parent', function ($query) {
+                            $query->where('type', 'grand-secteur');
                         });
                     })->whereNull('deleted_at')->exists();
 

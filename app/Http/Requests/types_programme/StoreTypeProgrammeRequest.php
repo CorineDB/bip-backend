@@ -16,7 +16,7 @@ class StoreTypeProgrammeRequest extends FormRequest
     {
         return [
             'type_programme'=> ['required', 'string', Rule::unique('types_programme', 'type_programme')->whereNull('deleted_at')],
-            'typeId' => ['required', Rule::exists('types_programme', 'id')->whereNull('deleted_at')],
+            'typeId' => ['sometimes', Rule::exists('types_programme', 'id')->whereNull('deleted_at')],
         ];
     }
 

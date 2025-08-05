@@ -6,6 +6,7 @@ use App\Enums\EnumTypeOrganisation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\DB;
 
 class Organisation extends Model
 {
@@ -31,7 +32,11 @@ class Organisation extends Model
      * @var array
      */
     protected $fillable = [
-        'nom', 'slug', 'description', 'type', 'parentId'
+        'nom',
+        'slug',
+        'description',
+        'type',
+        'parentId'
     ];
 
     /**
@@ -52,7 +57,8 @@ class Organisation extends Model
      * @var array
      */
     protected $hidden = [
-        'updated_at', 'deleted_at'
+        'updated_at',
+        'deleted_at'
     ];
 
     /**
@@ -64,34 +70,23 @@ class Organisation extends Model
     }
 
     /**
-     * Get the ministere organisation (self if already ministry, or parent ministry).
-     */
-    public function ministere()
-    {
-        // Si cette organisation est déjà un ministère, se retourner elle-même
-        if ($this->type === EnumTypeOrganisation::MINISTERE) {
-            return $this->newQuery()->where('id', $this->id);
-        }
-        
-        // Sinon, chercher le ministère parent récursivement
-        $current = $this;
-        while ($current->parent) {
-            $current = $current->parent;
-            if ($current->type === EnumTypeOrganisation::MINISTERE) {
-                return $this->newQuery()->where('id', $current->id);
-            }
-        }
-        
-        // Aucun ministère trouvé
-        return $this->newQuery()->whereRaw('1 = 0');
-    }
-
-    /**
      * Get the child organisations.
      */
     public function children()
     {
         return $this->hasMany(Organisation::class, 'parentId');
+    }
+
+    /**
+     * Get the personnes for the organisation.
+     */
+    public function admin()
+    {
+        return $this->hasOne(Personne::class, 'organismeId')->whereHas("user", function($query){
+            $query->where("type", "organisation")->whereHas("role", function($query){
+                $query->where("slug", "organisation");
+            });
+        });
     }
 
     /**
@@ -124,6 +119,7 @@ class Organisation extends Model
             ]);
         });
     }
+
     /**
      *
      *
@@ -137,17 +133,71 @@ class Organisation extends Model
     }
 
     /**
-    *
-    * @param  string  $value
-    * @return string
-    */
-    public function getNomAttribute($value){
-        return ucfirst(str_replace('\\',' ',$value));
+     *
+     * @param  string  $value
+     * @return string
+     */
+    public function getNomAttribute($value)
+    {
+        return ucfirst(str_replace('\\', ' ', $value));
     }
 
     public function user()
     {
         return $this->morphOne(User::class, 'profilable');
+    }
+
+    public function dpaf()
+    {
+        return $this->hasOne(Dpaf::class, 'id_ministere')->where('type', 'ministere');
+    }
+
+    /**
+     * Récupérer le ministère de tutelle de l'organisation.
+     *
+     * Remonte récursivement la hiérarchie des parents jusqu'à
+     * trouver l'organisation dont le type est MINISTERE.
+     *
+     * Méthode qui simule la relation vers le ministère racine.
+     * Retourne un Builder Eloquent.
+     *
+     * Usage :
+     * - $organisation->ministere()->first()
+     * - $organisation->ministere()->where(...)->first();
+     * - $organisation->ministere()->exists();
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function ministere()
+    {
+        // Si l'organisation est déjà un ministère, on renvoie elle-même
+        if ($this->type === EnumTypeOrganisation::MINISTERE) {
+            return self::where('id', $this->id);
+        }
+
+        $current = $this;
+        // Remonter la hiérarchie des parents
+        while ($current->parent) {
+            $current = $current->parent;
+            if ($current->type === EnumTypeOrganisation::MINISTERE) {
+                return self::where('id', $current->id);
+            }
+        }
+
+        // Requête vide pour éviter erreur // Aucun ministère trouvé
+        return self::whereRaw('1 = 0');
+    }
+
+    /**
+     * Accessor pour accéder directement à l'instance du ministère racine.
+     *
+     * Usage : $organisation->ministere
+     *
+     * @return Organisation|null
+     */
+    public function getMinistereAttribute()
+    {
+        return $this->ministere()->first();
     }
 
     /**
@@ -156,5 +206,79 @@ class Organisation extends Model
     public function membres()
     {
         return $this->morphMany(User::class, 'profilable');
+    }
+
+    /**
+     * Scope to filter by ministeres.
+     */
+    public function scopeMinisteres($query)
+    {
+        return $query->where('type', 'ministere');
+    }
+
+    /**
+     * Scope to filter by institutions.
+     */
+    public function scopeInstitutions($query, $idMinisteres = null)
+    {
+        return $query->where('type', 'etatique');
+    }
+
+    /**
+     * Scope to filter by institutions.
+     */
+    public function scopeInstitutionsWithMinistere($query)
+    {
+        return $query->scopeInstitutions()->with("organisation", function ($query) {
+            $query->where("type", "ministere");
+        });
+    }
+
+    /**
+     * Scope pour récupérer toutes les organisations descendantes d’un ministère donné,
+     * en excluant le ministère lui-même, à l’aide d’une requête récursive SQL (nécessite MySQL 8+ ou PostgreSQL).
+     *
+     * Ce scope utilise une CTE récursive (WITH RECURSIVE) pour parcourir la hiérarchie
+     * des organisations à partir de l’ID du ministère racine. Il permet d’obtenir efficacement
+     * tous les enfants directs et indirects sans recourir à une boucle en PHP.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int $ministereId ID du ministère racine
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeDescendantsFromMinistere($query, $ministereId)
+    {
+        return $query->whereIn('id', function ($subQuery) use ($ministereId) {
+            $subQuery->select('id')
+                ->from(DB::raw("(
+                        WITH RECURSIVE descendants AS (
+                            SELECT id, parentId
+                            FROM organisations
+                            WHERE parentId = ?
+                            UNION ALL
+                            SELECT o.id, o.parentId
+                            FROM organisations o
+                            INNER JOIN descendants d ON o.parentId = d.id
+                        )
+                        SELECT id FROM descendants
+                    ) AS descendants_subquery"), [$ministereId]);
+        });
+
+        $rows = DB::select("
+        WITH RECURSIVE descendants AS (
+            SELECT id, parentId
+            FROM organisations
+            WHERE parentId = :ministereId
+            UNION ALL
+            SELECT o.id, o.parentId
+            FROM organisations o
+            INNER JOIN descendants d ON o.parentId = d.id
+        )
+        SELECT id FROM descendants", ['ministereId' => $ministereId]);
+
+        $ids = collect($rows)->pluck('id');
+
+        return $query->whereIn('id', $ids);
     }
 }

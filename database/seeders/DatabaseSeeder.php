@@ -22,6 +22,9 @@ class DatabaseSeeder extends Seeder
             ArrondissementSeeder::class,
             VillageSeeder::class,
             PermissionSeeder::class,
+            OddSeeder::class,
+            CibleSeeder::class,
+            GrilleEvaluationPreliminaireSeeder::class
 
             /*
             OrganisationsSeeder::class,

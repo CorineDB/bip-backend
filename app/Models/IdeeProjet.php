@@ -335,6 +335,6 @@ class IdeeProjet extends Model
 
     public function evaluations()
     {
-        return $this->morphMany(Evaluation::class, 'evaluable');
+        return $this->morphMany(Evaluation::class, 'projetable');
     }
 }

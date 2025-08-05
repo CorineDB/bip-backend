@@ -19,7 +19,11 @@ class OrganisationResource extends BaseApiResource
             "id" => $this->id,
             "nom"=> $this->nom,
             "type"=> $this->type,
-            "description"=> $this->description
+            "description"=> $this->description,
+            "parentId"=> $this->parentId,
+            "admin"=> $this->when($this->admin, function(){
+                return new UserResource($this->admin->user);
+            })
         ];
     }
 

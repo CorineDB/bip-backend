@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 
 class EvaluationCritereResource extends BaseApiResource
 {
-
     /**
      * Transform the resource into an array.
      *
@@ -23,24 +22,27 @@ class EvaluationCritereResource extends BaseApiResource
             'is_pending' => $this->isPending(),
             'status' => $this->status,
             'numeric_value' => $this->getNumericValue(),
-            
+
             // Relations
             'evaluateur' => $this->whenLoaded('evaluateur', function () {
                 return [
                     'id' => $this->evaluateur->id,
-                    'username' => $this->evaluateur->username,
+                    'nom_complet' => $this->evaluateur->personne->nom . " " . $this->evaluateur->personne->prenom,
                     'email' => $this->evaluateur->email,
                 ];
             }),
-            
+
             'critere' => $this->whenLoaded('critere', function () {
                 return [
                     'id' => $this->critere->id,
-                    'nom' => $this->critere->nom,
-                    'description' => $this->critere->description,
+                    'intitule' => $this->critere->intitule,
+                    'ponderation' => $this->critere->ponderation,
+                    'ponderation_pct' => $this->critere->ponderation . '%',
+                    'commentaire' => $this->critere->commentaire,
+                    'is_mandatory' => $this->critere->is_mandatory,
                 ];
             }),
-            
+
             'notation' => $this->whenLoaded('notation', function () {
                 return [
                     'id' => $this->notation->id,
@@ -49,7 +51,7 @@ class EvaluationCritereResource extends BaseApiResource
                     'commentaire' => $this->notation->commentaire,
                 ];
             }),
-            
+
             'categorie_critere' => $this->whenLoaded('categorieCritere', function () {
                 return [
                     'id' => $this->categorieCritere->id,
@@ -57,7 +59,7 @@ class EvaluationCritereResource extends BaseApiResource
                     'description' => $this->categorieCritere->description,
                 ];
             }),
-            
+
             'evaluation' => $this->whenLoaded('evaluation', function () {
                 return [
                     'id' => $this->evaluation->id,
@@ -65,7 +67,7 @@ class EvaluationCritereResource extends BaseApiResource
                     'date_debut_evaluation' => $this->evaluation->date_debut_evaluation,
                 ];
             }),
-            
+
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

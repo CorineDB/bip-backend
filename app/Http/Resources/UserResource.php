@@ -18,13 +18,17 @@ class UserResource extends BaseApiResource
     {
         return [
             "id" => $this->id,
-            "nom"=> $this->personne->nom,
-            "prenom"=> $this->personne->prenom,
-            "email"=> $this->email,
-            "poste"=> $this->personne->poste,
-            "organisation"=> new OrganisationResource($this->organisation),
-            "status"=> "actif",
-            "role" => new RoleResource($this->role)
+            "nom" => $this->personne->nom,
+            "prenom" => $this->personne->prenom,
+            "email" => $this->email,
+            "poste" => $this->personne->poste,
+            /*"organisation" => $this->whenLoaded('organisation', function () {
+                return new OrganisationResource($this->organisation);
+            }),*/
+            "status" => $this->status,
+            "role" => $this->whenLoaded('role', function(){
+                return new RoleResource($this->role);
+            })
         ];
     }
 

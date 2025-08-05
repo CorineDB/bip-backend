@@ -20,8 +20,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
     public function __construct(
         CategorieCritereRepositoryInterface $repository
-    )
-    {
+    ) {
         parent::__construct($repository);
     }
 
@@ -94,23 +93,35 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             unset($data['criteres'], $data['notations']);
 
             if (!empty($data)) {
-                $this->repository->update($id, $data);
-            }
+                $categorieCritere->fill($data);
 
+                $categorieCritere->save();
+            }
             if (!empty($notationsCategorie)) {
                 foreach ($notationsCategorie as $notationData) {
                     if (isset($notationData['id']) && $notationData['id']) {
                         $notation = Notation::findOrFail($notationData['id']);
+                        $notationIdsFromRequest[] = $notation->id;
                         $notation->update($notationData);
                     } else {
-                        $notationData['categorie_critere_id'] = $id;
+                        $notationData['categorie_critere_id'] = $categorieCritere->id;
                         $notationData['critere_id'] = null;
-                        Notation::create($notationData);
+                        $notation = Notation::create($notationData);
+                        $notationIdsFromRequest[] = $notation->id;
                     }
                 }
+                // Supprimer les notations de catégorie non présentes dans la requête
+                Notation::where('categorie_critere_id', $categorieCritere->id)
+                    ->whereNull('critere_id')
+                    ->whereNotIn('id', $notationIdsFromRequest)
+                    ->delete();
             }
 
+            // ======= 3. GESTION DES CRITERES =======
+
+            // 3. Mise à jour ou ajout des critères et leurs notations
             if (!empty($criteres)) {
+                $critereIdsFromRequest = [];
                 foreach ($criteres as $critereData) {
                     $notations = $critereData['notations'] ?? [];
                     unset($critereData['notations']);
@@ -118,31 +129,49 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                     if (isset($critereData['id']) && $critereData['id']) {
                         $critere = Critere::findOrFail($critereData['id']);
                         $critere->update($critereData);
+                        $critereIdsFromRequest[] = $critere->id;
                     } else {
-                        $critereData['categorie_critere_id'] = $id;
+                        $critereData['categorie_critere_id'] = $categorieCritere->id;
                         $critere = Critere::create($critereData);
+                        $critereIdsFromRequest[] = $critere->id;
                     }
 
+                    // ======= 4. GESTION DES NOTATIONS DE CRITERE =======
                     if (!empty($notations)) {
+                        $notationIdsCritere = [];
                         foreach ($notations as $notationData) {
                             if (isset($notationData['id']) && $notationData['id']) {
                                 $notation = Notation::findOrFail($notationData['id']);
                                 $notation->update($notationData);
+                                $notationIdsCritere[] = $notation->id;
                             } else {
                                 $notationData['critere_id'] = $critere->id;
-                                $notationData['categorie_critere_id'] = $id;
-                                Notation::create($notationData);
+                                $notationData['categorie_critere_id'] = $categorieCritere->id;
+                                $notation = Notation::create($notationData);
+                                $notationIdsCritere[] = $notation->id;
                             }
                         }
+
+                        // Supprimer les anciennes notations du critère qui ne sont plus présentes
+                        Notation::where('critere_id', $critere->id)
+                            ->whereNotIn('id', $notationIdsCritere)
+                            ->delete();
                     }
+                }
+                // Supprimer les anciens critères (et leurs notations) qui ne figurent plus dans la requête
+                $criteresToDelete = $categorieCritere->criteres()->whereNotIn('id', $critereIdsFromRequest)->get();
+                foreach ($criteresToDelete as $critere) {
+                    // Supprimer les notations liées à ce critère
+                    Notation::where('critere_id', $critere->id)->delete();
+                    $critere->delete();
                 }
             }
 
+            $categorieCritere->refresh();
+
             DB::commit();
 
-            $updatedCategorie = $this->repository->findOrFail($id);
-
-            return (new $this->resourceClass($updatedCategorie->load(['criteres.notations', 'notations'])))
+            return (new $this->resourceClass($categorieCritere->load(['criteres.notations', 'notations'])))
                 ->additional(['message' => 'Catégorie critère mise à jour avec succès.'])
                 ->response();
         } catch (Exception $e) {
@@ -157,7 +186,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
     public function getGrilleEvaluationPreliminaire(): JsonResponse
     {
         try {
-            $grille = $this->repository->findByType('Évaluation préliminaire multi projet de l\'impact climatique');
+            $grille = $this->repository->findByAttribute('slug', 'evaluation-preliminaire-multi-projet-impact-climatique');
 
             if (!$grille) {
                 return response()->json([
@@ -179,8 +208,9 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
     public function updateGrilleEvaluationPreliminaire(array $data): JsonResponse
     {
         try {
-            $grille = $this->repository->findByType('Évaluation préliminaire multi projet de l\'impact climatique');
+            $grille = $this->repository->findByAttribute('slug', 'evaluation-preliminaire-multi-projet-impact-climatique');
 
+            $data["slug"] = 'evaluation-preliminaire-multi-projet-impact-climatique';
             if (!$grille) {
                 return response()->json([
                     'success' => false,

@@ -126,7 +126,7 @@ return new class extends Migration
         if (Schema::hasTable('personnes')) {
             Schema::table('personnes', function (Blueprint $table) {
                 if (Schema::hasColumn('personnes', 'organismeId')) {
-                    $table->bigInteger('organismeId')->unsigned()->change();
+                    $table->bigInteger('organismeId')->unsigned()->nullable()->change();
                 }
                 //
             });
@@ -135,7 +135,7 @@ return new class extends Migration
         if (Schema::hasTable('roles')) {
             Schema::table('roles', function (Blueprint $table) {
                 // Supprime la contrainte unique créée dans up()
-                $table->dropUnique('unique_role_nom_per_roleable');
+                $this->dropUniqueIfExists(table: 'roles', constraint: 'unique_role_nom_per_roleable');
                 if (Schema::hasColumn('users', 'nom')) {
                     $table->string('nom')->unique()->change();
                 }

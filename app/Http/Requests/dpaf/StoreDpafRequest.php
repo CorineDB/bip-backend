@@ -15,8 +15,10 @@ class StoreDpafRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nom' => ['required', 'string', Rule::unique('dpaf', 'nom')->whereNull('deleted_at')],
+            'nom' => ['required', 'string'],
             'description' => 'nullable|string',
+            'id_ministere' => [Rule::exists('organisations', 'id')->where("type", "ministere")->whereNull('deleted_at'), Rule::unique('dpaf', 'id_ministere')->whereNull('deleted_at')],
+
             "admin" => ["required"],
             'admin.email' => ["required", "email", "max:255", Rule::unique('users', 'email')->whereNull('deleted_at')],
 

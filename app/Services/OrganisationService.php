@@ -44,6 +44,70 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
         return OrganisationResource::class;
     }
 
+    public function create(array $data): JsonResponse
+    {
+        DB::beginTransaction();
+        try {
+
+            if($data['type'] != "ministere" && !isset($data['parentId'])){
+                throw new Exception("Veuillez preciser le ministere de tutelle de cette organisation", 404);
+            }
+
+            $organisation = $this->repository->create($data);
+
+            if(isset($data["admin"])){
+                $personneData = $data["admin"]['personne'] ?? [];
+
+                // Création de la personne
+                $personne = $this->personneRepository->create(array_merge($personneData, ["organismeId" => $organisation->id]));
+
+
+                $role = $this->roleRepository->findByAttribute('slug', 'organisation');
+
+                if (!$role) throw new Exception("Role introuvable", 400);
+
+                $password = $this->generateSimpleTemporaryPassword();
+
+                $organisation->user()->create(array_merge($data["admin"], ['password' => Hash::make($password), "username" => $data["admin"]['email'], "provider_user_id" => $data["admin"]['email'], "personneId" => $personne->id, "roleId" => $role->id, 'type' => $role->slug, 'profilable_type' => get_class($organisation), 'profilable_id' => $organisation->id]));
+
+                $organisation->refresh();
+
+                // Création de la personne
+
+                $organisation->user->roles()->attach([$role->id]);
+
+                $utilisateur = $organisation->user;
+
+                $utilisateur->account_verification_request_sent_at = Carbon::now();
+
+                $utilisateur->token = str_replace(['/', '\\', '.'], '', Hash::make($utilisateur->id . Hash::make($utilisateur->email) . Hash::make(Hash::make(strtotime($utilisateur->account_verification_request_sent_at)))));
+
+                $utilisateur->link_is_valide = true;
+
+                $utilisateur->save();
+
+                //Envoyer les identifiants de connexion à l'utilisateur via son email
+                dispatch(new SendEmailJob($organisation->user, "confirmation-compte", $password))->delay(now()->addSeconds(15));
+            }
+
+            $organisation->refresh();
+
+            DB::commit();
+
+            $acteur = Auth::check() ? Auth::user()->nom . " " . Auth::user()->prenom : "Inconnu";
+
+            $message = Str::ucfirst($acteur) . " a crée l'organisation {$organisation->nom}.";
+
+            return response()->json(['statut' => 'success', 'message' => "Organisation crée", 'data' => $organisation, 'statutCode' => Response::HTTP_OK], Response::HTTP_OK);
+        } catch (\Throwable $th) {
+
+            DB::rollBack();
+            //throw $th;
+            return response()->json(['statut' => 'error', 'message' => $th->getMessage(), 'errors' => [], 'statutCode' => Response::HTTP_INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
     public function update($organisationId, array $attributs): JsonResponse
     {
         DB::beginTransaction();
@@ -60,7 +124,7 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
             if ($organisation->user) {
                 $attributs["admin"]["personne"]["organismeId"] = $organisation->id;
                 $organisation->user->personne->fill($attributs["admin"]["personne"])->save();
-            } else if(isset($attributs["admin"])){
+            } else if(!$organisation->user && isset($attributs["admin"])){
                 $personneData = $attributs["admin"]['personne'] ?? [];
 
                 // Création de la personne

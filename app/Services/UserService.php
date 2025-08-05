@@ -15,6 +15,7 @@ use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Traits\GenerateTemporaryPassword;
 use App\Services\AuthService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +46,24 @@ class UserService extends BaseService implements UserServiceInterface
     protected function getResourceClass(): string
     {
         return UserResource::class;
+    }
+
+    public function all(): JsonResponse
+    {
+        try {
+
+            $item = $this->repository->getModel()->where("profilable_id", Auth::user()->profilable_id)->where("profilable_type", Auth::user()->profilable_type)->get();
+
+            return ($this->resourceClass::collection($item->load('role')))->response();
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Role not found.',
+            ], 404);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
     }
 
     public function create(array $data): JsonResponse
