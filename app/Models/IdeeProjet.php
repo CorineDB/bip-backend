@@ -219,6 +219,24 @@ class IdeeProjet extends Model
             ->withTimestamps();
     }
 
+
+
+    /**
+     * Get the projetable entity that the evaluation belongs to.
+     */
+    public function commentaires()
+    {
+        return $this->morphMany(Commentaire::class, 'commentaireable');
+    }
+
+    /**
+     * Get the projetable entity that the evaluation belongs to.
+     */
+    public function decisions()
+    {
+        return $this->morphMany(Workflow::class, 'projetable');
+    }
+
     public function secteur()
     {
         return $this->belongsTo(Secteur::class, 'secteurId')->where('type', "sous-secteur")->whereHas('parent', function($query){

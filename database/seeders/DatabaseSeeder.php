@@ -24,6 +24,9 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             OddSeeder::class,
             CibleSeeder::class,
+            FinancementSeeder::class,
+            OrganisationsSeeder::class,
+            ProgrammeSeeder::class,
             GrilleEvaluationPreliminaireSeeder::class
 
             /*

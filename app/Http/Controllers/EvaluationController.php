@@ -10,6 +10,7 @@ use App\Http\Requests\evaluations\CreateEvaluationWithEvaluateursRequest;
 use App\Http\Requests\evaluations\AssignEvaluateursRequest;
 use App\Http\Requests\evaluations\SoumettreEvaluationClimatiqueIdeeRequest;
 use App\Http\Requests\evaluations\ModifierEvaluationClimatiqueRequest;
+use App\Http\Requests\evaluations\ValidationIdeeProjetRequest;
 use App\Services\Contracts\EvaluationServiceInterface;
 use Illuminate\Http\JsonResponse;
 
@@ -56,6 +57,15 @@ class EvaluationController extends Controller
     ): JsonResponse {
         return $this->service->soumettreEvaluationClimatique($request->all(), $ideeProjetId);
     }
+
+    public function validerIdeeDeProjet(
+        ValidationIdeeProjetRequest $request,
+        $ideeProjetId
+    ): JsonResponse {
+        return $this->service->validerIdeeDeProjet($ideeProjetId, $request->all());
+    }
+
+
 
     /**
      * Dashboard responsable : informations complètes évaluation climatique.

@@ -92,6 +92,14 @@ class Evaluation extends Model
     }
 
     /**
+     * Get the projetable entity that the evaluation belongs to.
+     */
+    public function commentaires()
+    {
+        return $this->morphMany(Commentaire::class, 'commentaireable');
+    }
+
+    /**
      * Get the evaluateur (evaluator).
      */
     public function evaluateur()

@@ -257,6 +257,14 @@ Route::group(['middleware' => [/* 'cors', 'json.response'*/], 'as' => 'api.'], f
                 ->name('idees-projet.evaluation-climatique.soumettre');
         });
 
+
+        // Routes pour l'évaluation climatique unique des idées de projet
+        Route::prefix('idees-projet/{ideeProjetId}/validation')->group(function () {
+            Route::post('/', [EvaluationController::class, 'validerIdeeDeProjet'])
+                ->name('idees-projet.validation');
+        });
+
+
         /*
         // Routes pour les évaluations individuelles de critères
         Route::prefix('evaluations/{evaluationId}/evaluateurs/{evaluateurId}')->group(function () {
