@@ -51,6 +51,19 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
         return GroupeUtilisateurResource::class;
     }
 
+    public function all(): JsonResponse
+    {
+        try {
+
+            $item = $this->repository->getModel()->where("profilable_id", Auth::user()->profilable_id)->where("profilable_type", Auth::user()->profilable_type)->get();
+
+            return ($this->resourceClass::collection($item->load(['roles', "users"])))->response();
+
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
     /**
      * Create a new group of users.
      */

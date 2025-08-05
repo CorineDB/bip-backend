@@ -15,6 +15,7 @@ use Illuminate\Validation\ValidationException;
 class ValidationIdeeProjetRequest extends FormRequest
 {
     protected $categorieCritere;
+    protected $ideeProjet;
     protected $evaluation;
 
     public function authorize(): bool
@@ -29,15 +30,20 @@ class ValidationIdeeProjetRequest extends FormRequest
     {
         $ideeProjetId = $this->route('ideeProjetId');
 
-        $ideeProjet = IdeeProjet::findOrFail($ideeProjetId);
+        $this->ideeProjet = IdeeProjet::findOrFail($ideeProjetId);
 
-        if ($ideeProjet->statut != StatutIdee::IDEE_DE_PROJET) {
-            throw ValidationException::withMessages(["Vous le statut de l'idee de projet est a ". $ideeProjet->statut->value]);
-        }
+        /*if ($this->ideeProjet->statut != StatutIdee::IDEE_DE_PROJET) {
+            throw ValidationException::withMessages(["Vous le statut de l'idee de projet est a ". $this->ideeProjet->statut->value]);
+        }*/
+
     }
 
     public function rules(): array
     {
+        if($this->input("decision") == "valider" && $this->ideeProjet->score_climatique < 0.67){
+            throw ValidationException::withMessages(["Score de l'impact climatique est insastifaisant"], 403);
+        }
+
         return [
             'decision' => ["required", "in:valider,rejeter"],
             'commentaire' => 'nullable|string|max:1000',

@@ -16,8 +16,10 @@ use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Services\Traits\ProjetRelationsTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Events\IdeeProjetCree;
+use App\Models\Dpaf;
 use App\Models\Organisation;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class IdeeProjetService extends BaseService implements IdeeProjetServiceInterface
 {
@@ -40,6 +42,23 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
     protected function getResourcesClass(): string
     {
         return IdeeProjetResource::class;
+    }
+
+    public function all(): JsonResponse
+    {
+        try {
+
+            $item = $this->repository->getModel()->when(auth()->user()->profilable_type == Dpaf::class, function($query){
+                $query->where("ministereId", Auth::user()->profilable->ministere->id);
+            })->when(auth()->user()->profilable_type == Organisation::class, function($query){
+                $query->where("ministereId", Auth::user()->ministere->id);
+            })->latest()->get();
+
+            return ($this->resourceClass::collection($item))->response();
+
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
     }
 
     public function filterBy(array $filterParam): JsonResponse

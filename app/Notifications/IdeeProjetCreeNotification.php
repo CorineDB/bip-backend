@@ -37,7 +37,7 @@ class IdeeProjetCreeNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject('Nouvelle idée de projet créée')
             ->line("Votre idée a été bien enregistrée.")
-            ->action('Lire le message', url("{$path}/idees-projet/" . $this->ideeProjet->id));
+            ->action('Lire le message', url("{$path}/idees/" . $this->ideeProjet->id));
     }
 
     public function toBroadcast($notifiable)
@@ -63,7 +63,7 @@ class IdeeProjetCreeNotification extends Notification implements ShouldQueue
                 'sigle' => $this->ideeProjet->sigle,
                 'created_at' => $this->ideeProjet->created_at->toISOString(),
             ],
-            'action_url' => '/idees-projet/' . $this->ideeProjet->id,
+            'action_url' => '/idees/' . $this->ideeProjet->id,
         ];
     }
 }

@@ -9,7 +9,12 @@ use App\Models\Role;
 use App\Models\Permission;
 use App\Models\Personne;
 use App\Models\Organisation;
+use App\Models\Dgpd;
+use App\Models\Dpaf;
+use App\Models\GroupeUtilisateur;
+use App\Enums\EnumTypeOrganisation;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DefaultWorkspaceSeeder extends Seeder
 {
@@ -22,374 +27,511 @@ class DefaultWorkspaceSeeder extends Seeder
 
 
         /**
-         * Creer l'instance DPAF
+         * Créer l'instance DGPD
          */
-        // Supprime toutes les lignes de la table
-        DB::table('dpaf')->truncate();
-
-        /**
-         * Creer le compte admin de la DPAF
-         *
-         * lui attribuer le role dpaf
-         *
-         * utilise la fonction create de DpafService
-         *
-         * active le compte utilisateur automatiquement
-         */
-
-
-        /**
-         * Creer les roles de la DPAF
-         * Responsable projet (DPAF)
-         */
-
-        /**
-         * Creer l'organisation de type ministere
-         */
-
-        /**
-         * Creer un compte utilisateur de la dpaf (profilable_type == App\\Models\\Dpaf) mais du ministere sectoriel (organisation)
-         * avec le role Responsable projet
-         */
-
-        $this->command->info('✅ Espaces de travail créés avec succès !');
-    }
-
-    /**
-     * Créer les permissions pour l'évaluation climatique
-     */
-    private function createEvaluationPermissions(): void
-    {
-        $this->command->info('📋 Création des permissions d\'évaluation...');
-
-        $permissions = [
-            // Gestion des évaluations
+        // Créer ou récupérer l'instance DGPD
+        $dgpd = Dgpd::firstOrCreate(
+            ['slug' => 'dgpd'],
             [
-                'nom' => 'Créer une évaluation',
-                'slug' => 'evaluation.create',
-                'description' => 'Peut créer une nouvelle évaluation climatique'
-            ],
-            [
-                'nom' => 'Voir les évaluations',
-                'slug' => 'evaluation.view',
-                'description' => 'Peut consulter les évaluations'
-            ],
-            [
-                'nom' => 'Modifier une évaluation',
-                'slug' => 'evaluation.edit',
-                'description' => 'Peut modifier les paramètres d\'une évaluation'
-            ],
-            [
-                'nom' => 'Supprimer une évaluation',
-                'slug' => 'evaluation.delete',
-                'description' => 'Peut supprimer une évaluation'
-            ],
-            [
-                'nom' => 'Finaliser une évaluation',
-                'slug' => 'evaluation.finalize',
-                'description' => 'Peut finaliser et valider une évaluation'
-            ],
-
-            // Gestion des évaluateurs
-            [
-                'nom' => 'Assigner des évaluateurs',
-                'slug' => 'evaluation.assign-evaluators',
-                'description' => 'Peut assigner des évaluateurs à une évaluation'
-            ],
-            [
-                'nom' => 'Évaluer des critères',
-                'slug' => 'evaluation.evaluate-criteria',
-                'description' => 'Peut noter et évaluer des critères'
-            ],
-            [
-                'nom' => 'Voir le progrès des évaluations',
-                'slug' => 'evaluation.view-progress',
-                'description' => 'Peut consulter le progrès des évaluations'
-            ],
-
-            // Gestion des critères
-            [
-                'nom' => 'Gérer les critères',
-                'slug' => 'criteria.manage',
-                'description' => 'Peut créer, modifier, supprimer des critères'
-            ],
-            [
-                'nom' => 'Voir les critères',
-                'slug' => 'criteria.view',
-                'description' => 'Peut consulter les critères d\'évaluation'
-            ],
-
-            // Gestion des projets
-            [
-                'nom' => 'Créer des idées de projet',
-                'slug' => 'project-idea.create',
-                'description' => 'Peut créer des idées de projet'
-            ],
-            [
-                'nom' => 'Modifier des idées de projet',
-                'slug' => 'project-idea.edit',
-                'description' => 'Peut modifier des idées de projet'
-            ],
-            [
-                'nom' => 'Voir les idées de projet',
-                'slug' => 'project-idea.view',
-                'description' => 'Peut consulter les idées de projet'
-            ],
-
-            // Administration
-            [
-                'nom' => 'Gérer les utilisateurs',
-                'slug' => 'users.manage',
-                'description' => 'Peut créer, modifier, supprimer des utilisateurs'
-            ],
-            [
-                'nom' => 'Gérer les rôles',
-                'slug' => 'roles.manage',
-                'description' => 'Peut créer, modifier, supprimer des rôles'
-            ],
-        ];
-
-        foreach ($permissions as $permissionData) {
-            Permission::firstOrCreate(
-                ['slug' => $permissionData['slug']],
-                $permissionData
-            );
-        }
-
-        $this->command->info('✅ ' . count($permissions) . ' permissions créées');
-    }
-
-    /**
-     * Créer les rôles par défaut
-     */
-    private function createDefaultRoles(): array
-    {
-        $this->command->info('👥 Création des rôles par défaut...');
-
-        $rolesData = [
-            [
-                'nom' => 'Super Administrateur',
-                'slug' => 'super-admin',
-                'description' => 'Accès complet à toutes les fonctionnalités',
-                'permissions' => '*' // Toutes les permissions
-            ],
-            [
-                'nom' => 'Administrateur d\'Évaluation',
-                'slug' => 'evaluation-admin',
-                'description' => 'Peut gérer les évaluations et assigner les évaluateurs',
-                'permissions' => [
-                    'evaluation.create', 'evaluation.view', 'evaluation.edit', 'evaluation.delete',
-                    'evaluation.finalize', 'evaluation.assign-evaluators', 'evaluation.view-progress',
-                    'criteria.view', 'project-idea.view'
-                ]
-            ],
-            [
-                'nom' => 'Évaluateur Expert',
-                'slug' => 'evaluator-expert',
-                'description' => 'Expert qui peut évaluer des critères climatiques',
-                'permissions' => [
-                    'evaluation.view', 'evaluation.evaluate-criteria', 'evaluation.view-progress',
-                    'criteria.view', 'project-idea.view'
-                ]
-            ],
-            [
-                'nom' => 'Évaluateur Standard',
-                'slug' => 'evaluator-standard',
-                'description' => 'Évaluateur avec accès limité',
-                'permissions' => [
-                    'evaluation.evaluate-criteria', 'criteria.view', 'project-idea.view'
-                ]
-            ],
-            [
-                'nom' => 'Gestionnaire de Projet',
-                'slug' => 'project-manager',
-                'description' => 'Peut gérer les idées de projet',
-                'permissions' => [
-                    'project-idea.create', 'project-idea.edit', 'project-idea.view',
-                    'evaluation.view'
-                ]
-            ],
-            [
-                'nom' => 'Consultant',
-                'slug' => 'consultant',
-                'description' => 'Accès en lecture seule',
-                'permissions' => [
-                    'evaluation.view', 'criteria.view', 'project-idea.view'
-                ]
-            ]
-        ];
-
-        $roles = [];
-        $allPermissions = Permission::all();
-
-        foreach ($rolesData as $roleData) {
-            $role = Role::firstOrCreate(
-                ['slug' => $roleData['slug']],
-                [
-                    'nom' => $roleData['nom'],
-                    'slug' => $roleData['slug'],
-                    'description' => $roleData['description']
-                ]
-            );
-
-            // Assigner les permissions
-            if ($roleData['permissions'] === '*') {
-                // Super admin a toutes les permissions
-                $role->permissions()->sync($allPermissions->pluck('id'));
-            } else {
-                // Assigner les permissions spécifiques
-                $permissionIds = $allPermissions
-                    ->whereIn('slug', $roleData['permissions'])
-                    ->pluck('id');
-                $role->permissions()->sync($permissionIds);
-            }
-
-            $roles[$roleData['slug']] = $role;
-        }
-
-        $this->command->info('✅ ' . count($roles) . ' rôles créés avec permissions');
-        return $roles;
-    }
-
-    /**
-     * Créer l'organisation par défaut
-     */
-    private function createDefaultOrganisation(): Organisation
-    {
-        $this->command->info('🏢 Création de l\'organisation par défaut...');
-
-        return Organisation::firstOrCreate(
-            ['nom' => 'GDIZ - Direction Générale'],
-            [
-                'nom' => 'GDIZ - Direction Générale',
-                'sigle' => 'GDIZ-DG',
-                'description' => 'Organisation par défaut pour l\'évaluation climatique des projets',
-                'adresse' => 'Cameroun',
-                'telephone' => '+237 000 000 000',
-                'email' => 'admin@gdiz.org',
-                'type' => 'gouvernementale'
+                'nom' => 'Direction Générale de la Programmation et de la Prospective pour le Développement',
+                'description' => 'Direction en charge de la programmation et de la prospective pour le développement'
             ]
         );
-    }
 
-    /**
-     * Créer les utilisateurs par défaut
-     */
-    private function createDefaultUsers(array $roles, Organisation $organisation): void
-    {
-        $this->command->info('👤 Création des utilisateurs par défaut...');
+        /**
+         * Créer les rôles spécifiques à la DGPD
+         */
 
-        $usersData = [
+        // Créer le rôle Analyste DGPD spécifique à cette instance DGPD
+        $roleAnalysteDgpd = Role::firstOrCreate(
             [
-                'username' => 'superadmin',
-                'email' => 'superadmin@gdiz.org',
-                'role' => 'super-admin',
-                'personne' => [
-                    'nom' => 'Administrateur',
-                    'prenom' => 'Super',
-                    'fonction' => 'Administrateur Système'
-                ]
+                'slug' => 'analyste-dgpd',
+                'roleable_type' => get_class($dgpd),
+                'roleable_id' => $dgpd->id
             ],
             [
-                'username' => 'admin.evaluation',
-                'email' => 'admin.evaluation@gdiz.org',
-                'role' => 'evaluation-admin',
-                'person' => [
-                    'nom' => 'Kouam',
-                    'prenom' => 'Marie',
-                    'fonction' => 'Responsable Évaluations Climatiques'
-                ]
-            ],
-            [
-                'username' => 'expert.climat',
-                'email' => 'expert.climat@gdiz.org',
-                'role' => 'evaluator-expert',
-                'person' => [
-                    'nom' => 'Ngono',
-                    'prenom' => 'Paul',
-                    'fonction' => 'Expert Climatique Senior'
-                ]
-            ],
-            [
-                'username' => 'expert.environnement',
-                'email' => 'expert.environnement@gdiz.org',
-                'role' => 'evaluator-expert',
-                'person' => [
-                    'nom' => 'Fouda',
-                    'prenom' => 'Claire',
-                    'fonction' => 'Experte Environnementale'
-                ]
-            ],
-            [
-                'username' => 'evaluateur1',
-                'email' => 'evaluateur1@gdiz.org',
-                'role' => 'evaluator-standard',
-                'person' => [
-                    'nom' => 'Mbida',
-                    'prenom' => 'Jean',
-                    'fonction' => 'Évaluateur'
-                ]
-            ],
-            [
-                'username' => 'chef.projet',
-                'email' => 'chef.projet@gdiz.org',
-                'role' => 'project-manager',
-                'person' => [
-                    'nom' => 'Bello',
-                    'prenom' => 'Aminata',
-                    'fonction' => 'Chef de Projet'
-                ]
-            ],
-            [
-                'username' => 'consultant',
-                'email' => 'consultant@gdiz.org',
-                'role' => 'consultant',
-                'person' => [
-                    'nom' => 'Consultant',
-                    'prenom' => 'External',
-                    'fonction' => 'Consultant Externe'
-                ]
+                'nom' => 'Analyste DGPD',
+                'description' => 'Analyste de la Direction Générale de la Programmation et de la Prospective pour le Développement'
             ]
-        ];
+        );
 
-        foreach ($usersData as $userData) {
-            // Créer la personne
-            $personne = Personne::firstOrCreate(
-                ['email' => $userData['email']],
-                [
-                    'nom' => $userData['person']['nom'],
-                    'prenom' => $userData['person']['prenom'],
-                    'email' => $userData['email'],
-                    'telephone' => '+237 000 000 000',
-                    'fonction' => $userData['person']['fonction'],
-                    'organismeId' => $organisation->id
-                ]
-            );
+        $this->command->info('✅ Rôle Analyste DGPD créé');
 
-            // Créer l'utilisateur
-            $user = User::firstOrCreate(
-                ['email' => $userData['email']],
-                [
-                    'username' => $userData['username'],
-                    'email' => $userData['email'],
-                    'password' => Hash::make('password123'), // Mot de passe par défaut
-                    'is_email_verified' => true,
-                    'email_verified_at' => now(),
-                    'status' => 'active',
-                    'personneId' => $personne->id,
-                    'roleId' => $roles[$userData['role']]->id,
-                    'provider' => 'local',
-                    'person' => [
-                        'nom' => $userData['person']['nom'],
-                        'prenom' => $userData['person']['prenom'],
-                        'fonction' => $userData['person']['fonction']
-                    ]
-                ]
-            );
+        /**
+         * Créer le compte admin de la DGPD
+         */
 
-            $this->command->info("✅ Utilisateur créé: {$userData['username']} ({$userData['role']})");
+        // Récupérer le rôle DGPD
+        $roleDgpd = Role::firstOrCreate(['slug' => 'dgpd'],['nom' => 'DGPD']);
+
+        if (!$roleDgpd) {
+            $this->command->error('⚠️  Le rôle DGPD n\'existe pas. Assurez-vous d\'exécuter PermissionSeeder avant ce seeder.');
+            return;
         }
 
-        $this->command->info('🔑 Mot de passe par défaut pour tous les utilisateurs: password123');
+        // Vérifier si l'admin DGPD existe déjà
+        $adminDgpd = User::where('email', 'admin@dgpd.bj')->first();
+
+        if (!$adminDgpd) {
+            // Créer la personne pour l'admin DGPD
+            $adminDgpdPersonne = Personne::firstOrCreate(
+                ['nom' => 'Admin', 'prenom' => 'DGPD'],
+                [
+                    'poste' => 'Administrateur DGPD',
+                    'organismeId' => null
+                ]
+            );
+
+            // Générer un mot de passe temporaire
+            $password = 'DGPD123!';
+
+            // Créer l'utilisateur admin DGPD
+            $adminDgpd = User::create([
+                'provider' => 'local',
+                'provider_user_id' => 'admin@dgpd.bj',
+                'username' => 'admin@dgpd.bj',
+                'email' => 'admin@dgpd.bj',
+                'status' => 'actif',
+                'is_email_verified' => true,
+                'email_verified_at' => now(),
+                'password' => Hash::make($password),
+                'personneId' => $adminDgpdPersonne->id,
+                'roleId' => $roleDgpd->id,
+                'last_connection' => now(),
+                'ip_address' => '127.0.0.1',
+                'type' => 'dgpd',
+                'profilable_id' => $dgpd->id,
+                'profilable_type' => get_class($dgpd),
+                'account_verification_request_sent_at' => Carbon::now(),
+                'token' => str_replace(['/', '\\', '.'], '', Hash::make($dgpd->id . Hash::make('admin@dgpd.bj') . Hash::make(Hash::make(strtotime(Carbon::now()))))),
+                'link_is_valide' => true,
+                'created_at' => now(),
+                'lastRequest' => now()
+            ]);
+
+            // Attacher le rôle à l'utilisateur
+            $adminDgpd->roles()->attach([$roleDgpd->id]);
+
+            $this->command->info('✅ Compte DGPD créé avec succès !');
+            $this->command->info('📧 Email: admin@dgpd.bj');
+            $this->command->info('🔑 Mot de passe: ' . $password);
+        } else {
+            $this->command->info('ℹ️  Le compte admin DGPD existe déjà');
+        }
+
+        /**
+         * Créer un utilisateur Analyste DGPD
+         */
+
+        // Vérifier si l'analyste DGPD existe déjà
+        $analyteDgpd = User::where('email', 'analyste@dgpd.bj')->first();
+
+        if (!$analyteDgpd) {
+            // Créer la personne pour l'analyste DGPD
+            $analystePersonne = Personne::firstOrCreate(
+                ['nom' => 'Analyste', 'prenom' => 'DGPD'],
+                [
+                    'poste' => 'Analyste DGPD',
+                    'organismeId' => null
+                ]
+            );
+
+            // Générer un mot de passe temporaire
+            $passwordAnalyste = 'Analyste123!';
+
+            // Créer l'utilisateur analyste DGPD
+            $analyteDgpd = User::create([
+                'provider' => 'local',
+                'provider_user_id' => 'analyste@dgpd.bj',
+                'username' => 'analyste@dgpd.bj',
+                'email' => 'analyste@dgpd.bj',
+                'status' => 'actif',
+                'is_email_verified' => true,
+                'email_verified_at' => now(),
+                'password' => Hash::make($passwordAnalyste),
+                'personneId' => $analystePersonne->id,
+                'roleId' => $roleAnalysteDgpd->id,
+                'last_connection' => now(),
+                'ip_address' => '127.0.0.1',
+                'type' => 'analyste-dgpd',
+                'profilable_id' => $dgpd->id,
+                'profilable_type' => get_class($dgpd),
+                'account_verification_request_sent_at' => Carbon::now(),
+                'token' => str_replace(['/', '\\', '.'], '', Hash::make($dgpd->id . Hash::make('analyste@dgpd.bj') . Hash::make(Hash::make(strtotime(Carbon::now()))))),
+                'link_is_valide' => true,
+                'created_at' => now(),
+                'lastRequest' => now()
+            ]);
+
+            // Attacher le rôle à l'utilisateur
+            $analyteDgpd->roles()->attach([$roleAnalysteDgpd->id]);
+
+            $this->command->info('✅ Compte Analyste DGPD créé avec succès !');
+            $this->command->info('📧 Email: analyste@dgpd.bj');
+            $this->command->info('🔑 Mot de passe: ' . $passwordAnalyste);
+        } else {
+            $this->command->info('ℹ️  Le compte Analyste DGPD existe déjà');
+        }
+
+        // Créer le rôle Chargé d'étude spécifique à cette instance DGPD
+        $roleChargeEtude = Role::firstOrCreate(
+            [
+                'slug' => 'charge-etude',
+                'roleable_type' => get_class($dgpd),
+                'roleable_id' => $dgpd->id
+            ],
+            [
+                'nom' => 'Chargé d\'étude',
+                'description' => 'Chargé d\'étude de la Direction Générale de la Programmation et de la Prospective pour le Développement'
+            ]
+        );
+
+        $this->command->info('✅ Rôle Chargé d\'étude créé');
+
+        /**
+         * Créer les groupes spécifiques à la DGPD
+         */
+
+        // Créer le groupe Service technique/Service étude
+        $groupeServiceTechnique = GroupeUtilisateur::firstOrCreate(
+            [
+                'slug' => 'service-technique-service-etude',
+                'profilable_type' => get_class($dgpd),
+                'profilable_id' => $dgpd->id
+            ],
+            [
+                'nom' => 'Service technique/Service étude',
+                'description' => 'Groupe du service technique et du service étude de la DGPD'
+            ]
+        );
+
+        // Attacher les rôles au groupe (Analyste DGPD et Chargé d'étude)
+        $groupeServiceTechnique->roles()->syncWithoutDetaching([
+            $roleChargeEtude->id
+        ]);
+
+        $this->command->info('✅ Groupe Service technique/Service étude créé et associé aux rôles');
+
+        /**
+         * Créer une organisation de type ministère
+         */
+
+        // Créer l'organisation ministère
+        $ministere = Organisation::firstOrCreate(
+            ['slug' => 'ministere-planification-developpement'],
+            [
+                'nom' => 'Ministère du Plan et du Développement',
+                'description' => 'Ministère chargé de la planification et du développement',
+                'type' => EnumTypeOrganisation::MINISTERE,
+                'parentId' => null
+            ]
+        );
+
+        /**
+         * Créer le compte admin du ministère
+         */
+
+        // Récupérer le rôle Organisation
+        $roleOrganisation = Role::firstOrCreate(['slug' => 'organisation'],['nom' => 'Organisation']);
+
+        if (!$roleOrganisation) {
+            $this->command->error('⚠️  Le rôle Organisation n\'existe pas. Assurez-vous d\'exécuter PermissionSeeder avant ce seeder.');
+            return;
+        }
+
+        // Vérifier si l'admin ministère existe déjà
+        $adminMinistere = User::where('email', 'admin@ministere.bj')->first();
+
+        if (!$adminMinistere) {
+            // Créer la personne pour l'admin ministère
+            $adminMinisterePersonne = Personne::firstOrCreate(
+                ['nom' => 'Admin', 'prenom' => 'Ministère'],
+                [
+                    'poste' => 'Administrateur Ministère',
+                    'organismeId' => $ministere->id
+                ]
+            );
+
+            // Générer un mot de passe temporaire
+            $passwordMinistere = 'Ministere123!';
+
+            // Créer l'utilisateur admin ministère
+            $adminMinistere = User::create([
+                'provider' => 'local',
+                'provider_user_id' => 'admin@ministere.bj',
+                'username' => 'admin@ministere.bj',
+                'email' => 'admin@ministere.bj',
+                'status' => 'actif',
+                'is_email_verified' => true,
+                'email_verified_at' => now(),
+                'password' => Hash::make($passwordMinistere),
+                'personneId' => $adminMinisterePersonne->id,
+                'roleId' => $roleOrganisation->id,
+                'last_connection' => now(),
+                'ip_address' => '127.0.0.1',
+                'type' => 'organisation',
+                'profilable_id' => $ministere->id,
+                'profilable_type' => get_class($ministere),
+                'account_verification_request_sent_at' => Carbon::now(),
+                'token' => str_replace(['/', '\\', '.'], '', Hash::make($ministere->id . Hash::make('admin@ministere.bj') . Hash::make(Hash::make(strtotime(Carbon::now()))))),
+                'link_is_valide' => true,
+                'created_at' => now(),
+                'lastRequest' => now()
+            ]);
+
+            // Attacher le rôle à l'utilisateur
+            $adminMinistere->roles()->attach([$roleOrganisation->id]);
+
+            $this->command->info('✅ Organisation ministère créée avec succès !');
+            $this->command->info('📧 Email: admin@ministere.bj');
+            $this->command->info('🔑 Mot de passe: ' . $passwordMinistere);
+        } else {
+            $this->command->info('ℹ️  Le compte admin ministère existe déjà');
+        }
+
+        /**
+         * Créer le groupe Comité de validation Ministériel du ministère
+         */
+
+        // Créer le groupe Comité de validation Ministériel
+        $groupeComiteValidation = GroupeUtilisateur::firstOrCreate(
+            [
+                'slug' => 'comite-validation-ministeriel',
+                'profilable_type' => get_class($ministere),
+                'profilable_id' => $ministere->id
+            ],
+            [
+                'nom' => 'Comité de validation Ministériel',
+                'description' => 'Comité de validation ministériel chargé de l\'examen et de la validation des projets'
+            ]
+        );
+
+        $this->command->info('✅ Groupe Comité de validation Ministériel créé');
+
+        /**
+         * Créer la DPAF du ministère
+         */
+
+        // Créer l'instance DPAF rattachée au ministère
+        $dpaf = Dpaf::firstOrCreate(
+            [
+                'slug' => 'dpaf',
+                'id_ministere' => $ministere->id
+            ],
+            [
+                'nom' => 'Direction de la Programmation et de l\'Analyse Financière',
+                'description' => 'Direction de la Programmation et de l\'Analyse Financière du ' . $ministere->nom
+            ]
+        );
+
+        /**
+         * Créer le compte admin de la DPAF
+         */
+
+        // Récupérer le rôle DPAF
+        $roleDpaf = Role::firstOrCreate(['slug' => 'dpaf'], ['nom' => 'DPAF']);
+
+        if (!$roleDpaf) {
+            $this->command->error('⚠️  Le rôle DPAF n\'existe pas. Assurez-vous d\'exécuter PermissionSeeder avant ce seeder.');
+            return;
+        }
+
+        // Vérifier si l'admin DPAF existe déjà
+        $adminDpaf = User::where('email', 'admin@dpaf.bj')->first();
+
+        if (!$adminDpaf) {
+            // Créer la personne pour l'admin DPAF
+            $adminDpafPersonne = Personne::firstOrCreate(
+                ['nom' => 'Admin', 'prenom' => 'DPAF'],
+                [
+                    'poste' => 'Administrateur DPAF',
+                    'organismeId' => $ministere->id
+                ]
+            );
+
+            // Générer un mot de passe temporaire
+            $passwordDpaf = 'DPAF123!';
+
+            // Créer l'utilisateur admin DPAF
+            $adminDpaf = User::create([
+                'provider' => 'local',
+                'provider_user_id' => 'admin@dpaf.bj',
+                'username' => 'admin@dpaf.bj',
+                'email' => 'admin@dpaf.bj',
+                'status' => 'actif',
+                'is_email_verified' => true,
+                'email_verified_at' => now(),
+                'password' => Hash::make($passwordDpaf),
+                'personneId' => $adminDpafPersonne->id,
+                'roleId' => $roleDpaf->id,
+                'last_connection' => now(),
+                'ip_address' => '127.0.0.1',
+                'type' => 'dpaf',
+                'profilable_id' => $dpaf->id,
+                'profilable_type' => get_class($dpaf),
+                'account_verification_request_sent_at' => Carbon::now(),
+                'token' => str_replace(['/', '\\', '.'], '', Hash::make($dpaf->id . Hash::make('admin@dpaf.bj') . Hash::make(Hash::make(strtotime(Carbon::now()))))),
+                'link_is_valide' => true,
+                'created_at' => now(),
+                'lastRequest' => now()
+            ]);
+
+            // Attacher le rôle à l'utilisateur
+            $adminDpaf->roles()->attach([$roleDpaf->id]);
+
+            $this->command->info('✅ DPAF créée avec succès !');
+            $this->command->info('📧 Email: admin@dpaf.bj');
+            $this->command->info('🔑 Mot de passe: ' . $passwordDpaf);
+        } else {
+            $this->command->info('ℹ️  Le compte admin DPAF existe déjà');
+        }
+
+        /**
+         * Créer le rôle Responsable projet du ministère
+         */
+
+        // Créer le rôle Responsable projet spécifique au ministère
+        $roleResponsableProjet = Role::firstOrCreate(
+            [
+                'slug' => 'responsable-projet-' . $ministere->id,
+                'roleable_type' => get_class($ministere),
+                'roleable_id' => $ministere->id
+            ],
+            [
+                'nom' => 'Responsable projet',
+                'description' => 'Responsable de projet du ' . $ministere->nom
+            ]
+        );
+
+        $this->command->info('✅ Rôle Responsable projet créé');
+
+        /**
+         * Créer un utilisateur Responsable projet
+         */
+
+        // Vérifier si le responsable projet existe déjà
+        $responsableProjet = User::where('email', 'responsable-projet@ministere.bj')->first();
+
+        if (!$responsableProjet) {
+            // Créer la personne pour le responsable projet
+            $responsableProjetPersonne = Personne::firstOrCreate(
+                ['nom' => 'Responsable', 'prenom' => 'Projet'],
+                [
+                    'poste' => 'Responsable de projet',
+                    'organismeId' => $ministere->id
+                ]
+            );
+
+            // Générer un mot de passe temporaire
+            $passwordResponsable = 'ResponsableProjet123!';
+
+            // Créer l'utilisateur responsable projet
+            $responsableProjet = User::create([
+                'provider' => 'local',
+                'provider_user_id' => 'responsable-projet@ministere.bj',
+                'username' => 'responsable-projet@ministere.bj',
+                'email' => 'responsable-projet@ministere.bj',
+                'status' => 'actif',
+                'is_email_verified' => true,
+                'email_verified_at' => now(),
+                'password' => Hash::make($passwordResponsable),
+                'personneId' => $responsableProjetPersonne->id,
+                'roleId' => $roleResponsableProjet->id,
+                'last_connection' => now(),
+                'ip_address' => '127.0.0.1',
+                'type' => 'responsable-projet',
+                'profilable_id' => $ministere->id,
+                'profilable_type' => get_class($ministere),
+                'account_verification_request_sent_at' => Carbon::now(),
+                'token' => str_replace(['/', '\\', '.'], '', Hash::make($ministere->id . Hash::make('responsable-projet@ministere.bj') . Hash::make(Hash::make(strtotime(Carbon::now()))))),
+                'link_is_valide' => true,
+                'created_at' => now(),
+                'lastRequest' => now()
+            ]);
+
+            // Attacher le rôle à l'utilisateur
+            $responsableProjet->roles()->attach([$roleResponsableProjet->id]);
+
+            $this->command->info('✅ Compte Responsable projet créé avec succès !');
+            $this->command->info('📧 Email: responsable-projet@ministere.bj');
+            $this->command->info('🔑 Mot de passe: ' . $passwordResponsable);
+        } else {
+            $this->command->info('ℹ️  Le compte Responsable projet existe déjà');
+        }
+
+        /**
+         * Créer le rôle Responsable hiérarchique du ministère
+         */
+
+        // Créer le rôle Responsable hiérarchique spécifique au ministère
+        $roleResponsableHierarchique = Role::firstOrCreate(
+            [
+                'slug' => 'responsable-hierarchique-' . $ministere->id,
+                'roleable_type' => get_class($ministere),
+                'roleable_id' => $ministere->id
+            ],
+            [
+                'nom' => 'Responsable hiérarchique',
+                'description' => 'Responsable hiérarchique du ' . $ministere->nom
+            ]
+        );
+
+        $this->command->info('✅ Rôle Responsable hiérarchique créé');
+
+        /**
+         * Créer un utilisateur Responsable hiérarchique
+         */
+
+        // Vérifier si le responsable hiérarchique existe déjà
+        $responsableHierarchique = User::where('email', 'responsable-hierarchique@ministere.bj')->first();
+
+        if (!$responsableHierarchique) {
+            // Créer la personne pour le responsable hiérarchique
+            $responsableHierarchiquePersonne = Personne::firstOrCreate(
+                ['nom' => 'Responsable', 'prenom' => 'Hiérarchique'],
+                [
+                    'poste' => 'Responsable hiérarchique',
+                    'organismeId' => $ministere->id
+                ]
+            );
+
+            // Générer un mot de passe temporaire
+            $passwordResponsableHier = 'ResponsableHier123!';
+
+            // Créer l'utilisateur responsable hiérarchique
+            $responsableHierarchique = User::create([
+                'provider' => 'local',
+                'provider_user_id' => 'responsable-hierarchique@ministere.bj',
+                'username' => 'responsable-hierarchique@ministere.bj',
+                'email' => 'responsable-hierarchique@ministere.bj',
+                'status' => 'actif',
+                'is_email_verified' => true,
+                'email_verified_at' => now(),
+                'password' => Hash::make($passwordResponsableHier),
+                'personneId' => $responsableHierarchiquePersonne->id,
+                'roleId' => $roleResponsableHierarchique->id,
+                'last_connection' => now(),
+                'ip_address' => '127.0.0.1',
+                'type' => 'responsable-hierarchique',
+                'profilable_id' => $ministere->id,
+                'profilable_type' => get_class($ministere),
+                'account_verification_request_sent_at' => Carbon::now(),
+                'token' => str_replace(['/', '\\', '.'], '', Hash::make($ministere->id . Hash::make('responsable-hierarchique@ministere.bj') . Hash::make(Hash::make(strtotime(Carbon::now()))))),
+                'link_is_valide' => true,
+                'created_at' => now(),
+                'lastRequest' => now()
+            ]);
+
+            // Attacher le rôle à l'utilisateur
+            $responsableHierarchique->roles()->attach([$roleResponsableHierarchique->id]);
+
+            $this->command->info('✅ Compte Responsable hiérarchique créé avec succès !');
+            $this->command->info('📧 Email: responsable-hierarchique@ministere.bj');
+            $this->command->info('🔑 Mot de passe: ' . $passwordResponsableHier);
+        } else {
+            $this->command->info('ℹ️  Le compte Responsable hiérarchique existe déjà');
+        }
+
+        $this->command->info('✅ Espaces de travail créés avec succès !');
     }
 }

@@ -42,7 +42,7 @@ class EvaluationClimatiqueAssigneeNotification extends Notification implements S
         return (new MailMessage)
             ->subject('Nouvelle idée de projet créée')
             ->line('Vous avez été assigné(e) pour effectuer l\'évaluation climatique de l\'idée de projet "' . $this->ideeProjet->sigle . '".')
-            ->action("Accedez a l'objet de l'evaluation", url("{$path}/idees-projet/" . $this->ideeProjet->id));
+            ->action("Accedez a l'objet de l'evaluation", url("{$path}/idees/" . $this->ideeProjet->id));
     }
 
     public function toBroadcast($notifiable)

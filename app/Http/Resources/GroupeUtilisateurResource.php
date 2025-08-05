@@ -18,8 +18,12 @@ class GroupeUtilisateurResource extends BaseApiResource
         return [
             "id" => $this->id,
             "nom" => $this->nom,
-            "profilable" => $this->profilable,
-            "roles" => $this->roles
+            "roles" => $this->whenLoaded('roles', function(){
+                return RoleResource::collection($this->roles);
+            }),
+            "users" => $this->whenLoaded('users', function(){
+                return  UserResource::collection($this->users);
+            })
         ];
         return parent::toArray($request);
     }

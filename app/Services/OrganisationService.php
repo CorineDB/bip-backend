@@ -8,11 +8,14 @@ use App\Services\BaseService;
 use App\Services\Contracts\OrganisationServiceInterface;
 use App\Http\Resources\OrganisationResource;
 use App\Jobs\SendEmailJob;
+use App\Models\Dpaf;
+use App\Models\Organisation;
 use App\Repositories\Contracts\OrganisationRepositoryInterface;
 use App\Repositories\Contracts\PersonneRepositoryInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
 use App\Traits\GenerateTemporaryPassword;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +39,6 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
         $this->repository = $repository;
         $this->roleRepository = $roleRepository;
         $this->personneRepository = $personneRepository;
-
     }
 
     protected function getResourceClass(): string
@@ -44,18 +46,40 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
         return OrganisationResource::class;
     }
 
+    public function all(): JsonResponse
+    {
+        try {
+
+            $organisations = $this->repository->getModel()
+                ->when(Auth::user()->profilable_id && Auth::user()->profilable_type == Organisation::class, function ($query) {
+                    $query->descendantsFromMinistere(auth()->user()->profilable->ministere->id);
+                })->when(Auth::user()->profilable_id && Auth::user()->profilable_type == Dpaf::class, function ($query) {
+                    $query->descendantsFromMinistere(auth()->user()->profilable->ministere->id);
+                })->lastest()->get();
+
+            return ($this->resourceClass::collection($organisations))->response();
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Role not found.',
+            ], 404);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
     public function create(array $data): JsonResponse
     {
         DB::beginTransaction();
         try {
 
-            if($data['type'] != "ministere" && !isset($data['parentId'])){
+            if ($data['type'] != "ministere" && !isset($data['parentId'])) {
                 throw new Exception("Veuillez preciser le ministere de tutelle de cette organisation", 404);
             }
 
             $organisation = $this->repository->create($data);
 
-            if(isset($data["admin"])){
+            if (isset($data["admin"])) {
                 $personneData = $data["admin"]['personne'] ?? [];
 
                 // Création de la personne
@@ -105,7 +129,6 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
             //throw $th;
             return response()->json(['statut' => 'error', 'message' => $th->getMessage(), 'errors' => [], 'statutCode' => Response::HTTP_INTERNAL_SERVER_ERROR], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
     }
 
     public function update($organisationId, array $attributs): JsonResponse
@@ -124,7 +147,7 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
             if ($organisation->user) {
                 $attributs["admin"]["personne"]["organismeId"] = $organisation->id;
                 $organisation->user->personne->fill($attributs["admin"]["personne"])->save();
-            } else if(!$organisation->user && isset($attributs["admin"])){
+            } else if (!$organisation->user && isset($attributs["admin"])) {
                 $personneData = $attributs["admin"]['personne'] ?? [];
 
                 // Création de la personne

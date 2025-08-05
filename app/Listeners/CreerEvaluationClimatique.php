@@ -103,7 +103,7 @@ class CreerEvaluationClimatique implements ShouldQueue
             ]);
 
             // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
-            $evaluateurs = User::whereHas('roles', function ($query) {
+            /*$evaluateurs = User::whereHas('roles', function ($query) {
                 $query->whereHas('permissions', function ($subQuery) {
                     $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
                 });
@@ -111,9 +111,23 @@ class CreerEvaluationClimatique implements ShouldQueue
                 $query->whereHas('permissions', function ($subQuery) {
                     $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
                 });
-            })->get();
+            })->get();*/
 
-            Log::info("Evaluateurs : ". json_encode($evaluateurs));
+            // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
+            $evaluateurs = User::where('profilable_type', $ideeProjet->responsable->profilable_type)->where('profilable_id', $ideeProjet->responsable->profilable_id)
+                ->where(function ($query) {
+                    $query->whereHas('roles', function ($query) {
+                        $query->whereHas('permissions', function ($subQuery) {
+                            $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
+                        });
+                    })->orWhereHas('role', function ($query) {
+                        $query->whereHas('permissions', function ($subQuery) {
+                            $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
+                        });
+                    });
+                })->get();
+
+            Log::info("Evaluateurs : " . json_encode($evaluateurs));
 
             if ($evaluateurs->count() == 0) {
                 Log::warning('Aucun évaluateur trouvé avec la permission "effectuer-evaluation-climatique-idee-projet"');
@@ -131,7 +145,7 @@ class CreerEvaluationClimatique implements ShouldQueue
                 });
             })->get();
 
-            Log::info("Criteres : ". json_encode($criteres));
+            Log::info("Criteres : " . json_encode($criteres));
 
             Schema::disableForeignKeyConstraints();
 
@@ -157,7 +171,7 @@ class CreerEvaluationClimatique implements ShouldQueue
             // Notifier les évaluateurs assignés
             Notification::send($evaluateurs, new EvaluationClimatiqueAssigneeNotification($ideeProjet, $evaluation));
 
-            Log::info('Évaluation climatique créée avec succès pour l\'idée de projet: '. $ideeProjet->id);
+            Log::info('Évaluation climatique créée avec succès pour l\'idée de projet: ' . $ideeProjet->id);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Erreur lors de la création de l\'évaluation climatique: ' . $e->getMessage());

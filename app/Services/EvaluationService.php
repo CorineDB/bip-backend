@@ -23,6 +23,7 @@ use App\Notifications\EvaluationClimatiqueAssigneeNotification;
 use App\Traits\GenerateUniqueId;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Schema;
 
 class EvaluationService extends BaseService implements EvaluationServiceInterface
 {
@@ -104,6 +105,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                         'evaluation_id' => $evaluationId,
                         'critere_id' => $critere->id,
                         'evaluateur_id' => $evaluateurId,
+                        'notation_id' => null
                     ], [
                         'categorie_critere_id' => $critere->categorie_critere_id,
                         'note' => 'En attente',
@@ -166,6 +168,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     public function validerIdeeDeProjet($ideeProjetId, array $attributs): JsonResponse
     {
         try {
+            DB::beginTransaction();
 
             if (auth()->user()->type !== 'responsable-hierachique' && auth()->user()->type !== 'super-admin' && auth()->user()->type !== 'organisation') {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
@@ -193,15 +196,84 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'statut' => 1
             ]);
 
-            if ($attributs["decision"] == true) {
+            if ($attributs["decision"] == "valider") {
                 $ideeProjet->update([
                     'statut' => StatutIdee::ANALYSE
                 ]);
             } else {
+
                 $ideeProjet->update([
+                    'score_climatique' => 0,
                     'statut' => StatutIdee::BROUILLON
                 ]);
+
+                // Vérifier que l'évaluation climatique existe
+                $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
+                    ->where('projetable_id', $ideeProjet->id)
+                    ->where('type_evaluation', 'climatique')
+                    ->firstOrFail();
+
+                $criteresEvaluation = $evaluation->evaluationCriteres()
+                    ->autoEvaluation()
+                    ->active()->get();
+
+                // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
+                $evaluateurs = User::where('profilable_type', auth()->user()->profilable_type)->where('profilable_id', auth()->user()->profilable_id)
+                    ->where(function ($query) {
+                        $query->whereHas('roles', function ($query) {
+                            $query->whereHas('permissions', function ($subQuery) {
+                                $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
+                            });
+                        })->orWhereHas('role', function ($query) {
+                            $query->whereHas('permissions', function ($subQuery) {
+                                $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
+                            });
+                        });
+                    })->get();
+
+                if ($evaluateurs->count() == 0) {
+                    throw new Exception('Aucun évaluateur trouvé avec la permission "effectuer-evaluation-climatique-idee-projet"', 404);
+                }
+
+                // Récupérer les critères éligibles pour l'évaluation climatique
+                $criteres = Critere::where(function ($query) {
+                    $query->whereHas('categorie_critere', function ($subQuery) {
+                        $subQuery->where('slug', 'evaluation-preliminaire-multi-projet-impact-climatique');
+                    })->orWhere(function ($subQuery) {
+                        $subQuery->whereNull('categorie_critere_id')
+                            ->where('is_mandatory', true);
+                    });
+                })->get();
+
+                // Assigner chaque évaluateur à tous les critères
+                foreach ($evaluateurs as $evaluateur) {
+                    foreach ($criteres as $critere) {
+                        EvaluationCritere::create([
+                            'evaluation_id' => $evaluation->id,
+                            'critere_id' => $critere->id,
+                            'evaluateur_id' => $evaluateur->id,
+                            'categorie_critere_id' => $critere->categorie_critere_id,
+                            'note' => 'En attente',
+                            'notation_id' => null,
+                            'is_auto_evaluation' => true,
+                            'est_archiver' => false
+                        ]);
+                    }
+                }
+
+                $evaluation->update([
+                    'resultats_evaluation' => [],
+                    'evaluation' => [],
+                    'valider_le' => null,
+                    'statut' => -1  // Marquer comme terminée
+                ]);
+
+                $criteresEvaluation->each->update(["est_archiver" => true]);
             }
+
+            $ideeProjet->refresh();
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
@@ -209,6 +281,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'data' => $evaluation
             ]);
         } catch (Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => "Erreur lors de la validation de l'idee de projet",
@@ -241,6 +314,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'success' => false,
                     'message' => 'Auto Evaluation climatique déja validé',
                 ], 400);
+            }
+
+            $completionPercentage = $this->calculateCompletionPercentage($evaluation);
+
+            if ($completionPercentage != 100) {
+                throw new Exception("Auto-evaluation climatique toujours en veuillez patientez", 403);
             }
 
             // Calculer les résultats finaux
@@ -279,7 +358,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'success' => false,
                 'message' => 'Erreur lors de la finalisation',
                 'error' => $e->getMessage()
-            ], $e->getCode());
+            ], 500);
         }
     }
 
@@ -309,22 +388,29 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ], 400);
             }
 
-            $criteres = $evaluation->evaluationCriteres()
-                ->where('is_auto_evaluation', true)
-                ->where('est_archiver', false)->get();
+            $completionPercentage = $this->calculateCompletionPercentage($evaluation);
+
+            if ($completionPercentage != 100) {
+                throw new Exception("Auto-evauation climatique toujours en veuillez patientez", 403);
+            }
+
+            $criteresEvaluation = $evaluation->evaluationCriteres()
+                ->autoEvaluation()
+                ->active()->get();
 
             // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
-            $evaluateurs = User::whereHas('roles', function ($query) {
-                    $query->whereHas('permissions', function ($subQuery) {
-                        $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
+            $evaluateurs = User::where('profilable_type', auth()->user()->profilable_type)->where('profilable_id', auth()->user()->profilable_id)
+                ->where(function ($query) {
+                    $query->whereHas('roles', function ($query) {
+                        $query->whereHas('permissions', function ($subQuery) {
+                            $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
+                        });
+                    })->orWhereHas('role', function ($query) {
+                        $query->whereHas('permissions', function ($subQuery) {
+                            $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
+                        });
                     });
-                })->orWhereHas('role', function ($query) {
-                    $query->whereHas('permissions', function ($subQuery) {
-                        $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
-                    });
-                })->where('profilable_type', auth()->user()->profilable_type)->where('profilable_id', auth()->user()->profilable_id)->get();
-
-            //dd($evaluateurs);
+                })->get();
 
             if ($evaluateurs->count() == 0) {
                 throw new Exception('Aucun évaluateur trouvé avec la permission "effectuer-evaluation-climatique-idee-projet"', 404);
@@ -369,7 +455,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'statut' => 0  // Marquer comme terminée
             ]);
 
-            $criteres->each->update(["est_archiver" => true]);
+            $criteresEvaluation->each->update(["est_archiver" => true]);
 
             DB::commit();
 
@@ -414,8 +500,13 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
      */
     private function calculateCompletionPercentage(Evaluation $evaluation): float
     {
-        $totalCriteres = $evaluation->evaluationCriteres()->count();
+        $totalCriteres = $evaluation->evaluationCriteres()
+            ->autoEvaluation()
+            ->active()->count();
+
         $completedCriteres = $evaluation->evaluationCriteres()
+            ->autoEvaluation()
+            ->active()
             ->whereNotNull('notation_id')
             ->where('note', '!=', 'En attente')
             ->count();
@@ -502,7 +593,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->firstOrFail();
 
             // Vérifier que l'évaluateur est assigné à cette évaluation
-            /*$isAssigned = EvaluationCritere::where('evaluation_id', $evaluation->id)
+            $isAssigned = EvaluationCritere::where('evaluation_id', $evaluation->id)
+                ->autoEvaluation()
+                ->active()
                 ->where('evaluateur_id', $evaluateurId)
                 ->exists();
 
@@ -511,7 +604,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'success' => false,
                     'message' => 'Vous n\'êtes pas assigné comme évaluateur pour cette évaluation climatique.',
                 ], 403);
-            }*/
+            }
 
             // Vérifier et mettre à jour les réponses
             foreach ($reponses as $reponse) {
@@ -569,22 +662,57 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                         'commentaire' => $reponse['commentaire'] ?? null,
                         'updated_at' => now()
                     ]);*/
-                EvaluationCritere::updateOrCreate(
+                /*$evaluationCritere = EvaluationCritere::updateOrCreate(
                     [
                         'evaluation_id' => $evaluation->id,
                         'evaluateur_id' => $evaluateurId,
                         'categorie_critere_id' => $reponse["categorie_critere_id"],
                         'critere_id' => $reponse['critere_id'],
+                        'notation_id' => $notation->id
                     ],
                     [
                         'notation_id' => $notation->id,
                         'note' => $notation->valeur,
                         'commentaire' => $reponse['commentaire'] ?? null,
-                        'is_auto_evaluation' => $reponse['is_auto_evaluation'] ?? false,
+                        'is_auto_evaluation' => $reponse['is_auto_evaluation'] ?? true,
                         'est_archiver' => false,
                         'updated_at' => now(),
                     ]
-                );
+                );*/
+
+                $evaluationCritere = EvaluationCritere::where([
+                    'evaluation_id' => $evaluation->id,
+                    'evaluateur_id' => $evaluateurId,
+                    'categorie_critere_id' => $reponse["categorie_critere_id"],
+                    'critere_id' => $reponse['critere_id'],
+                    'est_archiver' => false, // ← ici la condition
+                    'is_auto_evaluation' => true,
+                ])->first();
+
+                if ($evaluationCritere) {
+                    $evaluationCritere->fill([
+                        'notation_id' => $notation->id,
+                        'note' => $notation->valeur,
+                        'commentaire' => $reponse['commentaire'] ?? null,
+                        'is_auto_evaluation' => true,
+                        'updated_at' => now(),
+                    ]);
+                    $evaluationCritere->save();
+                } else {
+                    $evaluationCritere = EvaluationCritere::create([
+                        'evaluation_id' => $evaluation->id,
+                        'evaluateur_id' => $evaluateurId,
+                        'categorie_critere_id' => $reponse["categorie_critere_id"],
+                        'critere_id' => $reponse['critere_id'],
+                        'notation_id' => $notation->id,
+                        'note' => $notation->valeur,
+                        'commentaire' => $reponse['commentaire'] ?? null,
+                        'is_auto_evaluation' => true,
+                        'est_archiver' => false,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
             }
 
             $evaluation->refresh();
@@ -597,11 +725,14 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             }
 
             $evaluation->refresh();
+            //dd($evaluation->evaluationCriteres()->active()->get());
 
             DB::commit();
 
             // Récupérer les réponses de l'évaluateur connecté
             $evaluateurReponses = EvaluationCritere::forEvaluation($evaluation->id)
+                ->autoEvaluation()
+                ->active()
                 ->byEvaluateur($evaluateurId)
                 ->with(['critere', 'notation', 'categorieCritere'])
                 ->get();
@@ -649,6 +780,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $evaluation = $this->repository->findOrFail($evaluationId);
 
             $evaluationCriteres = EvaluationCritere::forEvaluation($evaluationId)
+                ->autoEvaluation()
+                ->active()
                 ->byEvaluateur($evaluateurId)
                 ->with(['critere', 'notation', 'categorieCritere', 'evaluateur'])
                 ->get();
@@ -731,22 +864,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     {
         try {
 
-            /*$evaluateurs = User::whereHas('roles', function ($query) {
-                $query->whereHas('permissions', function ($subQuery) {
-                    $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
-                });
-            })->orWhereHas('role', function ($query) {
-                $query->whereHas('permissions', function ($subQuery) {
-                    $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
-                });
-            })->get();
-
-
-            return response()->json([
-                'success' => true,
-                'data' => $evaluateurs
-            ]);*/
-
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
             $evaluation = $ideeProjet->evaluations()
@@ -772,6 +889,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             // Récupérer tous les critères avec leurs évaluations
             $evaluationCriteres = EvaluationCritere::forEvaluation($evaluation->id)
+                ->autoEvaluation()
+                ->active()
                 ->with(['critere', 'notation', 'categorieCritere', 'evaluateur'])
                 ->get();
 
@@ -1047,6 +1166,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
         // Récupérer tous les critères complétés pour cette évaluation
         $criteres = EvaluationCritere::forEvaluation($evaluation->id)
+            ->autoEvaluation()
+            ->active()
             ->completed()
             ->with(['critere', 'notation'])
             ->get();
@@ -1156,6 +1277,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
         // Récupérer tous les critères complétés pour cette évaluation
         $criteres = EvaluationCritere::forEvaluation($evaluationId)
+            ->autoEvaluation()
+            ->active()
             ->completed()
             ->with(['critere', 'notation', 'categorieCritere'])
             ->get();
