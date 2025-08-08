@@ -24,8 +24,8 @@ class UpdateCategorieCritereRequest extends FormRequest
                 Rule::exists('notations', 'id')
                     ->whereNull('deleted_at')
             ],
-            'notations.*.libelle' => 'required_with:notations|string|max:255',
-            'notations.*.valeur' => 'required_with:notations|numeric|max:255',
+            'notations.*.libelle' => 'required_with:notations|string|max:255|distinct',
+            'notations.*.valeur' => 'required_with:notations|numeric|max:255|distinct',
             'notations.*.commentaire' => 'nullable|string',
 
             'criteres' => 'required|array|min:1',
@@ -50,7 +50,7 @@ class UpdateCategorieCritereRequest extends FormRequest
             ],
 
             'criteres.*.notations.*.libelle' => 'required_with:criteres.*.notations|string|max:255',
-            'criteres.*.notations.*.valeur' => 'required_with:criteres.*.notations|numeric|max:255',
+            'criteres.*.notations.*.valeur' => 'required_with:criteres.*.notations|numeric|max:255|distinct',
             'criteres.*.notations.*.commentaire' => 'nullable|string'
         ];
     }

@@ -82,8 +82,8 @@ class Organisation extends Model
      */
     public function admin()
     {
-        return $this->hasOne(Personne::class, 'organismeId')->whereHas("user", function($query){
-            $query->where("type", "organisation")->whereHas("role", function($query){
+        return $this->hasOne(Personne::class, 'organismeId')->whereHas("user", function ($query) {
+            $query->where("type", "organisation")->whereHas("role", function ($query) {
                 $query->where("slug", "organisation");
             });
         });
@@ -249,6 +249,25 @@ class Organisation extends Model
 
     public function scopeDescendantsFromMinistere($query, $ministereId)
     {
+        $ministereId = (int) $ministereId;
+
+        $descendants = DB::select("
+            WITH RECURSIVE descendants AS (
+                SELECT \"id\", \"parentId\"
+                FROM \"organisations\"
+                WHERE \"parentId\" = ?
+                UNION ALL
+                SELECT o.\"id\", o.\"parentId\"
+                FROM \"organisations\" o
+                INNER JOIN descendants d ON o.\"parentId\" = d.\"id\"
+            )
+            SELECT \"id\" FROM descendants
+        ", [$ministereId]);
+
+        $ids = collect($descendants)->pluck('id');
+
+        return $query->whereIn('id', $ids);
+
         return $query->whereIn('id', function ($subQuery) use ($ministereId) {
             $subQuery->select('id')
                 ->from(DB::raw("(

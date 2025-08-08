@@ -27,7 +27,8 @@ class DatabaseSeeder extends Seeder
             FinancementSeeder::class,
             OrganisationsSeeder::class,
             ProgrammeSeeder::class,
-            GrilleEvaluationPreliminaireSeeder::class
+            GrilleEvaluationPreliminaireSeeder::class,
+            GrilleAMCSeeder::class
 
             /*
             OrganisationsSeeder::class,

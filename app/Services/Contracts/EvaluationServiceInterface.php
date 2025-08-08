@@ -6,9 +6,6 @@ use Illuminate\Http\JsonResponse;
 
 interface EvaluationServiceInterface extends AbstractServiceInterface
 {
-    public function createEvaluationWithEvaluateurs(array $data): JsonResponse;
-    public function assignEvaluateursToEvaluation($evaluationId, array $evaluateurIds): JsonResponse;
-    public function getEvaluationProgress($evaluationId): JsonResponse;
     public function finalizeEvaluation($ideeProjetId): JsonResponse;
     public function refaireAutoEvaluationClimatique($ideeProjetId): JsonResponse;
 
@@ -16,4 +13,8 @@ interface EvaluationServiceInterface extends AbstractServiceInterface
     public function getEvaluateurCriteres($evaluationId, $evaluateurId = null): JsonResponse;
     public function getDashboardEvaluationClimatique($evaluationId): JsonResponse;
     public function validerIdeeDeProjet($ideeProjetId, array $attributs): JsonResponse;
+
+    public function appliquerAMC(array $data, $ideeProjetId): JsonResponse;
+    public function getDashboardAMC($ideeProjetId): JsonResponse;
+    public function validationIdeeDeProjetAProjet($ideeProjetId, array $attributs): JsonResponse;
 }

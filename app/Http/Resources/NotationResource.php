@@ -17,7 +17,7 @@ class NotationResource extends BaseApiResource
     {
         return [
             'id' => $this->id,
-            'critere_id' => $this->critere_id,
+            'critere_id' => $this->when($this->critere_id, $this->critere_id) ,
             'categorie_critere_id' => $this->categorie_critere_id,
             'libelle' => $this->libelle,
             'valeur' => $this->valeur,

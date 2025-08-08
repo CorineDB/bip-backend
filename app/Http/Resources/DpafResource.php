@@ -15,7 +15,21 @@ class DpafResource extends BaseApiResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            "id" => $this->id,
+            "nom" => $this->nom,
+            "description" => $this->description,
+            "admin" => $this->when($this->user, function () {
+                return new UserResource($this->user);
+            }),
+            "ministere" => $this->when($this->ministere, function () {
+                return [
+                    "id" => $this->ministere->id,
+                    "nom" => $this->ministere->nom,
+                    "type" => $this->ministere->type
+                ];
+            })
+        ];
     }
 
     /**

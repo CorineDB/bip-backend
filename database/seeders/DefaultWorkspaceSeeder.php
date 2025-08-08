@@ -393,7 +393,7 @@ class DefaultWorkspaceSeeder extends Seeder
         // Créer le rôle Responsable projet spécifique au ministère
         $roleResponsableProjet = Role::firstOrCreate(
             [
-                'slug' => 'responsable-projet-' . $ministere->id,
+                'slug' => 'responsable-projet',
                 'roleable_type' => get_class($ministere),
                 'roleable_id' => $ministere->id
             ],
@@ -402,6 +402,74 @@ class DefaultWorkspaceSeeder extends Seeder
                 'description' => 'Responsable de projet du ' . $ministere->nom
             ]
         );
+
+        $roleResponsableProjet->permissions()->sync([
+            // Gestion des utilisateurs
+            "voir-la-liste-des-utilisateurs",
+
+            // Gestion des groupes-utilisateur
+            "voir-la-liste-des-groupes-utilisateur",
+
+            // Gestion des rôles et permissions
+            "voir-la-liste-des-roles",
+
+            "voir-la-dpaf",
+
+            // Gestion les odds
+            "voir-la-liste-des-odds",
+
+            // Gestion les cibles
+            "voir-la-liste-des-cibles",
+
+            "voir-la-liste-des-departements",
+
+            // Entités géographiques
+            "voir-les-departements-geo", "voir-la-liste-des-communes", "voir-la-liste-des-arrondissements", "voir-la-liste-des-villages",
+
+            // Secteurs d'intervention
+            "voir-la-liste-des-grands-secteurs", "voir-la-liste-des-secteurs", "voir-la-liste-des-sous-secteurs",
+
+            "voir-la-liste-des-types-intervention",
+
+            // Financements
+            "voir-la-liste-des-types-financement", "voir-la-liste-des-natures-financement", "voir-la-liste-des-sources-financement",
+
+            // Programmes
+            "voir-la-liste-des-programmes", "voir-la-liste-des-composants-programme",
+
+            // Cadres stratégiques
+            "voir-la-liste-des-axes-du-pag", "voir-la-liste-des-piliers-du-pag", "voir-la-liste-des-actions-du-pag", "voir-la-liste-des-orientations-strategique-du-pnd", "voir-la-liste-des-objectifs-strategique-du-pnd", "voir-la-liste-des-resultats-strategique-du-pnd",
+
+            // Projets et idées
+            "voir-la-liste-des-categories-de-projet",
+            "voir-la-liste-des-idees-de-projet", "gerer-les-idees-projet", "creer-une-idee-de-projet", "modifier-une-idee-de-projet", "supprimer-une-idee-de-projet", "effectuer-evaluation-climatique-idee-projet", "obtenir-score-climatique", "obtenir-score-climatique-une-projet", "valider-le-score-climatique-une-idee-de-projet", "relancer-l-evaluation-climatique-une-idee-de-projet",
+
+            "consulter-le-canevas-de-la-fiche-idee-de-projet", "remplir-le-canevas-de-la-fiche-idee-de-projet", "telecharger-la-fiche-synthese-une-idee-de-projet",
+
+            "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet", "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet", "effectuer-evaluation-climatique-idee-projet", "acceder-au-tableau-de-bord-climatique", "valider-le-score-d-analyse-climatique-interne-d-une-idee-de-projet",
+
+            "acceder-au-tableau-d-amc", "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+
+            // Gestion les notes conceptuelle
+            "voir-la-liste-des-notes-conceptuelle", "commenter-une-note-conceptuelle", "voir-la-liste-des-commentaires-d-une-note-conceptuelle", "imprimer-une-note-conceptuelle", "voir-les-documents-relatifs-a-une-note-conceptuelle", "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
+
+            "voir-le-resultats-d-evaluation-d-une-note-conceptuelle", "imprimer-le-resultats-d-evaluation-d-une-note-conceptuelle",
+
+
+
+            // TDRs
+            "voir-la-liste-des-tdrs-de-prefaisabilite", "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-prefaisabilite", "telecharger-un-fichier-complementaire-d-un-tdr-de-prefaisabilite",
+            "telecharger-un-rapport-de-prefaisabilite", "voir-la-liste-des-rapports-de-prefaisabilite",
+
+            "voir-la-liste-des-tdrs-de-faisabilite", "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite", "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite",
+            "soumettre-un-rapport-de-faisabilite","modifier-un-rapport-de-faisabilite", "supprimer-un-rapport-de-faisabilite", "telecharger-un-rapport-de-faisabilite", "voir-la-liste-des-rapports-de-faisabilite",
+
+            "telecharger-un-rapport-d-evaluation-ex-ante", "voir-la-liste-des-rapports-d-evaluation-ex-ante",
+
+            // Commentaires et fichiers
+            "ajouter-commentaire", "voir-commentaires", "modifier-commentaire", "supprimer-commentaire",
+            "telecharger-fichier", "upload-fichier", "supprimer-fichier",
+        ]);
 
         $this->command->info('✅ Rôle Responsable projet créé');
 
@@ -466,7 +534,7 @@ class DefaultWorkspaceSeeder extends Seeder
         // Créer le rôle Responsable hiérarchique spécifique au ministère
         $roleResponsableHierarchique = Role::firstOrCreate(
             [
-                'slug' => 'responsable-hierarchique-' . $ministere->id,
+                'slug' => 'responsable-hierarchique',
                 'roleable_type' => get_class($ministere),
                 'roleable_id' => $ministere->id
             ],
@@ -475,6 +543,70 @@ class DefaultWorkspaceSeeder extends Seeder
                 'description' => 'Responsable hiérarchique du ' . $ministere->nom
             ]
         );
+
+        $roleResponsableHierarchique->permissions()->sync([
+            // Gestion des utilisateurs
+            "voir-la-liste-des-utilisateurs",
+
+            // Gestion des groupes-utilisateur
+            "voir-la-liste-des-groupes-utilisateur",
+
+            // Gestion des rôles et permissions
+            "voir-la-liste-des-roles",
+
+            "voir-la-dpaf",
+
+            // Gestion les odds
+            "voir-la-liste-des-odds",
+
+            // Gestion les cibles
+            "voir-la-liste-des-cibles",
+
+            "voir-la-liste-des-departements",
+
+            // Entités géographiques
+            "voir-les-departements-geo", "voir-la-liste-des-communes", "voir-la-liste-des-arrondissements", "voir-la-liste-des-villages",
+
+            // Secteurs d'intervention
+            "voir-la-liste-des-grands-secteurs", "voir-la-liste-des-secteurs", "voir-la-liste-des-sous-secteurs",
+
+            "voir-la-liste-des-types-intervention",
+
+            // Financements
+            "voir-la-liste-des-types-financement", "voir-la-liste-des-natures-financement", "voir-la-liste-des-sources-financement",
+
+            // Programmes
+            "voir-la-liste-des-programmes", "voir-la-liste-des-composants-programme",
+
+            // Cadres stratégiques
+            "voir-la-liste-des-axes-du-pag", "voir-la-liste-des-piliers-du-pag", "voir-la-liste-des-actions-du-pag", "voir-la-liste-des-orientations-strategique-du-pnd", "voir-la-liste-des-objectifs-strategique-du-pnd", "voir-la-liste-des-resultats-strategique-du-pnd",
+
+            // Projets et idées
+            "voir-la-liste-des-categories-de-projet",
+            "voir-la-liste-des-idees-de-projet", "valider-une-idee-de-projet-en-interne", "telecharger-la-fiche-synthese-une-idee-de-projet",
+
+            "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet", "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet", "acceder-au-tableau-de-bord-climatique",
+
+            "acceder-au-tableau-d-amc", "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+
+            // Gestion les notes conceptuelle
+            "voir-la-liste-des-notes-conceptuelle", "commenter-une-note-conceptuelle", "voir-la-liste-des-commentaires-d-une-note-conceptuelle", "imprimer-une-note-conceptuelle", "voir-les-documents-relatifs-a-une-note-conceptuelle", "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
+
+            "voir-le-resultats-d-evaluation-d-une-note-conceptuelle", "imprimer-le-resultats-d-evaluation-d-une-note-conceptuelle",
+
+            // TDRs
+            "voir-la-liste-des-tdrs-de-prefaisabilite", "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-prefaisabilite", "telecharger-un-fichier-complementaire-d-un-tdr-de-prefaisabilite",
+            "telecharger-un-rapport-de-prefaisabilite", "voir-la-liste-des-rapports-de-prefaisabilite",
+
+            "voir-la-liste-des-tdrs-de-faisabilite", "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite", "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite",
+            "telecharger-un-rapport-de-faisabilite", "voir-la-liste-des-rapports-de-faisabilite",
+
+            "telecharger-un-rapport-d-evaluation-ex-ante", "voir-la-liste-des-rapports-d-evaluation-ex-ante",
+
+            // Commentaires et fichiers
+            "ajouter-commentaire", "voir-commentaires", "modifier-commentaire", "supprimer-commentaire",
+            "telecharger-fichier", "upload-fichier", "supprimer-fichier",
+        ]);
 
         $this->command->info('✅ Rôle Responsable hiérarchique créé');
 

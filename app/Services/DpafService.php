@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Http\Resources\DpafResource;
 use App\Jobs\SendEmailJob;
+use App\Models\Organisation;
 use App\Repositories\Contracts\BaseRepositoryInterface;
 use Illuminate\Http\JsonResponse;
 use App\Repositories\Contracts\DpafRepositoryInterface;
@@ -14,6 +15,7 @@ use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Support\Facades\Hash;
 use App\Traits\GenerateTemporaryPassword;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +47,19 @@ class DpafService extends BaseService implements DpafServiceInterface
     {
         return DpafResource::class;
     }
+    public function all(): JsonResponse
+    {
+        try {
+            $dpafs = $this->repository->getModel()
+                ->when(Auth::user()->profilable_id && Auth::user()->profilable_type == Organisation::class, function ($query) {
+                    $query->where("id_ministere", auth()->user()->profilable->ministere->id);
+                })->latest()->get();
+
+            return ($this->resourceClass::collection($dpafs))->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
 
     public function create(array $attributs) : JsonResponse
     {
@@ -52,7 +67,7 @@ class DpafService extends BaseService implements DpafServiceInterface
 
         try {
 
-            //$dpaf = $this->repository->first();
+            $attributs['id_ministere'] = auth()->user()->profilable->ministere->id;
 
             $dpaf = $this->repository->getModel()->firstOrCreate(['id_ministere' => $attributs['id_ministere']], $attributs);
 

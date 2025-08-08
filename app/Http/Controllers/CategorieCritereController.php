@@ -57,4 +57,28 @@ class CategorieCritereController extends Controller
     {
         return $this->service->updateGrilleEvaluationPreliminaire($request->all());
     }
+
+    /**
+     * Get the grille analyse multi-criteres
+     */
+    public function getGrilleAnalyseMultiCriteres(): JsonResponse
+    {
+        return $this->service->getGrilleAnalyseMultiCriteres();
+    }
+
+    /**
+     * Get the grille analyse multi-criteres with evaluations for an idee de projet
+     */
+    public function getGrilleAnalyseMultiCriteresAvecEvaluations($ideeProjetId): JsonResponse
+    {
+        return $this->service->getGrilleAnalyseMultiCriteresAvecEvaluations($ideeProjetId);
+    }
+
+    /**
+     * Update the grille analyse multi-criteres
+     */
+    public function updateGrilleAnalyseMultiCriteres(UpdateCategorieCritereRequest $request): JsonResponse
+    {
+        return $this->service->updateGrilleAnalyseMultiCriteres($request->all());
+    }
 }

@@ -19,7 +19,15 @@ class StoreOrganisationRequest extends FormRequest
             'nom'=> ['required', 'string', Rule::unique('organisations', 'nom')->whereNull('deleted_at')],
             'description' => 'nullable|string',
             'type' => ['required', Rule::in(EnumTypeOrganisation::values())],
-            'parentId' => [Rule::requiredIf($this->type != 'ministere'), Rule::exists('organisations', 'id')->whereNull('deleted_at')]
+            'parentId' => [Rule::requiredIf($this->type != 'ministere'), Rule::exists('organisations', 'id')->whereNull('deleted_at')],
+
+            "admin"       =>      ["sometimes", "array", "min:1"],
+            'admin.email' => ["sometimes", "email", "max:255", Rule::unique('users', 'email')->whereNull('deleted_at')],
+
+            // Attributs de personne
+            'admin.personne.nom' => 'sometimes|string|max:255',
+            'admin.personne.prenom' => 'sometimes|string|max:255',
+            'admin.personne.poste' => 'nullable|string|max:255'
         ];
     }
 

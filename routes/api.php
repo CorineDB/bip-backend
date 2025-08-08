@@ -35,6 +35,8 @@ use App\Http\Controllers\OAuthController;
 use App\Models\Village;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Services\Traits\ResponseJsonTrait;
+
 
 // Get authenticated user
 /* Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -60,7 +62,7 @@ Route::prefix("auths")->group(['middleware' => ['auth:sanctum']], function () {
 */
 
 
-Route::group(['middleware' => [/* 'cors', 'json.response'*/], 'as' => 'api.'], function () {
+Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], function () {
 
     //Route::group(['middleware' => []], function () {
 
@@ -218,8 +220,6 @@ Route::group(['middleware' => [/* 'cors', 'json.response'*/], 'as' => 'api.'], f
             Route::get('natures-financement', 'natures_de_financement');
             Route::get('sources-financement', 'sources_de_financement');
             Route::get('natures-financement/{idNature}/sources', 'sources_nature_de_financement');
-
-
         });
 
         Route::apiResource('evaluations', EvaluationController::class);
@@ -258,10 +258,23 @@ Route::group(['middleware' => [/* 'cors', 'json.response'*/], 'as' => 'api.'], f
         });
 
 
+
+
         // Routes pour l'évaluation climatique unique des idées de projet
-        Route::prefix('idees-projet/{ideeProjetId}/validation')->group(function () {
-            Route::post('/', [EvaluationController::class, 'validerIdeeDeProjet'])
+        Route::prefix('idees-projet/{ideeProjetId}')->group(function () {
+            Route::post('validation', [EvaluationController::class, 'validerIdeeDeProjet'])
                 ->name('idees-projet.validation');
+            Route::post('/validation-en-projet', [EvaluationController::class, 'validationIdeeDeProjetAProjet'])
+                ->name('idees-projet.validation-en-projet');
+        });
+
+
+        // Routes pour AMC des idées de projet
+        Route::prefix('idees-projet/{ideeProjetId}/analyse-multi-critere')->group(function () {
+            Route::post('/', [EvaluationController::class, 'appliquerAMC'])
+                ->name('idees-projet.analyse-multi-critere');
+            Route::get('/', [EvaluationController::class, 'getDashboardAMC'])
+                ->name('idees-projet.analyse-multi-critere.show');
         });
 
 
@@ -297,48 +310,76 @@ Route::group(['middleware' => [/* 'cors', 'json.response'*/], 'as' => 'api.'], f
                 ->name('grille-evaluation-preliminaire.update');
         });
 
+        // Grille d'analyse multicritere
+        Route::prefix('grille-analyse-multi-critere')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CategorieCritereController::class, 'getGrilleAnalyseMultiCriteres'])
+                ->name('grille-analyse-multi-critere.get');
+            Route::put('/', [\App\Http\Controllers\CategorieCritereController::class, 'updateGrilleAnalyseMultiCriteres'])
+                ->name('grille-analyse-multi-critere.update');
+        });
+
         // SDG Integration
         Route::apiResource('odds', OddController::class);
+    });
 
-        // =============================================================================
-        // ENUM ROUTES - For Frontend Dropdown Options
-        // =============================================================================
 
-        Route::prefix('enums')->group(function () {
-            // Project Status & Workflow Enums
-            Route::get('/statut-idee', function () {
-                return response()->json(\App\Enums\StatutIdee::options());
-            });
+    // =============================================================================
+    // ENUM ROUTES - For Frontend Dropdown Options
+    // =============================================================================
 
-            Route::get('/phases-idee', function () {
-                return response()->json(\App\Enums\PhasesIdee::options());
-            });
+    Route::prefix('enums')->group(function () {
+        // Project Status & Workflow Enums
+        Route::get('/statut-idee', function () {
+            return [
+                'statut'        => "success",
+                'message'       => "Liste des statuts d'idee de projet",
+                'data'          => \App\Enums\StatutIdee::options(),
+                'statutCode'    => 200
+            ];
+        });
 
-            Route::get('/sous-phase-idee', function () {
-                return response()->json(\App\Enums\SousPhaseIdee::options());
-            });
+        Route::get('/phases-idee', function () {
+            return [
+                'statut'        => "success",
+                'message'       => "Liste des phases d'idee de projet",
+                'data'          => \App\Enums\PhasesIdee::options(),
+                'statutCode'    => 200
+            ];
+        });
 
-            // Project composants & Configuration
-            Route::get('/composants-projet', function () {
-                return response()->json(\App\Enums\TypesProjet::options());
-            });
+        Route::get('/sous-phase-idee', function () {
+            return [
+                'statut'        => "success",
+                'message'       => "Liste des sous d'idee de projet",
+                'data'          => \App\Enums\SousPhaseIdee::options(),
+                'statutCode'    => 200
+            ];
+        });
 
-            Route::get('/types-canevas', function () {
-                return response()->json(\App\Enums\TypesCanevas::options());
-            });
+        // Project composants & Configuration
+        Route::get('/composants-projet', function () {
+            return response()->json(\App\Enums\TypesProjet::options());
+        });
 
-            Route::get('/types-template', function () {
-                return response()->json(\App\Enums\TypesTemplate::options());
-            });
+        Route::get('/types-canevas', function () {
+            return response()->json(\App\Enums\TypesCanevas::options());
+        });
 
-            // Organization Types
-            Route::get('/types-organisation', function () {
-                return response()->json(\App\Enums\EnumTypeOrganisation::options());
-            });
+        Route::get('/types-template', function () {
+            return response()->json(\App\Enums\TypesTemplate::options());
+        });
 
-            // All enums endpoint for bulk loading
-            Route::get('/all', function () {
-                return response()->json([
+        // Organization Types
+        Route::get('/types-organisation', function () {
+            return response()->json(\App\Enums\EnumTypeOrganisation::options());
+        });
+
+        // All enums endpoint for bulk loading
+        Route::get('/all', function () {
+            return [
+                'statut'        => "success",
+                'message'       => "Liste des sous d'idee de projet",
+                'data'          => [
                     'statut_idee' => \App\Enums\StatutIdee::options(),
                     'phases_idee' => \App\Enums\PhasesIdee::options(),
                     'sous_phase_idee' => \App\Enums\SousPhaseIdee::options(),
@@ -346,8 +387,9 @@ Route::group(['middleware' => [/* 'cors', 'json.response'*/], 'as' => 'api.'], f
                     'types_canevas' => \App\Enums\TypesCanevas::options(),
                     'types_template' => \App\Enums\TypesTemplate::options(),
                     'types_organisation' => \App\Enums\EnumTypeOrganisation::options(),
-                ]);
-            });
+                ],
+                'statutCode'    => 200
+            ];
         });
     });
 });

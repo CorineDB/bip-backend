@@ -76,4 +76,12 @@ class Critere extends Model
     {
         return $this->hasMany(Notation::class, 'critere_id');
     }
+
+    /**
+     * Get the evaluation criteria for this evaluation.
+     */
+    public function critereEvaluations()
+    {
+        return $this->hasMany(EvaluationCritere::class, 'evaluation_id');
+    }
 }

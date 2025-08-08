@@ -15,7 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'keycloak' => \App\Http\Middleware\KeycloakAuth::class,
-            //'cors' => \App\Http\Middleware\CorsMiddleware::class,
+            'cors' => \App\Http\Middleware\CorsMiddleware::class,
 
             'json.response' => \App\Http\Middleware\ForceJsonResponse::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,

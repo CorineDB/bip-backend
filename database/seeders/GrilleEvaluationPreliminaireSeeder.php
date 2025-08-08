@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class GrilleEvaluationPreliminaireSeeder extends Seeder
 {
@@ -13,11 +14,13 @@ class GrilleEvaluationPreliminaireSeeder extends Seeder
     public function run(): void
     {
         $categorieCritere = \App\Models\CategorieCritere::firstOrCreate([
-            'type' => 'Évaluation préliminaire multi projet de l\'impact climatique'
+            'slug' => 'evaluation-preliminaire-multi-projet-impact-climatique',
         ], [
+            'type' => "Évaluation préliminaire multi projet de l'impact climatique",
             'slug' => 'evaluation-preliminaire-multi-projet-impact-climatique',
             'is_mandatory' => true
         ]);
+
 
         // Critère Atténuation
         $critereAttenuation = \App\Models\Critere::firstOrCreate([

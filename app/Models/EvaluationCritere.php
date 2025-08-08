@@ -225,6 +225,14 @@ class EvaluationCritere extends Model
     }
 
     /**
+     * Scope to filter manual evaluations.
+     */
+    public function scopeEvaluationExterne($query)
+    {
+        return $query->where('is_auto_evaluation', false);
+    }
+
+    /**
      * Scope to filter archived evaluations.
      */
     public function scopeArchived($query)

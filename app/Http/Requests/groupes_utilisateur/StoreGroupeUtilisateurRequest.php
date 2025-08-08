@@ -30,6 +30,8 @@ class StoreGroupeUtilisateurRequest extends FormRequest
                     ->whereNull('deleted_at')
             ],
             'description' => 'nullable|string',
+            'permissions' => ['required', 'array', 'min:1'],
+            'permissions.*' => ['required', 'distinct', Rule::exists('permissions', 'id')->whereNull('deleted_at')],
 
             // Rôles (optionnels à la création)
             'roles' => 'nullable|array|min:1',
@@ -45,10 +47,24 @@ class StoreGroupeUtilisateurRequest extends FormRequest
 
             // Utilisateurs (optionnels à la création)
             'users' => 'nullable|array',
-            'users.*' => [
+            'users.*.id' => [
                 'integer',
-                Rule::exists('users', 'id')->whereNull("roleId")->whereNull("roleId")->whereNull('deleted_at')
+                Rule::exists('users', 'id')/* ->whereNull("roleId")->whereNull("roleId") */->whereNull('deleted_at')
             ],
+            // Données utilisateur de base
+            'users.*.email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->whereNull('deleted_at')
+            ],
+
+            // Données de la personne
+            'users.*.personne' => 'required|array',
+            'users.*.personne.nom' => 'required|string|max:255',
+            'users.*.personne.prenom' => 'required|string|max:255',
+            'users.*.personne.poste' => 'nullable|string|max:255'
+
         ];
     }
 

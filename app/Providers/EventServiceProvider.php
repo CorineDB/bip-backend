@@ -22,6 +22,9 @@ class EventServiceProvider extends ServiceProvider
             //\App\Listeners\NotifierIdeeProjetSoumise::class,
             \App\Listeners\CreerEvaluationClimatique::class,
         ],
+        \App\Events\IdeeProjetTransformee::class => [
+            \App\Listeners\DupliquerIdeeProjetVersProjet::class,
+        ],
     ];
 
     /**

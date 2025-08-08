@@ -3,13 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\evaluations\AMCRequest;
 use Illuminate\Http\Request;
 use App\Http\Requests\evaluations\StoreEvaluationRequest;
-use App\Http\Requests\evaluations\UpdateEvaluationRequest;
-use App\Http\Requests\evaluations\CreateEvaluationWithEvaluateursRequest;
-use App\Http\Requests\evaluations\AssignEvaluateursRequest;
+use App\Http\Requests\evaluations\UpdateEvaluationRequest;;
 use App\Http\Requests\evaluations\SoumettreEvaluationClimatiqueIdeeRequest;
-use App\Http\Requests\evaluations\ModifierEvaluationClimatiqueRequest;
+use App\Http\Requests\evaluations\ValidationIdeeProjetAProjetRequest;
 use App\Http\Requests\evaluations\ValidationIdeeProjetRequest;
 use App\Services\Contracts\EvaluationServiceInterface;
 use Illuminate\Http\JsonResponse;
@@ -58,6 +57,25 @@ class EvaluationController extends Controller
         return $this->service->soumettreEvaluationClimatique($request->all(), $ideeProjetId);
     }
 
+    /**
+     * Soumettre les réponses d'évaluation climatique (Analyste DGPD).
+     */
+    public function appliquerAMC(
+        AMCRequest $request,
+        $ideeProjetId
+    ): JsonResponse {
+        return $this->service->appliquerAMC($request->all(), $ideeProjetId);
+    }
+
+    /**
+     * Soumettre les réponses d'évaluation climatique (Analyste DGPD).
+     */
+    public function getDashboardAMC(
+        $ideeProjetId
+    ): JsonResponse {
+        return $this->service->getDashboardAMC($ideeProjetId);
+    }
+
     public function validerIdeeDeProjet(
         ValidationIdeeProjetRequest $request,
         $ideeProjetId
@@ -65,7 +83,12 @@ class EvaluationController extends Controller
         return $this->service->validerIdeeDeProjet($ideeProjetId, $request->all());
     }
 
-
+    public function validationIdeeDeProjetAProjet(
+        ValidationIdeeProjetAProjetRequest $request,
+        $ideeProjetId
+    ): JsonResponse {
+        return $this->service->validationIdeeDeProjetAProjet($ideeProjetId, $request->all());
+    }
 
     /**
      * Dashboard responsable : informations complètes évaluation climatique.

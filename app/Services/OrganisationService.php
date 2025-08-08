@@ -49,13 +49,12 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
     public function all(): JsonResponse
     {
         try {
-
             $organisations = $this->repository->getModel()
                 ->when(Auth::user()->profilable_id && Auth::user()->profilable_type == Organisation::class, function ($query) {
                     $query->descendantsFromMinistere(auth()->user()->profilable->ministere->id);
                 })->when(Auth::user()->profilable_id && Auth::user()->profilable_type == Dpaf::class, function ($query) {
                     $query->descendantsFromMinistere(auth()->user()->profilable->ministere->id);
-                })->lastest()->get();
+                })->latest()->get();
 
             return ($this->resourceClass::collection($organisations))->response();
         } catch (ModelNotFoundException $e) {

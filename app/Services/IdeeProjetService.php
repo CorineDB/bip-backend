@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\StatutIdee;
 use App\Http\Resources\DocumentResource;
 use Illuminate\Http\JsonResponse;
 use Exception;
@@ -16,6 +17,7 @@ use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Services\Traits\ProjetRelationsTrait;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Events\IdeeProjetCree;
+use App\Models\Dgpd;
 use App\Models\Dpaf;
 use App\Models\Organisation;
 use App\Models\User;
@@ -51,7 +53,9 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             $item = $this->repository->getModel()->when(auth()->user()->profilable_type == Dpaf::class, function($query){
                 $query->where("ministereId", Auth::user()->profilable->ministere->id);
             })->when(auth()->user()->profilable_type == Organisation::class, function($query){
-                $query->where("ministereId", Auth::user()->ministere->id);
+                $query->where("ministereId", Auth::user()->profilable->ministere->id);
+            })->when(auth()->user()->profilable_type == Dgpd::class, function($query){
+                $query->whereIn("statut", [StatutIdee::ANALYSE, StatutIdee::AMC, StatutIdee::VALIDATION]);
             })->latest()->get();
 
             return ($this->resourceClass::collection($item))->response();
@@ -110,7 +114,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             //dd(auth()->user()->ministere->id);
 
             $idee->responsableId = auth()->id();
-            $idee->ministereId = auth()->user()->ministere?->id;
+            $idee->ministereId = auth()->user()->profilable?->ministere?->id;
 
             $idee->save();
 
@@ -926,8 +930,8 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             // Déclencher l'event seulement si l'idée passe de non-soumise à soumise
             if (
                 isset($data['est_soumise']) &&
-                $data['est_soumise'] === true &&
-                $ancienEtatSoumise !== true
+                $data['est_soumise'] === true /* &&
+                $ancienEtatSoumise !== true */
             ) {
                 event(new IdeeProjetCree($idee));
             }

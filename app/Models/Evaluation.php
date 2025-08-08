@@ -176,13 +176,43 @@ class Evaluation extends Model
                 $moyenne_evaluateurs = $notes->average();
 
                 return [
-                    'critere' => $critereEvaluations->first()->critere,
+                    'critere' => $critere,
                     'ponderation' => $critere->ponderation,
                     'ponderation_pct' => $critere->ponderation . '%',
                     'moyenne_evaluateurs' => $moyenne_evaluateurs,
                     'score_pondere' => $moyenne_evaluateurs * ($critere->ponderation / 100),
                     'total_evaluateurs' => $critereEvaluations->count(),
-                    'notes_individuelles' => $notes->toArray(),
+                    'evaluateurs' => $critereEvaluations->pluck('evaluateur.nom')->filter()->toArray()
+                ];
+            });
+    }
+
+    /**
+     * Calculate aggregated scores by critere with ponderation.
+     */
+    public function getAMCAggregatedScores()
+    {
+        return $this->evaluationCriteres()
+            ->with(['critere', 'notation', 'evaluateur'])
+            ->get()
+            ->groupBy('critere_id')
+            ->map(function ($critereEvaluations) {
+                $critere = $critereEvaluations->first()->critere;
+                if (str_contains(strtolower($critere->intitule ?? ''), 'impact climatique')) {
+                    $notes = $critereEvaluations->pluck('note')->filter();
+                } else {
+                    $notes = $critereEvaluations->pluck('notation.valeur')->filter();
+                }
+
+                $moyenne_evaluateurs = $notes->average();
+
+                return [
+                    'critere' => $critere,
+                    'ponderation' => $critere->ponderation,
+                    'ponderation_pct' => $critere->ponderation . '%',
+                    'moyenne_evaluateurs' => $moyenne_evaluateurs,
+                    'score_pondere' => $moyenne_evaluateurs * ($critere->ponderation / 100),
+                    'total_evaluateurs' => $critereEvaluations->count(),
                     'evaluateurs' => $critereEvaluations->pluck('evaluateur.nom')->filter()->toArray()
                 ];
             });
@@ -193,7 +223,7 @@ class Evaluation extends Model
      */
     public function getStatutTextAttribute(): string
     {
-        return match($this->statut) {
+        return match ($this->statut) {
             -1 => 'En attente',
             0 => 'En cours',
             1 => 'Terminée',

@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class EvaluationResource extends BaseApiResource
@@ -18,9 +19,9 @@ class EvaluationResource extends BaseApiResource
     {
         return [
             'type_evaluation' => $this->type_evaluation,
-            'date_debut_evaluation' => $this->date_debut_evaluation,
-            'date_fin_evaluation' => $this->date_fin_evaluation,
-            'valider_le' => $this->valider_le,
+            'date_debut_evaluation' => Carbon::parse($this->date_debut_evaluation)->format("d/m/Y H:m:i"),
+            'date_fin_evaluation' => Carbon::parse($this->date_fin_evaluation)->format("d/m/Y H:m:i"),
+            'valider_le' => Carbon::parse($this->valider_le)->format("d/m/Y H:m:i"),
             'valider_par' => $this->valider_par,
             'commentaire' => $this->commentaire,
             'evaluation' => $this->evaluation,

@@ -30,7 +30,12 @@ class Decision extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'valeur',
+        'date',
+        'observations',
+        'observateurId',
+        'objet_decision_id',
+        'objet_decision_type'
     ];
 
     /**
@@ -39,6 +44,7 @@ class Decision extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'date' => 'datetime',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -69,5 +75,23 @@ class Decision extends Model
                 // Exemple : $model->user()->delete();
             }
         });
+    }
+
+    // Relations
+
+    /**
+     * Relation polymorphique vers l'objet de la décision
+     */
+    public function objetDecision()
+    {
+        return $this->morphTo('objetDecision', 'objet_decision_type', 'objet_decision_id');
+    }
+
+    /**
+     * Relation vers l'observateur (personne qui prend la décision)
+     */
+    public function observateur()
+    {
+        return $this->belongsTo(Personne::class, 'observateurId');
     }
 }

@@ -103,18 +103,20 @@ class CreerEvaluationClimatique implements ShouldQueue
             ]);
 
             // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
-            /*$evaluateurs = User::whereHas('roles', function ($query) {
-                $query->whereHas('permissions', function ($subQuery) {
-                    $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
+            //where('profilable_type', $ideeProjet->responsable->profilable_type)->whereNotNull('profilable_id', $ideeProjet->responsable->profilable_id)
+            $evaluateurs = User::when($ideeProjet->ministere, function ($query) use ($ideeProjet) {
+                $query->where(function ($q) use ($ideeProjet) {
+                    $q->where('profilable_type', get_class($ideeProjet->ministere))
+                      ->where('profilable_id', $ideeProjet->ministere->id);
                 });
-            })->orWhereHas('role', function ($query) {
-                $query->whereHas('permissions', function ($subQuery) {
-                    $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
-                });
-            })->get();*/
-
-            // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
-            $evaluateurs = User::where('profilable_type', $ideeProjet->responsable->profilable_type)->where('profilable_id', $ideeProjet->responsable->profilable_id)
+            })
+                ->when($ideeProjet->responsable?->profilable->ministere, function ($query) use ($ideeProjet) {
+                    $query
+                        ->where('profilable_type', function ($query) use ($ideeProjet) {
+                            $ministere = $ideeProjet->responsable->profilable->ministere;
+                            $query->Where('profilable_type', get_class($ministere))->where('profilable_id', $ministere->id);
+                        });
+                })
                 ->where(function ($query) {
                     $query->whereHas('roles', function ($query) {
                         $query->whereHas('permissions', function ($subQuery) {
@@ -152,7 +154,7 @@ class CreerEvaluationClimatique implements ShouldQueue
             // Assigner chaque évaluateur à tous les critères
             foreach ($evaluateurs as $evaluateur) {
                 foreach ($criteres as $critere) {
-                    EvaluationCritere::create([
+                    EvaluationCritere::updateOrCreate([
                         'evaluation_id' => $evaluation->id,
                         'critere_id' => $critere->id,
                         'evaluateur_id' => $evaluateur->id,

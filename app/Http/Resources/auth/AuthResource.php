@@ -19,6 +19,7 @@ class AuthResource extends JsonResource
 
         return [
             "id" => $this->id,
+            "type" => $this->type,
             "nom"=> $this->personne->nom,
             "prenom"=> $this->personne->prenom,
             "email"=> $this->email,

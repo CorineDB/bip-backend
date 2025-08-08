@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="<?php echo e(str_replace('_', '-', app()->getLocale())); ?>">
 <head>
 
     <meta charset="utf-8">
@@ -7,9 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- CSRF Token -->
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
 
-    <title>{{ config("app.name") }}</title>
+    <title><?php echo e(config("app.name")); ?></title>
 
 <style type="text/css">
 
@@ -79,7 +79,7 @@
 
 <center>
     <h2 class="myStyle">
-        <a href="javascript:void(0)">{!! $details["subject"] !!}</a>
+        <a href="javascript:void(0)"><?php echo $details["subject"]; ?></a>
     </h2>
 </center>
 
@@ -88,25 +88,38 @@
     <div class="contenu" style="color: #718096;">
 
         <p>
-            {!! $details['content']["greeting"] !!}
+            <?php echo $details['content']["greeting"]; ?>
+
         </p>
 
         <p>
-            {!! $details['content']["introduction"] !!}
+            <?php echo $details['content']["introduction"]; ?>
+
         </p>
         <p>
-            Cliquer sur ce lien d'activation pour activer de votre compte
+            Identifiant : <?php echo $details['content']["identifiant"]; ?>
+
         </p>
-        <a href="{{$details['content']['lien']}}">Activation de compte</a>
+        <p>
+            Mot de passe : <?php echo $details['content']["password"]; ?>
+
+        </p>
+        <p>
+            Voici le lien de connexion
+        </p>
+
+        <a href="<?php echo e($details['content']['lien']); ?>"><?php echo e($details['content']['lien']); ?></a>
+
     </div>
 </div>
 
 
 <center>
     <p class="myStyle" style="color: #b0adc5;">
-        &copy; 2024 {{ config("app.name") }}. All rights reserved.
+        &copy; 2024 <?php echo e(config("app.name")); ?>. All rights reserved.
     </p>
 </center>
 
 </body>
 </html>
+<?php /**PATH /home/unknow/GDIZ/apps/backend_api/resources/views/emails/auth/confirmation_compte.blade.php ENDPATH**/ ?>

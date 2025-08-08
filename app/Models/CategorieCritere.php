@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class CategorieCritere extends Model
 {
@@ -82,22 +83,18 @@ class CategorieCritere extends Model
      */
     public function setTypeAttribute($value)
     {
-        $this->attributes['type'] = addslashes($value); // Escape value with backslashes
-        $this->attributes['slug'] = $this->generateUniqueSlug($value);
+        $this->attributes['type'] = Str::ucfirst(trim($value)); // Escape value with backslashes
     }
 
-    private function generateUniqueSlug($name)
+    /**
+     *
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setSlugAttribute($value)
     {
-        $baseSlug = str_replace(' ', '-', strtolower($name));
-        $slug = $baseSlug;
-        $counter = 1;
-
-        while (static::where('slug', $slug)->where('id', '!=', $this->id ?? 0)->exists()) {
-            $slug = $baseSlug . '-' . $counter;
-            $counter++;
-        }
-
-        return $slug;
+        $this->attributes['slug'] = $value ?? Str::slug($this->attributes['type']);
     }
 
     /**

@@ -17,13 +17,17 @@ return new class extends Migration
                 $table->id();
 
                 // Foreign keys
-                $table->bigInteger('ideeProjetId');
+                $table->unsignedBigInteger('ideeProjetId')->index();
 
-                $table->bigInteger('secteurId')->unsigned();
-                $table->bigInteger('ministereId')->unsigned();
-                $table->bigInteger('categorieId')->unsigned();
-                $table->bigInteger('responsableId')->unsigned();
-                $table->bigInteger('demandeurId')->unsigned();
+                $table->unsignedBigInteger('secteurId')->index();
+                $table->unsignedBigInteger('ministereId')->index();
+                $table->unsignedBigInteger('categorieId')->index();
+                $table->unsignedBigInteger('responsableId')->index();
+                $table->unsignedBigInteger('demandeurId');
+                $table->string('demandeur_type')->default('App\\Models\\User');
+                
+                // Index composite pour la relation polymorphique
+                $table->index(['demandeurId', 'demandeur_type'], 'projets_demandeur_index');
 
                 // Unique identifiers
                 $table->string('identifiant_bip')->nullable()->unique();
@@ -97,7 +101,6 @@ return new class extends Migration
                 $table->foreign('secteurId')->references('id')->on('secteurs')->onDelete('cascade');
                 $table->foreign('categorieId')->references('id')->on('categories_projet')->onDelete('cascade');
                 $table->foreign('responsableId')->references('id')->on('users')->onDelete('cascade');
-                $table->foreign('demandeurId')->references('id')->on('users')->onDelete('cascade');
             });
         }
     }

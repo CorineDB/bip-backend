@@ -30,8 +30,17 @@ class IdeesProjetResource extends BaseApiResource
 
             // Statuts et phases
             'statut' => $this->statut?->value ?? $this->statut,
+            // Statuts et phases
+            'statut' => $this->statut?->value ?? $this->statut,
+            'phase' => $this->phase?->value ?? $this->phase,
+            'sous_phase' => $this->sous_phase?->value ?? $this->sous_phase,
+            'type_projet' => $this->type_projet?->value ?? $this->type_projet,
             'est_coherent' => $this->est_coherent,
             'est_soumise' => $this->est_soumise,
+
+            // Scores d'évaluation
+            'score_climatique' => $this->score_climatique,
+            'score_amc' => $this->score_amc,
 
             // Descriptions et contenus principaux
             'description_projet' => $this->description_projet,

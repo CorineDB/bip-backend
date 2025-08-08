@@ -97,6 +97,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
                 $categorieCritere->save();
             }
+
             if (!empty($notationsCategorie)) {
                 foreach ($notationsCategorie as $notationData) {
                     if (isset($notationData['id']) && $notationData['id']) {
@@ -215,6 +216,83 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 return response()->json([
                     'success' => false,
                     'message' => 'Grille d\'évaluation préliminaire non trouvée.',
+                ], 404);
+            }
+
+            return $this->update($grille->id, $data);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Get the grille analyse multi-criteres for an idee de projet
+     */
+    public function getGrilleAnalyseMultiCriteres(): JsonResponse
+    {
+        try {
+            $grille = $this->repository->findByAttribute('slug', 'grille-analyse-multi-critere');
+
+            if (!$grille) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Grille d\'analyse multi-critères non trouvée.',
+                ], 404);
+            }
+
+            return (new $this->resourceClass($grille))
+                ->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Get the grille analyse multi-criteres with evaluations for an idee de projet
+     */
+    public function getGrilleAnalyseMultiCriteresAvecEvaluations(int $ideeProjetId): JsonResponse
+    {
+        try {
+            $grille = $this->repository->findByAttribute('slug', 'grille-analyse-multi-critere');
+
+            if (!$grille) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Grille d\'analyse multi-critères non trouvée.',
+                ], 404);
+            }
+
+            // Load the grille with criteres, notations and evaluations for the specific idee projet
+            $grille->load([
+                'criteres.notations',
+                'criteres.evaluations' => function($query) use ($ideeProjetId) {
+                    $query->where('projetable_type', 'App\\Models\\IdeeProjet')
+                          ->where('projetable_id', $ideeProjetId);
+                },
+                'notations'
+            ]);
+
+            return (new $this->resourceClass($grille))
+                ->additional(['idee_projet_id' => $ideeProjetId])
+                ->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Update the grille analyse multi-criteres
+     */
+    public function updateGrilleAnalyseMultiCriteres(array $data): JsonResponse
+    {
+        try {
+            $grille = $this->repository->findByAttribute('slug', 'grille-analyse-multi-critere');
+
+            $data["slug"] = 'grille-analyse-multi-critere';
+            if (!$grille) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Grille d\'analyse multi-critères non trouvée.',
                 ], 404);
             }
 

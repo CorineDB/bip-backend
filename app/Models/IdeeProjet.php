@@ -86,6 +86,7 @@ class IdeeProjet extends Model
         "categorieId",
         "responsableId",
         "demandeurId",
+        "demandeur_type",
         "titre_projet"
     ];
 
@@ -219,8 +220,6 @@ class IdeeProjet extends Model
             ->withTimestamps();
     }
 
-
-
     /**
      * Get the projetable entity that the evaluation belongs to.
      */
@@ -234,7 +233,16 @@ class IdeeProjet extends Model
      */
     public function decisions()
     {
+        return $this->morphMany(Decision::class, 'projetable');
+    }
+
+    /**
+     * Get the projetable entity that the evaluation belongs to.
+     */
+    public function workflows()
+    {
         return $this->morphMany(Workflow::class, 'projetable');
+
     }
 
     public function secteur()
@@ -261,7 +269,7 @@ class IdeeProjet extends Model
 
     public function demandeur()
     {
-        return $this->belongsTo(User::class, 'demandeurId');
+        return $this->morphTo('demandeur', 'demandeur_type', 'demandeurId');
     }
 
     public function financements()
