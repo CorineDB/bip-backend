@@ -25,4 +25,15 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->orderBy('created_at', 'desc')
             ->first();
     }
+
+
+    public function getCanevasRedactionNoteConceptuelle()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-redaction-note-conceptuelle');
+        })
+            ->where('type', 'formulaire')
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
 }

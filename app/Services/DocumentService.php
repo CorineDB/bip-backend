@@ -354,4 +354,119 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             return $this->errorResponse($e);
         }
     }
+
+
+    public function canevasRedactionNoteConceptuelle(): JsonResponse
+    {
+        try {
+            // Récupérer la fiche idée unique
+            $ficheIdee = $this->repository->getCanevasRedactionNoteConceptuelle();
+
+            if (!$ficheIdee) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas de redaction disponible idée trouvée.'
+                ], 404);
+            }
+
+            return (new $this->resourceClass($ficheIdee))
+                ->additional(['message' => 'Fiche idée récupérée avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function createOrUpdateCanevasRedactionNoteConceptuelle(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $ficheIdee = $this->repository->getCanevasRedactionNoteConceptuelle();
+
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-redaction-note-conceptuelle')->firstOrFail()->id;
+
+            if ($ficheIdee) {
+                // Mode mise à jour
+                /*$document = $ficheIdee;
+                if (!$document) {
+                    return $this->errorResponse(new Exception('Document non trouvé'), 404);
+                }*/
+
+                // Nettoyer les données du document principal
+                $documentData = collect($data)->except(['sections', 'champs', 'id'])->toArray();
+
+                // Mettre à jour le document principal
+                $ficheIdee->update($documentData);//$this->repository->update($id, $documentData);
+
+                $ficheIdee->refresh();
+
+                // Extraire les données relationnelles
+                $sectionsData = $data['sections'] ?? [];
+                $champsData = $data['champs'] ?? [];
+
+                // Traiter les sections avec leurs champs
+                if (!empty($sectionsData)) {
+                    $this->updateSectionsWithChamps($ficheIdee, $sectionsData);
+                }
+
+                // Traiter les champs directs (sans section)
+                if (!empty($champsData)) {
+                    $this->updateChampsDirects($ficheIdee, $champsData);
+                }
+
+                $ficheIdee->refresh();
+
+                // Recharger avec toutes les relations et générer la structure
+                //$ficheIdee->load(['sections.champs', 'champs', 'categorie']);
+                //$this->structureService->generateAndSaveStructure($ficheIdee);
+
+                DB::commit();
+
+                return (new $this->resourceClass($ficheIdee))
+                    ->additional(['message' => 'Fiche idée mise à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                // Mode création
+                // Extraire les données relationnelles avant création
+                $sectionsData = $data['sections'] ?? [];
+                $champsData = $data['champs'] ?? [];
+
+                // Nettoyer les données du document principal
+                $documentData = collect($data)->except(['sections', 'champs', 'id'])->toArray();
+
+
+                // Créer le document principal
+                $document = $this->repository->create($documentData);
+
+                // Traiter les sections avec leurs champs
+                if (!empty($sectionsData)) {
+                    $this->createSectionsWithChamps($document, $sectionsData);
+                }
+
+                // Traiter les champs directs (sans section)
+                if (!empty($champsData)) {
+                    $this->createDirectChamps($document, $champsData);
+                }
+
+                // Recharger avec toutes les relations et générer la structure
+                $document->load(['sections.champs', 'champs', 'categorie']);
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                return (new $this->resourceClass($document->fresh(['sections.champs', 'champs'])))
+                    ->additional(['message' => 'Fiche idée créée avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
 }

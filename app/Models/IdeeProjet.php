@@ -363,4 +363,21 @@ class IdeeProjet extends Model
     {
         return $this->morphMany(Evaluation::class, 'projetable');
     }
+
+    public function fichiers()
+    {
+        return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id')
+            ->active()
+            ->ordered();
+    }
+
+    public function allFichiers()
+    {
+        return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id');
+    }
+
+    public function fichiersParCategorie(string $categorie)
+    {
+        return $this->fichiers()->byCategorie($categorie);
+    }
 }

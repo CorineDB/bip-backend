@@ -30,7 +30,9 @@ class Dgpd extends Model
      * @var array
      */
     protected $fillable = [
-        'nom', 'slug', 'description'
+        'nom',
+        'slug',
+        'description'
     ];
 
     /**
@@ -59,6 +61,20 @@ class Dgpd extends Model
     protected static function boot()
     {
         parent::boot();
+
+        /*static::creating(function ($dgpd) {
+            $dgpd->roles()->firstOrCreate(
+                [
+                    'slug' => 'analyste-dgpd',
+                    'roleable_type' => Dgpd::class,
+                    'roleable_id' => $dgpd->id,
+                ],
+                [
+                    'nom' => 'Analyste DGPD',
+                    'description' => 'Analyste des idées projet ou projets',
+                ]
+            );
+        });*/
 
         static::deleting(function ($model) {
             $model->update([

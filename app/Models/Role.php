@@ -84,14 +84,29 @@ class Role extends Model
     {
         parent::boot();
 
-        static::deleting(function ($model) {
-            $model->update([
-                'nom' => time() . '::' . $model->nom,
-                'slug' => time() . '::' . $model->slug,
+        static::deleting(function ($role) {
+            // Liste des rôles critiques à ne pas supprimer
+            $rolesCritiques = [
+                'super-admin',
+                'dgpd',
+                'dpaf',
+                'organisation',
+                'responsable-projet',
+                'responsable-hierachique',
+                'analyste-dgpd',
+            ];
+
+            if (in_array($role->slug, $rolesCritiques)) {
+                throw new \Exception("Le rôle critique « {$role->slug} » ne peut pas être supprimé.");
+            }
+
+            $role->update([
+                'nom' => time() . '::' . $role->nom,
+                'slug' => time() . '::' . $role->slug,
             ]);
         });
     }
-    
+
     /**
      *
      *

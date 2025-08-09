@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 
-class RoleResource extends BaseApiResource
+class NoteConceptuelleResource extends BaseApiResource
 {
 
     /**
@@ -15,15 +15,7 @@ class RoleResource extends BaseApiResource
      */
     public function toArray(Request $request): array
     {
-        return [
-            'id' => $this->id,
-            'nom' => $this->nom,
-            'slug' => $this->slug,
-            // Relations selon le contexte
-            "permissions" => $this->whenLoaded('permissions', function(){
-                return PermissionResource::collection($this->permissions);
-            })
-        ];
+        return parent::toArray($request);
     }
 
     /**
@@ -36,7 +28,7 @@ class RoleResource extends BaseApiResource
     {
         return array_merge(parent::with($request), [
             'meta' => [
-                'type' => 'role',
+                'type' => 'noteconceptuelle',
                 'version' => '1.0',
             ],
         ]);

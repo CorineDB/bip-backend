@@ -206,6 +206,13 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::post('/create-or-update', [DocumentController::class, 'createOrUpdateFicheIdee']);
         });
 
+        Route::prefix('canevas-de-redaction-note-conceptuelle')->group(function () {
+            // Public routes
+            Route::get('', [DocumentController::class, 'canevasRedactionNoteConptuelle']);
+            Route::post('/create-or-update', [DocumentController::class, 'createOrUpdateCanevasRedactionNoteConptuelle']);
+        });
+
+
         Route::apiResource('categories-document', CategorieDocumentController::class);
 
         // Workflow & Process Management

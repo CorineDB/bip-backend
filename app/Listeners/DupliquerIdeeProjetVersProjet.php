@@ -32,7 +32,7 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
             $ideeProjet = $event->ideeProjet;
 
             // Chercher un projet existant basé sur l'idée de projet
-            $projet = Projet::where('idee_projet_id', $ideeProjet->id)->first();
+            $projet = Projet::where('ideeProjetId', $ideeProjet->id)->first();
 
             // Préparer les données à dupliquer
             $projetData = $this->prepareProjetData($ideeProjet);
@@ -42,7 +42,7 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
                 $projet->update($projetData);
             } else {
                 // Créer un nouveau projet
-                $projetData['idee_projet_id'] = $ideeProjet->id;
+                $projetData['ideeProjetId'] = $ideeProjet->id;
                 $projet = Projet::create($projetData);
             }
 
@@ -65,12 +65,10 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
      */
     private function prepareProjetData($ideeProjet): array
     {
-        // Récupérer tous les attributs fillable de IdeeProjet
+        // Récupérer uniquement les attributs qui existent dans la table projets
         return [
-            'est_soumise' => $ideeProjet->est_soumise,
             'identifiant_bip' => $ideeProjet->identifiant_bip,
             'identifiant_sigfp' => $ideeProjet->identifiant_sigfp,
-            'est_coherent' => $ideeProjet->est_coherent,
             'ficheIdee' => $ideeProjet->ficheIdee,
             'statut' => $ideeProjet->statut,
             'phase' => $ideeProjet->phase,
@@ -117,8 +115,8 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
             'ministereId' => $ideeProjet->ministereId,
             'categorieId' => $ideeProjet->categorieId,
             'responsableId' => $ideeProjet->responsableId,
-            'demandeurId' => $ideeProjet->demandeurId,
-            'demandeur_type' => $ideeProjet->demandeur ? get_class($ideeProjet->demandeur) : null,
+            'demandeurId' => $ideeProjet->demandeurId ?: $ideeProjet->responsableId,
+            'demandeur_type' => $ideeProjet->demandeur ? get_class($ideeProjet->demandeur) : 'App\\Models\\User',
             'titre_projet' => $ideeProjet->titre_projet,
         ];
     }
@@ -132,7 +130,7 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
         if ($ideeProjet->champs()->exists()) {
             $champsIds = $ideeProjet->champs()->pluck('champs.id');
             $pivotData = [];
-            
+
             foreach ($ideeProjet->champs as $champ) {
                 $pivotData[$champ->id] = [
                     'valeur' => $champ->pivot->valeur,
@@ -141,7 +139,7 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
                     'updated_at' => now()
                 ];
             }
-            
+
             $projet->champs()->sync($pivotData);
         }
 
@@ -179,7 +177,7 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
         if ($ideeProjet->lieuxIntervention()->exists()) {
             // Supprimer les anciens lieux du projet
             $projet->lieuxIntervention()->delete();
-            
+
             // Créer les nouveaux lieux
             foreach ($ideeProjet->lieuxIntervention as $lieu) {
                 $projet->lieuxIntervention()->create([
@@ -195,7 +193,7 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
         if ($ideeProjet->commentaires()->exists()) {
             // Supprimer les anciens commentaires du projet
             $projet->commentaires()->delete();
-            
+
             // Créer les nouveaux commentaires
             foreach ($ideeProjet->commentaires as $commentaire) {
                 $projet->commentaires()->create([
@@ -211,7 +209,7 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
         if ($ideeProjet->evaluations()->exists()) {
             // Supprimer les anciennes évaluations du projet
             $projet->evaluations()->delete();
-            
+
             // Créer les nouvelles évaluations
             foreach ($ideeProjet->evaluations as $evaluation) {
                 $nouvelleEvaluation = $projet->evaluations()->create([
@@ -240,6 +238,32 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
                         'est_archiver' => $critereEval->est_archiver
                     ]);
                 }
+            }
+        }
+
+        // Dupliquer les fichiers
+        if ($ideeProjet->fichiers()->exists()) {
+            // Supprimer les anciens fichiers du projet
+            $projet->allFichiers()->delete();
+
+            // Dupliquer les fichiers
+            foreach ($ideeProjet->allFichiers as $fichier) {
+                $projet->allFichiers()->create([
+                    'nom_original' => $fichier->nom_original,
+                    'nom_stockage' => $fichier->nom_stockage,
+                    'chemin' => $fichier->chemin,
+                    'extension' => $fichier->extension,
+                    'mime_type' => $fichier->mime_type,
+                    'taille' => $fichier->taille,
+                    'hash_md5' => $fichier->hash_md5,
+                    'description' => $fichier->description,
+                    'metadata' => $fichier->metadata,
+                    'categorie' => $fichier->categorie,
+                    'ordre' => $fichier->ordre,
+                    'uploaded_by' => $fichier->uploaded_by,
+                    'is_public' => $fichier->is_public,
+                    'is_active' => $fichier->is_active
+                ]);
             }
         }
     }

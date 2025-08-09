@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\documents\canevas_redaction_note_conceptuelle\CreateOrUpdateCanevasRedactionNoteConceptuelleRequest;
 use App\Http\Requests\documents\StoreDocumentRequest;
 use App\Http\Requests\documents\UpdateDocumentRequest;
 use App\Http\Requests\documents\fiches_idee\CreateOrUpdateFicheIdeeRequest;
@@ -56,4 +57,17 @@ class DocumentController extends Controller
     {
         return $this->service->createOrUpdateFicheIdee($request->validated());
     }
+
+
+    public function canevasRedactionNoteConptuelle(): JsonResponse
+    {
+        return $this->service->canevasRedactionNoteConptuelle();
+    }
+
+    public function createOrUpdateCanevasRedactionNoteConptuelle(CreateOrUpdateCanevasRedactionNoteConceptuelleRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasRedactionNoteConceptuelle($request->validated());
+    }
+
+
 }

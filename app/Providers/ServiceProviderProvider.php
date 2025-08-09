@@ -41,6 +41,7 @@ class ServiceProviderProvider extends ServiceProvider
             'CategorieDocumentServiceInterface' => 'CategorieDocumentService',
             'TrackInfoServiceInterface' => 'TrackInfoService',
             'DocumentServiceInterface' => 'DocumentService',
+            'NoteConceptuelleServiceInterface' => 'NoteConceptuelleService',
             'ChampServiceInterface' => 'ChampService',
             'EvaluationServiceInterface' => 'EvaluationService',
             "PassportOAuthServiceInterface" => "PassportOAuthService",

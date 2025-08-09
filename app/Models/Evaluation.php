@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Collection;
 
 class Evaluation extends Model
 {
@@ -140,6 +142,41 @@ class Evaluation extends Model
     }
 
     /**
+     * Get the evaluation criteria for this evaluation.
+     */
+    public function criteres()
+    {
+        // On part sur un builder de base
+        $evaluationCriteres = Critere::query();
+
+        switch ($this->type_evaluation) {
+            case "climatique":
+                $evaluationCriteres = Critere::whereHas("categorie_critere", function ($query) {
+                    $query->where("slug", "evaluation-preliminaire-multi-projet-impact-climatique");
+                })/*->orWhere(function($query) {
+                    $query->where("is_mandatory", true)
+                        ->where("est_general", true);
+                })*/;
+                break;
+
+            case "amc":
+                $evaluationCriteres = Critere::whereHas("categorie_critere", function ($query) {
+                    $query->where("slug", 'grille-analyse-multi-critere');
+                });
+                break;
+        }
+
+        // On retourne le builder, pas encore exécuté
+        return $evaluationCriteres;
+    }
+
+    public function getCriteresAttribute()
+    {
+        // Ici on exécute la requête
+        return $this->criteres()->get();
+    }
+
+    /**
      * Get all evaluateurs for this evaluation through evaluation_criteres.
      */
     public function evaluateurs()
@@ -161,12 +198,86 @@ class Evaluation extends Model
             ->groupBy('evaluateur_id');
     }
 
+    public function scopeEvaluateursClimatique()
+    {
+        return User::whereHas("personne", function($query){
+            $query->where("organismeId", $this->projetable->ministere->id)->where("status", "actif");
+        });
+        return $this->where("id", $this->id)->where("type_evaluation", "climatique")->where("projetable_type", IdeeProjet::class);
+    }
+
+    /**
+     * Calculate aggregated scores by critere with ponderation.
+     */
+    public function scopeAggregatedCritereScores($query)
+    {
+        /*dd($this->evaluateursClimatique()->first()->projetable->ministere->personnes
+        ->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet')));*/
+
+        //dd($this->criteres);
+
+        $totalEvaluateurs = $this->evaluateursClimatique()
+        ->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->count();
+
+        return $query->evaluationCriteres()->where("est_archiver", false)
+            ->with(['critere', 'notation', 'evaluateur'])
+            ->get()
+            ->groupBy('critere_id')
+            ->map(function ($critereEvaluations) use($totalEvaluateurs) {
+                $notes = $critereEvaluations->pluck('notation.valeur')->filter();
+                $critere = $critereEvaluations->first()->critere;
+                $moyenne_evaluateurs = $totalEvaluateurs ? $notes->sum() / $totalEvaluateurs : 0;
+
+                return [
+                    'critere' => $critere,
+                    'ponderation' => $critere->ponderation,
+                    'ponderation_pct' => $critere->ponderation . '%',
+                    'moyenne_evaluateurs' => $moyenne_evaluateurs,
+                    'score_pondere' => $moyenne_evaluateurs * ($critere->ponderation / 100),
+                    'total_evaluateurs' => $critereEvaluations->count(),
+                    'evaluateurs' => $critereEvaluations->pluck('evaluateur.nom')->filter()->toArray()
+                ];
+            });
+    }
+
+    /**
+     * Agrège les scores par critère à partir d'une collection d'évaluations.
+     *
+     * @param \Illuminate\Support\Collection $evaluationCriteres Collection d'objets EvaluationCritere
+     * @return \Illuminate\Support\Collection
+     */
+    function aggregateScoresByCritere($evaluationCriteres)
+    {
+        return $evaluationCriteres
+            ->groupBy('critere_id')
+            ->map(function ($critereEvaluations) {
+                $notes = $critereEvaluations->pluck('notation.valeur')->filter();
+                $critere = $critereEvaluations->first()->critere;
+                $moyenne_evaluateurs = $notes->avg();
+
+                return [
+                    'critere' => $critere,
+                    'ponderation' => $critere->ponderation,
+                    'ponderation_pct' => $critere->ponderation . '%',
+                    'moyenne_evaluateurs' => $moyenne_evaluateurs,
+                    'score_pondere' => $moyenne_evaluateurs * ($critere->ponderation / 100),
+                    'total_evaluateurs' => $critereEvaluations->count(),
+                    'total_evaluateurs_ayant_evaluer' => $critereEvaluations->count(),
+                    'evaluateurs' => $critereEvaluations->pluck('evaluateur.nom')->filter()->toArray(),
+                ];
+            });
+    }
+
     /**
      * Calculate aggregated scores by critere with ponderation.
      */
     public function getAggregatedScores()
     {
-        return $this->evaluationCriteres()
+        /*dd($this->evaluateursClimatique()->first()->projetable->ministere->personnes
+        ->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet')));*/
+
+        //dd($this->criteres);
+        return $this->evaluationCriteres()->where("est_archiver", false)
             ->with(['critere', 'notation', 'evaluateur'])
             ->get()
             ->groupBy('critere_id')

@@ -98,6 +98,15 @@ class Organisation extends Model
     }
 
     /**
+     * Get the personnes for the organisation.
+     */
+    public function users()
+    {
+        return $this->hasManyThrough(User::class, Personne::class, 'organismeId', 'personneId', 'id', 'id')
+        ->where('status', 'actif');
+    }
+
+    /**
      * Get the organisation that owns the role (polymorphic).
      */
     public function roles()

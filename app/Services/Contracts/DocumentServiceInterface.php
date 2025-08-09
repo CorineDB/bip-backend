@@ -10,4 +10,10 @@ interface DocumentServiceInterface extends AbstractServiceInterface
     public function ficheIdee(): JsonResponse;
 
     public function createOrUpdateFicheIdee(array $data): JsonResponse;
+
+    public function canevasRedactionNoteConceptuelle(): JsonResponse;
+
+    public function createOrUpdateCanevasRedactionNoteConceptuelle(array $data): JsonResponse;
+
+
 }

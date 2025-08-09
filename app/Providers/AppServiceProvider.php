@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Organisation;
+use App\Observers\OrganisationObserver;
 use Carbon\CarbonInterval;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;

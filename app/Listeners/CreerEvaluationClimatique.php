@@ -104,7 +104,8 @@ class CreerEvaluationClimatique implements ShouldQueue
 
             // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
             //where('profilable_type', $ideeProjet->responsable->profilable_type)->whereNotNull('profilable_id', $ideeProjet->responsable->profilable_id)
-            $evaluateurs = User::when($ideeProjet->ministere, function ($query) use ($ideeProjet) {
+
+            /*$evaluateurs = User::when($ideeProjet->ministere, function ($query) use ($ideeProjet) {
                 $query->where(function ($q) use ($ideeProjet) {
                     $q->where('profilable_type', get_class($ideeProjet->ministere))
                       ->where('profilable_id', $ideeProjet->ministere->id);
@@ -114,7 +115,7 @@ class CreerEvaluationClimatique implements ShouldQueue
                     $query
                         ->where('profilable_type', function ($query) use ($ideeProjet) {
                             $ministere = $ideeProjet->responsable->profilable->ministere;
-                            $query->Where('profilable_type', get_class($ministere))->where('profilable_id', $ministere->id);
+                            $query->where('profilable_type', get_class($ministere))->where('profilable_id', $ministere->id);
                         });
                 })
                 ->where(function ($query) {
@@ -127,7 +128,33 @@ class CreerEvaluationClimatique implements ShouldQueue
                             $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
                         });
                     });
+                })->get();*/
+
+            $evaluateurs = User::when($ideeProjet->ministere, function ($query) use ($ideeProjet) {
+                $query->where(function ($q) use ($ideeProjet) {
+                    $q->where('profilable_type', get_class($ideeProjet->ministere))
+                        ->where('profilable_id', $ideeProjet->ministere->id);
+                });
+            })
+                ->when($ideeProjet->responsable?->profilable->ministere, function ($query) use ($ideeProjet) {
+                    $ministere = $ideeProjet->responsable->profilable->ministere;
+                    $query->orWhere(function ($q) use ($ministere) {
+                        $q->where('profilable_type', get_class($ministere))
+                            ->where('profilable_id', $ministere->id);
+                    });
+                })
+                ->where(function ($query) {
+                    $query->whereHas('roles', function ($query) {
+                        $query->whereHas('permissions', function ($subQuery) {
+                            $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
+                        });
+                    })->orWhereHas('role', function ($query) {
+                        $query->whereHas('permissions', function ($subQuery) {
+                            $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
+                        });
+                    });
                 })->get();
+
 
             Log::info("Evaluateurs : " . json_encode($evaluateurs));
 

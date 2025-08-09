@@ -34,11 +34,9 @@ class Projet extends Model
      * @var array
      */
     protected $fillable = [
-        'idee_projet_id',
-        'est_soumise',
+        'ideeProjetId',
         'identifiant_bip',
         'identifiant_sigfp',
-        'est_coherent',
         'ficheIdee',
         'statut',
         'phase',
@@ -201,7 +199,7 @@ class Projet extends Model
 
     public function ideeProjet()
     {
-        return $this->belongsTo(IdeeProjet::class, 'idee_projet_id');
+        return $this->belongsTo(IdeeProjet::class, 'ideeProjetId');
     }
 
     public function champs()
@@ -348,5 +346,22 @@ class Projet extends Model
     public function evaluations()
     {
         return $this->morphMany(Evaluation::class, 'projetable');
+    }
+
+    public function fichiers()
+    {
+        return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id')
+            ->active()
+            ->ordered();
+    }
+
+    public function allFichiers()
+    {
+        return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id');
+    }
+
+    public function fichiersParCategorie(string $categorie)
+    {
+        return $this->fichiers()->byCategorie($categorie);
     }
 }

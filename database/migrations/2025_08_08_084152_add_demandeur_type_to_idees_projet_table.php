@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable('idees_projet') && !Schema::hasColumn('idees_projet', 'demandeur_type')) {
+        if (Schema::hasTable('idees_projet')) {
             Schema::table('idees_projet', function (Blueprint $table) {
-                $table->string('demandeur_type')->default('App\\Models\\User')->after('demandeurId');
+                //if (!Schema::hasColumn('idees_projet', 'demandeur_type')) {
+                    $table->string('demandeur_type')->default('App\\Models\\User')->after('demandeurId');
+                //}
             });
         }
     }

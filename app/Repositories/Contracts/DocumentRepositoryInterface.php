@@ -10,4 +10,9 @@ interface DocumentRepositoryInterface extends BaseRepositoryInterface
      * Get the unique fiche idée
      */
     public function getFicheIdee();
+
+    /**
+     * Get the unique fiche idée
+     */
+    public function getCanevasRedactionNoteConceptuelle();
 }
