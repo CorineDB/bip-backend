@@ -32,13 +32,15 @@ class OddSeeder extends Seeder
             "Paix, justice et institutions efficaces",
             "Partenariats pour la réalisation des objectifs"
         ];
-
+        \App\Models\Odd::truncate();
         foreach ($odds as $key => $odd) {
             // Critère Atténuation
-            \App\Models\Odd::firstOrCreate([
-                'odd' => $odd,
-                "slug" => Str::slug($odd)
-            ]);
+            \App\Models\Odd::firstOrCreate(
+                ['odd' => $odd],
+                [
+                    "slug" => Str::slug($odd)
+                ]
+            );
         }
     }
 }
