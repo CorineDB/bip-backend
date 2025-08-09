@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Secteur;
 use App\Models\TypeProgramme;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -16,7 +15,13 @@ class ProgrammeSeeder extends Seeder
      */
     public function run(): void
     {
-        $pag = TypeProgramme::where("slug", 'pag')->first();
+        //$pag = TypeProgramme::where("slug", 'pag')->first();
+
+        $pag = TypeProgramme::firstOrCreate([
+            'slug' => 'pag'
+        ],[
+            'type_programme' => "Programme d'action du gouvernement", 'slug' => 'pag'
+        ]);
 
         $pilier_pag = ["Consolider la démocratie, l’état de droit et la bonne gouvernance", "Transformation structurelle de l’économie", "Améliorer les conditions de vie des populations"];
 
@@ -52,7 +57,7 @@ class ProgrammeSeeder extends Seeder
         ];
 
 
-        DB::table("composants_programme")->truncate();
+        //DB::table("composants_programme")->truncate();
         foreach ($pag->children as $key => $child) {
             if ($child->slug === 'pilier-pag') {
                 foreach ($pilier_pag as $key => $pilier) {
@@ -185,7 +190,12 @@ class ProgrammeSeeder extends Seeder
             ]
         ];
 
-        $pnd = TypeProgramme::where("slug", 'pnd')->first();
+        //$pnd = TypeProgramme::where("slug", 'pnd')->first();
+        $pnd = TypeProgramme::firstOrCreate([
+            'slug' => 'pnd'
+        ],[
+            'type_programme' => "Programme de Developpement durable", 'slug' => 'pnd'
+        ]);
 
         $orientationCount = 1;
         foreach ($pnd_comp as $key => $obj) {
