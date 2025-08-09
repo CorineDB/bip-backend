@@ -17,10 +17,12 @@ class ProgrammeSeeder extends Seeder
     {
         //$pag = TypeProgramme::where("slug", 'pag')->first();
 
+        DB::table("types_programme")->truncate();
+        DB::table("composants_programme")->truncate();
         $pag = TypeProgramme::firstOrCreate([
             'slug' => 'pag'
         ],[
-            'type_programme' => "Programme d'action du gouvernement", 'slug' => 'pag'
+            'type_programme' => "Programme d'action du gouvernement"
         ]);
 
         $pilier_pag = ["Consolider la démocratie, l’état de droit et la bonne gouvernance", "Transformation structurelle de l’économie", "Améliorer les conditions de vie des populations"];
