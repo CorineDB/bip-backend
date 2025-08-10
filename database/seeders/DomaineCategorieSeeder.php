@@ -73,10 +73,10 @@ class DomaineCategorieSeeder extends Seeder
         ];
 
         foreach ($domaines as $domaineNom => $categories) {
-            TypeIntervention::updateOrCreate(
+            /*TypeIntervention::updateOrCreate(
                 ['type_intervent' => $domaineNom],
                 //['sectionId' => ??]
-            );
+            );*/
 
             foreach ($categories as $categorieNom) {
                 CategorieProjet::updateOrCreate(
