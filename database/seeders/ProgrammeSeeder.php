@@ -222,8 +222,7 @@ class ProgrammeSeeder extends Seeder
         $pnd = TypeProgramme::firstOrCreate([
             'slug' => 'pnd'
         ], [
-            'type_programme' => "Programme de Developpement durable",
-            'slug' => 'pnd'
+            'type_programme' => "Programme de Developpement durable"
         ]);
 
         $orientationCount = 1;
