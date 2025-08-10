@@ -2060,4 +2060,185 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             default => \App\Enums\SousPhaseIdee::redaction,
         };
     }
+
+    /**
+     * Classement des idées de projet par secteur et catégorie selon score pondéré AMC
+     */
+    public function getClassementIdeesProjetsValidation(): JsonResponse
+    {
+        try {
+            // Récupérer toutes les idées de projet en statut "Validation" avec leurs relations
+            $ideesProjets = IdeeProjet::with(['secteur', 'categorie', 'responsable', 'ministere'])
+                ->where('statut', StatutIdee::VALIDATION)
+                ->whereNotNull('score_amc')
+                ->get();
+
+            if ($ideesProjets->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Aucune idée de projet en validation trouvée',
+                    'data' => []
+                ]);
+            }
+
+            // Récupérer tous les critères AMC disponibles
+            $criteresAMC = Critere::whereHas('categorie_critere', function ($query) {
+                $query->where('slug', 'grille-analyse-multi-critere');
+            })->get();
+
+            // Traiter chaque idée projet avec ses données d'évaluation complètes
+            $ideesProjetsAvecEvaluations = $ideesProjets->map(function ($idee) use ($criteresAMC) {
+                // Récupérer l'évaluation AMC de cette idée
+                $evaluationAMC = $idee->evaluations()
+                    ->where('type_evaluation', 'amc')
+                    ->where('statut', 1)
+                    ->first();
+
+                $evaluationCriteres = [];
+                $scoresPonderes = [];
+
+                if ($evaluationAMC) {
+                    // Récupérer les évaluations de critères existantes
+                    $evaluationCriteresExistants = $evaluationAMC->evaluationCriteres()
+                        ->with(['critere', 'notation', 'evaluateur'])
+                        ->active()
+                        ->get()
+                        ->keyBy('critere_id');
+
+                    // Pour chaque critère AMC, récupérer ou créer les données d'évaluation
+                    foreach ($criteresAMC as $critere) {
+                        $evaluation = $evaluationCriteresExistants->get($critere->id);
+                        
+                        if ($evaluation && $evaluation->notation) {
+                            $valeurNotation = $evaluation->notation->valeur ?? 0;
+                        } else {
+                            $valeurNotation = 0; // Critère manquant = 0
+                        }
+
+                        $scorePondere = $valeurNotation * ($critere->ponderation / 100);
+
+                        $evaluationCriteres[] = [
+                            'critere_id' => $critere->id,
+                            'critere_nom' => $critere->intitule,
+                            'ponderation' => $critere->ponderation,
+                            'valeur_notation' => $valeurNotation,
+                            'score_pondere' => round($scorePondere, 2),
+                            'commentaire' => $evaluation->commentaire ?? null,
+                            'evaluateur' => $evaluation ? $evaluation->evaluateur?->nom : null,
+                            'date_evaluation' => $evaluation ? $evaluation->updated_at->format('d/m/Y') : null,
+                            'est_complete' => $evaluation ? !$evaluation->isPending() : false
+                        ];
+
+                        $scoresPonderes[] = $scorePondere;
+                    }
+                }
+
+                // Ajouter les données d'évaluation à l'idée
+                return $idee->setAppends([])->toArray() + [
+                    'score_amc_calcule' => round(array_sum($scoresPonderes), 2),
+                    'secteur_nom' => $idee->secteur?->nom ?? 'Sans secteur',
+                    'categorie_nom' => $idee->categorie?->categorie ?? 'Sans catégorie',
+                    'responsable_nom' => $idee->responsable?->nom ?? 'Non assigné',
+                    'ministere_nom' => $idee->ministere?->nom ?? 'Non assigné',
+                    'evaluation_criteres' => $evaluationCriteres,
+                    'evaluation_id' => $evaluationAMC?->id,
+                    'nombre_criteres_evalues' => count(array_filter($evaluationCriteres, fn($e) => $e['est_complete'])),
+                    'nombre_criteres_total' => $criteresAMC->count()
+                ];
+            });
+
+            // Trier par score AMC décroissant
+            $ideesProjetsTriees = $ideesProjetsAvecEvaluations->sortByDesc('score_amc_calcule');
+
+            // Grouper par secteur puis par catégorie
+            $classementParSecteur = $ideesProjetsTriees->groupBy('secteur_nom')->map(function ($ideesPourSecteur, $secteurNom) {
+                
+                $categoriesClassement = $ideesPourSecteur->groupBy('categorie_nom')->map(function ($ideesPourCategorie, $categorieNom) {
+                    
+                    // Trier par score AMC décroissant au sein de chaque catégorie
+                    $ideesTriees = $ideesPourCategorie->sortByDesc('score_amc_calcule')->values();
+                    
+                    return [
+                        'categorie' => $categorieNom,
+                        'nombre_idees' => $ideesTriees->count(),
+                        'score_moyen' => round($ideesTriees->avg('score_amc_calcule'), 2),
+                        'score_max' => round($ideesTriees->max('score_amc_calcule'), 2),
+                        'score_min' => round($ideesTriees->min('score_amc_calcule'), 2),
+                        'idees' => $ideesTriees->map(function ($idee, $index) {
+                            return [
+                                'rang_dans_categorie' => $index + 1,
+                                'id' => $idee['id'],
+                                'titre_projet' => $idee['titre_projet'],
+                                'score_amc' => $idee['score_amc_calcule'],
+                                'score_climatique' => round($idee['score_climatique'] ?? 0, 2),
+                                'responsable' => $idee['responsable_nom'],
+                                'ministere' => $idee['ministere_nom'],
+                                'secteur_id' => $idee['secteurId'],
+                                'categorie_id' => $idee['categorieId'],
+                                'evaluation_id' => $idee['evaluation_id'],
+                                'nombre_criteres_evalues' => $idee['nombre_criteres_evalues'],
+                                'nombre_criteres_total' => $idee['nombre_criteres_total'],
+                                'taux_completion' => round(($idee['nombre_criteres_evalues'] / $idee['nombre_criteres_total']) * 100, 1),
+                                'created_at' => $idee['created_at'],
+                                'evaluation_criteres' => $idee['evaluation_criteres']
+                            ];
+                        })->toArray()
+                    ];
+                })->sortByDesc('score_moyen')->values();
+
+                return [
+                    'secteur' => $secteurNom,
+                    'nombre_categories' => $categoriesClassement->count(),
+                    'nombre_total_idees' => $ideesPourSecteur->count(),
+                    'score_moyen_secteur' => round($ideesPourSecteur->avg('score_amc_calcule'), 2),
+                    'categories' => $categoriesClassement->toArray()
+                ];
+            })->sortByDesc('score_moyen_secteur')->values();
+
+            // Ajouter le classement global
+            $classementGlobal = $ideesProjetsTriees->map(function ($idee, $index) {
+                return [
+                    'rang_global' => $index + 1,
+                    'id' => $idee['id'],
+                    'titre_projet' => $idee['titre_projet'],
+                    'secteur' => $idee['secteur_nom'],
+                    'categorie' => $idee['categorie_nom'],
+                    'score_amc' => $idee['score_amc_calcule'],
+                    'score_climatique' => round($idee['score_climatique'] ?? 0, 2),
+                    'responsable' => $idee['responsable_nom'],
+                    'ministere' => $idee['ministere_nom'],
+                    'taux_completion' => round(($idee['nombre_criteres_evalues'] / $idee['nombre_criteres_total']) * 100, 1)
+                ];
+            })->values()->toArray();
+
+            // Statistiques générales
+            $statistiques = [
+                'nombre_total_idees' => $ideesProjetsTriees->count(),
+                'nombre_secteurs' => $classementParSecteur->count(),
+                'nombre_categories' => $ideesProjetsTriees->groupBy('categorie_nom')->count(),
+                'score_amc_moyen_global' => round($ideesProjetsTriees->avg('score_amc_calcule'), 2),
+                'score_amc_max' => round($ideesProjetsTriees->max('score_amc_calcule'), 2),
+                'score_amc_min' => round($ideesProjetsTriees->min('score_amc_calcule'), 2),
+                'nombre_criteres_amc' => $criteresAMC->count(),
+                'derniere_mise_a_jour' => now()->format('d/m/Y H:i:s')
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Classement généré avec succès',
+                'data' => [
+                    'statistiques' => $statistiques,
+                    'classement_global' => $classementGlobal,
+                    'classement_par_secteur' => $classementParSecteur->toArray()
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la génération du classement',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
