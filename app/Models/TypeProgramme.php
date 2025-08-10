@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class TypeProgramme extends Model
 {
@@ -100,10 +101,19 @@ class TypeProgramme extends Model
      */
     public function setTypeProgrammeAttribute($value)
     {
-        $this->attributes['type_programme'] = addslashes($value); // Escape value with backslashes
-        $this->attributes['slug'] = str_replace(' ', '-', strtolower($value));
+        $this->attributes['type'] = Str::ucfirst(trim($value)); // Escape value with backslashes
     }
 
+    /**
+     *
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setSlugAttribute($value)
+    {
+        $this->attributes['slug'] = $value ?? Str::slug($this->attributes['type']);
+    }
     /**
     *
     * @param  string  $value
