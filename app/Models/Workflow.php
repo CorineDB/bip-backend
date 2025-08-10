@@ -30,7 +30,12 @@ class Workflow extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'statut',
+        'phase', 
+        'sous_phase',
+        'date',
+        'projetable_id',
+        'projetable_type'
     ];
 
     /**
@@ -39,6 +44,7 @@ class Workflow extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'date' => 'datetime',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -69,5 +75,13 @@ class Workflow extends Model
                 // Exemple : $model->user()->delete();
             }
         });
+    }
+
+    /**
+     * Relation polymorphique vers l'objet du workflow (IdeeProjet, Projet, etc.)
+     */
+    public function projetable()
+    {
+        return $this->morphTo();
     }
 }

@@ -519,7 +519,15 @@ class OrganisationsSeeder extends Seeder
             }
 
             $this->command->info("✅ Groupe Comité de validation Ministériel créé pour {$ministere->nom}");
-            $roleDpaf = Role::firstOrCreate(['slug' => 'dpaf'], ['nom' => 'DPAF']);
+            $roleDpaf = Role::firstOrCreate([
+                'slug' => 'dpaf',
+                'roleable_type' => get_class($ministere),
+                'roleable_id' => $ministere->id
+            ], [
+                'nom' => 'DPAF',
+                'roleable_type' => get_class($ministere),
+                'roleable_id' => $ministere->id
+            ]);
 
             if (!$roleDpaf) {
                 $this->command->error('⚠️ Le rôle DPAF n\'existe pas.');

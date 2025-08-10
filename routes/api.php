@@ -417,7 +417,7 @@ Route::get('/test-json', function () {
         ->pluck('arrondissements')
         ->flatten(1);
 
-    DB::table("villages")->truncate();
+    //DB::table("villages")->truncate();
 
     // Générer tous les arrondissements basés sur les données du CommuneSeeder
     foreach ($arrondissements as $arrondissement) {
@@ -436,32 +436,12 @@ Route::get('/test-json', function () {
                     $slug .= $count;
                 }*/
 
-                $baseSlug = Str::slug($quartier["lib_quart"]); // e.g., 'tankpe'
+                Village::updateOrCreate([
+                    'code' => $code,
+                    'slug' => $slug,
+                    'arrondissementId' => $arrondissementRecord->id
+                ],[
 
-                // Get all slugs that start with the baseSlug
-                $existingSlugs = DB::table('villages')
-                    ->where('slug', 'like', $baseSlug . '%')
-                    ->pluck('slug')
-                    ->toArray();
-
-                if (!in_array($baseSlug, $existingSlugs)) {
-                    $slug = $baseSlug; // first occurrence
-                } else {
-                    // Find the highest suffix number
-                    $max = 0;
-                    foreach ($existingSlugs as $existingSlug) {
-                        // Extract the number suffix, e.g., 'tankpe2' -> 2
-                        if (preg_match('/^' . preg_quote($baseSlug) . '(\d+)$/', $existingSlug, $matches)) {
-                            $num = intval($matches[1]);
-                            if ($num > $max) {
-                                $max = $num;
-                            }
-                        }
-                    }
-                    $slug = $baseSlug . ($max + 1);
-                }
-
-                DB::table('villages')->insert([
                     'code' => $code,
                     'nom' => Str::title($quartier["lib_quart"]),
                     'slug' => $slug,
@@ -469,6 +449,15 @@ Route::get('/test-json', function () {
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+
+                /*DB::table('villages')->insert([
+                    'code' => $code,
+                    'nom' => Str::title($quartier["lib_quart"]),
+                    'slug' => $slug,
+                    'arrondissementId' => $arrondissementRecord->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);*/
             }
         }
     }

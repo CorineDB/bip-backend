@@ -722,6 +722,895 @@
                 ]
             }
         },
+        "/api/fiches-idee": {
+            "get": {
+                "tags": [
+                    "Documents - Templates"
+                ],
+                "summary": "Récupérer le template de fiche d'idée",
+                "description": "Récupère la structure du formulaire dynamique pour la saisie des fiches d'idées de projet avec tous les champs et sections configurés",
+                "operationId": "cfb02002f9be53bb0fe359cd2e74faf2",
+                "responses": {
+                    "200": {
+                        "description": "Template de fiche d'idée récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Template de fiche d'idée récupéré avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "nom": {
+                                                    "type": "string",
+                                                    "example": "Fiche d'idée de projet - Version 2024"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Formulaire standardisé pour la saisie des idées de projet"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "formulaire"
+                                                },
+                                                "sections": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "intitule": {
+                                                                "type": "string",
+                                                                "example": "Informations générales"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Informations de base sur le projet"
+                                                            },
+                                                            "ordre_affichage": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "champs": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "label": {
+                                                                            "type": "string",
+                                                                            "example": "Titre du projet"
+                                                                        },
+                                                                        "attribut": {
+                                                                            "type": "string",
+                                                                            "example": "titre_projet"
+                                                                        },
+                                                                        "type_champ": {
+                                                                            "type": "string",
+                                                                            "example": "text"
+                                                                        },
+                                                                        "is_required": {
+                                                                            "type": "boolean",
+                                                                            "example": true
+                                                                        },
+                                                                        "placeholder": {
+                                                                            "type": "string",
+                                                                            "example": "Saisir le titre du projet"
+                                                                        },
+                                                                        "ordre_affichage": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "meta_options": {
+                                                                            "properties": {
+                                                                                "validations_rules": {
+                                                                                    "properties": {
+                                                                                        "required": {
+                                                                                            "type": "boolean",
+                                                                                            "example": true
+                                                                                        },
+                                                                                        "maxlength": {
+                                                                                            "type": "integer",
+                                                                                            "example": 255
+                                                                                        }
+                                                                                    },
+                                                                                    "type": "object"
+                                                                                },
+                                                                                "conditions": {
+                                                                                    "properties": {
+                                                                                        "visible": {
+                                                                                            "type": "boolean",
+                                                                                            "example": true
+                                                                                        },
+                                                                                        "disable": {
+                                                                                            "type": "boolean",
+                                                                                            "example": false
+                                                                                        }
+                                                                                    },
+                                                                                    "type": "object"
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Template non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Template de fiche d'idée non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "passport": []
+                    }
+                ]
+            }
+        },
+        "/api/fiches-idee/create-or-update": {
+            "post": {
+                "tags": [
+                    "Documents - Templates"
+                ],
+                "summary": "Créer/mettre à jour le template de fiche d'idée",
+                "description": "Crée ou met à jour la structure du formulaire dynamique de fiche d'idée avec ses sections, champs et règles de validation",
+                "operationId": "6d93c9654d36d2466fefffc7d6fe1385",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nom",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "nom": {
+                                        "description": "Nom du template",
+                                        "type": "string",
+                                        "example": "Fiche d'idée de projet - Version 2024"
+                                    },
+                                    "description": {
+                                        "description": "Description du template",
+                                        "type": "string",
+                                        "example": "Formulaire pour la saisie des idées de projet"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "document",
+                                            "formulaire",
+                                            "grille",
+                                            "checklist"
+                                        ],
+                                        "example": "formulaire"
+                                    },
+                                    "sections": {
+                                        "description": "Sections du formulaire",
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "intitule": {
+                                                    "type": "string",
+                                                    "example": "Informations générales"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Section pour les informations de base"
+                                                },
+                                                "ordre_affichage": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "standard"
+                                                },
+                                                "champs": {
+                                                    "description": "Champs de la section",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "label": {
+                                                                "type": "string",
+                                                                "example": "Titre du projet"
+                                                            },
+                                                            "attribut": {
+                                                                "description": "Attribut unique du champ (doit être dans la liste autorisée)",
+                                                                "type": "string",
+                                                                "example": "titre_projet"
+                                                            },
+                                                            "type_champ": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "text",
+                                                                    "textarea",
+                                                                    "select",
+                                                                    "checkbox",
+                                                                    "radio",
+                                                                    "date",
+                                                                    "number",
+                                                                    "email",
+                                                                    "file"
+                                                                ],
+                                                                "example": "text"
+                                                            },
+                                                            "placeholder": {
+                                                                "type": "string",
+                                                                "example": "Saisir le titre du projet"
+                                                            },
+                                                            "is_required": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "ordre_affichage": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "meta_options": {
+                                                                "properties": {
+                                                                    "validations_rules": {
+                                                                        "properties": {
+                                                                            "required": {
+                                                                                "type": "boolean",
+                                                                                "example": true
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "conditions": {
+                                                                        "properties": {
+                                                                            "visible": {
+                                                                                "type": "boolean",
+                                                                                "example": true
+                                                                            },
+                                                                            "disable": {
+                                                                                "type": "boolean",
+                                                                                "example": false
+                                                                            },
+                                                                            "conditions": {
+                                                                                "type": "array",
+                                                                                "items": {
+                                                                                    "type": "object"
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "configs": {
+                                                                        "type": "object"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "champs": {
+                                        "description": "Champs racines (hors sections)",
+                                        "type": "array",
+                                        "items": {
+                                            "description": "Structure identique aux champs des sections",
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Template créé/mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Template de fiche d'idée créé avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "nom": {
+                                                    "type": "string",
+                                                    "example": "Fiche d'idée de projet - Version 2024"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "attributs_manquants": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Le champ avec l'attribut 'titre_projet' est obligatoire."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "passport": []
+                    }
+                ]
+            }
+        },
+        "/api/canevas-de-redaction-note-conceptuelle": {
+            "get": {
+                "tags": [
+                    "Documents - Templates"
+                ],
+                "summary": "Récupérer le template de canevas de note conceptuelle",
+                "description": "Récupère la structure du formulaire dynamique pour la rédaction des notes conceptuelles avec tous les champs et sections configurés",
+                "operationId": "94087f2198b3988d2015e629d7849d64",
+                "responses": {
+                    "200": {
+                        "description": "Template de canevas récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Template de canevas de note conceptuelle récupéré avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "nom": {
+                                                    "type": "string",
+                                                    "example": "Canevas de rédaction de note conceptuelle - V2024"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Template standardisé pour la rédaction des notes conceptuelles de projet"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "formulaire"
+                                                },
+                                                "sections": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "intitule": {
+                                                                "type": "string",
+                                                                "example": "Contexte et justification"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Section décrivant le contexte du projet"
+                                                            },
+                                                            "ordre_affichage": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "champs": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "label": {
+                                                                            "type": "string",
+                                                                            "example": "Contexte général"
+                                                                        },
+                                                                        "attribut": {
+                                                                            "type": "string",
+                                                                            "example": "contexte_general"
+                                                                        },
+                                                                        "type_champ": {
+                                                                            "type": "string",
+                                                                            "example": "textarea"
+                                                                        },
+                                                                        "is_required": {
+                                                                            "type": "boolean",
+                                                                            "example": true
+                                                                        },
+                                                                        "placeholder": {
+                                                                            "type": "string",
+                                                                            "example": "Décrire le contexte général du projet"
+                                                                        },
+                                                                        "ordre_affichage": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "meta_options": {
+                                                                            "properties": {
+                                                                                "validations_rules": {
+                                                                                    "properties": {
+                                                                                        "required": {
+                                                                                            "type": "boolean",
+                                                                                            "example": true
+                                                                                        }
+                                                                                    },
+                                                                                    "type": "object"
+                                                                                },
+                                                                                "conditions": {
+                                                                                    "properties": {
+                                                                                        "visible": {
+                                                                                            "type": "boolean",
+                                                                                            "example": true
+                                                                                        },
+                                                                                        "disable": {
+                                                                                            "type": "boolean",
+                                                                                            "example": false
+                                                                                        }
+                                                                                    },
+                                                                                    "type": "object"
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Template non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Template de canevas de note conceptuelle non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "passport": []
+                    }
+                ]
+            }
+        },
+        "/api/canevas-de-redaction-note-conceptuelle/create-or-update": {
+            "post": {
+                "tags": [
+                    "Documents - Templates"
+                ],
+                "summary": "Créer/mettre à jour le template de canevas de note conceptuelle",
+                "description": "Crée ou met à jour la structure du formulaire dynamique de canevas de note conceptuelle avec ses sections, champs et règles de validation",
+                "operationId": "f693e82eb6a77b9d4738a26fc4dbe36e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nom",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "nom": {
+                                        "description": "Nom du template",
+                                        "type": "string",
+                                        "example": "Canevas de rédaction de note conceptuelle - V2024"
+                                    },
+                                    "description": {
+                                        "description": "Description du template",
+                                        "type": "string",
+                                        "example": "Template pour la rédaction des notes conceptuelles"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "document",
+                                            "formulaire",
+                                            "grille",
+                                            "checklist"
+                                        ],
+                                        "example": "formulaire"
+                                    },
+                                    "sections": {
+                                        "description": "Sections du formulaire",
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "intitule": {
+                                                    "type": "string",
+                                                    "example": "Contexte et justification"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Section décrivant le contexte du projet"
+                                                },
+                                                "ordre_affichage": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "standard"
+                                                },
+                                                "champs": {
+                                                    "description": "Champs de la section",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "label": {
+                                                                "type": "string",
+                                                                "example": "Contexte général"
+                                                            },
+                                                            "attribut": {
+                                                                "description": "Attribut unique du champ",
+                                                                "type": "string",
+                                                                "example": "contexte_general"
+                                                            },
+                                                            "type_champ": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "text",
+                                                                    "textarea",
+                                                                    "select",
+                                                                    "checkbox",
+                                                                    "radio",
+                                                                    "date",
+                                                                    "number",
+                                                                    "email",
+                                                                    "file"
+                                                                ],
+                                                                "example": "textarea"
+                                                            },
+                                                            "placeholder": {
+                                                                "type": "string",
+                                                                "example": "Décrire le contexte général du projet"
+                                                            },
+                                                            "is_required": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "ordre_affichage": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "info": {
+                                                                "type": "string",
+                                                                "example": "Texte d'aide pour guider l'utilisateur"
+                                                            },
+                                                            "meta_options": {
+                                                                "properties": {
+                                                                    "validations_rules": {
+                                                                        "properties": {
+                                                                            "required": {
+                                                                                "type": "boolean",
+                                                                                "example": true
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "conditions": {
+                                                                        "properties": {
+                                                                            "visible": {
+                                                                                "type": "boolean",
+                                                                                "example": true
+                                                                            },
+                                                                            "disable": {
+                                                                                "type": "boolean",
+                                                                                "example": false
+                                                                            },
+                                                                            "conditions": {
+                                                                                "type": "array",
+                                                                                "items": {
+                                                                                    "type": "object"
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "configs": {
+                                                                        "type": "object"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "champs": {
+                                        "description": "Champs racines (hors sections)",
+                                        "type": "array",
+                                        "items": {
+                                            "description": "Structure identique aux champs des sections",
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Template créé/mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Template de canevas créé avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "nom": {
+                                                    "type": "string",
+                                                    "example": "Canevas de rédaction de note conceptuelle - V2024"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "nom": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Le nom du document est obligatoire."
+                                                    }
+                                                },
+                                                "sections": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Au moins une section ou un champ doit être fourni."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "passport": []
+                    }
+                ]
+            }
+        },
         "/api/passport-auths/authentification": {
             "post": {
                 "tags": [
@@ -1507,6 +2396,10 @@
         {
             "name": "Évaluations - Configuration",
             "description": "Endpoints pour configurer les grilles d'évaluation climatique et multicritères"
+        },
+        {
+            "name": "Documents - Templates",
+            "description": "Endpoints pour gérer les templates de documents dynamiques (fiches d'idées, canevas de notes conceptuelles)"
         }
     ]
 }

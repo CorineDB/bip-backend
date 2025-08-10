@@ -23,6 +23,8 @@ use App\Models\Dpaf;
 use App\Models\Notation;
 use App\Models\Organisation;
 use App\Models\User;
+use App\Models\Workflow;
+use App\Models\Decision;
 use App\Notifications\EvaluationClimatiqueAssigneeNotification;
 use App\Notifications\EvaluationClimatiqueFinaliseeNotification;
 use App\Notifications\ProgressionEvaluationClimatiqueNotification;
@@ -111,6 +113,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'statut' => StatutIdee::ANALYSE
                 ]);
 
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($ideeProjet, StatutIdee::ANALYSE);
+                $this->enregistrerDecision($ideeProjet, 'Validation par Responsable hiérarchique', $attributs["commentaire"] ?? 'Idée validée pour analyse multicritères');
+
                 $criteresEvaluationClimatique = $criteresEvaluationClimatique->byEvaluateur($evaluationClimatique->id)
                     ->with(['critere', 'notation', 'categorieCritere', 'evaluateur'])
                     ->get();
@@ -127,6 +133,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'score_climatique' => 0,
                     'statut' => StatutIdee::BROUILLON
                 ]);
+
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($ideeProjet, StatutIdee::BROUILLON);
+                $this->enregistrerDecision($ideeProjet, 'Rejet par Responsable hiérarchique', $attributs["commentaire"] ?? 'Idée rejetée - Retour en phase de rédaction');
 
                 // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
                 $evaluateurs = User::where('profilable_type', auth()->user()->profilable_type)->where('profilable_id', auth()->user()->profilable_id)
@@ -272,6 +282,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'statut' => StatutIdee::NOTE_CONCEPTUEL
                 ]);
 
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($ideeProjet, StatutIdee::NOTE_CONCEPTUEL);
+                $this->enregistrerDecision($ideeProjet, 'Validation finale par analyste DGPD', $attributs["commentaire"] ?? 'Idée transformée en projet');
+
                 // Déclencher l'event pour dupliquer vers un projet seulement si validé
                 event(new IdeeProjetTransformee($ideeProjet));
             } else {
@@ -279,6 +293,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'score_amc' => 0,
                     'statut' => StatutIdee::ANALYSE
                 ]);
+
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($ideeProjet, StatutIdee::ANALYSE);
+                $this->enregistrerDecision($ideeProjet, 'Rejet par analyste DGPD', $attributs["commentaire"] ?? 'Idée rejetée - Retour en analyse');
 
                 $evaluation->update([
                     'resultats_evaluation' => [],
@@ -445,6 +463,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'statut' => StatutIdee::IDEE_DE_PROJET  // Marquer comme terminée
             ]);
 
+            // Enregistrer le workflow et la décision
+            $this->enregistrerWorkflow($ideeProjet, StatutIdee::IDEE_DE_PROJET);
+            $this->enregistrerDecision($ideeProjet, 'Finalisation score climatique', 'Score climatique finalisé: ' . ($finalResults['score_climatique']['score_climatique'] ?? 0));
+
             $evaluation->update([
                 'resultats_evaluation' => $finalResults,
                 'valider_le' => now(),
@@ -570,6 +592,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'identifiant_bip' => null,
                 'statut' => StatutIdee::BROUILLON  // Marquer comme terminée
             ]);
+
+            // Enregistrer le workflow et la décision
+            $this->enregistrerWorkflow($ideeProjet, StatutIdee::BROUILLON);
+            $this->enregistrerDecision($ideeProjet, 'Réévaluation climatique demandée', 'Score climatique insatisfaisant - Retour en phase de rédaction');
 
             $evaluation->update([
                 'resultats_evaluation' => [],
@@ -1774,6 +1800,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'statut' => StatutIdee::VALIDATION  // Marquer comme terminée
             ]);
 
+            // Enregistrer le workflow et la décision
+            $this->enregistrerWorkflow($ideeProjet, StatutIdee::VALIDATION);
+            $this->enregistrerDecision($ideeProjet, 'Analyse multicritères complétée', 'Score AMC: ' . collect($finalResults["scores_ponderes_par_critere"])->avg("score_pondere"));
+
             $evaluation->refresh();
             DB::commit();
 
@@ -1969,5 +1999,65 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'error' => $e->getMessage()
             ], $e ? $e->getCode() : 500);
         }
+    }
+
+    /**
+     * Enregistrer un workflow pour le changement de statut d'une idée de projet
+     */
+    private function enregistrerWorkflow($ideeProjet, $nouveauStatut, $phase = null, $sousPhase = null)
+    {
+        Workflow::create([
+            'statut' => $nouveauStatut,
+            'phase' => $phase ?? $this->getPhaseFromStatut($nouveauStatut),
+            'sous_phase' => $sousPhase ?? $this->getSousPhaseFromStatut($nouveauStatut),
+            'date' => now(),
+            'projetable_id' => $ideeProjet->id,
+            'projetable_type' => get_class($ideeProjet),
+        ]);
+    }
+
+    /**
+     * Enregistrer une décision prise concernant une idée de projet
+     */
+    private function enregistrerDecision($ideeProjet, $valeurDecision, $observations = null, $observateurId = null)
+    {
+        Decision::create([
+            'valeur' => $valeurDecision,
+            'date' => now(),
+            'observations' => $observations,
+            'observateurId' => $observateurId ?? auth()->user()->personne?->id,
+            'objet_decision_id' => $ideeProjet->id,
+            'objet_decision_type' => get_class($ideeProjet),
+        ]);
+    }
+
+    /**
+     * Obtenir la phase correspondant au statut
+     */
+    private function getPhaseFromStatut($statut)
+    {
+        return match ($statut) {
+            \App\Enums\StatutIdee::BROUILLON => \App\Enums\PhasesIdee::identification,
+            \App\Enums\StatutIdee::IDEE_DE_PROJET => \App\Enums\PhasesIdee::evaluation_preliminaire,
+            \App\Enums\StatutIdee::ANALYSE => \App\Enums\PhasesIdee::evaluation_preliminaire,
+            \App\Enums\StatutIdee::VALIDATION => \App\Enums\PhasesIdee::validation,
+            \App\Enums\StatutIdee::NOTE_CONCEPTUEL => \App\Enums\PhasesIdee::validation,
+            default => \App\Enums\PhasesIdee::identification,
+        };
+    }
+
+    /**
+     * Obtenir la sous-phase correspondant au statut
+     */
+    private function getSousPhaseFromStatut($statut)
+    {
+        return match ($statut) {
+            \App\Enums\StatutIdee::BROUILLON => \App\Enums\SousPhaseIdee::redaction,
+            \App\Enums\StatutIdee::IDEE_DE_PROJET => \App\Enums\SousPhaseIdee::evaluation_climatique,
+            \App\Enums\StatutIdee::ANALYSE => \App\Enums\SousPhaseIdee::evaluation_multicritere,
+            \App\Enums\StatutIdee::VALIDATION => \App\Enums\SousPhaseIdee::validation_dgpd,
+            \App\Enums\StatutIdee::NOTE_CONCEPTUEL => \App\Enums\SousPhaseIdee::note_conceptuelle,
+            default => \App\Enums\SousPhaseIdee::redaction,
+        };
     }
 }
