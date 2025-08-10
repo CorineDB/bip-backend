@@ -280,10 +280,6 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
                 ->name('idees-projet.analyse-multi-critere.show');
         });
 
-        // Route pour le classement des idées de projet en validation
-        Route::get('idees-projet/classement-validation', [EvaluationController::class, 'getClassementIdeesProjetsValidation'])
-            ->name('idees-projet.classement-validation');
-
         // Evaluation Criteria Management
         Route::apiResource('categories-critere', \App\Http\Controllers\CategorieCritereController::class)
             ->parameters(['categories-critere' => 'categorie_critere']);
