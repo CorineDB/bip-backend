@@ -8,6 +8,7 @@ enum EnumTypeChamp: string
     case    TEXT                    = 'text';
     case    TEXTAREA                = 'textarea';
     case    NUMBER                  = 'number';
+    case    NUMERIC                 = 'numeric';
     case    DATE                    = 'date';
     case    BOOLEAN                 = 'boolean';
     case    SELECT                  = 'select';
