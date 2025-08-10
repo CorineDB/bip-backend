@@ -220,9 +220,11 @@ class ProgrammeSeeder extends Seeder
 
         //$pnd = TypeProgramme::where("slug", 'pnd')->first();
         $pnd = TypeProgramme::firstOrCreate([
-            'slug' => 'pnd'
-        ], [
+            'slug' => 'pnd',
             'type_programme' => "Programme de Developpement durable"
+        ], [
+            'type_programme' => "Programme de Developpement durable",
+            'slug' => 'pnd',
         ]);
 
         $orientationCount = 1;
