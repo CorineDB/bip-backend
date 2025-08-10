@@ -249,7 +249,7 @@ class IdeeProjet extends Model
     {
         return $this->belongsTo(Secteur::class, 'secteurId')->where('type', "sous-secteur")->whereHas('parent', function($query){
             $query->where('type', 'secteur');
-        })->get();
+        });
     }
 
     public function ministere()

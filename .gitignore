@@ -23,4 +23,4 @@ composer.lock
 Homestead.json
 Homestead.yaml
 Thumbs.db
-app/secrets/oauth/*.key
+/app/secrets/oauth/

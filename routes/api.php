@@ -156,6 +156,10 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         });
 
         // Project Management Core
+        // Route pour le classement des idées de projet en validation (doit être avant apiResource)
+        Route::get('idees-projet/classement-validation', [EvaluationController::class, 'getClassementIdeesProjetsValidation'])
+            ->name('idees-projet.classement-validation');
+            
         Route::apiResource('idees-projet', IdeeProjetController::class)
             ->parameters(['idees-projet' => 'idee_projet']);
 
