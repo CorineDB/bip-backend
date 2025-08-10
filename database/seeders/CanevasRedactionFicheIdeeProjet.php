@@ -103,7 +103,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true
+                                "required" => false
                             ]
                         ],
                         "champ_standard" => true,
@@ -131,7 +131,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "min" => 0,
                                 "array" => true
                             ]
@@ -162,7 +162,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "min" => 0,
                                 "numeric" => 0,
                             ]
@@ -193,7 +193,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "min" => 0,
                                 "numeric" => 0
                             ]
@@ -224,7 +224,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "min" => 2,
                                 "array" => true
                             ]
@@ -255,7 +255,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "min" => 0,
                                 "numeric" => 0
                             ]
@@ -293,7 +293,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true
+                                "required" => false
                             ]
                         ],
                         "champ_standard" => true,
@@ -320,7 +320,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true
+                                "required" => false
                             ]
                         ],
                         "champ_standard" => true,
@@ -347,7 +347,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true
+                                "required" => false
                             ]
                         ],
                         "champ_standard" => true,
@@ -375,8 +375,8 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
-                                "min" => 1,
+                                "required" => false,
+                                "min" => 0,
                                 "array" => true
                             ]
                         ],
@@ -406,7 +406,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                             ],
                             "validations_rules" => [
                                 "required" => false,
-                                "min" => 1,
+                                "min" => 0,
                                 "array" => true
                             ]
                         ],
@@ -436,7 +436,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                             ],
                             "validations_rules" => [
                                 "required" => false,
-                                "min" => 1,
+                                "min" => 0,
                                 "array" => true
                             ]
                         ],
@@ -466,7 +466,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                             ],
                             "validations_rules" => [
                                 "required" => false,
-                                "min" => 1,
+                                "min" => 0,
                                 "array" => true
                             ]
                         ],
@@ -504,9 +504,9 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "array" => true,
-                                "min" => 1
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -534,9 +534,9 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "array" => true,
-                                "min" => 1
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -564,9 +564,9 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "array" => true,
-                                "min" => 1
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -594,9 +594,9 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "array" => true,
-                                "min" => 1
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -624,9 +624,9 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "array" => true,
-                                "min" => 1
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -654,9 +654,9 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "array" => true,
-                                "min" => 1
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -684,9 +684,9 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "array" => true,
-                                "min" => 1
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -714,7 +714,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "array" => true,
                                 "min" => 0
                             ]
@@ -783,9 +783,9 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "array" => true,
-                                "min" => 1
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -813,9 +813,9 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "array" => true,
-                                "min" => 1
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -843,7 +843,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "string" => true,
                                 "max" => 1000,
                                 "min" => 10
@@ -874,7 +874,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "string" => true,
                                 "max" => 1000,
                                 "min" => 10
@@ -905,9 +905,9 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "array" => true,
-                                "min" => 1
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -944,10 +944,10 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "string" => true,
                                 "max" => 2000,
-                                "min" => 20
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -975,9 +975,9 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "array" => true,
-                                "min" => 1
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1005,9 +1005,9 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "array" => true,
-                                "min" => 1
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1035,10 +1035,10 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "string" => true,
                                 "max" => 1500,
-                                "min" => 20
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1066,10 +1066,10 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "string" => true,
                                 "max" => 1500,
-                                "min" => 20
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1097,10 +1097,10 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "string" => true,
                                 "max" => 2000,
-                                "min" => 20
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1128,10 +1128,10 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "string" => true,
                                 "max" => 2000,
-                                "min" => 20
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1162,7 +1162,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "required" => false,
                                 "string" => true,
                                 "max" => 2000,
-                                "min" => 20
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1199,10 +1199,10 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "string" => true,
                                 "max" => 3000,
-                                "min" => 50
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1230,10 +1230,10 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "string" => true,
                                 "max" => 3000,
-                                "min" => 50
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1261,10 +1261,10 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "string" => true,
                                 "max" => 3000,
-                                "min" => 50
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1327,7 +1327,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "required" => false,
                                 "string" => true,
                                 "max" => 1500,
-                                "min" => 10
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1355,10 +1355,10 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "string" => true,
                                 "max" => 1500,
-                                "min" => 10
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1390,7 +1390,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "required" => false,
                                 "string" => true,
                                 "max" => 1500,
-                                "min" => 10
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1421,7 +1421,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "required" => false,
                                 "string" => true,
                                 "max" => 1500,
-                                "min" => 10
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1452,7 +1452,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "required" => false,
                                 "string" => true,
                                 "max" => 1500,
-                                "min" => 10
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1483,7 +1483,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "required" => false,
                                 "string" => true,
                                 "max" => 1500,
-                                "min" => 10
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
@@ -1514,7 +1514,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "required" => false,
                                 "string" => true,
                                 "max" => 1500,
-                                "min" => 10
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
