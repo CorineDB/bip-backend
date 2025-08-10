@@ -764,6 +764,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             } elseif ($is_auto_evaluation) {
                 if ((auth()->user()->profilable_type == Organisation::class || auth()->user()->profilable_type == Dpaf::class) && auth()->user()->profilable?->ministere && $ideeProjet->ministere && (auth()->user()->profilable->ministere?->id == $ideeProjet->ministere->id)) {
 
+                    \Log::info("Evaluateurs : " . auth()->id());
                     $isAssigned = $evaluation->evaluateursClimatique()->where("id", auth()->id())->first()->hasPermissionTo('effectuer-evaluation-climatique-idee-projet');
                     //->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->isNotEmpty(); // ✅ on vérifie bien si la collection n'est pas vide;
                     $evaluateur = $evaluation->evaluateursClimatique()->where("id", auth()->id())
@@ -2038,11 +2039,11 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     private function getPhaseFromStatut($statut)
     {
         return match ($statut) {
-            \App\Enums\StatutIdee::BROUILLON => \App\Enums\PhasesIdee::identification,
+            \App\Enums\StatutIdee::BROUILLON => \App\Enums\PhasesIdee::identification,/*
             \App\Enums\StatutIdee::IDEE_DE_PROJET => \App\Enums\PhasesIdee::evaluation_preliminaire,
             \App\Enums\StatutIdee::ANALYSE => \App\Enums\PhasesIdee::evaluation_preliminaire,
             \App\Enums\StatutIdee::VALIDATION => \App\Enums\PhasesIdee::validation,
-            \App\Enums\StatutIdee::NOTE_CONCEPTUEL => \App\Enums\PhasesIdee::validation,
+            \App\Enums\StatutIdee::NOTE_CONCEPTUEL => \App\Enums\PhasesIdee::validation, */
             default => \App\Enums\PhasesIdee::identification,
         };
     }
@@ -2053,11 +2054,11 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     private function getSousPhaseFromStatut($statut)
     {
         return match ($statut) {
-            \App\Enums\StatutIdee::BROUILLON => \App\Enums\SousPhaseIdee::redaction,
+            \App\Enums\StatutIdee::BROUILLON => \App\Enums\SousPhaseIdee::redaction,/*
             \App\Enums\StatutIdee::IDEE_DE_PROJET => \App\Enums\SousPhaseIdee::evaluation_climatique,
             \App\Enums\StatutIdee::ANALYSE => \App\Enums\SousPhaseIdee::evaluation_multicritere,
             \App\Enums\StatutIdee::VALIDATION => \App\Enums\SousPhaseIdee::validation_dgpd,
-            \App\Enums\StatutIdee::NOTE_CONCEPTUEL => \App\Enums\SousPhaseIdee::note_conceptuelle,
+            \App\Enums\StatutIdee::NOTE_CONCEPTUEL => \App\Enums\SousPhaseIdee::note_conceptuelle, */
             default => \App\Enums\SousPhaseIdee::redaction,
         };
     }
