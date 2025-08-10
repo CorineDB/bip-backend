@@ -17,10 +17,11 @@ class ProgrammeSeeder extends Seeder
     {
         //$pag = TypeProgramme::where("slug", 'pag')->first()
 
+        DB::table("types_programme")->truncate();
         $pag = TypeProgramme::updateOrCreate([
             'slug' => 'pag'
         ], [
-            'type_programme' => "Programme d'action du gouvernement"
+            'type_programme' => "Programme d'Action du Gouvernement."
         ]);
 
         $pilier_pag = ["Consolider la démocratie, l’état de droit et la bonne gouvernance", "Transformation structurelle de l’économie", "Améliorer les conditions de vie des populations"];
@@ -55,7 +56,6 @@ class ProgrammeSeeder extends Seeder
 
             "Implantations dans le cadre de PPP pour les infrastructures urbaines, logistqiues et touristiques"
         ];
-
 
         # code...
         \App\Models\TypeProgramme::updateOrCreate([
@@ -221,9 +221,8 @@ class ProgrammeSeeder extends Seeder
         //$pnd = TypeProgramme::where("slug", 'pnd')->first();
         $pnd = TypeProgramme::updateOrCreate([
             'slug' => 'pnd',
-            'type_programme' => "Programme de Developpement durable"
         ], [
-            'type_programme' => "Programme de Developpement durable",
+            'type_programme' => "Programme de Developpement Durable.",
             'slug' => 'pnd',
         ]);
 
