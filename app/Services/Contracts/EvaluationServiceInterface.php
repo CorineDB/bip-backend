@@ -10,7 +10,6 @@ interface EvaluationServiceInterface extends AbstractServiceInterface
     public function refaireAutoEvaluationClimatique($ideeProjetId): JsonResponse;
 
     public function soumettreEvaluationClimatique(array $data, $ideeProjetId): JsonResponse;
-    public function getEvaluateurCriteres($evaluationId, $evaluateurId = null): JsonResponse;
     public function getDashboardEvaluationClimatique($evaluationId): JsonResponse;
     public function validerIdeeDeProjet($ideeProjetId, array $attributs): JsonResponse;
 

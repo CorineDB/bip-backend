@@ -24,6 +24,18 @@ use App\Models\Notation;
 use App\Models\Organisation;
 use App\Models\User;
 use App\Notifications\EvaluationClimatiqueAssigneeNotification;
+use App\Notifications\EvaluationClimatiqueFinaliseeNotification;
+use App\Notifications\ProgressionEvaluationClimatiqueNotification;
+use App\Notifications\EvaluationClimatiqueTermineNotification;
+use App\Notifications\NouvelleIdeeProjetNotification;
+use App\Notifications\DecisionFaibleScoreClimatiqueNotification;
+use App\Notifications\ValidationResponsableHierarchiqueNotification;
+use App\Notifications\DemandeAnalyseMulticriteresNotification;
+use App\Notifications\ResultatAMCNotification;
+use App\Notifications\FinAMCAnalysteNotification;
+use App\Notifications\ComiteValidationMinisterielNotification;
+use App\Notifications\DecisionFinaleValidationNotification;
+use App\Notifications\NotificationRedactionNoteConceptuelleNotification;
 use App\Traits\GenerateUniqueId;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -56,7 +68,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     public function validerIdeeDeProjet($ideeProjetId, array $attributs): JsonResponse
     {
         try {
-            if (auth()->user()->type !== 'responsable-hierachique' && auth()->user()->type !== 'super-admin' && auth()->user()->type !== 'organisation') {
+            if (auth()->user()->type !== 'responsable-hierachique') {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -64,9 +76,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            /*if ($ideeProjet->statut != StatutIdee::IDEE_DE_PROJET) {
+            if ($ideeProjet->statut != StatutIdee::IDEE_DE_PROJET) {
                 throw new Exception("Vous le statut de l'idee de projet est a brouillon");
-            }*/
+            }
 
             // Validation idee de projet
             $evaluation = Evaluation::create([
@@ -134,6 +146,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     throw new Exception('Aucun évaluateur trouvé avec la permission "effectuer-evaluation-climatique-idee-projet"', 404);
                 }
 
+                $evaluateurs = $evaluation->evaluateursClimatique()->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'));
+
+
                 // Récupérer les critères éligibles pour l'évaluation climatique
                 $criteres = Critere::where(function ($query) {
                     $query->whereHas('categorie_critere', function ($subQuery) {
@@ -174,6 +189,26 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             DB::commit();
 
+            // Notifier le Responsable projet de la décision
+            $responsableProjet = $ideeProjet->responsable;
+            if ($responsableProjet) {
+                $decision = $attributs["decision"];
+                Notification::send($responsableProjet, new ValidationResponsableHierarchiqueNotification($ideeProjet, $decision, $attributs["commentaire"] ?? null));
+
+                // Si validé, notifier l'analyste DGPD et les membres du Service technique
+                if ($decision === 'valider') {
+                    $analystesDGPD = User::where('type', 'analyste-dgpd')->get();
+                    $servicesTechniques = User::whereHas('roles', function ($query) {
+                        $query->whereIn('slug', ['service-technique', 'service-etude']);
+                    })->get();
+
+                    $destinataires = $analystesDGPD->merge($servicesTechniques);
+                    if ($destinataires->count() > 0) {
+                        Notification::send($destinataires, new DemandeAnalyseMulticriteresNotification($ideeProjet, auth()->user()));
+                    }
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Idee de projet evaluer avec succès',
@@ -183,7 +218,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => "Erreur lors de la validation de l'idee de projet",
+                'message' => "Erreur lors de la validation de l'idee de projet. ". $e->getMessage(),
                 'error' => $e->getMessage()
             ], $e->getCode());
         }
@@ -195,7 +230,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     public function validationIdeeDeProjetAProjet($ideeProjetId, array $attributs): JsonResponse
     {
         try {
-            if (auth()->user()->type !== 'analyste-dgpd' && auth()->user()->type !== 'super-admin' && auth()->user()->type !== 'organisation') {
+            if (auth()->user()->type !== 'analyste-dgpd') {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -203,9 +238,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            /*if ($ideeProjet->statut->value != StatutIdee::VALIDATION->value) {
-                throw new Exception("Vous le statut de l'idee de projet est a brouillon");
-            }*/
+            if ($ideeProjet->statut->value != StatutIdee::VALIDATION->value) {
+                throw new Exception("L'idee de projet n'est pas a l'etape de validation");
+            }
 
             // Vérifier s'il existe une évaluation précédente validée
             $evaluationPrecedente = Evaluation::where('projetable_type', get_class($ideeProjet))
@@ -281,6 +316,40 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             DB::commit();
 
+            // Récupérer le responsable hiérarchique qui a validé l'idée en interne
+            $evaluationValidation = Evaluation::where('projetable_type', get_class($ideeProjet))
+                ->where('projetable_id', $ideeProjet->id)
+                ->where('type_evaluation', 'validation-idee-projet')
+                ->where('statut', 1)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // Notifier le Responsable hiérarchique et projet de la décision finale
+            $responsableProjet = $ideeProjet->responsable;
+            $destinatairesDecision = collect([$responsableProjet]);
+
+            if ($evaluationValidation && $evaluationValidation->evaluateur) {
+                $destinatairesDecision->push($evaluationValidation->evaluateur);
+            }
+
+            $decision = $attributs["decision"];
+            Notification::send($destinatairesDecision, new DecisionFinaleValidationNotification($ideeProjet, $decision, auth()->user(), $attributs["commentaire"] ?? null));
+
+            // Si l'idée est validée, notifier la DPAF pour la rédaction de la note conceptuelle
+            if ($decision === 'valider') {
+                $dpafUsers = User::where('type', 'dpaf')
+                    ->whereHas('profilable', function ($query) use ($ideeProjet) {
+                        $query->where('ministere_id', $ideeProjet->ministere->id);
+                    })
+                    ->get();
+
+                if ($dpafUsers->count() > 0) {
+                    // Récupérer le projet créé s'il existe
+                    $projet = $ideeProjet->projet ?? null;
+                    Notification::send($dpafUsers, new NotificationRedactionNoteConceptuelleNotification($ideeProjet, $projet));
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Idee de projet evaluer avec succès',
@@ -290,7 +359,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => "Erreur lors de la validation de l'idee de projet",
+                'message' => "Erreur lors de la validation de l'idee de projet. ". $e->getMessage(),
                 'error' => $e->getMessage()
             ], $e->getCode());
         }
@@ -303,7 +372,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     {
         try {
 
-            if (auth()->user()->type !== 'responsable-projet' && auth()->user()->type !== 'super-admin' && auth()->user()->type !== 'organisation') {
+            if (auth()->user()->type !== 'responsable-projet') {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -318,7 +387,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             if ($evaluation->statut == 1) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Auto Evaluation climatique déja validé',
+                    'message' => 'Score Auto Evaluation climatique déja enregistré',
                 ], 400);
             }
 
@@ -382,15 +451,32 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'statut' => 1  // Marquer comme terminée
             ]);
 
+            // Notifier le Responsable que l'évaluation climatique est terminée
+            $responsable = $ideeProjet->responsable;
+            if ($responsable) {
+                Notification::send($responsable, new EvaluationClimatiqueFinaliseeNotification($ideeProjet, $evaluation));
+            }
+
+            // Notifier le Responsable hiérarchique qu'une nouvelle idée de projet a été créée
+            $responsablesHierarchiques = User::where('type', 'responsable-hierachique')
+                ->where('profilable_type', get_class($ideeProjet->ministere))
+                ->where('profilable_id', $ideeProjet->ministere->id)
+                ->get();
+
+            if ($responsablesHierarchiques->count() > 0) {
+                $scoreClimatique = $finalResults['score_climatique']['score_climatique'] ?? 0;
+                Notification::send($responsablesHierarchiques, new NouvelleIdeeProjetNotification($ideeProjet, $scoreClimatique));
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Évaluation finalisée avec succès',
+                'message' => "Score de l'auto-Évaluation climatique finalisée avec succès",
                 'data' => null
             ]);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la finalisation',
+                'message' =>"'Erreur lors de l'enregistrement du score. ". $e->getMessage(),
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -403,7 +489,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     {
         try {
 
-            if (auth()->user()->type !== 'responsable-projet' && auth()->user()->type !== 'super-admin' && auth()->user()->type !== 'organisation') {
+            if (auth()->user()->type !== 'responsable-projet') {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -474,6 +560,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     });
                 })->get();*/
 
+
             if ($evaluateurs->count() == 0) {
                 throw new Exception('Aucun évaluateur trouvé avec la permission "effectuer-evaluation-climatique-idee-projet"', 404);
             }
@@ -495,7 +582,11 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             DB::commit();
 
-            // Notifier les évaluateurs assignés
+            // Notifier les évaluateurs de la décision sur le faible score climatique
+            $scoreClimatique = $ideeProjet->score_climatique ?? 0;
+            Notification::send($evaluateurs, new DecisionFaibleScoreClimatiqueNotification($ideeProjet, $scoreClimatique, 'reevaluer', 'Score climatique insatisfaisant - Réévaluation demandée'));
+
+            // Notifier les évaluateurs assignés pour la nouvelle évaluation
             Notification::send($evaluateurs, new EvaluationClimatiqueAssigneeNotification($ideeProjet, $evaluation));
 
             return response()->json([
@@ -506,7 +597,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la finalisation',
+                'message' => "Erreur lors de la relance de l'evaluation climatique. ". $e->getMessage(),
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -519,7 +610,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     {
         $totalEvaluateurs = $evaluation->evaluateursClimatique()->count();
         $totalEvaluateurs = $evaluation->evaluateursClimatique()
-        ->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->count(); // ✅ on vérifie bien si la collection n'est pas vide;
+            ->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->count(); // ✅ on vérifie bien si la collection n'est pas vide;
 
         $totalCriteres = $evaluation->criteres->count();
 
@@ -645,8 +736,16 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $isAssigned = true;
             } elseif ($is_auto_evaluation) {
                 if ((auth()->user()->profilable_type == Organisation::class || auth()->user()->profilable_type == Dpaf::class) && auth()->user()->profilable?->ministere && $ideeProjet->ministere && (auth()->user()->profilable->ministere?->id == $ideeProjet->ministere->id)) {
-                    $isAssigned = $evaluation->evaluateursClimatique()
+
+                    $isAssigned = $evaluation->evaluateursClimatique()->where("id", auth()->id())->first()->hasPermissionTo('effectuer-evaluation-climatique-idee-projet');
+                    //->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->isNotEmpty(); // ✅ on vérifie bien si la collection n'est pas vide;
+                    $evaluateur = $evaluation->evaluateursClimatique()->where("id", auth()->id())
                         ->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->isNotEmpty(); // ✅ on vérifie bien si la collection n'est pas vide;
+
+                    \Log::info("Evaluateurs : " . json_encode($evaluateur));
+
+                    //$evaluateurs = $evaluation->evaluateursClimatique()->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'));
+
                 }
             }
 
@@ -656,43 +755,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'message' => 'Vous n\'êtes pas assigné comme évaluateur pour cette évaluation climatique.',
                 ], 403);
             }
-
-
-            /*$isAssigned = User::when((auth()->user()->profilable_type == Organisation::class || auth()->user()->profilable_type == Dpaf::class) && auth()->user()->profilable?->ministere && $ideeProjet->ministere && (auth()->user()->profilable->ministere?->id == $ideeProjet->ministere->id), function ($query) use ($ideeProjet) {
-                $query->where('profilable_type', get_class(auth()->user()->profilable->ministere))
-                    ->where('profilable_id', auth()->user()->profilable->ministere->id);/*
-                        ->where(function ($query) {
-                            $query->whereHas('roles', function ($query) {
-                                $query->whereHas('permissions', function ($subQuery) {
-                                    $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
-                                });
-                            })->orWhereHas('role', function ($query) {
-                                $query->whereHas('permissions', function ($subQuery) {
-                                    $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
-                                });
-                            });
-                        });
-            })->when(auth()->user()->profilable_type == Dgpd::class, function ($query) {
-                $query->where(function ($query) {
-                        $query->whereHas('roles', function ($query) {
-                            $query->whereHas('permissions', function ($subQuery) {
-                                $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
-                            });
-                        })->orWhereHas('role', function ($query) {
-                            $query->whereHas('permissions', function ($subQuery) {
-                                $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
-                            });
-                        });
-                    });
-            })->where('id', $evaluateurId)
-                ->first()->hasPermissionTo("effectuer-evaluation-climatique-idee-projet");
-
-            // Vérifier que l'évaluateur est assigné à cette évaluation
-            $isAssigned = EvaluationCritere::where('evaluation_id', $evaluation->id)
-                ->autoEvaluation()
-                ->active()
-                ->where('evaluateur_id', $evaluateurId)
-                ->exists();*/
 
             // Vérifier et mettre à jour les réponses
             foreach ($reponses as $reponse) {
@@ -737,36 +799,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                         'message' => 'Notation non trouvé avec l\'ID: ' . $reponse['notation_id'],
                     ], 400);
                 }
-
-                // Mettre à jour la réponse si le critère est éligible
-                /*EvaluationCritere::firstOrCreate('evaluation_id', $evaluation->id)
-                    ->where('critere_id', $reponse['critere_id'])
-                    ->where('evaluateur_id', $evaluateurId)
-                    ->update([
-                        'evaluation_id' => $evaluation->id,
-                        'evaluateur_id' => auth()->id(),
-                        'notation_id' => $notation->id,
-                        'note' => $notation->valeur, //'Évalué',
-                        'commentaire' => $reponse['commentaire'] ?? null,
-                        'updated_at' => now()
-                    ]);*/
-                /*$evaluationCritere = EvaluationCritere::updateOrCreate(
-                    [
-                        'evaluation_id' => $evaluation->id,
-                        'evaluateur_id' => $evaluateurId,
-                        'categorie_critere_id' => $reponse["categorie_critere_id"],
-                        'critere_id' => $reponse['critere_id'],
-                        'notation_id' => $notation->id
-                    ],
-                    [
-                        'notation_id' => $notation->id,
-                        'note' => $notation->valeur,
-                        'commentaire' => $reponse['commentaire'] ?? null,
-                        'is_auto_evaluation' => $reponse['is_auto_evaluation'] ?? true,
-                        'est_archiver' => false,
-                        'updated_at' => now(),
-                    ]
-                );*/
 
                 $evaluationCritere = EvaluationCritere::where([
                     'evaluation_id' => $evaluation->id,
@@ -895,6 +927,21 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             DB::commit();
 
+            // Calculer la progression et notifier le Responsable projet
+            $tauxProgression = $this->calculateCompletionPercentage($evaluation);
+            $responsableProjet = $ideeProjet->responsable;
+
+            if ($responsableProjet && $is_auto_evaluation) {
+                $scoreClimatique = $ideeProjet->score_climatique;
+                Notification::send($responsableProjet, new ProgressionEvaluationClimatiqueNotification($ideeProjet, $evaluation, $tauxProgression, $scoreClimatique));
+
+                // Si c'est le dernier évaluateur qui termine (progression = 100%)
+                if ($tauxProgression >= 100) {
+                    $scoreClimatiqueFinal = $this->calculateScoreClimatique($evaluation->id)['score_climatique'] ?? 0;
+                    Notification::send($responsableProjet, new EvaluationClimatiqueTermineNotification($ideeProjet, $evaluation, $scoreClimatiqueFinal));
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Réponses d\'évaluation climatique soumises avec succès',
@@ -924,56 +971,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'message' => $e ? $e->getMessage() : 'Erreur lors de la soumission des réponses',
                 'error' => $e->getMessage()
             ], $e ? ($e->getCode() ?? 500) : 500);
-        }
-    }
-
-    /**
-     * Obtenir toutes les évaluations de critères d'un évaluateur pour une évaluation.
-     */
-    public function getEvaluateurCriteres($evaluationId, $evaluateurId = null): JsonResponse
-    {
-        try {
-            $evaluateurId = $evaluateurId ?? auth()->id();
-
-            $evaluation = $this->repository->findOrFail($evaluationId);
-
-            $evaluationCriteres = EvaluationCritere::forEvaluation($evaluationId)
-                ->autoEvaluation()
-                ->active()
-                ->byEvaluateur($evaluateurId)
-                ->with(['critere', 'notation', 'categorieCritere', 'evaluateur'])
-                ->get();
-
-            // Calculer le score climatique si c'est une évaluation climatique
-            $scoreClimatique = null;
-            if ($evaluation->type_evaluation === 'climatique') {
-                $scoreClimatique = $this->calculateScoreClimatique($evaluationId);
-            }
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'evaluation' => new EvaluationResource($evaluation),
-                    'evaluateur_id' => $evaluateurId,
-                    'evaluateur_reponses' => EvaluationCritereResource::collection($evaluationCriteres),
-                    'evaluateur_stats' => [
-                        'total_criteres' => $evaluationCriteres->count(),
-                        'criteres_evalues' => $evaluationCriteres->filter->isCompleted()->count(),
-                        'criteres_en_attente' => $evaluationCriteres->filter->isPending()->count(),
-                        'taux_completion' => $evaluationCriteres->count() > 0 ?
-                            round(($evaluationCriteres->filter->isCompleted()->count() / $evaluationCriteres->count()) * 100, 2) : 0,
-                        'score_pondere_evaluateur' => $this->calculateEvaluateurScorePondere($evaluationCriteres)
-                    ],
-                    'score_global' => $this->calculateScoreGlobal($evaluationId),
-                    'score_climatique' => $scoreClimatique
-                ]
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de la récupération des critères de l\'évaluateur',
-                'error' => $e->getMessage()
-            ], 500);
         }
     }
 
@@ -1615,9 +1612,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            /*if (($ideeProjet->statut != StatutIdee::AMC && $ideeProjet->statut != StatutIdee::ANALYSE)) {
+            if (($ideeProjet->statut != StatutIdee::AMC && $ideeProjet->statut != StatutIdee::ANALYSE)) {
                 throw new Exception("AMC deja effectuer", 403);
-            }*/
+            }
 
             $evaluationClimatique = Evaluation::where(
                 'projetable_id',
@@ -1646,9 +1643,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 get_class($ideeProjet)
             )->where('type_evaluation', "amc")->first();
 
-            /*if ($evaluation->statut == 1) {
+            if ($evaluation->statut == 1) {
                 throw new Exception("Evaluation de l'amc deja effectuer", 403);
-            }*/
+            }
 
             // Vérifier que l'évaluation climatique existe
             $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
@@ -1668,8 +1665,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 "resultats_evaluation" => []
             ]);
 
+
             // Vérifier et mettre à jour les réponses
             foreach ($reponses as $reponse) {
+                $isEvalClimatique = false;
                 // Vérifier que le critère appartient à la bonne catégorie ou est obligatoire
                 $critere = Critere::with('categorie_critere')->find($reponse['critere_id']);
 
@@ -1680,7 +1679,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ], 400);
                 }
                 if (str_contains(strtolower($critere->intitule ?? ''), 'impact climatique')) {
-                    continue;
+                    $isEvalClimatique = true;
                 }
 
                 // Vérifier les conditions d'éligibilité du critère
@@ -1710,21 +1709,37 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ], 400);
                 }
 
+                $data = [
+                    'evaluateur_id' => $evaluateurId,
+                    'commentaire' => $reponse['commentaire'] ?? null,
+                    'is_auto_evaluation' => false,
+                    'est_archiver' => false,
+                    'updated_at' => now()
+                ];
+
+                if(!$isEvalClimatique){
+                    $data['notation_id'] = $notation->id;
+                    $data['note'] = $notation->valeur;
+                }
+
                 EvaluationCritere::updateOrCreate(
                     [
                         'evaluation_id' => $evaluation->id,
                         'critere_id' => $critere->id,
                         'categorie_critere_id' => $critere->categorie_critere_id,
                     ],
-                    [
-                        'notation_id' => $notation->id,
-                        'evaluateur_id' => $evaluateurId,
-                        'note' => $notation->valeur,
-                        'commentaire' => $reponse['commentaire'] ?? null,
-                        'is_auto_evaluation' => false,
-                        'est_archiver' => false,
-                        'updated_at' => now(),
-                    ]
+                    $data
+                    /*
+                        [
+                            'notation_id' => $notation->id,
+                            'evaluateur_id' => $evaluateurId,
+                            'note' => $notation->valeur,
+                            'commentaire' => $reponse['commentaire'] ?? null,
+                            'is_auto_evaluation' => false,
+                            'est_archiver' => false,
+                            'updated_at' => now(),
+                        ]
+                    */
                 );
             }
 
@@ -1761,6 +1776,34 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $evaluation->refresh();
             DB::commit();
+
+            // Notifier le Responsable hiérarchique du même ministère et le Responsable projet du résultat de l'AMC
+            $responsableProjet = $ideeProjet->responsable;
+            $responsablesHierarchiques = User::where('type', 'responsable-hierachique')
+                ->where('profilable_type', get_class($ideeProjet->ministere))
+                ->where('profilable_id', $ideeProjet->ministere->id)
+                ->get();
+
+            $servicesTechniques = User::whereHas('roles', function ($query) {
+                $query->whereIn('slug', ['service-technique', 'service-etude']);
+            })->get();
+
+            $destinatairesResultatAMC = collect([$responsableProjet])->merge($responsablesHierarchiques)->merge($servicesTechniques);
+            Notification::send($destinatairesResultatAMC, new ResultatAMCNotification($ideeProjet, $evaluation));
+
+            // Notifier l'analyste DGPD pour la validation finale
+            $analystesDGPD = User::where('type', 'analyste-dgpd')->get();
+            if ($analystesDGPD->count() > 0) {
+                Notification::send($analystesDGPD, new FinAMCAnalysteNotification($ideeProjet, $evaluation));
+            }
+
+            // Notifier le Comité de validation ministériel
+            $comiteValidation = User::whereHas('roles', function ($query) {
+                $query->where('slug', 'comite-validation-ministeriel');
+            })->get();
+            if ($comiteValidation->count() > 0) {
+                Notification::send($comiteValidation, new ComiteValidationMinisterielNotification($ideeProjet, $evaluation));
+            }
 
             return response()->json([
                 'success' => true,

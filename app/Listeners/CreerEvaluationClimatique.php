@@ -130,7 +130,7 @@ class CreerEvaluationClimatique implements ShouldQueue
                     });
                 })->get();*/
 
-            $evaluateurs = User::when($ideeProjet->ministere, function ($query) use ($ideeProjet) {
+            /*$evaluateurs = User::when($ideeProjet->ministere, function ($query) use ($ideeProjet) {
                 $query->where(function ($q) use ($ideeProjet) {
                     $q->where('profilable_type', get_class($ideeProjet->ministere))
                         ->where('profilable_id', $ideeProjet->ministere->id);
@@ -153,8 +153,9 @@ class CreerEvaluationClimatique implements ShouldQueue
                             $subQuery->where('slug', 'effectuer-evaluation-climatique-idee-projet');
                         });
                     });
-                })->get();
+                })->get();*/
 
+            $evaluateurs = $evaluation->evaluateursClimatique()->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'));
 
             Log::info("Evaluateurs : " . json_encode($evaluateurs));
 
@@ -176,8 +177,6 @@ class CreerEvaluationClimatique implements ShouldQueue
 
             Log::info("Criteres : " . json_encode($criteres));
 
-            Schema::disableForeignKeyConstraints();
-
             // Assigner chaque évaluateur à tous les critères
             foreach ($evaluateurs as $evaluateur) {
                 foreach ($criteres as $critere) {
@@ -193,7 +192,6 @@ class CreerEvaluationClimatique implements ShouldQueue
                     ]);
                 }
             }
-            Schema::enableForeignKeyConstraints();
 
             DB::commit();
 

@@ -662,17 +662,20 @@ class OrganisationsSeeder extends Seeder
             }
 
             /**
-             * Rôle Responsable hiérarchique
+             * Rôle Responsable hiérachique
              */
             $roleResponsableHierarchique = Role::firstOrCreate(
                 [
-                    'slug' => 'responsable-hierarchique',
+                    'slug' => 'responsable-hierachique',
                     'roleable_type' => get_class($ministere),
                     'roleable_id' => $ministere->id,
                 ],
                 [
-                    'nom' => 'Responsable hiérarchique',
-                    'description' => 'Responsable hiérarchique du ' . $ministere->nom,
+                    'nom' => 'Responsable hiérachique',
+                    'slug' => 'responsable-hierachique',
+                    'roleable_type' => get_class($ministere),
+                    'roleable_id' => $ministere->id,
+                    'description' => 'Responsable hiérachique du ' . $ministere->nom,
                 ]
             );
 
@@ -682,19 +685,19 @@ class OrganisationsSeeder extends Seeder
             // Synchroniser les permissions au rôle
             $roleResponsableHierarchique->permissions()->sync($permissionIds);
 
-            $this->command->info("✅ Rôle Responsable hiérarchique créé pour {$ministere->nom}");
+            $this->command->info("✅ Rôle Responsable hiérachique créé pour {$ministere->nom}");
 
             /**
-             * Utilisateur Responsable hiérarchique
+             * Utilisateur Responsable hiérachique
              */
-            $emailResponsableHier = "responsable-hierarchique.{$slugMin}@ministere.bj";
+            $emailResponsableHier = "responsable-hierachique.{$slugMin}@ministere.bj";
             $responsableHierarchique = User::where('email', $emailResponsableHier)->first();
 
             if (!$responsableHierarchique) {
                 $responsableHierarchiquePersonne = Personne::firstOrCreate(
                     ['nom' => 'Responsable', 'prenom' => 'Hiérarchique'],
                     [
-                        'poste' => 'Responsable hiérarchique',
+                        'poste' => 'Responsable hiérachique',
                         'organismeId' => $ministere->id
                     ]
                 );
@@ -714,7 +717,7 @@ class OrganisationsSeeder extends Seeder
                     'roleId' => $roleResponsableHierarchique->id,
                     'last_connection' => now(),
                     'ip_address' => '127.0.0.1',
-                    'type' => 'responsable-hierarchique',
+                    'type' => 'responsable-hierachique',
                     'profilable_id' => $ministere->id,
                     'profilable_type' => get_class($ministere),
                     'account_verification_request_sent_at' => Carbon::now(),
@@ -726,11 +729,11 @@ class OrganisationsSeeder extends Seeder
 
                 $responsableHierarchique->roles()->attach([$roleResponsableHierarchique->id]);
 
-                $this->command->info("✅ Compte Responsable hiérarchique créé avec succès pour {$ministere->nom}");
+                $this->command->info("✅ Compte Responsable hiérachique créé avec succès pour {$ministere->nom}");
                 $this->command->info("📧 Email: {$emailResponsableHier}");
                 $this->command->info("🔑 Mot de passe: {$passwordResponsableHier}");
             } else {
-                $this->command->info("ℹ️ Le compte Responsable hiérarchique existe déjà pour {$ministere->nom}");
+                $this->command->info("ℹ️ Le compte Responsable hiérachique existe déjà pour {$ministere->nom}");
             }
 
             $this->command->info("✅ Espaces de travail créés avec succès pour {$ministere->nom} !");

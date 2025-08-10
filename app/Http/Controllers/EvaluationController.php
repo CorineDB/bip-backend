@@ -105,12 +105,4 @@ class EvaluationController extends Controller
     public function refaireAutoEvaluationClimatique($ideeProjetId): JsonResponse {
         return $this->service->refaireAutoEvaluationClimatique($ideeProjetId);
     }
-
-    /**
-     * Récupérer les critères d'un évaluateur pour une évaluation.
-     */
-    public function getEvaluateurCriteres($ideeProjetId, $evaluateurId = null): JsonResponse
-    {
-        return $this->service->getEvaluateurCriteres($ideeProjetId, $evaluateurId);
-    }
 }

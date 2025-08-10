@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class Odd extends Model
 {
@@ -102,8 +103,18 @@ class Odd extends Model
      */
     public function setOddAttribute($value)
     {
-        $this->attributes['odd'] = addslashes($value); // Escape value with backslashes
-        $this->attributes['slug'] = str_replace(' ', '-', strtolower($value));
+        $this->attributes['odd'] = Str::ucfirst(trim($value)); // Escape value with backslashes
+    }
+
+    /**
+     *
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setSlugAttribute($value)
+    {
+        $this->attributes['slug'] = $value ?? Str::slug($this->attributes['odd']);
     }
 
     /**

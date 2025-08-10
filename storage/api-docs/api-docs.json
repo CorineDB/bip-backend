@@ -1,0 +1,1512 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API de Gestion des Idées de Projets - GDIZ",
+        "description": "Documentation de l'API pour la gestion des idées de projets et l'authentification",
+        "contact": {
+            "email": "support@gdiz.bj"
+        },
+        "license": {
+            "name": "Proprietary",
+            "url": "#"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://my-default-host.com",
+            "description": "Serveur API"
+        }
+    ],
+    "paths": {
+        "/api/grille-evaluation-preliminaire": {
+            "get": {
+                "tags": [
+                    "Évaluations - Configuration"
+                ],
+                "summary": "Récupérer la grille d'évaluation préliminaire",
+                "description": "Récupère la configuration de la grille d'évaluation préliminaire des impacts climatiques avec tous les critères et sous-critères",
+                "operationId": "e609fdf46e09b432a78ad71004e873d5",
+                "responses": {
+                    "200": {
+                        "description": "Grille d'évaluation préliminaire récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Grille d'évaluation préliminaire récupérée avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "categories": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "nom": {
+                                                                "type": "string",
+                                                                "example": "Adaptation au changement climatique"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Critères d'évaluation de l'adaptation climatique"
+                                                            },
+                                                            "poids": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 0.4
+                                                            },
+                                                            "criteres": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "nom": {
+                                                                            "type": "string",
+                                                                            "example": "Résilience aux événements climatiques"
+                                                                        },
+                                                                        "description": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "poids": {
+                                                                            "type": "number",
+                                                                            "format": "float",
+                                                                            "example": 0.3
+                                                                        },
+                                                                        "unite": {
+                                                                            "type": "string",
+                                                                            "example": "score"
+                                                                        },
+                                                                        "echelle_notation": {
+                                                                            "properties": {
+                                                                                "min": {
+                                                                                    "type": "integer",
+                                                                                    "example": 1
+                                                                                },
+                                                                                "max": {
+                                                                                    "type": "integer",
+                                                                                    "example": 5
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors de la récupération de la grille"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "passport": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Évaluations - Configuration"
+                ],
+                "summary": "Mettre à jour la grille d'évaluation préliminaire",
+                "description": "Met à jour la configuration de la grille d'évaluation préliminaire des impacts climatiques (critères, poids, échelles de notation)",
+                "operationId": "e58cc045ed08405f4640d9efaafc2e68",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "categories": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "nom": {
+                                                    "type": "string",
+                                                    "example": "Adaptation au changement climatique"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Critères d'évaluation de l'adaptation climatique"
+                                                },
+                                                "poids": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 0.4
+                                                },
+                                                "criteres": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "nom": {
+                                                                "type": "string",
+                                                                "example": "Résilience aux événements climatiques"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Capacité du projet à résister aux chocs climatiques"
+                                                            },
+                                                            "poids": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 0.3
+                                                            },
+                                                            "unite": {
+                                                                "type": "string",
+                                                                "example": "score"
+                                                            },
+                                                            "echelle_notation": {
+                                                                "properties": {
+                                                                    "min": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "max": {
+                                                                        "type": "integer",
+                                                                        "example": 5
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Grille d'évaluation préliminaire mise à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Grille d'évaluation préliminaire mise à jour avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "passport": []
+                    }
+                ]
+            }
+        },
+        "/api/grille-analyse-multi-critere": {
+            "get": {
+                "tags": [
+                    "Évaluations - Configuration"
+                ],
+                "summary": "Récupérer la grille d'analyse multicritères",
+                "description": "Récupère la configuration de la grille d'analyse multicritères avec tous les critères, sous-critères, poids et échelles de notation pour l'évaluation des projets",
+                "operationId": "38ca14eb5979e0728e550ccec45e0ff6",
+                "responses": {
+                    "200": {
+                        "description": "Grille d'analyse multicritères récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Grille d'analyse multicritères récupérée avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "categories": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "nom": {
+                                                                "type": "string",
+                                                                "example": "Impact environnemental"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Évaluation de l'impact du projet sur l'environnement"
+                                                            },
+                                                            "poids": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 0.3
+                                                            },
+                                                            "criteres": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "nom": {
+                                                                            "type": "string",
+                                                                            "example": "Réduction des émissions de GES"
+                                                                        },
+                                                                        "description": {
+                                                                            "type": "string",
+                                                                            "example": "Potentiel de réduction des gaz à effet de serre"
+                                                                        },
+                                                                        "poids": {
+                                                                            "type": "number",
+                                                                            "format": "float",
+                                                                            "example": 0.4
+                                                                        },
+                                                                        "unite": {
+                                                                            "type": "string",
+                                                                            "example": "tCO2e/an"
+                                                                        },
+                                                                        "echelle_notation": {
+                                                                            "properties": {
+                                                                                "min": {
+                                                                                    "type": "integer",
+                                                                                    "example": 0
+                                                                                },
+                                                                                "max": {
+                                                                                    "type": "integer",
+                                                                                    "example": 10
+                                                                                },
+                                                                                "labels": {
+                                                                                    "properties": {
+                                                                                        "0": {
+                                                                                            "type": "string",
+                                                                                            "example": "Aucun impact"
+                                                                                        },
+                                                                                        "5": {
+                                                                                            "type": "string",
+                                                                                            "example": "Impact modéré"
+                                                                                        },
+                                                                                        "10": {
+                                                                                            "type": "string",
+                                                                                            "example": "Impact élevé"
+                                                                                        }
+                                                                                    },
+                                                                                    "type": "object"
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "methode_aggregation": {
+                                                    "type": "string",
+                                                    "example": "somme_ponderee"
+                                                },
+                                                "seuils_decision": {
+                                                    "properties": {
+                                                        "acceptable": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 6
+                                                        },
+                                                        "bon": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 7.5
+                                                        },
+                                                        "excellent": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 9
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors de la récupération de la grille"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "passport": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Évaluations - Configuration"
+                ],
+                "summary": "Mettre à jour la grille d'analyse multicritères",
+                "description": "Met à jour la configuration de la grille d'analyse multicritères (critères, poids, échelles de notation, seuils de décision)",
+                "operationId": "37d6bd203f34e2553618ff2b3492b471",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "categories": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "nom": {
+                                                    "type": "string",
+                                                    "example": "Impact environnemental"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Évaluation de l'impact du projet sur l'environnement"
+                                                },
+                                                "poids": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 0.3
+                                                },
+                                                "criteres": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "nom": {
+                                                                "type": "string",
+                                                                "example": "Réduction des émissions de GES"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Potentiel de réduction des gaz à effet de serre"
+                                                            },
+                                                            "poids": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 0.4
+                                                            },
+                                                            "unite": {
+                                                                "type": "string",
+                                                                "example": "tCO2e/an"
+                                                            },
+                                                            "echelle_notation": {
+                                                                "properties": {
+                                                                    "min": {
+                                                                        "type": "integer",
+                                                                        "example": 0
+                                                                    },
+                                                                    "max": {
+                                                                        "type": "integer",
+                                                                        "example": 10
+                                                                    },
+                                                                    "labels": {
+                                                                        "properties": {
+                                                                            "0": {
+                                                                                "type": "string",
+                                                                                "example": "Aucun impact"
+                                                                            },
+                                                                            "5": {
+                                                                                "type": "string",
+                                                                                "example": "Impact modéré"
+                                                                            },
+                                                                            "10": {
+                                                                                "type": "string",
+                                                                                "example": "Impact élevé"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "methode_aggregation": {
+                                        "description": "Méthode d'agrégation des scores",
+                                        "type": "string",
+                                        "example": "somme_ponderee"
+                                    },
+                                    "seuils_decision": {
+                                        "properties": {
+                                            "acceptable": {
+                                                "type": "number",
+                                                "format": "float",
+                                                "example": 6
+                                            },
+                                            "bon": {
+                                                "type": "number",
+                                                "format": "float",
+                                                "example": 7.5
+                                            },
+                                            "excellent": {
+                                                "type": "number",
+                                                "format": "float",
+                                                "example": 9
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Grille d'analyse multicritères mise à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Grille d'analyse multicritères mise à jour avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "poids": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "La somme des poids doit être égale à 1.0"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "passport": []
+                    }
+                ]
+            }
+        },
+        "/api/passport-auths/authentification": {
+            "post": {
+                "tags": [
+                    "Auth - Connexion"
+                ],
+                "summary": "Authentification utilisateur",
+                "description": "Permet à un utilisateur de se connecter au système avec ses identifiants",
+                "operationId": "4374e81ee63077489d94ae9d5a75f51e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "description": "Adresse email de l'utilisateur",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "password": {
+                                        "description": "Mot de passe de l'utilisateur",
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "motdepasse123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Authentification réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Connexion réussie"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "access_token": {
+                                                    "type": "string",
+                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "Bearer"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer",
+                                                    "example": 86400
+                                                },
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "user@example.com"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "John Doe"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Identifiants incorrects",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Identifiants incorrects"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/passport-auths/utilisateur-connecte": {
+            "get": {
+                "tags": [
+                    "Auth - Sessions"
+                ],
+                "summary": "Informations utilisateur connecté",
+                "description": "Récupère les informations de l'utilisateur actuellement authentifié",
+                "operationId": "90e03774ff3e46ed679253b890ea61ab",
+                "responses": {
+                    "200": {
+                        "description": "Informations utilisateur récupérées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Informations utilisateur récupérées"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "user@example.com"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token invalide ou expiré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "passport": []
+                    }
+                ]
+            }
+        },
+        "/api/passport-auths/reinitialisation-de-mot-de-passe/{email}": {
+            "get": {
+                "tags": [
+                    "Auth - Mot de passe"
+                ],
+                "summary": "Demande de réinitialisation de mot de passe",
+                "description": "Envoie un email avec un lien de réinitialisation de mot de passe",
+                "operationId": "36413eb7b9459663931a0e027a032819",
+                "parameters": [
+                    {
+                        "name": "email",
+                        "in": "path",
+                        "description": "Adresse email de l'utilisateur",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "email",
+                            "example": "user@example.com"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Email de réinitialisation envoyé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Email de réinitialisation envoyé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Utilisateur introuvable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur introuvable"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/passport-auths/confirmation-de-compte/{email}": {
+            "get": {
+                "tags": [
+                    "Auth - Gestion de compte"
+                ],
+                "summary": "Confirmation de compte",
+                "description": "Envoie un email de confirmation de compte à l'utilisateur",
+                "operationId": "ae54b3acc156c61ce98f32c919641eb9",
+                "parameters": [
+                    {
+                        "name": "email",
+                        "in": "path",
+                        "description": "Adresse email de l'utilisateur",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "email",
+                            "example": "user@example.com"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Email de confirmation envoyé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Email de confirmation envoyé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Utilisateur introuvable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur introuvable"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/passport-auths/activation-de-compte/{token}": {
+            "get": {
+                "tags": [
+                    "Auth - Gestion de compte"
+                ],
+                "summary": "Activation de compte",
+                "description": "Active le compte d'un utilisateur à partir d'un token de confirmation",
+                "operationId": "092a64adc7f959af097280dfc7ed70b9",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "description": "Token d'activation reçu par email",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "abc123def456ghi789"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Compte activé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte activé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Token invalide ou expiré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token d'activation invalide ou expiré"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Compte déjà activé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ce compte est déjà activé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/passport-auths/verification-de-compte/{token}": {
+            "get": {
+                "tags": [
+                    "Auth - Gestion de compte"
+                ],
+                "summary": "Vérification de compte",
+                "description": "Vérifie la validité d'un token de vérification de compte",
+                "operationId": "4897ea5590039d24ee5e1521f6b32d2c",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "description": "Token de vérification",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "xyz789abc123def456"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token valide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token de vérification valide"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "valid": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-12-31T23:59:59Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Token invalide ou expiré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token de vérification invalide ou expiré"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/passport-auths/reinitialisation-de-mot-de-passe": {
+            "post": {
+                "tags": [
+                    "Auth - Mot de passe"
+                ],
+                "summary": "Réinitialisation du mot de passe",
+                "description": "Réinitialise le mot de passe d'un utilisateur avec un token de réinitialisation valide",
+                "operationId": "e732033032b37ea9b9194c7a48f19121",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token",
+                                    "new_password",
+                                    "new_password_confirmation"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "description": "Token de réinitialisation reçu par email",
+                                        "type": "string",
+                                        "example": "abc123def456"
+                                    },
+                                    "new_password": {
+                                        "description": "Nouveau mot de passe (min 8 caractères, majuscules, minuscules, chiffres, symboles)",
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NouveauMotDePasse123!"
+                                    },
+                                    "new_password_confirmation": {
+                                        "description": "Confirmation du nouveau mot de passe",
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NouveauMotDePasse123!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe réinitialisé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mot de passe réinitialisé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Token invalide ou expiré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide ou expiré"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/passport-auths/deconnexion": {
+            "post": {
+                "tags": [
+                    "Auth - Connexion"
+                ],
+                "summary": "Déconnexion utilisateur",
+                "description": "Déconnecte l'utilisateur authentifié et révoque son token",
+                "operationId": "d5fc7d3eaf61c5b483e2f9ef9af68198",
+                "responses": {
+                    "200": {
+                        "description": "Déconnexion réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Déconnexion réussie"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token invalide ou expiré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "passport": []
+                    }
+                ]
+            }
+        },
+        "/api/passport-auths/refresh-token": {
+            "get": {
+                "tags": [
+                    "Auth - Sessions"
+                ],
+                "summary": "Actualiser le token d'authentification",
+                "description": "Génère un nouveau token d'authentification pour l'utilisateur connecté",
+                "operationId": "4a564edd501dfa8b2e3ade62f7b8a275",
+                "responses": {
+                    "200": {
+                        "description": "Token actualisé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token actualisé avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "access_token": {
+                                                    "type": "string",
+                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "Bearer"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer",
+                                                    "example": 86400
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token invalide ou expiré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "passport": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "passport": {
+                "type": "oauth2",
+                "flows": {
+                    "password": {
+                        "tokenUrl": "/api/passport-auths/authentification",
+                        "scopes": {}
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth - Connexion",
+            "description": "Endpoints pour la connexion et la déconnexion des utilisateurs"
+        },
+        {
+            "name": "Auth - Gestion de compte",
+            "description": "Endpoints pour la confirmation, activation et vérification des comptes"
+        },
+        {
+            "name": "Auth - Mot de passe",
+            "description": "Endpoints pour la réinitialisation et modification des mots de passe"
+        },
+        {
+            "name": "Auth - Sessions",
+            "description": "Endpoints pour la gestion des sessions et tokens utilisateurs"
+        },
+        {
+            "name": "Évaluations - Configuration",
+            "description": "Endpoints pour configurer les grilles d'évaluation climatique et multicritères"
+        }
+    ]
+}

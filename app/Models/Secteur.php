@@ -6,6 +6,7 @@ use App\Enums\EnumTypeSecteur;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class Secteur extends Model
 {
@@ -110,8 +111,7 @@ class Secteur extends Model
      */
     public function setNomAttribute($value)
     {
-        $this->attributes['nom'] = addslashes($value); // Escape value with backslashes
-        $this->attributes['slug'] = $this->generateUniqueSlug($value);
+        $this->attributes['nom'] = Str::ucfirst(trim($value)); // Escape value with backslashes
     }
 
     private function generateUniqueSlug($name)
@@ -126,6 +126,17 @@ class Secteur extends Model
         }
 
         return $slug;
+    }
+
+    /**
+     *
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setSlugAttribute($value)
+    {
+        $this->attributes['slug'] = $this->generateUniqueSlug($value ?? Str::slug($this->attributes['nom']));
     }
 
     /**

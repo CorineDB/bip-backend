@@ -264,9 +264,6 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
                 ->name('idees-projet.evaluation-climatique.soumettre');
         });
 
-
-
-
         // Routes pour l'évaluation climatique unique des idées de projet
         Route::prefix('idees-projet/{ideeProjetId}')->group(function () {
             Route::post('validation', [EvaluationController::class, 'validerIdeeDeProjet'])
@@ -275,7 +272,6 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
                 ->name('idees-projet.validation-en-projet');
         });
 
-
         // Routes pour AMC des idées de projet
         Route::prefix('idees-projet/{ideeProjetId}/analyse-multi-critere')->group(function () {
             Route::post('/', [EvaluationController::class, 'appliquerAMC'])
@@ -283,27 +279,6 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::get('/', [EvaluationController::class, 'getDashboardAMC'])
                 ->name('idees-projet.analyse-multi-critere.show');
         });
-
-
-        /*
-        // Routes pour les évaluations individuelles de critères
-        Route::prefix('evaluations/{evaluationId}/evaluateurs/{evaluateurId}')->group(function () {
-            Route::get('/criteres', [\App\Http\Controllers\EvaluationCritereIndividuelController::class, 'getEvaluateurCriteres'])
-                ->name('evaluations.evaluateur.criteres');
-            Route::post('/criteres/{critereId}/noter', [\App\Http\Controllers\EvaluationCritereIndividuelController::class, 'noterCritere'])
-                ->name('evaluations.evaluateur.noter-critere');
-            Route::get('/criteres/{critereId}', [\App\Http\Controllers\EvaluationCritereIndividuelController::class, 'getCritereEvaluateur'])
-                ->name('evaluations.evaluateur.critere');
-            Route::post('/terminer', [\App\Http\Controllers\EvaluationCritereIndividuelController::class, 'terminerEvaluationEvaluateur'])
-                ->name('evaluations.evaluateur.terminer');
-            Route::get('/stats', [\App\Http\Controllers\EvaluationCritereIndividuelController::class, 'getStatsEvaluateur'])
-                ->name('evaluations.evaluateur.stats');
-        });
-
-        // Routes pour l'analyse des critères par tous les évaluateurs
-        Route::get('evaluations/{evaluationId}/criteres/{critereId}/all-evaluateurs',
-            [\App\Http\Controllers\EvaluationCritereIndividuelController::class, 'getCritereAllEvaluateurs'])
-            ->name('evaluations.critere.all-evaluateurs');*/
 
         // Evaluation Criteria Management
         Route::apiResource('categories-critere', \App\Http\Controllers\CategorieCritereController::class)
