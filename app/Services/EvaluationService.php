@@ -650,8 +650,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 }
             }
 
-            dd($isAssigned);
-
             if (!$isAssigned) {
                 return response()->json([
                     'success' => false,

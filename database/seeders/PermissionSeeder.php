@@ -277,6 +277,11 @@ class PermissionSeeder extends Seeder
                 // Commentaires et fichiers
                 "ajouter-commentaire", "voir-commentaires", "modifier-commentaire", "supprimer-commentaire",
                 "telecharger-fichier", "upload-fichier", "supprimer-fichier",
+
+                "voir-idees-projet", "voir-grille-evaluation-amc",
+                "remplir-grille-amc", "enregistrer-fiche-synthese-amc", "modifier-fiche-synthese-amc", "emettre-commentaire", "rejeter-idee-idee", "recevoir-notification-validation-idee", "voir-historique-amc", "telecharger-fiche-synthese-amc",
+                "voir-types-financement", "voir-sources-financement", "apprecier-tdr-faisabilite",
+                "soumettre-rapport-faisabilite", "voir-rapports-etude"
             ],
 
             // DPAF

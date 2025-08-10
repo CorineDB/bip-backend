@@ -399,7 +399,10 @@ class DefaultWorkspaceSeeder extends Seeder
             ],
             [
                 'nom' => 'Responsable projet',
-                'description' => 'Responsable de projet du ' . $ministere->nom
+                'slug' => 'responsable-projet',
+                'description' => 'Responsable de projet du ' . $ministere->nom,
+                'roleable_type' => get_class($ministere),
+                'roleable_id' => $ministere->id
             ]
         );
 
