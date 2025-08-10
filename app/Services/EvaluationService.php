@@ -764,13 +764,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             } elseif ($is_auto_evaluation) {
                 if ((auth()->user()->profilable_type == Organisation::class || auth()->user()->profilable_type == Dpaf::class) && auth()->user()->profilable?->ministere && $ideeProjet->ministere && (auth()->user()->profilable->ministere?->id == $ideeProjet->ministere->id)) {
 
-                    \Log::info("Evaluateurs : " . auth()->id() . json_encode($evaluation->evaluateursClimatique()->get()));
-                    $isAssigned = $evaluation->evaluateursClimatique()->where("id", auth()->id())->first()->hasPermissionTo('effectuer-evaluation-climatique-idee-projet');
+                    $isAssigned = $evaluation->evaluateursClimatique()->where("id", auth()->id())->first()?->hasPermissionTo('effectuer-evaluation-climatique-idee-projet');
                     //->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->isNotEmpty(); // ✅ on vérifie bien si la collection n'est pas vide;
                     $evaluateur = $evaluation->evaluateursClimatique()->where("id", auth()->id())
-                        ->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->isNotEmpty(); // ✅ on vérifie bien si la collection n'est pas vide;
-
-                    \Log::info("Evaluateurs : " . json_encode($evaluateur));
+                        ->get()->filter(fn($user) => $user?->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->isNotEmpty(); // ✅ on vérifie bien si la collection n'est pas vide;
 
                     //$evaluateurs = $evaluation->evaluateursClimatique()->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'));
 
