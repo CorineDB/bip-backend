@@ -131,7 +131,7 @@ class Dgpd extends Model
 
     public function setSlugAttribute($value)
     {
-        $this->attributes['slug'] = $this->generateUniqueSlug($value ?? Str::slug($this->attributes['odd']));
+        $this->attributes['slug'] = $this->generateUniqueSlug($value ?? Str::slug($this->attributes['nom']));
     }
 
     private function generateUniqueSlug($name)

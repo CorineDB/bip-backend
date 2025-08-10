@@ -166,7 +166,7 @@ class DocumentController extends Controller
      *                         )
      *                     )
      *                 ),
-     *                 @OA\Property(property="champs", type="array", description="Champs racines (hors sections)", 
+     *                 @OA\Property(property="champs", type="array", description="Champs racines (hors sections)",
      *                     @OA\Items(type="object", description="Structure identique aux champs des sections")
      *                 )
      *             )
@@ -335,7 +335,7 @@ class DocumentController extends Controller
      *                         )
      *                     )
      *                 ),
-     *                 @OA\Property(property="champs", type="array", description="Champs racines (hors sections)", 
+     *                 @OA\Property(property="champs", type="array", description="Champs racines (hors sections)",
      *                     @OA\Items(type="object", description="Structure identique aux champs des sections")
      *                 )
      *             )

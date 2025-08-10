@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class Document extends Model
 {
@@ -100,8 +101,12 @@ class Document extends Model
      */
     public function setNomAttribute($value)
     {
-        $this->attributes['nom'] = addslashes($value); // Escape value with backslashes
-        $this->attributes['slug'] = $this->generateUniqueSlug($value);
+        $this->attributes['nom'] = Str::ucfirst(trim($value)); // Escape value with backslashes
+    }
+
+    public function setSlugAttribute($value)
+    {
+        $this->attributes['slug'] = $this->generateUniqueSlug($value ?? Str::slug($this->attributes['nom']));
     }
 
     private function generateUniqueSlug($name)

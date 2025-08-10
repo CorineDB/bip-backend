@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             OrganisationsSeeder::class,
             ProgrammeSeeder::class,
             DomaineCategorieSeeder::class,
+            CanevasRedactionFicheIdeeProjet::class,
             GrilleEvaluationPreliminaireSeeder::class,
             GrilleAMCSeeder::class
 

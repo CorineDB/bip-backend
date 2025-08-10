@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class CategorieDocument extends Model
 {
@@ -53,7 +54,8 @@ class CategorieDocument extends Model
      * @var array
      */
     protected $hidden = [
-        'updated_at', 'deleted_at'
+        'updated_at',
+        'deleted_at'
     ];
 
     /**
@@ -90,16 +92,27 @@ class CategorieDocument extends Model
      */
     public function setNomAttribute($value)
     {
-        $this->attributes['nom'] = addslashes($value); // Escape value with backslashes
-        $this->attributes['slug'] = str_replace(' ', '-', strtolower($value));
+        $this->attributes['nom'] = Str::ucfirst(trim($value)); // Escape value with backslashes
     }
 
     /**
-    *
-    * @param  string  $value
-    * @return string
-    */
-    public function getNomAttribute($value){
-        return ucfirst(str_replace('\\',' ',$value));
+     *
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setSlugAttribute($value)
+    {
+        $this->attributes['slug'] = $value ?? Str::slug($this->attributes['nom']);
+    }
+
+    /**
+     *
+     * @param  string  $value
+     * @return string
+     */
+    public function getNomAttribute($value)
+    {
+        return ucfirst(str_replace('\\', ' ', $value));
     }
 }

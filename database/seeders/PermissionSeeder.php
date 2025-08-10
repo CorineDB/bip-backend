@@ -387,6 +387,7 @@ class PermissionSeeder extends Seeder
             "nom" => "Admin",
             "prenom" => "Admin",
             "poste" => "Administrateur general"
+            
         ]);
 
         // Supprimer les anciens utilisateurs et créer les nouveaux
