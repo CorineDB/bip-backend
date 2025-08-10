@@ -101,7 +101,7 @@ class TypeProgramme extends Model
      */
     public function setTypeProgrammeAttribute($value)
     {
-        $this->attributes['type'] = Str::ucfirst(trim($value)); // Escape value with backslashes
+        $this->attributes['type_programme'] = Str::ucfirst(trim($value)); // Escape value with backslashes
     }
 
     /**
@@ -112,7 +112,7 @@ class TypeProgramme extends Model
      */
     public function setSlugAttribute($value)
     {
-        $this->attributes['slug'] = $value ?? Str::slug($this->attributes['type']);
+        $this->attributes['slug'] = $value ?? Str::slug($this->attributes['type_programme']);
     }
     /**
     *
