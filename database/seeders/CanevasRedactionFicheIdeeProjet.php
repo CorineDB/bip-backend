@@ -146,7 +146,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                         "default_value" => "0",
                         "isEvaluated" => false,
                         "ordre_affichage" => 5,
-                        "type_champ" => "number",
+                        "type_champ" => "numeric",
                         "meta_options" => [
                             "configs" => [
                                 "max" => null,
@@ -160,7 +160,6 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                             ],
                             "validations_rules" => [
                                 "required" => true,
-                                "max" => null,
                                 "min" => 0
                             ]
                         ],
@@ -177,7 +176,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                         "default_value" => "0",
                         "isEvaluated" => false,
                         "ordre_affichage" => 5,
-                        "type_champ" => "number",
+                        "type_champ" => "numeric",
                         "meta_options" => [
                             "configs" => [
                                 "max" => null,
@@ -191,7 +190,6 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                             ],
                             "validations_rules" => [
                                 "required" => true,
-                                "max" => null,
                                 "min" => 0
                             ]
                         ],
@@ -208,7 +206,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                         "default_value" => "0",
                         "isEvaluated" => false,
                         "ordre_affichage" => 5,
-                        "type_champ" => "number",
+                        "type_champ" => "numeric",
                         "meta_options" => [
                             "configs" => [
                                 "max" => null,
@@ -237,7 +235,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                         "default_value" => "0",
                         "isEvaluated" => false,
                         "ordre_affichage" => 5,
-                        "type_champ" => "number",
+                        "type_champ" => "numeric",
                         "meta_options" => [
                             "configs" => [
                                 "max" => null,
