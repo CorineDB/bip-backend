@@ -753,9 +753,9 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "required" => true,
+                                "required" => false,
                                 "array" => true,
-                                "min" => 1
+                                "min" => 0
                             ]
                         ],
                         "champ_standard" => true,
