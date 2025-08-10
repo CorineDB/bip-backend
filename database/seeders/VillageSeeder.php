@@ -10,38 +10,56 @@ use Illuminate\Support\Str;
 class VillageSeeder extends Seeder
 {
     public function run(): void
-
     {
         // Supprime toutes les lignes de la table
         DB::table('villages')->truncate();
 
-        $villages = [
-            // Villages de Godomey
-            ['code' => 'GOD-001', 'nom' => 'Godomey Centre', 'slug' => 'godomey-centre', 'arrondissement_code' => 'ABM-GOD'],
-            ['code' => 'GOD-002', 'nom' => 'Sédjè-Dénou', 'slug' => 'sedje-denou', 'arrondissement_code' => 'ABM-GOD'],
-            ['code' => 'GOD-003', 'nom' => 'Alinakou', 'slug' => 'alinakou', 'arrondissement_code' => 'ABM-GOD'],
-            ['code' => 'GOD-004', 'nom' => 'Golo-Djigbé', 'slug' => 'golo-djigbe', 'arrondissement_code' => 'ABM-GOD'],
-            ['code' => 'GOD-005', 'nom' => 'Womey', 'slug' => 'womey', 'arrondissement_code' => 'ABM-GOD'],
+        // Charger les données depuis le fichier JSON
+        $jsonPath = base_path('decoupage_territorial_benin.json');
+        
+        if (!file_exists($jsonPath)) {
+            throw new \Exception("Fichier de découpage territorial introuvable : $jsonPath");
+        }
 
-            // Villages d'Akassato
-            ['code' => 'AKA-001', 'nom' => 'Akassato Centre', 'slug' => 'akassato-centre', 'arrondissement_code' => 'ABM-AKA'],
-            ['code' => 'AKA-002', 'nom' => 'Zinvié', 'slug' => 'zinvie', 'arrondissement_code' => 'ABM-AKA'],
-            ['code' => 'AKA-003', 'nom' => 'Tankpè', 'slug' => 'tankpe', 'arrondissement_code' => 'ABM-AKA'],
-            ['code' => 'AKA-004', 'nom' => 'Cococodji', 'slug' => 'cococodji', 'arrondissement_code' => 'ABM-AKA'],
-        ];
+        $data = json_decode(file_get_contents($jsonPath), true);
+        
+        if (!$data) {
+            throw new \Exception("Erreur lors de la lecture du fichier JSON");
+        }
 
-        foreach ($villages as $village) {
-            $arrondissement = DB::table('arrondissements')->where('code', $village['arrondissement_code'])->first();
+        foreach ($data as $departement) {
+            foreach ($departement['communes'] as $commune) {
+                foreach ($commune['arrondissements'] as $arrondissement) {
+                    // Trouver l'arrondissement correspondant en base
+                    $arrondissementDb = DB::table('arrondissements')
+                        ->join('communes', 'arrondissements.communeId', '=', 'communes.id')
+                        ->join('departements', 'communes.departementId', '=', 'departements.id')
+                        ->where('arrondissements.nom', 'like', '%' . trim($arrondissement['lib_arrond']) . '%')
+                        ->where('communes.nom', 'like', '%' . trim($commune['lib_com']) . '%')
+                        ->where('departements.nom', 'like', '%' . trim($departement['lib_dep']) . '%')
+                        ->select('arrondissements.*')
+                        ->first();
 
-            if ($arrondissement) {
-                DB::table('villages')->insert([
-                    'code' => $village['code'],
-                    'nom' => $village['nom'],
-                    'slug' => $village['slug'],
-                    'arrondissementId' => $arrondissement->id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                    if ($arrondissementDb && isset($arrondissement['quartiers'])) {
+                        foreach ($arrondissement['quartiers'] as $index => $quartier) {
+                            // Code composé : arrondissement + village
+                            $codeCompose = $arrondissementDb->code . '-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT);
+                            
+                            // Slug unique basé sur le nom du village et l'arrondissement
+                            $slugBase = Str::slug($quartier['lib_quart']);
+                            $slugUnique = $slugBase . '-' . $arrondissementDb->slug;
+
+                            DB::table('villages')->insert([
+                                'code' => $codeCompose,
+                                'nom' => trim($quartier['lib_quart']),
+                                'slug' => $slugUnique,
+                                'arrondissementId' => $arrondissementDb->id,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
+                    }
+                }
             }
         }
     }
