@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Secteur;
+use App\Models\TypeIntervention;
 use App\Models\TypeProgramme;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -327,145 +328,521 @@ class ProgrammeSeeder extends Seeder
         $grands_secteur = [
             'Infrastructures et cadre de vie' => [
                 'Transport' => [
-                    'Routes',
-                    'Ponts',
-                    'Voies urbaines',
-                    'Corridors logistiques'
+                    'Routes' => [
+                        'Réhabilitation',
+                        'Construction',
+                        'Entretien',
+                        'Signalisation routière'
+                    ],
+                    'Ponts' => [
+                        'Inspection',
+                        'Construction',
+                        'Réparation',
+                        'Entretien'
+                    ],
+                    'Voies urbaines' => [
+                        'Aménagement',
+                        'Éclairage public',
+                        'Mobilier urbain',
+                        'Gestion du trafic'
+                    ],
+                    'Corridors logistiques' => [
+                        'Optimisation',
+                        'Sécurité',
+                        'Développement d’infrastructures',
+                        'Gestion des flux'
+                    ]
                 ],
                 'Urbanisme et habitat' => [
-                    'Assainissement',
-                    'Logements sociaux',
-                    'Embellissement des villes'
+
+                    'Assainissement' => [
+                        'Réseaux d’égouts',
+                        'Gestion des eaux pluviales',
+                        'Stations de traitement',
+                        'Évacuation des déchets'
+                    ],
+                    'Logements sociaux' => [
+                        'Construction',
+                        'Réhabilitation',
+                        'Gestion locative',
+                        'Financement'
+                    ],
+                    'Embellissement des villes' => [
+                        'Espaces verts',
+                        'Mobilier urbain',
+                        'Peinture et rénovation',
+                        'Aménagement paysager'
+                    ]
                 ],
                 'Eau' => [
-                    'Accès à l’eau potable',
-                    'Hydraulique urbaine',
-                    'Hydraulique villageoise'
+                    'Accès à l’eau potable' => [
+                        'Forages',
+                        'Distribution d’eau',
+                        'Traitement de l’eau',
+                        'Maintenance des infrastructures'
+                    ],
+                    'Hydraulique urbaine' => [
+                        'Gestion réseau',
+                        'Stockage',
+                        'Pompage',
+                        'Traitement des eaux usées'
+                    ],
+                    'Hydraulique villageoise' => [
+                        'Forages villageois',
+                        'Petites adductions',
+                        'Maintenance locale',
+                        'Sensibilisation'
+                    ],
                 ],
                 'Énergie' => [
-                    'Extension réseau électrique',
-                    'Énergie solaire',
-                    'Centrales thermiques'
+                    'Extension réseau électrique' => [
+                        'Pose de lignes',
+                        'Postes de transformation',
+                        'Maintenance',
+                        'Développement rural'
+                    ],
+                    'Énergie solaire' => [
+                        'Installation panneaux',
+                        'Maintenance',
+                        'Formation technique',
+                        'Promotion'
+                    ],
+                    'Centrales thermiques' => [
+                        'Construction',
+                        'Exploitation',
+                        'Maintenance',
+                        'Sécurité'
+                    ],
                 ]
             ],
             'Éducation et formation' => [
                 'Éducation de base' => [
-                    'Maternelle',
-                    'Primaire',
-                    'Cantines scolaires (PNASI)'
+                    'Maternelle' => [
+                        'Construction et rénovation des salles de classe',
+                        'Formation des enseignants',
+                        'Fourniture de matériel pédagogique',
+                        'Sensibilisation des parents'
+                    ],
+                    'Primaire' => [
+                        'Développement des programmes scolaires',
+                        'Formation continue des enseignants',
+                        'Construction d’infrastructures sanitaires',
+                        'Organisation d’activités extrascolaires'
+                    ],
+                    'Cantines scolaires (PNASI)' => [
+                        'Mise en place des cantines',
+                        'Gestion et supervision alimentaire',
+                        'Sensibilisation à la nutrition',
+                        'Suivi sanitaire des enfants'
+                    ],
                 ],
                 'Éducation secondaire' => [
-                    'Collèges',
-                    'Lycées techniques',
-                    'Internats rénovés'
+                    'Collèges' => [
+                        'Réhabilitation des bâtiments scolaires',
+                        'Développement des laboratoires',
+                        'Formation des professeurs',
+                        'Promotion des activités sportives'
+                    ],
+                    'Lycées techniques' => [
+                        'Acquisition d’équipements spécialisés',
+                        'Partenariats avec entreprises',
+                        'Formations techniques avancées',
+                        'Stages pratiques pour élèves'
+                    ],
+                    'Internats rénovés' => [
+                        'Rénovation des dortoirs',
+                        'Amélioration des infrastructures sanitaires',
+                        'Gestion administrative',
+                        'Programme de vie scolaire'
+                    ],
                 ],
                 'Formation professionnelle' => [
-                    'Lycées techniques agricoles',
-                    'Écoles des métiers',
-                    'EFTP'
+                    'Lycées techniques agricoles' => [
+                        'Modernisation des équipements',
+                        'Développement de modules de formation',
+                        'Partenariat avec exploitations agricoles',
+                        'Organisation de stages'
+                    ],
+                    'Écoles des métiers' => [
+                        'Acquisition d’outils professionnels',
+                        'Formation continue des formateurs',
+                        'Développement des cursus adaptés',
+                        'Insertion professionnelle'
+                    ],
+                    'EFTP' => [ // Enseignement et formation technique et professionnelle
+                        'Mise en place de centres de formation',
+                        'Formation des formateurs',
+                        'Développement des programmes pratiques',
+                        'Partenariats industriels'
+                    ],
                 ],
                 'Enseignement supérieur' => [
-                    'Pôle universitaire d’Abomey-Calavi',
-                    'Centre d’excellence'
+                    'Pôle universitaire d’Abomey-Calavi' => [
+                        'Développement de la recherche',
+                        'Construction d’amphithéâtres',
+                        'Programmes d’échanges internationaux',
+                        'Gestion administrative et académique'
+                    ],
+                    'Centre d’excellence' => [
+                        'Renforcement des capacités',
+                        'Bourses d’études',
+                        'Innovation pédagogique',
+                        'Ateliers de perfectionnement'
+                    ],
                 ]
             ],
             'Santé et protection sociale' => [
                 'Santé' => [
-                    'Hôpitaux',
-                    'CHU',
-                    'Centres de santé',
-                    'Équipements médicaux'
+                    'Hôpitaux' => [
+                        'Construction et rénovation des infrastructures hospitalières',
+                        'Acquisition de matériel médical',
+                        'Formation du personnel soignant',
+                        'Mise en place de services d’urgence'
+                    ],
+                    'CHU' => [ // Centres Hospitaliers Universitaires
+                        'Développement de la recherche médicale',
+                        'Formation spécialisée des médecins',
+                        'Partenariats avec institutions internationales',
+                        'Renforcement des services cliniques'
+                    ],
+                    'Centres de santé' => [
+                        'Création de centres de proximité',
+                        'Campagnes de vaccination',
+                        'Sensibilisation à la santé publique',
+                        'Suivi des patients chroniques'
+                    ],
+                    'Équipements médicaux' => [
+                        'Acquisition et maintenance des équipements',
+                        'Formation à l’utilisation des technologies',
+                        'Déploiement d’équipements mobiles',
+                        'Gestion des stocks et approvisionnements'
+                    ],
                 ],
                 'Protection sociale' => [
-                    'RAMU',
-                    'Assurance santé universelle',
-                    'Filets sociaux',
-                    'Prise en charge scolaire'
-                ]
+                    'RAMU' => [ // Régime d'Assurance Maladie Universelle
+                        'Mise en place du système d’assurance maladie',
+                        'Sensibilisation des populations',
+                        'Gestion des cotisations',
+                        'Suivi et remboursement des prestations'
+                    ],
+                    'Assurance santé universelle' => [
+                        'Élaboration des politiques d’assurance',
+                        'Coordination avec les structures de santé',
+                        'Éducation à l’assurance maladie',
+                        'Suivi de la couverture sociale'
+                    ],
+                    'Filets sociaux' => [
+                        'Identification des bénéficiaires',
+                        'Distribution d’aides financières',
+                        'Suivi des programmes sociaux',
+                        'Évaluation d’impact'
+                    ],
+                    'Prise en charge scolaire' => [
+                        'Soutien aux enfants vulnérables',
+                        'Programmes nutritionnels',
+                        'Assistance médicale scolaire',
+                        'Sensibilisation des familles'
+                    ],
+                ],
             ],
             'Agriculture, élevage et pêche' => [
                 'Agriculture' => [
-                    'Zones agricoles à fort potentiel',
-                    'Mécanisation',
-                    'Irrigation'
+                    'Zones agricoles à fort potentiel' => [
+                        'Développement des infrastructures agricoles',
+                        'Amélioration des sols',
+                        'Promotion des cultures à haut rendement',
+                        'Accès aux intrants agricoles'
+                    ],
+                    'Mécanisation' => [
+                        'Acquisition de matériel agricole',
+                        'Formation à l’utilisation des machines',
+                        'Maintenance et réparation',
+                        'Promotion de l’agriculture mécanisée'
+                    ],
+                    'Irrigation' => [
+                        'Installation de systèmes d’irrigation',
+                        'Gestion de l’eau pour l’agriculture',
+                        'Formation à la gestion des ressources hydriques',
+                        'Développement de cultures irriguées'
+                    ],
                 ],
                 'Élevage' => [
-                    'Santé animale',
-                    'Transformation des produits'
+                    'Santé animale' => [
+                        'Vaccination et soins vétérinaires',
+                        'Lutte contre les épizooties',
+                        'Formation des éleveurs',
+                        'Contrôle sanitaire des élevages'
+                    ],
+                    'Transformation des produits' => [
+                        'Développement des unités de transformation',
+                        'Formation aux bonnes pratiques',
+                        'Mise en marché des produits transformés',
+                        'Contrôle qualité'
+                    ],
                 ],
                 'Pêche' => [
-                    'Halieutique',
-                    'Aquaculture',
-                    'Valorisation des pêcheries'
+                    'Halieutique' => [
+                        'Gestion durable des pêcheries',
+                        'Réglementation de la pêche',
+                        'Suivi des ressources halieutiques',
+                        'Protection des zones de reproduction'
+                    ],
+                    'Aquaculture' => [
+                        'Développement des fermes aquacoles',
+                        'Formation des pisciculteurs',
+                        'Gestion des systèmes aquacoles',
+                        'Amélioration des races'
+                    ],
+                    'Valorisation des pêcheries' => [
+                        'Transformation des produits de la pêche',
+                        'Promotion des produits locaux',
+                        'Développement des marchés',
+                        'Contrôle qualité'
+                    ],
                 ]
             ],
             'Numérique, TIC et innovation' => [
                 'Numérique' => [
-                    'Fibre optique',
-                    'Couverture 4G',
-                    'Dématérialisation des services'
+                    'Fibre optique' => [
+                        'Déploiement de réseaux fibre optique',
+                        'Maintenance des infrastructures',
+                        'Extension des réseaux aux zones rurales',
+                        'Sécurisation des infrastructures'
+                    ],
+                    'Couverture 4G' => [
+                        'Installation de stations de base 4G',
+                        'Optimisation de la couverture réseau',
+                        'Promotion de l’accès mobile internet',
+                        'Formation à l’utilisation des technologies mobiles'
+                    ],
+                    'Dématérialisation des services' => [
+                        'Développement de plateformes numériques',
+                        'Digitalisation des procédures administratives',
+                        'Formation des agents publics',
+                        'Sensibilisation des usagers'
+                    ],
                 ],
                 'Innovation' => [
-                    'E-services',
-                    'E-éducation',
-                    'Identité numérique'
+                    'E-services' => [
+                        'Création de services en ligne',
+                        'Intégration de solutions mobiles',
+                        'Sécurisation des données utilisateurs',
+                        'Suivi et évaluation des services'
+                    ],
+                    'E-éducation' => [
+                        'Développement de contenus éducatifs numériques',
+                        'Mise en place de plateformes d’apprentissage',
+                        'Formation des enseignants',
+                        'Promotion de l’accès aux ressources numériques'
+                    ],
+                    'Identité numérique' => [
+                        'Gestion des identités électroniques',
+                        'Mise en place de systèmes d’authentification',
+                        'Protection des données personnelles',
+                        'Sensibilisation à la cybersécurité'
+                    ],
                 ]
             ],
             'Gouvernance, justice et institutions' => [
                 'Justice' => [
-                    'Infrastructures judiciaires',
-                    'Modernisation des procédures'
+                    'Infrastructures judiciaires' => [
+                        'Construction de tribunaux',
+                        'Modernisation des palais de justice',
+                        'Amélioration des infrastructures pénitentiaires',
+                        'Accessibilité aux services judiciaires'
+                    ],
+                    'Modernisation des procédures' => [
+                        'Digitalisation des dossiers judiciaires',
+                        'Réforme des processus juridiques',
+                        'Formation des agents judiciaires',
+                        'Mise en place de systèmes de gestion électronique'
+                    ],
                 ],
                 'Sécurité' => [
-                    'Police républicaine',
-                    'Équipements',
-                    'Casernes'
+                    'Police républicaine' => [
+                        'Renforcement des effectifs',
+                        'Formation continue',
+                        'Équipements opérationnels',
+                        'Déploiement sur le terrain'
+                    ],
+                    'Équipements' => [
+                        'Acquisition de matériels',
+                        'Maintenance des équipements',
+                        'Modernisation technologique',
+                        'Logistique sécuritaire'
+                    ],
+                    'Casernes' => [
+                        'Construction de casernes',
+                        'Rénovation des bâtiments',
+                        'Sécurisation des locaux',
+                        'Amélioration des conditions de travail'
+                    ],
                 ],
                 'Gouvernance' => [
-                    'Lutte contre la corruption',
-                    'Réformes fiscales',
-                    'Administration modernisée'
+                    'Lutte contre la corruption' => [
+                        'Campagnes de sensibilisation',
+                        'Mise en place d’instances de contrôle',
+                        'Renforcement des mécanismes de transparence',
+                        'Formation anti-corruption'
+                    ],
+                    'Réformes fiscales' => [
+                        'Simplification des procédures fiscales',
+                        'Modernisation des administrations fiscales',
+                        'Amélioration de la collecte des impôts',
+                        'Soutien aux contribuables'
+                    ],
+                    'Administration modernisée' => [
+                        'Digitalisation des services publics',
+                        'Formation des fonctionnaires',
+                        'Réorganisation des structures administratives',
+                        'Amélioration de la qualité des services'
+                    ],
                 ]
             ],
             'Économie, emploi, industrie et artisanat' => [
                 'Industrie' => [
-                    'Zones économiques spéciales (Glo-Djigbé)',
-                    'Transformation locale'
+                    'Zones économiques spéciales (Glo-Djigbé)' => [
+                        'Aménagement et développement des zones',
+                        'Incitations fiscales pour les entreprises',
+                        'Développement des infrastructures logistiques',
+                        'Promotion des investissements étrangers'
+                    ],
+                    'Transformation locale' => [
+                        'Modernisation des unités de transformation',
+                        'Soutien aux PME industrielles',
+                        'Formation technique et professionnelle',
+                        'Promotion des produits locaux'
+                    ],
                 ],
                 'Artisanat' => [
-                    'Structuration des artisans',
-                    'Villages artisanaux'
+                    'Structuration des artisans' => [
+                        'Organisation en coopératives',
+                        'Formation et certification',
+                        'Accès aux marchés',
+                        'Accompagnement technique et financier'
+                    ],
+                    'Villages artisanaux' => [
+                        'Création et aménagement de villages',
+                        'Promotion culturelle et touristique',
+                        'Développement des infrastructures',
+                        'Soutien à la commercialisation'
+                    ],
                 ],
                 'Emploi' => [
-                    'Plan emploi jeunes',
-                    'Auto-emploi',
-                    'Stages',
-                    'ANPE'
+                    'Plan emploi jeunes' => [
+                        'Programmes de formation',
+                        'Aides à l’embauche',
+                        'Insertion professionnelle',
+                        'Suivi et accompagnement'
+                    ],
+                    'Auto-emploi' => [
+                        'Microcrédits',
+                        'Formation entrepreneuriale',
+                        'Soutien à la création d’entreprise',
+                        'Accompagnement post-création'
+                    ],
+                    'Stages' => [
+                        'Partenariats avec entreprises',
+                        'Développement de compétences',
+                        'Insertion dans le marché du travail',
+                        'Suivi des stagiaires'
+                    ],
+                    'ANPE' => [
+                        'Services d’orientation professionnelle',
+                        'Aide à la recherche d’emploi',
+                        'Organisation de foires de l’emploi',
+                        'Formation continue'
+                    ]
                 ]
             ],
             'Tourisme, culture et patrimoine' => [
                 'Tourisme' => [
-                    'Routes touristiques',
-                    'Hôtels',
-                    'Monuments',
-                    'Circuits patrimoniaux'
+                    'Routes touristiques' => [
+                        'Aménagement et signalisation',
+                        'Développement d’aires de repos',
+                        'Promotion des itinéraires',
+                        'Sécurité routière touristique'
+                    ],
+                    'Hôtels' => [
+                        'Construction et rénovation',
+                        'Certification qualité',
+                        'Formation du personnel',
+                        'Promotion du tourisme durable'
+                    ],
+                    'Monuments' => [
+                        'Restauration et conservation',
+                        'Mise en valeur historique',
+                        'Accessibilité au public',
+                        'Sensibilisation culturelle'
+                    ],
+                    'Circuits patrimoniaux' => [
+                        'Création de parcours thématiques',
+                        'Intégration communautaire',
+                        'Promotion auprès des touristes',
+                        'Développement d’activités connexes'
+                    ],
                 ],
                 'Culture' => [
-                    'Musées',
-                    'Patrimoine historique',
-                    'Sites religieux'
+                    'Musées' => [
+                        'Conservation des collections',
+                        'Modernisation des expositions',
+                        'Animations culturelles',
+                        'Formation des guides'
+                    ],
+                    'Patrimoine historique' => [
+                        'Inventaire des sites',
+                        'Protection juridique',
+                        'Restauration',
+                        'Valorisation touristique'
+                    ],
+                    'Sites religieux' => [
+                        'Entretien et restauration',
+                        'Organisation des pèlerinages',
+                        'Promotion du patrimoine immatériel',
+                        'Développement des infrastructures'
+                    ],
                 ]
             ],
             'Environnement et développement durable' => [
                 'Environnement' => [
-                    'Reboisement',
-                    'Protection côtière',
-                    'Gestion des déchets'
+                    'Reboisement' => [
+                        'Plantation d’arbres',
+                        'Protection des forêts',
+                        'Sensibilisation communautaire',
+                        'Suivi de la croissance'
+                    ],
+                    'Protection côtière' => [
+                        'Construction de digues',
+                        'Préservation des mangroves',
+                        'Gestion de l’érosion',
+                        'Surveillance des zones sensibles'
+                    ],
+                    'Gestion des déchets' => [
+                        'Collecte et tri sélectif',
+                        'Recyclage et valorisation',
+                        'Traitement des déchets dangereux',
+                        'Campagnes de sensibilisation'
+                    ],
                 ],
                 'Changement climatique' => [
-                    'Résilience',
-                    'Biodiversité',
-                    'Énergies renouvelables'
+                    'Résilience' => [
+                        'Planification des risques',
+                        'Formation aux mesures d’adaptation',
+                        'Soutien aux communautés vulnérables',
+                        'Développement d’infrastructures résistantes'
+                    ],
+                    'Biodiversité' => [
+                        'Conservation des espèces',
+                        'Protection des habitats naturels',
+                        'Recherche et suivi',
+                        'Programmes d’éducation environnementale'
+                    ],
+                    'Énergies renouvelables' => [
+                        'Installation de panneaux solaires',
+                        'Développement de parcs éoliens',
+                        'Promotion de la biomasse',
+                        'Optimisation de l’efficacité énergétique'
+                    ]
                 ]
             ]
         ];
@@ -492,8 +869,8 @@ class ProgrammeSeeder extends Seeder
                     'secteurId' => $grand->id,
                 ]);
 
-                foreach ($sousSecteurs as $sousNom) {
-                    Secteur::updateOrCreate([
+                foreach ($sousSecteurs as $sousNom => $typesIntervention) {
+                    $secteur = Secteur::updateOrCreate([
                         'slug' => Str::slug($sousNom)
                     ], [
                         'nom' => $sousNom,
@@ -501,6 +878,18 @@ class ProgrammeSeeder extends Seeder
                         'type' => 'sous-secteur',
                         'secteurId' => $secteur->id,
                     ]);
+
+                    // Ici, $typesIntervention est la liste des types (niveau 3)
+                    foreach ($typesIntervention as $typeNom) {
+                        // Créer type d'intervention lié au secteur (niveau 2)
+                        TypeIntervention::updateOrCreate([
+                            'type_intervention' => $typeNom,
+                            'secteurId' => $secteur->id,
+                        ], [
+                            'type_intervention' => $typeNom,
+                            'secteurId' => $secteur->id,
+                        ]);
+                    }
                 }
             }
         }
