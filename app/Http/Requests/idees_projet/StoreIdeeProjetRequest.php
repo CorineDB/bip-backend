@@ -238,7 +238,7 @@ class StoreIdeeProjetRequest extends FormRequest
             'caracteristiques_techniques' => ["nullable", 'string', 'max:65535'],
             'impact_environnement' => ["nullable", 'string', 'max:65535'],
             'aspect_organisationnel' => ["nullable", 'string', 'max:65535'],
-            'estimation_couts' => ["nullable", 'numeric', 'min:0', 'max:65535'],
+            'estimation_couts' => ["nullable", 'string', /* 'numeric', 'min:0', */ 'max:65535'],
             'risques_immediats' => ["nullable", 'string', 'max:65535'],
             'conclusions' => ["nullable", 'string', 'max:65535'],
             'sommaire' => ["nullable", 'string', 'max:65535'],
