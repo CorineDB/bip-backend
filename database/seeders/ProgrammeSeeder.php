@@ -17,7 +17,7 @@ class ProgrammeSeeder extends Seeder
     {
         //$pag = TypeProgramme::where("slug", 'pag')->first()
 
-        $pag = TypeProgramme::firstOrCreate([
+        $pag = TypeProgramme::updateOrCreate([
             'slug' => 'pag'
         ], [
             'type_programme' => "Programme d'action du gouvernement"
@@ -58,21 +58,21 @@ class ProgrammeSeeder extends Seeder
 
 
         # code...
-        \App\Models\TypeProgramme::firstOrCreate([
+        \App\Models\TypeProgramme::updateOrCreate([
             'slug' => Str::slug("pilier-pag"),
         ], [
             'type_programme' => "Piliers du PAG",
             "typeId" => $pag->id
         ]);
 
-        $axe = \App\Models\TypeProgramme::firstOrCreate([
+        $axe = \App\Models\TypeProgramme::updateOrCreate([
             'slug' => Str::slug("axe-pag"),
         ], [
             'type_programme' => "Axes du PAG",
             "typeId" => $pag->id
         ]);
 
-        \App\Models\TypeProgramme::firstOrCreate([
+        \App\Models\TypeProgramme::updateOrCreate([
             'slug' => Str::slug("action-pag"),
         ], [
             'type_programme' => "Actions du PAG",
@@ -84,7 +84,7 @@ class ProgrammeSeeder extends Seeder
             if ($child->slug === 'pilier-pag') {
                 foreach ($pilier_pag as $key => $pilier) {
                     # code...
-                    \App\Models\ComposantProgramme::firstOrCreate([
+                    \App\Models\ComposantProgramme::updateOrCreate([
                         'slug' => Str::slug($pilier),
                     ], [
                         'indice' => $key,
@@ -97,7 +97,7 @@ class ProgrammeSeeder extends Seeder
             if ($child->slug === 'axe-pag') {
                 foreach ($axe_pag as $key => $axe) {
                     # code...
-                    \App\Models\ComposantProgramme::firstOrCreate([
+                    \App\Models\ComposantProgramme::updateOrCreate([
                         'slug' => Str::slug($axe),
                     ], [
                         'indice' => $key,
@@ -110,7 +110,7 @@ class ProgrammeSeeder extends Seeder
             if ($child->slug === 'action-pag') {
                 foreach ($action_pag as $key => $action) {
                     # code...
-                    \App\Models\ComposantProgramme::firstOrCreate([
+                    \App\Models\ComposantProgramme::updateOrCreate([
                         'slug' => Str::slug($action),
                     ], [
                         'indice' => $key,
@@ -219,7 +219,7 @@ class ProgrammeSeeder extends Seeder
         ];
 
         //$pnd = TypeProgramme::where("slug", 'pnd')->first();
-        $pnd = TypeProgramme::firstOrCreate([
+        $pnd = TypeProgramme::updateOrCreate([
             'slug' => 'pnd',
             'type_programme' => "Programme de Developpement durable"
         ], [
@@ -231,7 +231,7 @@ class ProgrammeSeeder extends Seeder
         foreach ($pnd_comp as $key => $obj) {
 
             # code...
-            $type = \App\Models\TypeProgramme::firstOrCreate([
+            $type = \App\Models\TypeProgramme::updateOrCreate([
                 'slug' => Str::slug("orientation-strategique-pnd"),
             ], [
                 'type_programme' => "Orientation stratégique du PND",
@@ -240,7 +240,7 @@ class ProgrammeSeeder extends Seeder
             ]);
 
             # code...
-            \App\Models\ComposantProgramme::firstOrCreate([
+            \App\Models\ComposantProgramme::updateOrCreate([
                 'slug' => Str::slug($key),
             ], [
                 'indice' => $orientationCount,
@@ -250,7 +250,7 @@ class ProgrammeSeeder extends Seeder
             ]);
 
             # code...
-            $objectif = \App\Models\TypeProgramme::firstOrCreate([
+            $objectif = \App\Models\TypeProgramme::updateOrCreate([
                 'slug' => Str::slug("objectif-strategique-pnd"),
             ], [
                 'type_programme' => "Objectif stratégique du PND",
@@ -262,7 +262,7 @@ class ProgrammeSeeder extends Seeder
             foreach ($obj["objectifs"] as $objectif_str => $resultats_strategique) {
 
                 # code...
-                \App\Models\ComposantProgramme::firstOrCreate([
+                \App\Models\ComposantProgramme::updateOrCreate([
                     'slug' => Str::slug($objectif_str),
                 ], [
                     'indice' => $objectifCount,
@@ -273,7 +273,7 @@ class ProgrammeSeeder extends Seeder
 
 
                 # code...
-                $resultats = \App\Models\TypeProgramme::firstOrCreate([
+                $resultats = \App\Models\TypeProgramme::updateOrCreate([
                     'slug' => Str::slug("resultats-strategique-pnd"),
                 ], [
                     'type_programme' => "Resultats stratégique du PND",
@@ -286,7 +286,7 @@ class ProgrammeSeeder extends Seeder
                 foreach ($resultats_strategique as $resultats_str => $axes_strategique) {
 
                     # code...
-                    \App\Models\ComposantProgramme::firstOrCreate([
+                    \App\Models\ComposantProgramme::updateOrCreate([
                         'slug' => Str::slug($resultats_str),
                     ], [
                         'indice' => $resultatCount,
@@ -296,7 +296,7 @@ class ProgrammeSeeder extends Seeder
                     ]);
 
                     # code...
-                    $axe = \App\Models\TypeProgramme::firstOrCreate([
+                    $axe = \App\Models\TypeProgramme::updateOrCreate([
                         'slug' => Str::slug("axe-strategique-pnd"),
                     ], [
                         'type_programme' => "Axes stratégique du PND",
@@ -308,7 +308,7 @@ class ProgrammeSeeder extends Seeder
                     foreach ($axes_strategique as $axe_str => $actions_strategique) {
 
                         # code...
-                        \App\Models\ComposantProgramme::firstOrCreate([
+                        \App\Models\ComposantProgramme::updateOrCreate([
                             'slug' => Str::slug($axe_str),
                         ], [
                             'indice' => $axeCount,
@@ -474,7 +474,7 @@ class ProgrammeSeeder extends Seeder
 
         // Insertion dans la table `secteurs`
         foreach ($grands_secteur as $grandNom => $secteurs) {
-            $grand = Secteur::firstOrCreate([
+            $grand = Secteur::updateOrCreate([
                 'slug' => Str::slug($grandNom)
             ], [
                 'nom' => $grandNom,
@@ -484,7 +484,7 @@ class ProgrammeSeeder extends Seeder
             ]);
 
             foreach ($secteurs as $secteurNom => $sousSecteurs) {
-                $secteur = Secteur::firstOrCreate([
+                $secteur = Secteur::updateOrCreate([
                     'slug' => Str::slug($secteurNom)
                 ], [
                     'nom' => $secteurNom,
@@ -494,7 +494,7 @@ class ProgrammeSeeder extends Seeder
                 ]);
 
                 foreach ($sousSecteurs as $sousNom) {
-                    Secteur::firstOrCreate([
+                    Secteur::updateOrCreate([
                         'slug' => Str::slug($sousNom)
                     ], [
                         'nom' => $sousNom,
