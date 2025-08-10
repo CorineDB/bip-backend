@@ -2061,8 +2061,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             default => \App\Enums\SousPhaseIdee::redaction,
         };
     }
-<<<<<<< Updated upstream
-=======
 
     /**
      * Classement des idées de projet par secteur et catégorie selon score pondéré AMC
@@ -2244,5 +2242,4 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ], 500);
         }
     }
->>>>>>> Stashed changes
 }
