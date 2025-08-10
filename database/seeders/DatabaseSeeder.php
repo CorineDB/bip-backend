@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             OddSeeder::class,
             CibleSeeder::class,
             FinancementSeeder::class,
+            DomaineCategorieSeeder::class,
             OrganisationsSeeder::class,
             ProgrammeSeeder::class,
             DomaineCategorieSeeder::class,
