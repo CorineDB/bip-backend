@@ -50,6 +50,7 @@ class DgpdSeeder extends Seeder
         "consulter-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
         "imprimer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
         "effectuer-l-analyse-climatique-d-une-idee-de-projet",
+        "effectuer-evaluation-climatique-idee-projet",
         "acceder-au-tableau-d-amc",
         "effectuer-l-amc-d-une-idee-de-projet",
         "valider-une-idee-de-projet-a-projet",

@@ -387,7 +387,8 @@ class OrganisationsSeeder extends Seeder
 
             if (!$adminMinistere) {
                 $adminMinisterePersonne = Personne::firstOrCreate(
-                    ['nom' => 'Admin', 'prenom' => ucfirst($ministere->slug)],
+                    ['nom' => 'Admin', 'prenom' => ucfirst($ministere->slug),
+                    'organismeId' => $ministere->id],
                     [
                         'poste' => 'Administrateur Ministère',
                         'organismeId' => $ministere->id
@@ -471,7 +472,8 @@ class OrganisationsSeeder extends Seeder
 
             if (!$membre) {
                 $membrePersonne = Personne::firstOrCreate(
-                    ['nom' => 'Membre', 'prenom' => 'Comité'],
+                    ['nom' => 'Membre', 'prenom' => 'Comité',
+                    'organismeId' => $ministere->id],
                     [
                         'poste' => 'Membre Comité Validation',
                         'organismeId' => $ministere->id
@@ -552,7 +554,8 @@ class OrganisationsSeeder extends Seeder
 
             if (!$adminDpaf) {
                 $adminDpafPersonne = Personne::firstOrCreate(
-                    ['nom' => 'Admin', 'prenom' => 'DPAF'],
+                    ['nom' => 'Admin', 'prenom' => 'DPAF',
+                    'organismeId' => $ministere->id],
                     [
                         'poste' => 'Administrateur DPAF',
                         'organismeId' => $ministere->id
@@ -628,7 +631,8 @@ class OrganisationsSeeder extends Seeder
 
             if (!$responsableProjet) {
                 $responsableProjetPersonne = Personne::firstOrCreate(
-                    ['nom' => 'Responsable', 'prenom' => 'Projet'],
+                    ['nom' => 'Responsable', 'prenom' => 'Projet',
+                    'organismeId' => $ministere->id],
                     [
                         'poste' => 'Responsable de projet',
                         'organismeId' => $ministere->id
@@ -703,7 +707,8 @@ class OrganisationsSeeder extends Seeder
 
             if (!$responsableHierarchique) {
                 $responsableHierarchiquePersonne = Personne::firstOrCreate(
-                    ['nom' => 'Responsable', 'prenom' => 'Hiérarchique'],
+                    ['nom' => 'Responsable', 'prenom' => 'Hiérarchique',
+                    'organismeId' => $ministere->id],
                     [
                         'poste' => 'Responsable hiérachique',
                         'organismeId' => $ministere->id
