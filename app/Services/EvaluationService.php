@@ -403,12 +403,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->where('type_evaluation', 'climatique')
                 ->firstOrFail();
 
-            /*if ($evaluation->statut == 1) {
+            if ($evaluation->statut == 1) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Score Auto Evaluation climatique déja enregistré',
                 ], 400);
-            }*/
+            }
 
             $completionPercentage = $this->calculateCompletionPercentage($evaluation);
 
