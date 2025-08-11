@@ -58,7 +58,6 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
             $item = $this->repository->getModel()->where("profilable_id", Auth::user()->profilable_id)->where("profilable_type", Auth::user()->profilable_type)->get();
 
             return ($this->resourceClass::collection($item->load(['roles', "users"])))->response();
-
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -136,7 +135,6 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
                 'data' => $groupe->load(['roles', 'users', 'profilable']),
                 'statutCode' => Response::HTTP_CREATED
             ], Response::HTTP_CREATED);
-
         } catch (Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -222,7 +220,6 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
                 'data' => $groupe->load(['roles', 'users', 'profilable']),
                 'statutCode' => Response::HTTP_OK
             ], Response::HTTP_OK);
-
         } catch (Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -563,7 +560,11 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
             DB::commit();
 
             // Envoyer l'email d'inscription
-            dispatch(new SendEmailJob($user, "confirmation-compte", $password))->delay(now()->addSeconds(15));
+            //dispatch(new SendEmailJob($user, "confirmation-compte", $password))->delay(now()->addSeconds(15));
+
+            dispatch(new SendEmailJob($user, "confirmation-de-compte"))->delay(now()->addSeconds(15));
+
+            dispatch(new SendEmailJob($user, "confirmation-compte", $password))->delay(now()->addMinutes(1));
 
             $acteur = Auth::check() ? Auth::user()->nom . " " . Auth::user()->prenom : "Inconnu";
             $message = Str::ucfirst($acteur) . " a créé l'utilisateur {$user->username} dans le groupe {$groupe->nom}.";

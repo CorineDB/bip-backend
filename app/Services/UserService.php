@@ -170,7 +170,9 @@ class UserService extends BaseService implements UserServiceInterface
             DB::commit();
 
             //Envoyer les identifiants de connexion à l'utilisateur via son email
-            dispatch(new SendEmailJob($user, "confirmation-compte", $password))->delay(now()->addSeconds(15));
+            dispatch(new SendEmailJob($user, "confirmation-de-compte"))->delay(now()->addSeconds(15));
+
+            dispatch(new SendEmailJob($user, "confirmation-compte", $password))->delay(now()->addMinutes(1));
 
             return (new $this->resourceClass($user))
                 ->additional(['message' => 'Utilisateur créé avec succès.'])

@@ -110,7 +110,11 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
                 $utilisateur->save();
 
                 //Envoyer les identifiants de connexion à l'utilisateur via son email
-                dispatch(new SendEmailJob($organisation->user, "confirmation-compte", $password))->delay(now()->addSeconds(15));
+                //dispatch(new SendEmailJob($organisation->user, "confirmation-compte", $password))->delay(now()->addSeconds(15));
+
+                dispatch(new SendEmailJob($organisation->user, "confirmation-de-compte"))->delay(now()->addSeconds(15));
+
+                dispatch(new SendEmailJob($organisation->user, "confirmation-compte", $password))->delay(now()->addMinutes(1));
             }
 
             $organisation->refresh();

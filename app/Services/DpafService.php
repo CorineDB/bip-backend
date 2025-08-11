@@ -107,7 +107,11 @@ class DpafService extends BaseService implements DpafServiceInterface
                 $utilisateur->save();
 
                 //Envoyer les identifiants de connexion à l'utilisateur via son email
-                dispatch(new SendEmailJob($dpaf->user, "confirmation-compte", $password))->delay(now()->addSeconds(15));
+                //dispatch(new SendEmailJob($dpaf->user, "confirmation-compte", $password))->delay(now()->addSeconds(15));
+
+                dispatch(new SendEmailJob($dpaf->user, "confirmation-de-compte"))->delay(now()->addSeconds(15));
+
+                dispatch(new SendEmailJob($dpaf->user, "confirmation-compte", $password))->delay(now()->addMinutes(1));
 
             }
 
