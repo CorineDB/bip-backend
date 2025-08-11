@@ -43,7 +43,7 @@ class DecisionFinaleValidationNotification extends Notification implements Shoul
     {
         $path = env("CLIENT_APP_URL") ?? config("app.url");
         $decisionText = $this->decision === 'valider' ? 'validée et transformée en projet' : 'refusée';
-        
+
         $message = (new MailMessage)
             ->subject('Décision finale - ' . $this->ideeProjet->sigle)
             ->line('L\'analyste DGPD a pris une décision finale concernant l\'idée de projet "' . $this->ideeProjet->sigle . '".')
@@ -91,10 +91,10 @@ class DecisionFinaleValidationNotification extends Notification implements Shoul
     public function toDatabase($notifiable): array
     {
         $decisionText = $this->decision === 'valider' ? 'validée et transformée en projet' : 'refusée';
-        $messageComplement = $this->decision === 'valider' ? 
-            ' La DPAF a été notifiée pour rédiger la note conceptuelle.' : 
+        $messageComplement = $this->decision === 'valider' ?
+            ' La DPAF a été notifiée pour rédiger la note conceptuelle.' :
             '';
-        
+
         return [
             'type' => 'decision_finale_validation',
             'title' => 'Décision finale de validation',

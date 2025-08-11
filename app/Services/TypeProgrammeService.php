@@ -47,4 +47,14 @@ class TypeProgrammeService extends BaseService implements TypeProgrammeServiceIn
             return $this->errorResponse($e);
         }
     }
+
+    public function composants_composants_de_programme($idComposantProgramme): JsonResponse{
+        try {
+            $data = $this->repository->getModel()->where('typeId', $idComposantProgramme)->get();
+
+            return TypeProgrammeResource::collection($data)->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
 }

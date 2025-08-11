@@ -43,7 +43,7 @@ class EvaluationClimatiqueFinaliseeNotification extends Notification implements 
             ->subject('Évaluation climatique terminée')
             ->line('L\'évaluation climatique de l\'idée de projet "' . $this->ideeProjet->sigle . '" a été terminée.')
             ->line('Score climatique obtenu: ' . ($this->ideeProjet->score_climatique ?? 'Non calculé'))
-            ->action("Voir les résultats", url("{$path}/idees/" . $this->ideeProjet->id))
+            ->action("Voir les résultats", url("{$path}/idees/" . $this->ideeProjet->id . "/details-evaluation-climatique"))
             ->line('Vous pouvez maintenant procéder à la validation de cette idée de projet.');
     }
 
@@ -61,7 +61,7 @@ class EvaluationClimatiqueFinaliseeNotification extends Notification implements 
                 'date_fin_evaluation' => $this->evaluation->valider_le?->toISOString(),
                 'statut' => $this->evaluation->getStatutTextAttribute(),
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id,
+            'action_url' => '/idees/' . $this->ideeProjet->id . "/details-evaluation-climatique",
         ]);
     }
 
@@ -82,7 +82,7 @@ class EvaluationClimatiqueFinaliseeNotification extends Notification implements 
                 'date_fin_evaluation' => $this->evaluation->valider_le?->toISOString(),
                 'statut' => $this->evaluation->getStatutTextAttribute(),
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id,
+            'action_url' => '/idees/' . $this->ideeProjet->id . "/details-evaluation-climatique",
         ];
     }
 }

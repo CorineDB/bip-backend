@@ -7,7 +7,6 @@ use App\Models\Evaluation;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
-use Illuminate\Notifications\Messages\DatabaseMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -45,7 +44,7 @@ class ComiteValidationMinisterielNotification extends Notification implements Sh
             ->line('Score AMC obtenu: ' . number_format($this->ideeProjet->score_amc ?? 0, 2))
             ->line('Score climatique: ' . number_format($this->ideeProjet->score_climatique ?? 0, 2))
             ->line('En tant que membre du Comité de validation ministériel, vous êtes invité(e) à examiner les résultats et apporter vos amendements ou commentaires.')
-            ->action("Examiner et commenter", url("{$path}/idees/" . $this->ideeProjet->id . "/comite-validation"))
+            ->action("Examiner et commenter", url("{$path}/idees/" . $this->ideeProjet->id))
             ->line('Vos commentaires contribueront à l\'amélioration de l\'évaluation de cette idée de projet.');
     }
 
@@ -64,7 +63,7 @@ class ComiteValidationMinisterielNotification extends Notification implements Sh
                 'date_fin_amc' => now()->toISOString(),
                 'action_requise' => 'amendement_commentaire_comite',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/comite-validation',
+            'action_url' => '/idees/' . $this->ideeProjet->id
         ]);
     }
 
@@ -86,7 +85,7 @@ class ComiteValidationMinisterielNotification extends Notification implements Sh
                 'date_fin_amc' => now()->toISOString(),
                 'action_requise' => 'amendement_commentaire_comite',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/comite-validation',
+            'action_url' => '/idees/' . $this->ideeProjet->id
         ];
     }
 }

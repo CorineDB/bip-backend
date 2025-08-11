@@ -225,7 +225,7 @@ class Projet extends Model
 
     public function decisions()
     {
-        return $this->morphMany(Workflow::class, 'projetable');
+        return $this->morphMany(Workflow::class, 'objet_decision');
     }
 
     public function secteur()

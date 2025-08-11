@@ -57,7 +57,7 @@ class EvaluationClimatiqueAssigneeNotification extends Notification implements S
                 'sigle' => $this->ideeProjet->sigle,
                 'date_debut_evaluation' => $this->evaluation->date_debut_evaluation->toISOString(),
             ],
-            'action_url' => '/evaluations/climatique/' . $this->ideeProjet->id,
+            'action_url' => '/idees/' . $this->ideeProjet->id
         ]);
     }
 
@@ -76,7 +76,7 @@ class EvaluationClimatiqueAssigneeNotification extends Notification implements S
                 'sigle' => $this->ideeProjet->sigle,
                 'date_debut_evaluation' => $this->evaluation->date_debut_evaluation->toISOString(),
             ],
-            'action_url' => '/evaluations/climatique/' . $this->ideeProjet->id,
+            'action_url' => '/idees/' . $this->ideeProjet->id
         ];
     }
 }

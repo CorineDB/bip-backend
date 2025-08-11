@@ -47,7 +47,7 @@ class FinAMCAnalysteNotification extends Notification implements ShouldQueue
             ->line('Vous devez maintenant effectuer la validation de l\'idée de projet à projet.')
             ->line('Le Comité de validation ministériel a également été notifié pour amendements ou commentaires.')
             ->action("Procéder à la validation", url("{$path}/idees/" . $this->ideeProjet->id . "/validation-projet"))
-            ->line('Cette validation est nécessaire pour finaliser le processus d\'évaluation.');
+            ->line('Cette validation est nécessaire pour finaliser le processus d\'.');
     }
 
     public function toBroadcast($notifiable)

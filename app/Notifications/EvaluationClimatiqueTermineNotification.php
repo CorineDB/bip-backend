@@ -46,7 +46,7 @@ class EvaluationClimatiqueTermineNotification extends Notification implements Sh
             ->line('L\'évaluation climatique de l\'idée de projet "' . $this->ideeProjet->sigle . '" est maintenant complétée.')
             ->line('Score climatique obtenu: ' . number_format($this->scoreClimatique, 2))
             ->line('Vous devez maintenant valider ce score et transmettre l\'idée au Responsable hiérarchique.')
-            ->action("Finaliser l'évaluation", url("{$path}/idees/" . $this->ideeProjet->id . "/finaliser"))
+            ->action("Finaliser l'évaluation", url("{$path}/idees/" . $this->ideeProjet->id . "/details-evaluation-climatique"))
             ->line('Cette action est nécessaire pour poursuivre le processus d\'évaluation.');
     }
 
@@ -64,7 +64,7 @@ class EvaluationClimatiqueTermineNotification extends Notification implements Sh
                 'date_completion' => now()->toISOString(),
                 'action_requise' => 'finaliser_score_climatique',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/finaliser',
+            'action_url' => '/idees/' . $this->ideeProjet->id . '/details-evaluation-climatique',
         ]);
     }
 
@@ -85,7 +85,7 @@ class EvaluationClimatiqueTermineNotification extends Notification implements Sh
                 'date_completion' => now()->toISOString(),
                 'action_requise' => 'finaliser_score_climatique',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/finaliser',
+            'action_url' => '/idees/' . $this->ideeProjet->id . '/details-evaluation-climatique',
         ];
     }
 }

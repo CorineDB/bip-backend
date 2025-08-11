@@ -44,7 +44,7 @@ class NouvelleIdeeProjetNotification extends Notification implements ShouldQueue
             ->line('Score climatique obtenu: ' . number_format($this->scoreClimatique, 2))
             ->line('Responsable du projet: ' . ($this->ideeProjet->responsable->personne->nom ?? 'Non défini') . ' ' . ($this->ideeProjet->responsable->personne->prenom ?? ''))
             ->line('Cette idée nécessite votre validation avant de passer à l\'étape suivante.')
-            ->action("Examiner l'idée", url("{$path}/idees/" . $this->ideeProjet->id . "/validation"))
+            ->action("Examiner l'idée", url("{$path}/idees/" . $this->ideeProjet->id))
             ->line('Veuillez examiner l\'idée et donner votre décision de validation.');
     }
 
@@ -63,7 +63,7 @@ class NouvelleIdeeProjetNotification extends Notification implements ShouldQueue
                 'date_soumission' => now()->toISOString(),
                 'action_requise' => 'validation_hierarchique',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/validation',
+            'action_url' => '/idees/' . $this->ideeProjet->id
         ]);
     }
 
@@ -85,7 +85,7 @@ class NouvelleIdeeProjetNotification extends Notification implements ShouldQueue
                 'date_soumission' => now()->toISOString(),
                 'action_requise' => 'validation_hierarchique',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/validation',
+            'action_url' => '/idees/' . $this->ideeProjet->id
         ];
     }
 }

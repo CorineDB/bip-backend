@@ -24,6 +24,11 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
     /**
      * Handle the event.
      */
+    // PROPOSITION D'AMÉLIORATION:
+    // Séparer en 2 phases:
+    // 1. Synchrone: Créer/mettre à jour le projet principal
+    // 2. Asynchrone: Dupliquer les relations via dispatch()
+    // Cela évite les erreurs SQL sur le projet principal
     public function handle(IdeeProjetTransformee $event): void
     {
         try {
@@ -116,7 +121,7 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
             'categorieId' => $ideeProjet->categorieId,
             'responsableId' => $ideeProjet->responsableId,
             'demandeurId' => $ideeProjet->demandeurId ?: $ideeProjet->responsableId,
-            'demandeur_type' => $ideeProjet->demandeur ? get_class($ideeProjet->demandeur) : 'App\\Models\\User',
+            // 'demandeur_type' => $ideeProjet->demandeur ? get_class($ideeProjet->demandeur) : 'App\\Models\\User',
             'titre_projet' => $ideeProjet->titre_projet,
         ];
     }
@@ -185,6 +190,48 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
                     'communeId' => $lieu->communeId,
                     'villageId' => $lieu->villageId,
                     'departementId' => $lieu->departementId,
+                ]);
+            }
+        }
+
+        // Dupliquer les decisions
+        if ($ideeProjet->decisions()->exists()) {
+            // Supprimer les anciennes decisions du projet
+            $projet->decisions()->delete();
+
+            // Créer les nouvelles decisions
+            foreach ($ideeProjet->decisions as $decision) {
+                $projet->decisions()->create([
+                    'titre' => $decision->titre,
+                    'description' => $decision->description,
+                    'type_decision' => $decision->type_decision,
+                    'statut' => $decision->statut,
+                    'prise_par' => $decision->prise_par,
+                    'date_decision' => $decision->date_decision,
+                    'commentaire' => $decision->commentaire,
+                    'created_at' => $decision->created_at,
+                    'updated_at' => $decision->updated_at
+                ]);
+            }
+        }
+
+        // Dupliquer les workflows
+        if ($ideeProjet->workflows()->exists()) {
+            // Supprimer les anciens workflows du projet
+            $projet->workflows()->delete();
+
+            // Créer les nouveaux workflows
+            foreach ($ideeProjet->workflows as $workflow) {
+                $projet->workflows()->create([
+                    'etape' => $workflow->etape,
+                    'statut' => $workflow->statut,
+                    'date_debut' => $workflow->date_debut,
+                    'date_fin' => $workflow->date_fin,
+                    'responsable_id' => $workflow->responsable_id,
+                    'commentaire' => $workflow->commentaire,
+                    'ordre' => $workflow->ordre,
+                    'created_at' => $workflow->created_at,
+                    'updated_at' => $workflow->updated_at
                 ]);
             }
         }
@@ -267,4 +314,49 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
             }
         }
     }
+
+    /**
+     * Handle the event with improved async approach.
+     */
+    /*public function handleImproved(IdeeProjetTransformee $event): void
+    {
+        try {
+            // Phase 1: Création/mise à jour synchrone du projet principal
+            $ideeProjet = $event->ideeProjet;
+
+            // Chercher un projet existant basé sur l'idée de projet
+            $projet = Projet::where('ideeProjetId', $ideeProjet->id)->first();
+
+            // Préparer les données à dupliquer
+            $projetData = $this->prepareProjetData($ideeProjet);
+
+            if ($projet) {
+                // Mettre à jour le projet existant
+                $projet->update($projetData);
+            } else {
+                // Créer un nouveau projet
+                $projetData['ideeProjetId'] = $ideeProjet->id;
+                $projet = Projet::create($projetData);
+            }
+
+            Log::info("Projet {$projet->id} créé/mis à jour depuis IdeeProjet {$ideeProjet->id}");
+
+            // Phase 2: Duplication des relations en arrière-plan
+            dispatch(function () use ($ideeProjet, $projet) {
+                try {
+                    DB::beginTransaction();
+                    $this->duplicateRelations($ideeProjet, $projet);
+                    DB::commit();
+                    Log::info("Relations dupliquées pour Projet {$projet->id}");
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    Log::error("Erreur lors de la duplication des relations pour Projet {$projet->id}: " . $e->getMessage());
+                }
+            });
+
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de la création du Projet depuis IdeeProjet {$ideeProjet->id}: " . $e->getMessage());
+            throw $e;
+        }
+    }*/
 }

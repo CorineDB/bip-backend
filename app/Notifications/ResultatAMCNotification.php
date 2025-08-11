@@ -45,7 +45,7 @@ class ResultatAMCNotification extends Notification implements ShouldQueue
             ->line('Score AMC obtenu: ' . number_format($this->ideeProjet->score_amc ?? 0, 2))
             ->line('Score climatique: ' . number_format($this->ideeProjet->score_climatique ?? 0, 2))
             ->line('Vous pouvez maintenant examiner les résultats et apporter des amendements ou commentaires si nécessaire.')
-            ->action("Voir les résultats", url("{$path}/idees/" . $this->ideeProjet->id . "/amc/resultats"))
+            ->action("Voir les résultats", url("{$path}/idees/" . $this->ideeProjet->id . "/details-analyse-multi-critere"))
             ->line('Les résultats sont disponibles pour consultation et amendement.');
     }
 
@@ -64,7 +64,7 @@ class ResultatAMCNotification extends Notification implements ShouldQueue
                 'date_completion' => now()->toISOString(),
                 'action_possible' => 'amendement_commentaire',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/amc/resultats',
+            'action_url' => '/idees/' . $this->ideeProjet->id . '/details-analyse-multi-critere',
         ]);
     }
 
@@ -86,7 +86,7 @@ class ResultatAMCNotification extends Notification implements ShouldQueue
                 'date_completion' => now()->toISOString(),
                 'action_possible' => 'amendement_commentaire',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/amc/resultats',
+            'action_url' => '/idees/' . $this->ideeProjet->id . '/details-analyse-multi-critere',
         ];
     }
 }

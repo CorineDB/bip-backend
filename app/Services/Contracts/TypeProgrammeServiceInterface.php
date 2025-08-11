@@ -8,4 +8,5 @@ interface TypeProgrammeServiceInterface extends AbstractServiceInterface
 {
     public function programmes(): JsonResponse;
     public function composants_de_programme($idProgramme): JsonResponse;
+    public function composants_composants_de_programme($idComposantProgramme): JsonResponse;
 }

@@ -233,7 +233,7 @@ class IdeeProjet extends Model
      */
     public function decisions()
     {
-        return $this->morphMany(Decision::class, 'projetable');
+        return $this->morphMany(Decision::class, 'objet_decision');
     }
 
     /**
@@ -260,6 +260,11 @@ class IdeeProjet extends Model
     public function categorie()
     {
         return $this->belongsTo(CategorieProjet::class, 'categorieId');
+    }
+
+    public function projet()
+    {
+        return $this->hasOne(Projet::class, 'ideeProjetId');
     }
 
     public function responsable()

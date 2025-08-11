@@ -50,7 +50,7 @@ class ProgressionEvaluationClimatiqueNotification extends Notification implement
             ->when($this->scoreClimatique, function ($message) {
                 return $message->line('Score climatique actuel: ' . number_format($this->scoreClimatique, 2));
             })
-            ->action("Voir l'évaluation", url("{$path}/idees/" . $this->ideeProjet->id . "/evaluation"))
+            ->action("Voir l'évaluation", url("{$path}/idees/" . $this->ideeProjet->id . "/details-evaluation-climatique"))
             ->line('Vous serez notifié dès que l\'évaluation sera terminée.');
     }
 
@@ -68,7 +68,7 @@ class ProgressionEvaluationClimatiqueNotification extends Notification implement
                 'score_climatique_actuel' => $this->scoreClimatique,
                 'date_mise_a_jour' => now()->toISOString(),
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/evaluation',
+            'action_url' => '/idees/' . $this->ideeProjet->id . '/details-evaluation-climatique',
         ]);
     }
 
@@ -89,7 +89,7 @@ class ProgressionEvaluationClimatiqueNotification extends Notification implement
                 'score_climatique_actuel' => $this->scoreClimatique,
                 'date_mise_a_jour' => now()->toISOString(),
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/evaluation',
+            'action_url' => '/idees/' . $this->ideeProjet->id . '/details-evaluation-climatique',
         ];
     }
 }

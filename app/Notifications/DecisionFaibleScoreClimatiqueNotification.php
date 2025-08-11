@@ -55,7 +55,7 @@ class DecisionFaibleScoreClimatiqueNotification extends Notification implements 
 
         if ($this->decision === 'reevaluer') {
             $message->line('Une nouvelle évaluation climatique est demandée.')
-                   ->action("Commencer la réévaluation", url("{$path}/idees/" . $this->ideeProjet->id . "/evaluation"));
+                   ->action("Commencer la réévaluation", url("{$path}/idees/" . $this->ideeProjet->id . "/validation-evaluation-climatique"));
         } else {
             $message->action("Voir les détails", url("{$path}/idees/" . $this->ideeProjet->id));
         }
@@ -77,7 +77,7 @@ class DecisionFaibleScoreClimatiqueNotification extends Notification implements 
                 'commentaire' => $this->commentaire,
                 'date_decision' => now()->toISOString(),
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . ($this->decision === 'reevaluer' ? '/evaluation' : ''),
+            'action_url' => '/idees/' . $this->ideeProjet->id . ($this->decision === 'reevaluer' ? '/details-evaluation-climatique' : ''),
         ]);
     }
 
@@ -87,7 +87,7 @@ class DecisionFaibleScoreClimatiqueNotification extends Notification implements 
     public function toDatabase($notifiable): array
     {
         $decisionText = $this->decision === 'refuser' ? 'refusée' : 'acceptée pour réévaluation';
-        
+
         return [
             'type' => 'decision_faible_score_climatique',
             'title' => 'Décision suite au score climatique',
@@ -100,7 +100,7 @@ class DecisionFaibleScoreClimatiqueNotification extends Notification implements 
                 'commentaire' => $this->commentaire,
                 'date_decision' => now()->toISOString(),
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . ($this->decision === 'reevaluer' ? '/evaluation' : ''),
+            'action_url' => '/idees/' . $this->ideeProjet->id . ($this->decision === 'reevaluer' ? '/details-evaluation-climatique' : ''),
         ];
     }
 }

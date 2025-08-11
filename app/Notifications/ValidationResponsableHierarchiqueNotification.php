@@ -40,7 +40,7 @@ class ValidationResponsableHierarchiqueNotification extends Notification impleme
     {
         $path = env("CLIENT_APP_URL") ?? config("app.url");
         $decisionText = $this->decision === 'valider' ? 'validée' : 'refusée';
-        
+
         if ($this->decision === 'valider') {
             $actionText = 'L\'idée va maintenant passer à l\'analyse multicritères.';
         } else {
@@ -61,7 +61,7 @@ class ValidationResponsableHierarchiqueNotification extends Notification impleme
             $message->line('L\'analyste DGPD et les membres du Service technique/service étude ont été notifiés pour procéder à l\'analyse multicritères.');
         } else {
             $message->line('Veuillez réviser et reformuler votre idée en tenant compte des commentaires.')
-                   ->action("Modifier l'idée", url("{$path}/idees/" . $this->ideeProjet->id . "/edit"));
+                   ->action("Modifier l'idée", url("{$path}/idees/creer" . ($this->decision === 'refuser' ? '?edit=' . $this->ideeProjet->id : '')));
         }
 
         return $message;
@@ -81,7 +81,7 @@ class ValidationResponsableHierarchiqueNotification extends Notification impleme
                 'date_decision' => now()->toISOString(),
                 'prochaine_etape' => $this->decision === 'valider' ? 'analyse_multicriteres' : 'retour_brouillon',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . ($this->decision === 'refuser' ? '/edit' : ''),
+            'action_url' => '/idees/creer' . ($this->decision === 'refuser' ? '?edit=' . $this->ideeProjet->id : ''),
         ]);
     }
 
@@ -91,10 +91,10 @@ class ValidationResponsableHierarchiqueNotification extends Notification impleme
     public function toDatabase($notifiable): array
     {
         $decisionText = $this->decision === 'valider' ? 'validée' : 'refusée';
-        $messageComplement = $this->decision === 'valider' ? 
-            ' L\'idée passe à l\'analyse multicritères.' : 
+        $messageComplement = $this->decision === 'valider' ?
+            ' L\'idée passe à l\'analyse multicritères.' :
             ' L\'idée retourne en phase de rédaction (brouillon) pour révision.';
-        
+
         return [
             'type' => 'validation_responsable_hierarchique',
             'title' => 'Décision du Responsable hiérarchique',
@@ -107,7 +107,7 @@ class ValidationResponsableHierarchiqueNotification extends Notification impleme
                 'date_decision' => now()->toISOString(),
                 'prochaine_etape' => $this->decision === 'valider' ? 'analyse_multicriteres' : 'retour_brouillon',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . ($this->decision === 'refuser' ? '/edit' : ''),
+            'action_url' => '/idees/creer' . ($this->decision === 'refuser' ? '?edit=' . $this->ideeProjet->id : ''),
         ];
     }
 }

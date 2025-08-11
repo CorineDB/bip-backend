@@ -46,7 +46,7 @@ class DemandeAnalyseMulticriteresNotification extends Notification implements Sh
             ->line('Validée par: ' . ($this->responsableValidateur->personne->nom ?? 'Non défini') . ' ' . ($this->responsableValidateur->personne->prenom ?? ''))
             ->line('Email du validateur: ' . $this->responsableValidateur->email)
             ->line('Cette idée doit maintenant faire l\'objet d\'une analyse multicritères.')
-            ->action("Commencer l'analyse", url("{$path}/idees/" . $this->ideeProjet->id . "/amc"))
+            ->action("Commencer l'analyse", url("{$path}/idees/" . $this->ideeProjet->id))
             ->line('Veuillez procéder à l\'analyse multicritères de cette idée de projet.');
     }
 
@@ -66,7 +66,7 @@ class DemandeAnalyseMulticriteresNotification extends Notification implements Sh
                 'date_validation' => now()->toISOString(),
                 'action_requise' => 'analyse_multicriteres',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/amc',
+            'action_url' => '/idees/' . $this->ideeProjet->id
         ]);
     }
 
@@ -89,7 +89,7 @@ class DemandeAnalyseMulticriteresNotification extends Notification implements Sh
                 'date_validation' => now()->toISOString(),
                 'action_requise' => 'analyse_multicriteres',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/amc',
+            'action_url' => '/idees/' . $this->ideeProjet->id
         ];
     }
 }

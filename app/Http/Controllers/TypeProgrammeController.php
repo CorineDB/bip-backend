@@ -366,4 +366,9 @@ class TypeProgrammeController extends Controller
     {
         return $this->service->composants_de_programme($idProgramme);
     }
+
+    public function composants_composants_de_programme($idProgramme, $idComposantProgramme): JsonResponse
+    {
+        return $this->service->composants_composants_de_programme($idComposantProgramme);
+    }
 }

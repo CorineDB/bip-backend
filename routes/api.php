@@ -192,11 +192,20 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         Route::prefix('programmes')->name('programmes.')->controller(TypeProgrammeController::class)->group(function () {
             Route::get("{id}/composants-programme", "composants_de_programme");
+            Route::get("{idProgramme}/composants-programme/{idComposantProgramme}", "composants_composants_de_programme");
             Route::get("/", "programmes");
+        });
+
+        Route::controller(ComposantProgrammeController::class)->group(function () {
+            Route::get('programmes/{idProgramme}/composants-programme/{idComposantProgramme}/composants', 'composants_de_programme');
         });
 
         Route::apiResource('composants-programme', ComposantProgrammeController::class)
             ->parameters(['composants-programme' => 'composant_programme']);
+
+        Route::controller(ComposantProgrammeController::class)->group(function () {
+            Route::get('programmes/composants-programme/{id}/composants', 'composants_de_programme');
+        });
 
         Route::controller(ComposantProgrammeController::class)->group(function () {
             Route::get('composants-programme/{id}', 'composants_de_programme');
@@ -451,7 +460,7 @@ Route::get('/test-json', function () {
                     'code' => $code,
                     'slug' => $slug,
                     'arrondissementId' => $arrondissementRecord->id
-                ],[
+                ], [
 
                     'code' => $code,
                     'nom' => Str::title($quartier["lib_quart"]),
