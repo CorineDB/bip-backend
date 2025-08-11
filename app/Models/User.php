@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EnumTypeOrganisation;
 use App\Services\Traits\HasPermissionTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 use Laravel\Passport\Contracts\OAuthenticatable;
 use Laravel\Passport\HasApiTokens;
@@ -279,6 +281,86 @@ class User extends Authenticatable implements OAuthenticatable
     {
         return $query->whereHas("personne", function ($query) use ($idMinistere) {
             $query->ministeres($idMinistere);
+        });
+    }
+
+    /**
+     * Scope pour vérifier si un user appartient à un ministère donné.
+     *
+     * Vérifie si le user a un profilable de type Organisation ou Dpaf
+     * qui appartient au ministère spécifié.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int $ministereId ID du ministère
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByMinistere(Builder $query, $ministereId)
+    {
+        // Récupérer tous les IDs d'organisations qui appartiennent au ministère
+        $organisationIds = collect();
+        
+        // Pour les DPAF : directement via id_ministere
+        $dpafIds = Dpaf::where('id_ministere', $ministereId)->pluck('id');
+        
+        // Pour les Organisations : utiliser la logique de la méthode ministere()
+        $organisations = Organisation::all();
+        foreach ($organisations as $organisation) {
+            // Si c'est le ministère lui-même
+            if ($organisation->type === EnumTypeOrganisation::MINISTERE && $organisation->id == $ministereId) {
+                $organisationIds->push($organisation->id);
+                continue;
+            }
+            
+            // Recherche en profondeur dans la hiérarchie
+            $current = $organisation;
+            while ($current && $current->parent) {
+                $current = $current->parent;
+                if ($current->type === EnumTypeOrganisation::MINISTERE && $current->id == $ministereId) {
+                    $organisationIds->push($organisation->id);
+                    break;
+                }
+            }
+        }
+        
+        return $query->whereIn("profilable_type", [Organisation::class, Dpaf::class])
+            ->where("status", "actif")
+            ->where(function($userQuery) use ($organisationIds, $dpafIds) {
+                $userQuery->where(function($q) use ($dpafIds) {
+                    // Users avec profilable de type Dpaf
+                    $q->where('profilable_type', Dpaf::class)
+                      ->whereIn('profilable_id', $dpafIds);
+                })
+                ->orWhere(function($q) use ($organisationIds) {
+                    // Users avec profilable de type Organisation
+                    $q->where('profilable_type', Organisation::class)
+                      ->whereIn('profilable_id', $organisationIds);
+                });
+            });
+    }
+
+    /**
+     * Scope pour filtrer les users qui ont une permission spécifique.
+     * Utilise le trait HasPermissionTrait pour vérifier toutes les sources de permissions.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $permission Slug de la permission
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeWithPermission(Builder $query, $permission)
+    {
+        return $query->where(function($subQuery) use ($permission) {
+            // Via role direct (roleId)
+            $subQuery->whereHas('role.permissions', function($permQuery) use ($permission) {
+                $permQuery->where('slug', $permission);
+            })
+            // Via roles multiples (user_roles)
+            ->orWhereHas('roles.permissions', function($permQuery) use ($permission) {
+                $permQuery->where('slug', $permission);
+            })
+            // Via groupes utilisateur
+            ->orWhereHas('groupesUtilisateur.roles.permissions', function($permQuery) use ($permission) {
+                $permQuery->where('slug', $permission);
+            });
         });
     }
 }

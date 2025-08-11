@@ -198,11 +198,10 @@ class Evaluation extends Model
             ->groupBy('evaluateur_id');
     }
 
-    public function scopeEvaluateursClimatique()
+    public function scopeEvaluateursClimatique($query)
     {
-        return User::whereHas("personne", function($query){
-            $query->where("organismeId", $this->projetable->ministere->id)->where("status", "actif");
-        });
+        return User::byMinistere($this->projetable->ministere->id)
+                   ->withPermission('effectuer-evaluation-climatique-idee-projet');
         return $this->where("id", $this->id)->where("type_evaluation", "climatique")->where("projetable_type", IdeeProjet::class);
     }
 

@@ -244,11 +244,45 @@ class Organisation extends Model
     }
 
     /**
-     * Scope pour récupérer toutes les organisations descendantes d’un ministère donné,
-     * en excluant le ministère lui-même, à l’aide d’une requête récursive SQL (nécessite MySQL 8+ ou PostgreSQL).
+     * Scope pour récupérer le ministre d'une organisation.
+     *
+     * Ce scope retourne l'organisation de type ministère qui est soit :
+     * - l'organisation elle-même si elle est de type ministère
+     * - l'organisation parente de type ministère en remontant la hiérarchie
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int $organisationId ID de l'organisation
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeMinistere($query, $organisationId)
+    {
+        $organisation = self::find($organisationId);
+
+        if (!$organisation) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($organisation->type === EnumTypeOrganisation::MINISTERE) {
+            return $query->where('id', $organisation->id);
+        }
+
+        $current = $organisation;
+        while ($current->parent) {
+            $current = $current->parent;
+            if ($current->type === EnumTypeOrganisation::MINISTERE) {
+                return $query->where('id', $current->id);
+            }
+        }
+
+        return $query->whereRaw('1 = 0');
+    }
+
+    /**
+     * Scope pour récupérer toutes les organisations descendantes d'un ministère donné,
+     * en excluant le ministère lui-même, à l'aide d'une requête récursive SQL (nécessite MySQL 8+ ou PostgreSQL).
      *
      * Ce scope utilise une CTE récursive (WITH RECURSIVE) pour parcourir la hiérarchie
-     * des organisations à partir de l’ID du ministère racine. Il permet d’obtenir efficacement
+     * des organisations à partir de l'ID du ministère racine. Il permet d'obtenir efficacement
      * tous les enfants directs et indirects sans recourir à une boucle en PHP.
      *
      * @param \Illuminate\Database\Eloquent\Builder $query

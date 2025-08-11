@@ -1074,7 +1074,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             }
 
             // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
-            $evaluateurs = $evaluation->evaluateursClimatique()->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'));
+            $evaluateurs = $evaluation->evaluateursClimatique()->get();
 
             /* User::when($ideeProjet->ministere, function ($query) use ($ideeProjet) {
                 $query->where(function ($q) use ($ideeProjet) {
