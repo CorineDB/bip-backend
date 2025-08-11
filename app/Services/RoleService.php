@@ -26,8 +26,19 @@ class RoleService extends BaseService implements RoleServiceInterface
     public function all(): JsonResponse
     {
         try {
+            $user = Auth::user();
 
-            $item = $this->repository->getModel()->where("roleable_id", Auth::user()->profilable_id)->where("roleable_type", Auth::user()->profilable_type)->get();
+            $query = $this->repository->getModel()->whereNotIn('slug', ['super-admin', 'dpaf', 'dgpd', 'organisation'])
+                ->where("roleable_id", $user->profilable_id)
+                ->where("roleable_type", $user->profilable_type);
+
+            // Si l'utilisateur est super admin (profilable_type et profilable_id sont null),
+            // exclure les rôles spécifiés
+            if (is_null($user->profilable_type) && is_null($user->profilable_id)) {
+                $query->whereNotIn('slug', ['analyste-dgpd']);
+            }
+
+            $item = $query->get();
 
             return ($this->resourceClass::collection($item->load('permissions')))->response();
 

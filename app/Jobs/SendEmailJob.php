@@ -84,32 +84,35 @@ class SendEmailJob implements ShouldQueue
 
                 $mailer = new ReinitialisationMotDePasseEmail($details);
             }
-            /*elseif ($this->type == "rappel-ano") {
-                $details['view'] = "emails.ano.rappel";
-                $details['subject'] = "Rappel de traitement d'une demande d'ano";
-                $details['content'] = [
-                    "greeting" => "Demande d'ano",
-                    "introduction" => "Une demande d'ano est entente de validation",
-                ];
-                $mailer = new AnoEmail($details);
-            } elseif ($this->type == "demande-ano") {
-                $details['view'] = "emails.ano.demande";
-                $details['subject'] = "Nouvelle demande d'ano";
-                $details['content'] = [
-                    "greeting" => "Demande d'ano",
-                    "introduction" => "Une nouvelle demande d'ano vient d'être soumis",
-                ];
-                $mailer = new AnoEmail($details);
 
-            } elseif ($this->type == "reponse-ano") {
-                $details['view'] = "emails.ano.reponse";
-                $details['subject'] = "Reponse suite à la demande d'ano";
-                $details['content'] = [
-                    "greeting" => "Reponse à la demande d'ano",
-                    "introduction" => "Une nouvelle demande d'ano vient d'être soumis",
-                ];
-                $mailer = new AnoEmail($details);
-            }*/
+            /*
+                elseif ($this->type == "rappel-ano") {
+                    $details['view'] = "emails.ano.rappel";
+                    $details['subject'] = "Rappel de traitement d'une demande d'ano";
+                    $details['content'] = [
+                        "greeting" => "Demande d'ano",
+                        "introduction" => "Une demande d'ano est entente de validation",
+                    ];
+                    $mailer = new AnoEmail($details);
+                } elseif ($this->type == "demande-ano") {
+                    $details['view'] = "emails.ano.demande";
+                    $details['subject'] = "Nouvelle demande d'ano";
+                    $details['content'] = [
+                        "greeting" => "Demande d'ano",
+                        "introduction" => "Une nouvelle demande d'ano vient d'être soumis",
+                    ];
+                    $mailer = new AnoEmail($details);
+
+                } elseif ($this->type == "reponse-ano") {
+                    $details['view'] = "emails.ano.reponse";
+                    $details['subject'] = "Reponse suite à la demande d'ano";
+                    $details['content'] = [
+                        "greeting" => "Reponse à la demande d'ano",
+                        "introduction" => "Une nouvelle demande d'ano vient d'être soumis",
+                    ];
+                    $mailer = new AnoEmail($details);
+                }
+            */
 
             $when = now()->addSeconds(5);
 

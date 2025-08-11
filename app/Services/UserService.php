@@ -51,15 +51,27 @@ class UserService extends BaseService implements UserServiceInterface
     public function all(): JsonResponse
     {
         try {
+            $user = Auth::user();
 
-            $item = $this->repository->getModel()->where("profilable_id", Auth::user()->profilable_id)->where("profilable_type", Auth::user()->profilable_type)->get();
+            $query = $this->repository->getModel()
+                ->where("profilable_id", $user->profilable_id)
+                ->where("profilable_type", $user->profilable_type);
+
+            // Si l'utilisateur appartient aux scopes organisation, dpaf, ou dgpd,
+            // exclure les utilisateurs admin du scope
+            if (!is_null($user->profilable_type) && in_array($user->profilable_type, ['App\Models\Organisation', 'App\Models\Dpaf', 'App\Models\Dgpd'])) {
+                $query->whereHas('role', function ($roleQuery) {
+                    $roleQuery->whereNotIn('slug', '!=', ['organisation', 'dpaf', 'dgpd']);
+                });
+            }
+
+            $item = $query->get();
 
             return ($this->resourceClass::collection($item->load('role')))->response();
-
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Role not found.',
+                'message' => 'User not found.',
             ], 404);
         } catch (Exception $e) {
             return $this->errorResponse($e);
@@ -133,25 +145,27 @@ class UserService extends BaseService implements UserServiceInterface
 
             // Créer l'utilisateur dans Keycloak aussi
 
-            /*$keycloakId = $this->authService->createKeycloakUser([
-                'email' => $user->email,
-                'username' => $user->username,
-                'first_name' => $personne->prenom ?? '',
-                'last_name' => $personne->nom ?? '',
-                'password' => $data['password']
-            ]);
-
-            // Mettre à jour l'utilisateur avec le keycloak_id
-            if ($keycloakId) {
-                $user->update(['keycloak_id' => $keycloakId]);
-            } else {
-                // Log warning but don't fail the user creation
-                \Log::warning('User created in Laravel but failed to create in Keycloak', [
-                    'user_id' => $user->id,
-                    'email' => $user->email
+            /*
+                $keycloakId = $this->authService->createKeycloakUser([
+                    'email' => $user->email,
+                    'username' => $user->username,
+                    'first_name' => $personne->prenom ?? '',
+                    'last_name' => $personne->nom ?? '',
+                    'password' => $data['password']
                 ]);
-                DB::rollBack();
-            }*/
+
+                // Mettre à jour l'utilisateur avec le keycloak_id
+                if ($keycloakId) {
+                    $user->update(['keycloak_id' => $keycloakId]);
+                } else {
+                    // Log warning but don't fail the user creation
+                    \Log::warning('User created in Laravel but failed to create in Keycloak', [
+                        'user_id' => $user->id,
+                        'email' => $user->email
+                    ]);
+                    DB::rollBack();
+                }
+            */
 
             DB::commit();
 
