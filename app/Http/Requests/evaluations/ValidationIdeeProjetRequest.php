@@ -32,9 +32,9 @@ class ValidationIdeeProjetRequest extends FormRequest
 
         $this->ideeProjet = IdeeProjet::findOrFail($ideeProjetId);
 
-        /*if ($this->ideeProjet->statut != StatutIdee::IDEE_DE_PROJET) {
+        if ($this->ideeProjet->statut != StatutIdee::IDEE_DE_PROJET) {
             throw ValidationException::withMessages(["Vous le statut de l'idee de projet est a ". $this->ideeProjet->statut->value]);
-        }*/
+        }
 
     }
 

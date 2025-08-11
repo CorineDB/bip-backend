@@ -71,7 +71,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     public function validerIdeeDeProjet($ideeProjetId, array $attributs): JsonResponse
     {
         try {
-            if (auth()->user()->type !== 'responsable-hierachique') {
+            if (auth()->user()->type !== "responsable-hierachique") {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -140,7 +140,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $this->enregistrerDecision($ideeProjet, 'Rejet par Responsable hiérarchique', $attributs["commentaire"] ?? 'Idée rejetée - Retour en phase de rédaction');
 
                 // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
-                $evaluateurs = User::where('profilable_type', auth()->user()->profilable_type)->where('profilable_id', auth()->user()->profilable_id)
+                /*$evaluateurs = User::where('profilable_type', auth()->user()->profilable_type)->where('profilable_id', auth()->user()->profilable_id)
                     ->where(function ($query) {
                         $query->whereHas('roles', function ($query) {
                             $query->whereHas('permissions', function ($subQuery) {
@@ -155,7 +155,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
                 if ($evaluateurs->count() == 0) {
                     throw new Exception('Aucun évaluateur trouvé avec la permission "effectuer-evaluation-climatique-idee-projet"', 404);
-                }
+                }*/
 
                 $evaluateurs = $evaluation->evaluateursClimatique()->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'));
 
@@ -423,6 +423,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $evaluateurs = $evaluation->evaluateursClimatique()->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'));
             $criteres = $evaluation->criteres;
             $evaluationCriteres = new Collection();
+
             foreach ($evaluateurs as $evaluateur) {
                 foreach ($criteres as $critere) {
                     $evaluationCritere = $evaluation->evaluationCriteres()
@@ -445,6 +446,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     $evaluationCriteres->push($evaluationCritere->load(['critere', 'notation', 'categorieCritere', 'evaluateur']));
                 }
             }
+
             $aggregatedScores = $evaluation->aggregateScoresByCritere($evaluationCriteres);
             $finalResults = $this->calculateFinalResults($aggregatedScores);
 
@@ -459,14 +461,14 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             }
 
             $ideeProjet->update([
-                'score_climatique' => $finalResults['score_climatique']['score_climatique'],
+                'score_climatique' => $finalResults['score_final_pondere'],
                 'identifiant_bip' => $this->generateIdentifiantBip(),
                 'statut' => StatutIdee::IDEE_DE_PROJET  // Marquer comme terminée
             ]);
 
             // Enregistrer le workflow et la décision
             $this->enregistrerWorkflow($ideeProjet, StatutIdee::IDEE_DE_PROJET);
-            $this->enregistrerDecision($ideeProjet, 'Finalisation score climatique', 'Score climatique finalisé: ' . ($finalResults['score_climatique']['score_climatique'] ?? 0));
+            $this->enregistrerDecision($ideeProjet, 'Finalisation score climatique', 'Score climatique finalisé: ' . ($finalResults['score_final_pondere'] ?? 0));
 
             $evaluation->update([
                 'resultats_evaluation' => $finalResults,
@@ -487,7 +489,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->get();
 
             if ($responsablesHierarchiques->count() > 0) {
-                $scoreClimatique = $finalResults['score_climatique']['score_climatique'] ?? 0;
+                $scoreClimatique = $finalResults['score_final_pondere'] ?? 0;
                 Notification::send($responsablesHierarchiques, new NouvelleIdeeProjetNotification($ideeProjet, $scoreClimatique));
             }
 
@@ -582,6 +584,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                         });
                     });
                 })->get();*/
+
 
 
             if ($evaluateurs->count() == 0) {
@@ -766,7 +769,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
                     $isAssigned = $evaluation->evaluateursClimatique()->where("id", auth()->id())->first()?->hasPermissionTo('effectuer-evaluation-climatique-idee-projet');
 
-                    throw new Exception("Error Processing Request" . json_encode($evaluation->evaluateursClimatique()->get()), 403);
+                    //throw new Exception("Error Processing Request" . json_encode($evaluation->evaluateursClimatique()->get()), 403);
 
                     //->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->isNotEmpty(); // ✅ on vérifie bien si la collection n'est pas vide;
                     $evaluateur = $evaluation->evaluateursClimatique()->where("id", auth()->id())
