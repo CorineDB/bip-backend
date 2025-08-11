@@ -8,6 +8,8 @@ interface ComposantProgrammeServiceInterface extends AbstractServiceInterface
 {
     // Define contract methods here
 
+    public function composants_de_programme($idComposantTypeProgramme): JsonResponse;
+
     /**
      * Les axes du pag
      */

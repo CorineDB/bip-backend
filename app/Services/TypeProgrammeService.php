@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Resources\ProgrammeResource;
 use Illuminate\Http\JsonResponse;
 use Exception;
 use App\Services\BaseService;
@@ -24,5 +25,26 @@ class TypeProgrammeService extends BaseService implements TypeProgrammeServiceIn
     protected function getResourceClass(): string
     {
         return TypeProgrammeResource::class;
+    }
+
+
+    public function programmes(): JsonResponse {
+        try {
+            $data = $this->repository->getModel()->whereNull('typeId')->get();
+
+            return ProgrammeResource::collection($data)->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function composants_de_programme($idProgramme): JsonResponse {
+        try {
+            $data = $this->repository->getModel()->where('typeId', $idProgramme)->get();
+
+            return TypeProgrammeResource::collection($data)->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
     }
 }

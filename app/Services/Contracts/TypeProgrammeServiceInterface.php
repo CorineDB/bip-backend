@@ -2,7 +2,10 @@
 
 namespace App\Services\Contracts;
 
+use Illuminate\Http\JsonResponse;
+
 interface TypeProgrammeServiceInterface extends AbstractServiceInterface
 {
-    // Define contract methods here
+    public function programmes(): JsonResponse;
+    public function composants_de_programme($idProgramme): JsonResponse;
 }

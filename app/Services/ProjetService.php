@@ -2,11 +2,9 @@
 
 namespace App\Services;
 
-use Illuminate\Http\JsonResponse;
-use Exception;
+use App\Http\Resources\projets\ProjetsResource;
 use App\Services\BaseService;
 use App\Repositories\Contracts\BaseRepositoryInterface;
-use App\Http\Resources\ProjetResource;
 use App\Repositories\Contracts\ProjetRepositoryInterface;
 use App\Services\Contracts\ProjetServiceInterface;
 
@@ -23,6 +21,6 @@ class ProjetService extends BaseService implements ProjetServiceInterface
 
     protected function getResourceClass(): string
     {
-        return ProjetResource::class;
+        return ProjetsResource::class;
     }
 }

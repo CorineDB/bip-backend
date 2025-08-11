@@ -237,11 +237,11 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
                 throw new Exception("Erreur d'activation du compte", 500);
             }
 
-            //$utilisateur->account_verification_request_sent_at = null;
+            $utilisateur->account_verification_request_sent_at = null;
 
             $utilisateur->link_is_valide = false;
 
-            //$utilisateur->token = null;
+            $utilisateur->token = null;
 
             // Sauvegarder les informations
             $utilisateur->save();
@@ -530,8 +530,6 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
             return response()->json(['statut' => 'error', 'message' => $th->getMessage(), 'errors' => []], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
-
 
     /**
      * Generate authenticate token

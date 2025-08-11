@@ -169,7 +169,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::get('?statut=', 'filterByStatut');
         });
 
-        Route::apiResource('projets', ProjetController::class);
+        Route::apiResource('projets', ProjetController::class)->only(['index', 'show']);
         Route::apiResource('categories-projet', CategorieProjetController::class);
         Route::apiResource('secteurs', SecteurController::class);
 
@@ -189,10 +189,17 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         Route::apiResource('types-programme', TypeProgrammeController::class)
             ->parameters(['types-programme' => 'type_programme']);
+
+        Route::prefix('programmes')->name('programmes.')->controller(TypeProgrammeController::class)->group(function () {
+            Route::get("{id}/composants-programme", "composants_de_programme");
+            Route::get("/", "programmes");
+        });
+
         Route::apiResource('composants-programme', ComposantProgrammeController::class)
             ->parameters(['composants-programme' => 'composant_programme']);
 
         Route::controller(ComposantProgrammeController::class)->group(function () {
+            Route::get('composants-programme/{id}', 'composants_de_programme');
             Route::get('axes-pag', 'axesPag');
             Route::get('piliers-pag', 'piliersPag');
             Route::get('actions-pag', 'actionsPag');

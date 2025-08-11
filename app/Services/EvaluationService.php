@@ -569,7 +569,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     });
                 })->get();*/
 
-            $evaluateurs = $evaluation->evaluateursClimatique()->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'));
+            $evaluateurs = $evaluation->evaluateursClimatique()->get()/* ->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet')) */;
 
             // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
             /*$evaluateurs = User::where('profilable_type', auth()->user()->profilable_type)->where('profilable_id', auth()->user()->profilable_id)
