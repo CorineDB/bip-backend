@@ -380,4 +380,12 @@ class IdeeProjet extends Model
     {
         return $this->fichiers()->byCategorie($categorie);
     }
+
+    public function scopeEvaluateursClimatique()
+    {
+        return User::whereHas("personne", function($query){
+            $query->where("organismeId", $this->ministere->id)->where("status", "actif");
+        });
+        return $this->where("id", $this->id)->where("type_evaluation", "climatique")->where("projetable_type", IdeeProjet::class);
+    }
 }

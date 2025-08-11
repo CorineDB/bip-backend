@@ -15,9 +15,9 @@ trait HasPermissionTrait
     {
         if(is_string($permission)){
 
-            return $this->roles->each(function ($role) use ($permission) {
-                return ($role->permissions->contains($permission));
-            })->count();
+            return $this->roles->contains(function ($role) use ($permission) {
+                return $role->permissions->contains('slug', $permission);
+            });
             /*foreach ($permission->roles as $role) {
                 if ($this->roles->contains($role)) {
                     return true;

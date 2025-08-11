@@ -217,7 +217,7 @@ class Evaluation extends Model
         //dd($this->criteres);
 
         $totalEvaluateurs = $this->evaluateursClimatique()
-        ->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->count();
+                ->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->count();
 
         return $query->evaluationCriteres()->where("est_archiver", false)
             ->with(['critere', 'notation', 'evaluateur'])
