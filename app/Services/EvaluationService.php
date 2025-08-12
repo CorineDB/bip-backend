@@ -600,16 +600,16 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     {
         $totalEvaluateurs = $evaluation->evaluateursClimatique()->count();
         $totalEvaluateurs = $evaluation->evaluateursClimatique()
-            ->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->count(); // ✅ on vérifie bien si la collection n'est pas vide;
+            ->get()->count(); // ✅ on vérifie bien si la collection n'est pas vide;
 
         if ($evaluation->statut != 1) {
             // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
             $totalEvaluateurs = $evaluation->evaluateursClimatique()
-                ->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->count(); // ✅ on vérifie bien si la collection n'est pas vide;
+                ->get()->count(); // ✅ on vérifie bien si la collection n'est pas vide;
 
         } else {
 
-            $evaluateurs = $evaluation->evaluateursDeEvalPreliminaireClimatique()
+            $totalEvaluateurs = $evaluation->evaluateursDeEvalPreliminaireClimatique()
                 ->select('users.*')
                 ->distinct('users.id')
                 ->count();
