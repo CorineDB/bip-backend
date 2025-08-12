@@ -84,6 +84,10 @@ class CategorieCritere extends Model
     public function setTypeAttribute($value)
     {
         $this->attributes['type'] = Str::ucfirst(trim($value)); // Escape value with backslashes
+
+        if(!isset($this->attributes['slug'])){
+            $this->attributes['slug'] = $this->attributes['type'];
+        }
     }
 
     /**

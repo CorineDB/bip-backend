@@ -102,6 +102,10 @@ class Village extends Model
     public function setNomAttribute($value)
     {
         $this->attributes['nom'] = Str::ucfirst(trim($value)); // Escape value with backslashes
+
+        if(!isset($this->attributes['slug'])){
+            $this->attributes['slug'] = $this->attributes['nom'];
+        }
     }
 
     /**

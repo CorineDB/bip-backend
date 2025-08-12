@@ -102,6 +102,10 @@ class TypeProgramme extends Model
     public function setTypeProgrammeAttribute($value)
     {
         $this->attributes['type_programme'] = Str::ucfirst(trim($value)); // Escape value with backslashes
+
+        if(!isset($this->attributes['slug'])){
+            $this->attributes['slug'] = $this->attributes['type_programme'];
+        }
     }
 
     /**

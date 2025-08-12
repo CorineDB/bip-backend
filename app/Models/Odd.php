@@ -104,6 +104,10 @@ class Odd extends Model
     public function setOddAttribute($value)
     {
         $this->attributes['odd'] = Str::ucfirst(trim($value)); // Escape value with backslashes
+
+        if(!isset($this->attributes['slug'])){
+            $this->attributes['slug'] = $this->attributes['odd'];
+        }
     }
 
     /**

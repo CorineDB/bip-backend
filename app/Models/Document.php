@@ -102,6 +102,10 @@ class Document extends Model
     public function setNomAttribute($value)
     {
         $this->attributes['nom'] = Str::ucfirst(trim($value)); // Escape value with backslashes
+
+        if(!isset($this->attributes['slug'])){
+            $this->attributes['slug'] = $this->attributes['nom'];
+        }
     }
 
     public function setSlugAttribute($value)
@@ -162,5 +166,36 @@ class Document extends Model
     public function all_champs()
     {
         return $this->hasMany(Champ::class, 'documentId');;
+    }
+
+    /**
+     * Construire la liste ordonnée des éléments (champs et sections mélangés)
+     */
+    public function getOrderedElements()
+    {
+        $elements = collect();
+
+        // Ajouter les champs globaux
+        foreach ($this->champs->sortBy('ordre_affichage') as $champ) {
+            $elements->push([
+                'type' => 'champ',
+                'element_type' => 'field',
+                'ordre_affichage' => $champ->ordre_affichage,
+                'data' => $champ
+            ]);
+        }
+
+        // Ajouter les sections parents
+        foreach ($this->sections->whereNull('parentSectionId')->sortBy('ordre_affichage') as $section) {
+            $elements->push([
+                'type' => 'section',
+                'element_type' => 'section',
+                'ordre_affichage' => $section->ordre_affichage,
+                'data' => $section
+            ]);
+        }
+
+        // Trier tous les éléments par ordre d'affichage
+        return $elements->sortBy('ordre_affichage');
     }
 }
