@@ -26,8 +26,28 @@ class ResetPasswordRequest extends FormRequest
     public function rules()
     {
         return [
-            'token' => [ 'required', Rule::exists('users', 'token')],
-            //'email' => 'required|email',
+            'email' => [
+                'required',
+                'email',
+                Rule::exists('users', 'email')->whereNull('deleted_at')
+            ],
+            'token' => [
+                'required',
+                Rule::exists('users', 'token')
+                    ->where('email', $this->input('email'))
+                    ->whereNull('deleted_at')
+            ],
+            'new_password' => [
+                'required',
+                Password::min(8)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised(),
+                'confirmed'
+            ]/*,
+            'email' => ['required","email', Rule::exists('users', 'email')->whereNull("deleted_at")],
+            'token' => [ 'required', Rule::exists('users', 'token')->where("email", $this->input("email"))->whereNull("deleted_at")],
             'new_password' => [
                 'required',
                 Password::min(8)
@@ -37,7 +57,7 @@ class ResetPasswordRequest extends FormRequest
             ->uncompromised(),
                 //'regex:/^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[\d\x])(?=.*[!$#%]).*$/',
                 'confirmed'
-            ]
+            ] */
         ];
     }
 

@@ -90,7 +90,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
                 Route::get('/refresh-token', 'refresh_token')->name('refreshToken');
 
-                Route::post('reinitialisation-de-mot-de-passe', 'modificationDeMotDePasse')->name('modificationDeMotDePasse');
+                Route::post('modification-de-mot-de-passe', 'modificationDeMotDePasse')->name('modificationDeMotDePasse');
 
                 Route::get('/{id}/debloquer', 'debloquer')->name('debloquer');
             });

@@ -231,9 +231,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            /*if ($ideeProjet->statut->value != StatutIdee::VALIDATION->value) {
+            if ($ideeProjet->statut->value != StatutIdee::VALIDATION->value) {
                 throw new Exception("L'idee de projet n'est pas a l'etape de validation");
-            }*/
+            }
 
             // Vérifier s'il existe une évaluation précédente validée
             $evaluationPrecedente = Evaluation::where('projetable_type', get_class($ideeProjet))
@@ -1294,7 +1294,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ], 500);
         }
     }
-
     /**
      * Calculer le score climatique d'une évaluation.
      * Le score climatique est la moyenne pondérée de tous les critères évalués.

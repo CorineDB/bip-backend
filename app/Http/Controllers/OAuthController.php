@@ -84,7 +84,7 @@ class OAuthController extends Controller
      *         )
      *     )
      * )
-     * 
+     *
      * @param  App\Http\Requests\auth\LoginRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -126,7 +126,7 @@ class OAuthController extends Controller
      *         )
      *     )
      * )
-     * 
+     *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -167,7 +167,7 @@ class OAuthController extends Controller
      *         )
      *     )
      * )
-     * 
+     *
      * @param  $email
      * @return \Illuminate\Http\JsonResponse
      */
@@ -359,7 +359,7 @@ class OAuthController extends Controller
      *         )
      *     )
      * )
-     * 
+     *
      * @param  App\Http\Requests\auth\ResetPasswordRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -371,7 +371,7 @@ class OAuthController extends Controller
     /**
      * Réinitilisation de mot de passe
      *
-     * @param  App\Http\Requests\auth\ResetPasswordRequest  $request
+     * @param  App\Http\Requests\auth\ChangePasswordRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function modificationDeMotDePasse(ChangePasswordRequest $request)
@@ -405,7 +405,7 @@ class OAuthController extends Controller
      *         )
      *     )
      * )
-     * 
+     *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -445,7 +445,7 @@ class OAuthController extends Controller
      *         )
      *     )
      * )
-     * 
+     *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
