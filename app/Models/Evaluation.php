@@ -144,6 +144,14 @@ class Evaluation extends Model
     /**
      * Get the evaluation criteria for this evaluation.
      */
+    public function evaluationEvaluateurs()
+    {
+        return $this->hasMany(User::class, 'evaluation_id');
+    }
+
+    /**
+     * Get the evaluation criteria for this evaluation.
+     */
     public function criteres()
     {
         // On part sur un builder de base
@@ -182,10 +190,21 @@ class Evaluation extends Model
     public function evaluateurs()
     {
         return $this->belongsToMany(User::class, 'evaluation_criteres', 'evaluation_id', 'evaluateur_id')
-            ->withPivot('critere_id', 'note', 'notation_id', 'categorie_critere_id')
+            ->withPivot('critere_id', 'note', 'notation_id', 'categorie_critere_id', 'is_auto_evaluation')
             ->withTimestamps()
-            ->distinct();
+            /* ->distinct() */;
     }
+
+    /**
+     * Get all evaluateurs for this evaluation through evaluation_criteres.
+     */
+    public function evaluateursDeEvalPreliminaireClimatique()
+    {
+        return $this->evaluateurs()
+            ->wherePivot('is_auto_evaluation', true)
+            /* ->distinct() */;
+    }
+
 
     /**
      * Get evaluation criteres grouped by evaluateur.
