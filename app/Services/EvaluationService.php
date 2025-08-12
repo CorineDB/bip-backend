@@ -1019,12 +1019,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ], 400);
             }
 
-            //if ($evaluation->statut != 1) {
+            if ($evaluation->statut != 1) {
                 // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
                 $evaluateurs = $evaluation->evaluateursClimatique()->get();
-            /* }else{
-                $evaluateurs = $evaluation->evaluateurs();
-            } */
+            }else{
+                $evaluateurs = $evaluation->evaluateurs;
+            }
 
             /* User::when($ideeProjet->ministere, function ($query) use ($ideeProjet) {
                 $query->where(function ($q) use ($ideeProjet) {
