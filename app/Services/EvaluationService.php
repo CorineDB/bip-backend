@@ -1034,10 +1034,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $evaluateurs = $evaluation->evaluateursClimatique()->get();
             } else {
 
-                $evaluateurs = $evaluation->evaluateurs()
+                $evaluateurs = $evaluation->evaluateursDeEvalPreliminaireClimatique()
                     ->select('users.*')
                     ->distinct('users.id')
                     ->get();
+
+                dd($evaluateurs);
             }
 
             /* User::when($ideeProjet->ministere, function ($query) use ($ideeProjet) {
