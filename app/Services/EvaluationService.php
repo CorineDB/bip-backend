@@ -602,6 +602,19 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         $totalEvaluateurs = $evaluation->evaluateursClimatique()
             ->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->count(); // ✅ on vérifie bien si la collection n'est pas vide;
 
+        if ($evaluation->statut != 1) {
+            // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
+            $totalEvaluateurs = $evaluation->evaluateursClimatique()
+                ->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->count(); // ✅ on vérifie bien si la collection n'est pas vide;
+
+        } else {
+
+            $totalEvaluateurs = $evaluation->evaluateursDeEvalPreliminaireClimatique()
+                ->select('users.*')
+                ->distinct('users.id')
+                ->get();
+        }
+
         $totalCriteres = $evaluation->criteres->count();
 
         $completedCriteres = $evaluation->evaluationCriteres()
@@ -1053,6 +1066,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                             ->where('profilable_id', $ministere->id);
                     });
                 }) */
+
             if ($evaluateurs->count() == 0) {
                 throw new Exception('Aucun évaluateur trouvé avec la permission "effectuer-evaluation-climatique-idee-projet"', 404);
             }
