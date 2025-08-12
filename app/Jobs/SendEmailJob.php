@@ -51,6 +51,8 @@ class SendEmailJob implements ShouldQueue
 
             $lien = env("CLIENT_APP_URL") ?? config("app.url");
 
+            Log::notice($lien);
+
             if ($this->type == "confirmation-compte") {
                 $details['view'] = "emails.auth.confirmation_compte";
                 $details['subject'] = "Bienvenue";
