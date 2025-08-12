@@ -51,19 +51,21 @@ class UserService extends BaseService implements UserServiceInterface
     public function all(): JsonResponse
     {
         try {
+
             $user = Auth::user();
 
             $query = $this->repository->getModel()
+                ->whereNotIn("type", ["super-admin", "organisation", "dpaf", "dgpd"])
                 ->where("profilable_id", $user->profilable_id)
                 ->where("profilable_type", $user->profilable_type);
 
             // Si l'utilisateur appartient aux scopes organisation, dpaf, ou dgpd,
             // exclure les utilisateurs admin du scope
-            if (!is_null($user->profilable_type) && in_array($user->profilable_type, ['App\Models\Organisation', 'App\Models\Dpaf', 'App\Models\Dgpd'])) {
+            /* if (!is_null($user->profilable_type) && in_array($user->profilable_type, ['App\Models\Organisation', 'App\Models\Dpaf', 'App\Models\Dgpd'])) {
                 $query->whereHas('role', function ($roleQuery) {
                     $roleQuery->whereNotIn('slug', '!=', ['organisation', 'dpaf', 'dgpd']);
                 });
-            }
+            } */
 
             $item = $query->get();
 
