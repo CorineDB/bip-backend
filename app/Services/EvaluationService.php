@@ -211,7 +211,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => "Erreur lors de la validation de l'idee de projet. ". $e->getMessage(),
+                'message' => "Erreur lors de la validation de l'idee de projet. " . $e->getMessage(),
                 'error' => $e->getMessage()
             ], $e->getCode());
         }
@@ -364,7 +364,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $httpCode = $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500;
             return response()->json([
                 'success' => false,
-                'message' => "Erreur lors de la validation de l'idee de projet. ". $e->getMessage(),
+                'message' => "Erreur lors de la validation de l'idee de projet. " . $e->getMessage(),
                 'error' => $e->getMessage()
             ], $httpCode);
         }
@@ -487,7 +487,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' =>"'Erreur lors de l'enregistrement du score. ". $e->getMessage(),
+                'message' => "'Erreur lors de l'enregistrement du score. " . $e->getMessage(),
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -573,7 +573,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => "Erreur lors de la relance de l'evaluation climatique. ". $e->getMessage(),
+                'message' => "Erreur lors de la relance de l'evaluation climatique. " . $e->getMessage(),
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -1019,8 +1019,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ], 400);
             }
 
-            // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
-            $evaluateurs = $evaluation->evaluateursClimatique()->get();
+            if ($evaluation->statut != 1) {
+                // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
+                $evaluateurs = $evaluation->evaluateursClimatique()->get();
+            }else{
+                $evaluateurs = $evaluation->evaluateurs;
+            }
 
             /* User::when($ideeProjet->ministere, function ($query) use ($ideeProjet) {
                 $query->where(function ($q) use ($ideeProjet) {
@@ -1693,7 +1697,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'updated_at' => now()
                 ];
 
-                if(!$isEvalClimatique){
+                if (!$isEvalClimatique) {
                     $data['notation_id'] = $notation->id;
                     $data['note'] = $notation->valeur;
                 }
@@ -2182,7 +2186,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'classement_par_secteur' => $classementParSecteur->toArray()
                 ]
             ]);
-
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
