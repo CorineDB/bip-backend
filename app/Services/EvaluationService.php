@@ -609,10 +609,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
         } else {
 
-            $totalEvaluateurs = $evaluation->evaluateursDeEvalPreliminaireClimatique()
+            $evaluateurs = $evaluation->evaluateursDeEvalPreliminaireClimatique()
                 ->select('users.*')
                 ->distinct('users.id')
-                ->get();
+                ->count();
         }
 
         $totalCriteres = $evaluation->criteres->count();
