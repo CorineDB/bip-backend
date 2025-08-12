@@ -1038,8 +1038,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ->select('users.*')
                     ->distinct('users.id')
                     ->get();
-
-                dd($evaluateurs);
             }
 
             /* User::when($ideeProjet->ministere, function ($query) use ($ideeProjet) {
