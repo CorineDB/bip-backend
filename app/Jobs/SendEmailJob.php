@@ -121,6 +121,8 @@ class SendEmailJob implements ShouldQueue
 
             Log::notice($this->user->email);
 
+            Log::notice($lien);
+
             Mail::to($this->user->email)->later($when, $mailer);
         } catch (\Throwable $th) {
             Log::error($details['subject'] . ' : ' . $th->getMessage());
