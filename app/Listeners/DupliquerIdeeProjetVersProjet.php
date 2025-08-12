@@ -86,6 +86,7 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
             'resultats_attendus' => $ideeProjet->resultats_attendus,
             'isdeleted' => $ideeProjet->isdeleted,
             'body_projet' => $ideeProjet->body_projet,
+            'cout_estimatif_projet' => $ideeProjet->cout_estimatif_projet,
             'cout_dollar_americain' => $ideeProjet->cout_dollar_americain,
             'cout_euro' => $ideeProjet->cout_euro,
             'date_debut_etude' => $ideeProjet->date_debut_etude,

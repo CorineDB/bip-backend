@@ -49,6 +49,7 @@ class Projet extends Model
         'resultats_attendus',
         'isdeleted',
         'body_projet',
+        'cout_estimatif_projet',
         'cout_dollar_americain',
         'cout_euro',
         'date_debut_etude',

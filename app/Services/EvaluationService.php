@@ -44,6 +44,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
 use App\Events\IdeeProjetTransformee;
+use App\Http\Resources\idees_projet\IdeesProjetResource;
 use App\Models\IdeeProjet;
 
 class EvaluationService extends BaseService implements EvaluationServiceInterface
@@ -111,7 +112,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             if ($attributs["decision"] == "valider") {
                 $ideeProjet->update([
-                    'statut' => StatutIdee::ANALYSE
+                    'statut' => StatutIdee::ANALYSE,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::ANALYSE),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::ANALYSE),
                 ]);
 
                 // Enregistrer le workflow et la décision
@@ -132,7 +135,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
                 $ideeProjet->update([
                     'score_climatique' => 0,
-                    'statut' => StatutIdee::BROUILLON
+                    'statut' => StatutIdee::BROUILLON,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::BROUILLON),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::BROUILLON),
                 ]);
 
                 // Enregistrer le workflow et la décision
@@ -262,7 +267,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             if ($attributs["decision"] == "valider") {
                 $ideeProjet->update([
-                    'statut' => StatutIdee::NOTE_CONCEPTUEL
+                    'statut' => StatutIdee::NOTE_CONCEPTUEL,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::NOTE_CONCEPTUEL),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::NOTE_CONCEPTUEL),
                 ]);
 
                 // Enregistrer le workflow et la décision
@@ -277,7 +284,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             } else {
                 $ideeProjet->update([
                     'score_amc' => 0,
-                    'statut' => StatutIdee::ANALYSE
+                    'statut' => StatutIdee::ANALYSE,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::ANALYSE),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::ANALYSE),
                 ]);
 
                 // Enregistrer le workflow et la décision
@@ -449,7 +458,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $ideeProjet->update([
                 'score_climatique' => $finalResults['score_final_pondere'],
                 'identifiant_bip' => $this->generateIdentifiantBip(),
-                'statut' => StatutIdee::IDEE_DE_PROJET  // Marquer comme terminée
+                'statut' => StatutIdee::IDEE_DE_PROJET,  // Marquer comme terminée
+
+                'phase' => $this->getPhaseFromStatut(StatutIdee::IDEE_DE_PROJET),
+                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::IDEE_DE_PROJET),
             ]);
 
             // Enregistrer le workflow et la décision
@@ -540,7 +552,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $ideeProjet->update([
                 'score_climatique' => 0,
                 'identifiant_bip' => null,
-                'statut' => StatutIdee::BROUILLON  // Marquer comme terminée
+                'statut' => StatutIdee::BROUILLON,  // Marquer comme terminée
+                'phase' => $this->getPhaseFromStatut(StatutIdee::BROUILLON),
+                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::BROUILLON),
             ]);
 
             // Enregistrer le workflow et la décision
@@ -712,17 +726,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $isAssigned = true;
             } elseif ($is_auto_evaluation) {
                 if ((auth()->user()->profilable_type == Organisation::class || auth()->user()->profilable_type == Dpaf::class) && auth()->user()->profilable?->ministere && $ideeProjet->ministere && (auth()->user()->profilable->ministere?->id == $ideeProjet->ministere->id)) {
-
                     $isAssigned = $evaluation->evaluateursClimatique()->where("id", auth()->id())->first()?->hasPermissionTo('effectuer-evaluation-climatique-idee-projet');
-
-                    //throw new Exception("Error Processing Request" . json_encode($evaluation->evaluateursClimatique()->get()), 403);
-
-                    //->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->isNotEmpty(); // ✅ on vérifie bien si la collection n'est pas vide;
-                    $evaluateur = $evaluation->evaluateursClimatique()->where("id", auth()->id())
-                        ->get()->filter(fn($user) => $user?->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->isNotEmpty(); // ✅ on vérifie bien si la collection n'est pas vide;
-
-                    //$evaluateurs = $evaluation->evaluateursClimatique()->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'));
-
                 }
             }
 
@@ -892,6 +896,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                         'updated_at' => now(),
                     ]
                 );
+
+                $ideeProjet->update([
+                    'statut' => StatutIdee::AMC,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::AMC),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::AMC),
+                ]);
             } else {
                 // Récupérer les réponses de l'évaluateur connecté
                 $evaluationClimatiqueReponses = EvaluationCritere::forEvaluation($evaluation->id)
@@ -1022,8 +1032,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             if ($evaluation->statut != 1) {
                 // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
                 $evaluateurs = $evaluation->evaluateursClimatique()->get();
-            }else{
-                $evaluateurs = $evaluation->evaluationEvaluateurs;
+            } else {
+
+                $evaluateurs = $evaluation->evaluateurs()
+                    ->select('users.*')
+                    ->distinct('users.id')
+                    ->get();
             }
 
             /* User::when($ideeProjet->ministere, function ($query) use ($ideeProjet) {
@@ -1100,6 +1114,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'success' => true,
                 'data' => [
                     "statut_idee" => $ideeProjet->statut,
+                    "idee_projet" => new IdeesProjetResource($ideeProjet),
                     'evaluation' => new EvaluationResource($evaluation),
 
                     //'score_climatique' => $scoreClimatique,
@@ -1751,7 +1766,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet->update([
                 'score_amc' => collect($finalResults["scores_ponderes_par_critere"])->avg("score_pondere"),
-                'statut' => StatutIdee::VALIDATION  // Marquer comme terminée
+                'statut' => StatutIdee::VALIDATION,  // Marquer comme terminée
+
+                'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION),
+                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION),
             ]);
 
             // Enregistrer le workflow et la décision
@@ -1937,6 +1955,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             return response()->json([
                 'success' => true,
                 'data' => [
+                    "idee_projet" => new IdeesProjetResource($ideeProjet),
                     'evaluation_climatique' => [
                         "score_climatique" => round(($score_pondere_par_critere->sum('score_pondere') / $categorie->criteres->count()), 2),
                         "scores_pondere_par_critere" => array_values($score_pondere_par_critere->toArray()),/*  EvaluationCritereResource::collection($critereClimatiqueEvaluer)->resource->toArray()) */
@@ -1991,11 +2010,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     private function getPhaseFromStatut($statut)
     {
         return match ($statut) {
-            \App\Enums\StatutIdee::BROUILLON => \App\Enums\PhasesIdee::identification,/*
-            \App\Enums\StatutIdee::IDEE_DE_PROJET => \App\Enums\PhasesIdee::evaluation_preliminaire,
-            \App\Enums\StatutIdee::ANALYSE => \App\Enums\PhasesIdee::evaluation_preliminaire,
-            \App\Enums\StatutIdee::VALIDATION => \App\Enums\PhasesIdee::validation,
-            \App\Enums\StatutIdee::NOTE_CONCEPTUEL => \App\Enums\PhasesIdee::validation, */
+            \App\Enums\StatutIdee::BROUILLON => \App\Enums\PhasesIdee::identification,
+            \App\Enums\StatutIdee::IDEE_DE_PROJET => \App\Enums\PhasesIdee::identification,
+            \App\Enums\StatutIdee::ANALYSE => \App\Enums\PhasesIdee::identification,
+            \App\Enums\StatutIdee::AMC => \App\Enums\PhasesIdee::identification,
+            \App\Enums\StatutIdee::VALIDATION => \App\Enums\PhasesIdee::identification,
+            \App\Enums\StatutIdee::NOTE_CONCEPTUEL => \App\Enums\PhasesIdee::identification,
             default => \App\Enums\PhasesIdee::identification,
         };
     }
@@ -2006,11 +2026,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     private function getSousPhaseFromStatut($statut)
     {
         return match ($statut) {
-            \App\Enums\StatutIdee::BROUILLON => \App\Enums\SousPhaseIdee::redaction,/*
-            \App\Enums\StatutIdee::IDEE_DE_PROJET => \App\Enums\SousPhaseIdee::evaluation_climatique,
-            \App\Enums\StatutIdee::ANALYSE => \App\Enums\SousPhaseIdee::evaluation_multicritere,
-            \App\Enums\StatutIdee::VALIDATION => \App\Enums\SousPhaseIdee::validation_dgpd,
-            \App\Enums\StatutIdee::NOTE_CONCEPTUEL => \App\Enums\SousPhaseIdee::note_conceptuelle, */
+            \App\Enums\StatutIdee::BROUILLON => \App\Enums\SousPhaseIdee::redaction,
+            \App\Enums\StatutIdee::IDEE_DE_PROJET => \App\Enums\SousPhaseIdee::redaction,
+            \App\Enums\StatutIdee::ANALYSE => \App\Enums\SousPhaseIdee::analyse_idee,
+            \App\Enums\StatutIdee::AMC => \App\Enums\SousPhaseIdee::analyse_idee,
+            \App\Enums\StatutIdee::VALIDATION => \App\Enums\SousPhaseIdee::analyse_idee,
+            \App\Enums\StatutIdee::NOTE_CONCEPTUEL => \App\Enums\SousPhaseIdee::etude_de_profil,
             default => \App\Enums\SousPhaseIdee::redaction,
         };
     }
