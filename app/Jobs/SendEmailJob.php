@@ -73,6 +73,7 @@ class SendEmailJob implements ShouldQueue
                     "introduction" => "Voici votre lien d'activation de votre compte",
                     "lien" => $lien . "/activation/" . $this->user->token,
                 ];
+                Log::notice($lien . "/activation/" . $this->user->token);
                 $mailer = new ConfirmationDeCompteEmail($details);
             } elseif ($this->type == "reinitialisation-mot-de-passe") {
 
