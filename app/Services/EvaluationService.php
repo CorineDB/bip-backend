@@ -346,12 +346,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $this->enregistrerWorkflow($ideeProjet, StatutIdee::ANALYSE);
                 $this->enregistrerDecision($ideeProjet, 'Rejet par analyste DGPD', $attributs["commentaire"] ?? 'Idée rejetée - Retour en analyse');
 
-                $evaluation->update([
+                /* $evaluation->update([
                     'resultats_evaluation' => [],
                     'evaluation' => [],
                     'valider_le' => null,
                     'statut' => -1  // Marquer comme terminée
-                ]);
+                ]); */
 
                 // Vérifier que l'évaluation climatique existe
                 $evaluationClimatique = Evaluation::where('projetable_type', get_class($ideeProjet))
@@ -463,13 +463,13 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'success' => true,
                 'data' => [
                     'idee_projet' => new IdeesProjetResource($ideeProjet),
-                    'evaluation' => [
-                        'id' => 1,//$evaluation->id,
-                        'valider_le' => "10/08/2025 19:54:34",// Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i"),
-                        'valider_par' => null,//new UserResource($evaluation->validator),
+                    'evaluation' => $evaluation ? [
+                        'id' => $evaluation->id,
+                        'valider_le' => Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i"),
+                        'valider_par' => new UserResource($evaluation->validator),
                         'decision' => $evaluation->evaluation,
                         'statut' => $evaluation->statut
-                    ]
+                    ] : null
                 ]
             ]);
         } catch (Exception $e) {
