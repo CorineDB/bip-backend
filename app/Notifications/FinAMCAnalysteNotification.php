@@ -46,7 +46,7 @@ class FinAMCAnalysteNotification extends Notification implements ShouldQueue
             ->line('Score climatique: ' . number_format($this->ideeProjet->score_climatique ?? 0, 2))
             ->line('Vous devez maintenant effectuer la validation de l\'idée de projet à projet.')
             ->line('Le Comité de validation ministériel a également été notifié pour amendements ou commentaires.')
-            ->action("Procéder à la validation", url("{$path}/idees/" . $this->ideeProjet->id . "/validation-projet"))
+            ->action("Procéder à la validation", url("{$path}/idees/" . $this->ideeProjet->id))
             ->line('Cette validation est nécessaire pour finaliser le processus d\'.');
     }
 
@@ -65,7 +65,7 @@ class FinAMCAnalysteNotification extends Notification implements ShouldQueue
                 'date_fin_amc' => now()->toISOString(),
                 'action_requise' => 'validation_idee_projet_a_projet',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/validation-projet',
+            'action_url' => '/idees/' . $this->ideeProjet->id,
         ]);
     }
 
@@ -87,7 +87,7 @@ class FinAMCAnalysteNotification extends Notification implements ShouldQueue
                 'date_fin_amc' => now()->toISOString(),
                 'action_requise' => 'validation_idee_projet_a_projet',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/validation-projet',
+            'action_url' => '/idees/' . $this->ideeProjet->id,
         ];
     }
 }
