@@ -202,17 +202,17 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
 
             // Créer les nouvelles decisions
             foreach ($ideeProjet->decisions as $decision) {
-                $projet->decisions()->create([
-                    'titre' => $decision->titre,
-                    'description' => $decision->description,
-                    'type_decision' => $decision->type_decision,
-                    'statut' => $decision->statut,
-                    'prise_par' => $decision->prise_par,
-                    'date_decision' => $decision->date_decision,
-                    'commentaire' => $decision->commentaire,
-                    'created_at' => $decision->created_at,
-                    'updated_at' => $decision->updated_at
-                ]);
+                // Ne dupliquer que les décisions qui ont une valeur non-nulle
+                if ($decision->valeur !== null) {
+                    $projet->decisions()->create([
+                        'valeur' => $decision->valeur,
+                        'date' => $decision->date,
+                        'observations' => $decision->observations,
+                        'observateurId' => $decision->observateurId,
+                        'created_at' => $decision->created_at,
+                        'updated_at' => $decision->updated_at
+                    ]);
+                }
             }
         }
 
@@ -224,13 +224,10 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
             // Créer les nouveaux workflows
             foreach ($ideeProjet->workflows as $workflow) {
                 $projet->workflows()->create([
-                    'etape' => $workflow->etape,
                     'statut' => $workflow->statut,
-                    'date_debut' => $workflow->date_debut,
-                    'date_fin' => $workflow->date_fin,
-                    'responsable_id' => $workflow->responsable_id,
-                    'commentaire' => $workflow->commentaire,
-                    'ordre' => $workflow->ordre,
+                    'phase' => $workflow->phase,
+                    'sous_phase' => $workflow->sous_phase,
+                    'date' => $workflow->date,
                     'created_at' => $workflow->created_at,
                     'updated_at' => $workflow->updated_at
                 ]);
