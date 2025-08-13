@@ -32,6 +32,7 @@ use App\Http\Controllers\DgpdController;
 use App\Http\Controllers\DpafController;
 use App\Http\Controllers\GroupeUtilisateurController;
 use App\Http\Controllers\OAuthController;
+use App\Http\Controllers\NotificationController;
 use App\Models\Village;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -137,6 +138,15 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::apiResource('groupes-utilisateur', GroupeUtilisateurController::class)
             ->parameters(['groupes-utilisateur' => 'groupe_utilisateur']);
 
+        // Notifications
+        Route::prefix('notifications')->group(function () {
+            Route::get('/', [NotificationController::class, 'index']);
+            Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+            Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+            Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
+            Route::delete('/{id}', [NotificationController::class, 'destroy']);
+        });
+
         // Routes additionnelles pour les groupes d'utilisateurs
         Route::prefix('groupes-utilisateur/{groupe_utilisateur}')->group(function () {
             Route::post('/assign-roles', [GroupeUtilisateurController::class, 'assignRoles']);
@@ -228,7 +238,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         Route::prefix('canevas-de-redaction-note-conceptuelle')->group(function () {
             // Public routes
-            Route::get('', [DocumentController::class, 'canevasRedactionNoteConptuelle']);
+            Route::get('', [DocumentController::class, 'canevasRedactionNoteConceptuelle']);
             Route::post('/create-or-update', [DocumentController::class, 'createOrUpdateCanevasRedactionNoteConptuelle']);
         });
 
@@ -288,8 +298,12 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::prefix('idees-projet/{ideeProjetId}')->group(function () {
             Route::post('validation', [EvaluationController::class, 'validerIdeeDeProjet'])
                 ->name('idees-projet.validation');
+            Route::get('decisions-validation-climatique', [EvaluationController::class, 'getDecisionsValiderIdeeDeProjet'])
+                ->name('idees-projet.decisions-validation');
             Route::post('/validation-en-projet', [EvaluationController::class, 'validationIdeeDeProjetAProjet'])
                 ->name('idees-projet.validation-en-projet');
+            Route::get('decisions-validation-amc', [EvaluationController::class, 'getDecisionsValidationIdeeDeProjetAProjet'])
+                ->name('idees-projet.decisions-validation-finale');
         });
 
         // Routes pour AMC des idées de projet

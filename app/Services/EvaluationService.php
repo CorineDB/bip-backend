@@ -207,10 +207,14 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 }
             }
 
+            // Récupérer les décisions de validation
+            $decisions = $ideeProjet->decisions()->with('observateur')->get();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Idee de projet evaluer avec succès',
-                'data' => $evaluation
+                'data' => $evaluation,
+                'decisions' => $decisions
             ]);
         } catch (Exception $e) {
             DB::rollBack();
@@ -219,6 +223,41 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'message' => "Erreur lors de la validation de l'idee de projet. " . $e->getMessage(),
                 'error' => $e->getMessage()
             ], $e->getCode());
+        }
+    }
+
+    /**
+     * Récupérer les décisions de validation d'idée de projet par responsable hiérarchique
+     */
+    public function getDecisionsValiderIdeeDeProjet($ideeProjetId): JsonResponse
+    {
+        try {
+            $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
+            
+            // Récupérer les évaluations de validation par responsable hiérarchique
+            $evaluations = Evaluation::where('projetable_type', get_class($ideeProjet))
+                ->where('projetable_id', $ideeProjet->id)
+                ->where('type_evaluation', 'validation-idee-projet')
+                ->with(['evaluateur'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+            
+            // Récupérer les décisions associées
+            $decisions = $ideeProjet->decisions()->with('observateur')->get();
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'evaluations' => $evaluations,
+                    'decisions' => $decisions
+                ]
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "Erreur lors de la récupération des décisions. " . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
         }
     }
 
@@ -363,10 +402,14 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 }
             }*/
 
+            // Récupérer les décisions de validation
+            $decisions = $ideeProjet->decisions()->with('observateur')->get();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Idee de projet evaluer avec succès',
-                'data' => $evaluation
+                'data' => $evaluation,
+                'decisions' => $decisions
             ]);
         } catch (Exception $e) {
             DB::rollBack();
@@ -376,6 +419,41 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'message' => "Erreur lors de la validation de l'idee de projet. " . $e->getMessage(),
                 'error' => $e->getMessage()
             ], $httpCode);
+        }
+    }
+
+    /**
+     * Récupérer les décisions de validation finale d'idée de projet vers projet
+     */
+    public function getDecisionsValidationIdeeDeProjetAProjet($ideeProjetId): JsonResponse
+    {
+        try {
+            $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
+            
+            // Récupérer les évaluations de validation finale par analyste DGPD
+            $evaluations = Evaluation::where('projetable_type', get_class($ideeProjet))
+                ->where('projetable_id', $ideeProjet->id)
+                ->where('type_evaluation', 'validation-idee-projet-a-projet')
+                ->with(['evaluateur'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+            
+            // Récupérer les décisions associées
+            $decisions = $ideeProjet->decisions()->with('observateur')->get();
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'evaluations' => $evaluations,
+                    'decisions' => $decisions
+                ]
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "Erreur lors de la récupération des décisions finales. " . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
         }
     }
 

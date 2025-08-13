@@ -107,7 +107,6 @@
         </div>
     </div>
 
-
     <center>
         <p class="myStyle" style="color: #b0adc5;">
             &copy; 2024 {{ config("app.name") }}. All rights reserved.
