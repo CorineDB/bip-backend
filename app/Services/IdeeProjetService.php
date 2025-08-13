@@ -56,7 +56,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                 $query->where("ministereId", Auth::user()->profilable->ministere->id)->when(auth()->user()->type == "responsable-projet", function ($query) {
                     $query->where("responsableId", Auth::user()->id);
                 })->when(auth()->user()->type == "responsable-hierachique", function ($query) {
-                    $query->where("statut", StatutIdee::BROUILLON);
+                    $query->where("statut", "<>", StatutIdee::BROUILLON);
                 })->when((auth()->user()->type != "responsable-hierachique" && auth()->user()->type != "responsable-projet"), function ($query) {
                     $minStatut = null; //StatutIdee::BROUILLON;
                     if (!auth()->user()->hasPermissionTo('effectuer-evaluation-climatique-idee-projet')) $minStatut = StatutIdee::BROUILLON;
