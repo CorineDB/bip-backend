@@ -45,6 +45,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
 use App\Events\IdeeProjetTransformee;
 use App\Http\Resources\idees_projet\IdeesProjetResource;
+use App\Http\Resources\UserResource;
 use App\Models\IdeeProjet;
 
 class EvaluationService extends BaseService implements EvaluationServiceInterface
@@ -235,7 +236,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
             // Récupérer les évaluations de validation par responsable hiérarchique
-            $decision = Evaluation::where('projetable_type', get_class($ideeProjet))
+            $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'validation-idee-projet')
                 ->whereNotNull('valider_par')
@@ -249,12 +250,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'success' => true,
                 'data' => [
                     'idee_projet' => new IdeesProjetResource($ideeProjet),
-                    'decision' => [
-                        'id' => $decision->id,
-                        'valider_le' => Carbon::parse($decision->valider_le)->format("d/m/Y H:m:i"),
-                        'valider_par' => $decision->validator,
-                        'decision' => $decision->evaluation,
-                        'statut' => $decision->statut
+                    'evaluation' => [
+                        'id' => $evaluation->id,
+                        'valider_le' => Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i"),
+                        'valider_par' => new UserResource($evaluation->validator),
+                        'decision' => $evaluation->evaluation,
+                        'statut' => $evaluation->statut
                     ]
                 ]
             ]);
@@ -437,7 +438,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
             // Récupérer les évaluations de validation finale par analyste DGPD
-            $decision = Evaluation::where('projetable_type', get_class($ideeProjet))
+            $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'validation-idee-projet-a-projet')
                 ->whereNotNull('valider_par')
@@ -451,12 +452,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'success' => true,
                 'data' => [
                     'idee_projet' => new IdeesProjetResource($ideeProjet),
-                    'decision' => [
-                        'id' => $decision->id,
-                        'valider_le' => Carbon::parse($decision->valider_le)->format("d/m/Y H:m:i"),
-                        'valider_par' => $decision->validator,
-                        'decision' => $decision->evaluation,
-                        'statut' => $decision->statut
+                    'evaluation' => [
+                        'id' => $evaluation->id,
+                        'valider_le' => Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i"),
+                        'valider_par' => new UserResource($evaluation->validator),
+                        'decision' => $evaluation->evaluation,
+                        'statut' => $evaluation->statut
                     ]
                 ]
             ]);
