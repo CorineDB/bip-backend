@@ -274,17 +274,17 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     public function validationIdeeDeProjetAProjet($ideeProjetId, array $attributs): JsonResponse
     {
         try {
-            if (auth()->user()->type !== 'analyste-dgpd') {
+            /* if (auth()->user()->type !== 'analyste-dgpd') {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
-            }
+            } */
 
             DB::beginTransaction();
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if ($ideeProjet->statut->value != StatutIdee::VALIDATION->value) {
+            /* if ($ideeProjet->statut->value != StatutIdee::VALIDATION->value) {
                 throw new Exception("L'idee de projet n'est pas a l'etape de validation");
-            }
+            } */
 
             // Vérifier s'il existe une évaluation précédente validée
             $evaluationPrecedente = Evaluation::where('projetable_type', get_class($ideeProjet))
