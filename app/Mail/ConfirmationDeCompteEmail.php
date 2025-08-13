@@ -32,6 +32,7 @@ class ConfirmationDeCompteEmail extends Mailable implements ShouldQueue
      */
     public function build()
     {
+        dump($this->details);
         $details = $this->details;
         return $this->from(config("mail.mailers.smtp.username"), config("app.name"))->subject(Str::ucfirst($this->details['subject']))->view($this->details['view'], compact('details'));
     }

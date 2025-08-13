@@ -49,6 +49,8 @@ class SendEmailJob implements ShouldQueue
             $details = [];
             $data = [];
 
+            Log::notice("LOG TEST");
+
             $lien = env("CLIENT_APP_URL") ?? config("app.url");
 
             Log::notice($lien);
@@ -119,7 +121,7 @@ class SendEmailJob implements ShouldQueue
 
             $when = now()->addSeconds(5);
 
-            Log::notice($this->user->email);
+            //Log::notice($this->user->email);
 
             Log::notice($lien);
 
