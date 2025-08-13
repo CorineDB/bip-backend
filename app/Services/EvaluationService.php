@@ -233,23 +233,29 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     {
         try {
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
-            
+
             // Récupérer les évaluations de validation par responsable hiérarchique
-            $evaluations = Evaluation::where('projetable_type', get_class($ideeProjet))
+            $decision = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'validation-idee-projet')
-                ->with(['evaluateur'])
+                ->whereNotNull('valider_par')
+                ->whereNotNull('valider_le')
+                ->where('statut', 1)
+                ->with(['validator', 'commentaires'])
                 ->orderBy('created_at', 'desc')
-                ->get();
-            
-            // Récupérer les décisions associées
-            $decisions = $ideeProjet->decisions()->with('observateur')->get();
-            
+                ->first();
+
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'evaluations' => $evaluations,
-                    'decisions' => $decisions
+                    'idee_projet' => new IdeesProjetResource($ideeProjet),
+                    'decision' => [
+                        'id' => $decision->id,
+                        'valider_le' => Carbon::parse($decision->valider_le)->format("d/m/Y H:m:i"),
+                        'valider_par' => $decision->validator,
+                        'decision' => $decision->evaluation,
+                        'statut' => $decision->statut
+                    ]
                 ]
             ]);
         } catch (Exception $e) {
@@ -429,23 +435,29 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     {
         try {
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
-            
+
             // Récupérer les évaluations de validation finale par analyste DGPD
-            $evaluations = Evaluation::where('projetable_type', get_class($ideeProjet))
+            $decision = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'validation-idee-projet-a-projet')
-                ->with(['evaluateur'])
+                ->whereNotNull('valider_par')
+                ->whereNotNull('valider_le')
+                ->where('statut', 1)
+                ->with(['validator', 'commentaires'])
                 ->orderBy('created_at', 'desc')
-                ->get();
-            
-            // Récupérer les décisions associées
-            $decisions = $ideeProjet->decisions()->with('observateur')->get();
-            
+                ->first();
+
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'evaluations' => $evaluations,
-                    'decisions' => $decisions
+                    'idee_projet' => new IdeesProjetResource($ideeProjet),
+                    'decision' => [
+                        'id' => $decision->id,
+                        'valider_le' => Carbon::parse($decision->valider_le)->format("d/m/Y H:m:i"),
+                        'valider_par' => $decision->validator,
+                        'decision' => $decision->evaluation,
+                        'statut' => $decision->statut
+                    ]
                 ]
             ]);
         } catch (Exception $e) {
