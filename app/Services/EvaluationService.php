@@ -464,9 +464,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'data' => [
                     'idee_projet' => new IdeesProjetResource($ideeProjet),
                     'evaluation' => [
-                        'id' => $evaluation->id,
-                        'valider_le' => Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i"),
-                        'valider_par' => new UserResource($evaluation->validator),
+                        'id' => 1,//$evaluation->id,
+                        'valider_le' => "10/08/2025 19:54:34",// Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i"),
+                        'valider_par' => null,//new UserResource($evaluation->validator),
                         'decision' => $evaluation->evaluation,
                         'statut' => $evaluation->statut
                     ]
