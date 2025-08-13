@@ -115,4 +115,9 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    'client_app' => [
+        'url' => env('CLIENT_APP_URL', 'http://localhost/3000'),
+        //'name' => env('MAIL_FROM_NAME', 'Example'),
+    ],
+
 ];
