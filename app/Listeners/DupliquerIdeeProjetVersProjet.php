@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\IdeeProjetTransformee;
+use App\Models\Decision;
 use App\Models\Projet;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -204,11 +205,13 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
             foreach ($ideeProjet->decisions as $decision) {
                 // Ne dupliquer que les décisions qui ont une valeur non-nulle
                 if ($decision->valeur !== null) {
-                    $projet->decisions()->create([
+                    Decision::create([
                         'valeur' => $decision->valeur,
                         'date' => $decision->date,
                         'observations' => $decision->observations,
                         'observateurId' => $decision->observateurId,
+                        'objet_decision_id' => $projet->id,
+                        'objet_decision_type' => get_class($projet),
                         'created_at' => $decision->created_at,
                         'updated_at' => $decision->updated_at
                     ]);
