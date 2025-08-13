@@ -174,13 +174,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     }
                 }
 
-                $evaluation->update([
-                    'resultats_evaluation' => [],
-                    'evaluation' => [],
-                    'valider_le' => null,
-                    'statut' => -1  // Marquer comme terminée
-                ]);
-
                 $evaluationClimatique->update([
                     'resultats_evaluation' => [],
                     'evaluation' => [],
@@ -257,13 +250,13 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'success' => true,
                 'data' => [
                     'idee_projet' => new IdeesProjetResource($ideeProjet),
-                    'evaluation' => [
+                    'evaluation' => $evaluation ? [
                         'id' => $evaluation->id,
                         'valider_le' => Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i"),
                         'valider_par' => new UserResource($evaluation->validator),
                         'decision' => $evaluation->evaluation,
                         'statut' => $evaluation->statut
-                    ]
+                    ] : null
                 ]
             ]);
         } catch (Exception $e) {
