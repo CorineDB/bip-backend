@@ -27,9 +27,9 @@ class ValidationIdeeProjetAProjetRequest extends FormRequest
 
         $this->ideeProjet = IdeeProjet::findOrFail($ideeProjetId);
 
-        /* if ($this->ideeProjet->statut != StatutIdee::VALIDATION) {
+        if ($this->ideeProjet->statut != StatutIdee::VALIDATION) {
             throw ValidationException::withMessages([" Uniquement les idees etant a l'etape d'analyse pourront etre valider, cette idee de projet est a l'etape ". $this->ideeProjet->statut->value]);
-        } */
+        }
 
     }
 
