@@ -181,6 +181,13 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'statut' => -1  // Marquer comme terminée
                 ]);
 
+                $evaluationClimatique->update([
+                    'resultats_evaluation' => [],
+                    'evaluation' => [],
+                    'valider_le' => null,
+                    'statut' => 0  // Marquer comme terminée
+                ]);
+
                 $criteresEvaluationClimatique->get()->each->update(["est_archiver" => true]);
             }
 
@@ -351,6 +358,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ->where('projetable_id', $ideeProjet->id)
                     ->where('type_evaluation', 'climatique')
                     ->firstOrFail();
+
+                $evaluationClimatique->update([
+                    'date_fin_evaluation' => null
+                ]);
 
                 // Vérifier que l'évaluation amc existe
                 $evaluationAMC = Evaluation::where('projetable_type', get_class($ideeProjet))
