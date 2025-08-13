@@ -97,13 +97,17 @@
             <p>
                 Cliquer sur ce lien d'activation pour activer de votre compte
             </p>
-            <p>
-                <p>{{ json_encode($details) }} Test du lien</p>
-            </p>
-            <p>
-                {!! $details['content']['lien'] !!} Test du lien
-            </p>
             <a href="{{$details['content']['lien']}}">Activation de compte</a>
+
+            <!-- Bouton principal -->
+            <a href="{{ $details['content']['lien'] }}" class="button">Activation de compte</a>
+
+            <!-- Texte alternatif si le bouton ne fonctionne pas -->
+            <p class="fallback-link">
+                Si le bouton ci-dessus ne fonctionne pas, copiez et collez ce lien dans votre navigateur :
+                <br>
+                <a href="{{ $details['content']['lien'] }}">{{ $details['content']['lien'] }}</a>
+            </p>
         </div>
     </div>
 
