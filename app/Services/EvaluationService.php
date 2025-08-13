@@ -496,6 +496,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ], 400);
             }
 
+            if (auth()->id() !== $ideeProjet->responsable->id) {
+                throw new Exception("Vous n'avez pas les droits pour effectuer cette action", 403);
+            }
+
             $completionPercentage = $this->calculateCompletionPercentage($evaluation);
 
             if ($completionPercentage != 100) {
@@ -620,6 +624,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'success' => false,
                     'message' => 'Auto Evaluation climatique déja validé',
                 ], 400);
+            }
+
+            if (auth()->id() !== $ideeProjet->responsable->id) {
+                throw new Exception("Vous n'avez pas les droits pour effectuer cette action", 403);
             }
 
             $completionPercentage = $this->calculateCompletionPercentage($evaluation);
