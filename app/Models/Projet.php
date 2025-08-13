@@ -226,7 +226,7 @@ class Projet extends Model
 
     public function decisions()
     {
-        return $this->morphMany(Workflow::class, 'objet_decision');
+        return $this->morphMany(Decision::class, 'objet_decision');
     }
 
     public function secteur()
@@ -349,6 +349,11 @@ class Projet extends Model
         return $this->morphMany(Evaluation::class, 'projetable');
     }
 
+    public function workflows()
+    {
+        return $this->morphMany(Workflow::class, 'projetable');
+    }
+
     public function fichiers()
     {
         return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id')
@@ -364,5 +369,10 @@ class Projet extends Model
     public function fichiersParCategorie(string $categorie)
     {
         return $this->fichiers()->byCategorie($categorie);
+    }
+
+    public function scopeEvaluateursClimatique()
+    {
+        return User::byMinistere($this->ministere->id);
     }
 }
