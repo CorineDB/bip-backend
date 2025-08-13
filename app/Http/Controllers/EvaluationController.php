@@ -90,6 +90,16 @@ class EvaluationController extends Controller
         return $this->service->validationIdeeDeProjetAProjet($ideeProjetId, $request->all());
     }
 
+    public function getDecisionsValiderIdeeDeProjet($ideeProjetId): JsonResponse 
+    {
+        return $this->service->getDecisionsValiderIdeeDeProjet($ideeProjetId);
+    }
+
+    public function getDecisionsValidationIdeeDeProjetAProjet($ideeProjetId): JsonResponse 
+    {
+        return $this->service->getDecisionsValidationIdeeDeProjetAProjet($ideeProjetId);
+    }
+
     /**
      * Dashboard responsable : informations complètes évaluation climatique.
      */

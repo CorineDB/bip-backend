@@ -16,4 +16,6 @@ interface EvaluationServiceInterface extends AbstractServiceInterface
     public function appliquerAMC(array $data, $ideeProjetId): JsonResponse;
     public function getDashboardAMC($ideeProjetId): JsonResponse;
     public function validationIdeeDeProjetAProjet($ideeProjetId, array $attributs): JsonResponse;
+    public function getDecisionsValiderIdeeDeProjet($ideeProjetId): JsonResponse;
+    public function getDecisionsValidationIdeeDeProjetAProjet($ideeProjetId): JsonResponse;
 }
