@@ -59,7 +59,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                     $minStatut = null; //StatutIdee::BROUILLON;
                     if (!auth()->user()->hasPermissionTo('effectuer-evaluation-climatique-idee-projet')) $minStatut = StatutIdee::BROUILLON;
                     $query->whereNot("statut", $minStatut);
-                })->when((auth()->user()->type != "responsable-hierachique" && auth()->user()->type != "responsable-projet" && auth()->user()->type != "organisation"), function ($query) {
+                })->when((auth()->user()->type != "responsable-hierachique" && auth()->user()->type != "responsable-projet"), function ($query) {
                     $minStatut = null; //StatutIdee::BROUILLON;
                     if (!auth()->user()->hasPermissionTo('effectuer-evaluation-climatique-idee-projet')) $minStatut = StatutIdee::BROUILLON;
                     $query->whereNot("statut", $minStatut);
