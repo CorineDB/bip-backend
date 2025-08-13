@@ -59,10 +59,12 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                     $minStatut = null;//StatutIdee::BROUILLON;
                     if(!auth()->user()->hasPermissionTo('effectuer-evaluation-climatique-idee-projet')) $minStatut = StatutIdee::BROUILLON;
                     $query->whereNot("statut", $minStatut);
-                })->when((auth()->user()->type != "responsable-hierachique" && auth()->user()->type != "responsable-projet" && auth()->user()->type != "organisation"), function($query){
-                    $minStatut = null;//StatutIdee::BROUILLON;
-                    if(!auth()->user()->hasPermissionTo('effectuer-evaluation-climatique-idee-projet')) $minStatut = StatutIdee::BROUILLON;
-                    $query->whereNot("statut", $minStatut);
+                })->orWhere(function($query){
+                    //$query->when((auth()->user()->type != "responsable-hierachique" && auth()->user()->type != "responsable-projet" && auth()->user()->type != "organisation"), function($query){
+                        $minStatut = null;//StatutIdee::BROUILLON;
+                        if(auth()->user()->hasPermissionTo('effectuer-evaluation-climatique-idee-projet')) $minStatut = StatutIdee::BROUILLON;
+                        $query->whereNot("statut", $minStatut);
+                    //});
                 });
             })->when(auth()->user()->profilable_type == Dgpd::class, function($query){
                 $query->whereIn("statut", [StatutIdee::ANALYSE, StatutIdee::AMC, StatutIdee::VALIDATION]);
