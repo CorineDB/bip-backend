@@ -98,10 +98,10 @@
                 Cliquer sur ce lien d'activation pour activer de votre compte
             </p>
             <p>
-                {{$details}} Test du lient
+                <p>{{ json_encode($details) }} Test du lien</p>
             </p>
             <p>
-                {{$details['content']['lien']}} Test du lient
+                {!! $details['content']['lien'] !!} Test du lien
             </p>
             <a href="{{$details['content']['lien']}}">Activation de compte</a>
         </div>
