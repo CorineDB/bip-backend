@@ -52,6 +52,8 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
                 $projet = Projet::create($projetData);
             }
 
+            dd($projet);
+
             // Dupliquer les relations
             $this->duplicateRelations($ideeProjet, $projet);
 
