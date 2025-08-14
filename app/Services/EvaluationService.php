@@ -748,7 +748,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'critere_nom' => $data['critere']->intitule ?? 'N/A',
                 'ponderation' => $ponderation,
                 'ponderation_pct' => $ponderation . '%',
-                'moyenne_evaluateurs' => round($data['moyenne_evaluateurs'] ?? 0, 2),
+                'moyenne_evaluateurs' => $data['moyenne_evaluateurs'] ?? 0,
                 'score_pondere' => $score_pondere
             ];
 
@@ -981,7 +981,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ];
                 });
 
-                $score_climatique = $outilAMC->criteres->count() ? ($score_pondere_par_critere->sum('score_pondere') / $outilAMC->criteres->count()) : 0;
+                $score_climatique = $evaluation->criteres->count() ? ($score_pondere_par_critere->sum('score_pondere') / $evaluation->criteres->count()) : 0;
 
                 $evaluationAMC = Evaluation::updateOrCreate([
                     'projetable_id' => $ideeProjet->id,
@@ -1057,7 +1057,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                         'criteres_evalues' => $evaluationClimatiqueReponses->filter->isCompleted()->count(),
                         'criteres_en_attente' => $evaluationClimatiqueReponses->filter->isPending()->count(),
                         'taux_completion' => $evaluationClimatiqueReponses->count() > 0 ?
-                            round(($evaluationClimatiqueReponses->filter->isCompleted()->count() / $evaluationClimatiqueReponses->count()) * 100, 2) : 0
+                            (($evaluationClimatiqueReponses->filter->isCompleted()->count() / $evaluationClimatiqueReponses->count()) * 100) : 0
                     ]
                 ]
             ]);
@@ -1105,7 +1105,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         }
 
         $score_final = $ponderation_totale > 0 ?
-            round(($score_total * 100) / $ponderation_totale, 2) : 0;
+            (($score_total * 100) / $ponderation_totale) : 0;
 
         return [
             'score_total' => $score_total,
@@ -1281,7 +1281,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'criteres_evalues' => $criteres_completes->count(),
                 'total_criteres' => $total_criteres,
                 'taux_completion' => $total_criteres > 0 ?
-                    round(($criteres_completes->count() / $total_criteres) * 100, 2) : 0,
+                    (($criteres_completes->count() / $total_criteres) * 100) : 0,
                 'score_pondere_individuel' => $this->calculateEvaluateurScorePondere($criteres),
 
                 'evaluateur_reponses' => EvaluationCritereResource::collection($criteres),
@@ -1307,7 +1307,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'critere_nom' => $critere->intitule ?? 'N/A',
                 'ponderation' => $data['ponderation'] ?? 0,
                 'ponderation_pct' => ($data['ponderation'] ?? 0) . '%',
-                'moyenne_evaluateurs' => round($moyenneEvaluateurs, 2),
+                'moyenne_evaluateurs' => $moyenneEvaluateurs,
                 'score_pondere' => $scorePondere,
                 'total_evaluateurs' => $data['total_evaluateurs'] ?? 0,
                 'notes_individuelles' => $data['notes_individuelles'] ?? [],
@@ -1486,11 +1486,11 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
         // Score climatique sur l'échelle utilisée (généralement sur 5)
         $scoreClimatique = $ponderationTotale > 0 ?
-            round(($scoreTotal * 100) / $ponderationTotale, 2) : 0;
+            (($scoreTotal * 100) / $ponderationTotale) : 0;
 
         return [
             //'score_climatique' => $scoreClimatique,
-            "score_climatique" => round($criteresMoyennes->avg('score_pondere'), 2),
+            "score_climatique" => ($criteresMoyennes->avg('score_pondere')),
             'nombre_criteres_evalues' => $criteresMoyennes->count(),
             'ponderation_totale' => $ponderationTotale,
             'criteres_details' => $criteresMoyennes->values()->toArray(),
@@ -1591,7 +1591,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $ecartType = 0;
             if ($notes->count() > 0) {
                 $variance = $this->calculateVariance($notes->toArray());
-                $ecartType = round(sqrt($variance), 2);
+                $ecartType = (sqrt($variance));
             }
 
             return [
@@ -1604,7 +1604,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'score_pondere' => $moyenne * ($ponderation / 100),
                 'nombre_evaluateurs' => $critereEvaluations->count(),
                 'notes_individuelles' => $notes->toArray(),
-                'variance' => round($variance, 2),
+                'variance' => ($variance),
                 'ecart_type' => $ecartType
             ];
         });
@@ -1936,7 +1936,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                         'criteres_evalues' => $evaluateurReponses->filter->isCompleted()->count(),
                         'criteres_en_attente' => $evaluateurReponses->filter->isPending()->count(),
                         'taux_completion' => $evaluateurReponses->count() > 0 ?
-                            round(($evaluateurReponses->filter->isCompleted()->count() / $evaluateurReponses->count()) * 100, 2) : 0
+                            (($evaluateurReponses->filter->isCompleted()->count() / $evaluateurReponses->count()) * 100) : 0
                     ]
                 ]
             ]);
@@ -2074,7 +2074,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'data' => [
                     "idee_projet" => new IdeesProjetResource($ideeProjet),
                     'evaluation_climatique' => [
-                        "score_climatique" => round(($score_pondere_par_critere->sum('score_pondere') / $categorie->criteres->count()), 2),
+                        "score_climatique" => ($score_pondere_par_critere->sum('score_pondere') / $categorie->criteres->count()),
                         "scores_pondere_par_critere" => array_values($score_pondere_par_critere->toArray()),/*  EvaluationCritereResource::collection($critereClimatiqueEvaluer)->resource->toArray()) */
                         "evaluation_effectuer" => EvaluationCritereResource::collection($critereClimatiqueEvaluer)
                     ],
