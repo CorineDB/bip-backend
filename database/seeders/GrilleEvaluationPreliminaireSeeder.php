@@ -23,11 +23,11 @@ class GrilleEvaluationPreliminaireSeeder extends Seeder
 
 
         // Critère Atténuation
-        $critereAttenuation = \App\Models\Critere::firstOrCreate([
+        $critereAttenuation = \App\Models\Critere::updateOrCreate([
             'intitule' => 'Atténuation',
             'categorie_critere_id' => $categorieCritere->id
         ], [
-            'ponderation' => 5.0,
+            'ponderation' => 25,
             'commentaire' => 'La réduction des émissions de gaz à effet de serre résultant de la mise en œuvre du projet, avec la taxonomie de l\'UE comme guide pour établir un seuil en cas d\'ambiguïté concernant l\'importance de la contribution d\'un projet à la réduction des émissions de GES (par exemple, un projet d\'électricité avec des émissions de cycle de vie >100 g CO2e/kWh doit être classé comme « Faible atténuation » même s\'il prétend le contraire).',
             'is_mandatory' => true
         ]);
@@ -52,11 +52,11 @@ class GrilleEvaluationPreliminaireSeeder extends Seeder
         }
 
         // Critère Adaptation
-        $critereAdaptation = \App\Models\Critere::firstOrCreate([
+        $critereAdaptation = \App\Models\Critere::updateOrCreate([
             'intitule' => 'Adaptation',
             'categorie_critere_id' => $categorieCritere->id
         ], [
-            'ponderation' => 5.0,
+            'ponderation' => 16,
             'commentaire' => 'Les pertes évitées directement ou indirectement attribuables à la mise en œuvre d\'un projet, conférant ainsi une résilience dans les secteurs vulnérables au climat (par exemple, l\'agriculture, l\'eau, l\'énergie, la santé, etc.).',
             'is_mandatory' => true
         ]);
@@ -81,11 +81,11 @@ class GrilleEvaluationPreliminaireSeeder extends Seeder
         }
 
         // Critère Contribution à l'objectif CDN
-        $critereCDN = \App\Models\Critere::firstOrCreate([
+        $critereCDN = \App\Models\Critere::updateOrCreate([
             'intitule' => 'Contribution à l\'objectif CDN',
             'categorie_critere_id' => $categorieCritere->id
         ], [
-            'ponderation' => 3.0,
+            'ponderation' => 24,
             'commentaire' => 'Les idées de projet étant générées au niveau du ministère sectoriel, il est important d\'articuler dès le début le potentiel d\'un projet à contribuer aux objectifs d\'engagement définis dans les contributions déterminées au niveau national du Bénin.',
             'is_mandatory' => true
         ]);
@@ -110,11 +110,11 @@ class GrilleEvaluationPreliminaireSeeder extends Seeder
         }
 
         // Critère Changement transformationnel
-        $critereTransformationnel = \App\Models\Critere::firstOrCreate([
+        $critereTransformationnel = \App\Models\Critere::updateOrCreate([
             'intitule' => 'Changement transformationnel',
             'categorie_critere_id' => $categorieCritere->id
         ], [
-            'ponderation' => 3.0,
+            'ponderation' => 35,
             'commentaire' => 'Capacité du projet à provoquer un changement de paradigme avec des impacts et des externalités positives plus larges. Le cadre suivant du GCF (Fonds vert pour le climat) est utile pour évaluer le changement transformationnel.',
             'is_mandatory' => true
         ]);
