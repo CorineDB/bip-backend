@@ -28,7 +28,7 @@ class RoleService extends BaseService implements RoleServiceInterface
         try {
             $user = Auth::user();
 
-            $query = $this->repository->getModel()->whereNotIn('slug', ['super-admin', 'dpaf', 'dgpd', 'organisation'])
+            $query = $this->repository->getModel()/* ->whereNotIn('slug', ['super-admin', 'dpaf', 'dgpd', 'organisation']) */
                 ->where("roleable_id", $user->profilable_id)
                 ->where("roleable_type", $user->profilable_type);
 
