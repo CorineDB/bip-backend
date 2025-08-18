@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Enums\EnumTypeChamp;
+use App\Helpers\SlugHelper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class Champ extends Model
 {
@@ -42,8 +44,7 @@ class Champ extends Model
         'type_champ',
         'sectionId',
         'documentId',
-        'meta_options',
-        'champ_standard'
+        'meta_options'
     ];
 
     /**
@@ -56,6 +57,7 @@ class Champ extends Model
         'isEvaluated' => 'boolean',
         'type_champ' => EnumTypeChamp::class,
         'meta_options' => 'array',
+        //'default_value' => 'array',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -120,5 +122,43 @@ class Champ extends Model
         return $this->belongsToMany(Evaluation::class, 'evaluation_champs', 'champId', 'evaluationId')
                     ->withPivot('valeur', 'score')
                     ->withTimestamps();
+    }
+
+    /**
+     *
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setLabelAttribute($value)
+    {
+        $this->attributes['label'] = Str::ucfirst(trim($value));
+    }
+
+    /**
+     * Set the default_value attribute.
+     *
+     * @param  mixed  $value
+     * @return void
+     */
+    public function setDefaultValueAttribute($value)
+    {
+        $this->attributes['default_value'] = is_array($value) ? json_encode($value) : $value;
+    }
+
+    /**
+     * Get the default_value attribute.
+     *
+     * @param  string|null  $value
+     * @return mixed
+     */
+    public function getDefaultValueAttribute($value)
+    {
+        if (is_null($value)) {
+            return null;
+        }
+        
+        $decoded = json_decode($value, true);
+        return json_last_error() === JSON_ERROR_NONE ? $decoded : $value;
     }
 }

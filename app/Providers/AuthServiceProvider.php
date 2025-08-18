@@ -38,10 +38,8 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        // Configuration des routes Passport si nécessaire
-        if (class_exists(Passport::class)) {
-            Passport::routes();
-            
+        // Configuration Passport si nécessaire
+        if (class_exists(Passport::class)) {            
             // Configuration des tokens d'accès (optionnel)
             Passport::tokensExpireIn(now()->addDays(15));
             Passport::refreshTokensExpireIn(now()->addDays(30));

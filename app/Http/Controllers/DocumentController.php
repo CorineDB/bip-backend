@@ -282,9 +282,9 @@ class DocumentController extends Controller
      *     )
      * )
      */
-    public function canevasRedactionNoteConptuelle(): JsonResponse
+    public function canevasRedactionNoteConceptuelle(): JsonResponse
     {
-        return $this->service->canevasRedactionNoteConptuelle();
+        return $this->service->canevasRedactionNoteConceptuelle();
     }
 
     /**
@@ -379,7 +379,7 @@ class DocumentController extends Controller
      *     )
      * )
      */
-    public function createOrUpdateCanevasRedactionNoteConptuelle(CreateOrUpdateCanevasRedactionNoteConceptuelleRequest $request): JsonResponse
+    public function createOrUpdateCanevasRedactionNoteConceptuelle(CreateOrUpdateCanevasRedactionNoteConceptuelleRequest $request): JsonResponse
     {
         return $this->service->createOrUpdateCanevasRedactionNoteConceptuelle($request->validated());
     }

@@ -1530,10 +1530,10 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
      */
     public function run(): void
     {
-        DB::table('champs')->truncate();
+        /* DB::table('champs')->truncate();
         DB::table('champs_sections')->truncate();
         DB::table('documents')->truncate();
-        DB::table('categories_document')->truncate();
+        DB::table('categories_document')->truncate(); */
         $categorieDocument = \App\Models\CategorieDocument::firstOrCreate([
             'slug' => "fiche-idee",
         ], [

@@ -15,7 +15,7 @@ class NoteConceptuelle extends Model
      *
      * @var string
      */
-    protected $table = 'note_conceptuelles';
+    protected $table = 'notes_conceptuelle';
 
     /**
      * The attributes that should be mutated to dates.
@@ -30,7 +30,13 @@ class NoteConceptuelle extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'projetId',
+        'intitule',
+        'statut',
+        'valider_par',
+        'rediger_par',
+        'note_conceptuelle',
+        'decision'
     ];
 
     /**
@@ -39,6 +45,9 @@ class NoteConceptuelle extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'note_conceptuelle' => 'array',
+        'decision' => 'array',
+        'date_validation' => 'datetime',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -62,12 +71,43 @@ class NoteConceptuelle extends Model
 
         static::deleting(function ($model) {
             $model->update([
-                // Exemple : 'nom' => time() . '::' . $model->nom,
+                'intitule' => time() . '::' . $model->intitule,
             ]);
-
-            if (method_exists($model, 'user')) {
-                // Exemple : $model->user()->delete();
-            }
         });
+    }
+
+    /**
+     * Relation avec le projet
+     */
+    public function projet()
+    {
+        return $this->belongsTo(Projet::class, 'projetId');
+    }
+
+    /**
+     * Relation avec le validateur
+     */
+    public function validateur()
+    {
+        return $this->belongsTo(User::class, 'valider_par');
+    }
+
+    /**
+     * Relation avec le rédacteur
+     */
+    public function redacteur()
+    {
+        return $this->belongsTo(User::class, 'rediger_par');
+    }
+
+    /**
+     * Relation many-to-many avec les champs (pour les valeurs saisies)
+     */
+    public function champs()
+    {
+        return $this->morphToMany(Champ::class, 'projetable', 'champs_projet', 'projetable_id', 'champId')
+            ->using(ChampProjet::class)
+            ->withPivot(['valeur', 'commentaire', 'id'])
+            ->withTimestamps();
     }
 }

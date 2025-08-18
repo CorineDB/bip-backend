@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use App\Services\BaseService;
 use App\Repositories\Contracts\BaseRepositoryInterface;
 use App\Http\Resources\DocumentResource;
+use App\Http\Resources\CanevasNoteConceptuelleResource;
 use App\Models\CategorieDocument;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Services\Contracts\DocumentServiceInterface;
@@ -118,7 +119,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
     }
 
     /**
-     * Créer un champ avec validation des données
+     * Créer ou mettre à jour un champ avec validation des données
      */
     private function createChamp(array $champData, $document, $section = null): void
     {
@@ -139,11 +140,26 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             'sectionId' => $section ? $section->id : null
         ];
 
-        // Créer le champ via la relation appropriée
+        $this->createOrUpdateChamp($champAttributes, $document, $section);
+    }
+
+    /**
+     * Méthode utilitaire pour créer ou mettre à jour un champ
+     */
+    private function createOrUpdateChamp(array $champAttributes, $document, $section = null): void
+    {
+        // Critères uniques pour identifier un champ existant
+        $uniqueKeys = [
+            'attribut' => $champAttributes['attribut'],
+            'sectionId' => $section ? $section->id : null,
+            'documentId' => $document->id
+        ];
+
+        // Utiliser updateOrCreate pour éviter les doublons
         if ($section) {
-            $section->champs()->create($champAttributes);
+            $section->champs()->updateOrCreate($uniqueKeys, $champAttributes);
         } else {
-            $document->champs()->create($champAttributes);
+            $document->champs()->updateOrCreate($uniqueKeys, $champAttributes);
         }
     }
 
@@ -203,15 +219,14 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     //$champ->update($champAttributes);
                 } else {
                     // Champ n'existe pas, le créer
-                    $section->champs()->create($champAttributes);
+                    $this->createOrUpdateChamp($champAttributes, $section->document, $section);
                 }
             } else {
                 // Créer nouveau champ
-                $section->champs()->create($champAttributes);
+                $this->createOrUpdateChamp($champAttributes, $section->document, $section);
             }
         }
     }
-
     /**
      * Mettre à jour les champs directs (sans section) pour un document existant
      */
@@ -232,11 +247,11 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     $champ->update($champAttributes);
                 } else {
                     // Champ n'existe pas, le créer
-                    $document->champs()->create($champAttributes);
+                    $this->createOrUpdateChamp($champAttributes, $document);
                 }
             } else {
                 // Créer nouveau champ
-                $document->champs()->create($champAttributes);
+                $this->createOrUpdateChamp($champAttributes, $document);
             }
         }
     }
@@ -359,18 +374,18 @@ class DocumentService extends BaseService implements DocumentServiceInterface
     public function canevasRedactionNoteConceptuelle(): JsonResponse
     {
         try {
-            // Récupérer la fiche idée unique
-            $ficheIdee = $this->repository->getCanevasRedactionNoteConceptuelle();
+            // Récupérer le canevas de note conceptuelle unique
+            $canevas = $this->repository->getCanevasRedactionNoteConceptuelle();
 
-            if (!$ficheIdee) {
+            if (!$canevas) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucun canevas de redaction disponible idée trouvée.'
+                    'message' => 'Aucun canevas de rédaction de note conceptuelle trouvé.'
                 ], 404);
             }
 
-            return (new $this->resourceClass($ficheIdee))
-                ->additional(['message' => 'Fiche idée récupérée avec succès.'])
+            return (new CanevasNoteConceptuelleResource($canevas))
+                ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
                 ->response()
                 ->setStatusCode(200);
 
@@ -384,82 +399,51 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         try {
             DB::beginTransaction();
 
-            $ficheIdee = $this->repository->getCanevasRedactionNoteConceptuelle();
-
+            $canevas = $this->repository->getCanevasRedactionNoteConceptuelle();
             $data['categorieId'] = CategorieDocument::where('slug', 'canevas-redaction-note-conceptuelle')->firstOrFail()->id;
 
-            if ($ficheIdee) {
-                // Mode mise à jour
-                /*$document = $ficheIdee;
-                if (!$document) {
-                    return $this->errorResponse(new Exception('Document non trouvé'), 404);
-                }*/
+            if ($canevas) {
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->update($documentData);
+                $canevas->refresh();
 
-                // Nettoyer les données du document principal
-                $documentData = collect($data)->except(['sections', 'champs', 'id'])->toArray();
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
 
-                // Mettre à jour le document principal
-                $ficheIdee->update($documentData);//$this->repository->update($id, $documentData);
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
 
-                $ficheIdee->refresh();
-
-                // Extraire les données relationnelles
-                $sectionsData = $data['sections'] ?? [];
-                $champsData = $data['champs'] ?? [];
-
-                // Traiter les sections avec leurs champs
-                if (!empty($sectionsData)) {
-                    $this->updateSectionsWithChamps($ficheIdee, $sectionsData);
-                }
-
-                // Traiter les champs directs (sans section)
-                if (!empty($champsData)) {
-                    $this->updateChampsDirects($ficheIdee, $champsData);
-                }
-
-                $ficheIdee->refresh();
-
-                // Recharger avec toutes les relations et générer la structure
-                //$ficheIdee->load(['sections.champs', 'champs', 'categorie']);
-                //$this->structureService->generateAndSaveStructure($ficheIdee);
+                // Supprimer les éléments non présents dans le payload
+                $this->cleanupRemovedElements($canevas, $payloadIds);
 
                 DB::commit();
 
-                return (new $this->resourceClass($ficheIdee))
-                    ->additional(['message' => 'Fiche idée mise à jour avec succès.'])
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasRedactionNoteConceptuelle();
+
+                return (new CanevasNoteConceptuelleResource($canevas))
+                    ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
                     ->response()
                     ->setStatusCode(200);
             } else {
                 // Mode création
-                // Extraire les données relationnelles avant création
-                $sectionsData = $data['sections'] ?? [];
-                $champsData = $data['champs'] ?? [];
-
-                // Nettoyer les données du document principal
-                $documentData = collect($data)->except(['sections', 'champs', 'id'])->toArray();
-
-
-                // Créer le document principal
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
                 $document = $this->repository->create($documentData);
 
-                // Traiter les sections avec leurs champs
-                if (!empty($sectionsData)) {
-                    $this->createSectionsWithChamps($document, $sectionsData);
-                }
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
 
-                // Traiter les champs directs (sans section)
-                if (!empty($champsData)) {
-                    $this->createDirectChamps($document, $champsData);
-                }
-
-                // Recharger avec toutes les relations et générer la structure
-                $document->load(['sections.champs', 'champs', 'categorie']);
+                // Générer et sauvegarder la structure JSON
                 $this->structureService->generateAndSaveStructure($document);
 
                 DB::commit();
 
-                return (new $this->resourceClass($document->fresh(['sections.champs', 'champs'])))
-                    ->additional(['message' => 'Fiche idée créée avec succès.'])
+                // Recharger avec relations
+                $document = $this->repository->getCanevasRedactionNoteConceptuelle();
+
+                return (new CanevasNoteConceptuelleResource($document))
+                    ->additional(['message' => 'Canevas de note conceptuelle créé avec succès.'])
                     ->response()
                     ->setStatusCode(201);
             }
@@ -469,4 +453,222 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             return $this->errorResponse($e);
         }
     }
+
+    /**
+     * Traiter les données du payload forms de manière récursive
+     */
+    private function processFormsData($document, array $formsData, $parentSection = null): void
+    {
+        foreach ($formsData as $element) {
+            $this->processFormElement($document, $element, $parentSection);
+        }
+    }
+
+    /**
+     * Traiter un élément du formulaire de manière récursive
+     */
+    private function processFormElement($document, array $element, $parentSection = null): void
+    {
+        if ($element['element_type'] === 'field') {
+            $this->createFieldFromElement($document, $element, $parentSection);
+        } elseif ($element['element_type'] === 'section') {
+            $section = $this->createSectionFromElement($document, $element, $parentSection);
+
+            // Traiter récursivement les éléments enfants
+            if (isset($element['elements']) && is_array($element['elements'])) {
+                $this->processFormsData($document, $element['elements'], $section);
+            }
+        }
+    }
+
+    /**
+     * Créer un champ à partir d'un élément du formulaire
+     */
+    private function createFieldFromElement($document, array $fieldData, $section = null): void
+    {
+        $champAttributes = [
+            'label' => $fieldData['label'],
+            'info' => $fieldData['info'] ?? '',
+            'attribut' => $fieldData['attribut'],
+            'placeholder' => $fieldData['placeholder'] ?? '',
+            'is_required' => $fieldData['is_required'] ?? false,
+            'default_value' => $fieldData['default_value'] ?? null,
+            'isEvaluated' => $fieldData['isEvaluated'] ?? false,
+            'ordre_affichage' => $fieldData['ordre_affichage'],
+            'type_champ' => $fieldData['type_champ'],
+            'meta_options' => $fieldData['meta_options'] ?? [],
+            'champ_standard' => $fieldData['champ_standard'] ?? false,
+            'startWithNewLine' => $fieldData['startWithNewLine'] ?? null,
+            'documentId' => $document->id,
+            'sectionId' => $section ? $section->id : null
+        ];
+
+        $this->createOrUpdateChamp($champAttributes, $document, $section);
+    }
+
+    /**
+     * Créer une section à partir d'un élément du formulaire
+     */
+    private function createSectionFromElement($document, array $sectionData, $parentSection = null)
+    {
+        $section = $document->sections()->create([
+            'intitule' => $sectionData['intitule'],
+            'description' => $sectionData['description'] ?? '',
+            'ordre_affichage' => $sectionData['ordre_affichage'],
+            'type' => $sectionData['type'] ?? 'formulaire',
+            'slug' => $sectionData['key'] ?? \Illuminate\Support\Str::slug($sectionData['intitule']),
+            'parentSectionId' => $parentSection ? $parentSection->id : null
+        ]);
+
+        return $section;
+    }
+
+    /**
+     * Collecter tous les IDs présents dans le payload de manière récursive
+     */
+    private function collectAllIds(array $formsData): array
+    {
+        $ids = ['champs' => [], 'sections' => []];
+
+        foreach ($formsData as $element) {
+            $this->collectElementIds($element, $ids);
+        }
+
+        return $ids;
+    }
+
+    /**
+     * Collecter les IDs d'un élément de manière récursive
+     */
+    private function collectElementIds(array $element, array &$ids): void
+    {
+        // Collecter l'ID de l'élément actuel s'il existe
+        if (isset($element['id']) && $element['id']) {
+            if ($element['element_type'] === 'field') {
+                $ids['champs'][] = $element['id'];
+            } elseif ($element['element_type'] === 'section') {
+                $ids['sections'][] = $element['id'];
+            }
+        }
+
+        // Si c'est une section, traiter récursivement tous les éléments enfants
+        if ($element['element_type'] === 'section' && isset($element['elements']) && is_array($element['elements'])) {
+            foreach ($element['elements'] as $childElement) {
+                $this->collectElementIds($childElement, $ids);
+            }
+        }
+    }
+
+    /**
+     * Traiter les données du formulaire avec mise à jour intelligente
+     */
+    private function processFormsDataWithUpdate($document, array $formsData, array $payloadIds, $parentSection = null): void
+    {
+        foreach ($formsData as $element) {
+            $this->processFormElementWithUpdate($document, $element, $payloadIds, $parentSection);
+        }
+    }
+
+    /**
+     * Traiter un élément avec logique de création/mise à jour
+     */
+    private function processFormElementWithUpdate($document, array $element, array $payloadIds, $parentSection = null): void
+    {
+        if ($element['element_type'] === 'field') {
+            $this->createOrUpdateField($document, $element, $parentSection);
+        } elseif ($element['element_type'] === 'section') {
+            $section = $this->createOrUpdateSection($document, $element, $parentSection);
+
+            // Traiter récursivement les éléments enfants
+            if (isset($element['elements']) && is_array($element['elements'])) {
+                $this->processFormsDataWithUpdate($document, $element['elements'], $payloadIds, $section);
+            }
+        }
+    }
+
+    /**
+     * Créer ou mettre à jour un champ
+     */
+    private function createOrUpdateField($document, array $fieldData, $section = null): void
+    {
+        $champAttributes = [
+            'label' => $fieldData['label'],
+            'info' => $fieldData['info'] ?? '',
+            'attribut' => $fieldData['attribut'],
+            'placeholder' => $fieldData['placeholder'] ?? '',
+            'is_required' => $fieldData['is_required'] ?? false,
+            'default_value' => $fieldData['default_value'] ?? null,
+            'isEvaluated' => $fieldData['isEvaluated'] ?? false,
+            'ordre_affichage' => $fieldData['ordre_affichage'],
+            'type_champ' => $fieldData['type_champ'],
+            'meta_options' => $fieldData['meta_options'] ?? [],
+            'champ_standard' => $fieldData['champ_standard'] ?? false,
+            'startWithNewLine' => $fieldData['startWithNewLine'] ?? null,
+            'documentId' => $document->id,
+            'sectionId' => $section ? $section->id : null
+        ];
+
+        if (isset($fieldData['id']) && $fieldData['id']) {
+
+
+            // Mise à jour d'un champ existant
+            $champ = $document->all_champs()->find($fieldData['id']);
+            if ($champ) {
+                $champ->update($champAttributes);
+            } else {
+                // L'ID n'existe pas, créer un nouveau champ
+                $this->createOrUpdateChamp($champAttributes, $document, $section);
+            }
+        } else {
+            // Création d'un nouveau champ
+            $this->createOrUpdateChamp($champAttributes, $document, $section);
+        }
+    }
+
+    /**
+     * Créer ou mettre à jour une section
+     */
+    private function createOrUpdateSection($document, array $sectionData, $parentSection = null)
+    {
+        $sectionAttributes = [
+            'intitule' => $sectionData['intitule'],
+            'description' => $sectionData['description'] ?? '',
+            'ordre_affichage' => $sectionData['ordre_affichage'],
+            'type' => $sectionData['type'] ?? 'formulaire',
+            'slug' => $sectionData['key'] ?? \Illuminate\Support\Str::slug($sectionData['intitule']),
+            'parentSectionId' => $parentSection ? $parentSection->id : null
+        ];
+
+        if (isset($sectionData['id']) && $sectionData['id']) {
+            // Mise à jour d'une section existante
+            $section = $document->sections()->find($sectionData['id']);
+            if ($section) {
+                $section->update($sectionAttributes);
+                return $section;
+            } else {
+                // L'ID n'existe pas, créer une nouvelle section
+                return $document->sections()->create($sectionAttributes);
+            }
+        } else {
+            // Création d'une nouvelle section
+            return $document->sections()->create($sectionAttributes);
+        }
+    }
+
+    /**
+     * Supprimer les éléments qui ne sont plus présents dans le payload
+     */
+    private function cleanupRemovedElements($document, array $payloadIds): void
+    {
+        // Supprimer les champs non présents
+        $document->champs()
+            ->whereNotIn('id', $payloadIds['champs'])
+            ->forceDelete();
+
+        // Supprimer les sections non présentes
+        $document->sections()
+            ->whereNotIn('id', $payloadIds['sections'])
+            ->forceDelete();
+    }
+
 }

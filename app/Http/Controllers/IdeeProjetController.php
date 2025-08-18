@@ -20,7 +20,6 @@ class IdeeProjetController extends Controller
 
     public function index(FilterIdeeRequest $request): JsonResponse
     {
-
         if ($request->filled('statut')) {
             $statuts = is_array($request->statut) ? $request->statut : [$request->statut];
             return $this->service->filterBy($statuts);

@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
-
 use Laravel\Passport\Contracts\OAuthenticatable;
 use Laravel\Passport\HasApiTokens;
 use Laravel\Sanctum\NewAccessToken;
@@ -134,6 +132,7 @@ class User extends Authenticatable implements OAuthenticatable
 
     public function permissions()
     {
+        return $this->role->permissions();
         return $this->roles()->get()->last()->permissions();
     }
 
@@ -298,10 +297,10 @@ class User extends Authenticatable implements OAuthenticatable
     {
         // Récupérer tous les IDs d'organisations qui appartiennent au ministère
         $organisationIds = collect();
-        
+
         // Pour les DPAF : directement via id_ministere
         $dpafIds = Dpaf::where('id_ministere', $ministereId)->pluck('id');
-        
+
         // Pour les Organisations : utiliser la logique de la méthode ministere()
         $organisations = Organisation::all();
         foreach ($organisations as $organisation) {
@@ -310,7 +309,7 @@ class User extends Authenticatable implements OAuthenticatable
                 $organisationIds->push($organisation->id);
                 continue;
             }
-            
+
             // Recherche en profondeur dans la hiérarchie
             $current = $organisation;
             while ($current && $current->parent) {
@@ -321,7 +320,7 @@ class User extends Authenticatable implements OAuthenticatable
                 }
             }
         }
-        
+
         return $query->whereIn("profilable_type", [Organisation::class, Dpaf::class])
             ->where("status", "actif")
             ->where(function($userQuery) use ($organisationIds, $dpafIds) {

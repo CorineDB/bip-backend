@@ -57,7 +57,7 @@ class SendEmailJob implements ShouldQueue
 
             if ($this->type == "confirmation-compte") {
                 $details['view'] = "emails.auth.confirmation_compte";
-                $details['subject'] = "Bienvenue";
+                $details['subject'] = "Activation de votre compte BIP - Bienvenue";
                 $details['content'] = [
                     "greeting" => "Bienvenu Mr/Mme " . $this->user->personne->nom,
                     "introduction" => "Voici vos identifiant de connexion",
@@ -69,7 +69,7 @@ class SendEmailJob implements ShouldQueue
             } elseif ($this->type == "confirmation-de-compte") {
 
                 $details['view'] = "emails.auth.confirmation_de_compte";
-                $details['subject'] = "Confirmation de compte";
+                $details['subject'] = "Confirmez votre inscription sur BIP - Action requise";
                 $details['content'] = [
                     "greeting" => "Bienvenu Mr/Mme " . $this->user->personne->nom,
                     "introduction" => "Voici votre lien d'activation de votre compte",
@@ -80,7 +80,7 @@ class SendEmailJob implements ShouldQueue
             } elseif ($this->type == "reinitialisation-mot-de-passe") {
 
                 $details['view'] = "emails.auth.reinitialisation_mot_passe";
-                $details['subject'] = "Réinitialisation de passe";
+                $details['subject'] = "Réinitialisation de passe BIP";
                 $details['content'] = [
                     "greeting" => "Bienvenu Mr/Mme " . $this->user->personne->nom,
                     "introduction" => "Voici votre lien de réinitialisation",

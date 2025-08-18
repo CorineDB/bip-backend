@@ -21,16 +21,16 @@ class ChampResource extends BaseApiResource
             'key'               => $this->attribut,
             'attribut'          => $this->attribut,
             'placeholder'       => $this->placeholder,
-            'is_required'       => $this->is_required,
+            'is_required'       => (bool) $this->is_required,
             'default_value'     => $this->default_value,
-            'isEvaluated'       => $this->isEvaluated,
-            'ordre_affichage'   => $this->ordre_affichage,
+            'isEvaluated'       => (bool) $this->isEvaluated,
+            'ordre_affichage'   => (int) $this->ordre_affichage,
             'type_champ'        => $this->type_champ,
             'sectionId'         => $this->sectionId,
-            'meta_options'      => $this->meta_options,
-            "champ_standard"    => $this->champ_standard,
-            "startWithNewLine"  => $this->startWithNewLine
-
+            'documentId'        => $this->documentId,
+            'meta_options'      => $this->meta_options ?: (object)[],
+            'champ_standard'    => (bool) $this->champ_standard,
+            'startWithNewLine'  => $this->startWithNewLine
         ];
     }
 

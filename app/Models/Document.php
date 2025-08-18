@@ -37,7 +37,8 @@ class Document extends Model
         'categorieId',
         'type',
         'metadata',
-        'structure'
+        'structure',
+        'evaluation_configs'
     ];
 
     /**
@@ -48,6 +49,7 @@ class Document extends Model
     protected $casts = [
         'metadata' => 'array',
         'structure' => 'array',
+        'evaluation_configs' => 'array',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',

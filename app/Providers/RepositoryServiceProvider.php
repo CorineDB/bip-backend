@@ -30,6 +30,11 @@ class RepositoryServiceProvider extends ServiceProvider
             \App\Repositories\PermissionRepository::class
         );
 
+        $this->app->bind(
+            \App\Repositories\Contracts\NotificationRepositoryInterface::class,
+            \App\Repositories\NotificationRepository::class
+        );
+
         $contractPath = app_path('Repositories/Contracts');
 
         if (!File::exists($contractPath) || !File::isDirectory($contractPath)) {

@@ -49,8 +49,7 @@ class ServiceProviderProvider extends ServiceProvider
             'DgpdServiceInterface' => 'DgpdService',
             'GroupeUtilisateurServiceInterface' => 'GroupeUtilisateurService',
             'CategorieCritereServiceInterface' => 'CategorieCritereService',
-
-
+            'NotificationServiceInterface' => 'NotificationService'
         ];
 
         foreach ($services as $interface => $implementation) {

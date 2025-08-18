@@ -33,6 +33,7 @@ use App\Http\Controllers\DpafController;
 use App\Http\Controllers\GroupeUtilisateurController;
 use App\Http\Controllers\OAuthController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NoteConceptuelleController;
 use App\Models\Village;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -180,6 +181,29 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         });
 
         Route::apiResource('projets', ProjetController::class)->only(['index', 'show']);
+        
+        // Routes pour les notes conceptuelles des projets
+        Route::prefix('projets')->group(function () {
+            Route::post('{projetId}/note-conceptuelle', [NoteConceptuelleController::class, 'createForProject']);
+            Route::put('{projetId}/note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'updateForProject']);
+            Route::get('{projetId}/note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'getForProject']);
+            Route::delete('{projetId}/note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'deleteForProject']);
+            Route::post('{projetId}/valider-note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'validateNote']);
+            Route::get('{projetId}/details-validation-note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'getValidationDetails']);
+        });
+        
+        // Routes pour l'évaluation des notes conceptuelles
+        Route::prefix('notes-conceptuelle')->group(function () {
+            Route::get('{noteId}/evaluation-config', [NoteConceptuelleController::class, 'getWithEvaluationConfig']);
+            Route::post('{noteId}/evaluation', [NoteConceptuelleController::class, 'creerEvaluation']);
+            Route::get('{noteId}/evaluation', [NoteConceptuelleController::class, 'getEvaluation']);
+            Route::put('evaluation/{evaluationId}', [NoteConceptuelleController::class, 'mettreAJourEvaluation']);
+            
+            // Configuration des options de notation
+            Route::post('configurer-options-notation', [NoteConceptuelleController::class, 'configurerOptionsNotation']);
+            Route::get('options-notation-config', [NoteConceptuelleController::class, 'getOptionsNotationConfig']);
+        });
+        
         Route::apiResource('categories-projet', CategorieProjetController::class);
         Route::apiResource('secteurs', SecteurController::class);
 
@@ -239,7 +263,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::prefix('canevas-de-redaction-note-conceptuelle')->group(function () {
             // Public routes
             Route::get('', [DocumentController::class, 'canevasRedactionNoteConceptuelle']);
-            Route::post('/create-or-update', [DocumentController::class, 'createOrUpdateCanevasRedactionNoteConptuelle']);
+            Route::post('', [DocumentController::class, 'createOrUpdateCanevasRedactionNoteConceptuelle']);
         });
 
 
@@ -249,15 +273,16 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::apiResource('workflows', WorkflowController::class);
 
         // Financial & Evaluation
-        Route::apiResource('financements', FinancementController::class);
-
         Route::controller(FinancementController::class)->group(function () {
             Route::get('types-financement', 'types_de_financement');
             Route::get('types-financement/{idType}/natures', 'natures_type_de_financement');
             Route::get('natures-financement', 'natures_de_financement');
             Route::get('sources-financement', 'sources_de_financement');
             Route::get('natures-financement/{idNature}/sources', 'sources_nature_de_financement');
+            Route::get('financements/filters', 'financementsWithFilters');
         });
+
+        Route::apiResource('financements', FinancementController::class);
 
         Route::apiResource('evaluations', EvaluationController::class);
         Route::apiResource('champs', ChampController::class);

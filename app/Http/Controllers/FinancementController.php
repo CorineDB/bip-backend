@@ -67,4 +67,36 @@ class FinancementController extends Controller
     {
         return $this->service->sources_de_financement();
     }
+
+    /**
+     * Charger les financements avec filtres et dépendances hiérarchiques
+     */
+    public function financementsWithFilters(Request $request): JsonResponse
+    {
+        $filterType = $request->get('filter_type');
+        $parentId = $request->get('parent_id');
+        $dependsOn = $request->get('depends_on');
+
+        switch ($filterType) {
+            case 'type':
+                return $this->service->types_de_financement();
+
+            case 'nature':
+                // Si on a un parent_id (types_financement sélectionné), filtrer par type
+                if ($parentId && is_numeric($parentId)) {
+                    return $this->service->natures_type_de_financement($parentId);
+                }
+                return $this->service->natures_de_financement();
+
+            case 'source':
+                // Si on a un parent_id (natures_financement sélectionné), filtrer par nature
+                if ($parentId && is_numeric($parentId)) {
+                    return $this->service->sources_nature_de_financement($parentId);
+                }
+                return $this->service->sources_de_financement();
+
+            default:
+                return $this->service->all();
+        }
+    }
 }

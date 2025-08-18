@@ -50,7 +50,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
     {
         try {
 
-            $item = $this->repository->getModel()->when(auth()->user()->profilable_type == Dpaf::class, function ($query) {
+            $item = $this->repository->getModel()->whereIn("statut", [StatutIdee::BROUILLON, StatutIdee::IDEE_DE_PROJET, StatutIdee::ANALYSE, StatutIdee::AMC, StatutIdee::VALIDATION])->when(auth()->user()->profilable_type == Dpaf::class, function ($query) {
                 $query->where("ministereId", Auth::user()->profilable->ministere->id)->whereNot("statut", StatutIdee::BROUILLON);
             })->when(auth()->user()->profilable_type == Organisation::class, function ($query) {
                 $query->where("ministereId", Auth::user()->profilable->ministere->id)->when(auth()->user()->type == "responsable-projet", function ($query) {

@@ -26,6 +26,7 @@ enum EnumTypeChamp: string
     case    SLIDER_NUMBER           = 'slider_number';
     case    MULTISELECT_CHECKBOX    = 'multiselect_checkbox';
     case    MULTISELECT_FILE        = 'multiselect_file';
+    case    GROUP                   = 'group';
 
 
     /**

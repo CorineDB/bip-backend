@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class Cible extends Model
 {
@@ -102,8 +103,22 @@ class Cible extends Model
      */
     public function setCibleAttribute($value)
     {
-        $this->attributes['cible'] = addslashes($value); // Escape value with backslashes
-        $this->attributes['slug'] = str_replace(' ', '-', strtolower($value));
+        $this->attributes['cible'] = Str::ucfirst(trim($value));
+
+        if(!isset($this->attributes['slug'])){
+            $this->attributes['slug'] = $this->attributes['cible'];
+        }
+    }
+
+    /**
+     *
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setSlugAttribute($value)
+    {
+        $this->attributes['slug'] = $value ?? Str::slug($this->attributes['cible']);
     }
 
     /**

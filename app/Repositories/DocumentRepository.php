@@ -22,6 +22,18 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             $query->where('slug', 'fiche-idee');
         })
             ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
             ->orderBy('created_at', 'desc')
             ->first();
     }
@@ -33,6 +45,18 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             $query->where('slug', 'canevas-redaction-note-conceptuelle');
         })
             ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
             ->orderBy('created_at', 'desc')
             ->first();
     }

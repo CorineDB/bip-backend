@@ -19,7 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             'json.response' => \App\Http\Middleware\ForceJsonResponse::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,
-            'permission' => \App\Http\Middleware\PermissionMiddleware::class,
+            'permission' => \App\Http\Middleware\PermissionMiddleware::class
         ]);
         $middleware->use([
             \App\Http\Middleware\CorsMiddleware::class

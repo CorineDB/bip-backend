@@ -164,6 +164,176 @@ class OrganisationsSeeder extends Seeder
         "supprimer-fichier",
     ];
 
+    // DPAF
+    protected $dpafPermissionsSlugs = [
+        // Gestion des utilisateurs
+        "gerer-les-utilisateurs",
+        "voir-la-liste-des-utilisateurs",
+        "creer-un-utilisateur",
+        "modifier-un-utilisateur",
+        "supprimer-un-utilisateur",
+
+        // Gestion des groupes-utilisateur
+        "gerer-les-groupes-utilisateur",
+        "voir-la-liste-des-groupes-utilisateur",
+        "creer-un-groupe-utilisateur",
+        "modifier-un-groupe-utilisateur",
+        "supprimer-un-groupe-utilisateur",
+        "assigner-un-role-a-un-groupe-utilisateur",
+        "retirer-un-role-a-un-groupe-utilisateur",
+        "ajouter-un-utilisateur-a-un-groupe-utilisateur",
+        "ajouter-nouvel-utilisateur-a-un-groupe-utilisateur",
+
+        // Gestion des rôles et permissions
+        "gerer-les-roles",
+        "voir-la-liste-des-roles",
+        "creer-un-role",
+        "modifier-un-role",
+        "supprimer-un-role",
+        "assigner-des-permissions-a-un-role",
+        "retirer-des-permissions-a-un-role",
+
+        // Gestion les odds
+        "gerer-les-odds",
+
+        // Gestion les cibles
+        "gerer-les-cibles",
+
+        // Entités géographiques
+        "voir-les-departements-geo",
+        "voir-la-liste-des-communes",
+        "voir-la-liste-des-arrondissements",
+        "voir-la-liste-des-villages",
+
+        // Secteurs d'intervention
+        "voir-la-liste-des-grands-secteurs",
+        "voir-la-liste-des-secteurs",
+        "voir-la-liste-des-sous-secteurs",
+
+        "voir-la-liste-des-types-intervention",
+
+        // Financements
+        "voir-la-liste-des-types-financement",
+        "voir-la-liste-des-natures-financement",
+        "voir-la-liste-des-sources-financement",
+
+        // Programmes
+        "voir-la-liste-des-programmes",
+        "voir-la-liste-des-composants-programme",
+
+        // Cadres stratégiques
+        "voir-la-liste-des-axes-du-pag",
+        "voir-la-liste-des-piliers-du-pag",
+        "voir-la-liste-des-actions-du-pag",
+        "voir-la-liste-des-orientations-strategique-du-pnd",
+        "voir-la-liste-des-objectifs-strategique-du-pnd",
+        "voir-la-liste-des-resultats-strategique-du-pnd",
+
+        // Projets et idées
+        "voir-la-liste-des-categories-de-projet",
+        "voir-la-liste-des-idees-de-projet",
+        "gerer-les-idees-projet",
+        "creer-une-idee-de-projet",
+        "modifier-une-idee-de-projet",
+        "supprimer-une-idee-de-projet",
+        "effectuer-evaluation-climatique-idee-projet",
+        "obtenir-score-climatique",
+        "obtenir-score-climatique-une-projet",
+        "valider-le-score-climatique-une-idee-de-projet",
+        "relancer-l-evaluation-climatique-une-idee-de-projet",
+
+        "consulter-le-canevas-de-la-fiche-idee-de-projet",
+        "remplir-le-canevas-de-la-fiche-idee-de-projet",
+        "telecharger-la-fiche-synthese-une-idee-de-projet",
+
+        "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+        "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+        "effectuer-evaluation-climatique-idee-projet",
+        "acceder-au-tableau-de-bord-climatique",
+        "valider-le-score-d-analyse-climatique-interne-d-une-idee-de-projet",
+        "valider-une-idee-de-projet-en-interne",
+
+        "acceder-au-tableau-d-amc",
+        "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+
+        // Gestion les notes conceptuelle
+        "gerer-les-notes-conceptuelle",
+        "voir-la-liste-des-notes-conceptuelle",
+        "creer-une-note-conceptuelle",
+        "rediger-une-note-conceptuelle",
+        "modifier-une-note-conceptuelle",
+        "supprimer-une-note-conceptuelle",
+        "commenter-une-note-conceptuelle",
+        "voir-la-liste-des-commentaires-d-une-note-conceptuelle",
+        "imprimer-une-note-conceptuelle",
+        "televerser-une-note-conceptuelle",
+        "attacher-des-documents-relatifs-a-une-note-conceptuelle",
+        "voir-les-documents-relatifs-a-une-note-conceptuelle",
+        "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
+
+        "consulter-la-fiche-de-redaction-d-une-note-conceptuelle",
+        "imprimer-la-fiche-de-redaction-d-une-note-conceptuelle",
+        "evaluer-une-note-conceptulle",
+        "voir-le-resultats-d-evaluation-d-une-note-conceptuelle",
+        "imprimer-le-resultats-d-evaluation-d-une-note-conceptuelle",
+        "valider-l-etude-de-profil",
+
+        "consulter-l-outil-d-analyse-d-une-note-conceptuelle",
+        "imprimer-l-outil-d-analyse-d-une-note-conceptuelle",
+
+        // TDRs
+        "soumettre-un-tdr-de-prefaisabilite",
+        "voir-la-liste-des-tdrs-de-prefaisabilite",
+        "attacher-un-fichier-a-un-tdr-de-prefaisabilite",
+        "supprimer-un-tdr-de-prefaisabilite",
+        "apprecier-un-tdr-de-prefaisabilite",
+        "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-prefaisabilite",
+        "telecharger-un-fichier-complementaire-d-un-tdr-de-prefaisabilite",
+        "soumettre-un-rapport-de-prefaisabilite",
+        "modifier-un-rapport-de-prefaisabilite",
+        "supprimer-un-rapport-de-prefaisabilite",
+        "telecharger-un-rapport-de-prefaisabilite",
+        "valider-une-etude-de-prefaisabilite",
+        "gerer-les-rapports-de-prefaisabilite",
+        "voir-la-liste-des-rapports-de-prefaisabilite",
+
+        "soumettre-un-tdr-de-faisabilite",
+        "voir-la-liste-des-tdrs-de-faisabilite",
+        "attacher-un-fichier-a-un-tdr-de-faisabilite",
+        "supprimer-un-tdr-de-faisabilite",
+        "apprecier-un-tdr-de-faisabilite",
+        "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite",
+        "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite",
+        "soumettre-un-rapport-de-faisabilite",
+        "modifier-un-rapport-de-faisabilite",
+        "supprimer-un-rapport-de-faisabilite",
+        "telecharger-un-rapport-de-faisabilite",
+        "valider-une-etude-de-faisabilite",
+        "gerer-les-rapports-de-faisabilite",
+        "voir-la-liste-des-rapports-de-faisabilite",
+
+        "soumettre-un-rapport-d-evaluation-ex-ante",
+        "modifier-un-rapport-d-evaluation-ex-ante",
+        "supprimer-un-rapport-d-evaluation-ex-ante",
+        "telecharger-un-rapport-d-evaluation-ex-ante",
+        "valider-un-rapport-evaluation-ex-ante",
+        "gerer-les-rapports-d-evaluation-ex-ante",
+        "voir-la-liste-des-rapports-d-evaluation-ex-ante",
+        "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante",
+
+        "consulter-le-canevas-d-appreciation-d-un-tdr",
+        "imprimer-le-canevas-d-appreciation-d-un-tdr",
+
+        // Commentaires et fichiers
+        "ajouter-commentaire",
+        "voir-commentaires",
+        "modifier-commentaire",
+        "supprimer-commentaire",
+        "telecharger-fichier",
+        "upload-fichier",
+        "supprimer-fichier",
+    ];
+
     public function run(): void
     {
         $organisations = [
@@ -387,8 +557,11 @@ class OrganisationsSeeder extends Seeder
 
             if (!$adminMinistere) {
                 $adminMinisterePersonne = Personne::firstOrCreate(
-                    ['nom' => 'Admin', 'prenom' => ucfirst($ministere->slug),
-                    'organismeId' => $ministere->id],
+                    [
+                        'nom' => 'Admin',
+                        'prenom' => ucfirst($ministere->slug),
+                        'organismeId' => $ministere->id
+                    ],
                     [
                         'poste' => 'Administrateur Ministère',
                         'organismeId' => $ministere->id
@@ -472,8 +645,11 @@ class OrganisationsSeeder extends Seeder
 
             if (!$membre) {
                 $membrePersonne = Personne::firstOrCreate(
-                    ['nom' => 'Membre', 'prenom' => 'Comité',
-                    'organismeId' => $ministere->id],
+                    [
+                        'nom' => 'Membre',
+                        'prenom' => 'Comité',
+                        'organismeId' => $ministere->id
+                    ],
                     [
                         'poste' => 'Membre Comité Validation',
                         'organismeId' => $ministere->id
@@ -521,6 +697,7 @@ class OrganisationsSeeder extends Seeder
             }
 
             $this->command->info("✅ Groupe Comité de validation Ministériel créé pour {$ministere->nom}");
+
             $roleDpaf = Role::firstOrCreate([
                 'slug' => 'dpaf',
                 'roleable_type' => get_class($ministere),
@@ -535,6 +712,14 @@ class OrganisationsSeeder extends Seeder
                 $this->command->error('⚠️ Le rôle DPAF n\'existe pas.');
                 return;
             }
+
+            // Récupérer les IDs des permissions correspondantes aux slugs
+            $permissionIds = Permission::whereIn('slug', $this->dpafPermissionsSlugs)->pluck('id')->toArray();
+
+            // Synchroniser les permissions au rôle
+            $roleDpaf->permissions()->sync($permissionIds);
+
+            $this->command->info("✅ Rôle Responsable hiérachique créé pour {$ministere->nom}");
 
             // --- DPAF ---
             $dpaf = Dpaf::firstOrCreate(
@@ -554,8 +739,11 @@ class OrganisationsSeeder extends Seeder
 
             if (!$adminDpaf) {
                 $adminDpafPersonne = Personne::firstOrCreate(
-                    ['nom' => 'Admin', 'prenom' => 'DPAF',
-                    'organismeId' => $ministere->id],
+                    [
+                        'nom' => 'Admin',
+                        'prenom' => 'DPAF',
+                        'organismeId' => $ministere->id
+                    ],
                     [
                         'poste' => 'Administrateur DPAF',
                         'organismeId' => $ministere->id
@@ -631,8 +819,11 @@ class OrganisationsSeeder extends Seeder
 
             if (!$responsableProjet) {
                 $responsableProjetPersonne = Personne::firstOrCreate(
-                    ['nom' => 'Responsable', 'prenom' => 'Projet',
-                    'organismeId' => $ministere->id],
+                    [
+                        'nom' => 'Responsable',
+                        'prenom' => 'Projet',
+                        'organismeId' => $ministere->id
+                    ],
                     [
                         'poste' => 'Responsable de projet',
                         'organismeId' => $ministere->id
@@ -707,8 +898,11 @@ class OrganisationsSeeder extends Seeder
 
             if (!$responsableHierarchique) {
                 $responsableHierarchiquePersonne = Personne::firstOrCreate(
-                    ['nom' => 'Responsable', 'prenom' => 'Hiérarchique',
-                    'organismeId' => $ministere->id],
+                    [
+                        'nom' => 'Responsable',
+                        'prenom' => 'Hiérarchique',
+                        'organismeId' => $ministere->id
+                    ],
                     [
                         'poste' => 'Responsable hiérachique',
                         'organismeId' => $ministere->id

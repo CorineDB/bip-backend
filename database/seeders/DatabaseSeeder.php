@@ -32,7 +32,8 @@ class DatabaseSeeder extends Seeder
             DomaineCategorieSeeder::class,
             CanevasRedactionFicheIdeeProjet::class,
             GrilleEvaluationPreliminaireSeeder::class,
-            GrilleAMCSeeder::class
+            GrilleAMCSeeder::class,
+            CanvasRedactionNoteConceptuelleSeeder::class
 
             /*
             OrganisationsSeeder::class,
