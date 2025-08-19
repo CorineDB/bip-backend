@@ -610,7 +610,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
         if (isset($fieldData['id']) && $fieldData['id']) {
 
-
             // Mise à jour d'un champ existant
             $champ = $document->all_champs()->find($fieldData['id']);
             if ($champ) {

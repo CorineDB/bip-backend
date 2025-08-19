@@ -101,6 +101,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'statut' => 1
             ]);
 
+            if(isset($attributs['document']) && count($attributs['document'])){
+                //$evaluation->documents()->attac
+            }
+
             // Vérifier que l'évaluation climatique existe
             $evaluationClimatique = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
@@ -310,6 +314,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'statut' => 1,
                 'id_evaluation' => $evaluationPrecedente ? $evaluationPrecedente->id : null
             ]);
+
+            if(isset($attributs['document']) && count($attributs['document'])){
+                //$evaluation->documents()->attac
+            }
 
             if ($attributs["decision"] == "valider") {
                 $ideeProjet->update([

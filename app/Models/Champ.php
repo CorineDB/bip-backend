@@ -95,7 +95,7 @@ class Champ extends Model
      */
     public function section()
     {
-        return $this->belongsTo(ChampSection::class, 'sectionId');
+        return $this->belongsTo(ChampSection::class, "sectionId");
     }
 
     /**
@@ -103,14 +103,14 @@ class Champ extends Model
      */
     public function document()
     {
-        return $this->belongsTo(Document::class, 'documentId');
+        return $this->belongsTo(Document::class, "documentId");
     }
 
     public function ideesDeProjet()
     {
-        return $this->morphedByMany(IdeeProjet::class, 'projetable', 'champs_projet')
+        return $this->morphedByMany(IdeeProjet::class, "projetable", "champs_projet")
             ->using(ChampProjet::class)
-            ->withPivot(['valeur', 'commentaire', 'id'])
+            ->withPivot(["valeur", "commentaire", "id"])
             ->withTimestamps();
     }
 
@@ -119,8 +119,8 @@ class Champ extends Model
      */
     public function evaluations()
     {
-        return $this->belongsToMany(Evaluation::class, 'evaluation_champs', 'champId', 'evaluationId')
-                    ->withPivot('valeur', 'score')
+        return $this->belongsToMany(Evaluation::class, "evaluation_champs", "champId", "evaluationId")
+                    ->withPivot("note", "date_note", "commentaires")
                     ->withTimestamps();
     }
 
@@ -132,7 +132,7 @@ class Champ extends Model
      */
     public function setLabelAttribute($value)
     {
-        $this->attributes['label'] = Str::ucfirst(trim($value));
+        $this->attributes["label"] = Str::ucfirst(trim($value));
     }
 
     /**
@@ -143,7 +143,7 @@ class Champ extends Model
      */
     public function setDefaultValueAttribute($value)
     {
-        $this->attributes['default_value'] = is_array($value) ? json_encode($value) : $value;
+        $this->attributes["default_value"] = is_array($value) ? json_encode($value) : $value;
     }
 
     /**
@@ -157,7 +157,7 @@ class Champ extends Model
         if (is_null($value)) {
             return null;
         }
-        
+
         $decoded = json_decode($value, true);
         return json_last_error() === JSON_ERROR_NONE ? $decoded : $value;
     }

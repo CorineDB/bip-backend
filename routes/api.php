@@ -181,29 +181,33 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         });
 
         Route::apiResource('projets', ProjetController::class)->only(['index', 'show']);
-        
+
         // Routes pour les notes conceptuelles des projets
         Route::prefix('projets')->group(function () {
             Route::post('{projetId}/note-conceptuelle', [NoteConceptuelleController::class, 'createForProject']);
             Route::put('{projetId}/note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'updateForProject']);
             Route::get('{projetId}/note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'getForProject']);
             Route::delete('{projetId}/note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'deleteForProject']);
-            Route::post('{projetId}/valider-note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'validateNote']);
             Route::get('{projetId}/details-validation-note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'getValidationDetails']);
+            // Route pour la validation à l'étape étude de profil
+            Route::post('{projetId}/valider-etude-profil/{noteId}', [NoteConceptuelleController::class, 'validerEtudeProfil']);
+            // Route pour la validation à l'étape étude de profil
+            Route::post('{projetId}/confirmer-resultats-evaluation-note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'confirmerResultat']);
         });
-        
+
         // Routes pour l'évaluation des notes conceptuelles
         Route::prefix('notes-conceptuelle')->group(function () {
             Route::get('{noteId}/evaluation-config', [NoteConceptuelleController::class, 'getWithEvaluationConfig']);
             Route::post('{noteId}/evaluation', [NoteConceptuelleController::class, 'creerEvaluation']);
             Route::get('{noteId}/evaluation', [NoteConceptuelleController::class, 'getEvaluation']);
             Route::put('evaluation/{evaluationId}', [NoteConceptuelleController::class, 'mettreAJourEvaluation']);
-            
-            // Configuration des options de notation
-            Route::post('configurer-options-notation', [NoteConceptuelleController::class, 'configurerOptionsNotation']);
-            Route::get('options-notation-config', [NoteConceptuelleController::class, 'getOptionsNotationConfig']);
+            Route::post('{noteId}/confirmer-resultats-evaluation', [NoteConceptuelleController::class, 'confirmerResultat']);
         });
-        
+
+        // Configuration des options de notation d'une note conceptuelle
+        Route::get('grille-evaluation-note-conceptuelle', [NoteConceptuelleController::class, 'getOptionsNotationConfig']);
+        Route::post('grille-evaluation-note-conceptuelle', [NoteConceptuelleController::class, 'configurerOptionsNotation']);
+
         Route::apiResource('categories-projet', CategorieProjetController::class);
         Route::apiResource('secteurs', SecteurController::class);
 

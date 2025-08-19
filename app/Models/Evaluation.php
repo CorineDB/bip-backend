@@ -407,4 +407,32 @@ class Evaluation extends Model
     {
         return $this->update(['statut' => -1]);
     }
+
+    /**
+     * Get all evaluations for this champ.
+     */
+    public function champs_evalue()
+    {
+        return $this->belongsToMany(Champ::class, 'evaluation_champs', 'evaluationId', 'champId')
+                    ->withPivot('note', 'date_note', "commentaires")
+                    ->withTimestamps();
+    }
+
+    public function scopeEvaluationTermine($query, string $type_evaluation)
+    {
+        return $query->where("type_evaluation", $type_evaluation)->where("statut", 1)->whereNotNull("date_fin_evaluation")
+            ->orderBy('created_at', 'desc');
+    }
+
+    public function scopeEvaluationsEnCours($query, string $type_evaluation)
+    {
+        return $query->where("type_evaluation", $type_evaluation)->whereIn("statut", [-1, 0])->whereNull("date_fin_evaluation")
+            ->orderBy('created_at', 'desc');
+    }
+
+    public function scopeEvaluationParent($query, string $type_evaluation)
+    {
+        return $query->where("type_evaluation", $type_evaluation)->where("statut", 1)->whereNotNull("date_fin_evaluation")
+        ->orderBy('created_at', 'desc');
+    }
 }

@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\notes_conceptuelle\StoreNoteConceptuelleRequest;
 use App\Http\Requests\notes_conceptuelle\UpdateNoteConceptuelleRequest;
+use App\Http\Requests\notes_conceptuelle\ConfigurerOptionsEvaluationRequest;
+use App\Http\Requests\notes_conceptuelle\AppreciationNoteConceptuelleRequest;
+use App\Http\Requests\evaluation\ConfirmerResultatRequest;
+use App\Http\Requests\validation\ValiderEtudeProfilRequest;
 use App\Services\Contracts\NoteConceptuelleServiceInterface;
 use App\Models\NoteConceptuelle;
 use Illuminate\Http\JsonResponse;
@@ -107,7 +111,7 @@ class NoteConceptuelleController extends Controller
      */
     public function validateNote(StoreNoteConceptuelleRequest $request, $projetId, $noteId): JsonResponse
     {
-        return $this->service->validateNote($projetId, $noteId);
+        return $this->service->validateNote($projetId, $noteId, $request->validated());
     }
 
     /**
@@ -145,10 +149,9 @@ class NoteConceptuelleController extends Controller
     /**
      * Créer une évaluation pour une note conceptuelle
      */
-    public function creerEvaluation($noteId): JsonResponse
+    public function creerEvaluation(AppreciationNoteConceptuelleRequest $request, $noteId): JsonResponse
     {
-        $data = request()->all();
-        return $this->service->creerEvaluation($noteId, $data);
+        return $this->service->creerEvaluation($noteId, $request->validated());
     }
 
     /**
@@ -171,10 +174,9 @@ class NoteConceptuelleController extends Controller
     /**
      * Configurer les options de notation pour l'évaluation des notes conceptuelles
      */
-    public function configurerOptionsNotation(): JsonResponse
+    public function configurerOptionsNotation(ConfigurerOptionsEvaluationRequest $request): JsonResponse
     {
-        $data = request()->all();
-        return $this->service->configurerOptionsNotation($data);
+        return $this->service->configurerOptionsNotation($request->validated());
     }
 
     /**
@@ -183,5 +185,21 @@ class NoteConceptuelleController extends Controller
     public function getOptionsNotationConfig(): JsonResponse
     {
         return $this->service->getOptionsNotationConfig();
+    }
+
+    /**
+     * Confirmer le résultat de l'évaluation avec commentaires
+     */
+    public function confirmerResultat(ConfirmerResultatRequest $request, $noteId): JsonResponse
+    {
+        return $this->service->confirmerResultatParNote($noteId, $request->validated());
+    }
+
+    /**
+     * Valider le projet à l'étape étude de profil
+     */
+    public function validerEtudeProfil(ValiderEtudeProfilRequest $request, $projetId): JsonResponse
+    {
+        return $this->service->validerEtudeDeProfil($projetId, $request->validated());
     }
 }

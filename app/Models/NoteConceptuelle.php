@@ -110,4 +110,31 @@ class NoteConceptuelle extends Model
             ->withPivot(['valeur', 'commentaire', 'id'])
             ->withTimestamps();
     }
+
+    public function evaluations()
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')->where('type_evaluation', "note-conceptuelle");
+    }
+
+    public function evaluationTermine()
+    {
+        return $this->evaluations()->evaluationTermine("note-conceptuelle")->first();
+    }
+
+    public function evaluationEnCours()
+    {
+        return $this->evaluations()->evaluationsEnCours("note-conceptuelle")->first();
+    }
+
+    public function evaluationParent()
+    {
+        return $this->evaluations()->evaluationParent("note-conceptuelle")->first();
+    }
+
+    public function fichiers()
+    {
+        return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id')
+            ->active()
+            ->ordered();
+    }
 }

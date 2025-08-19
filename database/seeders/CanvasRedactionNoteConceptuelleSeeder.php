@@ -1022,7 +1022,7 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
         }
     }
 
-    /*private $payload = {
+    /*private $payload =
     "nom": "Canevas de rédaction de la note conceptuelle",
     "description": "Formulaire de rédaction d'une note conceptuelle de projet",
     "type": "formulaire",
@@ -1253,7 +1253,7 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                     "ordre_affichage": 5,
                     "label": "Les livrables du processus d'élaboration du projet",
                     "info": "",
-                    "attribut": "livrables_processus",
+                    "attribut": "livrable_processus",
                     "placeholder": "Listez les livrables attendus",
                     "is_required": true,
                     "default_value": null,
@@ -1344,9 +1344,9 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                             "id": 203,
                             "label": "Piliers du PAG",
                             "info": "Sélectionnez les éléments de Piliers du PAG",
-                            "attribut": "pilier-pag",
+                            "attribut": "piliers_pag",
                             "placeholder": "Choisissez les éléments de Piliers du PAG",
-                            "is_required": false,
+                            "is_required": true,
                             "default_value": null,
                             "isEvaluated": false,
                             "type_champ": "select",
@@ -1368,7 +1368,11 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                 "validations_rules": {
                                     "min": 0,
                                     "array": true,
-                                    "required": false
+                                    "required": true,
+                                    "each": {
+                                        "string": true,
+                                        "in": [] // Ici tu peux remplir avec les valeurs autorisées si connues
+                                    }
                                 }
                             },
                             "champ_standard": false,
@@ -1380,9 +1384,9 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                             "id": 204,
                             "label": "Axes du PAG",
                             "info": "Sélectionnez les éléments de Axes du PAG",
-                            "attribut": "axe-pag",
+                            "attribut": "axes_pag",
                             "placeholder": "Choisissez les éléments de Axes du PAG",
-                            "is_required": false,
+                            "is_required": true,
                             "default_value": null,
                             "isEvaluated": false,
                             "type_champ": "select",
@@ -1404,7 +1408,11 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                 "validations_rules": {
                                     "min": 0,
                                     "array": true,
-                                    "required": false
+                                    "required": true,
+                                    "each": {
+                                        "string": true,
+                                        "in": [] // Ici tu peux remplir avec les valeurs autorisées si connues
+                                    }
                                 }
                             },
                             "champ_standard": false,
@@ -1416,9 +1424,9 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                             "id": 205,
                             "label": "Actions du PAG",
                             "info": "Sélectionnez les éléments de Actions du PAG",
-                            "attribut": "action-pag",
+                            "attribut": "actions_pag",
                             "placeholder": "Choisissez les éléments de Actions du PAG",
-                            "is_required": false,
+                            "is_required": true,
                             "default_value": null,
                             "isEvaluated": false,
                             "type_champ": "select",
@@ -1429,7 +1437,7 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                     "options": [],
                                     "multiple": true,
                                     "datasource": "/api/programmes/1/composants-programme/4/composants",
-                                    "depends_on": "axe-pag",
+                                    "depends_on": "axes_pag",
                                     "load_dynamic": true
                                 },
                                 "conditions": {
@@ -1437,7 +1445,7 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                     "visible": false,
                                     "conditions": [
                                         {
-                                            "field": "axe-pag",
+                                            "field": "axes_pag",
                                             "operator": "not_empty"
                                         }
                                     ]
@@ -1445,7 +1453,11 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                 "validations_rules": {
                                     "min": 0,
                                     "array": true,
-                                    "required": false
+                                    "required": true,
+                                    "each": {
+                                        "string": true,
+                                        "in": [] // Ici tu peux remplir avec les valeurs autorisées si connues
+                                    }
                                 }
                             },
                             "champ_standard": false,
@@ -1469,9 +1481,9 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                             "id": 206,
                             "label": "Orientation stratégique du PND",
                             "info": "Sélectionnez les éléments de Orientation stratégique du PND",
-                            "attribut": "orientation-strategique-pnd",
+                            "attribut": "orientations_strategique_pnd",
                             "placeholder": "Choisissez les éléments de Orientation stratégique du PND",
-                            "is_required": false,
+                            "is_required": true,
                             "default_value": null,
                             "isEvaluated": false,
                             "type_champ": "select",
@@ -1493,7 +1505,11 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                 "validations_rules": {
                                     "min": 0,
                                     "array": true,
-                                    "required": false
+                                    "required": true,
+                                    "each": {
+                                        "string": true,
+                                        "in": [] // Ici tu peux remplir avec les valeurs autorisées si connues
+                                    }
                                 }
                             },
                             "champ_standard": false,
@@ -1505,9 +1521,9 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                             "id": 207,
                             "label": "Objectif stratégique du PND",
                             "info": "Sélectionnez les éléments de Objectif stratégique du PND",
-                            "attribut": "objectif-strategique-pnd",
+                            "attribut": "objectifs_strategique_pnd",
                             "placeholder": "Choisissez les éléments de Objectif stratégique du PND",
-                            "is_required": false,
+                            "is_required": true,
                             "default_value": null,
                             "isEvaluated": false,
                             "type_champ": "select",
@@ -1518,7 +1534,7 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                     "options": [],
                                     "multiple": true,
                                     "datasource": "/api/programmes/5/composants-programme/7/composants",
-                                    "depends_on": "orientation-strategique-pnd",
+                                    "depends_on": "orientations_strategique_pnd",
                                     "load_dynamic": true
                                 },
                                 "conditions": {
@@ -1526,7 +1542,7 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                     "visible": false,
                                     "conditions": [
                                         {
-                                            "field": "orientation-strategique-pnd",
+                                            "field": "orientations_strategique_pnd",
                                             "operator": "not_empty"
                                         }
                                     ]
@@ -1534,7 +1550,11 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                 "validations_rules": {
                                     "min": 0,
                                     "array": true,
-                                    "required": false
+                                    "required": true,
+                                    "each": {
+                                        "string": true,
+                                        "in": [] // Ici tu peux remplir avec les valeurs autorisées si connues
+                                    }
                                 }
                             },
                             "champ_standard": false,
@@ -1546,9 +1566,9 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                             "id": 208,
                             "label": "Resultats stratégique du PND",
                             "info": "Sélectionnez les éléments de Resultats stratégique du PND",
-                            "attribut": "resultats-strategique-pnd",
+                            "attribut": "resultats_strategique_pnd",
                             "placeholder": "Choisissez les éléments de Resultats stratégique du PND",
-                            "is_required": false,
+                            "is_required": true,
                             "default_value": null,
                             "isEvaluated": false,
                             "type_champ": "select",
@@ -1559,7 +1579,7 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                     "options": [],
                                     "multiple": true,
                                     "datasource": "/api/programmes/5/composants-programme/8/composants",
-                                    "depends_on": "objectif-strategique-pnd",
+                                    "depends_on": "objectifs_strategique_pnd",
                                     "load_dynamic": true
                                 },
                                 "conditions": {
@@ -1567,7 +1587,7 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                     "visible": false,
                                     "conditions": [
                                         {
-                                            "field": "objectif-strategique-pnd",
+                                            "field": "objectifs_strategique_pnd",
                                             "operator": "not_empty"
                                         }
                                     ]
@@ -1575,7 +1595,11 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                 "validations_rules": {
                                     "min": 0,
                                     "array": true,
-                                    "required": false
+                                    "required": true,
+                                    "each": {
+                                        "string": true,
+                                        "in": [] // Ici tu peux remplir avec les valeurs autorisées si connues
+                                    }
                                 }
                             },
                             "champ_standard": false,
@@ -1587,9 +1611,9 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                             "id": 209,
                             "label": "Axes stratégique du PND",
                             "info": "Sélectionnez les éléments de Axes stratégique du PND",
-                            "attribut": "axe-strategique-pnd",
+                            "attribut": "axes_strategique_pnd",
                             "placeholder": "Choisissez les éléments de Axes stratégique du PND",
-                            "is_required": false,
+                            "is_required": true,
                             "default_value": null,
                             "isEvaluated": false,
                             "type_champ": "select",
@@ -1600,7 +1624,7 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                     "options": [],
                                     "multiple": true,
                                     "datasource": "/api/programmes/5/composants-programme/9/composants",
-                                    "depends_on": "objectif-strategique-pnd",
+                                    "depends_on": "objectifs_strategique_pnd",
                                     "load_dynamic": true
                                 },
                                 "conditions": {
@@ -1608,7 +1632,7 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                     "visible": false,
                                     "conditions": [
                                         {
-                                            "field": "objectif-strategique-pnd",
+                                            "field": "objectifs_strategique_pnd",
                                             "operator": "not_empty"
                                         }
                                     ]
@@ -1616,7 +1640,11 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                 "validations_rules": {
                                     "min": 0,
                                     "array": true,
-                                    "required": false
+                                    "required": true,
+                                    "each": {
+                                        "string": true,
+                                        "in": [] // Ici tu peux remplir avec les valeurs autorisées si connues
+                                    }
                                 }
                             },
                             "champ_standard": false,
@@ -1744,22 +1772,35 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                 {
                     "element_type": "field",
                     "ordre_affichage": 2,
-                    "id": 199,
+                    "id": 219,
                     "label": "Coût estimatif du projet",
-                    "info": "",
-                    "attribut": "cout_estimatif",
+                    "info": "Coût estimatif du projet",
+                    "key": "cout_estimatif_projet",
+                    "attribut": "cout_estimatif_projet",
                     "placeholder": "Indiquez le coût estimatif global",
                     "is_required": true,
-                    "default_value": null,
+                    "default_value": {
+                        "montant": 1,
+                        "devise": "xof"
+                    },
                     "isEvaluated": false,
-                    "type_champ": "textarea",
+                    "type_champ": "group",
                     "sectionId": 64,
                     "documentId": 15,
                     "meta_options": {
                         "configs": {
                             "rows": 2,
+                            "type": "group",
                             "max_length": 1500,
-                            "min_length": 20
+                            "min_length": 20,
+                            "type_group": true,
+                            "required_children": true,
+                            "children_count_max": 2,
+                            "children_count_min": 2,
+                            "children_attributes": [
+                                "montant",
+                                "devise"
+                            ]
                         },
                         "conditions": {
                             "disable": false,
@@ -1767,9 +1808,9 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                             "conditions": []
                         },
                         "validations_rules": {
-                            "max": 1500,
-                            "min": 20,
-                            "string": true,
+                            "max": 2,
+                            "min": 2,
+                            "array": true,
                             "required": true
                         }
                     },
@@ -1816,7 +1857,11 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                 "validations_rules": {
                                     "min": 1,
                                     "array": true,
-                                    "required": true
+                                    "required": true,
+                                    "each": {
+                                        "string": true,
+                                        "in": [] // Ici tu peux remplir avec les valeurs autorisées si connues
+                                    }
                                 }
                             },
                             "champ_standard": false,
@@ -1830,7 +1875,7 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                             "info": "Sélectionnez les natures de financement",
                             "attribut": "natures_financement",
                             "placeholder": "Choisissez les natures de financement",
-                            "is_required": false,
+                            "is_required": true,
                             "default_value": null,
                             "isEvaluated": false,
                             "type_champ": "select",
@@ -1858,7 +1903,11 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                 "validations_rules": {
                                     "min": 0,
                                     "array": true,
-                                    "required": false
+                                    "required": true,
+                                    "each": {
+                                        "string": true,
+                                        "in": [] // Ici tu peux remplir avec les valeurs autorisées si connues
+                                    }
                                 }
                             },
                             "champ_standard": false,
@@ -1872,7 +1921,7 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                             "info": "Sélectionnez les sources de financement spécifiques",
                             "attribut": "sources_financement",
                             "placeholder": "Choisissez les sources de financement",
-                            "is_required": false,
+                            "is_required": true,
                             "default_value": null,
                             "isEvaluated": false,
                             "type_champ": "select",
@@ -1900,7 +1949,11 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                                 "validations_rules": {
                                     "min": 0,
                                     "array": true,
-                                    "required": false
+                                    "required": true,
+                                    "each": {
+                                        "string": true,
+                                        "in": [] // Ici tu peux remplir avec les valeurs autorisées si connues
+                                    }
                                 }
                             },
                             "champ_standard": false,
@@ -1911,6 +1964,5 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
             ]
         }
     ]
-}
     */
 }

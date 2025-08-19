@@ -22,7 +22,7 @@ class NoteConceptuelleResource extends BaseApiResource
             'statut' => $this->statut,
             'statut_libelle' => match($this->statut) {
                 1 => 'Soumise',
-                -1 => 'Rejetée', 
+                -1 => 'Rejetée',
                 default => 'Brouillon'
             },
             'valider_par' => $this->validateur ? new UserResource($this->validateur) : null,

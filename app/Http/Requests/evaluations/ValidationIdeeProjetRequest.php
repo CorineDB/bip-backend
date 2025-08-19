@@ -47,6 +47,8 @@ class ValidationIdeeProjetRequest extends FormRequest
         return [
             'decision' => ["required", "in:valider,rejeter"],
             'commentaire' => 'nullable|string|max:1000',
+            'documents' => 'nullable|array',
+            'documents.*' => 'file|distinct|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx'
         ];
     }
 

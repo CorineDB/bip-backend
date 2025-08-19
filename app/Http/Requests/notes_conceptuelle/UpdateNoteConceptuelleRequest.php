@@ -4,6 +4,9 @@ namespace App\Http\Requests\notes_conceptuelle;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Http;
 
 class UpdateNoteConceptuelleRequest extends FormRequest
 {
@@ -15,199 +18,311 @@ class UpdateNoteConceptuelleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'est_soumise' => 'sometimes|boolean',
-            'champs' => 'sometimes|array|min:1',
+            'est_soumise' => 'required|boolean',
+            'champs' => 'required|array',
+            'documents' => 'nullable|array',
+            'documents.autres.*' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
+            'documents.analyse_pre_risque_facteurs_reussite' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
+            'documents.etude_pre_faisabilite' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
+            'documents.note_conceptuell' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx'
         ];
-    }
 
-    public function withValidator($validator)
-    {
-        $validator->after(function ($validator) {
-            // Seulement valider les champs si ils sont fournis
-            if ($this->has('champs')) {
-                $this->validateChampsAgainstCanevas($validator);
-            }
-        });
-    }
-
-    /**
-     * Valider les champs soumis contre le canevas de rédaction (copie de StoreNoteConceptuelleRequest)
-     */
-    private function validateChampsAgainstCanevas($validator): void
-    {
-        // Récupérer le canevas de rédaction de note conceptuelle
-        $documentRepository = app(DocumentRepositoryInterface::class);
-        $canevasNoteConceptuelle = $documentRepository->getModel()->where([
-            'type' => 'formulaire'
-        ])->whereHas('categorie', function($query) {
-            $query->where('slug', 'canevas-redaction-note-conceptuelle');
-        })->orderBy('created_at', 'desc')->first();
-
-        if (!$canevasNoteConceptuelle) {
-            $validator->errors()->add('canevas', 'Canevas de rédaction de note conceptuelle non trouvé.');
-            return;
-        }
+        $defaultRules = [
+            // Règles par défaut si nécessaire
+        ];
 
         $estSoumise = $this->input('est_soumise', false);
-        $champsData = $this->input('champs', []);
+        $champsValues = $this->input('champs', []);
 
-        // Récupérer TOUS les champs du canevas (y compris ceux dans les sections)
-        $champsDefinitions = $this->extractAllFields($canevasNoteConceptuelle->all_champs);
+        $dynamicRules = $this->buildRulesFromCanevas($canevas, $champsValues, $defaultRules, $estSoumise);
 
-        // Valider chaque champ soumis
-        foreach ($champsData as $attribut => $valeur) {
-            $champDefinition = $champsDefinitions->get($attribut);
+        $finalRules = array_merge([
+            'est_soumise' => 'required|boolean',
+            'champs' => 'required|array',
+            'documents' => 'nullable|array',
+            'documents.*' => 'distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
+        ], $dynamicRules);
 
-            if (!$champDefinition) {
-                $validator->errors()->add("champs.{$attribut}", "Le champ '{$attribut}' n'est pas défini dans le canevas.");
+        return $finalRules;
+    }
+
+
+    /**
+     * Génère récursivement les règles à partir du canevas (version améliorée)
+     */
+    protected function buildRulesFromCanevas(array $fields, array $values, array $defaultRules = [], bool $estSoumise = false, string $prefix = 'champs'): array
+    {
+        $rules = [];
+
+        foreach ($fields as $field) {
+            // Les champs du canevas n'ont pas toujours element_type
+            // Si il a un attribut et des validations, c'est un champ
+            $isField = !empty($field['attribut']) && !empty($field['meta_options']['validations_rules']);
+            $isSection = ($field['element_type'] ?? null) === 'section' && !empty($field['elements']);
+
+            if (!$isField) {
+                // Gestion récursive des sections
+                if ($isSection) {
+                    $sectionRules = $this->buildRulesFromCanevas($field['elements'], $values, $defaultRules, $estSoumise, $prefix);
+                    $rules = array_merge($rules, $sectionRules);
+                }
                 continue;
             }
 
-            $this->validateFieldValue($validator, $attribut, $valeur, $champDefinition, $estSoumise);
-        }
+            $attribut = $field['attribut'];
+            $key = $prefix . '.' . $attribut;
+            $meta = $field['meta_options'] ?? [];
+            $validations = $meta['validations_rules'] ?? [];
 
-        // Si la note est soumise, vérifier que tous les champs requis sont présents
-        if ($estSoumise) {
-            $champsManquants = [];
-            foreach ($champsDefinitions as $attribut => $champDefinition) {
-                $metaOptions = $champDefinition->meta_options;
-                $isRequired = $metaOptions['validations_rules']['required'] ?? false;
+            // Vérifier la visibilité du champ
+            if (!$this->isFieldVisible($field, $values)) {
+                continue;
+            }
 
-                if ($isRequired && (!isset($champsData[$attribut]) || $champsData[$attribut] === '' || $champsData[$attribut] === null)) {
-                    // Message dynamique basé sur les propriétés du champ
-                    $validationRules = $metaOptions['validations_rules'];
-                    $label = $champDefinition->label;
-                    $placeholder = $champDefinition->placeholder ?? '';
-                    $min = $validationRules['min'] ?? null;
-                    $max = $validationRules['max'] ?? null;
+            $fieldRules = [];
 
-                    $message = "Le champ '{$label}' est obligatoire pour soumettre la note conceptuelle.";
-
-                    if ($placeholder) {
-                        $message .= " {$placeholder}";
+            // Construction des règles de base
+            foreach ($validations as $rule => $value) {
+                if ($rule === 'required') {
+                    // Required seulement si est_soumise est true
+                    if ($estSoumise && $value) {
+                        $fieldRules[] = 'required';
+                    } else {
+                        $fieldRules[] = 'nullable';
                     }
-
-                    if ($min && $max) {
-                        $message .= " (Entre {$min} et {$max} caractères requis)";
-                    } elseif ($min) {
-                        $message .= " (Minimum {$min} caractères requis)";
-                    } elseif ($max) {
-                        $message .= " (Maximum {$max} caractères autorisés)";
+                } elseif (is_bool($value) && $value) {
+                    $fieldRules[] = $rule;
+                } elseif (is_array($value)) {
+                    if ($rule === 'in') {
+                        // Ignorer les règles 'in' avec tableau vide - causé par datasource
+                        if (!empty($value)) {
+                            $fieldRules[] = Rule::in($value);
+                        }
+                    } elseif ($rule === 'each') {
+                        // Gestion spéciale pour la règle 'each' qui contient des sous-règles
+                        $fieldRules[] = 'array';
+                        // Les sous-règles 'each' seront traitées séparément avec .*
+                    } else {
+                        // Pour les autres règles array, vérifier si ce sont des scalaires
+                        $scalarValues = array_filter($value, function($v) {
+                            return is_scalar($v);
+                        });
+                        if (count($scalarValues) === count($value)) {
+                            $fieldRules[] = $rule . ':' . implode(',', $value);
+                        } else {
+                            // Si contient des non-scalaires, ignorer ou traiter différemment
+                            continue;
+                        }
                     }
-
-                    $validator->errors()->add("champs.{$attribut}", $message);
+                } elseif (!is_bool($value)) {
+                    $fieldRules[] = "{$rule}:{$value}";
                 }
             }
+
+            // Gestion des datasources dynamiques - TEMPORAIREMENT DESACTIVE
+            // if (!empty($meta['configs']['datasource'])) {
+            //     $options = $this->getDatasourceOptions($meta['configs']['datasource'], $attribut, $values);
+            //     if (!empty($options)) {
+            //         $fieldRules[] = Rule::in($options);
+            //     }
+            // }
+
+            // Merge avec les règles par défaut
+            if (isset($defaultRules[$attribut])) {
+                $fieldRules = array_merge($fieldRules, (array)$defaultRules[$attribut]);
+            }
+
+            // Pour les champs array, valider chaque élément
+            if (in_array('array', $fieldRules)) {
+                // Gestion des règles 'each' pour les éléments du tableau
+                $eachRules = $validations['each'] ?? [];
+                if (!empty($eachRules)) {
+                    $elementRules = [];
+                    foreach ($eachRules as $eachRule => $eachValue) {
+                        if (is_bool($eachValue) && $eachValue) {
+                            $elementRules[] = $eachRule;
+                        } elseif (is_array($eachValue) && $eachRule === 'in') {
+                            // Ignorer les règles 'in' avec tableau vide - causé par datasource
+                            if (!empty($eachValue)) {
+                                $elementRules[] = Rule::in($eachValue);
+                            }
+                        } elseif (!is_bool($eachValue) && !is_array($eachValue)) {
+                            $elementRules[] = "{$eachRule}:{$eachValue}";
+                        }
+                    }
+                    $rules["{$key}.*"] = $elementRules ?: ['string'];
+                } else {
+                    $rules["{$key}.*"] = ['string']; // Ou autre type selon le champ
+                }
+
+                // Si c'est un select multiple avec datasource - TEMPORAIREMENT DESACTIVE
+                // if (!empty($meta['configs']['datasource'])) {
+                //     $options = $this->getDatasourceOptions($meta['configs']['datasource'], $attribut, $values);
+                //     if (!empty($options)) {
+                //         $rules["{$key}.*"] = ['required', 'string', Rule::in($options)];
+                //     }
+                // }
+            }
+
+            if (!empty($fieldRules)) {
+                $rules[$key] = $fieldRules;
+            }
+
+            // Gestion récursive des children (si applicable)
+            if (!empty($field['children']) && is_array($field['children'])) {
+                $childValues = $values[$attribut] ?? [];
+                $childRules = $this->buildRulesFromCanevas($field['children'], $childValues, $defaultRules, $estSoumise, $key);
+                $rules = array_merge($rules, $childRules);
+            }
         }
+
+        return $rules;
     }
 
     /**
-     * Valider une valeur de champ spécifique
+     * Aplati toutes les sections pour ne garder que les champs.
      */
-    private function validateFieldValue($validator, $attribut, $valeur, $champDefinition, $estSoumise): void
+    private function extractAllFields(array $elements): array
     {
-        $metaOptions = $champDefinition->meta_options;
-        $validationRules = $metaOptions['validations_rules'] ?? [];
-        $label = $champDefinition->label;
-
-        // Construire les informations sur les contraintes pour les messages d'erreur
-        $constraints = [];
-        if (isset($validationRules['min'])) {
-            $constraints[] = "minimum {$validationRules['min']} caractères";
-        }
-        if (isset($validationRules['max'])) {
-            $constraints[] = "maximum {$validationRules['max']} caractères";
-        }
-        if (isset($validationRules['string']) && $validationRules['string']) {
-            $constraints[] = "format texte";
-        }
-        if (isset($validationRules['array']) && $validationRules['array']) {
-            $constraints[] = "format liste/tableau";
-        }
-        if (isset($validationRules['required']) && $validationRules['required']) {
-            $constraints[] = "obligatoire";
-        }
-
-        $constraintText = !empty($constraints) ? " (Contraintes: " . implode(', ', $constraints) . ")" : "";
-
-        // Vérifier si le champ est requis
-        $isRequired = $validationRules['required'] ?? false;
-        if ($estSoumise && $isRequired && (is_null($valeur) || $valeur === '')) {
-            $validator->errors()->add("champs.{$attribut}",
-                "Le champ '{$label}' est obligatoire pour soumettre la note conceptuelle.{$constraintText}"
-            );
-            return;
-        }
-
-        // Si la valeur est vide et pas obligatoire, pas besoin de valider plus
-        if (is_null($valeur) || $valeur === '') {
-            return;
-        }
-
-        // Validation des types
-        if (isset($validationRules['string']) && $validationRules['string'] && !is_string($valeur)) {
-            $validator->errors()->add("champs.{$attribut}",
-                "Le champ '{$label}' doit être une chaîne de caractères.{$constraintText}"
-            );
-            return;
-        }
-
-        if (isset($validationRules['array']) && $validationRules['array'] && !is_array($valeur)) {
-            $validator->errors()->add("champs.{$attribut}",
-                "Le champ '{$label}' doit être un tableau/liste.{$constraintText}"
-            );
-            return;
-        }
-
-        // Validation des longueurs/tailles avec messages détaillés
-        if (isset($validationRules['min'])) {
-            $min = $validationRules['min'];
-            if (is_string($valeur) && strlen($valeur) < $min) {
-                $actual = strlen($valeur);
-                $validator->errors()->add("champs.{$attribut}",
-                    "Le champ '{$label}' doit contenir au moins {$min} caractères (actuellement: {$actual}).{$constraintText}"
-                );
-            } elseif (is_array($valeur) && count($valeur) < $min) {
-                $actual = count($valeur);
-                $validator->errors()->add("champs.{$attribut}",
-                    "Le champ '{$label}' doit contenir au moins {$min} éléments (actuellement: {$actual}).{$constraintText}"
-                );
+        $fields = [];
+        foreach ($elements as $el) {
+            if (($el['element_type'] ?? null) === 'field') {
+                $fields[] = $el;
+            }
+            if (!empty($el['elements']) && is_array($el['elements'])) {
+                $fields = array_merge($fields, $this->extractAllFields($el['elements']));
             }
         }
-
-        if (isset($validationRules['max'])) {
-            $max = $validationRules['max'];
-            if (is_string($valeur) && strlen($valeur) > $max) {
-                $actual = strlen($valeur);
-                $validator->errors()->add("champs.{$attribut}",
-                    "Le champ '{$label}' ne peut pas dépasser {$max} caractères (actuellement: {$actual}).{$constraintText}"
-                );
-            } elseif (is_array($valeur) && count($valeur) > $max) {
-                $actual = count($valeur);
-                $validator->errors()->add("champs.{$attribut}",
-                    "Le champ '{$label}' ne peut pas contenir plus de {$max} éléments (actuellement: {$actual}).{$constraintText}"
-                );
-            }
-        }
-    }
-
-    /**
-     * Extraire tous les champs du canevas, y compris ceux dans les sections imbriquées
-     */
-    private function extractAllFields($elements): \Illuminate\Support\Collection
-    {
-        $fields = collect();
-
-        foreach ($elements as $element) {
-            if ($element['element_type'] === 'field') {
-                $fields->put($element['attribut'], (object) $element);
-            } elseif ($element['element_type'] === 'section' && isset($element['elements'])) {
-                // Récursion pour les sections imbriquées
-                $nestedFields = $this->extractAllFields($element['elements']);
-                $fields = $fields->merge($nestedFields);
-            }
-        }
-
         return $fields;
+    }
+
+    /**
+     * Vérifie si un champ doit être visible selon ses conditions.
+     */
+    private function isFieldVisible(array $champ, array $values): bool
+    {
+        $conditions = $champ['meta_options']['conditions'] ?? [];
+
+        // Vérifier d'abord si le champ est explicitement marqué comme invisible
+        $baseVisibility = $conditions['visible'] ?? true;
+        if ($baseVisibility === false) {
+            // Vérifier s'il y a des conditions de visibilité (dépendances)
+            $hasConditions = !empty($conditions['conditions']);
+
+            if ($hasConditions) {
+                // Le champ est invisible par défaut mais peut devenir visible selon les conditions
+                foreach ($conditions['conditions'] ?? [] as $condition) {
+                    $field = $condition['field'] ?? null;
+                    $operator = $condition['operator'] ?? null;
+
+                    if ($field && $operator === 'not_empty') {
+                        $fieldValue = $values[$field] ?? null;
+                        if (!empty($fieldValue)) {
+                            return true; // Le champ devient visible
+                        }
+                    }
+                }
+                return false; // Reste invisible car conditions non remplies
+            } else {
+                // Champ avec visible: false SANS conditions -> vraiment caché
+                return false;
+            }
+        }
+
+        // Par défaut, tous les champs sont visibles
+        // depends_on n'affecte PAS la visibilité, juste la validation
+        return true;
+    }
+
+    /**
+     * Récupérer les options depuis une datasource (version améliorée)
+     */
+    private function getDatasourceOptions(string $datasource, string $attribut, array $values = []): array
+    {
+        try {
+            // Construire l'URL complète si nécessaire
+            $url = Str::startsWith($datasource, 'http') ? $datasource : url($datasource);
+
+            // Gestion des dépendances (depends_on) - Version améliorée de GPT
+            $champ = $this->getCurrentField($attribut);
+            $dependsOn = $champ['meta_options']['configs']['depends_on'] ?? null;
+
+            if ($dependsOn) {
+                $dependsValue = $values[$dependsOn] ?? null;
+                if ($dependsValue) {
+                    // Support pour multiple parent_ids comme suggéré par GPT
+                    $parentIds = is_array($dependsValue) ? implode(',', $dependsValue) : $dependsValue;
+                    $url .= (Str::contains($url, '?') ? '&' : '?') . "parent_ids={$parentIds}";
+                }
+            }
+
+            $response = Http::timeout(5)->get($url);
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                // Extraire les IDs selon la structure de réponse
+                if (isset($data['data'])) {
+                    return collect($data['data'])->pluck('id')->filter()->toArray();
+                } elseif (is_array($data)) {
+                    return collect($data)->pluck('id')->filter()->toArray();
+                }
+            }
+        } catch (\Exception $e) {
+            // Log l'erreur mais ne pas bloquer la validation
+            \Log::warning("Erreur lors de la récupération de datasource: {$datasource}", [
+                'error' => $e->getMessage(),
+                'attribut' => $attribut
+            ]);
+        }
+
+        return [];
+    }
+
+    /**
+     * Récupérer le champ actuel depuis le canevas
+     */
+    private function getCurrentField(string $attribut): array
+    {
+        static $fields = null;
+
+        if ($fields === null) {
+            $documentRepository = app(DocumentRepositoryInterface::class);
+            $canevas = $documentRepository->getModel()
+                ->where('type', 'formulaire')
+                ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-redaction-note-conceptuelle'))
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if ($canevas && $canevas->all_champs) {
+                // Convertir en array si c'est une Collection
+                $champsArray = is_array($canevas->all_champs) ? $canevas->all_champs : $canevas->all_champs->toArray();
+                $fields = $this->extractAllFields($champsArray);
+            } else {
+                $fields = [];
+            }
+        }
+
+        return collect($fields)->firstWhere('attribut', $attribut) ?? [];
+    }
+
+    /**
+     * Récupérer le canevas depuis la base de données
+     */
+    protected function getCanevas(): array
+    {
+        $documentRepository = app(DocumentRepositoryInterface::class);
+        $canevas = $documentRepository->getModel()
+            ->where('type', 'formulaire')
+            ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-redaction-note-conceptuelle'))
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$canevas || !$canevas->all_champs) {
+            return [];
+        }
+
+        // Convertir la Collection en array
+        return $canevas->all_champs->toArray();
     }
 }
