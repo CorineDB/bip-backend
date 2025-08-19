@@ -34,6 +34,7 @@ use App\Http\Controllers\GroupeUtilisateurController;
 use App\Http\Controllers\OAuthController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NoteConceptuelleController;
+use App\Http\Controllers\TdrPrefaisabiliteController;
 use App\Models\Village;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -190,9 +191,14 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::delete('{projetId}/note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'deleteForProject']);
             Route::get('{projetId}/details-validation-note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'getValidationDetails']);
             // Route pour la validation à l'étape étude de profil
-            Route::post('{projetId}/valider-etude-profil/{noteId}', [NoteConceptuelleController::class, 'validerEtudeProfil']);
+            Route::post('{projetId}/valider-etude-profil', [NoteConceptuelleController::class, 'validerEtudeProfil']);
             // Route pour la validation à l'étape étude de profil
             Route::post('{projetId}/confirmer-resultats-evaluation-note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'confirmerResultat']);
+            
+            // Routes pour les TDRs de préfaisabilité
+            Route::post('{projetId}/soumettre-tdrs-prefaisabilite', [TdrPrefaisabiliteController::class, 'soumettreTdrs']);
+            Route::post('{projetId}/evaluer-tdrs-prefaisabilite', [TdrPrefaisabiliteController::class, 'evaluerTdrs']);
+            Route::post('{projetId}/soumettre-rapport-prefaisabilite', [TdrPrefaisabiliteController::class, 'soumettreRapportPrefaisabilite']);
         });
 
         // Routes pour l'évaluation des notes conceptuelles

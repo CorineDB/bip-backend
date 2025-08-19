@@ -25,6 +25,9 @@ enum StatutIdee: string
     case VALIDATION_PROFIL = '03c_ValidationProfil';
     case R_VALIDATION_PROFIL_NOTE_AMELIORER = '03c_R_ValidationProfilNoteAameliorer';
     case TDR_PREFAISABILITE = '04a_TDR_Prefaisabilité';
+    case EVALUATION_TDR_PF = '04b_Evaluation_TDR_PF';
+    case SOUMISSION_RAPPORT_PF = '04b_SoumissionRapportPF';
+    case VALIDATION_PF = '04c_ValidationPF';
 
     /**
      * Get all enum values

@@ -24,3 +24,8 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /app/secrets/oauth/
+
+/storage/*
+!/storage/app/public
+/storage/framework/*
+/storage/logs/*

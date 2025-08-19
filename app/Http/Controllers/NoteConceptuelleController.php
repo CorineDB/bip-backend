@@ -190,7 +190,7 @@ class NoteConceptuelleController extends Controller
     /**
      * Confirmer le résultat de l'évaluation avec commentaires
      */
-    public function confirmerResultat(ConfirmerResultatRequest $request, $noteId): JsonResponse
+    public function confirmerResultat(ConfirmerResultatRequest $request, $projetId, $noteId): JsonResponse
     {
         return $this->service->confirmerResultatParNote($noteId, $request->validated());
     }
