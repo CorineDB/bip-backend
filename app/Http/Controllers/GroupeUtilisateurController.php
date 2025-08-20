@@ -63,6 +63,22 @@ class GroupeUtilisateurController extends Controller
     }
 
     /**
+     * Assigner des permissions à un groupe d'utilisateurs
+     */
+    public function assignPermissions(AssignRolesRequest $request, $id): JsonResponse
+    {
+        return $this->service->assignPermissions($id, $request->validated()['permissions']);
+    }
+
+    /**
+     * Retirer des permissions d'un groupe d'utilisateurs
+     */
+    public function detachPermissions(Request $request, $id): JsonResponse
+    {
+        return $this->service->detachPermissions($id, $request->input('permissions', []));
+    }
+
+    /**
      * Ajouter des utilisateurs à un groupe
      */
     public function addUsers(AddUsersRequest $request, $id): JsonResponse

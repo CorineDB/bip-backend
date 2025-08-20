@@ -92,6 +92,6 @@ class Decision extends Model
      */
     public function observateur()
     {
-        return $this->belongsTo(Personne::class, 'observateurId');
+        return $this->belongsTo(User::class, 'observateurId');
     }
 }

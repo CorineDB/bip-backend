@@ -2,16 +2,21 @@
 
 namespace App\Http\Requests\tdrs;
 
+use App\Repositories\DocumentRepository;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class EvaluerTdrsRequest extends FormRequest
 {
+    protected $champs = [];
+
+    protected $appreciations = [];
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return auth()->check() && in_array(auth()->user()->type, ['dgpd', 'admin']);
+        return true; //auth()->check() && in_array(auth()->user()->type, ['dgpd', 'admin']);
     }
 
     /**
@@ -20,12 +25,10 @@ class EvaluerTdrsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'evaluations_champs' => 'required|array|min:1',
-            'evaluations_champs.*.appreciation' => 'required|string|in:passe,retour,non_accepte',
-            'evaluations_champs.*.commentaire' => 'required|string|min:10|max:500',
-            'commentaire' => 'nullable|string|max:2000',
-            'finaliser' => 'required|boolean',
-            'action' => 'nullable|string|in:reviser,abandonner'
+            'evaluations_champs' => 'required|array|min:'. count($this->champs),
+            'evaluations_champs.*.champ_id' => ["required", "in:".implode(",", $this->champs), Rule::exists("champs", "id",)],
+            'evaluations_champs.*.appreciation' => 'required|in:'.implode(",", $this->appreciations),
+            'evaluations_champs.*.commentaire' => 'required|string|min:10'
         ];
     }
 
@@ -61,5 +64,18 @@ class EvaluerTdrsRequest extends FormRequest
             'finaliser' => 'finalisation',
             'action' => 'action'
         ];
+    }
+
+    public function prepareForValidation(){
+        $canevas = app()->make(DocumentRepository::class)->getModel()
+                                            ->where('type', 'formulaire')
+                                            ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-appreciation-tdr'))
+                                            ->orderBy('created_at', 'desc')->first();
+
+        $evaluationConfigs = $canevas->evaluation_configs;
+
+        $this->appreciations = collect($evaluationConfigs['options_notation'] ?? [])->pluck('appreciation')->toArray();
+
+        $this->champs = $canevas->all_champs->pluck("id")->toArray();
     }
 }

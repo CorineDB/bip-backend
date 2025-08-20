@@ -25,13 +25,31 @@ interface GroupeUtilisateurServiceInterface extends AbstractServiceInterface
     public function detachRoles(int|string $groupeId, array $rolesIds): JsonResponse;
 
     /**
+     * Assigner des permissions à un groupe d'utilisateurs.
+     *
+     * @param int|string $groupeId
+     * @param array $permissionIds
+     * @return JsonResponse
+     */
+    public function assignPermissions(int|string $groupeId, array $permissionIds): JsonResponse;
+
+    /**
+     * Retirer des permissions d'un groupe d'utilisateurs.
+     *
+     * @param int|string $groupeId
+     * @param array $permissionIds
+     * @return JsonResponse
+     */
+    public function detachPermissions(int|string $groupeId, array $permissionIds): JsonResponse;
+
+    /**
      * Ajouter des utilisateurs à un groupe.
      *
      * @param int|string $groupeId
-     * @param array $usersIds
+     * @param array $users
      * @return JsonResponse
      */
-    public function addUsers(int|string $groupeId, array $usersIds): JsonResponse;
+    public function addUsers(int|string $groupeId, array $users): JsonResponse;
 
     /**
      * Retirer des utilisateurs d'un groupe.

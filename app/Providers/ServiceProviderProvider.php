@@ -50,7 +50,8 @@ class ServiceProviderProvider extends ServiceProvider
             'GroupeUtilisateurServiceInterface' => 'GroupeUtilisateurService',
             'CategorieCritereServiceInterface' => 'CategorieCritereService',
             'NotificationServiceInterface' => 'NotificationService',
-            'TdrPrefaisabiliteServiceInterface' => 'TdrPrefaisabiliteService'
+            'TdrPrefaisabiliteServiceInterface' => 'TdrPrefaisabiliteService',
+            'TdrFaisabiliteServiceInterface' => 'TdrFaisabiliteService'
         ];
 
         foreach ($services as $interface => $implementation) {

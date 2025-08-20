@@ -21,6 +21,9 @@ class GroupeUtilisateurResource extends BaseApiResource
             "roles" => $this->whenLoaded('roles', function(){
                 return RoleResource::collection($this->roles);
             }),
+            "permissions" => $this->whenLoaded('permissions', function(){
+                return PermissionResource::collection($this->permissions);
+            }),
             "users" => $this->whenLoaded('users', function(){
                 return  UserResource::collection($this->users);
             })

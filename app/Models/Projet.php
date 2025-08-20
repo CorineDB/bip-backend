@@ -86,7 +86,11 @@ class Projet extends Model
         'responsableId',
         'demandeurId',
         'demandeur_type',
-        'titre_projet'
+        'titre_projet',
+        'resume_tdr_prefaisabilite',
+        'resume_tdr_faisabilite',
+        'info_cabinet_etude_prefaisabilite',
+        'info_cabinet_etude_faisabilite'
     ];
 
     /**
@@ -105,6 +109,8 @@ class Projet extends Model
         'parties_prenantes' => 'array',
         'objectifs_specifiques' => 'array',
         'resultats_attendus' => 'array',
+        'info_cabinet_etude_prefaisabilite' => 'array',
+        'info_cabinet_etude_faisabilite' => 'array',
         'body_projet' => 'array',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
@@ -359,6 +365,36 @@ class Projet extends Model
         return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id')
             ->active()
             ->ordered();
+    }
+
+    public function tdrs_prefaisabilite()
+    {
+        return $this->fichiers()->where('categorie', 'tdr-prefaisabilite');
+    }
+
+    public function tdrs_faisabilite()
+    {
+        return $this->fichiers()->where('categorie', 'tdr-faisabilite');
+    }
+
+    public function rapports_prefaisabilite()
+    {
+        return $this->fichiers()->where('categorie', 'rapport-prefaisabilite');
+    }
+
+    public function rapports_faisabilite()
+    {
+        return $this->fichiers()->where('categorie', 'rapport-faisabilite');
+    }
+
+    public function rapports_evaluation_ex_ante()
+    {
+        return $this->fichiers()->where('categorie', 'rapport-evaluation-ex-ante');
+    }
+
+    public function documents_annexe_rapports_evaluation_ex_ante()
+    {
+        return $this->fichiers()->where('categorie', 'annexe-rapport-evaluation-ex-ante');
     }
 
     public function allFichiers()

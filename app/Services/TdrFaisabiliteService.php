@@ -14,14 +14,14 @@ use App\Enums\TypesProjet;
 use App\Http\Resources\projets\ProjetResource;
 use App\Http\Resources\UserResource;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
-use App\Services\Contracts\TdrPrefaisabiliteServiceInterface;
+use App\Services\Contracts\TdrFaisabiliteServiceInterface;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteServiceInterface
+class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteServiceInterface
 {
     protected DocumentRepositoryInterface $documentRepository;
     protected ProjetRepositoryInterface $projetRepository;
@@ -48,7 +48,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
-     * Soumettre les TDRs de préfaisabilité (SFD-010)
+     * Soumettre les TDRs de faisabilité (SFD-014)
      */
     public function soumettreTdrs(int $projetId, array $data): JsonResponse
     {
@@ -67,10 +67,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if (!in_array($projet->statut->value, [StatutIdee::TDR_PREFAISABILITE->value, StatutIdee::R_TDR_PREFAISABILITE->value])) {
+            if (!in_array($projet->statut->value, [StatutIdee::TDR_FAISABILITE->value, StatutIdee::R_TDR_FAISABILITE->value])) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Le projet n\'est pas à l\'étape de soumission des TDRs de préfaisabilité.'
+                    'message' => 'Le projet n\'est pas à l\'étape de soumission des TDRs de faisabilité.'
                 ], 422);
             }
 
@@ -84,21 +84,21 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer les commentaires des évaluations antérieures si c'est un retour
             $commentairesAnterieurs = $this->getCommentairesAnterieurs($projet);
 
-            $projet->resume_tdr_prefaisabilite = $data["resume_tdr_prefaisabilite"];
+            $projet->resume_tdr_faisabilite = $data["resume_tdr_faisabilite"];
 
             // Changer le statut du projet
             $projet->update([
-                'statut' => StatutIdee::EVALUATION_TDR_PF,
-                'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF),
-                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF)
+                'statut' => StatutIdee::EVALUATION_TDR_F,
+                'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_F),
+                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_F)
             ]);
 
             // Enregistrer le workflow et la décision
-            $this->enregistrerWorkflow($projet, StatutIdee::EVALUATION_TDR_PF);
+            $this->enregistrerWorkflow($projet, StatutIdee::EVALUATION_TDR_F);
             $this->enregistrerDecision(
                 $projet,
-                "Soumission des TDRs de préfaisabilité",
-                $data['resume_tdr_prefaisabilite'] ?? 'TDRs soumis pour évaluation',
+                "Soumission des TDRs de faisabilité",
+                $data['resume_tdr_faisabilite'] ?? 'TDRs soumis pour évaluation',
                 auth()->user()->personne->id
             );
 
@@ -109,16 +109,16 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             return response()->json([
                 'success' => true,
-                'message' => 'TDRs de préfaisabilité soumis avec succès.',
+                'message' => 'TDRs de faisabilité soumis avec succès.',
                 'data' => [
                     'projet' => new ProjetResource($projet),
                     'fichier_id' => $fichierTdr ? $fichierTdr->id : null,
                     'projet_id' => $projet->id,
-                    'ancien_statut' => in_array($projet->statut->value, [StatutIdee::TDR_PREFAISABILITE->value, StatutIdee::R_TDR_PREFAISABILITE->value]) ? $projet->statut->value : StatutIdee::TDR_PREFAISABILITE->value,
-                    'nouveau_statut' => StatutIdee::EVALUATION_TDR_PF->value,
+                    'ancien_statut' => in_array($projet->statut->value, [StatutIdee::TDR_FAISABILITE->value, StatutIdee::R_TDR_FAISABILITE->value]) ? $projet->statut->value : StatutIdee::TDR_FAISABILITE->value,
+                    'nouveau_statut' => StatutIdee::EVALUATION_TDR_F->value,
                     'fichier_url' => $fichierTdr ? $fichierTdr->url : null,
                     'resume' => $data['resume'] ?? null,
-                    'tdr_pre_faisabilite' => $data['tdr_pre_faisabilite'] ?? null,
+                    'tdr_faisabilite' => $data['tdr_faisabilite'] ?? null,
                     'type_tdr' => $data['type_tdr'] ?? null,
                     'soumis_par' => auth()->id(),
                     'soumis_le' => now()->format('d/m/Y H:i:s'),
@@ -133,7 +133,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
 
     /**
-     * Apprécier et évaluer les TDRs de préfaisabilité (SFD-011)
+     * Apprécier et évaluer les TDRs de faisabilité (SFD-015)
      */
     public function evaluerTdrs(int $projetId, array $data): JsonResponse
     {
@@ -141,7 +141,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             DB::beginTransaction();
 
             // Vérifier les autorisations (DGPD uniquement)
-            if (!in_array(auth()->user()->type, ['dgpd', 'admin'])) {
+            if (in_array(auth()->user()->type, ['dgpd', 'admin'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette évaluation.'
@@ -151,16 +151,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            // Vérifier que le projet est au bon statut
-            if ($projet->statut->value !== StatutIdee::EVALUATION_TDR_PF->value) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Le projet n\'est pas à l\'étape d\'évaluation des TDRs.'
-                ], 422);
-            }
-
             // Vérifier qu'il y a des TDRs soumis
-            $tdrsFichiers = $projet->fichiersParCategorie('tdr-prefaisabilite')->get();
+            $tdrsFichiers = $projet->fichiersParCategorie('tdr-faisabilite')->get();
 
             if ($tdrsFichiers->isEmpty()) {
                 return response()->json([
@@ -172,7 +164,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Créer ou mettre à jour l'évaluation
             $evaluation = $this->creerEvaluationTdr($projet, $data);
 
-            // Calculer le résultat de l'évaluation selon les règles SFD-011
+            // Calculer le résultat de l'évaluation selon les règles SFD-015
             $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, $data);
 
             // Traiter la décision selon le résultat (changement automatique du statut)
@@ -213,7 +205,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $this->enregistrerWorkflow($projet, $nouveauStatut);
             $this->enregistrerDecision(
                 $projet,
-                "Évaluation des TDRs de préfaisabilité - " . ucfirst($resultatsEvaluation['resultat_global']),
+                "Évaluation des TDRs de faisabilité - " . ucfirst($resultatsEvaluation['resultat_global']),
                 $data['commentaire'] ?? $resultatsEvaluation['message_resultat'],
                 auth()->user()->personne->id
             );
@@ -243,7 +235,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
-     * Récupérer les détails d'évaluation d'un TDR
+     * Récupérer les détails d'évaluation d'un TDR de faisabilité
      */
     public function getEvaluationTdr(int $projetId): JsonResponse
     {
@@ -259,16 +251,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            // Vérifier que le projet est au bon statut
-            /* if ($projet->statut->value !== StatutIdee::EVALUATION_TDR_PF->value) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Le projet n\'est pas à l\'étape d\'évaluation des TDRs.'
-                ], 422);
-            } */
-
             // Récupérer les TDRs soumis
-            $tdrsFichiers = $projet->fichiersParCategorie('tdr-prefaisabilite')->get();
+            $tdrsFichiers = $projet->fichiersParCategorie('tdr-faisabilite')->get();
             if ($tdrsFichiers->isEmpty()) {
                 return response()->json([
                     'success' => false,
@@ -278,7 +262,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Récupérer l'évaluation en cours ou la dernière évaluation
             $evaluation = $projet->evaluations()
-                ->where('type_evaluation', 'tdr-prefaisabilite')
+                ->where('type_evaluation', 'tdr-faisabilite')
                 ->with(['champs_evalue' => function ($query) {
                     $query->orderBy('ordre_affichage');
                 }])
@@ -365,26 +349,30 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 }
                 $resultatsEvaluation = $evaluation->resultats_evaluation;
             } else {
-                foreach ($evaluation->champs_evalue as $champ) {
-                    $evaluationsChamps[] = [
-                        'champ_id' => $champ->id,
-                        'appreciation' => $champ->pivot->note,
-                        'commentaire_evaluateur' => $champ->pivot->commentaires,
-                        'date_appreciation' => $champ->pivot->date_note
-                    ];
-                }
+                if ($evaluation) {
+                    foreach ($evaluation->champs_evalue as $champ) {
+                        $evaluationsChamps[] = [
+                            'champ_id' => $champ->id,
+                            'appreciation' => $champ->pivot->note,
+                            'commentaire_evaluateur' => $champ->pivot->commentaires,
+                            'date_appreciation' => $champ->pivot->date_note
+                        ];
+                    }
 
-                $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
+                    $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
+                }
             }
 
             // Déterminer les actions suivantes selon le résultat
-            $actionsSuivantes = $this->getActionsSuivantesSelonResultat($resultatsEvaluation['resultat_global']);
+            if ($resultatsEvaluation) {
+                $actionsSuivantes = $this->getActionsSuivantesSelonResultat($resultatsEvaluation['resultat_global']);
+            }
 
             // Récupérer toutes les évaluations du projet pour ce type
             $evaluations = $projet->evaluations()
                 ->where('statut', 1)
-                ->where('id', "<>", $evaluation->id)
-                ->where('type_evaluation', 'tdr-prefaisabilite')
+                ->where('id', "<>", $evaluation ? $evaluation->id : 0)
+                ->where('type_evaluation', 'tdr-faisabilite')
                 ->with(['champs_evalue' => function ($query) {
                     $query->orderBy('ordre_affichage');
                 }])
@@ -393,14 +381,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Construire l'historique des évaluations
             $historiqueEvaluations = $evaluations->map(function ($evaluation) {
-                // Recalculer le résultat pour chaque évaluation
-
-                //$resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
                 $resultatsEvaluation = $evaluation->resultats_evaluation;
                 $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation;
                 return [
                     'id' => $evaluation->id,
-                    'statut' => $evaluation->statut, // 0=en cours, 1=terminée
+                    'statut' => $evaluation->statut,
                     'evaluateur' => $evaluation->evaluateur ? new UserResource($evaluation->evaluateur) : 'N/A',
                     'date_debut' => Carbon::parse($evaluation->date_debut_evaluation)->format("Y-m-d h:i:s"),
                     'date_fin' => Carbon::parse($evaluation->date_fin_evaluation)->format("Y-m-d h:i:s"),
@@ -426,7 +411,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             return response()->json([
                 'success' => true,
-                'message' => 'Détails de l\'évaluation TDR récupérés avec succès.',
+                'message' => 'Détails de l\'évaluation TDR de faisabilité récupérés avec succès.',
                 'data' => [
                     'projet' => new ProjetResource($projet),
                     'tdr' => $tdrsFichiers->map(function ($fichier) {
@@ -437,13 +422,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             'taille' => $fichier->taille,
                             'date_upload' => $fichier->created_at,
                             'resume' => $fichier->metadata['resume'] ?? $fichier->description,
-                            'type_tdr' => $fichier->metadata['type_tdr'] ?? 'pre_faisabilite'
+                            'type_tdr' => $fichier->metadata['type_tdr'] ?? 'faisabilite'
                         ];
                     }),
-                    'resume_tdr' => $projet->resume_tdr_prefaisabilite,
+                    'resume_tdr' => $projet->resume_tdr_faisabilite,
                     'evaluation_existante' => $evaluation ? [
                         'id' => $evaluation->id,
-                        'statut' => $evaluation->statut, // 0=en cours, 1=terminée
+                        'statut' => $evaluation->statut,
                         'evaluateur' => new UserResource($evaluation->evaluateur),
                         'date_debut' => Carbon::parse($evaluation->date_debut_evaluation)->format("Y-m-d h:i:s"),
                         'date_fin' => Carbon::parse($evaluation->date_fin_evaluation)->format("Y-m-d h:i:s"),
@@ -461,7 +446,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
-     * Valider les TDRs de préfaisabilité (décision finale pour cas "non accepté" uniquement)
+     * Valider les TDRs de faisabilité (décision finale pour cas "non accepté" uniquement)
      */
     public function validerTdrs(int $projetId, array $data): JsonResponse
     {
@@ -469,7 +454,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             DB::beginTransaction();
 
             // Vérifier les autorisations (DGPD uniquement)
-            if (!in_array(auth()->user()->type, ['dgpd', 'admin'])) {
+            if (in_array(auth()->user()->type, ['dgpd', 'admin'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette validation.'
@@ -480,7 +465,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if ($projet->statut->value !== StatutIdee::EVALUATION_TDR_PF->value) {
+            if ($projet->statut->value !== StatutIdee::EVALUATION_TDR_F->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape d\'évaluation des TDRs.'
@@ -489,8 +474,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Vérifier qu'il y a une évaluation terminée avec résultat "non accepté"
             $evaluation = $projet->evaluations()
-                ->where('type_evaluation', 'tdr-prefaisabilite')
-                ->where('statut', 1) // Évaluation terminée
+                ->where('type_evaluation', 'tdr-faisabilite')
+                ->where('statut', 1)
                 ->orderBy('created_at', 'desc')
                 ->first();
 
@@ -533,8 +518,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             switch ($data['action']) {
                 case 'reviser':
-                    // Reviser malgré l'évaluation négative → retour au statut TDR_PREFAISABILITE
-                    $nouveauStatut = StatutIdee::TDR_PREFAISABILITE;
+                    // Reviser malgré l'évaluation négative → retour au statut TDR_FAISABILITE
+                    $nouveauStatut = StatutIdee::TDR_FAISABILITE;
                     $projet->update([
                         'statut' => $nouveauStatut,
                         'phase' => $this->getPhaseFromStatut($nouveauStatut),
@@ -560,7 +545,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $this->enregistrerWorkflow($projet, $nouveauStatut);
             $this->enregistrerDecision(
                 $projet,
-                "Décision finale TDRs préfaisabilité - " . ucfirst($data['action']),
+                "Décision finale TDRs faisabilité - " . ucfirst($data['action']),
                 $data['commentaire'] ?? $messageAction,
                 auth()->user()->personne->id
             );
@@ -577,7 +562,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'evaluation_id' => $evaluation->id,
                     'projet_id' => $projet->id,
                     'action' => $data['action'],
-                    'ancien_statut' => StatutIdee::EVALUATION_TDR_PF->value,
+                    'ancien_statut' => StatutIdee::EVALUATION_TDR_F->value,
                     'nouveau_statut' => $nouveauStatut->value,
                     'commentaire' => $data['commentaire'] ?? null,
                     'decision_par' => auth()->id(),
@@ -592,9 +577,173 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
-     * Valider l'étude de préfaisabilité (SFD-013)
+     * Récupérer les détails de validation des TDRs
      */
-    public function validerEtudePrefaisabilite(int $projetId, array $data): JsonResponse
+    public function getDetailsValidation(int $projetId): JsonResponse
+    {
+        try {
+            // Vérifier les autorisations (DGPD uniquement)
+            if (in_array(auth()->user()->type, ['dgpd', 'admin'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vous n\'avez pas les droits pour consulter ces détails.'
+                ], 403);
+            }
+
+            // Récupérer le projet
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Vérifier que le projet est à l'étape d'évaluation ou post-évaluation
+            if (!in_array($projet->statut->value, [
+                StatutIdee::EVALUATION_TDR_F->value,
+                StatutIdee::VALIDATION_F->value,
+                StatutIdee::SOUMISSION_RAPPORT_F->value,
+                StatutIdee::R_TDR_FAISABILITE->value,
+                StatutIdee::TDR_FAISABILITE->value,
+                StatutIdee::ABANDON->value
+            ])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le projet n\'est pas à une étape permettant la consultation des détails de validation.'
+                ], 422);
+            }
+
+            // Récupérer l'évaluation en cours ou la dernière évaluation
+            $evaluation = $projet->evaluations()
+                ->where('type_evaluation', 'tdr-faisabilite')
+                ->with(['champs_evalue' => function ($query) {
+                    $query->orderBy('ordre_affichage');
+                }])
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // Récupérer les décisions liées aux TDRs
+            $decisions = $projet->decisions()
+                ->where('valeur', 'like', '%TDR%')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Récupérer les fichiers TDR
+            $tdrsFichiers = $projet->fichiersParCategorie('tdr-faisabilite')->get();
+
+            // Construire l'historique des décisions
+            $historiqueDecisions = $decisions->map(function ($decision) {
+                return [
+                    'id' => $decision->id,
+                    'valeur' => $decision->valeur,
+                    'observations' => $decision->observations,
+                    'date' => Carbon::parse($decision->date)->format("Y-m-d h:i:s"),
+                    'observateur_id' => $decision->observateur_id,
+                    'observateur_nom' => $decision->observateur->nom ?? 'N/A',
+                    'observateur_prenom' => $decision->observateur->prenom ?? 'N/A'
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Détails de validation des TDRs récupérés avec succès.',
+                'data' => [
+                    'projet' => new ProjetResource($projet),
+                    'resume_tdr' => $projet->resume_tdr_faisabilite,
+                    'historique_decisions' => $historiqueDecisions,
+                    'statut_actuel' => [
+                        'code' => $projet->statut->value,
+                        'label' => $projet->statut->name,
+                        'phase' => $projet->phase,
+                        'sous_phase' => $projet->sous_phase
+                    ],
+                    'actions_possibles' => $this->getActionsPossibles($projet->statut, $evaluation['resultat_global'] ?? null)
+                ]
+            ]);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Soumettre le rapport de faisabilité (SFD-016)
+     */
+    public function soumettreRapportFaisabilite(int $projetId, array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            // Vérifier les autorisations (DPAF uniquement)
+            if (in_array(auth()->user()->type, ['dpaf', 'admin'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vous n\'avez pas les droits pour effectuer cette soumission.'
+                ], 403);
+            }
+
+            // Récupérer le projet
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Traitement et sauvegarde du fichier rapport
+            $fichierRapport = null;
+            if (isset($data['rapport_faisabilite'])) {
+                $fichierRapport = $this->sauvegarderFichierRapport($projet, $data['rapport_faisabilite'], $data);
+            }
+
+            if (isset($data['rapport_couts_avantages'])) {
+                $fichierRapport = $this->sauvegarderFichierRapport($projet, $data['rapport_couts_avantages'], $data);
+            }
+
+
+            // Enregistrer les informations du cabinet et recommandations
+            $this->enregistrerInformationsCabinet($projet, $data);
+
+            // Changer le statut du projet
+            $projet->update([
+                'statut' => StatutIdee::VALIDATION_F,
+                'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_F),
+                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_F)
+            ]);
+
+            // Enregistrer le workflow et la décision
+            $this->enregistrerWorkflow($projet, StatutIdee::VALIDATION_F);
+            $this->enregistrerDecision(
+                $projet,
+                "Soumission du rapport de faisabilité",
+                "Rapport soumis par cabinet: " . ($data['cabinet_etude']['nom_cabinet'] ?? 'N/A'),
+                auth()->user()->personne->id
+            );
+
+            DB::commit();
+
+            // Envoyer une notification
+            $this->envoyerNotificationSoumissionRapport($projet, $fichierRapport, $data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Rapport de faisabilité soumis avec succès.',
+                'data' => [
+                    'fichier_id' => $fichierRapport ? $fichierRapport->id : null,
+                    'projet_id' => $projet->id,
+                    'ancien_statut' => StatutIdee::SOUMISSION_RAPPORT_F->value,
+                    'nouveau_statut' => StatutIdee::VALIDATION_F->value,
+                    'cabinet' => [
+                        'nom' => $data['cabinet_etude']['nom_cabinet'] ?? null,
+                        'contact' => $data['cabinet_etude']['contact_cabinet'] ?? null,
+                        'email' => $data['cabinet_etude']['email_cabinet'] ?? null,
+                        'adresse_cabinet' => $data['cabinet_etude']['adresse_cabinet'] ?? null
+                    ],
+                    'recommandation' => $data['recommandation'] ?? null,
+                    'fichier_url' => $fichierRapport ? $fichierRapport->url : null,
+                    'soumis_par' => auth()->id(),
+                    'soumis_le' => now()->format('d/m/Y H:i:s')
+                ]
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Valider l'étude de faisabilité (SFD-017)
+     */
+    public function validerEtudeFaisabilite(int $projetId, array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -611,15 +760,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if ($projet->statut->value !== StatutIdee::VALIDATION_PF->value) {
+            if ($projet->statut->value !== StatutIdee::VALIDATION_F->value) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Le projet n\'est pas à l\'étape de validation de préfaisabilité.'
+                    'message' => 'Le projet n\'est pas à l\'étape de validation de faisabilité.'
                 ], 422);
             }
 
             // Valider l'action demandée
-            $actionsPermises = ['maturite', 'faisabilite', 'reprendre', 'abandonner', 'sauvegarder'];
+            $actionsPermises = ['maturite', 'reprendre', 'abandonner', 'sauvegarder'];
             if (!isset($data['action']) || !in_array($data['action'], $actionsPermises)) {
                 return response()->json([
                     'success' => false,
@@ -640,7 +789,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 case 'maturite':
                     // Projet à maturité
                     $nouveauStatut = StatutIdee::MATURITE;
-                    $typeProjet = TypesProjet::complexe1;
+                    $typeProjet = TypesProjet::complex2;
                     $projet->update([
                         'statut' => $nouveauStatut,
                         'phase' => $this->getPhaseFromStatut($nouveauStatut),
@@ -651,28 +800,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     $messageAction = 'Projet validé comme étant à maturité.';
                     break;
 
-                case 'faisabilite':
-                    // Faire une étude de faisabilité
-                    $nouveauStatut = StatutIdee::TDR_FAISABILITE;
-                    $typeProjet = TypesProjet::complex2;
-                    $projet->update([
-                        'statut' => $nouveauStatut,
-                        'phase' => $this->getPhaseFromStatut($nouveauStatut),
-                        'sous_phase' => $this->getSousPhaseFromStatut($nouveauStatut),
-                        'type_projet' => $typeProjet
-                    ]);
-                    $messageAction = 'Projet orienté vers une étude de faisabilité.';
-                    break;
-
                 case 'reprendre':
-                    // Reprendre l'étude de préfaisabilité
-                    $nouveauStatut = StatutIdee::SOUMISSION_RAPPORT_PF;
+                    // Reprendre l'étude de faisabilité
+                    $nouveauStatut = StatutIdee::SOUMISSION_RAPPORT_F;
                     $projet->update([
                         'statut' => $nouveauStatut,
                         'phase' => $this->getPhaseFromStatut($nouveauStatut),
                         'sous_phase' => $this->getSousPhaseFromStatut($nouveauStatut)
                     ]);
-                    $messageAction = 'Projet renvoyé pour reprendre l\'étude de préfaisabilité.';
+                    $messageAction = 'Projet renvoyé pour reprendre l\'étude de faisabilité.';
                     break;
 
                 case 'abandonner':
@@ -702,7 +838,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             $this->enregistrerDecision(
                 $projet,
-                "Validation préfaisabilité - " . ucfirst($data['action']),
+                "Validation faisabilité - " . ucfirst($data['action']),
                 $data['commentaire'] ?? $messageAction,
                 auth()->user()->personne->id
             );
@@ -710,7 +846,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             DB::commit();
 
             // Envoyer une notification
-            $this->envoyerNotificationValidationPrefaisabilite($projet, $data['action'], $data);
+            $this->envoyerNotificationValidationFaisabilite($projet, $data['action'], $data);
 
             return response()->json([
                 'success' => true,
@@ -718,8 +854,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'data' => [
                     'projet_id' => $projet->id,
                     'action' => $data['action'],
-                    'ancien_statut' => StatutIdee::VALIDATION_PF->value,
-                    'nouveau_statut' => $nouveauStatut ? $nouveauStatut->value : StatutIdee::VALIDATION_PF->value,
+                    'ancien_statut' => StatutIdee::VALIDATION_F->value,
+                    'nouveau_statut' => $nouveauStatut ? $nouveauStatut->value : StatutIdee::VALIDATION_F->value,
                     'type_projet' => $typeProjet ? $typeProjet->value : null,
                     'est_haut_risque' => $data['est_haut_risque'] ?? false,
                     'commentaire' => $data['commentaire'] ?? null,
@@ -734,85 +870,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         }
     }
 
-    /**
-     * Récupérer les détails de validation des TDRs
-     */
-    public function getDetailsValidation(int $projetId): JsonResponse
-    {
-        try {
-            // Vérifier les autorisations (DGPD uniquement)
-            /* if (in_array(auth()->user()->type, ['dgpd', 'admin'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour consulter ces détails.'
-                ], 403);
-            } */
-
-            // Récupérer le projet
-            $projet = $this->projetRepository->findOrFail($projetId);
-
-            // Vérifier que le projet est à l'étape d'évaluation ou post-évaluation
-            if (!in_array($projet->statut->value, [
-                StatutIdee::EVALUATION_TDR_PF->value,
-                StatutIdee::SOUMISSION_RAPPORT_PF->value,
-                StatutIdee::R_TDR_PREFAISABILITE->value,
-                StatutIdee::TDR_PREFAISABILITE->value,
-                StatutIdee::ABANDON->value
-            ])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Le projet n\'est pas à une étape permettant la consultation des détails de validation.'
-                ], 422);
-            }
-
-            // Récupérer l'évaluation en cours ou la dernière évaluation
-            $evaluation = $projet->evaluations()
-                ->where('type_evaluation', 'tdr-prefaisabilite')
-                ->with(['champs_evalue' => function ($query) {
-                    $query->orderBy('ordre_affichage');
-                }])
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            // Récupérer les décisions liées aux TDRs
-            $decisions = $projet->decisions()
-                ->where('valeur', 'like', '%TDR%')
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-            // Construire l'historique des décisions
-            $historiqueDecisions = $decisions->map(function ($decision) {
-                return [
-                    'id' => $decision->id,
-                    'valeur' => $decision->valeur,
-                    'observations' => $decision->observations,
-                    'date' => Carbon::parse($decision->date)->format("Y-m-d h:i:s"),
-                    'observateur_id' => $decision->observateur_id,
-                    'observateur_nom' => $decision->observateur->nom ?? 'N/A',
-                    'observateur_prenom' => $decision->observateur->prenom ?? 'N/A'
-                ];
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Détails de validation des TDRs récupérés avec succès.',
-                'data' => [
-                    'projet' => new ProjetResource($projet),
-                    'resume_tdr' => $projet->resume_tdr_prefaisabilite,
-                    'historique_decisions' => $historiqueDecisions,
-                    'statut_actuel' => [
-                        'code' => $projet->statut->value,
-                        'label' => $projet->statut->name,
-                        'phase' => $projet->phase,
-                        'sous_phase' => $projet->sous_phase
-                    ],
-                    'actions_possibles' => $this->getActionsPossibles($projet->statut, $evaluation['resultat_global'] ?? null)
-                ]
-            ]);
-        } catch (Exception $e) {
-            return $this->errorResponse($e);
-        }
-    }
+    // === MÉTHODES UTILITAIRES (identiques à TdrPrefaisabiliteService) ===
 
     /**
      * Obtenir les actions possibles selon le statut et le résultat d'évaluation
@@ -820,7 +878,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     private function getActionsPossibles($statut, $resultatEvaluation = null): array
     {
         return match ($statut) {
-            StatutIdee::EVALUATION_TDR_PF => [
+            StatutIdee::EVALUATION_TDR_F => [
                 'evaluer' => 'Procéder à l\'évaluation des TDRs',
                 // Actions de décision finale seulement pour cas "non accepté"
                 ...(($resultatEvaluation === 'non_accepte') ? [
@@ -841,13 +899,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             'passe' => [
                 'type' => 'automatique',
                 'message' => 'Évaluation réussie. Le projet passera automatiquement à l\'étape de soumission du rapport.',
-                'action_automatique' => 'SOUMISSION_RAPPORT_PF',
+                'action_automatique' => 'SOUMISSION_RAPPORT_F',
                 'actions_manuelles' => []
             ],
             'retour' => [
                 'type' => 'automatique',
                 'message' => 'Des améliorations sont nécessaires. Le projet retournera automatiquement à l\'étape de soumission des TDRs.',
-                'action_automatique' => 'R_TDR_PREFAISABILITE',
+                'action_automatique' => 'R_TDR_FAISABILITE',
                 'actions_manuelles' => []
             ],
             'non_accepte' => [
@@ -859,7 +917,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'action' => 'reviser',
                         'libelle' => 'Reviser tdr malgré l\'évaluation',
                         'description' => 'Permettre au projet de reviser avec de nouveaux TDRs',
-                        'consequence' => 'Retour à l\'étape TDR_PREFAISABILITE'
+                        'consequence' => 'Retour à l\'étape TDR_FAISABILITE'
                     ],
                     [
                         'action' => 'abandonner',
@@ -879,89 +937,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
-     * Soumettre le rapport de préfaisabilité (SFD-012)
-     */
-    public function soumettreRapportPrefaisabilite(int $projetId, array $data): JsonResponse
-    {
-        try {
-            DB::beginTransaction();
-
-            // Vérifier les autorisations (DPAF uniquement)
-            if (in_array(auth()->user()->type, ['dpaf', 'admin'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette soumission.'
-                ], 403);
-            }
-
-            // Récupérer le projet
-            $projet = $this->projetRepository->findOrFail($projetId);
-
-            // Vérifier que le projet est au bon statut
-            if ($projet->statut->value !== StatutIdee::SOUMISSION_RAPPORT_PF->value) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Le projet n\'est pas à l\'étape de soumission du rapport de préfaisabilité.'
-                ], 422);
-            }
-
-            // Traitement et sauvegarde du fichier rapport
-            $fichierRapport = null;
-            if (isset($data['rapport'])) {
-                $fichierRapport = $this->sauvegarderFichierRapport($projet, $data['rapport'], $data);
-            }
-
-            // Enregistrer les informations du cabinet et recommandations
-            $this->enregistrerInformationsCabinet($projet, $data);
-
-            // Changer le statut du projet
-            $projet->update([
-                'statut' => StatutIdee::VALIDATION_PF,
-                'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_PF),
-                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_PF)
-            ]);
-
-            // Enregistrer le workflow et la décision
-            $this->enregistrerWorkflow($projet, StatutIdee::VALIDATION_PF);
-            $this->enregistrerDecision(
-                $projet,
-                "Soumission du rapport de préfaisabilité",
-                "Rapport soumis par cabinet: " . ($data['cabinet_etude']['nom_cabinet'] ?? 'N/A'),
-                auth()->user()->personne->id
-            );
-
-            DB::commit();
-
-            // Envoyer une notification
-            $this->envoyerNotificationSoumissionRapport($projet, $fichierRapport, $data);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Rapport de préfaisabilité soumis avec succès.',
-                'data' => [
-                    'fichier_id' => $fichierRapport ? $fichierRapport : null,
-                    'projet_id' => $projet->id,
-                    'ancien_statut' => StatutIdee::SOUMISSION_RAPPORT_PF->value,
-                    'nouveau_statut' => StatutIdee::VALIDATION_PF->value,
-                    'cabinet' => [
-                        'nom' => $data['cabinet_etude']['nom_cabinet'] ?? null,
-                        'contact' => $data['cabinet_etude']['contact_cabinet'] ?? null,
-                        'email' => $data['cabinet_etude']['email_cabinet'] ?? null,
-                        'adresse_cabinet' => $data['cabinet_etude']['adresse_cabinet'] ?? null
-                    ],
-                    'recommandation' => $data['recommandation'] ?? null,
-                    'fichier_url' => $fichierRapport ? $fichierRapport->url : null,
-                    'soumis_par' => auth()->id(),
-                    'soumis_le' => now()->format('d/m/Y H:i:s')
-                ]
-            ]);
-        } catch (Exception $e) {
-            DB::rollBack();
-            return $this->errorResponse($e);
-        }
-    }
-
-    /**
      * Sauvegarder le fichier TDR téléversé
      */
     private function sauvegarderFichierTdr(Projet $projet, $fichier, array $data): Fichier
@@ -969,8 +944,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         // Générer les informations du fichier
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = 'tdr_prefaisabilite_' . $projet->id . '_' . time() . '.' . $extension;
-        $chemin = $fichier->storeAs('tdrs/prefaisabilite', $nomStockage, 'public');
+        $nomStockage = 'tdr_faisabilite_' . $projet->id . '_' . time() . '.' . $extension;
+        $chemin = $fichier->storeAs('tdrs/faisabilite', $nomStockage, 'public');
 
         // Créer l'enregistrement Fichier
         return Fichier::create([
@@ -981,21 +956,20 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             'mime_type' => $fichier->getMimeType(),
             'taille' => $fichier->getSize(),
             'hash_md5' => md5_file($fichier->getRealPath()),
-            'description' => $data['resume'] ?? 'Termes de référence pour l\'étude de préfaisabilité',
+            'description' => $data['resume'] ?? 'Termes de référence pour l\'étude de faisabilité',
             'commentaire' => $data['resume'] ?? null,
             'metadata' => [
-                'type_document' => 'tdr-prefaisabilite',
+                'type_document' => 'tdr-faisabilite',
                 'projet_id' => $projet->id,
                 'resume' => $data['resume'] ?? null,
                 'tdr_faisabilite' => $data['tdr_faisabilite'] ?? null,
-                'tdr_pre_faisabilite' => $data['tdr_pre_faisabilite'] ?? null,
-                'type_tdr' => $data['type_tdr'] ?? 'pre_faisabilite',
+                'type_tdr' => $data['type_tdr'] ?? 'faisabilite',
                 'soumis_par' => auth()->id(),
                 'soumis_le' => now()
             ],
             'fichier_attachable_id' => $projet->id,
             'fichier_attachable_type' => Projet::class,
-            'categorie' => 'tdr-prefaisabilite',
+            'categorie' => 'tdr-faisabilite',
             'ordre' => 1,
             'uploaded_by' => auth()->id(),
             'is_public' => false,
@@ -1008,9 +982,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
      */
     private function getCommentairesAnterieurs(Projet $projet): ?string
     {
-        if ($projet->statut->value === StatutIdee::R_TDR_PREFAISABILITE->value) {
+        if ($projet->statut->value === StatutIdee::R_TDR_FAISABILITE->value) {
             $derniereEvaluation = $projet->evaluations()
-                ->where('type_evaluation', 'tdr-prefaisabilite')
+                ->where('type_evaluation', 'tdr-faisabilite')
                 ->where('statut', 1)
                 ->orderBy('created_at', 'desc')
                 ->first();
@@ -1027,7 +1001,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     {
         // Récupérer une évaluation en cours existante ou en créer une nouvelle
         $evaluation = $projet->evaluations()
-            ->where('type_evaluation', 'tdr-prefaisabilite')
+            ->where('type_evaluation', 'tdr-faisabilite')
             ->where('statut', 0)
             ->orderBy('created_at', 'desc')
             ->first();
@@ -1035,15 +1009,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         if (!$evaluation) {
             // Récupérer l'évaluation parent si c'est une ré-évaluation
             $evaluationParent = $projet->evaluations()
-                ->where('type_evaluation', 'tdr-prefaisabilite')
+                ->where('type_evaluation', 'tdr-faisabilite')
                 ->where('statut', 1)
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            // Créer la grille d'évaluation basée sur le canevas
-            //$grilleEvaluation = $this->creerGrilleEvaluationTdr($canevasAppreciation);
             $evaluation = $projet->evaluations()->create([
-                'type_evaluation' => 'tdr-prefaisabilite',
+                'type_evaluation' => 'tdr-faisabilite',
                 'evaluateur_id' => auth()->id(),
                 'evaluation' => [],
                 'resultats_evaluation' => [],
@@ -1055,7 +1027,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
         // Enregistrer les appréciations pour chaque champ
         if (isset($data['evaluations_champs'])) {
-
             $syncData = [];
 
             foreach ($data['evaluations_champs'] as $evaluationChamp) {
@@ -1069,20 +1040,18 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $evaluation->champs_evalue()->syncWithoutDetaching($syncData);
         }
 
-        // Finaliser l'évaluation si demandé
-        //if (isset($data['finaliser']) && $data['finaliser']) {
+        // Finaliser l'évaluation
         $evaluation->update([
             'date_fin_evaluation' => now(),
             'statut' => 1,
             'commentaire' => $data['commentaire'] ?? null
         ]);
-        //}
 
         return $evaluation;
     }
 
     /**
-     * Calculer le résultat d'évaluation selon les règles SFD-011
+     * Calculer le résultat d'évaluation selon les règles SFD-015
      */
     private function calculerResultatEvaluationTdr($evaluation, array $data): array
     {
@@ -1114,7 +1083,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
         }
 
-        // Appliquer les règles métier de SFD-011
+        // Appliquer les règles métier de SFD-015
         $resultat = $this->determinerResultatSelonRegles([
             'passe' => $nombrePasse,
             'retour' => $nombreRetour,
@@ -1133,7 +1102,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
-     * Déterminer le résultat selon les règles SFD-011
+     * Déterminer le résultat selon les règles SFD-015
      */
     private function determinerResultatSelonRegles(array $compteurs): array
     {
@@ -1182,55 +1151,55 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
-     * Traiter la décision d'évaluation automatiquement selon les règles SFD-011
+     * Traiter la décision d'évaluation automatiquement selon les règles SFD-015
      */
     private function traiterDecisionEvaluationTdrAutomatique(Projet $projet, array $resultats): StatutIdee
     {
         switch ($resultats['resultat_global']) {
             case 'passe':
-                // La présélection a été un succès → SoumissionRapportPF (automatique)
+                // La présélection a été un succès → SoumissionRapportF (automatique)
                 $projet->update([
-                    'statut' => StatutIdee::SOUMISSION_RAPPORT_PF,
-                    'phase' => $this->getPhaseFromStatut(StatutIdee::SOUMISSION_RAPPORT_PF),
-                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::SOUMISSION_RAPPORT_PF)
+                    'statut' => StatutIdee::SOUMISSION_RAPPORT_F,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::SOUMISSION_RAPPORT_F),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::SOUMISSION_RAPPORT_F)
                 ]);
-                return StatutIdee::SOUMISSION_RAPPORT_PF;
+                return StatutIdee::SOUMISSION_RAPPORT_F;
 
             case 'retour':
-                // Retour pour travail supplémentaire → R_TDR_Préfaisabilité (automatique)
+                // Retour pour travail supplémentaire → R_TDR_FAISABILITE (automatique)
                 $projet->update([
-                    'statut' => StatutIdee::R_TDR_PREFAISABILITE,
-                    'phase' => $this->getPhaseFromStatut(StatutIdee::R_TDR_PREFAISABILITE),
-                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_TDR_PREFAISABILITE)
+                    'statut' => StatutIdee::R_TDR_FAISABILITE,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::R_TDR_FAISABILITE),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_TDR_FAISABILITE)
                 ]);
-                return StatutIdee::R_TDR_PREFAISABILITE;
+                return StatutIdee::R_TDR_FAISABILITE;
 
             case 'non_accepte':
             default:
-                // Non accepté → ATTENTE DE DÉCISION (reste à EVALUATION_TDR_PF)
+                // Non accepté → ATTENTE DE DÉCISION (reste à EVALUATION_TDR_F)
                 $projet->update([
-                    'statut' => StatutIdee::EVALUATION_TDR_PF,
-                    'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF),
-                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF)
+                    'statut' => StatutIdee::EVALUATION_TDR_F,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_F),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_F)
                 ]);
                 // L'utilisateur devra décider entre "reviser" ou "abandonner"
-                return StatutIdee::EVALUATION_TDR_PF;
+                return StatutIdee::EVALUATION_TDR_F;
         }
     }
 
     /**
-     * Sauvegarder le fichier rapport de préfaisabilité
+     * Sauvegarder le fichier rapport de faisabilité
      */
     private function sauvegarderFichierRapport(Projet $projet, $fichier, array $data): Fichier
     {
         // Générer les informations du fichier
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = 'rapport_prefaisabilite_' . $projet->id . '_' . time() . '.' . $extension;
-        $chemin = $fichier->storeAs('rapports/prefaisabilite', $nomStockage, 'public');
+        $nomStockage = 'rapport_faisabilite_' . $projet->id . '_' . time() . '.' . $extension;
+        $chemin = $fichier->storeAs('rapports/faisabilite', $nomStockage, 'public');
 
         // Créer l'enregistrement Fichier
-        $fichier = Fichier::create([
+        return Fichier::create([
             'nom_original' => $nomOriginal,
             'nom_stockage' => $nomStockage,
             'chemin' => $chemin,
@@ -1238,10 +1207,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             'mime_type' => $fichier->getMimeType(),
             'taille' => $fichier->getSize(),
             'hash_md5' => md5_file($fichier->getRealPath()),
-            'description' => 'Rapport d\'étude de préfaisabilité - Cabinet: ' . ($data['cabinet_etude']['nom_cabinet'] ?? 'N/A'),
+            'description' => 'Rapport d\'étude de faisabilité - Cabinet: ' . ($data['cabinet_etude']['nom_cabinet'] ?? 'N/A'),
             'commentaire' => $data['recommandation'] ?? null,
             'metadata' => [
-                'type_document' => 'rapport-prefaisabilite',
+                'type_document' => 'rapport-faisabilite',
                 'projet_id' => $projet->id,
                 'cabinet' => [
                     'nom' => $data['cabinet_etude']['nom_cabinet'] ?? null,
@@ -1255,14 +1224,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             ],
             'fichier_attachable_id' => $projet->id,
             'fichier_attachable_type' => Projet::class,
-            'categorie' => 'rapport-prefaisabilite',
+            'categorie' => 'rapport-faisabilite',
             'ordre' => 1,
             'uploaded_by' => auth()->id(),
             'is_public' => false,
             'is_active' => true
         ]);
-
-        return $fichier;
     }
 
     /**
@@ -1273,8 +1240,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         // Récupérer les métadonnées existantes ou créer un nouveau tableau
         $metadata = $projet->metadata ?? [];
 
-        // Ajouter les informations de préfaisabilité
-        $metadata['prefaisabilite'] = [
+        // Ajouter les informations de faisabilité
+        $metadata['faisabilite'] = [
             'cabinet' => [
                 'nom' => $data['cabinet_etude']['nom_cabinet'] ?? null,
                 'contact' => $data['cabinet_etude']['contact_cabinet'] ?? null,
@@ -1300,7 +1267,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         };
     }
 
-    // Méthodes utilitaires du workflow (réutilisées)
+    // Méthodes utilitaires du workflow (identiques à TdrPrefaisabiliteService)
     private function enregistrerWorkflow($projet, $nouveauStatut)
     {
         Workflow::create([
@@ -1315,7 +1282,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
     private function enregistrerDecision($projet, $valeur, $observations, $observateurId)
     {
-        return Decision::create([
+        Decision::create([
             'valeur' => $valeur,
             'date' => now(),
             'observations' => $observations,
@@ -1328,14 +1295,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     private function getPhaseFromStatut($statut)
     {
         return match ($statut) {
-            StatutIdee::TDR_PREFAISABILITE => \App\Enums\PhasesIdee::evaluation_ex_tante,
-            StatutIdee::R_TDR_PREFAISABILITE => \App\Enums\PhasesIdee::evaluation_ex_tante,
-            StatutIdee::EVALUATION_TDR_PF => \App\Enums\PhasesIdee::evaluation_ex_tante,
-            StatutIdee::SOUMISSION_RAPPORT_PF => \App\Enums\PhasesIdee::evaluation_ex_tante,
-            StatutIdee::VALIDATION_PF => \App\Enums\PhasesIdee::evaluation_ex_tante,
-            StatutIdee::MATURITE => \App\Enums\PhasesIdee::evaluation_ex_tante,
-            StatutIdee::RAPPORT => \App\Enums\PhasesIdee::evaluation_ex_tante,
-            StatutIdee::PRET => \App\Enums\PhasesIdee::evaluation_ex_tante,
+            StatutIdee::TDR_FAISABILITE => \App\Enums\PhasesIdee::evaluation_ex_tante,
+            StatutIdee::R_TDR_FAISABILITE => \App\Enums\PhasesIdee::evaluation_ex_tante,
+            StatutIdee::EVALUATION_TDR_F => \App\Enums\PhasesIdee::evaluation_ex_tante,
+            StatutIdee::SOUMISSION_RAPPORT_F => \App\Enums\PhasesIdee::evaluation_ex_tante,
+            StatutIdee::VALIDATION_F => \App\Enums\PhasesIdee::evaluation_ex_tante,
+            StatutIdee::MATURITE => \App\Enums\PhasesIdee::selection,
+            StatutIdee::PRET => \App\Enums\PhasesIdee::selection,
             StatutIdee::ABANDON => \App\Enums\PhasesIdee::evaluation_ex_tante,
             default => \App\Enums\PhasesIdee::evaluation_ex_tante,
         };
@@ -1344,28 +1310,16 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     private function getSousPhaseFromStatut($statut)
     {
         return match ($statut) {
-            StatutIdee::TDR_PREFAISABILITE => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
-            StatutIdee::R_TDR_PREFAISABILITE => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
-            StatutIdee::EVALUATION_TDR_PF => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
-            StatutIdee::SOUMISSION_RAPPORT_PF => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
-            StatutIdee::VALIDATION_PF => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
-            StatutIdee::ABANDON => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
-            default => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
+            StatutIdee::TDR_FAISABILITE => \App\Enums\SousPhaseIdee::faisabilite,
+            StatutIdee::R_TDR_FAISABILITE => \App\Enums\SousPhaseIdee::faisabilite,
+            StatutIdee::EVALUATION_TDR_F => \App\Enums\SousPhaseIdee::faisabilite,
+            StatutIdee::SOUMISSION_RAPPORT_F => \App\Enums\SousPhaseIdee::faisabilite,
+            StatutIdee::VALIDATION_F => \App\Enums\SousPhaseIdee::faisabilite,
+            StatutIdee::MATURITE => \App\Enums\SousPhaseIdee::faisabilite,
+            StatutIdee::PRET => \App\Enums\SousPhaseIdee::faisabilite,
+            StatutIdee::ABANDON => \App\Enums\SousPhaseIdee::faisabilite,
+            default => \App\Enums\SousPhaseIdee::faisabilite
         };
-    }
-
-    // Méthodes utilitaires (à implémenter selon les besoins)
-    private function envoyerNotificationSoumission($projet, $fichier)
-    { /* À implémenter */
-    }
-    private function envoyerNotificationEvaluation($projet, array $resultats)
-    { /* À implémenter */
-    }
-    private function envoyerNotificationSoumissionRapport($projet, $fichier, array $data)
-    { /* À implémenter */
-    }
-    private function envoyerNotificationValidation($projet, string $action, array $data)
-    { /* À implémenter */
     }
 
     /**
@@ -1399,7 +1353,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         $metadata = $projet->metadata ?? [];
 
         // Ajouter les informations de validation temporaires
-        $metadata['validation_prefaisabilite_temp'] = [
+        $metadata['validation_faisabilite_temp'] = [
             'est_haut_risque' => $data['est_haut_risque'] ?? false,
             'commentaire' => $data['commentaire'] ?? null,
             'checklist_haut_risque' => $data['checklist_haut_risque'] ?? null,
@@ -1411,288 +1365,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         $projet->update(['metadata' => $metadata]);
     }
 
-    /**
-     * Envoyer une notification pour la validation de préfaisabilité
-     */
-    private function envoyerNotificationValidationPrefaisabilite($projet, string $action, array $data)
+    // Méthodes utilitaires (à implémenter selon les besoins)
+    private function envoyerNotificationSoumission($projet, $fichier)
     { /* À implémenter */ }
-
-    /**
-     * Soumettre le rapport d'évaluation ex-ante (SFD-018)
-     */
-    public function soumettreRapportEvaluationExAnte(int $projetId, array $data): JsonResponse
-    {
-        try {
-            DB::beginTransaction();
-
-            // Vérifier les autorisations (Ministère sectoriel uniquement)
-            if (in_array(auth()->user()->type, ['dpaf', 'admin'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette soumission.'
-                ], 403);
-            }
-
-            // Récupérer le projet
-            $projet = $this->projetRepository->findOrFail($projetId);
-
-            // Vérifier que le projet est au bon statut
-            /*if ($projet->statut->value !== StatutIdee::MATURITE->value) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Le projet n\'est pas à l\'étape de maturité pour la soumission du rapport d\'évaluation ex-ante.'
-                ], 422);
-            }*/
-
-            // Traitement et sauvegarde du rapport principal
-            $fichierRapport = null;
-            if (isset($data['rapport_evaluation'])) {
-                $fichierRapport = $this->sauvegarderRapportEvaluationExAnte($projet, $data['rapport_evaluation_ex_ante'], $data);
-            }
-
-            // Traitement et sauvegarde des annexes
-            $fichiersAnnexes = [];
-            if (isset($data['documents_annexe']) && is_array($data['documents_annexe'])) {
-                foreach ($data['documents_annexe'] as $index => $annexe) {
-                    $fichiersAnnexes[] = $this->sauvegarderAnnexeRapport($projet, $annexe, $index, $data);
-                }
-            }
-
-            // Changer le statut du projet
-            $projet->update([
-                'statut' => StatutIdee::RAPPORT,
-                'phase' => $this->getPhaseFromStatut(StatutIdee::RAPPORT),
-                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::RAPPORT)
-            ]);
-
-            // Enregistrer le workflow et la décision
-            $this->enregistrerWorkflow($projet, StatutIdee::RAPPORT);
-            $this->enregistrerDecision(
-                $projet,
-                "Soumission du rapport d'évaluation ex-ante",
-                $data['commentaire'] ?? 'Rapport d\'évaluation ex-ante soumis pour validation',
-                auth()->user()->personne->id
-            );
-
-            DB::commit();
-
-            // Envoyer une notification
-            $this->envoyerNotificationSoumissionRapportExAnte($projet, $fichierRapport, $fichiersAnnexes);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Rapport d\'évaluation ex-ante soumis avec succès.',
-                'data' => [
-                    'projet_id' => $projet->id,
-                    'ancien_statut' => StatutIdee::MATURITE->value,
-                    'nouveau_statut' => StatutIdee::RAPPORT->value,
-                    'rapport_principal' => $fichierRapport ? $fichierRapport : null,
-                    'annexes' => collect($fichiersAnnexes)->map(function($fichier) {
-                        return [
-                            'id' => $fichier->id,
-                            'nom' => $fichier->nom_original,
-                            'url' => $fichier->url
-                        ];
-                    }),
-                    'nombre_annexes' => count($fichiersAnnexes),
-                    'soumis_par' => auth()->id(),
-                    'soumis_le' => now()->format('d/m/Y H:i:s')
-                ]
-            ]);
-
-        } catch (Exception $e) {
-            DB::rollBack();
-            return $this->errorResponse($e);
-        }
-    }
-
-    /**
-     * Valider le rapport final (SFD-019)
-     */
-    public function validerRapportFinal(int $projetId, array $data): JsonResponse
-    {
-        try {
-            DB::beginTransaction();
-
-            // Vérifier les autorisations (Comité de validation Ministériel uniquement)
-            if (in_array(auth()->user()->type, ['dgpd', 'admin'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette validation.'
-                ], 403);
-            }
-
-            // Récupérer le projet
-            $projet = $this->projetRepository->findOrFail($projetId);
-
-            // Vérifier que le projet est au bon statut
-            if ($projet->statut->value !== StatutIdee::RAPPORT->value) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Le projet n\'est pas à l\'étape de validation du rapport.'
-                ], 422);
-            }
-
-            // Valider l'action demandée
-            $actionsPermises = ['valider', 'corriger'];
-            if (!isset($data['action']) || !in_array($data['action'], $actionsPermises)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Action invalide. Actions possibles: valider, corriger.'
-                ], 422);
-            }
-
-            $nouveauStatut = null;
-            $messageAction = '';
-
-            switch ($data['action']) {
-                case 'valider':
-                    // Projet validé → Prêt pour sélection
-                    $nouveauStatut = StatutIdee::PRET;
-                    $projet->update([
-                        'statut' => $nouveauStatut,
-                        'phase' => $this->getPhaseFromStatut($nouveauStatut),
-                        'sous_phase' => $this->getSousPhaseFromStatut($nouveauStatut),
-                        'date_fin_etude' => now()
-                    ]);
-                    $messageAction = 'Projet validé et prêt pour la sélection.';
-                    break;
-
-                case 'corriger':
-                    // Corrections demandées → Retour à maturité
-                    $nouveauStatut = StatutIdee::MATURITE;
-                    $projet->update([
-                        'statut' => $nouveauStatut,
-                        'phase' => $this->getPhaseFromStatut($nouveauStatut),
-                        'sous_phase' => $this->getSousPhaseFromStatut($nouveauStatut)
-                    ]);
-                    $messageAction = 'Corrections demandées sur le rapport d\'évaluation ex-ante.';
-                    break;
-            }
-
-            // Enregistrer le workflow et la décision
-            $this->enregistrerWorkflow($projet, $nouveauStatut);
-            $this->enregistrerDecision(
-                $projet,
-                "Validation finale du rapport - " . ucfirst($data['action']),
-                $data['commentaire'] ?? $messageAction,
-                auth()->user()->personne->id
-            );
-
-            DB::commit();
-
-            // Envoyer une notification
-            $this->envoyerNotificationValidationFinale($projet, $data['action'], $data);
-
-            return response()->json([
-                'success' => true,
-                'message' => $messageAction,
-                'data' => [
-                    'projet_id' => $projet->id,
-                    'action' => $data['action'],
-                    'ancien_statut' => StatutIdee::RAPPORT->value,
-                    'nouveau_statut' => $nouveauStatut->value,
-                    'commentaire' => $data['commentaire'] ?? null,
-                    'valide_par' => auth()->id(),
-                    'valide_le' => now()->format('d/m/Y H:i:s'),
-                    'date_fin_etude' => $data['action'] === 'valider' ? now()->format('d/m/Y H:i:s') : null,
-                    'pret_pour_selection' => $data['action'] === 'valider'
-                ]
-            ]);
-
-        } catch (Exception $e) {
-            DB::rollBack();
-            return $this->errorResponse($e);
-        }
-    }
-
-    /**
-     * Sauvegarder le rapport d'évaluation ex-ante
-     */
-    private function sauvegarderRapportEvaluationExAnte(Projet $projet, $fichier, array $data): Fichier
-    {
-        // Générer les informations du fichier
-        $nomOriginal = $fichier->getClientOriginalName();
-        $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = 'rapport_evaluation_ex_ante_' . $projet->id . '_' . time() . '.' . $extension;
-        $chemin = $fichier->storeAs('rapports/evaluation-ex-ante', $nomStockage, 'public');
-
-        // Créer l'enregistrement Fichier
-        return Fichier::create([
-            'nom_original' => $nomOriginal,
-            'nom_stockage' => $nomStockage,
-            'chemin' => $chemin,
-            'extension' => $extension,
-            'mime_type' => $fichier->getMimeType(),
-            'taille' => $fichier->getSize(),
-            'hash_md5' => md5_file($fichier->getRealPath()),
-            'description' => 'Rapport d\'évaluation ex-ante',
-            'commentaire' => $data['commentaire'] ?? null,
-            'metadata' => [
-                'type_document' => 'rapport-evaluation-ex-ante',
-                'projet_id' => $projet->id,
-                //'ministere_sectoriel' => $data['ministere_sectoriel'] ?? null,
-                'soumis_par' => auth()->id(),
-                'soumis_le' => now()
-            ],
-            'fichier_attachable_id' => $projet->id,
-            'fichier_attachable_type' => Projet::class,
-            'categorie' => 'rapport-evaluation-ex-ante',
-            'ordre' => 1,
-            'uploaded_by' => auth()->id(),
-            'is_public' => false,
-            'is_active' => true
-        ]);
-    }
-
-    /**
-     * Sauvegarder une annexe du rapport
-     */
-    private function sauvegarderAnnexeRapport(Projet $projet, $fichier, int $index, array $data): Fichier
-    {
-        // Générer les informations du fichier
-        $nomOriginal = $fichier->getClientOriginalName();
-        $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = 'annexe_rapport_' . $projet->id . '_' . ($index + 1) . '_' . time() . '.' . $extension;
-        $chemin = $fichier->storeAs('rapports/evaluation-ex-ante/annexes', $nomStockage, 'public');
-
-        // Créer l'enregistrement Fichier
-        return Fichier::create([
-            'nom_original' => $nomOriginal,
-            'nom_stockage' => $nomStockage,
-            'chemin' => $chemin,
-            'extension' => $extension,
-            'mime_type' => $fichier->getMimeType(),
-            'taille' => $fichier->getSize(),
-            'hash_md5' => md5_file($fichier->getRealPath()),
-            'description' => 'Annexe ' . ($index + 1) . ' du rapport d\'évaluation ex-ante',
-            'commentaire' => $data['commentaire_annexe_' . $index] ?? null,
-            'metadata' => [
-                'type_document' => 'annexe-rapport-evaluation-ex-ante',
-                'projet_id' => $projet->id,
-                'numero_annexe' => $index + 1,
-                'soumis_par' => auth()->id(),
-                'soumis_le' => now()
-            ],
-            'fichier_attachable_id' => $projet->id,
-            'fichier_attachable_type' => Projet::class,
-            'categorie' => 'annexe-rapport-evaluation-ex-ante',
-            'ordre' => $index + 2, // +2 pour être après le rapport principal
-            'uploaded_by' => auth()->id(),
-            'is_public' => false,
-            'is_active' => true
-        ]);
-    }
-
-    /**
-     * Envoyer une notification pour la soumission du rapport ex-ante
-     */
-    private function envoyerNotificationSoumissionRapportExAnte($projet, $fichierRapport, array $fichiersAnnexes)
+    private function envoyerNotificationEvaluation($projet, array $resultats)
     { /* À implémenter */ }
-
-    /**
-     * Envoyer une notification pour la validation finale
-     */
-    private function envoyerNotificationValidationFinale($projet, string $action, array $data)
+    private function envoyerNotificationSoumissionRapport($projet, $fichier, array $data)
+    { /* À implémenter */ }
+    private function envoyerNotificationValidation($projet, string $action, array $data)
+    { /* À implémenter */ }
+    private function envoyerNotificationValidationFaisabilite($projet, string $action, array $data)
     { /* À implémenter */ }
 }

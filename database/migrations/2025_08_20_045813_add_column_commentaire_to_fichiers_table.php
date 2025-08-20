@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('champs', function (Blueprint $table) {
-            //
+        Schema::table('fichiers', function (Blueprint $table) {
+            // Ajouter la référence vers la section parent pour créer une hiérarchie
+            $table->longText('commentaire')->nullable();
         });
     }
 
@@ -21,8 +22,5 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('champs', function (Blueprint $table) {
-            //
-        });
     }
 };

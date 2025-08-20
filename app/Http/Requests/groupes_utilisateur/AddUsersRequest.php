@@ -15,11 +15,28 @@ class AddUsersRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Utilisateurs (optionnels à la création)
             'users' => 'required|array|min:1',
             'users.*' => [
                 'integer',
-                Rule::exists('users', 'id')->whereNull("roleId")->whereNull('deleted_at')
+                Rule::exists('users', 'id')->whereNull("roleId")->whereNull("roleId")->whereNull('deleted_at')
             ],
+            'users.*.id' => [ "nullable",
+                Rule::exists('users', 'id')->whereNull("roleId")->whereNull("roleId")->whereNull('deleted_at')
+            ],
+            // Données utilisateur de base
+            'users.*.email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->whereNull('deleted_at')
+            ],
+
+            // Données de la personne
+            'users.*.personne' => 'required|array',
+            'users.*.personne.nom' => 'required|string|max:255',
+            'users.*.personne.prenom' => 'required|string|max:255',
+            'users.*.personne.poste' => 'nullable|string|max:255'
         ];
     }
 

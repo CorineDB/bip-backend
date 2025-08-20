@@ -60,4 +60,27 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->orderBy('created_at', 'desc')
             ->first();
     }
+
+
+    public function getCanevasAppreciationTdr()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-appreciation-tdr');
+        })
+            ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
 }

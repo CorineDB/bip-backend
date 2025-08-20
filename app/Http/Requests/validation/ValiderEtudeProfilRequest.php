@@ -11,7 +11,7 @@ class ValiderEtudeProfilRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->check() && in_array(auth()->user()->type, ['comite_ministeriel', 'dpaf', 'admin']);
+        return true; //auth()->check() && in_array(auth()->user()->type, ['comite_ministeriel', 'dpaf', 'admin']);
     }
 
     /**
@@ -60,21 +60,21 @@ class ValiderEtudeProfilRequest extends FormRequest
         $validator->after(function ($validator) {
             // Vérifier que le projet existe et est au bon statut
             $projetId = $this->route('projetId') ?? $this->route('id');
-            
+
             if ($projetId) {
                 try {
                     $projet = app(\App\Repositories\Contracts\ProjetRepositoryInterface::class)->find($projetId);
-                    
+
                     if (!$projet) {
                         $validator->errors()->add('projet', 'Projet non trouvé.');
                         return;
                     }
-                    
+
                     if ($projet->statut->value !== \App\Enums\StatutIdee::VALIDATION_PROFIL->value) {
                         $validator->errors()->add('projet', 'Le projet n\'est pas à l\'étape de validation d\'étude de profil.');
                         return;
                     }
-                    
+
                 } catch (\Exception $e) {
                     $validator->errors()->add('projet', 'Erreur lors de la vérification du projet.');
                 }

@@ -7,6 +7,7 @@ use App\Http\Resources\CibleResource;
 use App\Http\Resources\FinancementResource;
 use App\Http\Resources\LieuInterventionResource;
 use App\Http\Resources\OddResource;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ProjetResource extends BaseApiResource
@@ -123,9 +124,39 @@ class ProjetResource extends BaseApiResource
                 });
             }),
 
+            'tdrs_prefaisabilite' => [
+                "document" => $this->tdrs_prefaisabilite,
+                "resume" => $this->resume_tdr_prefaisabilite
+            ],
+
+            'tdrs_faisabilite' => [
+                "document" => $this->tdrs_faisabilite,
+                "resume" => $this->resume_tdr_faisabilite
+            ],
+
+            'rapports_prefaisabilite' => [
+                "document" => $this->rapports_prefaisabilite,
+                "cabinet_etude" => $this->info_cabinet_etude_faisabilite
+            ],
+
+            'rapports_faisabilite' => [
+                "document" => $this->rapports_faisabilite,
+                "cabinet_etude" => $this->info_cabinet_etude_faisabilite
+            ],
+
+            'rapports_prefaisabilite' => [
+                "document" => $this->rapports_prefaisabilite,
+                "cabinet_etude" => $this->info_cabinet_etude_faisabilite
+            ],
+
+            'rapports_evaluation_ex_ante' => [
+                "rapports_evaluation_ex_ante" => $this->rapports_evaluation_ex_ante,
+                "documents_annexe_rapports_evaluation_ex_ante" => $this->documents_annexe_rapports_evaluation_ex_ante
+            ],
+
             // Timestamps
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at
+            'created_at' => Carbon::parse($this->created_at)->format("Y-m-d H:i:s"),
+            'updated_at' => Carbon::parse($this->updated_at)->format("Y-m-d H:i:s"),
         ];
     }
 

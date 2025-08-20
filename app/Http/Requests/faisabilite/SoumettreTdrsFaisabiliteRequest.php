@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\tdrs;
+namespace App\Http\Requests\faisabilite;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SoumettreTdrsRequest extends FormRequest
+class SoumettreTdrsFaisabiliteRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -21,7 +21,7 @@ class SoumettreTdrsRequest extends FormRequest
     {
         return [
             'tdr' => 'required|file|mimes:pdf,doc,xls,xlsx,docx|max:10240', // Max 10MB
-            'resume_tdr_prefaisabilite' => 'required|string|min:50|max:2000'
+            'resume_tdr_faisabilite' => 'required|string|min:50|max:2000'
         ];
     }
 
@@ -33,12 +33,12 @@ class SoumettreTdrsRequest extends FormRequest
         return [
             'tdr.required' => 'Le fichier TDR est obligatoire.',
             'tdr.file' => 'Le TDR doit être un fichier.',
-            'tdr.mimes' => 'Le TDR doit être un fichier PDF, DOC ou DOCX.',
+            'tdr.mimes' => 'Le TDR doit être un fichier PDF, DOC, XLS, XLSX ou DOCX.',
             'tdr.max' => 'Le fichier TDR ne peut dépasser 10 MB.',
-            'resume_tdr_prefaisabilite.required' => 'Un résumé est obligatoire.',
-            'resume_tdr_prefaisabilite.string' => 'Le résumé doit être du texte.',
-            'resume_tdr_prefaisabilite.min' => 'Le résumé doit contenir au moins 50 caractères.',
-            'resume_tdr_prefaisabilite.max' => 'Le résumé ne peut dépasser 2000 caractères.'
+            'resume_tdr_faisabilite.required' => 'Un résumé est obligatoire.',
+            'resume_tdr_faisabilite.string' => 'Le résumé doit être du texte.',
+            'resume_tdr_faisabilite.min' => 'Le résumé doit contenir au moins 50 caractères.',
+            'resume_tdr_faisabilite.max' => 'Le résumé ne peut dépasser 2000 caractères.'
         ];
     }
 
@@ -48,8 +48,8 @@ class SoumettreTdrsRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'fichier_tdr' => 'fichier TDR',
-            'resume_tdr_prefaisabilite' => 'résumé',
+            'tdr' => 'fichier TDR',
+            'resume_tdr_faisabilite' => 'résumé',
         ];
     }
 }

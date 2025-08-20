@@ -16,16 +16,17 @@ class AssignRolesRequest extends FormRequest
     {
         $profilable = auth()->user()->profilable;
         return [
-            'roles' => 'required|array|min:1',
+            'roles' => [Rule::requiredIf(count($this->input("permissions"))), "array", "min:1"],
             'roles.*' => [
-                'integer',
-                Rule::exists('roles', 'id')
+                Rule::exists("roles", "id")
                 ->when($profilable, function($query) use($profilable) {
-                    $query->where('roleable_type', get_class($profilable))
-                    ->where('roleable_id', $profilable->id);
+                    $query->where("roleable_type", get_class($profilable))
+                    ->where("roleable_id", $profilable->id);
                 })
-                ->whereNull('deleted_at')
+                ->whereNull("deleted_at")
             ],
+            "permissions" => [Rule::requiredIf(count($this->input("roles"))), "array", "min:1"],
+            "permissions.*" => ["required", "distinct", Rule::exists("permissions", "id")->whereNull("deleted_at")],
         ];
     }
 

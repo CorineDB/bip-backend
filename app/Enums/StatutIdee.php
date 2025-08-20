@@ -13,9 +13,13 @@ enum StatutIdee: string
     case ABANDON = '99_abandon';
     case PREFAISABILITE = '1a_prefaisabilite';
     case PRET = '10_pret';
-    case TDR_FAISABILITE = '05a_TDR_faisabilité';
-    case R_TDR_PREFAISABILITE = '04a_R_TDR_Préfaisabilité';
+    case RAPPORT = '09_Rapport';
+    case MATURITE = '08_Maturite';
+    case TDR_FAISABILITE = '05a_TDR_faisabilite';
+    case R_TDR_PREFAISABILITE = '04a_R_TDR_Prefaisabilite';
     case EVALUATION_TDR_F = '05b_Evaluation_TDR_F';
+    case R_TDR_FAISABILITE = '05a_R_TDR_faisabilite';
+
     case SOUMISSION_RAPPORT_F = '05b_SoumissionRapportF';
     case VALIDATION_F = '05c_ValidationF';
     case NOTE_CONCEPTUEL = '03a_NoteConceptuel';
@@ -24,7 +28,7 @@ enum StatutIdee: string
     case EVALUATION_NOTE = '03b_EvaluationNote';
     case VALIDATION_PROFIL = '03c_ValidationProfil';
     case R_VALIDATION_PROFIL_NOTE_AMELIORER = '03c_R_ValidationProfilNoteAameliorer';
-    case TDR_PREFAISABILITE = '04a_TDR_Prefaisabilité';
+    case TDR_PREFAISABILITE = '04a_TDR_Prefaisabilite';
     case EVALUATION_TDR_PF = '04b_Evaluation_TDR_PF';
     case SOUMISSION_RAPPORT_PF = '04b_SoumissionRapportPF';
     case VALIDATION_PF = '04c_ValidationPF';

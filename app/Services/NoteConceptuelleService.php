@@ -76,9 +76,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             // Préparer les données de la note conceptuelle
             $intitule = 'Note conceptuelle';
-            if (isset($champsData['contexte_justification'])) {
-                $intitule = substr($champsData['contexte_justification'], 0, 100) . '...';
-            }
 
             // Convertir le statut en numérique selon l'enum de la table
             $statutNumeric = match ($statut) {
@@ -102,7 +99,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             if ($noteConceptuelle) {
                 // Mettre à jour la note existante
-                $noteConceptuelle->update($noteData);
+                $noteConceptuelle->fill($noteData);
+                $noteConceptuelle->save();
                 $message = 'Note conceptuelle mise à jour avec succès.';
                 $statusCode = 200;
             } else {
@@ -125,13 +123,13 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $this->saveDynamicFieldsFromCanevas($noteConceptuelle, $champsData, $canevasNoteConceptuelle);
             }
 
-            $noteConceptuelle->refresh();
-
             $noteConceptuelle->note_conceptuelle = $noteConceptuelle->champs->map(function ($champ) {
                 return [
                     'id' => $champ->id,
                     'label' => $champ->label,
                     'attribut' => $champ->attribut,
+                    'ordre_affichage' => $champ['ordre_affichage'],
+                    'type_champ' => $champ['type_champ'],
                     'valeur' => $champ->pivot->valeur,
                     'commentaire' => $champ->pivot->commentaire,
                     'updated_at' => $champ->pivot->updated_at
@@ -140,12 +138,17 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             $noteConceptuelle->save();
 
-            $noteConceptuelle->projet->update([
-                'statut' => StatutIdee::VALIDATION_NOTE_AMELIORER,
-                'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_NOTE_AMELIORER),
-                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_NOTE_AMELIORER),
+            $noteConceptuelle->projet->fill([
+                'statut' => StatutIdee::EVALUATION_NOTE,
+                'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_NOTE),
+                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_NOTE),
+
                 'type_projet' => TypesProjet::simple
             ]);
+
+            $noteConceptuelle->projet->save();
+            $noteConceptuelle->projet->refresh();
+
             DB::commit();
 
             return (new $this->resourceClass($noteConceptuelle))
@@ -215,8 +218,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $this->saveDynamicFieldsFromCanevas($noteConceptuelle, $data, $canevasNoteConceptuelle);
             }
 
-            $noteConceptuelle->refresh();
-
             $noteConceptuelle->note_conceptuelle = $noteConceptuelle->champs->map(function ($champ) {
                 return [
                     'id' => $champ->id,
@@ -239,13 +240,15 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ]);
             }
 
-            // La méthode create gère déjà l'update automatiquement
-            return $this->create($data);
+
+            return (new $this->resourceClass($noteConceptuelle))
+                ->additional(['message' => $message])
+                ->response()
+                ->setStatusCode($statusCode);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
     }
-
 
     public function validateNote(int $projetId, int $noteId, array $data): JsonResponse
     {
@@ -280,6 +283,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             switch ($data["decision"]) {
                 case 'a_maturite':
                     $projet->update([
+                        'date_fin_etude' => now(),
                         'statut' => StatutIdee::PRET,
                         'phase' => $this->getPhaseFromStatut(StatutIdee::PRET),
                         'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::PRET),
@@ -305,6 +309,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
                 case 'abandonner_projet':
                     $projet->update([
+                        'date_fin_etude' => now(),
                         'statut' => StatutIdee::ABANDON,
                         'phase' => $this->getPhaseFromStatut(StatutIdee::ABANDON),
                         'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::ABANDON),
@@ -485,25 +490,24 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
                 // Créer la nouvelle évaluation
                 $evaluationData = [
-                    'type_evaluation' => "note-conceptuelle",/*
-                        'projetable_type' => NoteConceptuelle::class,
-                        'projetable_id' => $noteConceptuelle->id, */
+                    'type_evaluation' => "note-conceptuelle",
                     'evaluateur_id' => auth()->id(),
                     "evaluation" => [],
                     "resultats_evaluation" => [],
                     'date_debut_evaluation' => now(),
                     'statut' => 0, // En cours
-                    //'commentaire' => isset($data['raison']) ? $data['raison'] : null,
                     'id_evaluation' => $evaluationParent ? $evaluationParent->id : null // Lien vers le parent
                 ];
 
                 $evaluationEnCours = $noteConceptuelle->evaluations()->create($evaluationData);
             } else {
                 if ($data["evaluer"]) {
-                    $evaluationEnCours->update([
+                    $evaluationEnCours->fill([
                         'date_fin_evaluation' => now(),
                         'statut' => 1
                     ]);
+
+                    $evaluationEnCours->save();
                 }
             }
 
@@ -525,10 +529,12 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             // Enregistrer la raison globale si fournie
             if (isset($data['raison'])) {
-                $evaluationEnCours->update(['commentaire' => $data['raison']]);
+                $evaluationEnCours->fill(['commentaire' => $data['raison']]);
+                $evaluationEnCours->save();
             }
 
             $evaluationEnCours->refresh();
+
             DB::commit();
 
             $isNewEvaluation = !$noteConceptuelle->evaluationEnCours();
@@ -541,7 +547,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'data' => [
                     'evaluation_id' => $evaluationEnCours->id,
                     'statut' => $evaluationEnCours->statut,
-                    'appreciations' => $evaluationEnCours->refresh(),
+                    'appreciations' => $evaluationEnCours,
                     'appreciations_count' => count($data['evaluations_champs'] ?? []),
                     'finalise' => $data['evaluer'] ?? false
                 ]
@@ -670,12 +676,13 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         try {
             $noteConceptuelle = $this->repository->findOrFail($noteConceptuelleId);
 
-            $evaluation = $this->evaluationRepository->getModel()
+            /* $evaluation = $this->evaluationRepository->getModel()
                 ->where('projetable_type', NoteConceptuelle::class)
                 ->where('projetable_id', $noteConceptuelle->id)
                 ->where('type_evaluation', 'note_conceptuelle')
                 ->with(['evaluateur', 'validateur'])
-                ->first();
+                //->orderBy('created_at', 'desc')
+                ->first(); */
 
             $evaluation = $noteConceptuelle->evaluationEnCours();
 
@@ -705,7 +712,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'valider_par' => $evaluation->valider_par,
                         'commentaire' => $evaluation->commentaire,
                         'evaluation' => $evaluation->evaluation,
-                        'resultats_evaluation' => $evaluation->resultats_evaluation,
+                        'resultats_evaluation' => ($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen,
                         'statut' => $evaluation->statut,
                         'champs' => collect($noteConceptuelle->note_conceptuelle)->map(function ($champ) use($evaluation) {
                             $champ_evalue = collect($evaluation->champs_evalue)
@@ -722,7 +729,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                             ];
                         }),
                     ],
-                    'resultats_examen' => $resultatsExamen
+                    'resultats_examen' => ($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE)? $evaluation->resultats_evaluation : $resultatsExamen
                 ]
             ]);
         } catch (Exception $e) {
@@ -1036,6 +1043,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             // Récupérer la note conceptuelle
             $noteConceptuelle = $this->repository->find($evaluation->projetable_id);
+
             if (!$noteConceptuelle) {
                 return response()->json([
                     'success' => false,
@@ -1067,13 +1075,15 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             ];
 
             // Mettre à jour l'évaluation avec les données complètes
-            $evaluation->update([
+            $evaluation->fill([
                 'resultats_evaluation' => $resultatsExamen,
                 'evaluation' => $evaluationComplete,
                 'valider_par' => auth()->id(),
                 'valider_le' => now(),
                 'commentaire' => ($evaluation->commentaire ?? '') . "\n\nCommentaire de confirmation: " . ($data['commentaire_confirmation'] ?? '')
             ]);
+
+            $evaluation->save();
 
             // Enregistrer la décision et la raison dans la note conceptuelle
             $noteConceptuelleUpdate = [
@@ -1113,9 +1123,13 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     break;
             }
 
-            $noteConceptuelle->update($noteConceptuelleUpdate);
+            $noteConceptuelle->fill($noteConceptuelleUpdate);
 
-            $noteConceptuelle->projet->update($noteConceptuelleData);
+            $noteConceptuelle->save();
+
+            $noteConceptuelle->projet->fill($noteConceptuelleData);
+
+            $noteConceptuelle->projet->save();
 
             // Enregistrer dans l'historique des décisions si nécessaire
             $this->enregistrerDecisionEvaluation($noteConceptuelle, $resultatsExamen, $data);
@@ -1127,7 +1141,9 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'message' => 'Résultat de l\'évaluation confirmé avec succès.',
                 'data' => [
                     'evaluation_id' => $evaluation->id,
+                    'statutevaluation_id' => $evaluation->statut,
                     'note_conceptuelle_id' => $noteConceptuelle->id,
+                    'statut' => $noteConceptuelle->statut,
                     'resultat_final' => $resultatsExamen['resultat_global'],
                     'decision' => $noteConceptuelle->decision,
                     'nouveau_statut_note' => $noteConceptuelle->statut,
@@ -1220,7 +1236,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if ($projet->statut->value !== StatutIdee::VALIDATION_PROFIL->value) {
+            if ($projet->statut->value == StatutIdee::VALIDATION_PROFIL->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de validation d\'étude de profil.'
@@ -1336,7 +1352,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             case 'retour':
             case 'non_accepte':
                 // Retour pour travail supplémentaire ou Non accepté
-                return ['abandonner_projet', 'reviser_note_conceptuelle', 'sauvegarder'];
+                return ['abandonner_projet', 'reviser_note_conceptuelle', 'faire_etude_prefaisabilite', 'sauvegarder'];
 
             default:
                 // Évaluation non définie - toutes les actions sont possibles
@@ -1572,7 +1588,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             'valeur' => $valeurDecision,
             'date' => now(),
             'observations' => $observations,
-            'observateurId' => $observateurId ?? auth()->user()->id,
+            'observateur_id' => auth()->user()->id,
             'objet_decision_id' => $ideeProjet->id,
             'objet_decision_type' => get_class($ideeProjet),
         ]);
@@ -1590,9 +1606,12 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             \App\Enums\StatutIdee::AMC => \App\Enums\PhasesIdee::identification,
             \App\Enums\StatutIdee::VALIDATION => \App\Enums\PhasesIdee::identification,
             \App\Enums\StatutIdee::NOTE_CONCEPTUEL => \App\Enums\PhasesIdee::identification,
+            \App\Enums\StatutIdee::EVALUATION_NOTE => \App\Enums\PhasesIdee::identification,
+            \App\Enums\StatutIdee::R_VALIDATION_NOTE_AMELIORER => \App\Enums\PhasesIdee::identification,
+            \App\Enums\StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER => \App\Enums\PhasesIdee::identification,
+
             \App\Enums\StatutIdee::VALIDATION_PROFIL => \App\Enums\PhasesIdee::identification,
             \App\Enums\StatutIdee::VALIDATION_NOTE_AMELIORER => \App\Enums\PhasesIdee::identification,
-            \App\Enums\StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER => \App\Enums\PhasesIdee::identification,
             default => \App\Enums\PhasesIdee::identification,
         };
     }
@@ -1609,10 +1628,12 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             \App\Enums\StatutIdee::AMC => \App\Enums\SousPhaseIdee::analyse_idee,
             \App\Enums\StatutIdee::VALIDATION => \App\Enums\SousPhaseIdee::analyse_idee,
             \App\Enums\StatutIdee::NOTE_CONCEPTUEL => \App\Enums\SousPhaseIdee::etude_de_profil,
+            \App\Enums\StatutIdee::EVALUATION_NOTE => \App\Enums\SousPhaseIdee::etude_de_profil,
+            \App\Enums\StatutIdee::R_VALIDATION_NOTE_AMELIORER => \App\Enums\SousPhaseIdee::etude_de_profil,
             \App\Enums\StatutIdee::VALIDATION_PROFIL => \App\Enums\SousPhaseIdee::etude_de_profil,
             \App\Enums\StatutIdee::VALIDATION_NOTE_AMELIORER => \App\Enums\SousPhaseIdee::etude_de_profil,
             \App\Enums\StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER => \App\Enums\SousPhaseIdee::etude_de_profil,
-            default => \App\Enums\SousPhaseIdee::redaction,
+            default => \App\Enums\SousPhaseIdee::etude_de_profil,
         };
     }
 }

@@ -35,6 +35,7 @@ use App\Http\Controllers\OAuthController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NoteConceptuelleController;
 use App\Http\Controllers\TdrPrefaisabiliteController;
+use App\Http\Controllers\TdrFaisabiliteController;
 use App\Models\Village;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -153,6 +154,8 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::prefix('groupes-utilisateur/{groupe_utilisateur}')->group(function () {
             Route::post('/assign-roles', [GroupeUtilisateurController::class, 'assignRoles']);
             Route::delete('/detach-roles', [GroupeUtilisateurController::class, 'detachRoles']);
+            Route::post('/assign-permissions', [GroupeUtilisateurController::class, 'assignPermissions']);
+            Route::delete('/detach-permissions', [GroupeUtilisateurController::class, 'detachPermissions']);
             Route::post('/add-users', [GroupeUtilisateurController::class, 'addUsers']);
             Route::delete('/remove-users', [GroupeUtilisateurController::class, 'removeUsers']);
             Route::get('/roles', [GroupeUtilisateurController::class, 'getRoles']);
@@ -194,11 +197,26 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::post('{projetId}/valider-etude-profil', [NoteConceptuelleController::class, 'validerEtudeProfil']);
             // Route pour la validation à l'étape étude de profil
             Route::post('{projetId}/confirmer-resultats-evaluation-note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'confirmerResultat']);
-            
+
             // Routes pour les TDRs de préfaisabilité
             Route::post('{projetId}/soumettre-tdrs-prefaisabilite', [TdrPrefaisabiliteController::class, 'soumettreTdrs']);
-            Route::post('{projetId}/evaluer-tdrs-prefaisabilite', [TdrPrefaisabiliteController::class, 'evaluerTdrs']);
+            Route::post('{projetId}/apprecier-tdrs-prefaisabilite', [TdrPrefaisabiliteController::class, 'evaluerTdrs']);
+            Route::get('{projetId}/details-appreciation-tdrs-prefaisabilite', [TdrPrefaisabiliteController::class, 'getEvaluationTdr']);
+            Route::post('{projetId}/valider-tdrs-prefaisabilite', [TdrPrefaisabiliteController::class, 'validerTdrs']);
+            Route::get('{projetId}/details-validations-tdrs-prefaisabilite', [TdrPrefaisabiliteController::class, 'getDetailsValidation']);
             Route::post('{projetId}/soumettre-rapport-prefaisabilite', [TdrPrefaisabiliteController::class, 'soumettreRapportPrefaisabilite']);
+            Route::post('{projetId}/valider-etude-prefaisabilite', [TdrPrefaisabiliteController::class, 'validerEtudePrefaisabilite']);
+            Route::post('{projetId}/soumettre-rapport-evaluation-ex-ante', [TdrPrefaisabiliteController::class, 'soumettreRapportEvaluationExAnte']);
+            Route::post('{projetId}/valider-rapport-final', [TdrPrefaisabiliteController::class, 'validerRapportFinal']);
+
+            // Routes pour les TDRs de faisabilité
+            Route::post('{projetId}/soumettre-tdrs-faisabilite', [TdrFaisabiliteController::class, 'soumettreTdrs']);
+            Route::post('{projetId}/apprecier-tdrs-faisabilite', [TdrFaisabiliteController::class, 'evaluerTdrs']);
+            Route::get('{projetId}/details-appreciation-tdrs-faisabilite', [TdrFaisabiliteController::class, 'getEvaluationTdr']);
+            Route::post('{projetId}/valider-tdrs-faisabilite', [TdrFaisabiliteController::class, 'validerTdrs']);
+            Route::get('{projetId}/details-validations-tdrs-faisabilite', [TdrFaisabiliteController::class, 'getDetailsValidation']);
+            Route::post('{projetId}/soumettre-rapport-faisabilite', [TdrFaisabiliteController::class, 'soumettreRapportFaisabilite']);
+            Route::post('{projetId}/valider-etude-faisabilite', [TdrFaisabiliteController::class, 'validerEtudeFaisabilite']);
         });
 
         // Routes pour l'évaluation des notes conceptuelles
@@ -274,6 +292,12 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             // Public routes
             Route::get('', [DocumentController::class, 'canevasRedactionNoteConceptuelle']);
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasRedactionNoteConceptuelle']);
+        });
+
+        Route::prefix('canevas-appreciation-tdr')->group(function () {
+            // Public routes
+            Route::get('', [DocumentController::class, 'canevasAppreciationTdr']);
+            Route::post('', [DocumentController::class, 'createOrUpdateCanevasAppreciationTdr']);
         });
 
 
