@@ -49,6 +49,8 @@ class Champ extends Model
         'champ_standard'
     ];
 
+    protected $default=["startWithNewLine" => false];
+
     /**
      * The attributes that should be cast.
      *
