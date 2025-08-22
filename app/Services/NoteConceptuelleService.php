@@ -61,6 +61,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             // Extraire les données spécifiques au payload
             $champsData = $data['champs'] ?? [];
+            $documentsData = $data['documents'] ?? [];
             $estSoumise = $data['est_soumise'] ?? false;
             $projetId = $data['projetId'] ?? null;
 
@@ -121,6 +122,11 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             if ($canevasNoteConceptuelle) {
                 // Sauvegarder les champs dynamiques basés sur le canevas
                 $this->saveDynamicFieldsFromCanevas($noteConceptuelle, $champsData, $canevasNoteConceptuelle);
+            }
+
+            // Gérer les documents/fichiers
+            if (!empty($documentsData)) {
+                $this->handleDocuments($noteConceptuelle, $documentsData);
             }
 
             $noteConceptuelle->note_conceptuelle = $noteConceptuelle->champs->map(function ($champ) {
@@ -280,7 +286,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 throw new Exception("Le projet n'est pas a l'etape de validation");
             }
 
-            switch ($data["decision"]) {
+            switch ($data["decision"]) {/*
                 case 'a_maturite':
                     $projet->update([
                         'date_fin_etude' => now(),
@@ -289,7 +295,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::PRET),
                         'type_projet' => TypesProjet::simple
                     ]);
-                    break;
+                    break; */
                 case 'faire_etude_prefaisabilite':
                     $projet->update([
                         'statut' => StatutIdee::TDR_PREFAISABILITE,
@@ -1347,7 +1353,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         switch ($resultatGlobal) {
             case 'passe':
                 // La présélection a été un succès
-                return ['projet_a_maturite', 'faire_etude_prefaisabilite', 'sauvegarder'];
+                return [/* 'projet_a_maturite',  */'faire_etude_prefaisabilite', 'sauvegarder'];
 
             case 'retour':
             case 'non_accepte':
@@ -1356,7 +1362,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             default:
                 // Évaluation non définie - toutes les actions sont possibles
-                return ['projet_a_maturite', 'faire_etude_prefaisabilite', 'reviser_note_conceptuelle', 'abandonner_projet', 'sauvegarder'];
+                return [/* 'projet_a_maturite',  */'faire_etude_prefaisabilite', 'reviser_note_conceptuelle', 'abandonner_projet', 'sauvegarder'];
         }
     }
 
@@ -1365,7 +1371,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     private function traiterDecisionValidation($projet, string $decision, array $data): \App\Enums\StatutIdee
     {
-        switch ($decision) {
+        switch ($decision) {/*
             case 'projet_a_maturite':
                 $projet->update([
                     'statut' => StatutIdee::PRET,
@@ -1373,7 +1379,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::PRET),
                     'type_projet' => TypesProjet::simple
                 ]);
-                return StatutIdee::PRET;
+                return StatutIdee::PRET; */
 
             case 'faire_etude_prefaisabilite':
                 $projet->update([
@@ -1416,7 +1422,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     {
         try {
             $typeNotification = match($decision) {
-                'projet_a_maturite' => 'projet_pret',
+                //'projet_a_maturite' => 'projet_pret',
                 'faire_etude_prefaisabilite' => 'etude_prefaisabilite_requise',
                 'reviser_note_conceptuelle' => 'revision_note_requise',
                 'abandonner_projet' => 'projet_abandonne',
@@ -1439,7 +1445,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     private function getMessageSuccesValidation(string $decision): string
     {
         return match($decision) {
-            'projet_a_maturite' => 'Projet validé comme prêt pour la suite.',
+            //'projet_a_maturite' => 'Projet validé comme prêt pour la suite.',
             'faire_etude_prefaisabilite' => 'Projet orienté vers une étude de pré-faisabilité.',
             'reviser_note_conceptuelle' => 'Projet renvoyé pour révision de la note conceptuelle.',
             'abandonner_projet' => 'Projet abandonné.',
@@ -1453,12 +1459,12 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     private function getActionsEffectuees(string $decision): array
     {
-        return match($decision) {
+        return match($decision) {/*
             'projet_a_maturite' => [
                 'statut_change' => 'Statut changé vers "Prêt"',
                 'type_projet' => 'Type défini comme "Simple"',
                 'notification' => 'Notification envoyée'
-            ],
+            ], */
             'faire_etude_prefaisabilite' => [
                 'statut_change' => 'Statut changé vers "TDR Pré-faisabilité"',
                 'type_projet' => 'Type défini comme "Complexe1"',
@@ -1634,6 +1640,117 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             \App\Enums\StatutIdee::VALIDATION_NOTE_AMELIORER => \App\Enums\SousPhaseIdee::etude_de_profil,
             \App\Enums\StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER => \App\Enums\SousPhaseIdee::etude_de_profil,
             default => \App\Enums\SousPhaseIdee::etude_de_profil,
+        };
+    }
+
+    /**
+     * Gérer les documents/fichiers associés à la note conceptuelle
+     */
+    private function handleDocuments(NoteConceptuelle $noteConceptuelle, array $documentsData): void
+    {
+        foreach ($documentsData as $category => $files) {
+            if (is_array($files)) {
+                // Pour les documents multiples (ex: autres)
+                foreach ($files as $file) {
+                    if ($file) {
+                        $this->storeDocument($noteConceptuelle, $file, $category);
+                    }
+                }
+            } else {
+                // Pour un seul document
+                if ($files) {
+                    $this->storeDocument($noteConceptuelle, $files, $category);
+                }
+            }
+        }
+    }
+
+    /**
+     * Stocker un document/fichier
+     */
+    private function storeDocument(NoteConceptuelle $noteConceptuelle, $file, string $category): void
+    {
+        // Générer un nom unique pour le fichier
+        $originalName = $file->getClientOriginalName();
+        $extension = $file->getClientOriginalExtension();
+        $storageName = $this->generateStorageName($category, $noteConceptuelle->id, $extension);
+
+        // Stocker le fichier
+        $storedPath = $file->storeAs('notes_conceptuelles/' . $noteConceptuelle->id, $storageName, 'public');
+
+        // Déterminer la description selon la catégorie
+        $description = $this->getDescriptionByCategory($category);
+
+        // Créer l'entrée dans la table fichiers
+        $noteConceptuelle->fichiers()->create([
+            'nom_original' => $originalName,
+            'nom_stockage' => $storageName,
+            'chemin' => $storedPath,
+            'extension' => $extension,
+            'mime_type' => $file->getMimeType(),
+            'taille' => $file->getSize(),
+            'hash_md5' => md5_file($file->getRealPath()),
+            'description' => $description,
+            'commentaire' => null,
+            'metadata' => [
+                'type_document' => 'note-conceptuelle-' . str_replace('_', '-', $category),
+                'note_conceptuelle_id' => $noteConceptuelle->id,
+                'projet_id' => $noteConceptuelle->projetId,
+                'categorie_originale' => $category,
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now()
+            ],
+            'fichier_attachable_id' => $noteConceptuelle->id,
+            'fichier_attachable_type' => NoteConceptuelle::class,
+            'categorie' => $category,
+            'ordre' => $this->getOrderByCategory($category),
+            'uploaded_by' => auth()->id(),
+            'is_public' => false,
+            'is_active' => true
+        ]);
+    }
+
+    /**
+     * Générer un nom de stockage selon la catégorie
+     */
+    private function generateStorageName(string $category, int $noteConceptuelleId, string $extension): string
+    {
+        $prefix = match($category) {
+            'analyse_pre_risque_facteurs_reussite' => 'analyse_pre_risque',
+            'etude_pre_faisabilite' => 'etude_pre_faisabilite',
+            'note_conceptuelle' => 'note_conceptuelle',
+            'autres' => 'autres_documents',
+            default => $category
+        };
+
+        return $prefix . '_' . $noteConceptuelleId . '_' . time() . '.' . $extension;
+    }
+
+    /**
+     * Obtenir la description selon la catégorie de document
+     */
+    private function getDescriptionByCategory(string $category): string
+    {
+        return match($category) {
+            'analyse_pre_risque_facteurs_reussite' => 'Analyse pré-risque et facteurs de réussite',
+            'etude_pre_faisabilite' => 'Étude de pré-faisabilité',
+            'note_conceptuelle' => 'Note conceptuelle',
+            'autres' => 'Autres documents',
+            default => ucfirst(str_replace('_', ' ', $category))
+        };
+    }
+
+    /**
+     * Obtenir l'ordre d'affichage selon la catégorie
+     */
+    private function getOrderByCategory(string $category): int
+    {
+        return match($category) {
+            'note_conceptuelle' => 1,
+            'analyse_pre_risque_facteurs_reussite' => 2,
+            'etude_pre_faisabilite' => 3,
+            'autres' => 4,
+            default => 99
         };
     }
 }

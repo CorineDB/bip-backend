@@ -13,5 +13,28 @@ class NoteConceptuelleRepository extends BaseRepository implements NoteConceptue
         parent::__construct($model);
     }
 
-    // Add custom methods here
+    /**
+     * Trouver une note conceptuelle avec ses fichiers
+     */
+    public function findWithFiles(int|string $id): ?NoteConceptuelle
+    {
+        return $this->model->with(['fichiers.uploadedBy'])->find($id);
+    }
+
+    /**
+     * Override findById pour inclure les fichiers par défaut
+     */
+    public function findById(
+        $modelId,
+        array $attribut = ['*'],
+        array $relations = [],
+        array $appends = []
+    ): ?NoteConceptuelle {
+        // Ajouter la relation fichiers par défaut si pas déjà présente
+        if (!in_array('fichiers', $relations) && !in_array('fichiers.uploadedBy', $relations)) {
+            $relations[] = 'fichiers.uploadedBy';
+        }
+
+        return parent::findById($modelId, $attribut, $relations, $appends);
+    }
 }

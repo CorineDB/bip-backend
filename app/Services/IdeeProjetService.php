@@ -116,8 +116,6 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             // Créer ou récupérer l'idée de projet
             $idee = $this->getOrCreateIdeeProjet($data);
 
-            $idee->ficheIdee = new DocumentResource($this->documentRepository->getFicheIdee());
-
             if (isset($data['est_soumise'])) {
                 $idee->est_soumise = $data["est_soumise"];
             }
@@ -125,10 +123,12 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             // Remplir les attributs de base
             $this->fillIdeeFromChamps($idee, $champsData);
 
-            //dd(auth()->user()->ministere->id);
-
             $idee->responsableId = auth()->id();
             $idee->ministereId = auth()->user()->profilable?->ministere?->id;
+
+            if ($idee->est_soumise != true) {
+                $idee->date_debut_etude = now();
+            }
 
             $idee->save();
 
@@ -137,6 +137,22 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             // Sauvegarder les champs dynamiques
             $this->saveDynamicFields($idee, $champsData);
+
+            $idee->refresh();
+
+            $ficheIdee["form"] = new DocumentResource($this->documentRepository->getFicheIdee());
+
+            $ficheIdee["formData"] = $idee->champs->map(function ($champ) {
+                return [
+                    'id' => $champ->id,
+                    'attribut' => $champ->attribut,
+                    'value' => $champ->pivot->valeur
+                ];
+            });
+
+            $idee->ficheIdee = $ficheIdee;
+
+            $idee->save();
 
             $idee->refresh();
 
@@ -366,15 +382,6 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
         if (count($array) === 1) {
             return reset($array);
         }
-
-        // Si c'est un array avec des clés spécifiques (comme duree.duree), prendre la première valeur significative
-        /*if (isset($array['duree'])) {
-            return $array['duree'];
-        }*/
-
-        /*if (isset($array['montant'])) {
-            return $array['montant'];
-        }*/
 
         // Sinon, joindre avec une virgule
         return implode(', ', array_filter($array));
@@ -920,9 +927,16 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             // Sauvegarder l'état précédent de est_soumise
             $ancienEtatSoumise = $idee->est_soumise;
 
-            if (isset($data['est_soumise'])) {
-                $idee->est_soumise = $data["est_soumise"];
+            if ($idee->est_soumise != true) {
+                if (isset($data['est_soumise'])) {
+                    $idee->est_soumise = $data["est_soumise"];
+                }
+
+                if ($idee->date_debut_etude == null) {
+                    $idee->date_debut_etude = now();
+                }
             }
+
             $champsData = $data['champs'] ?? [];
             $relations = $this->extractRelationsFromChamps($champsData);
 
@@ -939,13 +953,29 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             $idee->refresh();
 
+            $ficheIdee["form"] = new DocumentResource($this->documentRepository->getFicheIdee());
+
+            $ficheIdee["formData"] = $idee->champs->map(function ($champ) {
+                return [
+                    'id' => $champ->id,
+                    'attribut' => $champ->attribut,
+                    'value' => $champ->pivot->valeur
+                ];
+            });
+
+            $idee->ficheIdee = $ficheIdee;
+
+            $idee->save();
+
+            $idee->refresh();
+
             DB::commit();
 
             // Déclencher l'event seulement si l'idée passe de non-soumise à soumise
             if (
                 isset($data['est_soumise']) &&
-                $data['est_soumise'] === true /* &&
-                $ancienEtatSoumise !== true */
+                $data['est_soumise'] === true &&
+                $ancienEtatSoumise !== true
             ) {
                 event(new IdeeProjetCree($idee));
             }

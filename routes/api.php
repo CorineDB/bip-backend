@@ -393,6 +393,10 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
                 ->name('grille-analyse-multi-critere.update');
         });
 
+        // Checklist des mesures d'adaptation pour projets à haut risque
+        Route::get('checklist-mesures-adaptation', [\App\Http\Controllers\CategorieCritereController::class, 'getChecklistMesuresAdaptation'])
+            ->name('checklist-mesures-adaptation.get');
+
         // SDG Integration
         Route::apiResource('odds', OddController::class);
     });

@@ -101,10 +101,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'statut' => 1
             ]);
 
-            if(isset($attributs['document']) && count($attributs['document'])){
-                //$evaluation->documents()->attac
-            }
-
             // Vérifier que l'évaluation climatique existe
             $evaluationClimatique = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
@@ -139,6 +135,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             } else {
 
                 $ideeProjet->update([
+                    'est_soumise' => false,
                     'score_climatique' => 0,
                     'statut' => StatutIdee::BROUILLON,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::BROUILLON),
@@ -315,10 +312,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'id_evaluation' => $evaluationPrecedente ? $evaluationPrecedente->id : null
             ]);
 
-            if(isset($attributs['document']) && count($attributs['document'])){
-                //$evaluation->documents()->attac
-            }
-
             if ($attributs["decision"] == "valider") {
                 $ideeProjet->update([
                     'statut' => StatutIdee::NOTE_CONCEPTUEL,
@@ -329,8 +322,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 // Enregistrer le workflow et la décision
                 $this->enregistrerWorkflow($ideeProjet, StatutIdee::NOTE_CONCEPTUEL);
                 $this->enregistrerDecision($ideeProjet, 'Validation finale par analyste DGPD', $attributs["commentaire"] ?? 'Idée transformée en projet');
-
-                //dd($ideeProjet->decisions);
 
                 // Déclencher l'event pour dupliquer vers un projet seulement si validé
                 event(new IdeeProjetTransformee($ideeProjet));
@@ -661,8 +652,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             }
 
             $ideeProjet->update([
+                'est_soumise' => false,
                 'score_climatique' => 0,
-                'identifiant_bip' => null,
+                'identifiant_bip' => null, //$this->generateIdentifiantBip(),
                 'statut' => StatutIdee::BROUILLON,  // Marquer comme terminée
                 'phase' => $this->getPhaseFromStatut(StatutIdee::BROUILLON),
                 'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::BROUILLON),
@@ -688,7 +680,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             Notification::send($evaluateurs, new DecisionFaibleScoreClimatiqueNotification($ideeProjet, $scoreClimatique, 'reevaluer', 'Score climatique insatisfaisant - Réévaluation demandée'));
 
             // Notifier les évaluateurs assignés pour la nouvelle évaluation
-            Notification::send($evaluateurs, new EvaluationClimatiqueAssigneeNotification($ideeProjet, $evaluation));
+            //Notification::send($evaluateurs, new EvaluationClimatiqueAssigneeNotification($ideeProjet, $evaluation));
 
             return response()->json([
                 'success' => true,

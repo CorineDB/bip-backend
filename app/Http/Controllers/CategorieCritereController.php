@@ -341,4 +341,20 @@ class CategorieCritereController extends Controller
     {
         return $this->service->updateGrilleAnalyseMultiCriteres($request->all());
     }
+
+    /**
+     * Récupérer la checklist des mesures d'adaptation pour projets à haut risque
+     */
+    public function getChecklistMesuresAdaptation(): JsonResponse
+    {
+        return $this->service->getChecklistMesuresAdaptation();
+    }
+
+    /**
+     * Soumettre la checklist des mesures d'adaptation pour un projet
+     */
+    public function soumettreChecklistMesuresAdaptation(\Illuminate\Http\Request $request, int $projetId): JsonResponse
+    {
+        return $this->service->soumettreChecklistMesuresAdaptation($projetId, $request->all());
+    }
 }

@@ -23,11 +23,11 @@ class StoreNoteConceptuelleRequest extends FormRequest
             return [
                 'est_soumise' => 'required|boolean',
                 'champs' => 'required|array',
-                'documents' => 'nullable|array',
+                'documents' => 'required|array',
                 'documents.autres.*' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
                 'documents.analyse_pre_risque_facteurs_reussite' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
                 'documents.etude_pre_faisabilite' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
-                'documents.note_conceptuell' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx'
+                'documents.note_conceptuelle' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx'
             ];
         }
 

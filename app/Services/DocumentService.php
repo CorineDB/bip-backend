@@ -81,20 +81,28 @@ class DocumentService extends BaseService implements DocumentServiceInterface
     /**
      * Créer les sections avec leurs champs associés
      */
-    private function createSectionsWithChamps($document, array $sectionsData): void
+    private function createSectionsWithChamps($document, array $sectionsData, $sectionParent = null): void
     {
         foreach ($sectionsData as $sectionData) {
             $section = $document->sections()->create([
                 'intitule' => $sectionData['intitule'],
                 'description' => $sectionData['description'],
                 'ordre_affichage' => $sectionData['ordre_affichage'],
-                'type' => $sectionData['type'] ?? null
+                'type' => $sectionData['type'] ?? null,
+                'parentSectionId' =>  $sectionParent ? $sectionParent->id : null
             ]);
 
             // Créer les champs de cette section si fournis
             if (isset($sectionData['champs']) && is_array($sectionData['champs'])) {
                 foreach ($sectionData['champs'] as $champData) {
                     $this->createChamp($champData, $document, $section);
+                }
+            }
+
+            // Créer les sous-sections si elles existent
+            if (isset($sectionData['sous_sections']) && is_array($sectionData['sous_sections'])) {
+                foreach ($sectionData['sous_sections'] as $sousSectionData) {
+                    $this->createSectionsWithChamps($sousSectionData, $document, $section);
                 }
             }
         }

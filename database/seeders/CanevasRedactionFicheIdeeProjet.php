@@ -1240,7 +1240,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                         "startWithNewLine" => null
                     ],
                     [
-                        "label" => "Échéancier du projet",
+                        "label" => "Echéancier des principaux extrants",
                         "info" => "",
                         "key" => "echeancier",
                         "attribut" => "echeancier",

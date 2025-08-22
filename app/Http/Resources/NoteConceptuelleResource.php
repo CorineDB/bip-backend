@@ -43,6 +43,28 @@ class NoteConceptuelleResource extends BaseApiResource
                     ];
                 });
             }),
+            'fichiers' => $this->whenLoaded('fichiers', function() {
+                return $this->fichiers->sortBy('ordre')->map(function ($fichier) {
+                    return [
+                        'id' => $fichier->id,
+                        'nom_original' => $fichier->nom_original,
+                        'categorie' => $fichier->categorie,
+                        'description' => $fichier->description,
+                        'extension' => $fichier->extension,
+                        'mime_type' => $fichier->mime_type,
+                        'taille' => $fichier->taille,
+                        'taille_formatee' => $fichier->taille_formatee,
+                        'url' => $fichier->url,
+                        'is_image' => $fichier->is_image,
+                        'is_document' => $fichier->is_document,
+                        'ordre' => $fichier->ordre,
+                        'metadata' => $fichier->metadata,
+                        'type_document' => $fichier->metadata['type_document'] ?? null,
+                        'uploaded_by' => $fichier->uploadedBy ? new UserResource($fichier->uploadedBy) : null,
+                        'created_at' => $fichier->created_at?->toISOString(),
+                    ];
+                })->values();
+            }),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
