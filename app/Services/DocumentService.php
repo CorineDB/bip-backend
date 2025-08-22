@@ -261,7 +261,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     $champ->update($champAttributes);
                 } else {
                     // Cas 2: Le champ est dans une autre section, il faut le déplacer
-                    
+
                     // Vérifier s'il y a déjà un autre champ avec le même attribut dans la section cible
                     $existingChampInSection = $section->champs()
                         ->where('attribut', $champAttribut)

@@ -19,6 +19,4 @@ interface DocumentServiceInterface extends AbstractServiceInterface
 
     public function createOrUpdateCanevasAppreciationTdr(array $data): JsonResponse;
 
-
-
 }

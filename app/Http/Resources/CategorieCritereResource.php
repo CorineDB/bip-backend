@@ -28,6 +28,24 @@ class CategorieCritereResource extends BaseApiResource
             'total_ponderation' => $this->whenLoaded('criteres', function () {
                 return $this->criteres->sum('ponderation');
             }),
+            'fichiers' => $this->when($this->relationLoaded('fichiers') && $this->fichiers->count(), function() {
+                return $this->fichiers->map(function ($fichier) {
+                    return [
+                        'id' => $fichier->id,
+                        'nom_original' => $fichier->nom_original,
+                        'extension' => $fichier->extension,
+                        'mime_type' => $fichier->mime_type,
+                        'taille_formatee' => $fichier->taille_formatee,
+                        'url' => $fichier->url,
+                        'categorie' => $fichier->categorie,
+                        'description' => $fichier->description,
+                        'commentaire' => $fichier->commentaire,
+                        'is_public' => $fichier->is_public,
+                        'is_active' => $fichier->is_active,
+                        'created_at' => $fichier->created_at->format('Y-m-d H:i:s')
+                    ];
+                });
+            }),
             'updated_at' => Carbon::parse($this->updated_at)->format("d/m/y H:i:s")
         ];
     }

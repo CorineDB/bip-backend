@@ -300,7 +300,6 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasAppreciationTdr']);
         });
 
-
         Route::apiResource('categories-document', CategorieDocumentController::class);
 
         // Workflow & Process Management
@@ -381,7 +380,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::prefix('grille-evaluation-preliminaire')->group(function () {
             Route::get('/', [\App\Http\Controllers\CategorieCritereController::class, 'getGrilleEvaluationPreliminaire'])
                 ->name('grille-evaluation-preliminaire.get');
-            Route::put('/', [\App\Http\Controllers\CategorieCritereController::class, 'updateGrilleEvaluationPreliminaire'])
+            Route::post('/', [\App\Http\Controllers\CategorieCritereController::class, 'updateGrilleEvaluationPreliminaire'])
                 ->name('grille-evaluation-preliminaire.update');
         });
 

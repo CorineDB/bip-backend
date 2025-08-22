@@ -357,4 +357,5 @@ class CategorieCritereController extends Controller
     {
         return $this->service->soumettreChecklistMesuresAdaptation($projetId, $request->all());
     }
+
 }

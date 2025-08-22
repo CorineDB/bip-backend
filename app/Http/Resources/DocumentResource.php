@@ -37,7 +37,27 @@ class DocumentResource extends BaseApiResource
                         ->sortBy('ordre_affichage')
                 );
             }),
-            'forms'       => $this->buildOrderedElementsResource()
+            'forms'       => $this->buildOrderedElementsResource(),
+            // Fichiers attachés au document
+            'fichiers'    => $this->when($this->relationLoaded('fichiers') && $this->fichiers->count(), function() {
+                return $this->fichiers->map(function ($fichier) {
+                    return [
+                        'id' => $fichier->id,
+                        'nom_original' => $fichier->nom_original,
+                        'extension' => $fichier->extension,
+                        'mime_type' => $fichier->mime_type,
+                        'taille_formatee' => $fichier->taille_formatee,
+                        'url' => $fichier->url,
+                        'categorie' => $fichier->categorie,
+                        'description' => $fichier->description,
+                        'commentaire' => $fichier->commentaire,
+                        'is_public' => $fichier->is_public,
+                        'is_active' => $fichier->is_active,
+                        'created_at' => $fichier->created_at->format('Y-m-d H:i:s')
+                    ];
+                });
+            }),
+            'evaluation_configs' => $this->evaluation_configs
         ];
     }
 

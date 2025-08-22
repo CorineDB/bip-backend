@@ -171,6 +171,31 @@ class Document extends Model
     }
 
     /**
+     * Get all fichiers attached to this document.
+     */
+    public function fichiers()
+    {
+        return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id')
+                    ->ordered();
+    }
+
+    /**
+     * Get fichiers by category.
+     */
+    public function fichiersByCategorie($categorie)
+    {
+        return $this->fichiers()->byCategorie($categorie);
+    }
+
+    /**
+     * Get active fichiers only.
+     */
+    public function fichiersActifs()
+    {
+        return $this->fichiers()->active();
+    }
+
+    /**
      * Construire la liste ordonnée des éléments (champs et sections mélangés)
      */
     public function getOrderedElements()

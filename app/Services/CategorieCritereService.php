@@ -71,7 +71,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
             DB::commit();
 
-            return (new $this->resourceClass($categorieCritere->load(['criteres.notations', 'notations'])))
+            return (new $this->resourceClass($categorieCritere->load(['criteres.notations', 'notations', 'fichiers'])))
                 ->additional(['message' => 'Catégorie critère créée avec succès.'])
                 ->response()
                 ->setStatusCode(201);
@@ -172,7 +172,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
             DB::commit();
 
-            return (new $this->resourceClass($categorieCritere->load(['criteres.notations', 'notations'])))
+            return (new $this->resourceClass($categorieCritere->load(['criteres.notations', 'notations', 'fichiers'])))
                 ->additional(['message' => 'Catégorie critère mise à jour avec succès.'])
                 ->response();
         } catch (Exception $e) {
@@ -196,7 +196,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 ], 404);
             }
 
-            return (new $this->resourceClass($grille->load(['criteres.notations', 'notations'])))
+            return (new $this->resourceClass($grille->load(['criteres.notations', 'notations', 'fichiers'])))
                 ->response();
         } catch (Exception $e) {
             return $this->errorResponse($e);
@@ -209,6 +209,8 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
     public function updateGrilleEvaluationPreliminaire(array $data): JsonResponse
     {
         try {
+            DB::beginTransaction();
+
             $grille = $this->repository->findByAttribute('slug', 'evaluation-preliminaire-multi-projet-impact-climatique');
 
             $data["slug"] = 'evaluation-preliminaire-multi-projet-impact-climatique';
@@ -219,8 +221,39 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 ], 404);
             }
 
-            return $this->update($grille->id, $data);
+            // Traiter les documents référentiels s'il y en a
+            if (isset($data['documents_referentiel']) && !empty($data['documents_referentiel'])) {
+                foreach ($data['documents_referentiel'] as $file) {
+                    // Stocker le fichier
+                    $path = $file->store('documents/referentiel', 'public');
+
+                    // Créer l'enregistrement dans la table fichiers
+                    $grille->fichiers()->create([
+                        'nom_original' => $file->getClientOriginalName(),
+                        'nom_stockage' => $file->hashName(),
+                        'chemin' => $path,
+                        'extension' => $file->getClientOriginalExtension(),
+                        'mime_type' => $file->getMimeType(),
+                        'taille' => $file->getSize(),
+                        'hash_md5' => md5_file($file->getRealPath()),
+                        'categorie' => 'guide-referentiel-appreciation',
+                        'uploaded_by' => auth()->id(),
+                        'is_public' => false,
+                        'is_active' => true
+                    ]);
+                }
+            }
+
+            // Enlever les fichiers des données avant mise à jour
+            unset($data['documents_referentiel']);
+
+            // Mettre à jour la grille
+            $result = $this->update($grille->id, $data);
+
+            DB::commit();
+            return $result;
         } catch (Exception $e) {
+            DB::rollBack();
             return $this->errorResponse($e);
         }
     }
@@ -286,6 +319,8 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
     public function updateGrilleAnalyseMultiCriteres(array $data): JsonResponse
     {
         try {
+            DB::beginTransaction();
+
             $grille = $this->repository->findByAttribute('slug', 'grille-analyse-multi-critere');
 
             $data["slug"] = 'grille-analyse-multi-critere';
@@ -296,8 +331,39 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 ], 404);
             }
 
-            return $this->update($grille->id, $data);
+            // Traiter les documents référentiels s'il y en a
+            if (isset($data['documents_referentiel']) && !empty($data['documents_referentiel'])) {
+                foreach ($data['documents_referentiel'] as $file) {
+                    // Stocker le fichier
+                    $path = $file->store('documents/referentiel', 'public');
+
+                    // Créer l'enregistrement dans la table fichiers
+                    $grille->fichiers()->create([
+                        'nom_original' => $file->getClientOriginalName(),
+                        'nom_stockage' => $file->hashName(),
+                        'chemin' => $path,
+                        'extension' => $file->getClientOriginalExtension(),
+                        'mime_type' => $file->getMimeType(),
+                        'taille' => $file->getSize(),
+                        'hash_md5' => md5_file($file->getRealPath()),
+                        'categorie' => 'referentiel',
+                        'uploaded_by' => auth()->id(),
+                        'is_public' => false,
+                        'is_active' => true
+                    ]);
+                }
+            }
+
+            // Enlever les fichiers des données avant mise à jour
+            unset($data['documents_referentiel']);
+
+            // Mettre à jour la grille
+            $result = $this->update($grille->id, $data);
+
+            DB::commit();
+            return $result;
         } catch (Exception $e) {
+            DB::rollBack();
             return $this->errorResponse($e);
         }
     }
@@ -309,7 +375,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
     {
         try {
             $checklistCategorie = $this->repository->findByAttribute('slug', 'checklist-mesures-adaptation-haut-risque');
-            
+
             if (!$checklistCategorie) {
                 return response()->json([
                     'success' => false,
@@ -435,7 +501,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
             // Calculer le score final et déterminer le statut
             $scorePourcentage = $scoreMaximal > 0 ? ($scoreTotal / $scoreMaximal) * 100 : 0;
-            
+
             $statutFinal = 'non_conforme';
             if ($scorePourcentage >= 80) {
                 $statutFinal = 'conforme';
@@ -489,4 +555,5 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             return $this->errorResponse($e);
         }
     }
+
 }

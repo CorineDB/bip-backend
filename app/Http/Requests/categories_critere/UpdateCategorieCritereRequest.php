@@ -50,8 +50,12 @@ class UpdateCategorieCritereRequest extends FormRequest
             ],
 
             'criteres.*.notations.*.libelle' => 'required_with:criteres.*.notations|string|max:255',
-            'criteres.*.notations.*.valeur' => 'required_with:criteres.*.notations|numeric|max:255|distinct',
-            'criteres.*.notations.*.commentaire' => 'nullable|string'
+            'criteres.*.notations.*.valeur' => 'required_with:criteres.*.notations|numeric|max:255',
+            'criteres.*.notations.*.commentaire' => 'nullable|string',
+
+            // Documents référentiels
+            'documents_referentiel' => 'required|array',
+            'documents_referentiel.*' => 'distinct|file|mimes:pdf,doc,docx,xls,xlsx,png,jpg,txt|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,image/png,image/jpeg,text/plain|max:10240'
         ];
     }
 

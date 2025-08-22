@@ -125,4 +125,37 @@ class CategorieCritere extends Model
     {
         return $this->hasMany(Notation::class, 'categorie_critere_id')->whereNull("critere_id");
     }
+
+    /**
+     * Get all fichiers attached to this categorie critere.
+     */
+    public function fichiers()
+    {
+        return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id')
+                    ->ordered();
+    }
+
+    /**
+     * Get fichiers by category.
+     */
+    public function fichiersByCategorie($categorie)
+    {
+        return $this->fichiers()->byCategorie($categorie);
+    }
+
+    /**
+     * Get active fichiers only.
+     */
+    public function fichiersActifs()
+    {
+        return $this->fichiers()->active();
+    }
+
+    /**
+     * Get documents referentiel (fichiers de catégorie 'referentiel')
+     */
+    public function documentsReferentiel()
+    {
+        return $this->fichiers()->byCategorie('referentiel');
+    }
 }
