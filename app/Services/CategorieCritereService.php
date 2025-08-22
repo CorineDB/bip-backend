@@ -224,23 +224,45 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             // Traiter les documents référentiels s'il y en a
             if (isset($data['documents_referentiel']) && !empty($data['documents_referentiel'])) {
                 foreach ($data['documents_referentiel'] as $file) {
-                    // Stocker le fichier
+                    $nomOriginal = $file->getClientOriginalName();
+                    
+                    // Vérifier si un fichier avec ce nom existe déjà
+                    $fichierExistant = $grille->fichiers()
+                        ->where('nom_original', $nomOriginal)
+                        ->where('categorie', 'guide-referentiel-appreciation')
+                        ->first();
+
+                    // Stocker le nouveau fichier
                     $path = $file->store('documents/referentiel', 'public');
 
-                    // Créer l'enregistrement dans la table fichiers
-                    $grille->fichiers()->create([
-                        'nom_original' => $file->getClientOriginalName(),
-                        'nom_stockage' => $file->hashName(),
-                        'chemin' => $path,
-                        'extension' => $file->getClientOriginalExtension(),
-                        'mime_type' => $file->getMimeType(),
-                        'taille' => $file->getSize(),
-                        'hash_md5' => md5_file($file->getRealPath()),
-                        'categorie' => 'guide-referentiel-appreciation',
-                        'uploaded_by' => auth()->id(),
-                        'is_public' => false,
-                        'is_active' => true
-                    ]);
+                    if ($fichierExistant) {
+                        // Mettre à jour le fichier existant
+                        $fichierExistant->update([
+                            'nom_stockage' => $file->hashName(),
+                            'chemin' => $path,
+                            'extension' => $file->getClientOriginalExtension(),
+                            'mime_type' => $file->getMimeType(),
+                            'taille' => $file->getSize(),
+                            'hash_md5' => md5_file($file->getRealPath()),
+                            'uploaded_by' => auth()->id(),
+                            'is_active' => true
+                        ]);
+                    } else {
+                        // Créer un nouveau fichier
+                        $grille->fichiers()->create([
+                            'nom_original' => $nomOriginal,
+                            'nom_stockage' => $file->hashName(),
+                            'chemin' => $path,
+                            'extension' => $file->getClientOriginalExtension(),
+                            'mime_type' => $file->getMimeType(),
+                            'taille' => $file->getSize(),
+                            'hash_md5' => md5_file($file->getRealPath()),
+                            'categorie' => 'guide-referentiel-appreciation',
+                            'uploaded_by' => auth()->id(),
+                            'is_public' => false,
+                            'is_active' => true
+                        ]);
+                    }
                 }
             }
 
@@ -334,23 +356,45 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             // Traiter les documents référentiels s'il y en a
             if (isset($data['documents_referentiel']) && !empty($data['documents_referentiel'])) {
                 foreach ($data['documents_referentiel'] as $file) {
-                    // Stocker le fichier
+                    $nomOriginal = $file->getClientOriginalName();
+                    
+                    // Vérifier si un fichier avec ce nom existe déjà
+                    $fichierExistant = $grille->fichiers()
+                        ->where('nom_original', $nomOriginal)
+                        ->where('categorie', 'guide-referentiel-amc')
+                        ->first();
+
+                    // Stocker le nouveau fichier
                     $path = $file->store('documents/referentiel', 'public');
 
-                    // Créer l'enregistrement dans la table fichiers
-                    $grille->fichiers()->create([
-                        'nom_original' => $file->getClientOriginalName(),
-                        'nom_stockage' => $file->hashName(),
-                        'chemin' => $path,
-                        'extension' => $file->getClientOriginalExtension(),
-                        'mime_type' => $file->getMimeType(),
-                        'taille' => $file->getSize(),
-                        'hash_md5' => md5_file($file->getRealPath()),
-                        'categorie' => 'referentiel',
-                        'uploaded_by' => auth()->id(),
-                        'is_public' => false,
-                        'is_active' => true
-                    ]);
+                    if ($fichierExistant) {
+                        // Mettre à jour le fichier existant
+                        $fichierExistant->update([
+                            'nom_stockage' => $file->hashName(),
+                            'chemin' => $path,
+                            'extension' => $file->getClientOriginalExtension(),
+                            'mime_type' => $file->getMimeType(),
+                            'taille' => $file->getSize(),
+                            'hash_md5' => md5_file($file->getRealPath()),
+                            'uploaded_by' => auth()->id(),
+                            'is_active' => true
+                        ]);
+                    } else {
+                        // Créer un nouveau fichier
+                        $grille->fichiers()->create([
+                            'nom_original' => $nomOriginal,
+                            'nom_stockage' => $file->hashName(),
+                            'chemin' => $path,
+                            'extension' => $file->getClientOriginalExtension(),
+                            'mime_type' => $file->getMimeType(),
+                            'taille' => $file->getSize(),
+                            'hash_md5' => md5_file($file->getRealPath()),
+                            'categorie' => 'guide-referentiel-amc',
+                            'uploaded_by' => auth()->id(),
+                            'is_public' => false,
+                            'is_active' => true
+                        ]);
+                    }
                 }
             }
 

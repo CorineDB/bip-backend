@@ -924,6 +924,14 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             $idee = $this->repository->findOrFail($id);
 
+            // Vérifier si l'idée de projet est soumise - si oui, refuser la modification
+            if ($idee->est_soumise === true) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Les idées de projet soumises ne peuvent plus être modifiées pendant l\'évaluation climatique.',
+                ], 403);
+            }
+
             // Sauvegarder l'état précédent de est_soumise
             $ancienEtatSoumise = $idee->est_soumise;
 

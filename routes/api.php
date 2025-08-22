@@ -186,6 +186,12 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         Route::apiResource('projets', ProjetController::class)->only(['index', 'show']);
 
+        // Routes pour filtrer les projets par maturité
+        Route::get('/projets-selectionnable', [ProjetController::class, 'projetsEnCoursMaturation'])
+            ->name('projets.selectionnable');
+        Route::get('/projets-mature', [ProjetController::class, 'projetsArrivesAMaturite'])
+            ->name('projets.mature');
+
         // Routes pour les notes conceptuelles des projets
         Route::prefix('projets')->group(function () {
             Route::post('{projetId}/note-conceptuelle', [NoteConceptuelleController::class, 'createForProject']);
@@ -388,7 +394,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::prefix('grille-analyse-multi-critere')->group(function () {
             Route::get('/', [\App\Http\Controllers\CategorieCritereController::class, 'getGrilleAnalyseMultiCriteres'])
                 ->name('grille-analyse-multi-critere.get');
-            Route::put('/', [\App\Http\Controllers\CategorieCritereController::class, 'updateGrilleAnalyseMultiCriteres'])
+            Route::post('/', [\App\Http\Controllers\CategorieCritereController::class, 'updateGrilleAnalyseMultiCriteres'])
                 ->name('grille-analyse-multi-critere.update');
         });
 

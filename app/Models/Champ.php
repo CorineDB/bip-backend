@@ -44,7 +44,9 @@ class Champ extends Model
         'type_champ',
         'sectionId',
         'documentId',
-        'meta_options'
+        'meta_options',
+        'startWithNewLine',
+        'champ_standard'
     ];
 
     /**
@@ -53,14 +55,16 @@ class Champ extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'is_required' => 'boolean',
-        'isEvaluated' => 'boolean',
-        'type_champ' => EnumTypeChamp::class,
-        'meta_options' => 'array',
-        //'default_value' => 'array',
-        'created_at' => 'datetime:Y-m-d',
-        'updated_at' => 'datetime:Y-m-d H:i:s',
-        'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'startWithNewLine'  => 'boolean',
+        'champ_standard'    => 'boolean',
+        'is_required'       => 'boolean',
+        'isEvaluated'       => 'boolean',
+        'type_champ'        => EnumTypeChamp::class,
+        'meta_options'      => 'array',
+        //'default_value'   => 'array',
+        'created_at'        => 'datetime:Y-m-d',
+        'updated_at'        => 'datetime:Y-m-d H:i:s',
+        'deleted_at'        => 'datetime:Y-m-d H:i:s',
     ];
 
     /**

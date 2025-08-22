@@ -811,6 +811,14 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
+            // Vérifier si l'idée de projet est soumise - si non, refuser l'évaluation
+            if ($ideeProjet->est_soumise !== true) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'L\'évaluation climatique ne peut être effectuée que sur des idées de projet soumises.',
+                ], 403);
+            }
+
             $evaluation = Evaluation::where(
                 'projetable_id',
                 $ideeProjet->id

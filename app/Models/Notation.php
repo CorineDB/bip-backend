@@ -30,7 +30,7 @@ class Notation extends Model
      * @var array
      */
     protected $fillable = [
-        "libelle", "valeur", "commentaire", "critere_id", "categorie_critere_id"
+        "libelle", "valeur", "commentaire", "secteur_id", "critere_id", "categorie_critere_id"
     ];
 
     /**
@@ -75,5 +75,24 @@ class Notation extends Model
     public function critere()
     {
         return $this->belongsTo(Critere::class, 'critere_id');
+    }
+
+    /**
+     * Get the secteur
+     */
+    public function secteur()
+    {
+        return $this->belongsTo(Secteur::class, 'secteur_id');
+    }
+
+    /**
+     * Get evaluation criteres grouped by evaluateur.
+     */
+    public function notationsParSecteur($query)
+    {
+        return $query()
+            ->with(['secteur'])
+            ->get()
+            ->groupBy('secteur_id');
     }
 }

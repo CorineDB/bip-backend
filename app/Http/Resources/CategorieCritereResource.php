@@ -28,7 +28,7 @@ class CategorieCritereResource extends BaseApiResource
             'total_ponderation' => $this->whenLoaded('criteres', function () {
                 return $this->criteres->sum('ponderation');
             }),
-            'fichiers' => $this->when($this->relationLoaded('fichiers') && $this->fichiers->count(), function() {
+            'fichiers' => $this->when($this->relationLoaded('fichiers'), function() {
                 return $this->fichiers->map(function ($fichier) {
                     return [
                         'id' => $fichier->id,
