@@ -175,14 +175,16 @@ class DocumentService extends BaseService implements DocumentServiceInterface
     /**
      * Mettre à jour les sections avec leurs champs pour un document existant
      */
-    private function updateSectionsWithChamps($document, array $sectionsData)
+    private function updateSectionsWithChamps($document, array $sectionsData, $sectionParent = null)
     {
         foreach ($sectionsData as $sectionData) {
             $sectionId = $sectionData['id'] ?? null;
             $champsData = $sectionData['champs'] ?? [];
+            $sousSectionsData = $sectionData['sous_sections'] ?? [];
 
             // Extraire les données de la section (sans les champs)
             $sectionAttributes = collect($sectionData)->except(['id', 'champs'])->toArray();
+            $sectionAttributes["parentSectionId"] = $sectionParent ? $sectionParent->id : null;
 
             if ($sectionId) {
                 // Mettre à jour section existante
@@ -200,6 +202,14 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $section = $document->sections()->create($sectionAttributes);
             }
 
+            // Créer les sous-sections si elles existent
+
+            // Traiter les champs de la section
+            if (!empty($sousSectionsData)) {
+                $sousSectionData = $sectionData['sous_sections'];
+                $this->updateSectionsWithChamps($document, $sousSectionData, $section);
+            }
+
             // Traiter les champs de la section
             if (!empty($champsData)) {
                 $this->updateChampsForSection($section, $champsData);
@@ -214,26 +224,84 @@ class DocumentService extends BaseService implements DocumentServiceInterface
     {
         foreach ($champsData as $champData) {
             $champId = $champData['id'] ?? null;
+            $champAttribut = $champData['attribut'] ?? null;
 
             // Extraire les données du champ
             $champAttributes = collect($champData)->except(['id', 'sectionId'])->toArray();
             $champAttributes['sectionId'] = $section->id;
 
+            $champ = null;
+
+            // Essayer de trouver le champ par ID d'abord
             if ($champId) {
-                // Mettre à jour champ existant
-                $champ = $section->champs()->find($champId);
-                if ($champ) {
-                    $champ->fill($champAttributes);
-                    $champ->save();
-                    //$champ->update($champAttributes);
+                $champ = $section->document->all_champs()->find($champId);
+            }
+
+            // Si pas trouvé par ID, chercher par attribut dans tout le document
+            if (!$champ && $champAttribut) {
+                $champ = $section->document->all_champs()->where('attribut', $champAttribut)->first();
+            }
+
+            if ($champ) {
+                // Vérifier s'il y a déjà un champ avec le même attribut dans la section cible
+                $existingChampInSection = $section->champs()
+                    ->where('attribut', $champAttribut)
+                    ->where('id', '!=', $champ->id)
+                    ->first();
+
+                if ($existingChampInSection) {
+                    // Il existe déjà un champ avec le même attribut dans cette section
+                    // Supprimer le champ existant dans la section cible et déplacer l'autre
+                    $existingChampInSection->delete();
+                }
+
+                // Vérifier si le champ est déjà dans la section cible
+                if ($champ->sectionId == $section->id) {
+                    // Cas 1: Le champ est déjà dans cette section, juste le mettre à jour
+                    $champ->update($champAttributes);
                 } else {
-                    // Champ n'existe pas, le créer
-                    $this->createOrUpdateChamp($champAttributes, $section->document, $section);
+                    // Cas 2: Le champ est dans une autre section, il faut le déplacer
+                    
+                    // Vérifier s'il y a déjà un autre champ avec le même attribut dans la section cible
+                    $existingChampInSection = $section->champs()
+                        ->where('attribut', $champAttribut)
+                        ->where('id', '!=', $champ->id)
+                        ->first();
+
+                    if ($existingChampInSection) {
+                        // Il existe déjà un champ avec le même attribut dans cette section
+                        // Supprimer le champ existant dans la section cible pour éviter le conflit
+                        $existingChampInSection->delete();
+                    }
+
+                    // Déplacer le champ vers la nouvelle section
+                    $champ->update($champAttributes);
                 }
             } else {
-                // Créer nouveau champ
+                // Cas 3: Aucun champ existant trouvé, en créer un nouveau
                 $this->createOrUpdateChamp($champAttributes, $section->document, $section);
             }
+
+
+            /*
+                if ($champId) {
+                    // Mettre à jour champ existant
+                    $champ = $section->champs()->find($champId);
+                    if ($champ) {
+                        $champ->fill($champAttributes);
+                        $champ->save();
+                        dump($champAttributes);
+                        $this->createOrUpdateChamp($champAttributes, $section->document, $section);
+                        //$champ->update($champAttributes);
+                    } else {
+                        // Champ n'existe pas, le créer
+                        $this->createOrUpdateChamp($champAttributes, $section->document, $section);
+                    }
+                } else {
+                    // Créer nouveau champ
+                    $this->createOrUpdateChamp($champAttributes, $section->document, $section);
+                }
+            */
         }
     }
     /**

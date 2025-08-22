@@ -210,7 +210,7 @@ class DocumentController extends Controller
      */
     public function createOrUpdateFicheIdee(CreateOrUpdateFicheIdeeRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateFicheIdee($request->validated());
+        return $this->service->createOrUpdateFicheIdee($request->all());
     }
 
 

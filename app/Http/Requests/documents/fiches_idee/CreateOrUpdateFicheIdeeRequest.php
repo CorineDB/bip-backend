@@ -53,13 +53,9 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
             }
         }
 
-        // Champs dans sections
+        // Champs dans sections (récursif pour gérer les sous-sections)
         foreach ($this->input('sections', []) as $section) {
-            foreach ($section['champs'] ?? [] as $champ) {
-                if (isset($champ['attribut'])) {
-                    $foundAttributs[] = $champ['attribut'];
-                }
-            }
+            $this->extractAttributsFromSection($section, $foundAttributs);
         }
 
         $foundAttributs = array_unique($foundAttributs);
@@ -68,6 +64,26 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
         foreach ($requiredAttributes as $required) {
             if (!in_array($required, $foundAttributs)) {
                 $validator->errors()->add('attributs_manquants', "Le champ avec l’attribut '$required' est obligatoire.");
+            }
+        }
+    }
+
+    /**
+     * Extrait récursivement les attributs des champs d'une section et de ses sous-sections
+     */
+    private function extractAttributsFromSection(array $section, array &$foundAttributs): void
+    {
+        // Champs directs de la section
+        foreach ($section['champs'] ?? [] as $champ) {
+            if (isset($champ['attribut'])) {
+                $foundAttributs[] = $champ['attribut'];
+            }
+        }
+
+        // Champs dans les sous-sections (récursif)
+        if (isset($section['sous_sections']) && is_array($section['sous_sections'])) {
+            foreach ($section['sous_sections'] as $sousSection) {
+                $this->extractAttributsFromSection($sousSection, $foundAttributs);
             }
         }
     }
