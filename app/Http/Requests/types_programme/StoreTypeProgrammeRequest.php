@@ -28,7 +28,6 @@ class StoreTypeProgrammeRequest extends FormRequest
             'typeId' => [
                 'required_if:type,composant-programme',
                 Rule::exists('types_programme', 'id')
-                    ->whereNotNull('typeId')
                     ->whereNull('deleted_at')
             ],
         ];
