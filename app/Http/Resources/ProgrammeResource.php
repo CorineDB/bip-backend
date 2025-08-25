@@ -17,6 +17,7 @@ class ProgrammeResource extends BaseApiResource
     {
         return [
             "id" => $this->id,
+            "slug"=> $this->slug,
             "type_programme"=> $this->type_programme
         ];
     }
