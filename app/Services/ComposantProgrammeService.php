@@ -130,8 +130,8 @@ class ComposantProgrammeService extends BaseService implements ComposantProgramm
     public function composants_de_programme($idComposantTypeProgramme): JsonResponse{
         try {
 
-            $data = $this->repository->getModel()->whereHas('typeProgramme', function($query) use ($idComposantTypeProgramme){
-                $query->where('typeId', $idComposantTypeProgramme);
+            $data = $this->repository->getModel()->where('typeId', $idComposantTypeProgramme)->whereHas('typeProgramme', function($query) use ($idComposantTypeProgramme){
+                $query->where('id', $idComposantTypeProgramme);
             })->get();
 
             return $this->resourceClass::collection($data)->response();
