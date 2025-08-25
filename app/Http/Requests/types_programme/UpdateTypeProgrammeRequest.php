@@ -14,11 +14,32 @@ class UpdateTypeProgrammeRequest extends FormRequest
 
     public function rules(): array
     {
-        $typeProgrammeId = $this->route('type_programme') ? (is_string($this->route('type_programme')) ? $this->route('type_programme') : ($this->route('type_programme')->id)) : $this->route('id');
+        // Récupère l'ID du type_programme en fonction de la route
+        $typeProgrammeId = $this->route('type_programme')
+            ? (is_string($this->route('type_programme'))
+                ? $this->route('type_programme')
+                : $this->route('type_programme')->id)
+            : $this->route('id');
 
         return [
-            'type_programme'=> ['required', 'string', Rule::unique('types_programme', 'type_programme')->ignore($typeProgrammeId)->whereNull('deleted_at')],
-            'typeId' => ['required', Rule::exists('types_programme', 'id')->whereNull('deleted_at'), "different:$typeProgrammeId"]
+            'type_programme'=> [
+                'required',
+                'string',
+                Rule::unique('types_programme', 'type_programme')
+                    ->ignore($typeProgrammeId) // ignore l'ID actuel
+                    ->whereNull('deleted_at')
+            ],
+            'type' => [
+                'required',
+                'string',
+                'in:programme,composant-programme'
+            ],
+            'typeId' => [
+                'required_if:type,composant-programme',
+                Rule::exists('types_programme', 'id')
+                    ->whereNull('deleted_at'),
+                "different:$typeProgrammeId" // ne peut pas être son propre parent
+            ],
         ];
     }
 
@@ -28,6 +49,10 @@ class UpdateTypeProgrammeRequest extends FormRequest
             'type_programme.required' => 'Le type de programme est obligatoire.',
             'type_programme.string' => 'Le type de programme doit être une chaîne de caractères.',
             'type_programme.unique' => 'Ce type de programme existe déjà.',
+            'type.required' => 'Le champ type est obligatoire.',
+            'type.string' => 'Le champ type doit être une chaîne de caractères.',
+            'type.in' => 'Le champ type doit être soit "programme" soit "composant-programme".',
+            'typeId.required_if' => 'L\'ID du type parent est obligatoire quand le type est "composant-programme".',
             'typeId.integer' => 'L\'ID du type parent doit être un nombre entier.',
             'typeId.exists' => 'Le type de programme parent sélectionné n\'existe pas.',
             'typeId.different' => 'Un type de programme ne peut pas être son propre parent.'
