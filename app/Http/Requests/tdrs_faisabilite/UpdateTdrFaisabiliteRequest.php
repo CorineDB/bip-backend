@@ -19,7 +19,7 @@ class UpdateTdrFaisabiliteRequest extends FormRequest
     {
         return [
             'est_soumise'           => 'required|boolean',
-            'champs'                => 'required|array',
+            'champs'                => 'nullable|array|min:0',
             'termes_de_reference'   => 'required|array',
             'termes_de_reference.*' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx'
         ];
@@ -35,8 +35,8 @@ class UpdateTdrFaisabiliteRequest extends FormRequest
 
         $finalRules = array_merge([
             'est_soumise' => 'required|boolean',
-            'champs' => 'required|array',
-            'termes_de_reference' => 'nullable|array',
+            'champs'                => 'nullable|array|min:0',
+            'termes_de_reference' => 'required|array',
             'termes_de_reference.*' => 'distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
         ], $dynamicRules);
 
