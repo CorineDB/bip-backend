@@ -8,6 +8,9 @@ use App\Models\Projet;
 use App\Models\Notation;
 use App\Models\CategorieCritere;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Http;
 
 class SoumettreRapportPrefaisabiliteRequest extends FormRequest
 {

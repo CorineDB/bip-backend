@@ -65,14 +65,9 @@ interface DocumentRepositoryInterface extends BaseRepositoryInterface
     public function getCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique();
 
     /**
-     * Get the unique canevas de checklist etude faisabilite organisationnelle
-     */
-    public function getCanevasChecklistEtudeFaisabiliteOrganisationnelle();
-
-    /**
      * Get the unique canevas de checklist etude analyse impact environnemental et sociale
      */
-    public function getCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale();
+    public function getCanevasChecklistEtudeImpactEnvironnementalEtSociale();
 
     /**
      * Get the unique canevas de checklist suivi assurance qualite etude faisabilite
