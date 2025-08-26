@@ -300,7 +300,7 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
                 }
 
                 foreach ($existingRoles as $role) {
-                    $rolePermissions = $role->permissions()->pluck('id')->toArray();
+                    $rolePermissions = $role->permissions->pluck('id')->toArray();
                     $permissions = array_merge($permissions, $rolePermissions);
                 }
             }
