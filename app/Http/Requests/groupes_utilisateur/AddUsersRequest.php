@@ -16,13 +16,13 @@ class AddUsersRequest extends FormRequest
     {
         return [
             // Utilisateurs (optionnels à la création)
-            'users' => 'required|array|min:1',
+            /* 'users' => 'required|array|min:1',
             'users.*' => [
                 'integer',
                 Rule::exists('users', 'id')->whereNull("roleId")->whereNull("roleId")->whereNull('deleted_at')
             ],
             'users.*.id' => [ "nullable",
-                Rule::exists('users', 'id')->whereNull("roleId")->whereNull("roleId")->whereNull('deleted_at')
+                Rule::exists('users', 'id')->whereNull('deleted_at')
             ],
             // Données utilisateur de base
             'users.*.email' => [
@@ -36,6 +36,33 @@ class AddUsersRequest extends FormRequest
             'users.*.personne' => 'required|array',
             'users.*.personne.nom' => 'required|string|max:255',
             'users.*.personne.prenom' => 'required|string|max:255',
+            'users.*.personne.poste' => 'nullable|string|max:255', */
+
+
+
+            // Utilisateurs (au moins 1)
+            'users' => 'required|array|min:1',
+
+            // Cas 1 : utilisateur existant
+            'users.*.id' => [
+                'required_without:users.*.email',   // obligatoire si pas d'email
+                Rule::exists('users', 'id')->whereNull('deleted_at')
+            ],
+
+            // Cas 2 : nouvel utilisateur
+            'users.*.email' => [
+                'required_without:users.*.id',      // obligatoire si pas d'id
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->whereNull('deleted_at')
+            ],
+
+            'users.*.personne' => [
+                'required_with:users.*.email',      // requis si on crée un user
+                'array'
+            ],
+            'users.*.personne.nom' => 'required_with:users.*.email|string|max:255',
+            'users.*.personne.prenom' => 'required_with:users.*.email|string|max:255',
             'users.*.personne.poste' => 'nullable|string|max:255'
         ];
     }
