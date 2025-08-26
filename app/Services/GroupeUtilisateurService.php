@@ -86,7 +86,7 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
                 $existingRoles = Role::whereIn('id', $data['roles'])->get();
                 if (count($existingRoles) === count($data['roles'])) {
                     foreach ($existingRoles as $role) {
-                        $rolePermissions = $role->permissions()->pluck('id')->toArray();
+                        $rolePermissions = $role->permissions->pluck('id')->toArray();
                         $permissionsIds = array_merge($permissionsIds, $rolePermissions);
                     }
                 } else {
@@ -109,7 +109,7 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
             }
 
             // Assigner les rôles si fournis
-            if (isset($data['roles']) && is_array($data['roles'])) {
+            /* if (isset($data['roles']) && is_array($data['roles'])) {
                 $existingRoles = Role::whereIn('id', $data['roles'])->pluck('id')->toArray();
                 if (count($existingRoles) === count($data['roles'])) {
                     $groupe->roles()->attach($data['roles']);
@@ -122,7 +122,7 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
                         'statutCode' => Response::HTTP_BAD_REQUEST
                     ], Response::HTTP_BAD_REQUEST);
                 }
-            }
+            } */
 
             // Ajouter / Créer les utilisateurs
             if (!empty($data['users']) && is_array($data['users'])) {
