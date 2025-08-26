@@ -173,6 +173,19 @@ class DocumentService extends BaseService implements DocumentServiceInterface
     }
 
     /**
+     * Méthode pour forcer la création d'un nouveau champ
+     */
+    private function createNewChamp(array $champAttributes, $document, $section = null): void
+    {
+        // Forcer la création d'un nouveau champ sans vérification d'unicité
+        if ($section) {
+            $section->champs()->create($champAttributes);
+        } else {
+            $document->champs()->create($champAttributes);
+        }
+    }
+
+    /**
      * Mettre à jour les sections avec leurs champs pour un document existant
      */
     private function updateSectionsWithChamps($document, array $sectionsData, $sectionParent = null)
@@ -234,12 +247,12 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
             // Essayer de trouver le champ par ID d'abord
             if ($champId) {
-                $champ = $section->document->champs()->find($champId);
+                $champ = $section->document->all_champs()->find($champId);
             }
 
             // Si pas trouvé par ID, chercher par attribut dans tout le document
             if (!$champ && $champAttribut) {
-                $champ = $section->document->champs()->where('attribut', $champAttribut)->first();
+                $champ = $section->document->all_champs()->where('attribut', $champAttribut)->first();
             }
 
             if ($champ) {
@@ -684,16 +697,16 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         if (isset($fieldData['id']) && $fieldData['id']) {
 
             // Mise à jour d'un champ existant
-            $champ = $document->champs()->find($fieldData['id']);
+            $champ = $document->all_champs()->find($fieldData['id']);
             if ($champ) {
                 $champ->update($champAttributes);
             } else {
                 // L'ID n'existe pas, créer un nouveau champ
-                $this->createOrUpdateChamp($champAttributes, $document, $section);
+                $this->createNewChamp($champAttributes, $document, $section);
             }
         } else {
-            // Création d'un nouveau champ
-            $this->createOrUpdateChamp($champAttributes, $document, $section);
+            // Création d'un nouveau champ (forcer la création, pas updateOrCreate)
+            $this->createNewChamp($champAttributes, $document, $section);
         }
     }
 
@@ -733,12 +746,12 @@ class DocumentService extends BaseService implements DocumentServiceInterface
     private function cleanupRemovedElements($document, array $payloadIds): void
     {
         // Supprimer les champs non présents
-        $document->champs()
+        $document->all_champs()
             ->whereNotIn('id', $payloadIds['champs'])
             ->forceDelete();
 
         // Supprimer les sections non présentes
-        $document->sections()
+        $document->all_sections()
             ->whereNotIn('id', $payloadIds['sections'])
             ->forceDelete();
     }
