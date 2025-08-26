@@ -83,7 +83,7 @@ class NoteConceptuelleController extends Controller
      */
     public function getForProject($projetId, $noteId): JsonResponse
     {
-        return $this->service->find($noteId);
+        return $this->service->getForProject($projetId, $noteId);
     }
 
     /**

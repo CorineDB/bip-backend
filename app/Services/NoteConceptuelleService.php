@@ -381,6 +381,39 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         }
     }
 
+    /**
+     * Récupérer une note conceptuelle d'un projet
+     */
+    public function getForProject(int $projetId, int $noteId): JsonResponse
+    {
+        try {
+
+            // Vérifier que le projet existe
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Trouver la note conceptuelle associée au projet
+            $noteConceptuelle = $this->repository->getModel()->where([
+                'id' => $noteId,
+                'projetId' => $projet->id
+            ])->first();
+
+            if (!$noteConceptuelle) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Note conceptuelle non trouvée pour ce projet.'
+                ], 404);
+            }
+
+            return (new $this->resourceClass($noteConceptuelle))
+                ->additional(['message' => 'Note conceptuelle validée avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
     public function getValidationDetails(int $projetId, int $noteId): JsonResponse
     {
         try {
