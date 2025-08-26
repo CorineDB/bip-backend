@@ -81,9 +81,9 @@ class NoteConceptuelleController extends Controller
     /**
      * Récupérer une note conceptuelle d'un projet
      */
-    public function getForProject($projetId, $noteId): JsonResponse
+    public function getForProject($projetId): JsonResponse
     {
-        return $this->service->getForProject($projetId, $noteId);
+        return $this->service->getForProject($projetId);
     }
 
     /**
