@@ -1058,7 +1058,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function getCanevasChecklistEtudeFaisabiliteEconomique()
+    public function canevasChecklistEtudeFaisabiliteEconomique(): JsonResponse
     {
         try {
             // Récupérer le canevas de note conceptuelle unique
