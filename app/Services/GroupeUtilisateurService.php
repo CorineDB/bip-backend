@@ -913,7 +913,7 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
             $attachedUsers = [];
 
             foreach ($usersData as $userData) {
-                if (!empty($userData['id'])) {
+                if (isset($userData['id']) && !empty($userData['id'])) {
                     // Cas 1 : utilisateur existant
                     $user = User::where('id', $userData['id'])
                         ->whereNull('roleId')
