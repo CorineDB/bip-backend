@@ -234,12 +234,12 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
             // Essayer de trouver le champ par ID d'abord
             if ($champId) {
-                $champ = $section->document->all_champs()->find($champId);
+                $champ = $section->document->champs()->find($champId);
             }
 
             // Si pas trouvé par ID, chercher par attribut dans tout le document
             if (!$champ && $champAttribut) {
-                $champ = $section->document->all_champs()->where('attribut', $champAttribut)->first();
+                $champ = $section->document->champs()->where('attribut', $champAttribut)->first();
             }
 
             if ($champ) {
@@ -684,7 +684,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         if (isset($fieldData['id']) && $fieldData['id']) {
 
             // Mise à jour d'un champ existant
-            $champ = $document->all_champs()->find($fieldData['id']);
+            $champ = $document->champs()->find($fieldData['id']);
             if ($champ) {
                 $champ->update($champAttributes);
             } else {
@@ -733,12 +733,12 @@ class DocumentService extends BaseService implements DocumentServiceInterface
     private function cleanupRemovedElements($document, array $payloadIds): void
     {
         // Supprimer les champs non présents
-        $document->all_champs()
+        $document->champs()
             ->whereNotIn('id', $payloadIds['champs'])
             ->forceDelete();
 
         // Supprimer les sections non présentes
-        $document->all_sections()
+        $document->sections()
             ->whereNotIn('id', $payloadIds['sections'])
             ->forceDelete();
     }
