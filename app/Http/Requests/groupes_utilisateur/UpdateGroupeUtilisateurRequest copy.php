@@ -14,11 +14,9 @@ class UpdateGroupeUtilisateurRequest extends FormRequest
 
     public function rules(): array
     {
-        $groupeId = $this->route('groupe_utilisateur')
-            ? (is_string($this->route('groupe_utilisateur'))
-                ? $this->route('groupe_utilisateur')
-                : $this->route('groupe_utilisateur')->id)
-            : $this->route('id');
+        $groupeId = $this->route('groupe_utilisateur') ?
+            (is_string($this->route('groupe_utilisateur')) ? $this->route('groupe_utilisateur') : $this->route('groupe_utilisateur')->id) :
+            $this->route('id');
 
         $profilable = auth()->user()->profilable;
 
@@ -29,65 +27,48 @@ class UpdateGroupeUtilisateurRequest extends FormRequest
                 'string',
                 'max:255',
                 Rule::unique('groupes_utilisateur', 'nom')
-                    ->ignore($groupeId)
+                    ->ignore($groupeId)/*
+                    ->when($profilable, function ($query) use ($profilable) {
+                        $query->where('profilable_type', get_class($profilable))
+                            ->where('profilable_id', $profilable->id);
+                    })*/
                     ->whereNull('deleted_at')
             ],
             'description' => 'nullable|string',
-
-            // Permissions
             'permissions' => ['required', 'array', 'min:1'],
-            'permissions.*' => [
-                'required',
-                'distinct',
-                'integer',
-                Rule::exists('permissions', 'id')->whereNull('deleted_at')
-            ],
+            'permissions.*' => ['required', 'distinct', Rule::exists('permissions', 'id')->whereNull('deleted_at')],
 
-            // Rôles
+            // Rôles (optionnels à la création)
             'roles' => 'nullable|array|min:1',
             'roles.*' => [
-                'integer',
+                'required',
                 Rule::exists('roles', 'id')
                     ->when($profilable, function ($query) use ($profilable) {
                         $query->where('roleable_type', get_class($profilable))
-                              ->where('roleable_id', $profilable->id);
+                            ->where('roleable_id', $profilable->id);
                     })
                     ->whereNull('deleted_at')
             ],
 
-            // Utilisateurs (optionnels sur update)
+            // Utilisateurs (optionnels à la création)
             'users' => 'nullable|array',
-
-            // Cas 1 : utilisateur existant
             'users.*.id' => [
-                'nullable',
                 'integer',
-                'required_without:users.*.email',
-                'prohibited_with:users.*.email',
-                Rule::exists('users', 'id')->whereNull('deleted_at')
+                Rule::exists('users', 'id')/* ->whereNull("roleId")->whereNull("roleId") */->whereNull('deleted_at')
             ],
-
-            // Cas 2 : nouvel utilisateur (ou modification d’un existant)
+            // Données utilisateur de base
             'users.*.email' => [
-                'nullable',
-                'required_without:users.*.id',
-                'prohibited_with:users.*.id',
+                'required',
                 'email',
                 'max:255',
-                // ⚠️ ici on ignore l'utilisateur si un id est fourni
-                Rule::unique('users', 'email')
-                    ->ignore($this->input('users.*.id'))
-                    ->whereNull('deleted_at')
+                Rule::unique('users', 'email')->whereNull('deleted_at')
             ],
 
-            // Données de la personne (requis uniquement si nouvel user avec email)
-            'users.*.personne' => [
-                'required_with:users.*.email',
-                'array'
-            ],
-            'users.*.personne.nom' => 'required_with:users.*.email|string|max:255',
-            'users.*.personne.prenom' => 'required_with:users.*.email|string|max:255',
-            'users.*.personne.poste' => 'nullable|string|max:255',
+            // Données de la personne
+            'users.*.personne' => 'required|array',
+            'users.*.personne.nom' => 'required|string|max:255',
+            'users.*.personne.prenom' => 'required|string|max:255',
+            'users.*.personne.poste' => 'nullable|string|max:255'
         ];
     }
 
@@ -106,8 +87,8 @@ class UpdateGroupeUtilisateurRequest extends FormRequest
             'roles.*.exists' => 'Un ou plusieurs rôles spécifiés n\'existent pas.',
 
             'users.array' => 'Les utilisateurs doivent être un tableau.',
-            'users.*.id.exists' => 'Un ou plusieurs utilisateurs spécifiés n\'existent pas.',
-            'users.*.email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
+            'users.*.integer' => 'Chaque ID d\'utilisateur doit être un nombre entier.',
+            'users.*.exists' => 'Un ou plusieurs utilisateurs spécifiés n\'existent pas.',
         ];
     }
 }
