@@ -60,15 +60,12 @@ class UpdateGroupeUtilisateurRequest extends FormRequest
 
             // Cas 1 : utilisateur existant
             'users.*.id' => [
-                'nullable',
-                'integer',
                 'required_without:users.*.email',
                 Rule::exists('users', 'id')->whereNull('deleted_at')
             ],
 
             // Cas 2 : nouvel utilisateur (ou modification d’un existant)
             'users.*.email' => [
-                'nullable',
                 'required_without:users.*.id',
                 'email',
                 'max:255',

@@ -55,14 +55,12 @@ class StoreGroupeUtilisateurRequest extends FormRequest
 
             // Cas 1 : utilisateur existant
             'users.*.id' => [
-                'nullable',
                 'required_without:users.*.email',   // obligatoire si pas d'email
                 Rule::exists('users', 'id')->whereNull("roleId")->whereNull('deleted_at')
             ],
 
             // Cas 2 : nouvel utilisateur
             'users.*.email' => [
-                'nullable',
                 'required_without:users.*.id',      // obligatoire si pas d'id
                 'email',
                 'max:255',
