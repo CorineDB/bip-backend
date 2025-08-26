@@ -722,6 +722,8 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 return $document->sections()->create($sectionAttributes);
             }
         } else {
+
+            dd($sectionAttributes);
             // Création d'une nouvelle section
             return $document->sections()->create($sectionAttributes);
         }
