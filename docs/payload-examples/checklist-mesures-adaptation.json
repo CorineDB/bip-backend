@@ -1,0 +1,325 @@
+{
+  "criteres": [
+    {
+      "intitule": "Chaleur",
+      "ponderation": 25,
+      "commentaire": "Mesures d'adaptation contre les températures élevées",
+      "is_mandatory": true,
+      "secteurs": [
+        {
+          "secteur_id": 47,
+          "mesures": [
+            {
+              "libelle": "Gestion des ressources en eau",
+              "valeur": "gestion-des-ressources-en-eau",
+              "commentaire": "Optimisation de l'utilisation de l'eau pour les cultures"
+            },
+            {
+              "libelle": "Irrigation à haut rendement",
+              "valeur": "irrigation-a-haut-rendement",
+              "commentaire": "Systèmes d'irrigation économes en eau"
+            },
+            {
+              "libelle": "Exploitation et maintenance des exploitations agricoles",
+              "valeur": "exploitation-et-maintenance-des-exploitations-agricoles",
+              "commentaire": "Bonnes pratiques de gestion agricole"
+            },
+            {
+              "libelle": "Sélection végétale",
+              "valeur": "selection-vegetale",
+              "commentaire": "Choix de variétés résistantes à la chaleur"
+            }
+          ]
+        },
+        "Energie": {
+          "notations": [
+            {
+              "libelle": "Systèmes de refroidissement efficaces",
+              "valeur": "systemes-de-refroidissement-efficaces",
+              "commentaire": "Technologies de refroidissement pour infrastructure énergétique"
+            },
+            {
+              "libelle": "Composants éoliens/solaires/TIC résistants à la chaleur",
+              "valeur": "composants-resistants-a-la-chaleur",
+              "commentaire": "Équipements adaptés aux hautes températures"
+            },
+            {
+              "libelle": "Choisissez des emplacements plus frais",
+              "valeur": "emplacements-plus-frais",
+              "commentaire": "Sélection d'emplacements stratégiques"
+            },
+            {
+              "libelle": "Maintenance préventive renforcée",
+              "valeur": "maintenance-preventive-renforcee",
+              "commentaire": "Programme de maintenance adapté aux conditions climatiques"
+            }
+          ]
+        },
+        "Eau": {
+          "notations": [
+            {
+              "libelle": "Comptage et tarifs de l'eau",
+              "valeur": "comptage-et-tarifs-de-l-eau",
+              "commentaire": "Gestion économique des ressources hydriques"
+            },
+            {
+              "libelle": "Gestion de la demande / Réduction de l'ENC",
+              "valeur": "gestion-de-la-demande-reduction-enc",
+              "commentaire": "Réduction des eaux non comptabilisées"
+            },
+            {
+              "libelle": "Réutilisation et dessalement de l'eau",
+              "valeur": "reutilisation-et-dessalement-de-l-eau",
+              "commentaire": "Technologies de recyclage et dessalement"
+            },
+            {
+              "libelle": "Recharge des aquifères à l'aide d'eau recyclée",
+              "valeur": "recharge-des-aquiferes-eau-recyclee",
+              "commentaire": "Reconstitution des nappes phréatiques"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "intitule": "Inondations",
+      "ponderation": 25,
+      "commentaire": "Mesures d'adaptation contre les inondations",
+      "is_mandatory": true,
+      "secteurs": {
+        "Agriculture": {
+          "notations": [
+            {
+              "libelle": "Drainage des terres agricoles",
+              "valeur": "drainage-terres-agricoles",
+              "commentaire": "Systèmes de drainage pour évacuer l'excès d'eau"
+            },
+            {
+              "libelle": "Cultures résistantes aux inondations",
+              "valeur": "cultures-resistantes-aux-inondations",
+              "commentaire": "Variétés adaptées aux conditions humides"
+            },
+            {
+              "libelle": "Élévation des structures agricoles",
+              "valeur": "elevation-structures-agricoles",
+              "commentaire": "Surélévation des installations pour éviter l'inondation"
+            },
+            {
+              "libelle": "Systèmes d'alerte précoce",
+              "valeur": "systemes-alerte-precoce",
+              "commentaire": "Dispositifs de prévention et d'alerte"
+            }
+          ]
+        },
+        "Energie": {
+          "notations": [
+            {
+              "libelle": "Protection des installations électriques",
+              "valeur": "protection-installations-electriques",
+              "commentaire": "Étanchéité et protection contre l'eau"
+            },
+            {
+              "libelle": "Relocalisation des équipements sensibles",
+              "valeur": "relocalisation-equipements-sensibles",
+              "commentaire": "Déplacement vers des zones moins exposées"
+            },
+            {
+              "libelle": "Systèmes de drainage industriels",
+              "valeur": "systemes-drainage-industriels",
+              "commentaire": "Évacuation efficace des eaux de surface"
+            },
+            {
+              "libelle": "Plans d'urgence énergétique",
+              "valeur": "plans-urgence-energetique",
+              "commentaire": "Protocoles de continuité de service"
+            }
+          ]
+        },
+        "Eau": {
+          "notations": [
+            {
+              "libelle": "Infrastructure de rétention d'eau",
+              "valeur": "infrastructure-retention-eau",
+              "commentaire": "Bassins de rétention et ouvrages hydrauliques"
+            },
+            {
+              "libelle": "Systèmes de pompage d'urgence",
+              "valeur": "systemes-pompage-urgence",
+              "commentaire": "Équipements d'évacuation rapide"
+            },
+            {
+              "libelle": "Étanchéité des réseaux d'eau potable",
+              "valeur": "etancheite-reseaux-eau-potable",
+              "commentaire": "Protection contre la contamination"
+            },
+            {
+              "libelle": "Plans de gestion des crises hydriques",
+              "valeur": "plans-gestion-crises-hydriques",
+              "commentaire": "Protocoles de réponse aux inondations"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "intitule": "Sécheresse",
+      "ponderation": 25,
+      "commentaire": "Mesures d'adaptation contre la sécheresse",
+      "is_mandatory": true,
+      "secteurs": {
+        "Agriculture": {
+          "notations": [
+            {
+              "libelle": "Techniques d'agriculture sèche",
+              "valeur": "techniques-agriculture-seche",
+              "commentaire": "Pratiques agricoles économes en eau"
+            },
+            {
+              "libelle": "Stockage de l'eau agricole",
+              "valeur": "stockage-eau-agricole",
+              "commentaire": "Réservoirs et citernes pour l'irrigation"
+            },
+            {
+              "libelle": "Variétés résistantes à la sécheresse",
+              "valeur": "varietes-resistantes-a-la-secheresse",
+              "commentaire": "Cultures adaptées aux conditions arides"
+            },
+            {
+              "libelle": "Mulching et conservation des sols",
+              "valeur": "mulching-et-conservation-des-sols",
+              "commentaire": "Préservation de l'humidité du sol"
+            }
+          ]
+        },
+        "Energie": {
+          "notations": [
+            {
+              "libelle": "Refroidissement sans eau",
+              "valeur": "refroidissement-sans-eau",
+              "commentaire": "Technologies de refroidissement à sec"
+            },
+            {
+              "libelle": "Efficacité énergétique renforcée",
+              "valeur": "efficacite-energetique-renforcee",
+              "commentaire": "Réduction de la consommation d'énergie"
+            },
+            {
+              "libelle": "Sources d'énergie alternatives",
+              "valeur": "sources-energie-alternatives",
+              "commentaire": "Diversification du mix énergétique"
+            },
+            {
+              "libelle": "Stockage d'énergie optimisé",
+              "valeur": "stockage-energie-optimise",
+              "commentaire": "Batteries et systèmes de stockage efficaces"
+            }
+          ]
+        },
+        "Eau": {
+          "notations": [
+            {
+              "libelle": "Recherche de nouvelles sources d'eau",
+              "valeur": "recherche-nouvelles-sources-eau",
+              "commentaire": "Exploration de nappes profondes"
+            },
+            {
+              "libelle": "Réduction des pertes en réseau",
+              "valeur": "reduction-des-pertes-en-reseau",
+              "commentaire": "Amélioration de l'étanchéité des canalisations"
+            },
+            {
+              "libelle": "Recyclage des eaux usées",
+              "valeur": "recyclage-des-eaux-usees",
+              "commentaire": "Traitement et réutilisation des eaux"
+            },
+            {
+              "libelle": "Gestion de la demande en eau",
+              "valeur": "gestion-de-la-demande-en-eau",
+              "commentaire": "Optimisation de la consommation"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "intitule": "Vents forts",
+      "ponderation": 25,
+      "commentaire": "Mesures d'adaptation contre les vents violents",
+      "is_mandatory": true,
+      "secteurs": {
+        "Agriculture": {
+          "notations": [
+            {
+              "libelle": "Brise-vents et haies protectrices",
+              "valeur": "brise-vents-et-haies-protectrices",
+              "commentaire": "Barrières végétales contre le vent"
+            },
+            {
+              "libelle": "Structures agricoles renforcées",
+              "valeur": "structures-agricoles-renforcees",
+              "commentaire": "Bâtiments résistants aux vents forts"
+            },
+            {
+              "libelle": "Systèmes d'ancrage des cultures",
+              "valeur": "systemes-ancrage-des-cultures",
+              "commentaire": "Techniques de tuteurage et support"
+            },
+            {
+              "libelle": "Planification spatiale agricole",
+              "valeur": "planification-spatiale-agricole",
+              "commentaire": "Aménagement tenant compte de l'exposition au vent"
+            }
+          ]
+        },
+        "Energie": {
+          "notations": [
+            {
+              "libelle": "Renforcement des lignes électriques",
+              "valeur": "renforcement-des-lignes-electriques",
+              "commentaire": "Infrastructure électrique résistante au vent"
+            },
+            {
+              "libelle": "Enfouissement des câbles",
+              "valeur": "enfouissement-des-cables",
+              "commentaire": "Protection souterraine des réseaux"
+            },
+            {
+              "libelle": "Éoliennes adaptées aux vents forts",
+              "valeur": "eoliennes-adaptees-aux-vents-forts",
+              "commentaire": "Turbines résistantes aux conditions extrêmes"
+            },
+            {
+              "libelle": "Systèmes de coupure automatique",
+              "valeur": "systemes-de-coupure-automatique",
+              "commentaire": "Protection automatique des équipements"
+            }
+          ]
+        },
+        "Eau": {
+          "notations": [
+            {
+              "libelle": "Protection des installations de captage",
+              "valeur": "protection-des-installations-de-captage",
+              "commentaire": "Sécurisation des points de prélèvement"
+            },
+            {
+              "libelle": "Réseaux souterrains protégés",
+              "valeur": "reseaux-souterrains-proteges",
+              "commentaire": "Enfouissement des canalisations principales"
+            },
+            {
+              "libelle": "Réservoirs sécurisés",
+              "valeur": "reservoirs-securises",
+              "commentaire": "Structures de stockage résistantes"
+            },
+            {
+              "libelle": "Plans de continuité de service",
+              "valeur": "plans-de-continuite-de-service",
+              "commentaire": "Protocoles de maintien de la distribution"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

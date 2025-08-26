@@ -411,4 +411,177 @@ class Projet extends Model
     {
         return User::byMinistere($this->ministere->id);
     }
+
+    // Relations avec les TDRs
+
+    /**
+     * Relation avec tous les TDRs du projet
+     */
+    public function tdrs()
+    {
+        return $this->hasMany(Tdr::class, 'projet_id');
+    }
+
+    /**
+     * TDRs de préfaisabilité
+     */
+    public function tdrsPrefaisabilite()
+    {
+        return $this->tdrs()->prefaisabilite();
+    }
+
+    /**
+     * TDRs de faisabilité
+     */
+    public function tdrsFaisabilite()
+    {
+        return $this->tdrs()->faisabilite();
+    }
+
+    /**
+     * TDR de préfaisabilité actif (le plus récent avec statut valide ou en cours)
+     */
+    public function tdrPrefaisabiliteActif()
+    {
+        return $this->tdrsPrefaisabilite()
+            ->whereIn('statut', ['soumis', 'en_evaluation', 'valide', 'retour_travail_supplementaire'])
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * TDR de faisabilité actif (le plus récent avec statut valide ou en cours)
+     */
+    public function tdrFaisabiliteActif()
+    {
+        return $this->tdrsFaisabilite()
+            ->whereIn('statut', ['soumis', 'en_evaluation', 'valide', 'retour_travail_supplementaire'])
+            ->orderBy('created_at', 'desc');
+    }
+
+    // Méthodes pour récupérer les TDRs avec historique
+
+    /**
+     * Obtenir le TDR de préfaisabilité actif avec son historique complet
+     */
+    public function getTdrPrefaisabiliteAvecHistorique()
+    {
+        return $this->tdrPrefaisabiliteActif()
+            ->with([
+                'fichiers' => function($q) { $q->active()->ordered(); },
+                'commentaires' => function($q) { $q->orderBy('created_at', 'desc'); },
+                'commentaires.commentateur:id,name,email',
+                'soumisPar:id,name,email',
+                'evaluateur:id,name,email',
+                'validateur:id,name,email',
+                'decideur:id,name,email'
+            ])
+            ->first();
+    }
+
+    /**
+     * Obtenir le TDR de faisabilité actif avec son historique complet
+     */
+    public function getTdrFaisabiliteAvecHistorique()
+    {
+        return $this->tdrFaisabiliteActif()
+            ->with([
+                'fichiers' => function($q) { $q->active()->ordered(); },
+                'commentaires' => function($q) { $q->orderBy('created_at', 'desc'); },
+                'commentaires.commentateur:id,name,email',
+                'soumisPar:id,name,email',
+                'evaluateur:id,name,email',
+                'validateur:id,name,email',
+                'decideur:id,name,email'
+            ])
+            ->first();
+    }
+
+    /**
+     * Obtenir l'historique complet de tous les TDRs du projet
+     */
+    public function getHistoriqueTdrs()
+    {
+        return $this->tdrs()
+            ->with([
+                'fichiers' => function($q) { $q->active()->ordered(); },
+                'commentaires' => function($q) { $q->orderBy('created_at', 'desc'); },
+                'commentaires.commentateur:id,name,email',
+                'soumisPar:id,name,email',
+                'evaluateur:id,name,email',
+                'validateur:id,name,email',
+                'decideur:id,name,email'
+            ])
+            ->orderBy('type')
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Obtenir les commentaires d'évaluation de tous les TDRs
+     */
+    public function getCommentairesEvaluationTdrs()
+    {
+        return \App\Models\Commentaire::whereIn('commentaireable_id', 
+                $this->tdrs()->pluck('id')
+            )
+            ->where('commentaireable_type', Tdr::class)
+            ->with(['commentateur:id,name,email'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy('commentaireable_id');
+    }
+
+    /**
+     * Vérifier si le projet a un TDR de préfaisabilité valide
+     */
+    public function hasTdrPrefaisabiliteValide(): bool
+    {
+        return $this->tdrsPrefaisabilite()
+            ->where('statut', 'valide')
+            ->exists();
+    }
+
+    /**
+     * Vérifier si le projet a un TDR de faisabilité valide
+     */
+    public function hasTdrFaisabiliteValide(): bool
+    {
+        return $this->tdrsFaisabilite()
+            ->where('statut', 'valide')
+            ->exists();
+    }
+
+    /**
+     * Obtenir le statut du workflow TDR pour le projet
+     */
+    public function getStatutWorkflowTdr(): array
+    {
+        $tdrPrefaisabilite = $this->getTdrPrefaisabiliteAvecHistorique();
+        $tdrFaisabilite = $this->getTdrFaisabiliteAvecHistorique();
+
+        return [
+            'prefaisabilite' => [
+                'existe' => !is_null($tdrPrefaisabilite),
+                'statut' => $tdrPrefaisabilite?->statut,
+                'decision_finale' => $tdrPrefaisabilite?->decision_finale,
+                'date_soumission' => $tdrPrefaisabilite?->date_soumission,
+                'date_evaluation' => $tdrPrefaisabilite?->date_evaluation,
+                'date_validation' => $tdrPrefaisabilite?->date_validation,
+                'nombre_commentaires' => $tdrPrefaisabilite?->commentaires?->count() ?? 0,
+                'nombre_fichiers' => $tdrPrefaisabilite?->fichiers?->count() ?? 0
+            ],
+            'faisabilite' => [
+                'existe' => !is_null($tdrFaisabilite),
+                'statut' => $tdrFaisabilite?->statut,
+                'decision_finale' => $tdrFaisabilite?->decision_finale,
+                'date_soumission' => $tdrFaisabilite?->date_soumission,
+                'date_evaluation' => $tdrFaisabilite?->date_evaluation,
+                'date_validation' => $tdrFaisabilite?->date_validation,
+                'nombre_commentaires' => $tdrFaisabilite?->commentaires?->count() ?? 0,
+                'nombre_fichiers' => $tdrFaisabilite?->fichiers?->count() ?? 0
+            ],
+            'peut_soumettre_faisabilite' => $this->hasTdrPrefaisabiliteValide(),
+            'workflow_complet' => $this->hasTdrPrefaisabiliteValide() && $this->hasTdrFaisabiliteValide()
+        ];
+    }
 }

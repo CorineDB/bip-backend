@@ -83,4 +83,246 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->orderBy('created_at', 'desc')
             ->first();
     }
+
+    public function getCanevasRedactionTdrPrefaisabilite()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-tdr-prefaisabilite');
+        })
+            ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    public function getCanevasRedactionTdrFaisabilite()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-tdr-faisabilite');
+        })
+            ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    public function getCanevasChecklistSuiviRapportPrefaisabilite()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-checklist-suivi-rapport-prefaisabilite');
+        })
+            ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    public function getCanevasChecklistMesuresAdaptation()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'checklist-mesures-adaptation-haut-risque');
+        })
+            ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    public function getCanevasChecklistEtudeFaisabiliteMarche()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-checklist-etude-faisabilite-marche');
+        })
+            ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    public function getCanevasChecklistEtudeFaisabiliteEconomique()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-checklist-etude-faisabilite-economique');
+        })
+            ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    public function getCanevasChecklistEtudeFaisabiliteTechnique()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-checklist-etude-faisabilite-technique');
+        })
+            ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    public function getCanevasChecklistEtudeFaisabiliteFinanciere()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-checklist-analyse-faisabilite-financiere');
+        })
+            ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    public function getCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-checklist-etude-faisabilite-organisationnelle-juridique');
+        })
+            ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    public function getCanevasChecklistEtudeImpactEnvironnementalEtSociale()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-checklist-etude-faisabilite-environnemental-sociale');
+        })
+            ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    public function getCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-checklist-suivi-assurance-qualite-etude-faisabilite');
+        })
+            ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
 }

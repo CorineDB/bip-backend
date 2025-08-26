@@ -4,7 +4,7 @@ namespace App\Services\Contracts;
 
 use Illuminate\Http\JsonResponse;
 
-interface TdrPrefaisabiliteServiceInterface
+interface TdrPrefaisabiliteServiceInterface extends AbstractServiceInterface
 {
     /**
      * Soumettre les TDRs de préfaisabilité (SFD-010)

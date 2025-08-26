@@ -5,6 +5,19 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\documents\CreateOrUpdateCanevasAppreciationTdrRequest;
 use App\Http\Requests\documents\canevas_redaction_note_conceptuelle\CreateOrUpdateCanevasRedactionNoteConceptuelleRequest;
+use App\Http\Requests\documents\CreateOrUpdateCanevasChecklistMesuresAdaptationRequest;
+use App\Http\Requests\documents\etudes_faisabilite\CreateOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabiliteRequest;
+use App\Http\Requests\documents\CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest;
+use App\Http\Requests\documents\CreateOrUpdateCanevasRedactionTdrFaisabiliteRequest;
+use App\Http\Requests\documents\CreateOrUpdateCanevasRedactionTdrPrefaisabiliteRequest;
+use App\Http\Requests\documents\CreateOrUpdateChecklistTdrFaisabiliteRequest;
+use App\Http\Requests\documents\CreateOrUpdateChecklistTdrPrefaisabiliteRequest;
+use App\Http\Requests\documents\etudes_faisabilite\CreateOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSocialeRequest;
+use App\Http\Requests\documents\etudes_faisabilite\CreateOrUpdateCanevasChecklistEtudeFaisabiliteEconomiqueRequest;
+use App\Http\Requests\documents\etudes_faisabilite\CreateOrUpdateCanevasChecklistEtudeFaisabiliteFinanciereRequest;
+use App\Http\Requests\documents\etudes_faisabilite\CreateOrUpdateCanevasChecklistEtudeFaisabiliteMarcheRequest;
+use App\Http\Requests\documents\etudes_faisabilite\CreateOrUpdateCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridiqueRequest;
+use App\Http\Requests\documents\etudes_faisabilite\CreateOrUpdateCanevasChecklistEtudeFaisabiliteTechniqueRequest;
 use App\Http\Requests\documents\StoreDocumentRequest;
 use App\Http\Requests\documents\UpdateDocumentRequest;
 use App\Http\Requests\documents\fiches_idee\CreateOrUpdateFicheIdeeRequest;
@@ -393,5 +406,182 @@ class DocumentController extends Controller
     public function createOrUpdateCanevasAppreciationTdr(CreateOrUpdateCanevasAppreciationTdrRequest $request): JsonResponse
     {
         return $this->service->createOrUpdateCanevasAppreciationTdr($request->validated());
+    }
+
+    public function canevasRedactionTdrPrefaisabilite(): JsonResponse
+    {
+        return $this->service->canevasRedactionTdrPrefaisabilite();
+    }
+
+    public function createOrUpdateCanevasRedactionTdrPrefaisabilite(CreateOrUpdateCanevasRedactionTdrPrefaisabiliteRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasRedactionTdrPrefaisabilite($request->validated());
+    }
+
+    public function configurerChecklistTdrPrefaisabilite(CreateOrUpdateChecklistTdrPrefaisabiliteRequest $request): JsonResponse
+    {
+        return $this->service->configurerChecklistTdrPrefaisabilite($request->validated());
+    }
+
+    public function canevasRedactionTdrFaisabilite(): JsonResponse
+    {
+        return $this->service->canevasRedactionTdrFaisabilite();
+    }
+
+    public function createOrUpdateCanevasRedactionTdrFaisabilite(CreateOrUpdateCanevasRedactionTdrFaisabiliteRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasRedactionTdrFaisabilite($request->validated());
+    }
+
+    public function configurerChecklistTdrFaisabilite(CreateOrUpdateChecklistTdrFaisabiliteRequest $request): JsonResponse
+    {
+        return $this->service->configurerChecklistTdrFaisabilite($request->validated());
+    }
+
+    /**
+     * Récupérer le canevas de checklist suivi rapport préfaisabilité
+     */
+    public function canevasChecklistSuiviRapportPrefaisabilite(): JsonResponse
+    {
+        return $this->service->canevasChecklistSuiviRapportPrefaisabilite();
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas de checklist suivi rapport préfaisabilité
+     */
+    public function createOrUpdateCanevasChecklistSuiviRapportPrefaisabilite(CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasChecklistSuiviRapportPrefaisabilite($request->validated());
+    }
+
+    /**
+     * Récupérer le canevas de checklist mesures adaptation
+     */
+    public function canevasChecklistMesuresAdaptation(): JsonResponse
+    {
+        return $this->service->canevasChecklistMesuresAdaptation();
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas de checklist mesures adaptation
+     */
+    public function createOrUpdateCanevasChecklistMesuresAdaptation(CreateOrUpdateCanevasChecklistMesuresAdaptationRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasChecklistMesuresAdaptation($request->validated());
+    }
+
+
+
+
+    /**
+     * Récupérer le canevas de checklist mesures adaptation
+     */
+    public function canevasChecklistEtudeFaisabiliteMarche(): JsonResponse
+    {
+        return $this->service->canevasChecklistEtudeFaisabiliteMarche();
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas de checklist mesures adaptation
+     */
+    public function createOrUpdateCanevasChecklistEtudeFaisabiliteMarche(CreateOrUpdateCanevasChecklistEtudeFaisabiliteMarcheRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteMarche($request->validated());
+    }
+
+    /**
+     * Récupérer le canevas de checklist mesures adaptation
+     */
+    public function canevasChecklistEtudeFaisabiliteEconomique(): JsonResponse
+    {
+        return $this->service->canevasChecklistEtudeFaisabiliteEconomique();
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas de checklist mesures adaptation
+     */
+    public function createOrUpdateCanevasChecklistEtudeFaisabiliteEconomique(CreateOrUpdateCanevasChecklistEtudeFaisabiliteEconomiqueRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteEconomique($request->validated());
+    }
+
+    /**
+     * Récupérer le canevas de checklist mesures adaptation
+     */
+    public function canevasChecklistEtudeFaisabiliteTechnique(): JsonResponse
+    {
+        return $this->service->canevasChecklistEtudeFaisabiliteTechnique();
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas de checklist mesures adaptation
+     */
+    public function createOrUpdateCanevasChecklistEtudeFaisabiliteTechnique(CreateOrUpdateCanevasChecklistEtudeFaisabiliteTechniqueRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteTechnique($request->validated());
+    }
+
+    /**
+     * Récupérer le canevas de checklist mesures adaptation
+     */
+    public function canevasChecklistEtudeFaisabiliteFinanciere(): JsonResponse
+    {
+        return $this->service->canevasChecklistEtudeFaisabiliteFinanciere();
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas de checklist mesures adaptation
+     */
+    public function createOrUpdateCanevasChecklistEtudeFaisabiliteFinanciere(CreateOrUpdateCanevasChecklistEtudeFaisabiliteFinanciereRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteFinanciere($request->validated());
+    }
+
+    /**
+     * Récupérer le canevas de checklist mesures adaptation
+     */
+    public function canevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique(): JsonResponse
+    {
+        return $this->service->canevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique();
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas de checklist mesures adaptation
+     */
+    public function createOrUpdateCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique(CreateOrUpdateCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridiqueRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique($request->validated());
+    }
+
+    /**
+     * Récupérer le canevas de checklist mesures adaptation
+     */
+    public function canevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale(): JsonResponse
+    {
+        return $this->service->canevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale();
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas de checklist mesures adaptation
+     */
+    public function createOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale(CreateOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSocialeRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale($request->validated());
+    }
+
+    /**
+     * Récupérer le canevas de checklist mesures adaptation
+     */
+    public function canevasChecklistSuiviAssuranceQualiteEtudeFaisabilite(): JsonResponse
+    {
+        return $this->service->canevasChecklistSuiviAssuranceQualiteEtudeFaisabilite();
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas de checklist mesures adaptation
+     */
+    public function createOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite(CreateOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabiliteRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite($request->validated());
     }
 }

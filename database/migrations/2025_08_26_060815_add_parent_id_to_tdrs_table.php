@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('champs', function (Blueprint $table) {
-            // Ajouter la référence vers la section parent pour créer une hiérarchie
-            //$table->boolean('champ_standard')->default(true);
-            //
+        Schema::table('tdrs', function (Blueprint $table) {
+            $table->foreignId('parent_id')->nullable()->after('projet_id')->index()->constrained('tdrs')->onDelete('set null');
         });
     }
 
@@ -23,8 +21,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('champs', function (Blueprint $table) {
-            //
+        Schema::table('tdrs', function (Blueprint $table) {
+            $table->dropForeign(['parent_id']);
+            $table->dropColumn('parent_id');
         });
     }
 };

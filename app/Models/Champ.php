@@ -140,6 +140,10 @@ class Champ extends Model
     {
         $this->attributes["label"] = Str::ucfirst(trim($value));
     }
+    public function setSstartWithNewLineAttribute($value)
+    {
+        $this->attributes["label"] = $value == null ? false : $value;
+    }
 
     /**
      * Set the default_value attribute.

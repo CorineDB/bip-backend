@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Services\BaseService;
 use App\Repositories\Contracts\ProjetRepositoryInterface;
 use App\Repositories\Contracts\EvaluationRepositoryInterface;
+use App\Repositories\Contracts\TdrRepositoryInterface;
 use App\Models\Fichier;
 use App\Models\Projet;
 use App\Models\Decision;
@@ -13,6 +14,8 @@ use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
 use App\Http\Resources\projets\ProjetResource;
 use App\Http\Resources\UserResource;
+use App\Models\Tdr;
+use App\Services\Contracts\CategorieCritereServiceInterface;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Services\Contracts\TdrPrefaisabiliteServiceInterface;
 use Carbon\Carbon;
@@ -26,15 +29,21 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     protected DocumentRepositoryInterface $documentRepository;
     protected ProjetRepositoryInterface $projetRepository;
     protected EvaluationRepositoryInterface $evaluationRepository;
+    protected CategorieCritereServiceInterface $categorieCritereService;
+    protected TdrRepositoryInterface $tdrRepository;
 
     public function __construct(
         DocumentRepositoryInterface $documentRepository,
         ProjetRepositoryInterface $projetRepository,
-        EvaluationRepositoryInterface $evaluationRepository
+        EvaluationRepositoryInterface $evaluationRepository,
+        CategorieCritereServiceInterface $categorieCritereService,
+        TdrRepositoryInterface $tdrRepository
     ) {
         $this->documentRepository = $documentRepository;
         $this->projetRepository = $projetRepository;
         $this->evaluationRepository = $evaluationRepository;
+        $this->categorieCritereService = $categorieCritereService;
+        $this->tdrRepository = $tdrRepository;
     }
 
     protected function getResourceClass(): string
@@ -45,6 +54,254 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     protected function getResourcesClass(): string
     {
         return ProjetResource::class;
+    }
+
+    public function create(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            // Extraire les données spécifiques au payload
+            $champsData = $data['champs'] ?? [];
+            $termesDeReference = $data['termes_de_reference'] ?? [];
+            $documentsData = $data['documents'] ?? [];
+            $estSoumis = $data['est_soumis'] ?? false;
+            $projetId = $data['projet_id'] ?? null;
+            $resume = $data['resume'] ?? null;
+
+            if (!$projetId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ID du projet requis.'
+                ], 422);
+            }
+
+            // Déterminer le statut selon est_soumis
+            $statut = $estSoumis ? 'soumis' : 'brouillon';
+
+            // Préparer les données du TDR
+            $tdrData = [
+                'type' => 'prefaisabilite',
+                'statut' => $statut,
+                'resume' => $resume,
+                'termes_de_reference' => $termesDeReference,
+                'rediger_par_id' => auth()->id(),
+                'soumis_par_id' => $estSoumis ? auth()->id() : null,
+                'date_soumission' => $estSoumis ? now() : null,
+            ];
+
+            // Chercher ou créer un TDR unique par projet et type
+            $tdrPrefaisabilite = $this->tdrRepository->findByProjetAndType($projetId, 'prefaisabilite');
+
+            if ($tdrPrefaisabilite) {
+                // Mettre à jour le TDR existant
+                $this->tdrRepository->update($tdrPrefaisabilite->id, $tdrData);
+                $tdrPrefaisabilite->refresh();
+                $message = 'TDR de préfaisabilité mis à jour avec succès.';
+                $statusCode = 200;
+            } else {
+                // Créer un nouveau TDR
+                $tdrData['projet_id'] = $projetId;
+                $tdrPrefaisabilite = $this->tdrRepository->create($tdrData);
+                $message = 'TDR de préfaisabilité créé avec succès.';
+                $statusCode = 201;
+            }
+
+            // Récupérer le canevas de rédaction TDR préfaisabilité
+            $canevasTdr = $this->documentRepository->getModel()->where([
+                'type' => 'formulaire'
+            ])->whereHas('categorie', function ($query) {
+                $query->where('slug', 'canevas-tdr-prefaisabilite');
+            })->orderBy('created_at', 'desc')->first();
+
+            if ($canevasTdr && !empty($champsData)) {
+                // Sauvegarder les champs dynamiques basés sur le canevas
+                $this->saveDynamicFieldsFromCanevas($tdrPrefaisabilite, $champsData, $canevasTdr);
+            }
+
+            // Gérer les documents/fichiers
+            if (!empty($documentsData)) {
+                $this->handleDocuments($tdrPrefaisabilite, $documentsData);
+            }
+
+            // Recharger le TDR avec ses relations pour obtenir les champs
+            $tdrPrefaisabilite = $this->tdrRepository->findById(
+                $tdrPrefaisabilite->id,
+                ['*'],
+                ['champs', 'fichiers', 'projet']
+            );
+
+            // Mettre à jour les termes de référence avec les données des champs
+            if ($tdrPrefaisabilite->champs) {
+                $termesDeReferenceFormates = $tdrPrefaisabilite->champs->map(function ($champ) {
+                    return [
+                        'id' => $champ->id,
+                        'label' => $champ->label,
+                        'attribut' => $champ->attribut,
+                        'ordre_affichage' => $champ->ordre_affichage,
+                        'type_champ' => $champ->type_champ,
+                        'valeur' => $champ->pivot->valeur,
+                        'commentaire' => $champ->pivot->commentaire,
+                        'updated_at' => $champ->pivot->updated_at
+                    ];
+                });
+
+                $this->tdrRepository->update($tdrPrefaisabilite->id, [
+                    'termes_de_reference' => $termesDeReferenceFormates->toArray()
+                ]);
+            }
+
+            // Mettre à jour le statut du projet si TDR soumis
+            if ($estSoumis) {
+                $projet = $tdrPrefaisabilite->projet;
+                $projet->fill([
+                    'statut' => StatutIdee::TDR_PREFAISABILITE,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::TDR_PREFAISABILITE),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::TDR_PREFAISABILITE),
+                    'resume_tdr_prefaisabilite' => $resume
+                ]);
+                $projet->save();
+                $projet->refresh();
+            }
+
+            DB::commit();
+
+            // Recharger le TDR final avec toutes ses relations
+            $tdrFinal = $this->tdrRepository->findById(
+                $tdrPrefaisabilite->id,
+                ['*'],
+                ['fichiers', 'commentaires.commentateur', 'soumisPar', 'evaluateur', 'validateur', 'projet']
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => $tdrFinal
+            ], $statusCode);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Sauvegarder les champs dynamiques basés sur le canevas TDR
+     */
+    private function saveDynamicFieldsFromCanevas(Tdr $tdrPrefaisabilite, array $champsData, $canevasTdr): void
+    {
+        // Récupérer tous les champs du canevas TDR
+        $champsDefinitions = $canevasTdr->all_champs;
+
+        // Indexer par attribut pour accès rapide
+        $champsMap = $champsDefinitions->keyBy('attribut');
+
+        $syncData = [];
+
+        foreach ($champsData as $attribut => $valeur) {
+            if (isset($champsMap[$attribut])) {
+                $champ = $champsMap[$attribut];
+
+                // Le cast JSON du modèle ChampProjet gère automatiquement tout type
+                $syncData[$champ->id] = [
+                    'valeur' => $valeur, // Peut être string, array, object, number, boolean, etc.
+                    'commentaire' => null
+                ];
+            }
+        }
+
+        // Synchroniser tous les champs reçus
+        if (!empty($syncData)) {
+            $tdrPrefaisabilite->champs()->sync($syncData);
+        }
+    }
+
+    /**
+     * Gérer les documents/fichiers attachés au TDR
+     */
+    private function handleDocuments(Tdr $tdr, array $documentsData): void
+    {
+        foreach ($documentsData as $documentData) {
+            if (isset($documentData['file']) && $documentData['file']) {
+                $file = $documentData['file'];
+                $categorie = $documentData['categorie'] ?? 'tdr';
+                
+                // Stocker le fichier et créer l'enregistrement
+                $path = Storage::putFile('tdrs', $file);
+                
+                $tdr->fichiers()->create([
+                    'nom_original' => $file->getClientOriginalName(),
+                    'nom_stockage' => basename($path),
+                    'chemin' => $path,
+                    'extension' => $file->getClientOriginalExtension(),
+                    'mime_type' => $file->getMimeType(),
+                    'taille' => $file->getSize(),
+                    'hash_md5' => md5_file($file->getRealPath()),
+                    'description' => $documentData['description'] ?? null,
+                    'categorie' => $categorie,
+                    'uploaded_by' => auth()->id(),
+                    'is_public' => false,
+                    'is_active' => true
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Méthode de mise à jour simplifiée - utilise la logique de create
+     */
+    public function update($id, array $data): JsonResponse
+    {
+        try {
+            // Récupérer la note conceptuelle pour obtenir le projetId
+            $tdrPrefaisabilite = $this->repository->findOrFail($id);
+            // Mettre à jour la note existante
+            $tdrPrefaisabilite->update($data);
+
+            $message = 'Tdr de préfaisabilité mise à jour avec succès.';
+            $statusCode = 200;
+
+            // Récupérer le canevas de rédaction de note conceptuelle
+            $canevasNoteConceptuelle = $this->documentRepository->getModel()->where([
+                'type' => 'formulaire'
+            ])->whereHas('categorie', function ($query) {
+                $query->where('slug', 'canevas-tdr-prefaisabilite');
+            })->orderBy('created_at', 'desc')->first();
+
+            if ($canevasNoteConceptuelle) {
+                // Sauvegarder les champs dynamiques basés sur le canevas
+                $this->saveDynamicFieldsFromCanevas($tdrPrefaisabilite, $data, $canevasNoteConceptuelle);
+            }
+
+            $tdrPrefaisabilite->note_conceptuelle = $tdrPrefaisabilite->champs->map(function ($champ) {
+                return [
+                    'id' => $champ->id,
+                    'label' => $champ->label,
+                    'attribut' => $champ->attribut,
+                    'valeur' => $champ->pivot->valeur,
+                    'commentaire' => $champ->pivot->commentaire,
+                    'updated_at' => $champ->pivot->updated_at
+                ];
+            });
+
+            $tdrPrefaisabilite->save();
+
+            if($tdrPrefaisabilite->projet->statut == StatutIdee::NOTE_CONCEPTUEL){
+                $tdrPrefaisabilite->projet->update([
+                    'statut' => StatutIdee::VALIDATION_NOTE_AMELIORER,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_NOTE_AMELIORER),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_NOTE_AMELIORER),
+                    'type_projet' => TypesProjet::simple
+                ]);
+            }
+
+
+            return (new $this->resourceClass($tdrPrefaisabilite))
+                ->additional(['message' => $message])
+                ->response()
+                ->setStatusCode($statusCode);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
     }
 
     /**
@@ -74,11 +331,73 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ], 422);
             }
 
-            // Traitement et sauvegarde du fichier TDR
-            $fichierTdr = null;
+            // Extraire les données spécifiques au payload
+            $champsData = $data['champs'] ?? [];
+            $documentsData = $data['documents'] ?? [];
+            $estSoumise = $data['est_soumise'] ?? true;
+            
+            // Déterminer le statut selon est_soumise
+            $statut = $estSoumise ? 'soumis' : 'brouillon';
 
+            // Préparer les données du TDR
+            $tdrData = [
+                'projet_id' => $projetId,
+                'type' => 'prefaisabilite',
+                'statut' => $statut,
+                'resume' => $data['resume_tdr_prefaisabilite'] ?? 'TDR de préfaisabilité',
+                'termes_de_reference' => $champsData,
+                'date_soumission' => $estSoumise ? now() : null,
+                'soumis_par_id' => auth()->id(),
+                'rediger_par_id' => auth()->id(),
+            ];
+
+            // Chercher un TDR existant pour ce projet et type
+            $tdrExistant = \App\Models\Tdr::where('projet_id', $projetId)
+                ->where('type', 'prefaisabilite')
+                ->orderBy("created_at", "desc")
+                ->first();
+
+            if ($tdrExistant && $tdrExistant->statut === 'soumis') {
+                // Si un TDR soumis existe déjà, créer une nouvelle version avec parent_id
+                $tdrData['parent_id'] = $tdrExistant->id;
+                $tdr = \App\Models\Tdr::create($tdrData);
+                $message = 'Nouvelle version du TDR de préfaisabilité créée avec succès.';
+                $statusCode = 201;
+            } elseif ($tdrExistant && $tdrExistant->statut !== 'soumis') {
+                // Si un TDR non soumis existe, le mettre à jour
+                $tdr = $tdrExistant;
+                $tdr->fill($tdrData);
+                $tdr->save();
+                $message = 'TDR de préfaisabilité mis à jour avec succès.';
+                $statusCode = 200;
+            } else {
+                // Créer un nouveau TDR (première version)
+                $tdr = \App\Models\Tdr::create($tdrData);
+                $message = 'TDR de préfaisabilité créé avec succès.';
+                $statusCode = 201;
+            }
+
+            // Récupérer le canevas de rédaction TDR préfaisabilité
+            $canevasTdr = $this->documentRepository->getModel()->where([
+                'type' => 'formulaire'
+            ])->whereHas('categorie', function ($query) {
+                $query->where('slug', 'canevas-redaction-tdr-prefaisabilite');
+            })->orderBy('created_at', 'desc')->first();
+
+            if ($canevasTdr) {
+                // Sauvegarder les champs dynamiques basés sur le canevas
+                $this->saveDynamicFieldsFromCanevas($tdr, $champsData, $canevasTdr);
+            }
+
+            // Gérer les documents/fichiers
+            if (!empty($documentsData)) {
+                $this->handleDocuments($tdr, $documentsData);
+            }
+
+            // Traitement et sauvegarde du fichier TDR (legacy)
+            $fichierTdr = null;
             if (isset($data['tdr'])) {
-                $fichierTdr = $this->sauvegarderFichierTdr($projet, $data['tdr'], $data);
+                $fichierTdr = $this->gererFichierTdr($projet, $data['tdr'], $data);
             }
 
             // Récupérer les commentaires des évaluations antérieures si c'est un retour
@@ -86,42 +405,45 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             $projet->resume_tdr_prefaisabilite = $data["resume_tdr_prefaisabilite"];
 
-            // Changer le statut du projet
-            $projet->update([
-                'statut' => StatutIdee::EVALUATION_TDR_PF,
-                'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF),
-                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF)
-            ]);
+            // Changer le statut du projet seulement si est_soumise est true
+            if ($estSoumise) {
+                $projet->update([
+                    'statut' => StatutIdee::EVALUATION_TDR_PF,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF)
+                ]);
 
-            // Enregistrer le workflow et la décision
-            $this->enregistrerWorkflow($projet, StatutIdee::EVALUATION_TDR_PF);
-            $this->enregistrerDecision(
-                $projet,
-                "Soumission des TDRs de préfaisabilité",
-                $data['resume_tdr_prefaisabilite'] ?? 'TDRs soumis pour évaluation',
-                auth()->user()->personne->id
-            );
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($projet, StatutIdee::EVALUATION_TDR_PF);
+                $this->enregistrerDecision(
+                    $projet,
+                    "Soumission des TDRs de préfaisabilité",
+                    $data['resume_tdr_prefaisabilite'] ?? 'TDRs soumis pour évaluation',
+                    auth()->user()->personne->id
+                );
+
+                // Envoyer une notification
+                $this->envoyerNotificationSoumission($projet, $fichierTdr);
+            }
 
             DB::commit();
 
-            // Envoyer une notification
-            $this->envoyerNotificationSoumission($projet, $fichierTdr);
-
             return response()->json([
                 'success' => true,
-                'message' => 'TDRs de préfaisabilité soumis avec succès.',
+                'message' => $message,
                 'data' => [
+                    'tdr' => $tdr,
                     'projet' => new ProjetResource($projet),
                     'fichier_id' => $fichierTdr ? $fichierTdr->id : null,
                     'projet_id' => $projet->id,
                     'ancien_statut' => in_array($projet->statut->value, [StatutIdee::TDR_PREFAISABILITE->value, StatutIdee::R_TDR_PREFAISABILITE->value]) ? $projet->statut->value : StatutIdee::TDR_PREFAISABILITE->value,
-                    'nouveau_statut' => StatutIdee::EVALUATION_TDR_PF->value,
+                    'nouveau_statut' => $estSoumise ? StatutIdee::EVALUATION_TDR_PF->value : $projet->statut->value,
                     'fichier_url' => $fichierTdr ? $fichierTdr->url : null,
                     'resume' => $data['resume'] ?? null,
                     'tdr_pre_faisabilite' => $data['tdr_pre_faisabilite'] ?? null,
                     'type_tdr' => $data['type_tdr'] ?? null,
                     'soumis_par' => auth()->id(),
-                    'soumis_le' => now()->format('d/m/Y H:i:s'),
+                    'soumis_le' => $estSoumise ? now()->format('d/m/Y H:i:s') : null,
                     'commentaires_anterieurs' => $commentairesAnterieurs
                 ]
             ]);
@@ -905,10 +1227,72 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ], 422);
             }
 
+            // Déterminer si c'est une soumission ou un brouillon
+            $action = $data['action'] ?? 'submit';
+            $estBrouillon = $action === 'draft';
+
+            // Si c'est un brouillon, on peut sauvegarder sans les fichiers
+            if ($estBrouillon) {
+                // Pour les brouillons, les fichiers ne sont pas requis
+                // Traiter seulement la checklist si présente
+                if (isset($data['checklist_controle_adaptation_haut_risque'])) {
+                    $resultChecklistValidation = $this->traiterChecklistControleAdaptation(
+                        $projet,
+                        $data['checklist_controle_adaptation_haut_risque'],
+                        true
+                    );
+
+                    if (!$resultChecklistValidation['success']) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $resultChecklistValidation['message']
+                        ], 422);
+                    }
+                }
+
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Checklist sauvegardée en brouillon.',
+                    'data' => [
+                        'projet_id' => $projet->id,
+                        'statut' => $projet->statut->value,
+                        'action' => 'draft',
+                        'checklist_brouillon' => true,
+                        'criteres_completes' => $resultChecklistValidation['criteres_completes'] ?? 0,
+                        'total_criteres' => $resultChecklistValidation['total_criteres'] ?? 0,
+                        'est_complete' => $resultChecklistValidation['est_complete'] ?? false,
+                        'sauvegarde_le' => now()->format('d/m/Y H:i:s')
+                    ]
+                ]);
+            }
+
+            // Pour la soumission finale, traiter la checklist si présente
+            if (isset($data['checklist_controle_adaptation_haut_risque'])) {
+                $resultChecklistValidation = $this->traiterChecklistControleAdaptation(
+                    $projet,
+                    $data['checklist_controle_adaptation_haut_risque'],
+                    false
+                );
+
+                if (!$resultChecklistValidation['success']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $resultChecklistValidation['message']
+                    ], 422);
+                }
+            }
+
             // Traitement et sauvegarde du fichier rapport
             $fichierRapport = null;
             if (isset($data['rapport'])) {
-                $fichierRapport = $this->sauvegarderFichierRapport($projet, $data['rapport'], $data);
+                $fichierRapport = $this->gererFichierRapport($projet, $data['rapport'], $data);
+            }
+
+            // Traitement et sauvegarde du procès verbal
+            $fichierProcesVerbal = null;
+            if (isset($data['proces_verbal'])) {
+                $fichierProcesVerbal = $this->gererFichierProcesVerbal($projet, $data['proces_verbal'], $data);
             }
 
             // Enregistrer les informations du cabinet et recommandations
@@ -939,10 +1323,23 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'success' => true,
                 'message' => 'Rapport de préfaisabilité soumis avec succès.',
                 'data' => [
-                    'fichier_id' => $fichierRapport ? $fichierRapport : null,
                     'projet_id' => $projet->id,
                     'ancien_statut' => StatutIdee::SOUMISSION_RAPPORT_PF->value,
                     'nouveau_statut' => StatutIdee::VALIDATION_PF->value,
+                    'fichiers' => [
+                        'rapport' => $fichierRapport ? [
+                            'id' => $fichierRapport->id,
+                            'nom' => $fichierRapport->nom_original,
+                            'url' => $fichierRapport->url,
+                            'status' => 'traite'
+                        ] : null,
+                        'proces_verbal' => $fichierProcesVerbal ? [
+                            'id' => $fichierProcesVerbal->id,
+                            'nom' => $fichierProcesVerbal->nom_original,
+                            'url' => $fichierProcesVerbal->url,
+                            'status' => 'traite'
+                        ] : null
+                    ],
                     'cabinet' => [
                         'nom' => $data['cabinet_etude']['nom_cabinet'] ?? null,
                         'contact' => $data['cabinet_etude']['contact_cabinet'] ?? null,
@@ -950,7 +1347,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'adresse_cabinet' => $data['cabinet_etude']['adresse_cabinet'] ?? null
                     ],
                     'recommandation' => $data['recommandation'] ?? null,
-                    'fichier_url' => $fichierRapport ? $fichierRapport->url : null,
                     'soumis_par' => auth()->id(),
                     'soumis_le' => now()->format('d/m/Y H:i:s')
                 ]
@@ -962,15 +1358,90 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
-     * Sauvegarder le fichier TDR téléversé
+     * Gérer le fichier TDR avec versioning intelligent
      */
-    private function sauvegarderFichierTdr(Projet $projet, $fichier, array $data): Fichier
+    private function gererFichierTdr(Projet $projet, $fichier, array $data): ?Fichier
+    {
+        // Calculer le hash du nouveau fichier
+        $nouveauHash = md5_file($fichier->getRealPath());
+
+        // Vérifier s'il y a déjà un TDR actif avec le même hash
+        $tdrIdentique = $projet->tdrs_prefaisabilite()
+            ->where('hash_md5', $nouveauHash)
+            ->where('is_active', true)
+            ->first();
+
+        if ($tdrIdentique) {
+            return $tdrIdentique;
+        }
+
+        // Pour les TDRs, toujours vérifier le statut R_TDR_PREFAISABILITE
+        $doitCreerNouvelleVersion = ($projet->statut->value === StatutIdee::R_TDR_PREFAISABILITE->value);
+
+        if ($doitCreerNouvelleVersion) {
+            return $this->creerNouvelleVersionTdr($projet, $fichier, $data);
+        } else {
+            return $this->remplacerTdrExistant($projet, $fichier, $data);
+        }
+    }
+
+    /**
+     * Créer une nouvelle version du TDR
+     */
+    private function creerNouvelleVersionTdr(Projet $projet, $fichier, array $data): Fichier
+    {
+        // Récupérer la dernière version
+        $derniereVersion = $projet->tdrs_prefaisabilite()
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $nouvelleVersion = 1;
+        if ($derniereVersion) {
+            $versionActuelle = $derniereVersion->metadata['version'] ?? 1;
+            $nouvelleVersion = $versionActuelle + 1;
+
+            // Archiver l'ancienne version
+            $derniereVersion->update([
+                'is_active' => false,
+                'metadata' => array_merge($derniereVersion->metadata ?? [], [
+                    'statut' => 'archive',
+                    'archive_le' => now(),
+                    'remplace_par_version' => $nouvelleVersion
+                ])
+            ]);
+        }
+
+        return $this->sauvegarderFichierTdr($projet, $fichier, $data, $nouvelleVersion);
+    }
+
+    /**
+     * Remplacer le TDR existant (même cycle)
+     */
+    private function remplacerTdrExistant(Projet $projet, $fichier, array $data): Fichier
+    {
+        $tdrExistant = $projet->tdrs_prefaisabilite()->where('is_active', true)->first();
+        $version = 1;
+
+        if ($tdrExistant) {
+            $version = $tdrExistant->metadata['version'] ?? 1;
+            // Supprimer l'ancien fichier physique
+            Storage::disk('public')->delete($tdrExistant->chemin);
+            $tdrExistant->delete();
+        }
+
+        return $this->sauvegarderFichierTdr($projet, $fichier, $data, $version);
+    }
+
+    /**
+     * Sauvegarder le fichier TDR avec version
+     */
+    private function sauvegarderFichierTdr(Projet $projet, $fichier, array $data, int $version = 1): Fichier
     {
         // Générer les informations du fichier
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = 'tdr_prefaisabilite_' . $projet->id . '_' . time() . '.' . $extension;
-        $chemin = $fichier->storeAs('tdrs/prefaisabilite', $nomStockage, 'public');
+        $nomStockage = "tdr_prefaisabilite_v{$version}.{$extension}";
+        $chemin = $fichier->storeAs("projets/{$projet->id}/prefaisabilite", $nomStockage, 'public');
 
         // Créer l'enregistrement Fichier
         return Fichier::create([
@@ -986,6 +1457,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             'metadata' => [
                 'type_document' => 'tdr-prefaisabilite',
                 'projet_id' => $projet->id,
+                'version' => $version,
+                'statut' => 'actif',
                 'resume' => $data['resume'] ?? null,
                 'tdr_faisabilite' => $data['tdr_faisabilite'] ?? null,
                 'tdr_pre_faisabilite' => $data['tdr_pre_faisabilite'] ?? null,
@@ -1219,18 +1692,79 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
-     * Sauvegarder le fichier rapport de préfaisabilité
+     * Gérer le fichier rapport avec versioning intelligent
      */
-    private function sauvegarderFichierRapport(Projet $projet, $fichier, array $data): Fichier
+    private function gererFichierRapport(Projet $projet, $fichier, array $data): ?Fichier
+    {
+        // Calculer le hash du nouveau fichier
+        $nouveauHash = md5_file($fichier->getRealPath());
+
+        // Vérifier s'il y a déjà un rapport actif avec le même hash
+        $rapportIdentique = $projet->rapports_prefaisabilite()
+            ->where('hash_md5', $nouveauHash)
+            ->where('is_active', true)
+            ->first();
+
+        if ($rapportIdentique) {
+            return $rapportIdentique;
+        }
+
+        // Déterminer s'il faut une nouvelle version ou remplacer
+        $doitCreerNouvelleVersion = $this->doitCreerNouvelleVersionRapport($projet);
+
+        if ($doitCreerNouvelleVersion) {
+            // Nouvelle version après rejet - garder l'historique
+            return $this->creerNouvelleVersionRapport($projet, $fichier, $data);
+        } else {
+            // Modification du même cycle - remplacer
+            return $this->remplacerRapportExistant($projet, $fichier, $data);
+        }
+    }
+
+    /**
+     * Gérer le fichier procès verbal avec versioning intelligent
+     */
+    private function gererFichierProcesVerbal(Projet $projet, $fichier, array $data): ?Fichier
+    {
+        // Calculer le hash du nouveau fichier
+        $nouveauHash = md5_file($fichier->getRealPath());
+
+        // Vérifier s'il y a déjà un procès verbal actif avec le même hash
+        $procesVerbalIdentique = $projet->fichiers()
+            ->where('categorie', 'proces-verbal-prefaisabilite')
+            ->where('hash_md5', $nouveauHash)
+            ->where('is_active', true)
+            ->first();
+
+        if ($procesVerbalIdentique) {
+            return $procesVerbalIdentique;
+        }
+
+        // Déterminer s'il faut une nouvelle version ou remplacer
+        $doitCreerNouvelleVersion = $this->doitCreerNouvelleVersionRapport($projet);
+
+        if ($doitCreerNouvelleVersion) {
+            // Nouvelle version après rejet - garder l'historique
+            return $this->creerNouvelleVersionProcesVerbal($projet, $fichier, $data);
+        } else {
+            // Modification du même cycle - remplacer
+            return $this->remplacerProcesVerbalExistant($projet, $fichier, $data);
+        }
+    }
+
+    /**
+     * Sauvegarder le fichier rapport de préfaisabilité avec version
+     */
+    private function sauvegarderFichierRapport(Projet $projet, $fichier, array $data, int $version = 1): Fichier
     {
         // Générer les informations du fichier
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = 'rapport_prefaisabilite_' . $projet->id . '_' . time() . '.' . $extension;
-        $chemin = $fichier->storeAs('rapports/prefaisabilite', $nomStockage, 'public');
+        $nomStockage = "rapport_prefaisabilite_v{$version}.{$extension}";
+        $chemin = $fichier->storeAs("projets/{$projet->id}/prefaisabilite", $nomStockage, 'public');
 
         // Créer l'enregistrement Fichier
-        $fichier = Fichier::create([
+        return Fichier::create([
             'nom_original' => $nomOriginal,
             'nom_stockage' => $nomStockage,
             'chemin' => $chemin,
@@ -1243,6 +1777,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             'metadata' => [
                 'type_document' => 'rapport-prefaisabilite',
                 'projet_id' => $projet->id,
+                'version' => $version,
+                'statut' => 'actif',
                 'cabinet' => [
                     'nom' => $data['cabinet_etude']['nom_cabinet'] ?? null,
                     'contact' => $data['cabinet_etude']['contact_cabinet'] ?? null,
@@ -1261,8 +1797,46 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             'is_public' => false,
             'is_active' => true
         ]);
+    }
 
-        return $fichier;
+    /**
+     * Sauvegarder le fichier procès verbal avec version
+     */
+    private function sauvegarderFichierProcesVerbal(Projet $projet, $fichier, array $data, int $version = 1): Fichier
+    {
+        // Générer les informations du fichier
+        $nomOriginal = $fichier->getClientOriginalName();
+        $extension = $fichier->getClientOriginalExtension();
+        $nomStockage = "proces_verbal_prefaisabilite_v{$version}.{$extension}";
+        $chemin = $fichier->storeAs("projets/{$projet->id}/prefaisabilite", $nomStockage, 'public');
+
+        // Créer l'enregistrement Fichier
+        return Fichier::create([
+            'nom_original' => $nomOriginal,
+            'nom_stockage' => $nomStockage,
+            'chemin' => $chemin,
+            'extension' => $extension,
+            'mime_type' => $fichier->getMimeType(),
+            'taille' => $fichier->getSize(),
+            'hash_md5' => md5_file($fichier->getRealPath()),
+            'description' => 'Procès verbal de préfaisabilité',
+            'commentaire' => $data['commentaire_proces_verbal'] ?? null,
+            'metadata' => [
+                'type_document' => 'proces-verbal-prefaisabilite',
+                'projet_id' => $projet->id,
+                'version' => $version,
+                'statut' => 'actif',
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now()
+            ],
+            'fichier_attachable_id' => $projet->id,
+            'fichier_attachable_type' => Projet::class,
+            'categorie' => 'proces-verbal-prefaisabilite',
+            'ordre' => 2,
+            'uploaded_by' => auth()->id(),
+            'is_public' => false,
+            'is_active' => true
+        ]);
     }
 
     /**
@@ -1412,6 +1986,194 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
+     * Traiter la checklist de contrôle des adaptations pour projets à haut risque
+     */
+    private function traiterChecklistControleAdaptation($projet, array $checklistData, bool $estBrouillon = false): array
+    {
+        try {
+            // La validation des critères et mesures est déjà faite dans le FormRequest
+            // Ici, on ne fait que le traitement métier
+
+            // Charger les relations nécessaires
+            $projet->load('secteur.parent');
+
+            $mesuresValidees = [];
+            $criteresCompletes = 0;
+            $totalCriteres = count($checklistData['criteres']);
+
+            // Traiter chaque critère de la checklist
+            foreach ($checklistData['criteres'] as $critere) {
+                $critereId = $critere['critere_id'];
+                $mesuresSelectionnees = $critere['mesures_selectionnees'] ?? [];
+
+                // Pour les brouillons, on peut avoir des critères sans mesures
+                if (empty($mesuresSelectionnees) && $estBrouillon) {
+                    continue; // Passer au critère suivant pour les brouillons
+                }
+
+                // Enregistrer les mesures validées
+                foreach ($mesuresSelectionnees as $mesureId) {
+                    $mesuresValidees[] = [
+                        'critere_id' => $critereId,
+                        'mesure_id' => $mesureId,
+                        'secteur_id' => $projet->secteur->parent->id
+                    ];
+                }
+
+                if (!empty($mesuresSelectionnees)) {
+                    $criteresCompletes++;
+                }
+            }
+
+            // Enregistrer la validation de la checklist dans les métadonnées du projet
+            $metadata = $projet->metadata ?? [];
+            $metadata['checklist_controle_adaptation_haut_risque'] = [
+                'est_brouillon' => $estBrouillon,
+                'valide' => !$estBrouillon && $criteresCompletes === $totalCriteres,
+                'mesures_validees' => $mesuresValidees,
+                'criteres_completes' => $criteresCompletes,
+                'total_criteres' => $totalCriteres,
+                'secteur_id' => $projet->secteur->parent->id,
+                'sous_secteur_id' => $projet->secteurId,
+                'derniere_mise_a_jour' => now(),
+                'mis_a_jour_par' => auth()->id()
+            ];
+
+            $projet->update(['metadata' => $metadata]);
+
+            return [
+                'success' => true,
+                'message' => $estBrouillon ?
+                    'Checklist sauvegardée en brouillon.' :
+                    'Checklist de contrôle des adaptations validée avec succès.',
+                'mesures_validees' => count($mesuresValidees),
+                'criteres_completes' => $criteresCompletes,
+                'total_criteres' => $totalCriteres,
+                'est_complete' => $criteresCompletes === $totalCriteres
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Erreur lors du traitement de la checklist: ' . $e->getMessage()
+            ];
+        }
+    }
+
+
+    /**
+     * Déterminer si une nouvelle version doit être créée pour le rapport
+     */
+    private function doitCreerNouvelleVersionRapport(Projet $projet): bool
+    {
+        // Pour les rapports : compter les soumissions précédentes
+        $nombreSoumissions = $projet->workflows()
+            ->where('statut', StatutIdee::VALIDATION_PF)
+            ->count();
+
+        return $nombreSoumissions > 0;
+    }
+
+    /**
+     * Créer une nouvelle version du rapport
+     */
+    private function creerNouvelleVersionRapport(Projet $projet, $fichier, array $data): Fichier
+    {
+        // Récupérer la dernière version
+        $derniereVersion = $projet->rapports_prefaisabilite()
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $nouvelleVersion = 1;
+        if ($derniereVersion) {
+            $versionActuelle = $derniereVersion->metadata['version'] ?? 1;
+            $nouvelleVersion = $versionActuelle + 1;
+
+            // Archiver l'ancienne version
+            $derniereVersion->update([
+                'is_active' => false,
+                'metadata' => array_merge($derniereVersion->metadata ?? [], [
+                    'statut' => 'archive',
+                    'archive_le' => now(),
+                    'remplace_par_version' => $nouvelleVersion
+                ])
+            ]);
+        }
+
+        return $this->sauvegarderFichierRapport($projet, $fichier, $data, $nouvelleVersion);
+    }
+
+    /**
+     * Remplacer le rapport existant (même cycle)
+     */
+    private function remplacerRapportExistant(Projet $projet, $fichier, array $data): Fichier
+    {
+        $rapportExistant = $projet->rapports_prefaisabilite()->where('is_active', true)->first();
+        $version = 1;
+
+        if ($rapportExistant) {
+            $version = $rapportExistant->metadata['version'] ?? 1;
+            // Supprimer l'ancien fichier physique
+            Storage::disk('public')->delete($rapportExistant->chemin);
+            $rapportExistant->delete();
+        }
+
+        return $this->sauvegarderFichierRapport($projet, $fichier, $data, $version);
+    }
+
+    /**
+     * Créer une nouvelle version du procès verbal
+     */
+    private function creerNouvelleVersionProcesVerbal(Projet $projet, $fichier, array $data): Fichier
+    {
+        // Récupérer la dernière version
+        $derniereVersion = $projet->fichiers()
+            ->where('categorie', 'proces-verbal-prefaisabilite')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $nouvelleVersion = 1;
+        if ($derniereVersion) {
+            $versionActuelle = $derniereVersion->metadata['version'] ?? 1;
+            $nouvelleVersion = $versionActuelle + 1;
+
+            // Archiver l'ancienne version
+            $derniereVersion->update([
+                'is_active' => false,
+                'metadata' => array_merge($derniereVersion->metadata ?? [], [
+                    'statut' => 'archive',
+                    'archive_le' => now(),
+                    'remplace_par_version' => $nouvelleVersion
+                ])
+            ]);
+        }
+
+        return $this->sauvegarderFichierProcesVerbal($projet, $fichier, $data, $nouvelleVersion);
+    }
+
+    /**
+     * Remplacer le procès verbal existant (même cycle)
+     */
+    private function remplacerProcesVerbalExistant(Projet $projet, $fichier, array $data): Fichier
+    {
+        $procesVerbalExistant = $projet->fichiers()
+            ->where('categorie', 'proces-verbal-prefaisabilite')
+            ->where('is_active', true)
+            ->first();
+
+        $version = 1;
+
+        if ($procesVerbalExistant) {
+            $version = $procesVerbalExistant->metadata['version'] ?? 1;
+            // Supprimer l'ancien fichier physique
+            Storage::disk('public')->delete($procesVerbalExistant->chemin);
+            $procesVerbalExistant->delete();
+        }
+
+        return $this->sauvegarderFichierProcesVerbal($projet, $fichier, $data, $version);
+    }
+
+    /**
      * Envoyer une notification pour la validation de préfaisabilité
      */
     private function envoyerNotificationValidationPrefaisabilite($projet, string $action, array $data)
@@ -1447,14 +2209,14 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Traitement et sauvegarde du rapport principal
             $fichierRapport = null;
             if (isset($data['rapport_evaluation'])) {
-                $fichierRapport = $this->sauvegarderRapportEvaluationExAnte($projet, $data['rapport_evaluation_ex_ante'], $data);
+                $fichierRapport = $this->gererRapportEvaluationExAnte($projet, $data['rapport_evaluation_ex_ante'], $data);
             }
 
             // Traitement et sauvegarde des annexes
             $fichiersAnnexes = [];
             if (isset($data['documents_annexe']) && is_array($data['documents_annexe'])) {
                 foreach ($data['documents_annexe'] as $index => $annexe) {
-                    $fichiersAnnexes[] = $this->sauvegarderAnnexeRapport($projet, $annexe, $index, $data);
+                    $fichiersAnnexes[] = $this->gererAnnexeRapportExAnte($projet, $annexe, $index, $data);
                 }
             }
 
@@ -1607,15 +2369,182 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
-     * Sauvegarder le rapport d'évaluation ex-ante
+     * Déterminer si une nouvelle version doit être créée pour l'évaluation ex-ante
      */
-    private function sauvegarderRapportEvaluationExAnte(Projet $projet, $fichier, array $data): Fichier
+    private function doitCreerNouvelleVersionEvaluationExAnte(Projet $projet): bool
+    {
+        // Pour l'évaluation ex-ante : compter les soumissions précédentes
+        $nombreSoumissions = $projet->workflows()
+            ->where('statut', StatutIdee::RAPPORT)
+            ->count();
+
+        return $nombreSoumissions > 0;
+    }
+
+    /**
+     * Gérer le rapport d'évaluation ex-ante avec versioning
+     */
+    private function gererRapportEvaluationExAnte(Projet $projet, $fichier, array $data): ?Fichier
+    {
+        // Calculer le hash du nouveau fichier
+        $nouveauHash = md5_file($fichier->getRealPath());
+
+        // Vérifier s'il y a déjà un rapport actif avec le même hash
+        $rapportIdentique = $projet->rapports_evaluation_ex_ante()
+            ->where('hash_md5', $nouveauHash)
+            ->where('is_active', true)
+            ->first();
+
+        if ($rapportIdentique) {
+            return $rapportIdentique;
+        }
+
+        // Déterminer s'il faut une nouvelle version ou remplacer
+        $doitCreerNouvelleVersion = $this->doitCreerNouvelleVersionEvaluationExAnte($projet);
+
+        if ($doitCreerNouvelleVersion) {
+            return $this->creerNouvelleVersionRapportExAnte($projet, $fichier, $data);
+        } else {
+            return $this->remplacerRapportExAnteExistant($projet, $fichier, $data);
+        }
+    }
+
+    /**
+     * Gérer les annexes avec versioning
+     */
+    private function gererAnnexeRapportExAnte(Projet $projet, $fichier, int $index, array $data): ?Fichier
+    {
+        // Calculer le hash du nouveau fichier
+        $nouveauHash = md5_file($fichier->getRealPath());
+
+        // Vérifier s'il y a déjà une annexe identique
+        $annexeIdentique = $projet->documents_annexe_rapports_evaluation_ex_ante()
+            ->where('hash_md5', $nouveauHash)
+            ->where('is_active', true)
+            ->where('ordre', $index + 2)
+            ->first();
+
+        if ($annexeIdentique) {
+            return $annexeIdentique;
+        }
+
+        // Les annexes suivent la même logique que le rapport principal
+        $doitCreerNouvelleVersion = $this->doitCreerNouvelleVersionEvaluationExAnte($projet);
+
+        if ($doitCreerNouvelleVersion) {
+            return $this->creerNouvelleVersionAnnexeExAnte($projet, $fichier, $index, $data);
+        } else {
+            return $this->remplacerAnnexeExAnteExistante($projet, $fichier, $index, $data);
+        }
+    }
+
+    /**
+     * Créer une nouvelle version du rapport ex-ante
+     */
+    private function creerNouvelleVersionRapportExAnte(Projet $projet, $fichier, array $data): Fichier
+    {
+        // Récupérer la dernière version
+        $derniereVersion = $projet->rapports_evaluation_ex_ante()
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $nouvelleVersion = 1;
+        if ($derniereVersion) {
+            $versionActuelle = $derniereVersion->metadata['version'] ?? 1;
+            $nouvelleVersion = $versionActuelle + 1;
+
+            // Archiver l'ancienne version
+            $derniereVersion->update([
+                'is_active' => false,
+                'metadata' => array_merge($derniereVersion->metadata ?? [], [
+                    'statut' => 'archive',
+                    'archive_le' => now(),
+                    'remplace_par_version' => $nouvelleVersion
+                ])
+            ]);
+        }
+
+        return $this->sauvegarderRapportEvaluationExAnte($projet, $fichier, $data, $nouvelleVersion);
+    }
+
+    /**
+     * Remplacer le rapport ex-ante existant
+     */
+    private function remplacerRapportExAnteExistant(Projet $projet, $fichier, array $data): Fichier
+    {
+        $rapportExistant = $projet->rapports_evaluation_ex_ante()->where('is_active', true)->first();
+        $version = 1;
+
+        if ($rapportExistant) {
+            $version = $rapportExistant->metadata['version'] ?? 1;
+            Storage::disk('public')->delete($rapportExistant->chemin);
+            $rapportExistant->delete();
+        }
+
+        return $this->sauvegarderRapportEvaluationExAnte($projet, $fichier, $data, $version);
+    }
+
+    /**
+     * Créer une nouvelle version d'annexe ex-ante
+     */
+    private function creerNouvelleVersionAnnexeExAnte(Projet $projet, $fichier, int $index, array $data): Fichier
+    {
+        // Récupérer la dernière version de cette annexe
+        $derniereVersion = $projet->documents_annexe_rapports_evaluation_ex_ante()
+            ->where('ordre', $index + 2)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $nouvelleVersion = 1;
+        if ($derniereVersion) {
+            $versionActuelle = $derniereVersion->metadata['version'] ?? 1;
+            $nouvelleVersion = $versionActuelle + 1;
+
+            // Archiver l'ancienne version
+            $derniereVersion->update([
+                'is_active' => false,
+                'metadata' => array_merge($derniereVersion->metadata ?? [], [
+                    'statut' => 'archive',
+                    'archive_le' => now(),
+                    'remplace_par_version' => $nouvelleVersion
+                ])
+            ]);
+        }
+
+        return $this->sauvegarderAnnexeRapport($projet, $fichier, $index, $data, $nouvelleVersion);
+    }
+
+    /**
+     * Remplacer l'annexe ex-ante existante
+     */
+    private function remplacerAnnexeExAnteExistante(Projet $projet, $fichier, int $index, array $data): Fichier
+    {
+        $annexeExistante = $projet->documents_annexe_rapports_evaluation_ex_ante()
+            ->where('ordre', $index + 2)
+            ->where('is_active', true)
+            ->first();
+
+        $version = 1;
+
+        if ($annexeExistante) {
+            $version = $annexeExistante->metadata['version'] ?? 1;
+            Storage::disk('public')->delete($annexeExistante->chemin);
+            $annexeExistante->delete();
+        }
+
+        return $this->sauvegarderAnnexeRapport($projet, $fichier, $index, $data, $version);
+    }
+
+    /**
+     * Sauvegarder le rapport d'évaluation ex-ante avec version
+     */
+    private function sauvegarderRapportEvaluationExAnte(Projet $projet, $fichier, array $data, int $version = 1): Fichier
     {
         // Générer les informations du fichier
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = 'rapport_evaluation_ex_ante_' . $projet->id . '_' . time() . '.' . $extension;
-        $chemin = $fichier->storeAs('rapports/evaluation-ex-ante', $nomStockage, 'public');
+        $nomStockage = "rapport_evaluation_ex_ante_v{$version}.{$extension}";
+        $chemin = $fichier->storeAs("projets/{$projet->id}/evaluation-ex-ante", $nomStockage, 'public');
 
         // Créer l'enregistrement Fichier
         return Fichier::create([
@@ -1631,7 +2560,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             'metadata' => [
                 'type_document' => 'rapport-evaluation-ex-ante',
                 'projet_id' => $projet->id,
-                //'ministere_sectoriel' => $data['ministere_sectoriel'] ?? null,
+                'version' => $version,
+                'statut' => 'actif',
                 'soumis_par' => auth()->id(),
                 'soumis_le' => now()
             ],
@@ -1646,15 +2576,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
-     * Sauvegarder une annexe du rapport
+     * Sauvegarder une annexe du rapport avec version
      */
-    private function sauvegarderAnnexeRapport(Projet $projet, $fichier, int $index, array $data): Fichier
+    private function sauvegarderAnnexeRapport(Projet $projet, $fichier, int $index, array $data, int $version = 1): Fichier
     {
         // Générer les informations du fichier
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = 'annexe_rapport_' . $projet->id . '_' . ($index + 1) . '_' . time() . '.' . $extension;
-        $chemin = $fichier->storeAs('rapports/evaluation-ex-ante/annexes', $nomStockage, 'public');
+        $nomStockage = "annexe_{$index}_v{$version}.{$extension}";
+        $chemin = $fichier->storeAs("projets/{$projet->id}/evaluation-ex-ante", $nomStockage, 'public');
 
         // Créer l'enregistrement Fichier
         return Fichier::create([
@@ -1671,6 +2601,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'type_document' => 'annexe-rapport-evaluation-ex-ante',
                 'projet_id' => $projet->id,
                 'numero_annexe' => $index + 1,
+                'version' => $version,
+                'statut' => 'actif',
                 'soumis_par' => auth()->id(),
                 'soumis_le' => now()
             ],

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Http\Resources\CanevasAppreciationTdrResource;
+use App\Http\Resources\CanevasRedactionTdrPrefaisabiliteResource;
+use App\Http\Resources\CanevasRedactionTdrFaisabiliteResource;
 use Illuminate\Http\JsonResponse;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -23,8 +25,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
     public function __construct(
         DocumentRepositoryInterface $repository,
         DocumentStructureService $structureService
-    )
-    {
+    ) {
         parent::__construct($repository);
         $this->structureService = $structureService;
     }
@@ -71,7 +72,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 ->additional(['message' => 'Document créé avec succès.'])
                 ->response()
                 ->setStatusCode(201);
-
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e);
@@ -353,7 +353,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $documentData = collect($data)->except(['sections', 'champs', 'id'])->toArray();
 
                 // Mettre à jour le document principal
-                $ficheIdee->update($documentData);//$this->repository->update($id, $documentData);
+                $ficheIdee->update($documentData); //$this->repository->update($id, $documentData);
 
                 $ficheIdee->refresh();
 
@@ -417,7 +417,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     ->response()
                     ->setStatusCode(201);
             }
-
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e);
@@ -441,7 +440,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 ->additional(['message' => 'Fiche idée récupérée avec succès.'])
                 ->response()
                 ->setStatusCode(200);
-
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -465,7 +463,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
                 ->response()
                 ->setStatusCode(200);
-
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -524,7 +521,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     ->response()
                     ->setStatusCode(201);
             }
-
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e);
@@ -747,6 +743,945 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             ->forceDelete();
     }
 
+    /** Etude de Prefaisabilite */
+
+    public function canevasChecklistSuiviRapportPrefaisabilite(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas de checklist suivi rapport préfaisabilité unique
+            $canevas = $this->repository->getCanevasChecklistSuiviRapportPrefaisabilite();
+
+            if (!$canevas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas de checklist suivi rapport préfaisabilité trouvé.'
+                ], 404);
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => 'Canevas de checklist suivi rapport préfaisabilité récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function createOrUpdateCanevasChecklistSuiviRapportPrefaisabilite(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasChecklistSuiviRapportPrefaisabilite();
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-suivi-rapport-prefaisabilite')->firstOrFail()->id;
+
+            if ($canevas) {
+                unset($data["slug"]);
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['options_notation'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
+                // $this->cleanupRemovedElements($canevas, $payloadIds);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasChecklistSuiviRapportPrefaisabilite();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas de checklist suivi rapport préfaisabilité mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                $data["slug"] = "canevas-checklist-suivi-rapport-prefaisabilite";
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                if (isset($data['options_notation'])) {
+
+                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasChecklistSuiviRapportPrefaisabilite();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => 'Canevas de checklist suivi rapport préfaisabilité créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function canevasChecklistMesuresAdaptation(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas de checklist mesures adaptation unique
+            $canevas = $this->repository->getCanevasChecklistMesuresAdaptation();
+
+            if (!$canevas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas de checklist mesures adaptation trouvé.'
+                ], 404);
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => 'Canevas de checklist mesures adaptation récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+    public function createOrUpdateCanevasChecklistMesuresAdaptation(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasChecklistMesuresAdaptation();
+            $data['categorieId'] = CategorieDocument::where('slug', 'checklist-mesures-adaptation-haut-risque')->firstOrFail()->id;
+
+            if ($canevas) {
+                unset($data["slug"]);
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['options_notation'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
+                // $this->cleanupRemovedElements($canevas, $payloadIds);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasChecklistMesuresAdaptation();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas de checklist mesures adaptation mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                $data["slug"] = "checklist-mesures-adaptation-haut-risque";
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                if (isset($data['options_notation'])) {
+
+                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasChecklistMesuresAdaptation();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => 'Canevas de checklist mesures adaptation créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    /** Etude de Faisabilite */
+
+    public function canevasChecklistEtudeFaisabiliteMarche(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas de checklist etude faisabilite marche unique
+            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteMarche();
+
+            if (!$canevas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas de checklist etude faisabilite marche trouvé.'
+                ], 404);
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => 'Canevas de checklist etude faisabilite marche récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function createOrUpdateCanevasChecklistEtudeFaisabiliteMarche(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteMarche();
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-etude-faisabilite-marche')->firstOrFail()->id;
+
+            if ($canevas) {
+                unset($data["slug"]);
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['options_notation'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
+                // $this->cleanupRemovedElements($canevas, $payloadIds);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteMarche();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas de checklist etude faisabilite marche mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                $data["slug"] = "canevas-checklist-etude-faisabilite-marche";
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                if (isset($data['options_notation'])) {
+
+                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasChecklistEtudeFaisabiliteMarche();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => 'Canevas de checklist etude faisabilite marche créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function getCanevasChecklistEtudeFaisabiliteEconomique()
+    {
+        try {
+            // Récupérer le canevas de note conceptuelle unique
+            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteEconomique();
+
+            if (!$canevas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas de rédaction de note conceptuelle trouvé.'
+                ], 404);
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function createOrUpdateCanevasChecklistEtudeFaisabiliteEconomique(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteEconomique();
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-etude-faisabilite-economique')->firstOrFail()->id;
+
+            if ($canevas) {
+                unset($data["slug"]);
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['options_notation'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
+                // $this->cleanupRemovedElements($canevas, $payloadIds);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteEconomique();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas de checklist etude faisabilite economique mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                $data["slug"] = "canevas-checklist-etude-faisabilite-economique";
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                if (isset($data['options_notation'])) {
+
+                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasChecklistEtudeFaisabiliteEconomique();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => 'Canevas de checklist etude faisabilite economique créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function canevasChecklistEtudeFaisabiliteTechnique(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas de checklist etude faisabilite technique unique
+            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteTechnique();
+
+            if (!$canevas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas de checklist etude faisabilite technique trouvé.'
+                ], 404);
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => 'Canevas de checklist etude faisabilite technique récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function createOrUpdateCanevasChecklistEtudeFaisabiliteTechnique(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteTechnique();
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-etude-faisabilite-technique')->firstOrFail()->id;
+
+            if ($canevas) {
+                unset($data["slug"]);
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['options_notation'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
+                // $this->cleanupRemovedElements($canevas, $payloadIds);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteTechnique();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                $data["slug"] = "canevas-appreciation-tdr";
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                if (isset($data['options_notation'])) {
+
+                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasChecklistEtudeFaisabiliteTechnique();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => 'Canevas de note conceptuelle créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function canevasChecklistEtudeFaisabiliteFinanciere(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas de note conceptuelle unique
+            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteFinanciere();
+
+            if (!$canevas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas de rédaction de note conceptuelle trouvé.'
+                ], 404);
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function createOrUpdateCanevasChecklistEtudeFaisabiliteFinanciere(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteFinanciere();
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-analyse-faisabilite-financiere')->firstOrFail()->id;
+
+            if ($canevas) {
+                unset($data["slug"]);
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['options_notation'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
+                // $this->cleanupRemovedElements($canevas, $payloadIds);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteFinanciere();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                $data["slug"] = "canevas-appreciation-tdr";
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                if (isset($data['options_notation'])) {
+
+                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasChecklistEtudeFaisabiliteFinanciere();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => 'Canevas de note conceptuelle créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function canevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas de note conceptuelle unique
+            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique();
+
+            if (!$canevas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas de rédaction de note conceptuelle trouvé.'
+                ], 404);
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function createOrUpdateCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique();
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-etude-faisabilite-organisationnelle-juridique')->firstOrFail()->id;
+
+            if ($canevas) {
+                unset($data["slug"]);
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['options_notation'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
+                // $this->cleanupRemovedElements($canevas, $payloadIds);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                $data["slug"] = "canevas-appreciation-tdr";
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                if (isset($data['options_notation'])) {
+
+                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => 'Canevas de note conceptuelle créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function canevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas de note conceptuelle unique
+            $canevas = $this->repository->getCanevasChecklistEtudeImpactEnvironnementalEtSociale();
+
+            if (!$canevas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas de rédaction de note conceptuelle trouvé.'
+                ], 404);
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function createOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasChecklistEtudeImpactEnvironnementalEtSociale();
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-etude-faisabilite-environnemental-sociale')->firstOrFail()->id;
+
+            if ($canevas) {
+                unset($data["slug"]);
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['options_notation'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
+                // $this->cleanupRemovedElements($canevas, $payloadIds);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasChecklistEtudeImpactEnvironnementalEtSociale();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                $data["slug"] = "canevas-appreciation-tdr";
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                if (isset($data['options_notation'])) {
+
+                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasChecklistEtudeImpactEnvironnementalEtSociale();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => 'Canevas de note conceptuelle créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function canevasChecklistSuiviAssuranceQualiteEtudeFaisabilite(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas de note conceptuelle unique
+            $canevas = $this->repository->getCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite();
+
+            if (!$canevas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas de rédaction de note conceptuelle trouvé.'
+                ], 404);
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function createOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite();
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-suivi-assurance-qualite-etude-faisabilite')->firstOrFail()->id;
+
+            if ($canevas) {
+                unset($data["slug"]);
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['options_notation'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
+                // $this->cleanupRemovedElements($canevas, $payloadIds);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                $data["slug"] = "canevas-appreciation-tdr";
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                if (isset($data['options_notation'])) {
+
+                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => 'Canevas de note conceptuelle créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
     public function canevasAppreciationTDR(): JsonResponse
     {
         try {
@@ -764,7 +1699,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
                 ->response()
                 ->setStatusCode(200);
-
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -846,11 +1780,327 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     ->response()
                     ->setStatusCode(201);
             }
-
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e);
         }
     }
 
+    public function canevasRedactionTdrPrefaisabilite(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas de rédaction TDR préfaisabilité unique
+            $canevas = $this->repository->getCanevasRedactionTdrPrefaisabilite();
+
+            if (!$canevas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas de rédaction TDR préfaisabilité trouvé.'
+                ], 404);
+            }
+
+            return (new CanevasRedactionTdrPrefaisabiliteResource($canevas))
+                ->additional(['message' => 'Canevas de rédaction TDR préfaisabilité récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function createOrUpdateCanevasRedactionTdrPrefaisabilite(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasRedactionTdrPrefaisabilite();
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-tdr-prefaisabilite')->firstOrFail()->id;
+
+            if ($canevas) {
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                unset($documentData["evaluation_configs"]);
+                unset($documentData["options_notation"]);
+                $canevas->update($documentData);
+                $canevas->refresh();
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // Supprimer les éléments non présents dans le payload
+                $this->cleanupRemovedElements($canevas, $payloadIds);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasRedactionTdrPrefaisabilite();
+
+                return (new CanevasRedactionTdrPrefaisabiliteResource($canevas))
+                    ->additional(['message' => 'Canevas de rédaction TDR préfaisabilité mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                unset($documentData["evaluation_configs"]);
+                unset($documentData["options_notation"]);
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasRedactionTdrPrefaisabilite();
+
+                return (new CanevasRedactionTdrPrefaisabiliteResource($document))
+                    ->additional(['message' => 'Canevas de rédaction TDR préfaisabilité créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function configurerChecklistTdrPrefaisabilite(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasRedactionTdrPrefaisabilite();
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-tdr-prefaisabilite')->firstOrFail()->id;
+
+            if ($canevas) {
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['options_notation'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+
+                    DB::commit();
+                    $canevas->refresh();
+                }
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasRedactionTdrPrefaisabilite();
+
+                return (new CanevasRedactionTdrPrefaisabiliteResource($canevas))
+                    ->additional(['message' => 'Canevas de rédaction TDR préfaisabilité mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                // Mode création
+                $documentData = collect($data)->except(['forms'])->toArray();
+
+                if (isset($data['options_notation'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $documentData = array_merge($documentData, ['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasRedactionTdrPrefaisabilite();
+
+                return (new CanevasRedactionTdrPrefaisabiliteResource($document))
+                    ->additional(['message' => 'Canevas de rédaction TDR préfaisabilité créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function canevasRedactionTdrFaisabilite(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas de rédaction TDR faisabilité unique
+            $canevas = $this->repository->getCanevasRedactionTdrFaisabilite();
+
+            if (!$canevas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas de rédaction TDR faisabilité trouvé.'
+                ], 404);
+            }
+
+            return (new CanevasRedactionTdrFaisabiliteResource($canevas))
+                ->additional(['message' => 'Canevas de rédaction TDR faisabilité récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function createOrUpdateCanevasRedactionTdrFaisabilite(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasRedactionTdrFaisabilite();
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-tdr-faisabilite')->firstOrFail()->id;
+
+            if ($canevas) {
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                unset($documentData["evaluation_configs"]);
+                unset($documentData["options_notation"]);
+
+                $canevas->update($documentData);
+                $canevas->refresh();
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // Supprimer les éléments non présents dans le payload
+                $this->cleanupRemovedElements($canevas, $payloadIds);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasRedactionTdrFaisabilite();
+
+                return (new CanevasRedactionTdrFaisabiliteResource($canevas))
+                    ->additional(['message' => 'Canevas de rédaction TDR faisabilité mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                unset($documentData["evaluation_configs"]);
+                unset($documentData["options_notation"]);
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasRedactionTdrFaisabilite();
+
+                return (new CanevasRedactionTdrFaisabiliteResource($document))
+                    ->additional(['message' => 'Canevas de rédaction TDR faisabilité créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function configurerChecklistTdrFaisabilite(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasRedactionTdrFaisabilite();
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-tdr-faisabilite')->firstOrFail()->id;
+
+            if ($canevas) {
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['options_notation'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+
+                    DB::commit();
+                    $canevas->refresh();
+                }
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasRedactionTdrFaisabilite();
+
+                return (new CanevasRedactionTdrFaisabiliteResource($canevas))
+                    ->additional(['message' => 'Canevas de rédaction TDR préfaisabilité mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                // Mode création
+                $documentData = collect($data)->except(['forms'])->toArray();
+
+                if (isset($data['options_notation'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $documentData = array_merge($documentData, ['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasRedactionTdrFaisabilite();
+
+                return (new CanevasRedactionTdrFaisabiliteResource($document))
+                    ->additional(['message' => 'Canevas de rédaction TDR préfaisabilité créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
 }

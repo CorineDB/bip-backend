@@ -59,6 +59,14 @@ class Notation extends Model
     protected static function boot()
     {
         parent::boot();
+
+        static::deleting(function ($notation) {
+            // Modifier le libellé et la valeur pour éviter les conflits lors de futures créations
+            $notation->update([
+                'libelle' => time() . '::' . $notation->libelle,
+                'valeur' => time() . '::' . $notation->valeur,
+            ]);
+        });
     }
 
     /**

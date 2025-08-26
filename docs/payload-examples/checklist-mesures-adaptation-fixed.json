@@ -1,0 +1,216 @@
+{
+  "criteres": [
+    {
+      "intitule": "Chaleur",
+      "ponderation": 25,
+      "commentaire": "Mesures d'adaptation contre les températures élevées",
+      "is_mandatory": true,
+      "secteurs": [
+        {
+          "secteur_id": 47,
+          "mesures": [
+            {
+              "libelle": "Gestion des ressources en eau",
+              "valeur": "gestion-des-ressources-en-eau",
+              "commentaire": "Optimisation de l'utilisation de l'eau pour les cultures"
+            },
+            {
+              "libelle": "Irrigation à haut rendement", 
+              "valeur": "irrigation-a-haut-rendement",
+              "commentaire": "Systèmes d'irrigation économes en eau"
+            }
+          ]
+        },
+        {
+          "secteur_id": 15,
+          "mesures": [
+            {
+              "libelle": "Systèmes de refroidissement efficaces",
+              "valeur": "systemes-de-refroidissement-efficaces",
+              "commentaire": "Technologies de refroidissement pour infrastructure énergétique"
+            },
+            {
+              "libelle": "Composants résistants à la chaleur",
+              "valeur": "composants-resistants-a-la-chaleur",
+              "commentaire": "Équipements adaptés aux hautes températures"
+            }
+          ]
+        },
+        {
+          "secteur_id": 11,
+          "mesures": [
+            {
+              "libelle": "Comptage et tarifs de l'eau",
+              "valeur": "comptage-et-tarifs-de-l-eau",
+              "commentaire": "Gestion économique des ressources hydriques"
+            },
+            {
+              "libelle": "Gestion de la demande en eau",
+              "valeur": "gestion-de-la-demande-en-eau",
+              "commentaire": "Optimisation de la consommation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "intitule": "Sécheresse",
+      "ponderation": 25,
+      "commentaire": "Mesures d'adaptation contre la sécheresse",
+      "is_mandatory": true,
+      "secteurs": [
+        {
+          "secteur_id": 47,
+          "mesures": [
+            {
+              "libelle": "Techniques d'agriculture sèche",
+              "valeur": "techniques-agriculture-seche",
+              "commentaire": "Pratiques agricoles économes en eau"
+            },
+            {
+              "libelle": "Stockage de l'eau agricole",
+              "valeur": "stockage-eau-agricole", 
+              "commentaire": "Réservoirs et citernes pour l'irrigation"
+            }
+          ]
+        },
+        {
+          "secteur_id": 15,
+          "mesures": [
+            {
+              "libelle": "Refroidissement sans eau",
+              "valeur": "refroidissement-sans-eau",
+              "commentaire": "Technologies de refroidissement à sec"
+            },
+            {
+              "libelle": "Efficacité énergétique renforcée",
+              "valeur": "efficacite-energetique-renforcee",
+              "commentaire": "Réduction de la consommation d'énergie"
+            }
+          ]
+        },
+        {
+          "secteur_id": 11,
+          "mesures": [
+            {
+              "libelle": "Recherche de nouvelles sources d'eau",
+              "valeur": "recherche-nouvelles-sources-eau",
+              "commentaire": "Exploration de nappes profondes"
+            },
+            {
+              "libelle": "Recyclage des eaux usées",
+              "valeur": "recyclage-des-eaux-usees",
+              "commentaire": "Traitement et réutilisation des eaux"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "intitule": "Inondations",
+      "ponderation": 25,
+      "commentaire": "Mesures d'adaptation contre les inondations",
+      "is_mandatory": true,
+      "secteurs": [
+        {
+          "secteur_id": 47,
+          "mesures": [
+            {
+              "libelle": "Drainage des terres agricoles",
+              "valeur": "drainage-terres-agricoles",
+              "commentaire": "Systèmes de drainage pour évacuer l'excès d'eau"
+            },
+            {
+              "libelle": "Cultures résistantes aux inondations",
+              "valeur": "cultures-resistantes-aux-inondations",
+              "commentaire": "Variétés adaptées aux conditions humides"
+            }
+          ]
+        },
+        {
+          "secteur_id": 15,
+          "mesures": [
+            {
+              "libelle": "Protection des installations électriques",
+              "valeur": "protection-installations-electriques",
+              "commentaire": "Étanchéité et protection contre l'eau"
+            },
+            {
+              "libelle": "Plans d'urgence énergétique",
+              "valeur": "plans-urgence-energetique",
+              "commentaire": "Protocoles de continuité de service"
+            }
+          ]
+        },
+        {
+          "secteur_id": 11,
+          "mesures": [
+            {
+              "libelle": "Infrastructure de rétention d'eau",
+              "valeur": "infrastructure-retention-eau",
+              "commentaire": "Bassins de rétention et ouvrages hydrauliques"
+            },
+            {
+              "libelle": "Systèmes de pompage d'urgence",
+              "valeur": "systemes-pompage-urgence",
+              "commentaire": "Équipements d'évacuation rapide"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "intitule": "Vents forts",
+      "ponderation": 25,
+      "commentaire": "Mesures d'adaptation contre les vents violents",
+      "is_mandatory": true,
+      "secteurs": [
+        {
+          "secteur_id": 47,
+          "mesures": [
+            {
+              "libelle": "Brise-vents et haies protectrices",
+              "valeur": "brise-vents-et-haies-protectrices",
+              "commentaire": "Barrières végétales contre le vent"
+            },
+            {
+              "libelle": "Structures agricoles renforcées",
+              "valeur": "structures-agricoles-renforcees",
+              "commentaire": "Bâtiments résistants aux vents forts"
+            }
+          ]
+        },
+        {
+          "secteur_id": 15,
+          "mesures": [
+            {
+              "libelle": "Renforcement des lignes électriques",
+              "valeur": "renforcement-des-lignes-electriques",
+              "commentaire": "Infrastructure électrique résistante au vent"
+            },
+            {
+              "libelle": "Enfouissement des câbles",
+              "valeur": "enfouissement-des-cables",
+              "commentaire": "Protection souterraine des réseaux"
+            }
+          ]
+        },
+        {
+          "secteur_id": 11,
+          "mesures": [
+            {
+              "libelle": "Protection des installations de captage",
+              "valeur": "protection-des-installations-de-captage",
+              "commentaire": "Sécurisation des points de prélèvement"
+            },
+            {
+              "libelle": "Réseaux souterrains protégés",
+              "valeur": "reseaux-souterrains-proteges",
+              "commentaire": "Enfouissement des canalisations principales"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

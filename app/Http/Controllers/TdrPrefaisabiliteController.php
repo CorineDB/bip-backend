@@ -9,6 +9,8 @@ use App\Http\Requests\tdrs\SoumettreTdrsRequest;
 use App\Http\Requests\tdrs\EvaluerTdrsRequest;
 use App\Http\Requests\tdrs\SoumettreRapportPrefaisabiliteRequest;
 use App\Http\Requests\tdrs\ValiderTdrsRequest;
+use App\Http\Requests\tdrs_prefaisabilite\StoreTdrPrefaisabiliteRequest;
+use App\Http\Requests\tdrs_prefaisabilite\UpdateTdrPrefaisabiliteRequest;
 use App\Services\Contracts\TdrPrefaisabiliteServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +22,31 @@ class TdrPrefaisabiliteController extends Controller
     public function __construct(TdrPrefaisabiliteServiceInterface $service)
     {
         $this->service = $service;
+    }
+
+    public function index(): JsonResponse
+    {
+        return $this->service->all();
+    }
+
+    public function show($id): JsonResponse
+    {
+        return $this->service->find($id);
+    }
+
+    public function store(StoreTdrPrefaisabiliteRequest $request): JsonResponse
+    {
+        return $this->service->create($request->all());
+    }
+
+    public function update(UpdateTdrPrefaisabiliteRequest $request, $id): JsonResponse
+    {
+        return $this->service->update($id, $request->all());
+    }
+
+    public function destroy($id): JsonResponse
+    {
+        return $this->service->delete($id);
     }
 
     /**

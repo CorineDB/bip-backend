@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\categories_critere\checklistMesuresAdaptation\CreateOrUpdateChecklistRequest;
 use App\Http\Requests\categories_critere\StoreCategorieCritereRequest;
 use App\Http\Requests\categories_critere\UpdateCategorieCritereRequest;
 use App\Services\Contracts\CategorieCritereServiceInterface;
@@ -351,11 +352,11 @@ class CategorieCritereController extends Controller
     }
 
     /**
-     * Soumettre la checklist des mesures d'adaptation pour un projet
+     * Créer ou mettre à jour la checklist des mesures d'adaptation
      */
-    public function soumettreChecklistMesuresAdaptation(\Illuminate\Http\Request $request, int $projetId): JsonResponse
+    public function createOrUpdateChecklistMesuresAdaptation(CreateOrUpdateChecklistRequest $request): JsonResponse
     {
-        return $this->service->soumettreChecklistMesuresAdaptation($projetId, $request->all());
+        return $this->service->createOrUpdateChecklistMesuresAdaptation($request->validated());
     }
 
 }

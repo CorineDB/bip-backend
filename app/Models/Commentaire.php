@@ -30,7 +30,11 @@ class Commentaire extends Model
      * @var array
      */
     protected $fillable = [
-        // Exemple : 'nom', 'programmeId'
+        'commentaire',
+        'date',
+        'commentaireable_type',
+        'commentaireable_id',
+        'commentateurId'
     ];
 
     /**
@@ -39,9 +43,10 @@ class Commentaire extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'created_at' => 'datetime:Y-m-d',
-        'updated_at' => 'datetime:Y-m-d H:i:s',
-        'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'date' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     /**
@@ -50,8 +55,44 @@ class Commentaire extends Model
      * @var array
      */
     protected $hidden = [
-        // Exemple : 'programmeId', 'updated_at', 'deleted_at'
+        'deleted_at'
     ];
+
+    // Relations
+
+    /**
+     * Relation polymorphique vers l'entité commentée
+     */
+    public function commentaireable()
+    {
+        return $this->morphTo('commentaireable', 'commentaireable_type', 'commentaireable_id');
+    }
+
+    /**
+     * Relation avec l'utilisateur qui a fait le commentaire
+     */
+    public function commentateur()
+    {
+        return $this->belongsTo(User::class, 'commentateurId');
+    }
+
+    // Scopes
+
+    /**
+     * Scope pour les commentaires récents
+     */
+    public function scopeRecents($query, int $jours = 7)
+    {
+        return $query->where('created_at', '>=', now()->subDays($jours));
+    }
+
+    /**
+     * Scope pour les commentaires d'un utilisateur
+     */
+    public function scopeParCommentateur($query, int $commentateurId)
+    {
+        return $query->where('commentateurId', $commentateurId);
+    }
 
     /**
      * The model's boot method.
@@ -60,13 +101,10 @@ class Commentaire extends Model
     {
         parent::boot();
 
-        static::deleting(function ($model) {
-            $model->update([
-                // Exemple : 'nom' => time() . '::' . $model->nom,
-            ]);
-
-            if (method_exists($model, 'user')) {
-                // Exemple : $model->user()->delete();
+        // Définir automatiquement la date lors de la création
+        static::creating(function ($commentaire) {
+            if (!$commentaire->date) {
+                $commentaire->date = now();
             }
         });
     }

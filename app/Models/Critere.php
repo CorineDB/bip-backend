@@ -59,6 +59,13 @@ class Critere extends Model
     protected static function boot()
     {
         parent::boot();
+
+        static::deleting(function ($critere) {
+            // Modifier l'intitulé pour éviter les conflits lors de futures créations
+            $critere->update([
+                'intitule' => time() . '::' . $critere->intitule,
+            ]);
+        });
     }
 
     /**

@@ -74,9 +74,71 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ], 422);
             }
 
-            // Traitement et sauvegarde du fichier TDR
-            $fichierTdr = null;
+            // Extraire les données spécifiques au payload
+            $champsData = $data['champs'] ?? [];
+            $documentsData = $data['documents'] ?? [];
+            $estSoumise = $data['est_soumise'] ?? true;
 
+            // Déterminer le statut selon est_soumise
+            $statut = $estSoumise ? 'soumis' : 'brouillon';
+
+            // Préparer les données du TDR
+            $tdrData = [
+                'projet_id' => $projetId,
+                'type' => 'faisabilite',
+                'statut' => $statut,
+                'resume' => $data['resume_tdr_faisabilite'] ?? 'TDR de faisabilité',
+                'termes_de_reference' => $champsData,
+                'date_soumission' => $estSoumise ? now() : null,
+                'soumis_par_id' => auth()->id(),
+                'rediger_par_id' => auth()->id(),
+            ];
+
+            // Chercher un TDR existant pour ce projet et type
+            $tdrExistant = \App\Models\Tdr::where('projet_id', $projetId)
+                ->where('type', 'faisabilite')
+                ->orderBy("created_at", "desc")
+                ->first();
+
+            if ($tdrExistant && $tdrExistant->statut === 'soumis') {
+                // Si un TDR soumis existe déjà, créer une nouvelle version avec parent_id
+                $tdrData['parent_id'] = $tdrExistant->id;
+                $tdr = \App\Models\Tdr::create($tdrData);
+                $message = 'Nouvelle version du TDR de faisabilité créée avec succès.';
+                $statusCode = 201;
+            } elseif ($tdrExistant && $tdrExistant->statut !== 'soumis') {
+                // Si un TDR non soumis existe, le mettre à jour
+                $tdr = $tdrExistant;
+                $tdr->fill($tdrData);
+                $tdr->save();
+                $message = 'TDR de faisabilité mis à jour avec succès.';
+                $statusCode = 200;
+            } else {
+                // Créer un nouveau TDR (première version)
+                $tdr = \App\Models\Tdr::create($tdrData);
+                $message = 'TDR de faisabilité créé avec succès.';
+                $statusCode = 201;
+            }
+
+            // Récupérer le canevas de rédaction TDR faisabilité
+            $canevasTdr = $this->documentRepository->getModel()->where([
+                'type' => 'formulaire'
+            ])->whereHas('categorie', function ($query) {
+                $query->where('slug', 'canevas-redaction-tdr-faisabilite');
+            })->orderBy('created_at', 'desc')->first();
+
+            if ($canevasTdr) {
+                // Sauvegarder les champs dynamiques basés sur le canevas
+                $this->saveDynamicFieldsFromCanevas($tdr, $champsData, $canevasTdr);
+            }
+
+            // Gérer les documents/fichiers
+            if (!empty($documentsData)) {
+                $this->handleDocuments($tdr, $documentsData);
+            }
+
+            // Traitement et sauvegarde du fichier TDR (legacy)
+            $fichierTdr = null;
             if (isset($data['tdr'])) {
                 $fichierTdr = $this->sauvegarderFichierTdr($projet, $data['tdr'], $data);
             }
@@ -86,42 +148,45 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             $projet->resume_tdr_faisabilite = $data["resume_tdr_faisabilite"];
 
-            // Changer le statut du projet
-            $projet->update([
-                'statut' => StatutIdee::EVALUATION_TDR_F,
-                'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_F),
-                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_F)
-            ]);
+            // Changer le statut du projet seulement si est_soumise est true
+            if ($estSoumise) {
+                $projet->update([
+                    'statut' => StatutIdee::EVALUATION_TDR_F,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_F),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_F)
+                ]);
 
-            // Enregistrer le workflow et la décision
-            $this->enregistrerWorkflow($projet, StatutIdee::EVALUATION_TDR_F);
-            $this->enregistrerDecision(
-                $projet,
-                "Soumission des TDRs de faisabilité",
-                $data['resume_tdr_faisabilite'] ?? 'TDRs soumis pour évaluation',
-                auth()->user()->personne->id
-            );
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($projet, StatutIdee::EVALUATION_TDR_F);
+                $this->enregistrerDecision(
+                    $projet,
+                    "Soumission des TDRs de faisabilité",
+                    $data['resume_tdr_faisabilite'] ?? 'TDRs soumis pour évaluation',
+                    auth()->user()->personne->id
+                );
+
+                // Envoyer une notification
+                $this->envoyerNotificationSoumission($projet, $fichierTdr);
+            }
 
             DB::commit();
 
-            // Envoyer une notification
-            $this->envoyerNotificationSoumission($projet, $fichierTdr);
-
             return response()->json([
                 'success' => true,
-                'message' => 'TDRs de faisabilité soumis avec succès.',
+                'message' => $message,
                 'data' => [
+                    'tdr' => $tdr,
                     'projet' => new ProjetResource($projet),
                     'fichier_id' => $fichierTdr ? $fichierTdr->id : null,
                     'projet_id' => $projet->id,
                     'ancien_statut' => in_array($projet->statut->value, [StatutIdee::TDR_FAISABILITE->value, StatutIdee::R_TDR_FAISABILITE->value]) ? $projet->statut->value : StatutIdee::TDR_FAISABILITE->value,
-                    'nouveau_statut' => StatutIdee::EVALUATION_TDR_F->value,
+                    'nouveau_statut' => $estSoumise ? StatutIdee::EVALUATION_TDR_F->value : $projet->statut->value,
                     'fichier_url' => $fichierTdr ? $fichierTdr->url : null,
                     'resume' => $data['resume'] ?? null,
                     'tdr_faisabilite' => $data['tdr_faisabilite'] ?? null,
                     'type_tdr' => $data['type_tdr'] ?? null,
                     'soumis_par' => auth()->id(),
-                    'soumis_le' => now()->format('d/m/Y H:i:s'),
+                    'soumis_le' => $estSoumise ? now()->format('d/m/Y H:i:s') : null,
                     'commentaires_anterieurs' => $commentairesAnterieurs
                 ]
             ]);
@@ -1363,6 +1428,68 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
         // Mettre à jour le projet
         $projet->update(['metadata' => $metadata]);
+    }
+
+    /**
+     * Sauvegarder les champs dynamiques basés sur le canevas
+     */
+    private function saveDynamicFieldsFromCanevas($tdr, array $champsData, $canevasTdr): void
+    {
+        // Récupérer tous les champs du canevas TDR
+        $champsDefinitions = $canevasTdr->all_champs;
+
+        // Indexer par attribut pour accès rapide
+        $champsMap = $champsDefinitions->keyBy('attribut');
+
+        $syncData = [];
+
+        foreach ($champsData as $attribut => $valeur) {
+            if (isset($champsMap[$attribut])) {
+                $champ = $champsMap[$attribut];
+
+                // Le cast JSON du modèle ChampProjet gère automatiquement tout type
+                $syncData[$champ->id] = [
+                    'valeur' => $valeur, // Peut être string, array, object, number, boolean, etc.
+                    'commentaire' => null
+                ];
+            }
+        }
+
+        // Synchroniser tous les champs reçus
+        if (!empty($syncData)) {
+            $tdr->champs()->sync($syncData);
+        }
+    }
+
+    /**
+     * Gérer les documents/fichiers attachés au TDR
+     */
+    private function handleDocuments($tdr, array $documentsData): void
+    {
+        foreach ($documentsData as $documentData) {
+            if (isset($documentData['file']) && $documentData['file']) {
+                $file = $documentData['file'];
+                $categorie = $documentData['categorie'] ?? 'tdr';
+
+                // Stocker le fichier et créer l'enregistrement
+                $path = \Illuminate\Support\Facades\Storage::putFile('tdrs', $file);
+
+                $tdr->fichiers()->create([
+                    'nom_original' => $file->getClientOriginalName(),
+                    'nom_stockage' => basename($path),
+                    'chemin' => $path,
+                    'extension' => $file->getClientOriginalExtension(),
+                    'mime_type' => $file->getMimeType(),
+                    'taille' => $file->getSize(),
+                    'hash_md5' => md5_file($file->getRealPath()),
+                    'description' => $documentData['description'] ?? null,
+                    'categorie' => $categorie,
+                    'uploaded_by' => auth()->id(),
+                    'is_public' => false,
+                    'is_active' => true
+                ]);
+            }
+        }
     }
 
     // Méthodes utilitaires (à implémenter selon les besoins)

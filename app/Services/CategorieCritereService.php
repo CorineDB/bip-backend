@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\SlugHelper;
 use Illuminate\Http\JsonResponse;
 use Exception;
 use App\Services\BaseService;
@@ -9,6 +10,8 @@ use App\Repositories\Contracts\BaseRepositoryInterface;
 use App\Repositories\Contracts\CategorieCritereRepositoryInterface;
 use App\Services\Contracts\CategorieCritereServiceInterface;
 use App\Http\Resources\CategorieCritereResource;
+use App\Http\Resources\ChecklistMesuresAdaptationResource;
+use App\Models\Secteur;
 use App\Models\Critere;
 use App\Models\Notation;
 use Illuminate\Support\Facades\DB;
@@ -223,9 +226,12 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
             // Traiter les documents référentiels s'il y en a
             if (isset($data['documents_referentiel']) && !empty($data['documents_referentiel'])) {
+                $nomsFilesSoumis = [];
+
                 foreach ($data['documents_referentiel'] as $file) {
                     $nomOriginal = $file->getClientOriginalName();
-                    
+                    $nomsFilesSoumis[] = $nomOriginal;
+
                     // Vérifier si un fichier avec ce nom existe déjà
                     $fichierExistant = $grille->fichiers()
                         ->where('nom_original', $nomOriginal)
@@ -264,6 +270,12 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                         ]);
                     }
                 }
+
+                // Supprimer les fichiers qui ne sont plus soumis
+                $grille->fichiers()
+                    ->where('categorie', 'guide-referentiel-appreciation')
+                    ->whereNotIn('nom_original', $nomsFilesSoumis)
+                    ->delete();
             }
 
             // Enlever les fichiers des données avant mise à jour
@@ -320,9 +332,9 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             // Load the grille with criteres, notations and evaluations for the specific idee projet
             $grille->load([
                 'criteres.notations',
-                'criteres.evaluations' => function($query) use ($ideeProjetId) {
+                'criteres.evaluations' => function ($query) use ($ideeProjetId) {
                     $query->where('projetable_type', 'App\\Models\\IdeeProjet')
-                          ->where('projetable_id', $ideeProjetId);
+                        ->where('projetable_id', $ideeProjetId);
                 },
                 'notations'
             ]);
@@ -355,9 +367,12 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
             // Traiter les documents référentiels s'il y en a
             if (isset($data['documents_referentiel']) && !empty($data['documents_referentiel'])) {
+                $nomsFilesSoumis = [];
+
                 foreach ($data['documents_referentiel'] as $file) {
                     $nomOriginal = $file->getClientOriginalName();
-                    
+                    $nomsFilesSoumis[] = $nomOriginal;
+
                     // Vérifier si un fichier avec ce nom existe déjà
                     $fichierExistant = $grille->fichiers()
                         ->where('nom_original', $nomOriginal)
@@ -396,6 +411,12 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                         ]);
                     }
                 }
+
+                // Supprimer les fichiers qui ne sont plus soumis
+                $grille->fichiers()
+                    ->where('categorie', 'guide-referentiel-amc')
+                    ->whereNotIn('nom_original', $nomsFilesSoumis)
+                    ->delete();
             }
 
             // Enlever les fichiers des données avant mise à jour
@@ -430,7 +451,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             return response()->json([
                 'success' => true,
                 'message' => 'Checklist des mesures d\'adaptation récupérée avec succès.',
-                'data' => new $this->resourceClass($checklistCategorie)
+                'data' => new ChecklistMesuresAdaptationResource($checklistCategorie->load(['criteres.notations.secteur', 'fichiers']))
             ]);
         } catch (Exception $e) {
             return $this->errorResponse($e);
@@ -499,7 +520,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 }
 
                 // Enregistrer la réponse
-                \App\Models\ReponseEvaluation::updateOrCreate([
+                \App\Models\EvaluationCritere::updateOrCreate([
                     'evaluation_id' => $evaluation->id,
                     'critere_id' => $critere->id
                 ], [
@@ -511,36 +532,6 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 $scoreTotal += $notation->valeur;
                 $scoreMaximal += 3; // Score maximum par critère
                 $criteresEvalues++;
-            }
-
-            // Traiter les sous-critères spécifiques aux secteurs si fournis
-            if (isset($data['sous_criteres']) && is_array($data['sous_criteres'])) {
-                foreach ($data['sous_criteres'] as $sousCritereId => $reponseData) {
-                    $sousCritere = \App\Models\SousCritere::find($sousCritereId);
-                    if (!$sousCritere) {
-                        continue;
-                    }
-
-                    // Vérifier que le sous-critère appartient à un critère de la checklist
-                    if (!$checklistCategorie->criteres()->where('id', $sousCritere->critere_id)->exists()) {
-                        continue;
-                    }
-
-                    $notation = \App\Models\Notation::find($reponseData['notation_id'] ?? null);
-                    if (!$notation) {
-                        continue;
-                    }
-
-                    // Enregistrer la réponse du sous-critère
-                    \App\Models\ReponseSousCritere::updateOrCreate([
-                        'evaluation_id' => $evaluation->id,
-                        'sous_critere_id' => $sousCritere->id
-                    ], [
-                        'notation_id' => $notation->id,
-                        'commentaire' => $reponseData['commentaire'] ?? null,
-                        'score' => $notation->valeur
-                    ]);
-                }
             }
 
             // Calculer le score final et déterminer le statut
@@ -593,11 +584,220 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                     'criteres_evalues' => $criteresEvalues
                 ]
             ]);
-
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e);
         }
     }
 
+    /**
+     * Créer ou mettre à jour la checklist des mesures d'adaptation
+     */
+    public function createOrUpdateChecklistMesuresAdaptation(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            // Rechercher ou créer la catégorie checklist
+            $checklistCategorie = $this->repository->getModel()->firstOrCreate([
+                'slug' => 'checklist-mesures-adaptation-haut-risque'
+            ], [
+                'type' => "checklist",
+                'slug' => 'checklist-mesures-adaptation-haut-risque',
+                'is_mandatory' => true
+            ]);
+
+            // Mettre à jour les informations de base si c'est une mise à jour
+            if (isset($data['type'])) {
+                $checklistCategorie->update([
+                    'type' => "checklist",
+                    'is_mandatory' => true
+                ]);
+            }
+
+            // Traiter les critères avec leur structure secteurs/notations (mise à jour incrémentale)
+            $this->processCriteresWithSecteurs($checklistCategorie, $data['criteres']);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Checklist des mesures d\'adaptation créée/mise à jour avec succès.',
+                'data' => new ChecklistMesuresAdaptationResource(
+                    $checklistCategorie->fresh(['criteres.notations.secteur'])
+                )
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Nettoyer les critères et notations existants
+     */
+    private function cleanupExistingCriteres($checklistCategorie): void
+    {
+        // Supprimer toutes les notations liées aux critères de cette catégorie
+        Notation::whereHas('critere', function ($query) use ($checklistCategorie) {
+            $query->where('categorie_critere_id', $checklistCategorie->id);
+        })->delete();
+
+        // Supprimer les notations directes de la catégorie (si il y en a)
+        Notation::where('categorie_critere_id', $checklistCategorie->id)
+            ->whereNull('critere_id')
+            ->delete();
+
+        // Supprimer tous les critères de cette catégorie
+        Critere::where('categorie_critere_id', $checklistCategorie->id)->delete();
+    }
+
+    /**
+     * Traiter les critères avec leur structure secteurs/notations (mise à jour incrémentale)
+     */
+    private function processCriteresWithSecteurs($checklistCategorie, array $criteres): void
+    {
+        $criteresTraites = [];
+
+        foreach ($criteres as $critereData) {
+            if (isset($critereData["id"]) && $critereData["id"]) {
+                // Mise à jour d'un critère existant
+                $critere = Critere::find($critereData["id"]);
+                
+                if (!$critere || $critere->categorie_critere_id !== $checklistCategorie->id) {
+                    continue; // Critère non trouvé ou pas dans la bonne catégorie
+                }
+
+                $critere->update([
+                    'intitule' => $critereData['intitule'],
+                    'ponderation' => $critereData['ponderation'],
+                    'commentaire' => $critereData['commentaire'] ?? null,
+                    'is_mandatory' => $critereData['is_mandatory'] ?? true
+                ]);
+
+                $criteresTraites[] = $critere->id;
+            } else {
+                // Création d'un nouveau critère
+                $critere = Critere::create([
+                    'intitule' => $critereData['intitule'],
+                    'categorie_critere_id' => $checklistCategorie->id,
+                    'ponderation' => $critereData['ponderation'],
+                    'commentaire' => $critereData['commentaire'] ?? null,
+                    'is_mandatory' => $critereData['is_mandatory'] ?? true
+                ]);
+
+                $criteresTraites[] = $critere->id;
+            }
+
+            // Traiter les secteurs et leurs mesures
+            $mesuresTraitees = [];
+            
+            foreach ($critereData['secteurs'] as $secteurData) {
+                // Vérifier que secteur_id est fourni
+                if (!isset($secteurData['secteur_id'])) {
+                    continue;
+                }
+
+                $secteur = Secteur::find($secteurData['secteur_id']);
+                if (!$secteur) {
+                    continue; // Secteur non trouvé, ignorer
+                }
+
+                // Traiter les mesures de ce secteur pour ce critère
+                if (isset($secteurData['mesures']) && is_array($secteurData['mesures'])) {
+                    foreach ($secteurData['mesures'] as $mesureData) {
+                        // Gestion des mesures existantes ou nouvelles
+                        if (isset($mesureData['id']) && $mesureData['id']) {
+                            $mesure = Notation::find($mesureData['id']);
+                            
+                            if ($mesure && $mesure->critere_id === $critere->id) {
+                                // Mise à jour d'une mesure existante du bon critère
+                                $mesure->update([
+                                    'libelle' => $mesureData['libelle'],
+                                    'valeur' => $mesureData['valeur'] ?? SlugHelper::generate($mesureData['libelle']),
+                                    'commentaire' => $mesureData['commentaire'] ?? $mesureData['description'] ?? null,
+                                ]);
+                                $mesuresTraitees[] = $mesure->id;
+                            } else if ($mesure && $mesure->critere_id !== $critere->id) {
+                                // Mesure appartient à un autre critère, on lui change de critère et on met à jour
+                                $mesure->update([
+                                    'critere_id' => $critere->id,
+                                    'secteur_id' => $secteur->id,
+                                    'libelle' => $mesureData['libelle'],
+                                    'valeur' => $mesureData['valeur'] ?? SlugHelper::generate($mesureData['libelle']),
+                                    'commentaire' => $mesureData['commentaire'] ?? $mesureData['description'] ?? null
+                                ]);
+                                $mesuresTraitees[] = $mesure->id;
+                            } else {
+                                // Mesure introuvable, créer une nouvelle
+                                $nouvelleMesure = Notation::create([
+                                    'categorie_critere_id' => $checklistCategorie->id,
+                                    'critere_id' => $critere->id,
+                                    'secteur_id' => $secteur->id,
+                                    'libelle' => $mesureData['libelle'],
+                                    'valeur' => $mesureData['valeur'] ?? SlugHelper::generate($mesureData['libelle']),
+                                    'commentaire' => $mesureData['commentaire'] ?? $mesureData['description'] ?? null
+                                ]);
+                                $mesuresTraitees[] = $nouvelleMesure->id;
+                            }
+                        } else {
+                            // Création d'une nouvelle mesure
+                            $nouvelleMesure = Notation::create([
+                                'categorie_critere_id' => $checklistCategorie->id,
+                                'critere_id' => $critere->id,
+                                'secteur_id' => $secteur->id,
+                                'libelle' => $mesureData['libelle'],
+                                'valeur' => $mesureData['valeur'] ?? SlugHelper::generate($mesureData['libelle']),
+                                'commentaire' => $mesureData['commentaire'] ?? $mesureData['description'] ?? null
+                            ]);
+                            $mesuresTraitees[] = $nouvelleMesure->id;
+                        }
+                    }
+                }
+            }
+
+            // Supprimer les mesures non traitées pour ce critère (celles qui ont été retirées)
+            if (!empty($mesuresTraitees)) {
+                Notation::where('critere_id', $critere->id)
+                    ->whereNotIn('id', $mesuresTraitees)
+                    ->delete();
+            }
+        }
+
+        // Supprimer les critères non traités pour cette catégorie (ceux qui ont été retirés)
+        if (!empty($criteresTraites)) {
+            $criteresASupprimer = Critere::where('categorie_critere_id', $checklistCategorie->id)
+                ->whereNotIn('id', $criteresTraites)
+                ->pluck('id');
+
+            if ($criteresASupprimer->isNotEmpty()) {
+                // Supprimer d'abord les notations liées aux critères à supprimer
+                Notation::whereIn('critere_id', $criteresASupprimer)->delete();
+                
+                // Puis supprimer les critères
+                Critere::whereIn('id', $criteresASupprimer)->delete();
+            }
+        }
+    }
+
+
+
+    /**
+     * Récupérer ou créer un secteur et retourner son ID
+     */
+    private function getOrCreateSecteur(string $nomSecteur): int
+    {
+        $slug = Str::slug($nomSecteur);
+
+        $secteur = Secteur::firstOrCreate([
+            'slug' => $slug,
+            'type' => 'secteur'
+        ], [
+            'nom' => $nomSecteur,
+            'slug' => $slug,
+            'description' => "Secteur {$nomSecteur} pour checklist d'adaptation"
+        ]);
+
+        return $secteur->id;
+    }
 }

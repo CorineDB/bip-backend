@@ -4,7 +4,7 @@ namespace App\Services\Contracts;
 
 use Illuminate\Http\JsonResponse;
 
-interface TdrFaisabiliteServiceInterface
+interface TdrFaisabiliteServiceInterface extends AbstractServiceInterface
 {
     /**
      * Soumettre les TDRs de faisabilité
