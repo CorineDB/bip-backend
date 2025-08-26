@@ -54,10 +54,10 @@ class UserService extends BaseService implements UserServiceInterface
 
             $user = Auth::user();
 
-            $query = $this->repository->getModel()
+            $query = $this->repository->getModel()/*
                 ->whereNotIn("type", ["super-admin", "organisation", "dpaf", "dgpd"])
                 ->where("profilable_id", $user->profilable_id)
-                ->where("profilable_type", $user->profilable_type);
+                ->where("profilable_type", $user->profilable_type) */;
 
             // Si l'utilisateur appartient aux scopes organisation, dpaf, ou dgpd,
             // exclure les utilisateurs admin du scope
@@ -69,7 +69,7 @@ class UserService extends BaseService implements UserServiceInterface
 
             $item = $query->get();
 
-            return ($this->resourceClass::collection($item))->response();
+            return ($this->resourceClass::collection($item->load(['role', 'groupesUtilisateur'])))->response();
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
