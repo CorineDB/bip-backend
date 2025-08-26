@@ -54,8 +54,12 @@ class UserService extends BaseService implements UserServiceInterface
 
             $user = Auth::user();
 
-            $query = $this->repository->getModel()/*
-                ->whereNotIn("type", ["super-admin", "organisation", "dpaf", "dgpd"])*/
+            $query = $this->repository->getModel()
+                //->whereNotIn("type", ["super-admin", "organisation", "dpaf", "dgpd"])
+                ->where(function ($q) {
+                    $q->whereNull('type')
+                      ->orWhereNotIn('type', ['super-admin', 'organisation', 'dpaf', 'dgpd']);
+                })
                 ->where("profilable_id", $user->profilable_id)
                 ->where("profilable_type", $user->profilable_type);
 
