@@ -171,6 +171,14 @@ class Document extends Model
     }
 
     /**
+     * Get all sections for this document.
+     */
+    public function all_sections()
+    {
+        return $this->hasMany(ChampSection::class, 'documentId');
+    }
+
+    /**
      * Get all fichiers attached to this document.
      */
     public function fichiers()

@@ -733,12 +733,12 @@ class DocumentService extends BaseService implements DocumentServiceInterface
     private function cleanupRemovedElements($document, array $payloadIds): void
     {
         // Supprimer les champs non présents
-        $document->champs()
+        $document->all_champs()
             ->whereNotIn('id', $payloadIds['champs'])
             ->forceDelete();
 
         // Supprimer les sections non présentes
-        $document->sections()
+        $document->all_sections()
             ->whereNotIn('id', $payloadIds['sections'])
             ->forceDelete();
     }
