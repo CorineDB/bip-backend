@@ -24,7 +24,7 @@ class UpdateGroupeUtilisateurRequest extends FormRequest
         $profilable = auth()->user()->profilable;
 
         return [
-            // Groupe
+            // Champs obligatoires du groupe
             'nom' => [
                 'required',
                 'string',
@@ -40,21 +40,23 @@ class UpdateGroupeUtilisateurRequest extends FormRequest
             'permissions.*' => [
                 'required',
                 'distinct',
+                'integer',
                 Rule::exists('permissions', 'id')->whereNull('deleted_at')
             ],
 
             // Rôles
             'roles' => 'nullable|array|min:1',
             'roles.*' => [
+                'integer',
                 Rule::exists('roles', 'id')
                     ->when($profilable, function ($query) use ($profilable) {
                         $query->where('roleable_type', get_class($profilable))
-                            ->where('roleable_id', $profilable->id);
+                              ->where('roleable_id', $profilable->id);
                     })
                     ->whereNull('deleted_at')
             ],
 
-            // Utilisateurs
+            // Utilisateurs (optionnels)
             'users' => 'nullable|array',
             'users.*.id' => [
                 'required_without:users.*.email',
@@ -65,31 +67,11 @@ class UpdateGroupeUtilisateurRequest extends FormRequest
                 'email',
                 'max:255',
             ],
-            'users.*.personne' => 'required_with:users.*.email|array',
+            'users.*.personne' => ['required_with:users.*.email', 'array'],
             'users.*.personne.nom' => 'required_with:users.*.email|string|max:255',
             'users.*.personne.prenom' => 'required_with:users.*.email|string|max:255',
             'users.*.personne.poste' => 'nullable|string|max:255',
         ];
-    }
-
-    public function withValidator($validator)
-    {
-        $validator->sometimes('users.*.email', function ($input, $value) {
-            return true; // toujours valide pour appliquer la vérification custom
-        }, function ($attribute, $value, $fail) {
-            // Récupérer l’index du tableau : users.0.email → 0
-            preg_match('/users\.(\d+)\.email/', $attribute, $matches);
-            $index = $matches[1] ?? null;
-            $userId = $this->input("users.$index.id");
-
-            if (User::where('email', $value)
-                ->where('id', '!=', $userId)
-                ->whereNull('deleted_at')
-                ->exists()
-            ) {
-                $fail("L'email $value est déjà utilisé par un autre utilisateur.");
-            }
-        });
     }
 
     public function messages(): array
@@ -106,14 +88,34 @@ class UpdateGroupeUtilisateurRequest extends FormRequest
             'roles.*.integer' => 'Chaque ID de rôle doit être un nombre entier.',
             'roles.*.exists' => 'Un ou plusieurs rôles spécifiés n\'existent pas.',
 
-            'permissions.array' => 'Les permissions doivent être un tableau.',
-            'permissions.*.integer' => 'Chaque ID de permission doit être un nombre entier.',
-            'permissions.*.exists' => 'Une ou plusieurs permissions spécifiées n\'existent pas.',
-
             'users.array' => 'Les utilisateurs doivent être un tableau.',
             'users.*.id.exists' => 'Un ou plusieurs utilisateurs spécifiés n\'existent pas.',
-            'users.*.email.email' => 'L\'email doit être une adresse valide.',
-            'users.*.personne.required_with' => 'Les informations de la personne sont requises pour chaque nouvel utilisateur.',
+            'users.*.email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        // Validation custom pour l'unicité des emails
+        $validator->after(function ($validator) {
+            $users = $this->input('users', []);
+
+            foreach ($users as $index => $user) {
+                if (!empty($user['email'])) {
+                    $userId = $user['id'] ?? null;
+
+                    if (User::where('email', $user['email'])
+                        ->where('id', '!=', $userId)
+                        ->whereNull('deleted_at')
+                        ->exists()
+                    ) {
+                        $validator->errors()->add(
+                            "users.$index.email",
+                            "L'email {$user['email']} est déjà utilisé par un autre utilisateur."
+                        );
+                    }
+                }
+            }
+        });
     }
 }
