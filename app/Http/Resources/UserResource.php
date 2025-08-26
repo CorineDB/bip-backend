@@ -28,6 +28,9 @@ class UserResource extends BaseApiResource
             "status" => $this->status,
             "role" => $this->whenLoaded('role', function(){
                 return new RoleResource($this->role);
+            }),
+            "groupes_utilisateur" => $this->whenLoaded('groupesUtilisateurs', function(){
+                return new GroupeUtilisateurResource($this->groupesUtilisateurs);
             })
         ];
     }

@@ -69,7 +69,7 @@ class UserService extends BaseService implements UserServiceInterface
 
             $item = $query->get();
 
-            return ($this->resourceClass::collection($item->load('role')))->response();
+            return ($this->resourceClass::collection($item))->response();
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,

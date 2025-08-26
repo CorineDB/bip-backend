@@ -75,8 +75,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             }
 
             // Extraire les données spécifiques au payload
-            $champsData = $data['champs'] ?? [];
-            $documentsData = $data['documents'] ?? [];
             $estSoumise = $data['est_soumise'] ?? true;
 
             // Déterminer le statut selon est_soumise
@@ -88,7 +86,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'type' => 'faisabilite',
                 'statut' => $statut,
                 'resume' => $data['resume_tdr_faisabilite'] ?? 'TDR de faisabilité',
-                'termes_de_reference' => $champsData,
                 'date_soumission' => $estSoumise ? now() : null,
                 'soumis_par_id' => auth()->id(),
                 'rediger_par_id' => auth()->id(),
@@ -105,36 +102,16 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 $tdrData['parent_id'] = $tdrExistant->id;
                 $tdr = \App\Models\Tdr::create($tdrData);
                 $message = 'Nouvelle version du TDR de faisabilité créée avec succès.';
-                $statusCode = 201;
             } elseif ($tdrExistant && $tdrExistant->statut !== 'soumis') {
                 // Si un TDR non soumis existe, le mettre à jour
                 $tdr = $tdrExistant;
                 $tdr->fill($tdrData);
                 $tdr->save();
                 $message = 'TDR de faisabilité mis à jour avec succès.';
-                $statusCode = 200;
             } else {
                 // Créer un nouveau TDR (première version)
                 $tdr = \App\Models\Tdr::create($tdrData);
                 $message = 'TDR de faisabilité créé avec succès.';
-                $statusCode = 201;
-            }
-
-            // Récupérer le canevas de rédaction TDR faisabilité
-            $canevasTdr = $this->documentRepository->getModel()->where([
-                'type' => 'formulaire'
-            ])->whereHas('categorie', function ($query) {
-                $query->where('slug', 'canevas-redaction-tdr-faisabilite');
-            })->orderBy('created_at', 'desc')->first();
-
-            if ($canevasTdr) {
-                // Sauvegarder les champs dynamiques basés sur le canevas
-                $this->saveDynamicFieldsFromCanevas($tdr, $champsData, $canevasTdr);
-            }
-
-            // Gérer les documents/fichiers
-            if (!empty($documentsData)) {
-                $this->handleDocuments($tdr, $documentsData);
             }
 
             // Traitement et sauvegarde du fichier TDR (legacy)

@@ -19,9 +19,14 @@ class SoumettreTdrsRequest extends FormRequest
      */
     public function rules(): array
     {
+        $estSoumise = $this->input('est_soumise', true);
+
         return [
-            'tdr' => 'required|file|mimes:pdf,doc,xls,xlsx,docx|max:10240', // Max 10MB
-            'resume_tdr_prefaisabilite' => 'required|string|min:50|max:2000'
+            'est_soumise' => 'sometimes|boolean',
+            'tdr' => 'nullable|file|mimes:pdf,doc,xls,xlsx,docx|max:10240', // Max 10MB
+            'autres_document' => 'nullable|array',
+            'autres_document.*' => 'file|mimes:pdf,doc,xls,xlsx,docx,jpg,jpeg,png|max:10240', // Max 10MB par fichier
+            'resume_tdr_prefaisabilite' => $estSoumise ? 'required|string|min:50|max:2000' : 'nullable|string|max:2000'
         ];
     }
 
@@ -31,11 +36,15 @@ class SoumettreTdrsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'tdr.required' => 'Le fichier TDR est obligatoire.',
+            'est_soumise.boolean' => 'Le champ est_soumise doit être vrai ou faux.',
             'tdr.file' => 'Le TDR doit être un fichier.',
-            'tdr.mimes' => 'Le TDR doit être un fichier PDF, DOC ou DOCX.',
+            'tdr.mimes' => 'Le TDR doit être un fichier PDF, DOC, XLS, XLSX ou DOCX.',
             'tdr.max' => 'Le fichier TDR ne peut dépasser 10 MB.',
-            'resume_tdr_prefaisabilite.required' => 'Un résumé est obligatoire.',
+            'autres_document.array' => 'Les autres documents doivent être un tableau de fichiers.',
+            'autres_document.*.file' => 'Chaque document doit être un fichier.',
+            'autres_document.*.mimes' => 'Chaque document doit être un fichier PDF, DOC, XLS, XLSX, DOCX, JPG, JPEG ou PNG.',
+            'autres_document.*.max' => 'Chaque fichier ne peut dépasser 10 MB.',
+            'resume_tdr_prefaisabilite.required' => 'Un résumé est obligatoire pour soumettre.',
             'resume_tdr_prefaisabilite.string' => 'Le résumé doit être du texte.',
             'resume_tdr_prefaisabilite.min' => 'Le résumé doit contenir au moins 50 caractères.',
             'resume_tdr_prefaisabilite.max' => 'Le résumé ne peut dépasser 2000 caractères.'
@@ -48,7 +57,8 @@ class SoumettreTdrsRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'fichier_tdr' => 'fichier TDR',
+            'tdr' => 'fichier TDR',
+            'autres_document' => 'autres documents',
             'resume_tdr_prefaisabilite' => 'résumé',
         ];
     }

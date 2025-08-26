@@ -332,8 +332,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
 
             // Extraire les données spécifiques au payload
-            $champsData = $data['champs'] ?? [];
-            $documentsData = $data['documents'] ?? [];
             $estSoumise = $data['est_soumise'] ?? true;
             
             // Déterminer le statut selon est_soumise
@@ -345,7 +343,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'type' => 'prefaisabilite',
                 'statut' => $statut,
                 'resume' => $data['resume_tdr_prefaisabilite'] ?? 'TDR de préfaisabilité',
-                'termes_de_reference' => $champsData,
                 'date_soumission' => $estSoumise ? now() : null,
                 'soumis_par_id' => auth()->id(),
                 'rediger_par_id' => auth()->id(),
@@ -362,42 +359,22 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $tdrData['parent_id'] = $tdrExistant->id;
                 $tdr = \App\Models\Tdr::create($tdrData);
                 $message = 'Nouvelle version du TDR de préfaisabilité créée avec succès.';
-                $statusCode = 201;
             } elseif ($tdrExistant && $tdrExistant->statut !== 'soumis') {
                 // Si un TDR non soumis existe, le mettre à jour
                 $tdr = $tdrExistant;
                 $tdr->fill($tdrData);
                 $tdr->save();
                 $message = 'TDR de préfaisabilité mis à jour avec succès.';
-                $statusCode = 200;
             } else {
                 // Créer un nouveau TDR (première version)
                 $tdr = \App\Models\Tdr::create($tdrData);
                 $message = 'TDR de préfaisabilité créé avec succès.';
-                $statusCode = 201;
-            }
-
-            // Récupérer le canevas de rédaction TDR préfaisabilité
-            $canevasTdr = $this->documentRepository->getModel()->where([
-                'type' => 'formulaire'
-            ])->whereHas('categorie', function ($query) {
-                $query->where('slug', 'canevas-redaction-tdr-prefaisabilite');
-            })->orderBy('created_at', 'desc')->first();
-
-            if ($canevasTdr) {
-                // Sauvegarder les champs dynamiques basés sur le canevas
-                $this->saveDynamicFieldsFromCanevas($tdr, $champsData, $canevasTdr);
-            }
-
-            // Gérer les documents/fichiers
-            if (!empty($documentsData)) {
-                $this->handleDocuments($tdr, $documentsData);
             }
 
             // Traitement et sauvegarde du fichier TDR (legacy)
             $fichierTdr = null;
             if (isset($data['tdr'])) {
-                $fichierTdr = $this->gererFichierTdr($projet, $data['tdr'], $data);
+                $fichierTdr = $this->sauvegarderFichierTdr($projet, $data['tdr'], $data);
             }
 
             // Récupérer les commentaires des évaluations antérieures si c'est un retour
