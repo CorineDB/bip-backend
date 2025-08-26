@@ -916,7 +916,6 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
                 if (isset($userData['id']) && !empty($userData['id'])) {
                     // Cas 1 : utilisateur existant
                     $user = User::where('id', $userData['id'])
-                        ->whereNull('roleId')
                         ->whereNull('deleted_at')
                         ->firstOrFail();
                 } else {
