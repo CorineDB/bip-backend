@@ -5,7 +5,7 @@ namespace App\Http\Requests\groupes_utilisateur;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateGroupeUtilisateurRequest extends FormRequest
+class UpdateGroupeUtilisateurRequestcop extends FormRequest
 {
     public function authorize(): bool
     {
@@ -27,11 +27,11 @@ class UpdateGroupeUtilisateurRequest extends FormRequest
                 'string',
                 'max:255',
                 Rule::unique('groupes_utilisateur', 'nom')
-                    ->ignore($groupeId)/*
+                    ->ignore($groupeId)
                     ->when($profilable, function ($query) use ($profilable) {
                         $query->where('profilable_type', get_class($profilable))
                             ->where('profilable_id', $profilable->id);
-                    })*/
+                    })
                     ->whereNull('deleted_at')
             ],
             'description' => 'nullable|string',

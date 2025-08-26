@@ -63,7 +63,6 @@ class UpdateGroupeUtilisateurRequest extends FormRequest
                 'nullable',
                 'integer',
                 'required_without:users.*.email',
-                'prohibited_with:users.*.email',
                 Rule::exists('users', 'id')->whereNull('deleted_at')
             ],
 
@@ -71,7 +70,6 @@ class UpdateGroupeUtilisateurRequest extends FormRequest
             'users.*.email' => [
                 'nullable',
                 'required_without:users.*.id',
-                'prohibited_with:users.*.id',
                 'email',
                 'max:255',
                 // ⚠️ ici on ignore l'utilisateur si un id est fourni

@@ -57,7 +57,6 @@ class StoreGroupeUtilisateurRequest extends FormRequest
             'users.*.id' => [
                 'nullable',
                 'required_without:users.*.email',   // obligatoire si pas d'email
-                'prohibited_with:users.*.email',    // interdit si email est présent
                 Rule::exists('users', 'id')->whereNull("roleId")->whereNull('deleted_at')
             ],
 
@@ -65,7 +64,6 @@ class StoreGroupeUtilisateurRequest extends FormRequest
             'users.*.email' => [
                 'nullable',
                 'required_without:users.*.id',      // obligatoire si pas d'id
-                'prohibited_with:users.*.id',       // interdit si id est présent
                 'email',
                 'max:255',
                 Rule::unique('users', 'email')->whereNull('deleted_at')
