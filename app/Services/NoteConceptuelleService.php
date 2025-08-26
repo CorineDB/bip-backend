@@ -384,7 +384,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     /**
      * Récupérer une note conceptuelle d'un projet
      */
-    public function getForProject(int $projetId, int $noteId): JsonResponse
+    public function getForProject(int $projetId): JsonResponse
     {
         try {
 
@@ -392,10 +392,15 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Trouver la note conceptuelle associée au projet
-            $noteConceptuelle = $this->repository->getModel()->where([
+            /* $noteConceptuelle = $this->repository->getModel()->where([
                 'id' => $noteId,
                 'projetId' => $projet->id
-            ])->first();
+            ])->first(); */
+
+            $noteConceptuelle = $this->repository->getModel()
+                ->where('projetId', $projet->id)
+                ->orderBy("created_at", "desc")
+                ->first();
 
             if (!$noteConceptuelle) {
                 return response()->json([
