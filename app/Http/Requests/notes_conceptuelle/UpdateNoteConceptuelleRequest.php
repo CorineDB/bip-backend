@@ -38,7 +38,7 @@ class UpdateNoteConceptuelleRequest extends FormRequest
 
         $dynamicRules = $this->buildRulesFromCanevas($canevas, $champsValues, $defaultRules, $estSoumise);
 
-        $finalRules = array_merge([
+       /*  $finalRules = array_merge([
             'est_soumise' => 'required|boolean',
             'champs' => 'required|array',
             'documents' => 'nullable|array',
@@ -46,7 +46,19 @@ class UpdateNoteConceptuelleRequest extends FormRequest
             'documents.analyse_pre_risque_facteurs_reussite' => 'required|' . self::DOCUMENT_RULE,
             'documents.etude_pre_faisabilite' => 'required|' . self::DOCUMENT_RULE,
             'documents.note_conceptuelle' => 'required|' . self::DOCUMENT_RULE,
+        ], $dynamicRules); */
+
+
+        $finalRules = array_merge([
+            'est_soumise' => 'required|boolean',
+            'champs' => 'required|array',
+            'documents' => $estSoumise ? 'required|array' : 'nullable|array',
+            'documents.autres.*' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
+            'documents.analyse_pre_risque_facteurs_reussite' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
+            'documents.etude_pre_faisabilite' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
+            'documents.note_conceptuelle' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
         ], $dynamicRules);
+
 
         return $finalRules;
     }
