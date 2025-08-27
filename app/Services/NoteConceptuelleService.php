@@ -1267,12 +1267,12 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     {
         try {
             // Vérifier les autorisations (Comité de validation Ministériel)
-            if (!in_array(auth()->user()->type, ['comite_ministeriel', 'dpaf', 'admin'])) {
+            /* if (!in_array(auth()->user()->type, ['comite_ministeriel', 'dpaf', 'admin'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette validation.'
                 ], 403);
-            }
+            } */
 
             DB::beginTransaction();
 
