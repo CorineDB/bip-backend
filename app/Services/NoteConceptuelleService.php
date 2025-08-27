@@ -1280,7 +1280,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if ($projet->statut->value == StatutIdee::VALIDATION_PROFIL->value) {
+            if ($projet->statut->value != StatutIdee::VALIDATION_PROFIL->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de validation d\'étude de profil.'
