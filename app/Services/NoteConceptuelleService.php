@@ -494,7 +494,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'poids' => $this->calculatePoids($champ),
                 'contenu_redige' => $contenuRedige, // Le contenu rédigé à évaluer
                 'valeur_brute' => $valeurRedige, // Valeur brute pour référence
-                'statut_evaluation' => null, // Options: passe, retour, non_accepte
+                'statut_evaluation' => null, // Options: passe, retour, non-accepte
                 'commentaire_evaluateur' => null, // Commentaire de l'évaluateur
                 'options_notation' => $this->getOptionsNotation($canevas),
                 'a_du_contenu' => !empty($valeurRedige) && $valeurRedige !== '' && $valeurRedige !== null
@@ -671,7 +671,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         $critèresParStatut = [
             'passe' => 0,
             'retour' => 0,
-            'non_accepte' => 0,
+            'non-accepte' => 0,
             'non_evalué' => 0
         ];
 
@@ -693,8 +693,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         // Déterminer le statut global
         $statutGlobal = 'en_cours';
         if ($critèresParStatut['non_evalué'] === 0) {
-            if ($critèresParStatut['non_accepte'] > 0) {
-                $statutGlobal = 'non_accepte';
+            if ($critèresParStatut['non-accepte'] > 0) {
+                $statutGlobal = 'non-accepte';
             } elseif ($critèresParStatut['retour'] > 0) {
                 $statutGlobal = 'retour';
             } else {
@@ -809,7 +809,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     case 'retour':
                         $nombreRetour++;
                         break;
-                    case 'non_accepte':
+                    case 'non-accepte':
                         $nombreNonAccepte++;
                         break;
                 }
@@ -839,7 +839,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $resultat = $this->determinerResultatExamen([
                 'passe' => $nombrePasse,
                 'retour' => $nombreRetour,
-                'non_accepte' => $nombreNonAccepte,
+                'non-accepte' => $nombreNonAccepte,
                 'non_evalues' => $nombreNonEvalues,
                 'obligatoires_non_evalues' => $champsObligatoiresNonEvalues,
                 'total' => $totalChamps
@@ -893,10 +893,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         // Pourcentage d'amélioration (retour / total évalué)
         $pourcentageAmelioration = $champsEvalues > 0 ? round(($nombreRetour / $champsEvalues) * 100, 2) : 0;
 
-        // Pourcentage de rejet (non_accepte / total évalué)
+        // Pourcentage de rejet (non-accepte / total évalué)
         $pourcentageRejet = $champsEvalues > 0 ? round(($nombreNonAccepte / $champsEvalues) * 100, 2) : 0;
 
-        // Progression globale (pondérée : passe = 1, retour = 0.5, non_accepte = 0)
+        // Progression globale (pondérée : passe = 1, retour = 0.5, non-accepte = 0)
         $scoreGlobal = ($nombrePasse * 1) + ($nombreRetour * 0.5) + ($nombreNonAccepte * 0);
         $progressionGlobale = $totalChamps > 0 ? round(($scoreGlobal / $totalChamps) * 100, 2) : 0;
 
@@ -961,7 +961,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         // Règle 1: Si des questions obligatoires n'ont pas été complétées
         if ($compteurs['obligatoires_non_evalues'] > 0) {
             return [
-                'statut' => 'non_accepte',
+                'statut' => 'non-accepte',
                 'message' => 'Non accepté',
                 'raisons' => ["Des questions obligatoires n'ont pas été complétées ({$compteurs['obligatoires_non_evalues']} champ(s))"],
                 'recommandations' => ["Compléter tous les champs obligatoires avant soumission"]
@@ -969,11 +969,11 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         }
 
         // Règle 2: Si une réponse a été évaluée comme "Non accepté"
-        if ($compteurs['non_accepte'] > 0) {
+        if ($compteurs['non-accepte'] > 0) {
             return [
-                'statut' => 'non_accepte',
+                'statut' => 'non-accepte',
                 'message' => 'Non accepté',
-                'raisons' => ["{$compteurs['non_accepte']} réponse(s) évaluée(s) comme \"Non accepté\""],
+                'raisons' => ["{$compteurs['non-accepte']} réponse(s) évaluée(s) comme \"Non accepté\""],
                 'recommandations' => ["Revoir complètement les sections marquées comme \"Non accepté\""]
             ];
         }
@@ -981,7 +981,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         // Règle 3: Si 10 ou plus des réponses ont été évaluées comme "Retour"
         if ($compteurs['retour'] >= 10) {
             return [
-                'statut' => 'non_accepte',
+                'statut' => 'non-accepte',
                 'message' => 'Non accepté',
                 'raisons' => ["{$compteurs['retour']} réponses évaluées comme \"Retour\" (seuil maximum: 10)"],
                 'recommandations' => ["Réviser en profondeur la note conceptuelle"]
@@ -1049,7 +1049,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $resume .= "\n( ) Non accepté\n";
                 break;
 
-            case 'non_accepte':
+            case 'non-accepte':
                 $resume .= "( ) La présélection a été un succès (passes reçues dans toutes les questions)\n\n";
                 $resume .= "( ) Retour pour un travail supplémentaire\n\n";
                 $resume .= "(✓) Non accepté\n";
@@ -1157,7 +1157,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_VALIDATION_NOTE_AMELIORER),
                     ];
                     break;
-                case 'non_accepte':
+                case 'non-accepte':
                     $noteConceptuelleUpdate['statut'] = -1; // Rejetée
                     $noteConceptuelleData = [
                         'statut' => StatutIdee::NOTE_CONCEPTUEL,
@@ -1394,7 +1394,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 return [/* 'projet_a_maturite',  */'faire_etude_prefaisabilite', 'sauvegarder'];
 
             case 'retour':
-            case 'non_accepte':
+            case 'non-accepte':
                 // Retour pour travail supplémentaire ou Non accepté
                 return ['abandonner_projet', 'reviser_note_conceptuelle', 'faire_etude_prefaisabilite', 'sauvegarder'];
 
