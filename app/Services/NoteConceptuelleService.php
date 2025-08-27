@@ -409,7 +409,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ], 404);
             }
 
-            return (new $this->resourceClass($noteConceptuelle))
+            return (new $this->resourceClass($noteConceptuelle->load(["fichiers", "projet"])))
                 ->additional(['message' => 'Note conceptuelle validée avec succès.'])
                 ->response()
                 ->setStatusCode(200);
