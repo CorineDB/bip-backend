@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Http;
 
 class StoreNoteConceptuelleRequest extends FormRequest
 {
+    const DOCUMENT_RULE = 'distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx';
+
     public function authorize(): bool
     {
         return true;
@@ -24,10 +26,10 @@ class StoreNoteConceptuelleRequest extends FormRequest
                 'est_soumise' => 'required|boolean',
                 'champs' => 'required|array',
                 'documents' => 'required|array',
-                'documents.autres.*' => 'nullable|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
-                'documents.analyse_pre_risque_facteurs_reussite' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
-                'documents.etude_pre_faisabilite' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
-                'documents.note_conceptuelle' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx'
+                'documents.autres.*' => 'required|' . self::DOCUMENT_RULE,
+                'documents.analyse_pre_risque_facteurs_reussite' => 'required|' . self::DOCUMENT_RULE,
+                'documents.etude_pre_faisabilite' => 'required|' . self::DOCUMENT_RULE,
+                'documents.note_conceptuelle' => 'required|' . self::DOCUMENT_RULE
             ];
         }
 
@@ -44,10 +46,10 @@ class StoreNoteConceptuelleRequest extends FormRequest
             'est_soumise' => 'required|boolean',
             'champs' => 'required|array',
             'documents' => 'nullable|array',
-            'documents.autres.*' => 'nullable|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
-            'documents.analyse_pre_risque_facteurs_reussite' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
-            'documents.etude_pre_faisabilite' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
-            'documents.note_conceptuelle' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx'
+            'documents.autres.*' => 'required|' . self::DOCUMENT_RULE,
+            'documents.analyse_pre_risque_facteurs_reussite' => 'required|' . self::DOCUMENT_RULE,
+            'documents.etude_pre_faisabilite' => 'required|' . self::DOCUMENT_RULE,
+            'documents.note_conceptuelle' => 'required|' . self::DOCUMENT_RULE
         ], $dynamicRules);
 
         return $finalRules;
@@ -64,6 +66,7 @@ class StoreNoteConceptuelleRequest extends FormRequest
             // Les champs du canevas n'ont pas toujours element_type
             // Si il a un attribut et des validations, c'est un champ
             $isField = !empty($field['attribut']) && !empty($field['meta_options']['validations_rules']);
+
             $isSection = ($field['element_type'] ?? null) === 'section' && !empty($field['elements']);
 
             if (!$isField) {

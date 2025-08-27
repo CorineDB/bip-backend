@@ -80,12 +80,17 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             // Déterminer le statut selon est_soumise
             $statut = $estSoumise ? 'soumis' : 'brouillon';
 
+            // Extraire les données spécifiques au payload
+            //$champsData = $data['champs'] ?? [];
+            $documentsData = $data['autres_document'] ?? [];
+
             // Préparer les données du TDR
             $tdrData = [
                 'projet_id' => $projetId,
                 'type' => 'faisabilite',
                 'statut' => $statut,
                 'resume' => $data['resume_tdr_faisabilite'] ?? 'TDR de faisabilité',
+                'termes_de_reference' => [],
                 'date_soumission' => $estSoumise ? now() : null,
                 'soumis_par_id' => auth()->id(),
                 'rediger_par_id' => auth()->id(),
@@ -112,6 +117,25 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 // Créer un nouveau TDR (première version)
                 $tdr = \App\Models\Tdr::create($tdrData);
                 $message = 'TDR de faisabilité créé avec succès.';
+            }
+
+            /*
+            // Récupérer le canevas de rédaction TDR faisabilité
+            $canevasTdr = $this->documentRepository->getModel()->where([
+                'type' => 'formulaire'
+            ])->whereHas('categorie', function ($query) {
+                $query->where('slug', 'canevas-redaction-tdr-faisabilite');
+            })->orderBy('created_at', 'desc')->first();
+
+            if ($canevasTdr) {
+                // Sauvegarder les champs dynamiques basés sur le canevas
+                $this->saveDynamicFieldsFromCanevas($tdr, $champsData, $canevasTdr);
+            }
+                */
+
+            // Gérer les documents/fichiers
+            if (!empty($documentsData)) {
+                $this->handleDocuments($tdr, $documentsData);
             }
 
             // Traitement et sauvegarde du fichier TDR (legacy)
@@ -1471,13 +1495,18 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
     // Méthodes utilitaires (à implémenter selon les besoins)
     private function envoyerNotificationSoumission($projet, $fichier)
-    { /* À implémenter */ }
+    { /* À implémenter */
+    }
     private function envoyerNotificationEvaluation($projet, array $resultats)
-    { /* À implémenter */ }
+    { /* À implémenter */
+    }
     private function envoyerNotificationSoumissionRapport($projet, $fichier, array $data)
-    { /* À implémenter */ }
+    { /* À implémenter */
+    }
     private function envoyerNotificationValidation($projet, string $action, array $data)
-    { /* À implémenter */ }
+    { /* À implémenter */
+    }
     private function envoyerNotificationValidationFaisabilite($projet, string $action, array $data)
-    { /* À implémenter */ }
+    { /* À implémenter */
+    }
 }

@@ -224,10 +224,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             if (isset($documentData['file']) && $documentData['file']) {
                 $file = $documentData['file'];
                 $categorie = $documentData['categorie'] ?? 'tdr';
-                
+
                 // Stocker le fichier et créer l'enregistrement
                 $path = Storage::putFile('tdrs', $file);
-                
+
                 $tdr->fichiers()->create([
                     'nom_original' => $file->getClientOriginalName(),
                     'nom_stockage' => basename($path),
@@ -333,9 +333,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Extraire les données spécifiques au payload
             $estSoumise = $data['est_soumise'] ?? true;
-            
+
             // Déterminer le statut selon est_soumise
             $statut = $estSoumise ? 'soumis' : 'brouillon';
+
+            // Extraire les données spécifiques au payload
+            //$champsData = $data['champs'] ?? [];
+            $documentsData = $data['autres_document'] ?? [];
 
             // Préparer les données du TDR
             $tdrData = [
@@ -343,6 +347,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'type' => 'prefaisabilite',
                 'statut' => $statut,
                 'resume' => $data['resume_tdr_prefaisabilite'] ?? 'TDR de préfaisabilité',
+                'termes_de_reference' => [],
                 'date_soumission' => $estSoumise ? now() : null,
                 'soumis_par_id' => auth()->id(),
                 'rediger_par_id' => auth()->id(),
@@ -369,6 +374,25 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 // Créer un nouveau TDR (première version)
                 $tdr = \App\Models\Tdr::create($tdrData);
                 $message = 'TDR de préfaisabilité créé avec succès.';
+            }
+
+            /*
+                // Récupérer le canevas de rédaction TDR préfaisabilité
+                $canevasTdr = $this->documentRepository->getModel()->where([
+                    'type' => 'formulaire'
+                ])->whereHas('categorie', function ($query) {
+                    $query->where('slug', 'canevas-redaction-tdr-prefaisabilite');
+                })->orderBy('created_at', 'desc')->first();
+
+                if ($canevasTdr) {
+                    // Sauvegarder les champs dynamiques basés sur le canevas
+                    $this->saveDynamicFieldsFromCanevas($tdr, $champsData, $canevasTdr);
+                }
+            */
+
+            // Gérer les documents/fichiers
+            if (!empty($documentsData)) {
+                $this->handleDocuments($tdr, $documentsData);
             }
 
             // Traitement et sauvegarde du fichier TDR (legacy)

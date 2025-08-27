@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Http;
 
 class UpdateNoteConceptuelleRequest extends FormRequest
 {
+    const DOCUMENT_RULE = 'distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx';
+
     public function authorize(): bool
     {
         return true;
@@ -21,10 +23,10 @@ class UpdateNoteConceptuelleRequest extends FormRequest
             'est_soumise' => 'required|boolean',
             'champs' => 'required|array',
             'documents' => 'nullable|array',
-            'documents.autres.*' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
-            'documents.analyse_pre_risque_facteurs_reussite' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
-            'documents.etude_pre_faisabilite' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
-            'documents.note_conceptuell' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx'
+            'documents.autres.*' => 'required|' . self::DOCUMENT_RULE,
+            'documents.analyse_pre_risque_facteurs_reussite' => 'required|' . self::DOCUMENT_RULE,
+            'documents.etude_pre_faisabilite' => 'required|' . self::DOCUMENT_RULE,
+            'documents.note_conceptuell' => 'required|' . self::DOCUMENT_RULE,
         ];
 
         $defaultRules = [
@@ -40,10 +42,10 @@ class UpdateNoteConceptuelleRequest extends FormRequest
             'est_soumise' => 'required|boolean',
             'champs' => 'required|array',
             'documents' => 'nullable|array',
-            'documents.autres.*' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
-            'documents.analyse_pre_risque_facteurs_reussite' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
-            'documents.etude_pre_faisabilite' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx',
-            'documents.note_conceptuelle' => 'required|distinct|file|max:2048|mimes:pdf,jpg,jpeg,png,doc,docx'
+            'documents.autres.*' => 'required|' . self::DOCUMENT_RULE,
+            'documents.analyse_pre_risque_facteurs_reussite' => 'required|' . self::DOCUMENT_RULE,
+            'documents.etude_pre_faisabilite' => 'required|' . self::DOCUMENT_RULE,
+            'documents.note_conceptuelle' => 'required|' . self::DOCUMENT_RULE,
         ], $dynamicRules);
 
         return $finalRules;

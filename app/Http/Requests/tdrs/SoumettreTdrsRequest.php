@@ -23,7 +23,7 @@ class SoumettreTdrsRequest extends FormRequest
 
         return [
             'est_soumise' => 'sometimes|boolean',
-            'tdr' => 'nullable|file|mimes:pdf,doc,xls,xlsx,docx|max:10240', // Max 10MB
+            'tdr' => 'required|file|mimes:pdf,doc,xls,xlsx,docx|max:10240', // Max 10MB
             'autres_document' => 'nullable|array',
             'autres_document.*' => 'file|mimes:pdf,doc,xls,xlsx,docx,jpg,jpeg,png|max:10240', // Max 10MB par fichier
             'resume_tdr_prefaisabilite' => $estSoumise ? 'required|string|min:50|max:2000' : 'nullable|string|max:2000'
@@ -44,6 +44,11 @@ class SoumettreTdrsRequest extends FormRequest
             'autres_document.*.file' => 'Chaque document doit être un fichier.',
             'autres_document.*.mimes' => 'Chaque document doit être un fichier PDF, DOC, XLS, XLSX, DOCX, JPG, JPEG ou PNG.',
             'autres_document.*.max' => 'Chaque fichier ne peut dépasser 10 MB.',
+            'champs.array' => 'Les champs doivent être un tableau.',
+            'documents.array' => 'Les documents doivent être un tableau de fichiers.',
+            'documents.*.file' => 'Chaque document de checklist doit être un fichier.',
+            'documents.*.mimes' => 'Chaque document de checklist doit être un fichier PDF, DOC, XLS, XLSX, DOCX, JPG, JPEG ou PNG.',
+            'documents.*.max' => 'Chaque fichier de checklist ne peut dépasser 10 MB.',
             'resume_tdr_prefaisabilite.required' => 'Un résumé est obligatoire pour soumettre.',
             'resume_tdr_prefaisabilite.string' => 'Le résumé doit être du texte.',
             'resume_tdr_prefaisabilite.min' => 'Le résumé doit contenir au moins 50 caractères.',
@@ -59,6 +64,8 @@ class SoumettreTdrsRequest extends FormRequest
         return [
             'tdr' => 'fichier TDR',
             'autres_document' => 'autres documents',
+            'champs' => 'champs de checklist',
+            'documents' => 'documents de checklist',
             'resume_tdr_prefaisabilite' => 'résumé',
         ];
     }
