@@ -196,6 +196,14 @@ class NoteConceptuelleController extends Controller
     }
 
     /**
+     * Récupérer les détails de validation de l'étude de profil pour un projet
+     */
+    public function getDetailsEtudeProfil($projetId): JsonResponse
+    {
+        return $this->service->getDetailsEtudeProfil($projetId);
+    }
+
+    /**
      * Valider le projet à l'étape étude de profil
      */
     public function validerEtudeProfil(ValiderEtudeProfilRequest $request, $projetId): JsonResponse

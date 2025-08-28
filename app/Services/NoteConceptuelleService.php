@@ -18,6 +18,7 @@ use App\Enums\TypesProjet;
 use App\Http\Resources\CanevasNoteConceptuelleResource;
 use App\Http\Resources\ChampResource;
 use App\Http\Resources\projets\ProjetsResource;
+use App\Http\Resources\UserResource;
 use App\Models\Decision;
 use App\Models\Workflow;
 use Carbon\Carbon;
@@ -256,7 +257,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             $noteConceptuelle->save();
 
-            if($noteConceptuelle->projet->statut == StatutIdee::NOTE_CONCEPTUEL){
+            if ($noteConceptuelle->projet->statut == StatutIdee::NOTE_CONCEPTUEL) {
                 $noteConceptuelle->projet->update([
                     'statut' => StatutIdee::VALIDATION_NOTE_AMELIORER,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_NOTE_AMELIORER),
@@ -743,14 +744,13 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ->where('projetable_type', NoteConceptuelle::class)
                 ->where('projetable_id', $noteConceptuelle->id)
                 ->where('type_evaluation', 'note_conceptuelle')
-                ->with(['evaluateur', 'validateur'])
+                ->with(['evaluateur', 'validator'])
                 //->orderBy('created_at', 'desc')
                 ->first(); */
 
             $evaluation = $noteConceptuelle->evaluationEnCours();
 
             if (!$evaluation) {
-
                 $evaluation = $noteConceptuelle->evaluationTermine();
             }
 
@@ -778,9 +778,9 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'evaluation' => $evaluation->evaluation,
                         'resultats_evaluation' => ($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen,
                         'statut' => $evaluation->statut,
-                        'champs' => collect($noteConceptuelle->note_conceptuelle)->map(function ($champ) use($evaluation) {
+                        'champs' => collect($noteConceptuelle->note_conceptuelle)->map(function ($champ) use ($evaluation) {
                             $champ_evalue = collect($evaluation->champs_evalue)
-                            ->firstWhere('attribut', $champ["attribut"]);
+                                ->firstWhere('attribut', $champ["attribut"]);
                             return [
                                 'id' => $champ["id"],
                                 'label' => $champ["label"],
@@ -793,7 +793,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                             ];
                         }),
                     ],
-                    'resultats_examen' => ($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE)? $evaluation->resultats_evaluation : $resultatsExamen
+                    'resultats_examen' => ($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen
                 ]
             ]);
         } catch (Exception $e) {
@@ -1221,7 +1221,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     ]
                 ]
             ]);
-
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e);
@@ -1253,7 +1252,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             // Utiliser la méthode existante avec l'ID d'évaluation
             return $this->confirmerResultat($evaluation->id, $data);
-
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -1286,13 +1284,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     public function validerEtudeDeProfil(int $projetId, array $data): JsonResponse
     {
         try {
-            // Vérifier les autorisations (Comité de validation Ministériel)
-            /* if (!in_array(auth()->user()->type, ['comite_ministeriel', 'dpaf', 'admin'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette validation.'
-                ], 403);
-            } */
+            // Vérifier les autorisations
+            if (!in_array(auth()->user()->type, ['comite_ministeriel', 'dpaf', 'admin'])) {
+                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+            }
 
             DB::beginTransaction();
 
@@ -1335,13 +1330,34 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ], 422);
             }
 
-            $projet->est_haut_risque = $data["est_haut_risque"];
-            $projet->est_dur = $data["est_dur"];
+            if (isset($data["est_haut_risque"])) {
+                $projet->est_haut_risque = $data["est_haut_risque"];
+            }
+
+            if (isset($data["est_dur"])) {
+                $projet->est_dur = $data["est_dur"];
+            }
 
             $projet->save();
 
             // Traiter la décision selon le cas d'utilisation
             $nouveauStatut = $this->traiterDecisionValidation($projet, $data['decision'], $data);
+
+            // Créer une évaluation pour tracer la validation
+            $evaluation = $noteConceptuelle->evaluations()->create([
+                'type_evaluation' => 'validation-etude-profil',
+                'projetable_type' => get_class($projet),
+                'projetable_id' => $projet->id,
+                'date_debut_evaluation' => now(),
+                'date_fin_evaluation' => now(),
+                'valider_le' => now(),
+                'evaluateur_id' => auth()->id(),
+                'valider_par' => auth()->id(),
+                'commentaire' => $data['commentaire'] ?? '',
+                'evaluation' => $data,
+                'resultats_evaluation' => $data['decision'],
+                'statut' => 1
+            ]);
 
             // Enregistrer le workflow et la décision
             $this->enregistrerWorkflow($projet, $nouveauStatut);
@@ -1349,7 +1365,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $projet,
                 "Validation de l'étude de profil - " . ucfirst(str_replace('_', ' ', $data['decision'])),
                 $data['commentaire'] ?? '',
-                auth()->user()->id
+                auth()->id()
             );
 
             // Envoyer des notifications si nécessaire
@@ -1373,10 +1389,65 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'actions_effectuees' => $this->getActionsEffectuees($data['decision'])
                 ]
             ]);
-
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Récupérer les détails de validation de l'étude de profil pour un projet
+     */
+    public function getDetailsEtudeProfil(int $projetId): JsonResponse
+    {
+        try {
+            // Récupérer le projet
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Récupérer la note conceptuelle du projet
+            $noteConceptuelle = $this->repository->getModel()
+                ->where('projetId', $projetId)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if (!$noteConceptuelle) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucune note conceptuelle trouvée pour ce projet.'
+                ], 404);
+            }
+
+            // Récupérer l'évaluation de validation la plus récente
+            $evaluation = $noteConceptuelle->evaluations()
+                ->where('type_evaluation', 'validation-etude-profil')
+                ->whereNotNull('valider_par')
+                ->whereNotNull('valider_le')
+                ->where('statut', 1)
+                ->with(['validator', 'commentaires'])
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'projet' => new \App\Http\Resources\projets\ProjetsResource($projet),
+                    'note_conceptuelle' => new $this->resourceClass($noteConceptuelle),
+                    'evaluation' => $evaluation ? [
+                        'id' => $evaluation->id,
+                        'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:i:s") : null,
+                        'valider_par' => new UserResource($evaluation->validator),
+                        'decision' => $evaluation->evaluation,
+                        'statut' => $evaluation->statut,
+                        'commentaire' => $evaluation->commentaire
+                    ] : null
+                ]
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "Erreur lors de la récupération des détails de validation. " . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
         }
     }
 
@@ -1484,7 +1555,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     private function envoyerNotificationValidation($projet, string $decision, string $commentaire): void
     {
         try {
-            $typeNotification = match($decision) {
+            $typeNotification = match ($decision) {
                 //'projet_a_maturite' => 'projet_pret',
                 'faire_etude_prefaisabilite' => 'etude_prefaisabilite_requise',
                 'reviser_note_conceptuelle' => 'revision_note_requise',
@@ -1507,7 +1578,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     private function getMessageSuccesValidation(string $decision): string
     {
-        return match($decision) {
+        return match ($decision) {
             //'projet_a_maturite' => 'Projet validé comme prêt pour la suite.',
             'faire_etude_prefaisabilite' => 'Projet orienté vers une étude de pré-faisabilité.',
             'reviser_note_conceptuelle' => 'Projet renvoyé pour révision de la note conceptuelle.',
@@ -1522,7 +1593,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     private function getActionsEffectuees(string $decision): array
     {
-        return match($decision) {/*
+        return match ($decision) {/*
             'projet_a_maturite' => [
                 'statut_change' => 'Statut changé vers "Prêt"',
                 'type_projet' => 'Type défini comme "Simple"',
@@ -1778,7 +1849,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     private function generateStorageName(string $category, int $noteConceptuelleId, string $extension): string
     {
-        $prefix = match($category) {
+        $prefix = match ($category) {
             'analyse_pre_risque_facteurs_reussite' => 'analyse_pre_risque',
             'etude_pre_faisabilite' => 'etude_pre_faisabilite',
             'note_conceptuelle' => 'note_conceptuelle',
@@ -1794,7 +1865,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     private function getDescriptionByCategory(string $category): string
     {
-        return match($category) {
+        return match ($category) {
             'analyse_pre_risque_facteurs_reussite' => 'Analyse pré-risque et facteurs de réussite',
             'etude_pre_faisabilite' => 'Étude de pré-faisabilité',
             'note_conceptuelle' => 'Note conceptuelle',
@@ -1808,7 +1879,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     private function getOrderByCategory(string $category): int
     {
-        return match($category) {
+        return match ($category) {
             'note_conceptuelle' => 1,
             'analyse_pre_risque_facteurs_reussite' => 2,
             'etude_pre_faisabilite' => 3,

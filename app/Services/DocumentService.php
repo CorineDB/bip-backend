@@ -184,7 +184,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             } else {
                 $newChamp = $document->champs()->create($champAttributes);
             }
-            
+
             // Log pour debug
             \Log::info('Nouveau champ créé', ['champ_id' => $newChamp->id, 'attribut' => $champAttributes['attribut']]);
         } catch (\Exception $e) {
@@ -512,6 +512,9 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
                 // $this->cleanupRemovedElements($canevas, $payloadIds);
 
+                // Regénérer la structure après les modifications
+                $this->structureService->generateAndSaveStructure($canevas);
+
                 DB::commit();
 
                 // Recharger avec relations
@@ -744,7 +747,9 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             }
         } else {
             // Création d'une nouvelle section
-            return $document->sections()->create($sectionAttributes);
+            $newSection = $document->sections()->create($sectionAttributes);
+            \Log::info('Nouvelle section créée', ['section_id' => $newSection->id, 'intitule' => $sectionAttributes['intitule']]);
+            return $newSection;
         }
     }
 

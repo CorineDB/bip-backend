@@ -13,4 +13,9 @@ interface NoteConceptuelleServiceInterface extends AbstractServiceInterface
      * Récupérer une note conceptuelle d'un projet
      */
     public function getForProject(int $projetId): JsonResponse;
+
+    /**
+     * Récupérer les détails de validation de l'étude de profil pour un projet
+     */
+    public function getDetailsEtudeProfil(int $projetId): JsonResponse;
 }
