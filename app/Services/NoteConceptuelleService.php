@@ -1285,7 +1285,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     {
         try {
             // Vérifier les autorisations
-            if (!in_array(auth()->user()->type, ['comite_ministeriel', 'dpaf', 'admin'])) {
+            if (!in_array(auth()->user()->type, ['comite_ministeriel', 'dpaf', 'responsable-projet', 'admin'])) {
                 throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
             }
 
