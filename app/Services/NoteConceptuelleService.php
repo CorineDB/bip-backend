@@ -1330,8 +1330,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ], 422);
             }
 
-            if (isset($data["est_haut_risque"])) {
-                $projet->est_haut_risque = $data["est_haut_risque"];
+            if (isset($data["est_a_haut_risque"])) {
+                $projet->est_a_haut_risque = $data["est_a_haut_risque"];
             }
 
             if (isset($data["est_dur"])) {
