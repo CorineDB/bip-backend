@@ -120,7 +120,7 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
             "situation_actuelle",
             "contraintes",
             "echeancier",
-            "fondement",
+            //"fondement",
             "secteurId",
             "categorieId",
             /*"ministereId",
