@@ -17,6 +17,7 @@ use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
 use App\Http\Resources\CanevasNoteConceptuelleResource;
 use App\Http\Resources\ChampResource;
+use App\Http\Resources\projets\ProjetsResource;
 use App\Models\Decision;
 use App\Models\Workflow;
 use Carbon\Carbon;
@@ -80,9 +81,9 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             // Convertir le statut en numérique selon l'enum de la table
             $statutNumeric = match ($statut) {
-                'soumise' => 1,
-                'rejetee' => -1,
-                default => 0 // brouillon
+                'soumise'   => 1,
+                'brouillon' => 0,
+                default     => 0 // brouillon
             };
 
             $noteData = [
@@ -206,8 +207,26 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         try {
             // Récupérer la note conceptuelle pour obtenir le projetId
             $noteConceptuelle = $this->repository->findOrFail($id);
+            $estSoumise = $data['est_soumise'] ?? false;
+
+            // Déterminer le statut selon est_soumise
+            $statut = $estSoumise ? 'soumise' : 'brouillon';
+
+
+            // Convertir le statut en numérique selon l'enum de la table
+            $statutNumeric = match ($statut) {
+                'soumise'   => 1,
+                'brouillon' => 0,
+                default     => 0 // brouillon
+            };
+
+
+            $noteData = [
+                'statut' => $statutNumeric,
+            ];
+
             // Mettre à jour la note existante
-            $noteConceptuelle->update($data);
+            $noteConceptuelle->update(array_merge($data, $noteData));
 
             $message = 'Note conceptuelle mise à jour avec succès.';
             $statusCode = 200;
@@ -748,6 +767,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             return response()->json([
                 'success' => true,
                 'data' => [
+                    'projet' => new ProjetsResource($noteConceptuelle->projet),
                     'evaluation' => [
                         'type_evaluation' => $evaluation->type_evaluation,
                         'date_debut_evaluation' => $evaluation->date_debut_evaluation ? Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,

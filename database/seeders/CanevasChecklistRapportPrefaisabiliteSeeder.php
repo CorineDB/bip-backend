@@ -10,11 +10,11 @@ use Illuminate\Support\Facades\DB;
 class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
 {
     protected $documentData = [
-        "nom" => "Checklist de suivi rapport de préfaisabilité",
-        "slug" => "checklist-suivi-rapport-prefaisabilite",
-        "description" => "Checklist de suivi rapport de préfaisabilité",
+        "nom" => "Check liste de suivi rapport prefaisabilite",
+        "slug" => "check-liste-suivi-rapport-prefaisabilite",
+        "description" => "Check liste de suivi rapport prefaisabilite",
         "type" => "formulaire",
-        "categorieId" => 4,
+        "categorieId" => 8,
         "forms" => [
             // Section 1: Identification du projet
             [
@@ -22,37 +22,34 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                 "ordre_affichage" => 1,
                 "label" => "Identification du projet",
                 "attribut" => "section_identification_projet",
-                "description" => "Éléments fondamentaux d'identification et de définition du projet",
-                "is_required" => true,
-                "meta_options" => [
-                    "configs" => [
-                        "collapsible" => true,
-                        "collapsed" => false
-                    ],
-                    "conditions" => [
-                        "disable" => false,
-                        "visible" => true,
-                        "conditions" => []
-                    ]
-                ],
-                "champ_standard" => true,
-                "startWithNewLine" => true,
+                "key" => "section_identification_projet",
+                "description" => "Cette section évalue le projet en prenant en compte les besoins des bénéficiaires et les alternatives possibles. Cela permet de justifier pourquoi le projet est nécessaire et quel impact il aura sur la population cible",
                 "elements" => [
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 1,
                         "label" => "Problématique à résoudre",
                         "attribut" => "problematique_a_resoudre",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Décrivez la problématique que le projet vise à résoudre",
+                        "type_champ" => "radio",
+                        "placeholder" => "La problématique à résoudre est-elle clairement définie ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -60,10 +57,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -74,16 +78,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 2,
                         "label" => "Objectifs et résultats attendus de l'évaluation",
                         "attribut" => "objectifs_resultats_attendus",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Définissez les objectifs et résultats attendus du projet",
+                        "type_champ" => "radio",
+                        "placeholder" => "Les objectifs et résultats attendus sont-ils définis ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -91,10 +105,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -105,16 +126,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 3,
                         "label" => "Analyse des besoins",
                         "attribut" => "analyse_des_besoins",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Analysez les besoins identifiés pour ce projet",
+                        "type_champ" => "radio",
+                        "placeholder" => "L'analyse des besoins est-elle réalisée ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -122,10 +153,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -136,16 +174,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 4,
                         "label" => "Population cible/ bénéficiaires",
                         "attribut" => "population_cible_beneficiaires",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Identifiez la population cible et les bénéficiaires du projet",
+                        "type_champ" => "radio",
+                        "placeholder" => "La population cible et les bénéficiaires sont-ils identifiés ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -153,10 +201,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -167,16 +222,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 5,
                         "label" => "Alternatives considérées",
                         "attribut" => "alternatives_considerees",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Décrivez les alternatives envisagées et justifiez le choix retenu",
+                        "type_champ" => "radio",
+                        "placeholder" => "Les alternatives sont-elles considérées et le choix est-il justifié ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -184,10 +249,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -202,37 +274,34 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                 "ordre_affichage" => 2,
                 "label" => "Analyse économique et financière",
                 "attribut" => "section_analyse_economique_financiere",
-                "description" => "Évaluation de la viabilité économique et financière du projet",
-                "is_required" => true,
-                "meta_options" => [
-                    "configs" => [
-                        "collapsible" => true,
-                        "collapsed" => false
-                    ],
-                    "conditions" => [
-                        "disable" => false,
-                        "visible" => true,
-                        "conditions" => []
-                    ]
-                ],
-                "champ_standard" => true,
-                "startWithNewLine" => true,
+                "key" => "section_analyse_economique_financiere",
+                "description" => "Cette section évalue la faisabilité financière du projet en tenant compte des coûts, des modes de financement, et de la rentabilité attendue. Une analyse approfondie des risques financiers et des options de financement doit également être réalisée pour garantir la viabilité du projet.",
                 "elements" => [
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 1,
                         "label" => "Viabilité économique",
                         "attribut" => "viabilite_economique",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Analysez la viabilité économique du projet",
+                        "type_champ" => "radio",
+                        "placeholder" => "La viabilité économique est-elle analysée ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -240,10 +309,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -254,16 +330,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 2,
                         "label" => "Plan de financement",
                         "attribut" => "plan_de_financement",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Détaillez le plan de financement du projet",
+                        "type_champ" => "radio",
+                        "placeholder" => "Le plan de financement est-il détaillé ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -271,10 +357,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -285,16 +378,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 3,
                         "label" => "Analyse de la rentabilité",
                         "attribut" => "analyse_rentabilite",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Analysez la rentabilité attendue du projet",
+                        "type_champ" => "radio",
+                        "placeholder" => "L'analyse de rentabilité est-elle réalisée ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -302,10 +405,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -316,16 +426,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 4,
                         "label" => "Délais de mise en œuvre",
                         "attribut" => "delais_mise_en_oeuvre",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Détaillez les délais de mise en œuvre du projet",
+                        "type_champ" => "radio",
+                        "placeholder" => "Les délais de mise en œuvre sont-ils détaillés ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -333,10 +453,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -347,16 +474,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 5,
                         "label" => "Contrôle des adaptations pour les projets à haut risque",
                         "attribut" => "controle_adaptations_haut_risque",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Décrivez les mesures de contrôle des adaptations pour les projets à haut risque",
+                        "type_champ" => "radio",
+                        "placeholder" => "Les mesures de contrôle pour les projets à haut risque sont-elles décrites ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -364,10 +501,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -378,16 +522,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 6,
                         "label" => "Analyse des vulnérabilités",
                         "attribut" => "analyse_vulnerabilites",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Analysez les vulnérabilités du projet",
+                        "type_champ" => "radio",
+                        "placeholder" => "L'analyse des vulnérabilités est-elle réalisée ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -395,10 +549,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -409,16 +570,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 7,
                         "label" => "Analyse des risques financiers",
                         "attribut" => "analyse_risques_financiers",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Analysez les risques financiers associés au projet",
+                        "type_champ" => "radio",
+                        "placeholder" => "L'analyse des risques financiers est-elle réalisée ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -426,10 +597,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -444,37 +622,33 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                 "ordre_affichage" => 3,
                 "label" => "Impact social et environnemental",
                 "attribut" => "section_impact_social_environnemental",
-                "description" => "Évaluation des impacts sociaux et environnementaux du projet",
-                "is_required" => true,
-                "meta_options" => [
-                    "configs" => [
-                        "collapsible" => true,
-                        "collapsed" => false
-                    ],
-                    "conditions" => [
-                        "disable" => false,
-                        "visible" => true,
-                        "conditions" => []
-                    ]
-                ],
-                "champ_standard" => true,
-                "startWithNewLine" => true,
+                "description" => "On analyse l’impact du projet sur la société et l’environnement. Cela inclut les effets positifs (emplois, bien-être social) et négatifs (pollution, exploitation des ressources). Il est important de prévoir des mesures d’atténuation pour limiter les impacts négatifs.",
                 "elements" => [
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 1,
                         "label" => "Impact sur les populations locales",
                         "attribut" => "impact_populations_locales",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Analysez l'impact sur les populations locales (création d'emplois, réduction de la pauvreté, etc.)",
+                        "type_champ" => "radio",
+                        "placeholder" => "L'impact sur les populations locales est-il analysé ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -482,10 +656,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -496,16 +677,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 2,
                         "label" => "Impact sur l'environnement",
                         "attribut" => "impact_environnement",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Analysez l'impact sur l'environnement (durabilité, effets sur les ressources naturelles)",
+                        "type_champ" => "radio",
+                        "placeholder" => "L'impact sur l'environnement est-il analysé ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -513,10 +704,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -527,16 +725,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 3,
                         "label" => "Mécanismes d'atténuation des impacts négatifs",
                         "attribut" => "mecanismes_attenuation_impacts",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Décrivez les mécanismes d'atténuation des impacts négatifs",
+                        "type_champ" => "radio",
+                        "placeholder" => "Les mécanismes d'atténuation des impacts négatifs sont-ils décrits ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -544,10 +752,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -558,16 +773,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 4,
                         "label" => "Prise en compte du genre et de l'inclusion sociale",
                         "attribut" => "genre_inclusion_sociale",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Analysez la prise en compte du genre et de l'inclusion sociale",
+                        "type_champ" => "radio",
+                        "placeholder" => "La prise en compte du genre et de l'inclusion sociale est-elle analysée ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -575,10 +800,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -594,36 +826,32 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                 "label" => "Planification et gouvernance du projet",
                 "attribut" => "section_planification_gouvernance",
                 "description" => "Organisation, planification et gestion du projet",
-                "is_required" => true,
-                "meta_options" => [
-                    "configs" => [
-                        "collapsible" => true,
-                        "collapsed" => false
-                    ],
-                    "conditions" => [
-                        "disable" => false,
-                        "visible" => true,
-                        "conditions" => []
-                    ]
-                ],
-                "champ_standard" => true,
-                "startWithNewLine" => true,
                 "elements" => [
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 1,
                         "label" => "Calendrier prévisionnel (chronogramme de projet)",
                         "attribut" => "calendrier_previsionnel",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Détaillez le calendrier prévisionnel et le chronogramme du projet",
+                        "type_champ" => "radio",
+                        "placeholder" => "Le calendrier prévisionnel et le chronogramme sont-ils détaillés ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -631,10 +859,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -645,16 +880,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 2,
                         "label" => "Structure de gouvernance",
                         "attribut" => "structure_gouvernance",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Décrivez la structure de gouvernance (instances de décision, comité de suivi)",
+                        "type_champ" => "radio",
+                        "placeholder" => "La structure de gouvernance est-elle décrite ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -662,10 +907,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -676,16 +928,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 3,
                         "label" => "Suivi et évaluation",
                         "attribut" => "suivi_evaluation",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Détaillez le système de suivi et évaluation (indicateurs de performance)",
+                        "type_champ" => "radio",
+                        "placeholder" => "Le système de suivi et évaluation est-il détaillé ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -693,10 +955,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -707,16 +976,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 4,
                         "label" => "Identification des risques potentiels",
                         "attribut" => "identification_risques_potentiels",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Identifiez les risques potentiels (techniques, économiques, environnementaux, sociaux)",
+                        "type_champ" => "radio",
+                        "placeholder" => "Les risques potentiels sont-ils identifiés ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -724,10 +1003,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -738,16 +1024,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 5,
                         "label" => "Plan de gestion et d'atténuation des risques",
                         "attribut" => "plan_gestion_attenuation_risques",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Décrivez le plan de gestion et d'atténuation des risques",
+                        "type_champ" => "radio",
+                        "placeholder" => "Le plan de gestion et d'atténuation des risques est-il décrit ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -755,10 +1051,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -774,36 +1077,32 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                 "label" => "Conformité légale et réglementaire",
                 "attribut" => "section_conformite_legale_reglementaire",
                 "description" => "Respect du cadre légal et réglementaire applicable",
-                "is_required" => true,
-                "meta_options" => [
-                    "configs" => [
-                        "collapsible" => true,
-                        "collapsed" => false
-                    ],
-                    "conditions" => [
-                        "disable" => false,
-                        "visible" => true,
-                        "conditions" => []
-                    ]
-                ],
-                "champ_standard" => true,
-                "startWithNewLine" => true,
                 "elements" => [
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 1,
                         "label" => "Cadre législatif et réglementaire",
                         "attribut" => "cadre_legislatif_reglementaire",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Analysez le cadre législatif et réglementaire applicable",
+                        "type_champ" => "radio",
+                        "placeholder" => "Le cadre législatif et réglementaire est-il analysé ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -811,10 +1110,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -825,16 +1131,26 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 2,
                         "label" => "Conformité avec les accords internationaux",
                         "attribut" => "conformite_accords_internationaux",
-                        "type_champ" => "textarea",
-                        "placeholder" => "Analysez la conformité avec les accords internationaux",
+                        "type_champ" => "radio",
+                        "placeholder" => "La conformité avec les accords internationaux est-elle analysée ?",
                         "is_required" => true,
                         "default_value" => null,
                         "isEvaluated" => true,
                         "meta_options" => [
                             "configs" => [
-                                "rows" => 4,
-                                "max_length" => 3000,
-                                "min_length" => 50
+                                "options" =>[
+                                  [
+                                    "label"=> "Disponible",
+                                    "value"=> "disponible"
+                                  ],
+                                  [
+                                    "label"=> "Pas encore disponibles",
+                                    "value"=> "pas-encore-disponibles"
+                                  ]
+                            ],
+                                "show_explanation" => true,
+                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                "explanation_max_length" => 1000
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -842,10 +1158,17 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "conditions" => []
                             ],
                             "validations_rules" => [
-                                "max" => 3000,
-                                "min" => 50,
+                                "in" => [
+                                    "disponible",
+                                    "pas-encore-disponibles"
+                                ],
                                 "string" => true,
-                                "required" => true
+                                "required" => true,
+                                "explanation_validation" => [
+                                    "max" => 1000,
+                                    "string" => true,
+                                    "required" => false
+                                ]
                             ]
                         ],
                         "champ_standard" => true,
@@ -865,11 +1188,11 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
 
         try {
             // Créer la catégorie de document pour les checklists
-            $categorieDocument = CategorieDocument::firstOrCreate([
-                'slug' => "check-list-suivi-rapport-prefaisabilite",
+            $categorieDocument = CategorieDocument::updateOrCreate([
+                'slug' => "canevas-checklist-suivi-rapport-prefaisabilite",
             ], [
-                'nom' => "Check-list de suivi rapport de préfaisabilité",
-                'slug' => "check-list-suivi-rapport-prefaisabilite",
+                'nom' => "Canevas check liste de suivi rapport prefaisabilite",
+                'slug' => "canevas-checklist-suivi-rapport-prefaisabilite",
                 "description" => "Canevas standardisés pour les check-list de suivi de rédaction de rapports",
                 "format" => "formulaire"
             ]);
@@ -884,8 +1207,10 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                 "categorieId" => $categorieDocument->id
             ]);
 
-            // Créer le document principal
-            $document = Document::updateOrCreate(['slug' => "checklist-suivi-rapport-prefaisabilite"], $documentData);
+            // Créer ou récupérer le document principal par nom
+            $document = Document::updateOrCreate([
+                'nom' => $documentData['nom']
+            ], $documentData);
 
             // Traiter les sections et leurs éléments
             if (!empty($formsData)) {
@@ -919,22 +1244,18 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
     private function createSection(array $sectionData, $document, $parentSection = null): void
     {
         $sectionAttributes = [
-            'label' => $sectionData['label'],
-            'attribut' => $sectionData['attribut'] ?? null,
+            'intitule' => $sectionData['label'],
+            'slug' => $sectionData['attribut'] ?? null,
             'description' => $sectionData['description'] ?? null,
-            'is_required' => $sectionData['is_required'] ?? false,
-            'ordre_affichage' => $sectionData['ordre_affichage'],
-            'element_type' => 'section',
-            'meta_options' => $sectionData['meta_options'] ?? [],
-            'champ_standard' => $sectionData['champ_standard'] ?? false,
-            'startWithNewLine' => $sectionData['startWithNewLine'] ?? true,
             'documentId' => $document->id,
-            'parent_section_id' => $parentSection ? $parentSection->id : null
+            'parentSectionId' => $parentSection ? $parentSection->id : null,
+            'ordre_affichage' => $sectionData['ordre_affichage'],
         ];
 
-        // Créer la section
-        $section = $document->champs()->updateOrCreate([
-            'attribut' => $sectionData['attribut']
+        // Créer la section en utilisant intitule et documentId pour l'unicité
+        $section = $document->sections()->updateOrCreate([
+            'intitule' => $sectionData['label'],
+            'documentId' => $document->id
         ], $sectionAttributes);
 
         // Traiter les éléments enfants de la section
@@ -960,17 +1281,18 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
             'isEvaluated' => $champData['isEvaluated'] ?? false,
             'default_value' => $champData['default_value'] ?? null,
             'ordre_affichage' => $champData['ordre_affichage'],
-            'element_type' => 'field',
             'type_champ' => $champData['type_champ'],
             'meta_options' => $champData['meta_options'] ?? [],
             'startWithNewLine' => $champData['startWithNewLine'] ?? false,
             'documentId' => $document->id,
-            'parent_section_id' => $parentSection ? $parentSection->id : null
+            'sectionId' => $parentSection ? $parentSection->id : null
         ];
 
-        // Créer le champ
-        $document->champs()->updateOrCreate([
-            'attribut' => $champData['attribut']
+        // Créer le champ en utilisant la contrainte d'unicité complète
+        \App\Models\Champ::updateOrCreate([
+            'attribut' => $champData['attribut'],
+            'sectionId' => $parentSection ? $parentSection->id : null,
+            'documentId' => $document->id
         ], $champAttributes);
     }
 }

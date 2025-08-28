@@ -417,6 +417,16 @@ class Projet extends Model
     /**
      * Relation avec tous les TDRs du projet
      */
+    public function noteConceptuelle()
+    {
+        return $this->hasOne(NoteConceptuelle::class, 'projet_id');
+    }
+
+    // Relations avec les TDRs
+
+    /**
+     * Relation avec tous les TDRs du projet
+     */
     public function tdrs()
     {
         return $this->hasMany(Tdr::class, 'projet_id');
@@ -521,7 +531,7 @@ class Projet extends Model
      */
     public function getCommentairesEvaluationTdrs()
     {
-        return \App\Models\Commentaire::whereIn('commentaireable_id', 
+        return \App\Models\Commentaire::whereIn('commentaireable_id',
                 $this->tdrs()->pluck('id')
             )
             ->where('commentaireable_type', Tdr::class)

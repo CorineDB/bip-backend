@@ -238,7 +238,8 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::get('grille-evaluation-note-conceptuelle', [NoteConceptuelleController::class, 'getOptionsNotationConfig']);
         Route::post('grille-evaluation-note-conceptuelle', [NoteConceptuelleController::class, 'configurerOptionsNotation']);
 
-        Route::apiResource('categories-projet', CategorieProjetController::class);
+        Route::apiResource('categories-projet', CategorieProjetController::class)
+            ->parameters(['categories-projet' => 'categorie_projet']);
         Route::apiResource('secteurs', SecteurController::class);
 
         Route::controller(SecteurController::class)->group(function () {
@@ -364,7 +365,8 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         Route::post('configurer-checklist-tdr-faisabilite', [DocumentController::class, 'configurerChecklistTdrFaisabilite']);
 
-        Route::apiResource('categories-document', CategorieDocumentController::class);
+        Route::apiResource('categories-document', CategorieDocumentController::class)
+            ->parameters(['categories-document' => 'categorie_document']);
 
         // Workflow & Process Management
         Route::apiResource('workflows', WorkflowController::class);

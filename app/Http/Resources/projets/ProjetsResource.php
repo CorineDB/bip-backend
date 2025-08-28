@@ -3,6 +3,7 @@
 namespace App\Http\Resources\projets;
 
 use App\Http\Resources\BaseApiResource;
+use App\Http\Resources\NoteConceptuelleResource;
 use App\Http\Resources\SecteurResourcePublic;
 use Illuminate\Http\Request;
 
@@ -43,6 +44,7 @@ class ProjetsResource extends BaseApiResource
             // Données JSON structurées
             'cout_estimatif_projet' => $this->cout_estimatif_projet ?? [],
             'secteur' => new SecteurResourcePublic($this->secteur),
+            'noteConceptuelle' => new NoteConceptuelleResource($this->noteConceptuelle),
         ];
     }
 

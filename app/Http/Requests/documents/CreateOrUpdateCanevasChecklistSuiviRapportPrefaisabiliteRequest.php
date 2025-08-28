@@ -9,7 +9,7 @@ use Illuminate\Validation\Rule;
 
 class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends FormRequest
 {
-    private $canevas_appreciation_tdr = null;
+    private $canevas_checklist_suivi = null;
 
     public function authorize(): bool
     {
@@ -18,7 +18,7 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
 
     public function prepareForValidation()
     {
-        $this->canevas_appreciation_tdr = Document::whereHas('categorie', function ($query) {
+        $this->canevas_checklist_suivi = Document::whereHas('categorie', function ($query) {
             $query->where('slug', 'canevas-checklist-suivi-rapport-prefaisabilite');
         })
         ->where('type', 'formulaire')
@@ -133,9 +133,9 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
                 function ($attribute, $value, $fail) {
                     $exists = Document::where('nom', $value)
                         ->whereHas('categorie', function ($query) {
-                            $query->where('slug', 'checklist-mesures-adaptation-haut-risque');
-                        })->when($this->canevas_appreciation_tdr, function($query){
-                            $query->where("id","<>", $this->canevas_appreciation_tdr->id);
+                            $query->where('slug', 'canevas-checklist-suivi-rapport-prefaisabilite');
+                        })->when($this->canevas_checklist_suivi, function($query){
+                            $query->where("id","<>", $this->canevas_checklist_suivi->id);
                         })->exists();
 
                     if ($exists) {
@@ -246,6 +246,57 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
                 'Le type de champ est obligatoire.');
         }
 
+        // Validation des propriétés supplémentaires
+        if (isset($element['id']) && (!is_integer($element['id']) || $element['id'] < 1)) {
+            $validator->errors()->add("{$path}.id",
+                'L\'ID du champ doit être un entier positif.');
+        }
+
+        if (isset($element['info']) && !is_string($element['info'])) {
+            $validator->errors()->add("{$path}.info",
+                'Le champ info doit être une chaîne de caractères.');
+        }
+
+        if (isset($element['key']) && (!is_string($element['key']) || strlen($element['key']) > 255)) {
+            $validator->errors()->add("{$path}.key",
+                'La clé du champ ne doit pas dépasser 255 caractères.');
+        }
+
+        if (isset($element['placeholder']) && !is_string($element['placeholder'])) {
+            $validator->errors()->add("{$path}.placeholder",
+                'Le placeholder doit être une chaîne de caractères.');
+        }
+
+        if (isset($element['is_required']) && !is_bool($element['is_required'])) {
+            $validator->errors()->add("{$path}.is_required",
+                'Le champ is_required doit être un booléen.');
+        }
+
+        if (isset($element['isEvaluated']) && !is_bool($element['isEvaluated'])) {
+            $validator->errors()->add("{$path}.isEvaluated",
+                'Le champ isEvaluated doit être un booléen.');
+        }
+
+        if (isset($element['sectionId']) && $element['sectionId'] !== null && (!is_integer($element['sectionId']) || $element['sectionId'] < 1)) {
+            $validator->errors()->add("{$path}.sectionId",
+                'Le sectionId doit être un entier positif ou null.');
+        }
+
+        if (isset($element['documentId']) && (!is_integer($element['documentId']) || $element['documentId'] < 1)) {
+            $validator->errors()->add("{$path}.documentId",
+                'Le documentId doit être un entier positif.');
+        }
+
+        if (isset($element['champ_standard']) && !is_bool($element['champ_standard'])) {
+            $validator->errors()->add("{$path}.champ_standard",
+                'Le champ champ_standard doit être un booléen.');
+        }
+
+        if (isset($element['startWithNewLine']) && !is_bool($element['startWithNewLine'])) {
+            $validator->errors()->add("{$path}.startWithNewLine",
+                'Le champ startWithNewLine doit être un booléen.');
+        }
+
         // Meta options obligatoires
         if (!isset($element['meta_options']) || !is_array($element['meta_options'])) {
             $validator->errors()->add("{$path}.meta_options",
@@ -265,6 +316,27 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
             $validator->errors()->add("{$path}.intitule",
                 'L\'intitulé de la section est obligatoire et ne doit pas dépasser 255 caractères.');
         }
+
+        // Validation des propriétés supplémentaires
+        if (isset($element['id']) && (!is_integer($element['id']) || $element['id'] < 1)) {
+            $validator->errors()->add("{$path}.id",
+                'L\'ID de la section doit être un entier positif.');
+        }
+
+        if (isset($element['description']) && !is_string($element['description'])) {
+            $validator->errors()->add("{$path}.description",
+                'La description de la section doit être une chaîne de caractères.');
+        }
+
+        if (isset($element['type']) && !is_string($element['type'])) {
+            $validator->errors()->add("{$path}.type",
+                'Le type de section doit être une chaîne de caractères.');
+        }
+
+        if (isset($element['parentSectionId']) && $element['parentSectionId'] !== null && (!is_integer($element['parentSectionId']) || $element['parentSectionId'] < 1)) {
+            $validator->errors()->add("{$path}.parentSectionId",
+                'Le parentSectionId doit être un entier positif ou null.');
+        }
     }
 
     /**
@@ -276,6 +348,8 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
         if (!isset($metaOptions['configs']) || !is_array($metaOptions['configs'])) {
             $validator->errors()->add("{$path}.meta_options.configs",
                 'La section configs est obligatoire dans les options métadonnées.');
+        } else {
+            $this->validateConfigs($metaOptions['configs'], $path, $validator);
         }
 
         // Conditions obligatoire
@@ -294,12 +368,44 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
                 $validator->errors()->add("{$path}.meta_options.conditions.visible",
                     'Le champ visible est obligatoire et doit être un booléen.');
             }
+
+            if (isset($conditions['conditions']) && !is_array($conditions['conditions'])) {
+                $validator->errors()->add("{$path}.meta_options.conditions.conditions",
+                    'Le champ conditions doit être un tableau.');
+            }
         }
 
         // Validation rules obligatoire
         if (!isset($metaOptions['validations_rules']) || !is_array($metaOptions['validations_rules'])) {
             $validator->errors()->add("{$path}.meta_options.validations_rules",
                 'La section validations_rules est obligatoire dans les options métadonnées.');
+        }
+    }
+
+    /**
+     * Valide la section configs des meta options
+     */
+    private function validateConfigs($configs, $path, $validator)
+    {
+        if (isset($configs['rows']) && (!is_integer($configs['rows']) || $configs['rows'] < 1)) {
+            $validator->errors()->add("{$path}.meta_options.configs.rows",
+                'Le nombre de lignes doit être un entier positif.');
+        }
+
+        if (isset($configs['max_length']) && (!is_integer($configs['max_length']) || $configs['max_length'] < 1)) {
+            $validator->errors()->add("{$path}.meta_options.configs.max_length",
+                'La longueur maximale doit être un entier positif.');
+        }
+
+        if (isset($configs['min_length']) && (!is_integer($configs['min_length']) || $configs['min_length'] < 0)) {
+            $validator->errors()->add("{$path}.meta_options.configs.min_length",
+                'La longueur minimale doit être un entier positif ou zéro.');
+        }
+
+        // Vérifier que min_length <= max_length si les deux sont présents
+        if (isset($configs['min_length']) && isset($configs['max_length']) && $configs['min_length'] > $configs['max_length']) {
+            $validator->errors()->add("{$path}.meta_options.configs.min_length",
+                'La longueur minimale ne peut pas être supérieure à la longueur maximale.');
         }
     }
 

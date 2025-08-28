@@ -154,6 +154,7 @@ class CreateOrUpdateCanevasAppreciationTdrRequest extends FormRequest
             // Forms array - structure flexible avec validation récursive
             'forms' => 'required|array|min:1',
             'forms.*' => 'required|array',
+            'forms.*.startWithNewLine' => 'required|in:false,true'
         ];
     }
 

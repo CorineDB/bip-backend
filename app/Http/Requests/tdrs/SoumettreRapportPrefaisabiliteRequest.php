@@ -14,12 +14,28 @@ use Illuminate\Support\Facades\Http;
 
 class SoumettreRapportPrefaisabiliteRequest extends FormRequest
 {
+    protected $champs = [];
+
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
         return true; //auth()->check() && in_array(auth()->user()->type, ['dpaf', 'admin']);
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    public function prepareForValidation(): void
+    {
+        // Récupérer le canevas de checklist de suivi
+        $canevas = $this->getChecklistSuiviPrefaisabilite();
+        if (!empty($canevas)) {
+            // Extraire tous les IDs des champs du canevas
+            $champsValides = $this->extractAllFields($canevas);
+            $this->champs = collect($champsValides)->pluck('id')->filter()->toArray();
+        }
     }
 
     /**
@@ -35,7 +51,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
 
         return [
             // Action: submit (soumettre) ou draft (brouillon)
-            'action' => 'sometimes|string|in:submit,draft',
+            'action' => 'required|string|in:submit,draft',
 
             // Fichiers requis uniquement pour la soumission finale
             'rapport' => 'required_unless:action,draft|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
@@ -56,7 +72,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
             'checklist_controle_adaptation_haut_risque.criteres' => [
                 'required_with:checklist_controle_adaptation_haut_risque',
                 'array',
-                $this->input('action', 'submit') === 'draft' ? 'min:1' : "size:$nombreCriteresRequis"
+                $this->input('action', 'submit') === 'draft' ? 'min:0' : "size:$nombreCriteresRequis"
             ],
             'checklist_controle_adaptation_haut_risque.criteres.*' => 'array',
             'checklist_controle_adaptation_haut_risque.criteres.*.critere_id' => 'required|integer|exists:criteres,id',
@@ -68,6 +84,17 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
                 'min:1'
             ],
             'checklist_controle_adaptation_haut_risque.criteres.*.mesures_selectionnees.*' => 'integer|exists:notations,id',
+
+            // Checklist de suivi de rapport de préfaisabilité
+            'checklist_suivi_rapport_prefaisabilite' => [
+                'required_unless:action,draft',
+                'array',
+                $this->input('action', 'submit') === 'draft' ? 'min:0' : 'min:' . count($this->champs)
+            ],
+            'checklist_suivi_rapport_prefaisabilite.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champs)],
+            // Les règles dynamiques seront ajoutées dans withValidator
+            //'checklist_suivi_rapport_prefaisabilite.*.reponse' => 'required_unless:action,draft|string',
+            //'checklist_suivi_rapport_prefaisabilite.*.commentaire' => 'required_unless:action,draft|string|min:10|max:1000',
         ];
     }
 
@@ -78,6 +105,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
     {
         $validator->after(function (Validator $validator) {
             $this->validateChecklistAgainstProjectSector($validator);
+            $this->validateChecklistSuiviPrefaisabilite($validator);
         });
     }
 
@@ -94,6 +122,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
 
         // Récupérer le projet avec ses relations
         $projet = Projet::with('secteur.parent')->find($projetId);
+
         if (!$projet || !$projet->secteur || !$projet->secteur->parent) {
             $validator->errors()->add('projet', 'Le projet doit avoir un secteur avec un parent défini pour valider la checklist.');
             return;
@@ -175,6 +204,73 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
     }
 
     /**
+     * Valider la checklist de suivi de rapport de préfaisabilité
+     */
+    private function validateChecklistSuiviPrefaisabilite(Validator $validator): void
+    {
+        $checklistSuivi = $this->input('checklist_suivi_rapport_prefaisabilite');
+        if (!$checklistSuivi || !is_array($checklistSuivi)) {
+            return;
+        }
+
+        $estSoumise = $this->input('action', 'submit') === 'submit';
+        $canevasFields = $this->getCanevasFieldsWithConfigs();
+
+
+        foreach ($checklistSuivi as $index => $evaluation) {
+            $checkpointId = $evaluation['checkpoint_id'] ?? null;
+            $remarque = $evaluation['remarque'] ?? null;
+            $explication = $evaluation['explication'] ?? null;
+
+            // Vérifier que le checkpoint_id existe dans le canevas
+            if ($checkpointId && !in_array($checkpointId, $this->champs)) {
+                $validator->errors()->add(
+                    "checklist_suivi_rapport_prefaisabilite.{$index}.checkpoint_id",
+                    "Le champ sélectionné n'appartient pas à la checklist de suivi."
+                );
+                continue;
+            }
+
+            // Récupérer la configuration du champ
+            $fieldConfig = $canevasFields[$checkpointId] ?? null;
+
+            // Validation de la remarque
+            if ($estSoumise) {
+                // Pour submit, la remarque est obligatoire et doit être dans les valeurs autorisées
+                if (empty($remarque)) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_prefaisabilite.{$index}.remarque",
+                        "La remarque est obligatoire pour la soumission finale."
+                    );
+                } else {
+                    $this->validateRemarqueValue($validator, $index, $remarque, $fieldConfig);
+                }
+            } else {
+                // Pour draft, la remarque peut être null ou dans les valeurs autorisées
+                if ($remarque !== null) {
+                    $this->validateRemarqueValue($validator, $index, $remarque, $fieldConfig);
+                }
+            }
+
+            // Validation de l'explication selon show_explanation
+            $this->validateExplication($validator, $index, $explication, $fieldConfig, $estSoumise);
+        }
+
+        // Vérifier que tous les champs obligatoires sont présents pour la soumission finale
+        if ($estSoumise && !empty($this->champs)) {
+            $champsEvalues = collect($checklistSuivi)->pluck('checkpoint_id')->toArray();
+            $champsManquants = array_diff($this->champs, $champsEvalues);
+
+            if (!empty($champsManquants)) {
+                $validator->errors()->add(
+                    'checklist_suivi_rapport_prefaisabilite',
+                    'Tous les champs de la checklist doivent être évalués pour la soumission finale. Champs manquants: ' . implode(', ', $champsManquants)
+                );
+            }
+        }
+    }
+
+    /**
      * Get the error messages for the defined validation rules.
      */
     public function messages(): array
@@ -221,6 +317,21 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
             'checklist_controle_adaptation_haut_risque.criteres.*.mesures_selectionnees.required_unless' => 'Pour soumettre le rapport, toutes les mesures doivent être sélectionnées pour chaque critère.',
             'checklist_controle_adaptation_haut_risque.criteres.*.mesures_selectionnees.*.exists' => 'Une ou plusieurs mesures sélectionnées n\'existent pas.',
             'checklist_controle_adaptation_haut_risque.criteres.*.mesures_selectionnees.*.integer' => 'L\'ID de la mesure doit être un nombre entier.',
+
+            // Messages pour la checklist de suivi
+            'checklist_suivi_rapport_prefaisabilite.required' => 'La checklist de suivi de rapport de préfaisabilité est obligatoire.',
+            'checklist_suivi_rapport_prefaisabilite.array' => 'La checklist de suivi doit être un tableau.',
+            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.required_with' => 'Les évaluations des champs de la checklist de suivi sont obligatoires.',
+            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.array' => 'Les évaluations des champs doivent être un tableau.',
+            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.min' => 'Au moins une évaluation de champ est requise.',
+            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.champ_id.required' => 'L\'ID du champ est obligatoire.',
+            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.champ_id.integer' => 'L\'ID du champ doit être un nombre entier.',
+            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.reponse.required_unless' => 'La réponse est obligatoire pour la soumission finale.',
+            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.reponse.string' => 'La réponse doit être du texte.',
+            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.commentaire.required_unless' => 'Le commentaire est obligatoire pour la soumission finale.',
+            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.commentaire.string' => 'Le commentaire doit être du texte.',
+            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.commentaire.min' => 'Le commentaire doit contenir au moins 10 caractères.',
+            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.commentaire.max' => 'Le commentaire ne peut dépasser 1000 caractères.',
         ];
     }
 
@@ -381,9 +492,15 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
     {
         $fields = [];
         foreach ($elements as $el) {
-            if (($el['element_type'] ?? null) === 'field') {
+            // Si l'élément a un ID et des meta_options, c'est probablement un champ
+            if (!empty($el['id']) && !empty($el['meta_options'])) {
                 $fields[] = $el;
             }
+            // Si c'est marqué explicitement comme un champ
+            elseif (($el['element_type'] ?? null) === 'field') {
+                $fields[] = $el;
+            }
+            // Récursion pour les éléments enfants (sections)
             if (!empty($el['elements']) && is_array($el['elements'])) {
                 $fields = array_merge($fields, $this->extractAllFields($el['elements']));
             }
@@ -601,5 +718,115 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
 
         // Convertir la Collection en array
         return $canevas->all_champs->toArray();
+    }
+
+    /**
+     * Récupérer le canevas depuis la base de données
+     */
+    protected function getChecklistSuiviPrefaisabilite(): array
+    {
+        $documentRepository = app(DocumentRepositoryInterface::class);
+        $canevas = $documentRepository->getModel()
+            ->where('type', 'formulaire')
+            ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-checklist-suivi-rapport-prefaisabilite'))
+            ->orderBy('created_at', 'desc')
+            ->first();
+        if (!$canevas || !$canevas->all_champs) {
+            return [];
+        }
+
+        // Convertir la Collection en array
+        return $canevas->all_champs->toArray();
+    }
+
+    /**
+     * Valider la valeur de la remarque selon les options du champ
+     */
+    private function validateRemarqueValue(Validator $validator, int $index, $remarque, ?array $fieldConfig): void
+    {
+        if (!$fieldConfig) return;
+
+        $validationsRules = $fieldConfig['meta_options']['validations_rules'] ?? [];
+        $validValues = $validationsRules['in'] ?? ['disponible', 'pas-encore-disponibles'];
+
+        if (!in_array($remarque, $validValues)) {
+            $validator->errors()->add(
+                "checklist_suivi_rapport_prefaisabilite.{$index}.remarque",
+                "La remarque doit être une des valeurs autorisées: " . implode(', ', $validValues)
+            );
+        }
+    }
+
+    /**
+     * Valider l'explication selon la configuration show_explanation
+     */
+    private function validateExplication(Validator $validator, int $index, $explication, ?array $fieldConfig, bool $estSoumise): void
+    {
+        if (!$fieldConfig) return;
+
+        $showExplanation = $fieldConfig['meta_options']['configs']['show_explanation'] ?? false;
+        $maxLength = $fieldConfig['meta_options']['configs']['explanation_max_length'] ?? 1000;
+
+        // Si show_explanation est false, l'explication ne doit pas être requis même en submit
+        if (!$showExplanation) {
+            // L'explication est optionnel
+            if ($explication !== null && strlen($explication) > $maxLength) {
+                $validator->errors()->add(
+                    "checklist_suivi_rapport_prefaisabilite.{$index}.explication",
+                    "L'explication ne peut pas dépasser {$maxLength} caractères."
+                );
+            }
+            return;
+        }
+
+        // Si show_explanation est true, valider selon les règles
+        if ($estSoumise) {
+            $remarque = $this->input("checklist_suivi_rapport_prefaisabilite.{$index}.remarque") == 'pas-encore-disponibles';
+
+            // Pour submit, l'explication est obligatoire si show_explanation = true
+            if ($remarque == true) {
+                if (empty($explication)) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_prefaisabilite.{$index}.explication",
+                        "L'explication est obligatoire pour la soumission finale lorsque le champ d'explication est activé."
+                    );
+                } elseif (strlen($explication) < 10) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_prefaisabilite.{$index}.explication",
+                        "L'explication doit contenir au moins 10 caractères."
+                    );
+                } elseif (strlen($explication) > $maxLength) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_prefaisabilite.{$index}.explication",
+                        "L'explication ne peut pas dépasser {$maxLength} caractères."
+                    );
+                }
+            }
+        } else {
+            // Pour draft, l'explication est optionnel mais doit respecter les limites si présent
+            if ($explication !== null && strlen($explication) > $maxLength) {
+                $validator->errors()->add(
+                    "checklist_suivi_rapport_prefaisabilite.{$index}.explication",
+                    "L'explication ne peut pas dépasser {$maxLength} caractères."
+                );
+            }
+        }
+    }
+
+    /**
+     * Récupérer les champs du canevas avec leurs configurations
+     */
+    private function getCanevasFieldsWithConfigs(): array
+    {
+        $canevas = $this->getChecklistSuiviPrefaisabilite();
+
+        $fieldsWithConfigs = [];
+        foreach ($canevas as $field) {
+            if (!empty($field['id'])) {
+                $fieldsWithConfigs[$field['id']] = $field;
+            }
+        }
+
+        return $fieldsWithConfigs;
     }
 }

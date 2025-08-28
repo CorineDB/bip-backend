@@ -18,6 +18,7 @@ class CategorieDocumentResource extends BaseApiResource
         return [
             "id" => $this->id,
             "nom"=> $this->nom,
+            "slug"=> $this->slug,
             "description"=> $this->description,
             "format"=> $this->format
         ];

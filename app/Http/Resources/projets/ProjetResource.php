@@ -6,6 +6,7 @@ use App\Http\Resources\BaseApiResource;
 use App\Http\Resources\CibleResource;
 use App\Http\Resources\FinancementResource;
 use App\Http\Resources\LieuInterventionResource;
+use App\Http\Resources\NoteConceptuelleResource;
 use App\Http\Resources\OddResource;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -99,6 +100,7 @@ class ProjetResource extends BaseApiResource
             'categorie' => $this->whenLoaded('categorie'),
             'responsable' => $this->whenLoaded('responsable'),
             'demandeur' => $this->whenLoaded('demandeur'),
+            'noteConceptuelle' => new NoteConceptuelleResource($this->noteConceptuelle),
 
             'cibles' => $this->whenLoaded('cibles', CibleResource::collection($this->cibles)),
             'odds' => $this->whenLoaded('odds', OddResource::collection($this->odds)),
