@@ -177,11 +177,19 @@ class DocumentService extends BaseService implements DocumentServiceInterface
      */
     private function createNewChamp(array $champAttributes, $document, $section = null): void
     {
-        // Forcer la création d'un nouveau champ sans vérification d'unicité
-        if ($section) {
-            $section->champs()->create($champAttributes);
-        } else {
-            $document->champs()->create($champAttributes);
+        try {
+            // Forcer la création d'un nouveau champ sans vérification d'unicité
+            if ($section) {
+                $newChamp = $section->champs()->create($champAttributes);
+            } else {
+                $newChamp = $document->champs()->create($champAttributes);
+            }
+            
+            // Log pour debug
+            \Log::info('Nouveau champ créé', ['champ_id' => $newChamp->id, 'attribut' => $champAttributes['attribut']]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de la création du champ', ['error' => $e->getMessage(), 'attributs' => $champAttributes]);
+            throw $e;
         }
     }
 
@@ -501,8 +509,8 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Traiter la structure forms avec mise à jour intelligente
                 $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
 
-                // Supprimer les éléments non présents dans le payload
-                $this->cleanupRemovedElements($canevas, $payloadIds);
+                // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
+                // $this->cleanupRemovedElements($canevas, $payloadIds);
 
                 DB::commit();
 

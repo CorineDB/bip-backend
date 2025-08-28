@@ -285,7 +285,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             $tdrPrefaisabilite->save();
 
-            if($tdrPrefaisabilite->projet->statut == StatutIdee::NOTE_CONCEPTUEL){
+            if ($tdrPrefaisabilite->projet->statut == StatutIdee::NOTE_CONCEPTUEL) {
                 $tdrPrefaisabilite->projet->update([
                     'statut' => StatutIdee::VALIDATION_NOTE_AMELIORER,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_NOTE_AMELIORER),
@@ -1236,7 +1236,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             if ($estBrouillon) {
                 // Pour les brouillons, les fichiers ne sont pas requis
                 // Traiter seulement la checklist si présente
-                if (isset($data['checklist_controle_adaptation_haut_risque'])) {
+
+                if ($projet->est_a_haut_risque && isset($data['checklist_controle_adaptation_haut_risque'])) {
                     $resultChecklistValidation = $this->traiterChecklistControleAdaptation(
                         $projet,
                         $data['checklist_controle_adaptation_haut_risque'],
@@ -1247,6 +1248,29 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         return response()->json([
                             'success' => false,
                             'message' => $resultChecklistValidation['message']
+                        ], 422);
+                    }
+                }
+
+                // Traiter la checklist de suivi si présente
+                if (isset($data['checklist_suivi_rapport_prefaisabilite'])) {
+                    // Préparer les fichiers pour le brouillon (si disponibles)
+                    $fichiersData = [
+                        'cabinet_etude' => $data['cabinet_etude'] ?? null,
+                        'recommandation' => $data['recommandation'] ?? null
+                    ];
+
+                    $resultChecklistSuivi = $this->traiterChecklistSuiviRapportPrefaisabilite(
+                        $projet,
+                        $data['checklist_suivi_rapport_prefaisabilite'],
+                        true,
+                        $fichiersData
+                    );
+
+                    if (!$resultChecklistSuivi['success']) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $resultChecklistSuivi['message']
                         ], 422);
                     }
                 }
@@ -1269,7 +1293,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
 
             // Pour la soumission finale, traiter la checklist si présente
-            if (isset($data['checklist_controle_adaptation_haut_risque'])) {
+            if ($projet->est_a_haut_risque && isset($data['checklist_controle_adaptation_haut_risque'])) {
                 $resultChecklistValidation = $this->traiterChecklistControleAdaptation(
                     $projet,
                     $data['checklist_controle_adaptation_haut_risque'],
@@ -1284,6 +1308,31 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 }
             }
 
+            // Traiter la checklist de suivi pour la soumission finale
+            if (isset($data['checklist_suivi_rapport_prefaisabilite'])) {
+                // Préparer les fichiers et données pour la soumission finale
+                $fichiersData = [
+                    'rapport' => $data['rapport'] ?? null,
+                    'proces_verbal' => $data['proces_verbal'] ?? null,
+                    'cabinet_etude' => $data['cabinet_etude'] ?? null,
+                    'recommandation' => $data['recommandation'] ?? null
+                ];
+
+                $resultChecklistSuivi = $this->traiterChecklistSuiviRapportPrefaisabilite(
+                    $projet,
+                    $data['checklist_suivi_rapport_prefaisabilite'],
+                    false,
+                    $fichiersData
+                );
+
+                if (!$resultChecklistSuivi['success']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $resultChecklistSuivi['message']
+                    ], 422);
+                }
+            }
+            // Si pas de checklist de suivi, traiter quand même les fichiers de rapport
             // Traitement et sauvegarde du fichier rapport
             $fichierRapport = null;
             if (isset($data['rapport'])) {
@@ -1295,6 +1344,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             if (isset($data['proces_verbal'])) {
                 $fichierProcesVerbal = $this->gererFichierProcesVerbal($projet, $data['proces_verbal'], $data);
             }
+
 
             // Enregistrer les informations du cabinet et recommandations
             $this->enregistrerInformationsCabinet($projet, $data);
@@ -2052,12 +2102,151 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'total_criteres' => $totalCriteres,
                 'est_complete' => $criteresCompletes === $totalCriteres
             ];
-
         } catch (\Exception $e) {
             return [
                 'success' => false,
                 'message' => 'Erreur lors du traitement de la checklist: ' . $e->getMessage()
             ];
+        }
+    }
+
+    /**
+     * Traiter la checklist de suivi du rapport de préfaisabilité
+     */
+    private function traiterChecklistSuiviRapportPrefaisabilite($projet, array $checklistData, bool $estBrouillon = false, array $fichiers = []): array
+    {
+        try {
+            DB::beginTransaction();
+
+            // Récupérer le dernier rapport de préfaisabilité s'il existe
+            $rapportExistant = $projet->rapportPrefaisabilite()->first();
+
+            // Déterminer le parent_id pour la hiérarchie (uniquement si soumission finale et rapport existe)
+            $parentId = null;
+            if ($rapportExistant && !$estBrouillon) {
+                $parentId = $rapportExistant->id;
+            }
+
+            // Créer le nouveau rapport
+            $rapport = \App\Models\Rapport::create([
+                'projet_id' => $projet->id,
+                'parent_id' => $parentId,
+                'type' => 'prefaisabilite',
+                'statut' => $estBrouillon ? 'brouillon' : 'soumis',
+                'intitule' => 'Rapport de préfaisabilité - ' . $projet->titre_projet,
+                'checklist_suivi' => $checklistData, // Stocker directement les données
+                'info_cabinet_etude' => $fichiers['cabinet_etude'] ?? null,
+                'recommandation' => $fichiers['recommandation'] ?? null,
+                'date_soumission' => $estBrouillon ? null : now(),
+                'soumis_par_id' => $estBrouillon ? null : auth()->id()
+            ]);
+
+            // Associer les fichiers au rapport si ils existent
+            if (!empty($fichiers)) {
+                // Fichier rapport principal
+                if (isset($fichiers['rapport'])) {
+                    $this->attacherFichierAuRapport($rapport, $fichiers['rapport'], 'rapport');
+                }
+
+                // Procès verbal
+                if (isset($fichiers['proces_verbal'])) {
+                    $this->attacherFichierAuRapport($rapport, $fichiers['proces_verbal'], 'proces-verbal');
+                }
+            }
+
+            // Traiter les données de checklist via la relation champs() si nécessaire
+            $this->traiterChampsChecklistSuivi($rapport, $checklistData);
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => $estBrouillon ?
+                    'Checklist de suivi sauvegardée en brouillon.' :
+                    'Checklist de suivi du rapport de préfaisabilité validée avec succès.',
+                'rapport_id' => $rapport->id,
+                'projet_id' => $projet->id,
+                'est_brouillon' => $estBrouillon
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'success' => false,
+                'message' => 'Erreur lors du traitement de la checklist de suivi: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Obtenir l'ID du rapport de préfaisabilité le plus récent pour un projet
+     */
+    private function getRapportIdForProject($projet)
+    {
+        $rapport = \App\Models\Rapport::where('projet_id', $projet->id)
+            ->where('type', 'prefaisabilite')
+            ->latest('created_at')
+            ->first();
+            
+        return $rapport ? $rapport->id : null;
+    }
+
+    /**
+     * Attacher un fichier à un rapport en utilisant les méthodes existantes
+     */
+    private function attacherFichierAuRapport($rapport, $fichier, $categorie)
+    {
+        if ($fichier instanceof \Illuminate\Http\UploadedFile) {
+            // Utiliser les méthodes existantes selon le type de fichier
+            $fichierCree = null;
+
+            if ($categorie === 'rapport') {
+                $fichierCree = $this->gererFichierRapport($rapport->projet, $fichier, []);
+            } elseif ($categorie === 'proces-verbal') {
+                $fichierCree = $this->gererFichierProcesVerbal($rapport->projet, $fichier, []);
+            }
+
+            // Associer le fichier créé au rapport si il a été créé avec succès
+            if ($fichierCree) {
+                // Mettre à jour le fichier pour l'associer également au rapport
+                $fichierCree->update([
+                    'fichier_attachable_type' => \App\Models\Rapport::class,
+                    'fichier_attachable_id' => $rapport->id
+                ]);
+            }
+
+            return $fichierCree;
+        }
+
+        return null;
+    }
+
+    /**
+     * Traiter les champs de checklist via la relation champs()
+     */
+    private function traiterChampsChecklistSuivi($rapport, array $checklistData)
+    {
+        foreach ($checklistData as $evaluation) {
+            $checkpointId = $evaluation['checkpoint_id'];
+            $remarque = $evaluation['remarque'] ?? null;
+            $explication = $evaluation['explication'] ?? null;
+
+            // Préparer la valeur à stocker (remarque + explication)
+            $valeur = [
+                'remarque' => $remarque,
+                'explication' => $explication,
+                'checkpoint_id' => $checkpointId,
+                'date_evaluation' => now()
+            ];
+
+            // Créer ou mettre à jour la relation champ-rapport
+            $rapport->champs()->syncWithoutDetaching([
+                $checkpointId => [
+                    'valeur' => $valeur,
+                    'commentaire' => $explication,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]
+            ]);
         }
     }
 
@@ -2178,7 +2367,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
      * Envoyer une notification pour la validation de préfaisabilité
      */
     private function envoyerNotificationValidationPrefaisabilite($projet, string $action, array $data)
-    { /* À implémenter */ }
+    { /* À implémenter */
+    }
 
     /**
      * Soumettre le rapport d'évaluation ex-ante (SFD-018)
@@ -2250,7 +2440,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'ancien_statut' => StatutIdee::MATURITE->value,
                     'nouveau_statut' => StatutIdee::RAPPORT->value,
                     'rapport_principal' => $fichierRapport ? $fichierRapport : null,
-                    'annexes' => collect($fichiersAnnexes)->map(function($fichier) {
+                    'annexes' => collect($fichiersAnnexes)->map(function ($fichier) {
                         return [
                             'id' => $fichier->id,
                             'nom' => $fichier->nom_original,
@@ -2262,7 +2452,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'soumis_le' => now()->format('d/m/Y H:i:s')
                 ]
             ]);
-
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e);
@@ -2362,7 +2551,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'pret_pour_selection' => $data['action'] === 'valider'
                 ]
             ]);
-
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e);
@@ -2621,11 +2809,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
      * Envoyer une notification pour la soumission du rapport ex-ante
      */
     private function envoyerNotificationSoumissionRapportExAnte($projet, $fichierRapport, array $fichiersAnnexes)
-    { /* À implémenter */ }
+    { /* À implémenter */
+    }
 
     /**
      * Envoyer une notification pour la validation finale
      */
     private function envoyerNotificationValidationFinale($projet, string $action, array $data)
-    { /* À implémenter */ }
+    { /* À implémenter */
+    }
 }

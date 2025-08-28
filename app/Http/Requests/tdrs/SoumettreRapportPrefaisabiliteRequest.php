@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Http;
 class SoumettreRapportPrefaisabiliteRequest extends FormRequest
 {
     protected $champs = [];
+    protected $projet = null;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -29,6 +30,15 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
      */
     public function prepareForValidation(): void
     {
+        // Récupérer l'ID du projet depuis la route
+        $projetId = $this->route('projetId');
+        if (!$projetId) {
+            return;
+        }
+
+        // Récupérer le projet avec ses relations
+        $this->projet = Projet::with('secteur.parent')->findOrFail($projetId);
+
         // Récupérer le canevas de checklist de suivi
         $canevas = $this->getChecklistSuiviPrefaisabilite();
         if (!empty($canevas)) {
@@ -68,7 +78,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
             'recommandation' => 'required_unless:action,draft|string|max:500',
 
             // Checklist contrôle des adaptations pour projets à haut risque
-            'checklist_controle_adaptation_haut_risque' => 'sometimes|array',
+            'checklist_controle_adaptation_haut_risque' => [Rule::requiredIf(!$this->projet->est_a_haut_risque), 'array'],
             'checklist_controle_adaptation_haut_risque.criteres' => [
                 'required_with:checklist_controle_adaptation_haut_risque',
                 'array',
@@ -114,16 +124,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
      */
     private function validateChecklistAgainstProjectSector(Validator $validator): void
     {
-        // Récupérer l'ID du projet depuis la route
-        $projetId = $this->route('projetId');
-        if (!$projetId) {
-            return;
-        }
-
-        // Récupérer le projet avec ses relations
-        $projet = Projet::with('secteur.parent')->find($projetId);
-
-        if (!$projet || !$projet->secteur || !$projet->secteur->parent) {
+        if (!$this->projet || !$this->projet->secteur || !$this->projet->secteur->parent) {
             $validator->errors()->add('projet', 'Le projet doit avoir un secteur avec un parent défini pour valider la checklist.');
             return;
         }
@@ -147,7 +148,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
         $criteresValides = $categorieChecklist->criteres->pluck('id')->toArray();
         $totalCriteresRequis = $categorieChecklist->criteres->count();
 
-        foreach ($checklist['criteres'] as $index => $critere) {
+        /* foreach ($checklist['criteres'] as $index => $critere) {
             $critereId = $critere['critere_id'] ?? null;
 
             // Vérifier que le critère appartient à la catégorie checklist
@@ -166,7 +167,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
                 // Vérifier que la mesure existe, appartient au bon critère et au secteur parent
                 $mesureValide = Notation::where('id', $mesureId)
                     ->where('critere_id', $critereId)
-                    ->where('secteur_id', $projet->secteur->parent->id)
+                    ->where('secteur_id', $this->projet->secteur->parent->id)
                     ->exists();
 
                 if (!$mesureValide) {
@@ -176,7 +177,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
                     );
                 }
             }
-        }
+        } */
 
         // Vérifier que tous les critères obligatoires sont présents pour une soumission finale
         if ($this->input('action', 'submit') === 'submit') {
@@ -779,12 +780,14 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
             return;
         }
 
+        // Récupérer la remarque pour ce champ
+        $remarque = $this->input("checklist_suivi_rapport_prefaisabilite.{$index}.remarque");
+        $remarqueEstPasEncoreDisponible = $remarque === 'pas-encore-disponibles';
+
         // Si show_explanation est true, valider selon les règles
         if ($estSoumise) {
-            $remarque = $this->input("checklist_suivi_rapport_prefaisabilite.{$index}.remarque") == 'pas-encore-disponibles';
-
             // Pour submit, l'explication est obligatoire si show_explanation = true
-            if ($remarque == true) {
+            if ($showExplanation && $remarqueEstPasEncoreDisponible) {
                 if (empty($explication)) {
                     $validator->errors()->add(
                         "checklist_suivi_rapport_prefaisabilite.{$index}.explication",
@@ -803,12 +806,32 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
                 }
             }
         } else {
-            // Pour draft, l'explication est optionnel mais doit respecter les limites si présent
-            if ($explication !== null && strlen($explication) > $maxLength) {
-                $validator->errors()->add(
-                    "checklist_suivi_rapport_prefaisabilite.{$index}.explication",
-                    "L'explication ne peut pas dépasser {$maxLength} caractères."
-                );
+            // Pour draft, l'explication devient obligatoire SEULEMENT si show_explanation = true ET remarque = "pas-encore-disponibles"
+            if ($showExplanation && $remarqueEstPasEncoreDisponible) {
+                if (empty($explication)) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_prefaisabilite.{$index}.explication",
+                        "L'explication est obligatoire lorsque la remarque est 'pas-encore-disponibles' et que le champ d'explication est activé."
+                    );
+                } elseif (strlen($explication) < 10) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_prefaisabilite.{$index}.explication",
+                        "L'explication doit contenir au moins 10 caractères."
+                    );
+                } elseif (strlen($explication) > $maxLength) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_prefaisabilite.{$index}.explication",
+                        "L'explication ne peut pas dépasser {$maxLength} caractères."
+                    );
+                }
+            } else {
+                // Pour draft dans tous les autres cas, l'explication est optionnel mais doit respecter les limites si présent
+                if ($explication !== null && strlen($explication) > $maxLength) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_prefaisabilite.{$index}.explication",
+                        "L'explication ne peut pas dépasser {$maxLength} caractères."
+                    );
+                }
             }
         }
     }

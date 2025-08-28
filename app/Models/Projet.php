@@ -90,7 +90,9 @@ class Projet extends Model
         'resume_tdr_prefaisabilite',
         'resume_tdr_faisabilite',
         'info_cabinet_etude_prefaisabilite',
-        'info_cabinet_etude_faisabilite'
+        'info_cabinet_etude_faisabilite',
+        'est_a_haut_risque',
+        'est_dur'
     ];
 
     /**
@@ -104,6 +106,8 @@ class Projet extends Model
         'sous_phase'     => SousPhaseIdee::class,
         'type_projet'     => TypesProjet::class,
         'decision' => 'array',
+        'est_a_haut_risque' => 'boolean',
+        'est_dur' => 'boolean',
         'cout_estimatif_projet' => 'array',
         'ficheIdee' => 'array',
         'parties_prenantes' => 'array',
@@ -377,25 +381,66 @@ class Projet extends Model
         return $this->fichiers()->where('categorie', 'tdr-faisabilite');
     }
 
-    public function rapports_prefaisabilite()
+    // Les fichiers de rapports sont maintenant gérés via la table 'rapports'
+    // Utilisez les relations rapportPrefaisabilite(), rapportFaisabilite(), rapportEvaluationExAnte()
+    // puis ->fichiers() pour accéder aux fichiers associés aux rapports
+
+    // Nouvelles relations pour la table rapports avec checklists
+    public function rapports()
     {
-        return $this->fichiers()->where('categorie', 'rapport-prefaisabilite');
+        return $this->hasMany(Rapport::class);
     }
 
-    public function rapports_faisabilite()
+    /**
+     * Récupérer le dernier rapport de préfaisabilité
+     */
+    public function rapportPrefaisabilite()
     {
-        return $this->fichiers()->where('categorie', 'rapport-faisabilite');
+        return $this->rapports()->prefaisabilite()->latest('created_at');
     }
 
-    public function rapports_evaluation_ex_ante()
+    /**
+     * Récupérer tous les rapports de préfaisabilité
+     */
+    public function rapportsPrefaisabilite()
     {
-        return $this->fichiers()->where('categorie', 'rapport-evaluation-ex-ante');
+        return $this->rapports()->prefaisabilite()->orderBy('created_at');
     }
 
-    public function documents_annexe_rapports_evaluation_ex_ante()
+    /**
+     * Récupérer le dernier rapport de faisabilité
+     */
+    public function rapportFaisabilite()
     {
-        return $this->fichiers()->where('categorie', 'annexe-rapport-evaluation-ex-ante');
+        return $this->rapports()->faisabilite()->latest('created_at');
     }
+
+    /**
+     * Récupérer tous les rapports de faisabilité
+     */
+    public function rapportsFaisabilite()
+    {
+        return $this->rapports()->faisabilite()->orderBy('created_at');
+    }
+
+    /**
+     * Récupérer le dernier rapport d'évaluation ex-ante
+     */
+    public function rapportEvaluationExAnte()
+    {
+        return $this->rapports()->evaluationExAnte()->latest('created_at');
+    }
+
+    /**
+     * Récupérer tous les rapports d'évaluation ex-ante
+     */
+    public function rapportsEvaluationExAnte()
+    {
+        return $this->rapports()->evaluationExAnte()->orderBy('created_at');
+    }
+
+    // Les documents annexes des rapports sont maintenant gérés via la table 'rapports'
+    // Utilisez $rapport->documentsAnnexes() pour accéder aux documents annexes d'un rapport
 
     public function allFichiers()
     {

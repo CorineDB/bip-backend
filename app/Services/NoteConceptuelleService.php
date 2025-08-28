@@ -1335,6 +1335,11 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ], 422);
             }
 
+            $projet->est_haut_risque = $data["est_haut_risque"];
+            $projet->est_dur = $data["est_dur"];
+
+            $projet->save();
+
             // Traiter la décision selon le cas d'utilisation
             $nouveauStatut = $this->traiterDecisionValidation($projet, $data['decision'], $data);
 
