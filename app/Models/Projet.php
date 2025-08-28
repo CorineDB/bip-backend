@@ -419,7 +419,7 @@ class Projet extends Model
      */
     public function noteConceptuelle()
     {
-        return $this->hasOne(NoteConceptuelle::class, 'projet_id');
+        return $this->hasOne(NoteConceptuelle::class, 'projetId');
     }
 
     // Relations avec les TDRs
