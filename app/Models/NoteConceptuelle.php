@@ -47,6 +47,7 @@ class NoteConceptuelle extends Model
     protected $casts = [
         'note_conceptuelle' => 'array',
         'decision' => 'array',
+        'statut' => 'integer',
         'date_validation' => 'datetime',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
