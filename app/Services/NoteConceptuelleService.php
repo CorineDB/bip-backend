@@ -1265,7 +1265,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             }
 
             //if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle')) {
-            if (/* !auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle') &&  */auth()->user()->type !== 'dgpd' ) {
+            if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle') &&  auth()->user()->type !== 'dgpd' ) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -1340,10 +1340,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
                 }
             */
-
-            if (auth()->user()->profilable->ministere->id != $projet->ministere->id) {
-                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
-            }
 
             // Vérifier que le projet est au bon statut
             if ($projet->statut->value != StatutIdee::VALIDATION_PROFIL->value) {

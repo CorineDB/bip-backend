@@ -136,9 +136,18 @@ class User extends Authenticatable implements OAuthenticatable
         return $this->roles()->get()->last()->permissions();
     }
 
-
     public function allPermissions()
     {
+
+        $roleIds = $this->role ? [$this->role->id] : [];
+        $groupIds = $this->groupesUtilisateur->pluck('id')->toArray();
+
+        $permissions = Permission::query()
+            ->whereHas('roles', fn($q) => $q->whereIn('roles.id', $roleIds))
+            ->orWhereHas('groupesUtilisateur', fn($q) => $q->whereIn('groupes_utilisateur.id', $groupIds));
+
+        return $permissions;
+
         $roleIds = $this->role ? [$this->role->id] : [];
 
         $groupIds = $this->groupesUtilisateur->pluck('id')->toArray();
@@ -148,13 +157,8 @@ class User extends Authenticatable implements OAuthenticatable
             /* ->orWhereHas('groupesUtilisateur', fn($q) => $q->whereIn('groupes_utilisateur.id', $groupIds)) */;
 
         return $this->role->permissions
-        ->merge($this->groupesUtilisateur->flatMap->permissions)
-        ->unique('id');
-
-        return Permission::whereIn('id', $allIds);
-
-        return $this->role->permissions();
-        return $this->roles()->get()->last()->permissions();
+            ->merge($this->groupesUtilisateur->flatMap->permissions)
+            ->unique('id');
     }
 
     /**
