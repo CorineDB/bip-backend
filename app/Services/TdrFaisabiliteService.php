@@ -847,7 +847,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $typeProjet = null;
 
             // Traiter les informations du projet à haut risque si applicable
-            if (isset($data['est_haut_risque']) && $data['est_haut_risque']) {
+            if (isset($data['est_a_haut_risque']) && $data['est_a_haut_risque']) {
                 $this->traiterProjetHautRisque($projet, $data);
             }
 
@@ -923,7 +923,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'ancien_statut' => StatutIdee::VALIDATION_F->value,
                     'nouveau_statut' => $nouveauStatut ? $nouveauStatut->value : StatutIdee::VALIDATION_F->value,
                     'type_projet' => $typeProjet ? $typeProjet->value : null,
-                    'est_haut_risque' => $data['est_haut_risque'] ?? false,
+                    'est_a_haut_risque' => $data['est_a_haut_risque'] ?? false,
                     'commentaire' => $data['commentaire'] ?? null,
                     'valide_par' => auth()->id(),
                     'valide_le' => now()->format('d/m/Y H:i:s'),
@@ -1399,7 +1399,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             // Ajouter les informations de haut risque
             $metadata['haut_risque'] = [
-                'est_haut_risque' => true,
+                'est_a_haut_risque' => true,
                 'checklist_validee' => $data['checklist_haut_risque'],
                 'date_validation_checklist' => now(),
                 'valide_par' => auth()->id()
@@ -1420,7 +1420,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
         // Ajouter les informations de validation temporaires
         $metadata['validation_faisabilite_temp'] = [
-            'est_haut_risque' => $data['est_haut_risque'] ?? false,
+            'est_a_haut_risque' => $data['est_a_haut_risque'] ?? false,
             'commentaire' => $data['commentaire'] ?? null,
             'checklist_haut_risque' => $data['checklist_haut_risque'] ?? null,
             'date_sauvegarde' => now(),

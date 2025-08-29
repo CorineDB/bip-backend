@@ -22,7 +22,7 @@ class ValiderEtudeProfilRequest extends FormRequest
         return [
             'decision'          => 'required|string|in:faire_etude_prefaisabilite,reviser_note_conceptuelle,abandonner_projet,sauvegarder',
             'commentaire'       => 'required|string|min:10|max:2000',
-            'est_haut_risque'   => 'required|boolean:false',
+            'est_a_haut_risque'   => 'required|boolean:false',
             'est_dur'           => 'required|boolean:false',
         ];
     }
@@ -51,7 +51,7 @@ class ValiderEtudeProfilRequest extends FormRequest
         return [
             'decision' => 'décision',
             'commentaire' => 'commentaire',
-            'est_haut_risque' => 'est un projet a haut risque',
+            'est_a_haut_risque' => 'est un projet a haut risque',
             'est_dur' => 'est un projet de nature dur',
         ];
     }
