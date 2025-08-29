@@ -110,7 +110,7 @@ class GroupeUtilisateur extends Model
      */
     public function permissions()
     {
-        return $this->belongsToMany(Role::class, 'groupe_utilisateur_permissions', 'groupeUtilisateurId', 'permissionId')
+        return $this->belongsToMany(Permission::class, 'groupe_utilisateur_permissions', 'groupeUtilisateurId', 'permissionId')
             ->withTimestamps()
             ->withPivot('deleted_at');
     }
