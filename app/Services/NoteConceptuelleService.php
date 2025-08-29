@@ -20,6 +20,7 @@ use App\Http\Resources\ChampResource;
 use App\Http\Resources\projets\ProjetsResource;
 use App\Http\Resources\UserResource;
 use App\Models\Decision;
+use App\Models\Dpaf;
 use App\Models\Workflow;
 use Carbon\Carbon;
 use Exception;
@@ -59,6 +60,11 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     public function create(array $data): JsonResponse
     {
         try {
+
+            if (auth()->user()->type !== 'responsable-projet') {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             DB::beginTransaction();
 
             // Extraire les données spécifiques au payload
@@ -206,6 +212,11 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     public function update($id, array $data): JsonResponse
     {
         try {
+
+            if (auth()->user()->type !== 'responsable-projet') {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             // Récupérer la note conceptuelle pour obtenir le projetId
             $noteConceptuelle = $this->repository->findOrFail($id);
             $estSoumise = $data['est_soumise'] ?? false;
@@ -541,7 +552,16 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     public function creerEvaluation(int $noteConceptuelleId, array $data): JsonResponse
     {
+
         try {
+            if (auth()->user()->profilable_type !== Dpaf::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
+            if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle')) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             DB::beginTransaction();
 
             $noteConceptuelle = $this->repository->findOrFail($noteConceptuelleId);
@@ -1285,10 +1305,18 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     public function validerEtudeDeProfil(int $projetId, array $data): JsonResponse
     {
         try {
-            // Vérifier les autorisations
-            if (!in_array(auth()->user()->type, ['comite_ministeriel', 'dpaf', 'responsable-projet', 'admin'])) {
-                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+            if (auth()->user()->profilable_type !== Dpaf::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
+
+            if (!auth()->user()->hasPermissionTo('valider-l-etude-de-profil')) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
+            // Vérifier les autorisations
+            /* if (!in_array(auth()->user()->type, ['comite_ministeriel'])) {
+                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+            } */
 
             DB::beginTransaction();
 

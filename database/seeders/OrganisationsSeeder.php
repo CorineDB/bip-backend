@@ -334,6 +334,38 @@ class OrganisationsSeeder extends Seeder
         "supprimer-fichier",
     ];
 
+    protected $comiteMinisterielPermissionsSlugs = [
+        "telecharger-la-fiche-synthese-une-idee-de-projet",
+        "acceder-au-tableau-de-bord-climatique",
+        "acceder-au-tableau-d-amc",
+        "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+        "voir-la-liste-des-idees-de-projet",
+        "voir-la-liste-des-projet",
+        "voir-le-resultats-d-evaluation-d-une-note-conceptuelle",
+        "imprimer-le-resultats-d-evaluation-d-une-note-conceptuelle",
+        "voir-les-documents-relatifs-a-une-note-conceptuelle",
+        "imprimer-une-note-conceptuelle",
+        "commenter-une-note-conceptuelle",
+        "voir-la-liste-des-notes-conceptuelle",
+        "voir-la-liste-des-commentaires-d-une-note-conceptuelle",
+        "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
+        "voir-la-liste-des-tdrs-de-prefaisabilite",
+        "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-prefaisabilite",
+        "telecharger-un-fichier-complementaire-d-un-tdr-de-prefaisabilite",
+        "telecharger-un-rapport-de-prefaisabilite",
+        "voir-la-liste-des-rapports-de-prefaisabilite",
+        "valider-une-etude-de-prefaisabilite",
+        "voir-la-liste-des-rapports-de-faisabilite",
+        "telecharger-un-rapport-de-faisabilite",
+        "valider-une-etude-de-faisabilite",
+        "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite",
+        "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite",
+        "voir-la-liste-des-tdrs-de-faisabilite",
+        "valider-un-rapport-evaluation-ex-ante",
+        "telecharger-un-rapport-d-evaluation-ex-ante",
+        "voir-la-liste-des-rapports-d-evaluation-ex-ante"
+    ];
+
     public function run(): void
     {
         $organisations = [
