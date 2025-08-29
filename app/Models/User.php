@@ -133,16 +133,9 @@ class User extends Authenticatable implements OAuthenticatable
     public function permissions()
     {
 
-        // IDs des permissions du rôle (si rôle existant)
-        $rolePermissions = $this->role ? $this->role->permissions()->pluck('permissions.id') : collect();
-
-        // IDs des permissions des groupes utilisateurs
-        $groupPermissions = Permission::whereHas('groupesUtilisateur', function ($q) {
-            $q->whereIn('groupes_utilisateur.id', $this->groupesUtilisateur->pluck('id'));
-        })->pluck('permissions.id');
-
-        // Fusionner et supprimer les doublons
-        $allIds = $rolePermissions->merge($groupPermissions)->unique();
+        return $this->role->permissions
+        ->merge($this->groupesUtilisateurs->flatMap->permissions)
+        ->unique('id');
 
         return Permission::whereIn('id', $allIds);
 
