@@ -138,7 +138,7 @@ class User extends Authenticatable implements OAuthenticatable
 
         // IDs des permissions des groupes utilisateurs
         $groupPermissions = Permission::whereHas('groupesUtilisateur', function ($q) {
-            $q->whereIn('groupes_utilisateurs.id', $this->groupesUtilisateur->pluck('id'));
+            $q->whereIn('groupes_utilisateur.id', $this->groupesUtilisateur->pluck('id'));
         })->pluck('permissions.id');
 
         // Fusionner et supprimer les doublons
