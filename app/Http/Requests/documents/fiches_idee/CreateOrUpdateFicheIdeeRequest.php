@@ -104,7 +104,7 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
             "cout_dollar_canadien",
             "risques_immediats",
             "sommaire",
-            "objectif_general",
+            //"objectif_general",
             "conclusions",
             "constats_majeurs",
             "description",
