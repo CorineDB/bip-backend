@@ -559,7 +559,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     "evaluation" => [],
                     "resultats_evaluation" => [],
                     'date_debut_evaluation' => now(),
-                    'statut' => 0, // En cours
+                    'date_fin_evaluation' => $data["evaluer"] ? now() : null,
+                    'statut' => $data["evaluer"] ? 1 : 0, // En cours
                     'id_evaluation' => $evaluationParent ? $evaluationParent->id : null // Lien vers le parent
                 ];
 
