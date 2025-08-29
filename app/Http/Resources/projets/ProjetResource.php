@@ -101,7 +101,7 @@ class ProjetResource extends BaseApiResource
             'categorie' => $this->whenLoaded('categorie'),
             'responsable' => $this->whenLoaded('responsable'),
             'demandeur' => $this->whenLoaded('demandeur'),
-            'porteur_projet' => $this->porteur_projet,
+            //'porteur_projet' => $this->porteur_projet,
             'noteConceptuelle' => new NoteConceptuelleResource($this->noteConceptuelle),
 
             // TDRs

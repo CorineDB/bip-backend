@@ -100,7 +100,7 @@ class IdeeProjetResource extends BaseApiResource
             'categorie' => $this->whenLoaded('categorie'),
             'responsable' => $this->whenLoaded('responsable'),
             'demandeur' => $this->whenLoaded('demandeur'),
-            'porteur_projet' => $this->porteur_projet,
+            //'porteur_projet' => $this->porteur_projet,
 
             'cibles' => $this->whenLoaded('cibles', CibleResource::collection($this->cibles)),
             'odds' => $this->whenLoaded('odds', OddResource::collection($this->odds)),

@@ -87,7 +87,7 @@ class Projet extends Model
         'demandeurId',
         'demandeur_type',
         'titre_projet',
-        'porteur_projet',
+        //'porteur_projet',
         'resume_tdr_prefaisabilite',
         'resume_tdr_faisabilite',
         'info_cabinet_etude_prefaisabilite',
