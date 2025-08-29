@@ -508,69 +508,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     }
 
     /**
-     * Créer une grille d'évaluation basée sur le canevas de note conceptuelle
-     */
-    /*
-    public function creerGrilleEvaluation(NoteConceptuelle $noteConceptuelle): array
-    {
-        // Récupérer le canevas de note conceptuelle
-        $canevas = $this->documentRepository->getModel()
-            ->where('type', 'formulaire')
-            ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-redaction-note-conceptuelle'))
-            ->orderBy('created_at', 'desc')
-            ->first();
-
-        if (!$canevas) {
-            throw new Exception('Canevas de note conceptuelle introuvable');
-        }
-
-        $grille = [];
-        $champsCanevas = $canevas->all_champs;
-        $noteData = $noteConceptuelle->note_conceptuelle ?? [];
-
-        foreach ($champsCanevas as $champ) {
-            // Ne pas évaluer certains types de champs
-            if (in_array($champ->type_champ, ['section', 'group'])) {
-                continue;
-            }
-
-            $valeurRedige = $noteData[$champ->attribut] ?? null;
-
-            // Formater la valeur selon le type de champ
-            $contenuRedige = $this->formaterContenuRedige($valeurRedige, $champ);
-
-            $critere = [
-                'champ_id' => $champ->id,
-                'label' => $champ->label,
-                'attribut' => $champ->attribut,
-                'is_required' => $champ->is_required,
-                'description' => $champ->info ?? "Évaluation de: {$champ->label}",
-                'poids' => $this->calculatePoids($champ),
-                'contenu_redige' => $contenuRedige, // Le contenu rédigé à évaluer
-                'valeur_brute' => $valeurRedige, // Valeur brute pour référence
-                'statut_evaluation' => null, // Options: passe, retour, non-accepte
-                'commentaire_evaluateur' => null, // Commentaire de l'évaluateur
-                'options_notation' => $this->getOptionsNotation($canevas),
-                'a_du_contenu' => !empty($valeurRedige) && $valeurRedige !== '' && $valeurRedige !== null
-            ];
-
-            $grille[] = $critere;
-        }
-
-        return $grille;
-    }
-    */
-
-    /**
-     * Récupérer la valeur d'un champ depuis la note conceptuelle
-     */
-    private function getValeurFromNote(NoteConceptuelle $noteConceptuelle, string $attribut)
-    {
-        $noteData = $noteConceptuelle->note_conceptuelle ?? [];
-        return $noteData[$attribut] ?? null;
-    }
-
-    /**
      * Créer une évaluation pour une note conceptuelle
      */
     public function creerEvaluation(int $noteConceptuelleId, array $data): JsonResponse
@@ -1343,6 +1280,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             /* if (!in_array(auth()->user()->type, ['comite_ministeriel'])) {
                 throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
             } */
+
+            if (auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
 
             if (!auth()->user()->hasPermissionTo('valider-l-etude-de-profil') && auth()->user()->type != 'dgpd') {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
