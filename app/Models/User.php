@@ -140,7 +140,7 @@ class User extends Authenticatable implements OAuthenticatable
 
             // permissions des groupes
             $q->orWhereHas('groupesUtilisateur', function ($qg) {
-                $qg->whereIn('groupes_utilisateurs.id', $this->groupesUtilisateurs()->pluck('id'));
+                $qg->whereIn('groupes_utilisateurs.id', $this->groupesUtilisateur()->pluck('id'));
             });
         });
 

@@ -62,6 +62,16 @@ class Permission extends Model
     }
 
     /**
+     * Get the groupesUtilisateur that belong to this group.
+     */
+    public function groupesUtilisateur()
+    {
+        return $this->belongsToMany(GroupeUtilisateur::class, 'groupe_utilisateur_permissions', 'permissionId', 'groupeUtilisateurId')
+            ->withTimestamps()
+            ->withPivot('deleted_at');
+    }
+
+    /**
      * The model's boot method.
      */
     protected static function boot()
