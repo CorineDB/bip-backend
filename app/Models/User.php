@@ -146,6 +146,14 @@ class User extends Authenticatable implements OAuthenticatable
 
     public function allPermissions()
     {
+        $roleIds = $this->role ? [$this->role->id] : [];
+
+        $groupIds = $this->groupesUtilisateur->pluck('id')->toArray();
+
+        return Permission::query()
+            ->whereHas('roles', fn($q) => $q->whereIn('roles.id', $roleIds))
+            ->orWhereHas('groupesUtilisateur', fn($q) => $q->whereIn('groupes_utilisateurs.id', $groupIds));
+
         return $this->role->permissions
         ->merge($this->groupesUtilisateur->flatMap->permissions)
         ->unique('id');
