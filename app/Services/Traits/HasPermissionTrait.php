@@ -8,8 +8,8 @@ trait HasPermissionTrait
 
     public function hasPermissionTo($permission)
     {
-        return $this->hasPermissionThroughRole($permission) 
-            || $this->hasPermissionThroughGroup($permission) 
+        return $this->hasPermissionThroughRole($permission)
+            || $this->hasPermissionThroughGroup($permission)
             || $this->hasPermission($permission);
     }
 
@@ -84,7 +84,7 @@ trait HasPermissionTrait
      */
     protected function hasPermission($permission)
     {
-        return (bool) $this->permissions->where('slug', $permission)->count();
+        return (bool) $this->allPermissions->where('slug', $permission)->count();
     }
 
     /**
