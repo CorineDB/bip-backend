@@ -306,14 +306,14 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
             // Supprimer doublons
             $permissions = array_unique($permissions);
 
-            dump($permissions);
+            dump("Permissions a mettre a jour". $permissions);
 
             if(count($permissions)){
                 // Synchroniser les permissions
                 $groupe->permissions()->sync($permissions);
             }
 
-            dd($groupe->permissions);
+            dd("Permissions mis a jour". $groupe->permissions);
 
             /**
              * ---- Gestion des Utilisateurs ----
