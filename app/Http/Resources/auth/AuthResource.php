@@ -31,7 +31,7 @@ class AuthResource extends JsonResource
             }),
             "status"=> $this->status,
             "role" => $this->role ? new RoleResource($this->role->load("permissions")) : null,
-            "permissions" => PermissionResource::collection($this->allPermissions),
+            "permissions" => PermissionResource::collection($this->allPermissions()),
             "groupes_utilisateur" => GroupeUtilisateurResource::collection($this->groupesUtilisateur)
         ];
     }
