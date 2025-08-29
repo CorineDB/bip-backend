@@ -183,6 +183,7 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
     /*public function create(array $data): JsonResponse
     {
         DB::beginTransaction();

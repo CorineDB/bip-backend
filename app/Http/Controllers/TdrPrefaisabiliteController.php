@@ -50,6 +50,14 @@ class TdrPrefaisabiliteController extends Controller
     }
 
     /**
+     * Récupérer les détails des TDRs de préfaisabilité soumis
+     */
+    public function getTdrDetails(int $projetId): JsonResponse
+    {
+        return $this->service->getTdrDetails($projetId);
+    }
+
+    /**
      * Soumettre les TDRs de préfaisabilité (SFD-010)
      */
     public function soumettreTdrs(SoumettreTdrsRequest $request, int $projetId): JsonResponse

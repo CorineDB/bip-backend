@@ -8,7 +8,9 @@ trait HasPermissionTrait
 
     public function hasPermissionTo($permission)
     {
-        return $this->hasPermissionThroughRole($permission) || $this->hasPermission($permission);
+        return $this->hasPermissionThroughRole($permission) 
+            || $this->hasPermissionThroughGroup($permission) 
+            || $this->hasPermission($permission);
     }
 
     public function hasPermissionThroughRole($permission)
@@ -27,6 +29,22 @@ trait HasPermissionTrait
         else if(is_object($permission)){
             foreach ($permission->roles as $role) {
                 if ($this->roles->contains($role)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public function hasPermissionThroughGroup($permission)
+    {
+        if (is_string($permission)) {
+            return $this->groupesUtilisateur->contains(function ($groupe) use ($permission) {
+                return $groupe->permissions->contains('slug', $permission);
+            });
+        } else if (is_object($permission)) {
+            foreach ($this->groupesUtilisateur as $groupe) {
+                if ($groupe->permissions->contains($permission)) {
                     return true;
                 }
             }
@@ -84,9 +102,25 @@ trait HasPermissionTrait
     {
         $permissions = [];
 
-        $this->roles->each(function ($role) use ($permissions) {
-            $permissions = array_unique(array_merge($permissions, $role->permissions));
+        // Permissions via roles directs
+        $this->roles->each(function ($role) use (&$permissions) {
+            $permissions = array_unique(array_merge($permissions, $role->permissions->toArray()));
         });
+
+        // Permissions via groupes (permissions directes)
+        $this->groupesUtilisateur->each(function ($groupe) use (&$permissions) {
+            $permissions = array_unique(array_merge($permissions, $groupe->permissions->toArray()));
+        });
+
+        // Permissions via groupes (permissions des roles des groupes)
+        $this->groupesUtilisateur->each(function ($groupe) use (&$permissions) {
+            $groupe->roles->each(function ($role) use (&$permissions) {
+                $permissions = array_unique(array_merge($permissions, $role->permissions->toArray()));
+            });
+        });
+
+        // Permissions directes de l'utilisateur
+        $permissions = array_unique(array_merge($permissions, $this->permissions->toArray()));
 
         return $permissions;
     }

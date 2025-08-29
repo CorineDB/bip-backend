@@ -48,6 +48,14 @@ class TdrFaisabiliteController extends Controller
     }
 
     /**
+     * Récupérer les détails des TDRs de faisabilité soumis
+     */
+    public function getTdrDetails(int $projetId): JsonResponse
+    {
+        return $this->service->getTdrDetails($projetId);
+    }
+
+    /**
      * Soumettre les TDRs de faisabilité (SFD-014)
      */
     public function soumettreTdrs(SoumettreTdrsFaisabiliteRequest $request, int $projetId): JsonResponse

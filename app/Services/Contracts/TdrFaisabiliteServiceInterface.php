@@ -7,6 +7,11 @@ use Illuminate\Http\JsonResponse;
 interface TdrFaisabiliteServiceInterface extends AbstractServiceInterface
 {
     /**
+     * Récupérer les détails des TDRs de faisabilité soumis
+     */
+    public function getTdrDetails(int $projetId): JsonResponse;
+
+    /**
      * Soumettre les TDRs de faisabilité
      */
     public function soumettreTdrs(int $projetId, array $data): JsonResponse;

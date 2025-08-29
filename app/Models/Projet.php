@@ -513,6 +513,24 @@ class Projet extends Model
             ->orderBy('created_at', 'desc');
     }
 
+    /**
+     * TDR préfaisabilité avec détails complets
+     */
+    public function tdrPrefaisabilite()
+    {
+        return $this->tdrPrefaisabiliteActif()
+            ->with(['soumisPar', 'redigerPar', 'fichiers.uploadedBy']);
+    }
+
+    /**
+     * TDR faisabilité avec détails complets
+     */
+    public function tdrFaisabilite()
+    {
+        return $this->tdrFaisabiliteActif()
+            ->with(['soumisPar', 'redigerPar', 'fichiers.uploadedBy']);
+    }
+
     // Méthodes pour récupérer les TDRs avec historique
 
     /**

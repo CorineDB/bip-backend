@@ -7,6 +7,11 @@ use Illuminate\Http\JsonResponse;
 interface TdrPrefaisabiliteServiceInterface extends AbstractServiceInterface
 {
     /**
+     * Récupérer les détails des TDRs de préfaisabilité soumis
+     */
+    public function getTdrDetails(int $projetId): JsonResponse;
+
+    /**
      * Soumettre les TDRs de préfaisabilité (SFD-010)
      */
     public function soumettreTdrs(int $projetId, array $data): JsonResponse;

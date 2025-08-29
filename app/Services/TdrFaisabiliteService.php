@@ -48,6 +48,50 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     }
 
     /**
+     * Récupérer les détails des TDRs de faisabilité soumis
+     */
+    public function getTdrDetails(int $projetId): JsonResponse
+    {
+        try {
+            // Récupérer le projet
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Récupérer le TDR le plus récent pour ce projet
+            $tdr = $this->repository->getModel()
+                ->where('projetId', $projetId)
+                ->where('type', 'faisabilite')
+                ->with(['soumisPar', 'redigerPar', 'fichiers.uploadedBy'])
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if (!$tdr) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun TDR de faisabilité trouvé pour ce projet.'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'projet' => new ProjetResource($projet),
+                    'tdr' => $tdr,
+                    'fichiers' => $tdr->fichiers,
+                    'peut_apprecier' => $projet->statut->value === StatutIdee::TDR_FAISABILITE->value,
+                    'statut_projet' => $projet->statut,
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "Erreur lors de la récupération des détails du TDR. " . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
+        }
+    }
+
+    /**
      * Soumettre les TDRs de faisabilité (SFD-014)
      */
     public function soumettreTdrs(int $projetId, array $data): JsonResponse
@@ -141,7 +185,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             // Traitement et sauvegarde du fichier TDR (legacy)
             $fichierTdr = null;
             if (isset($data['tdr'])) {
-                $fichierTdr = $this->sauvegarderFichierTdr($projet, $data['tdr'], $data);
+                $fichierTdr = $this->sauvegarderFichierTdr($tdr, $data['tdr'], $data);
             }
 
             // Récupérer les commentaires des évaluations antérieures si c'est un retour
@@ -1005,13 +1049,13 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     /**
      * Sauvegarder le fichier TDR téléversé
      */
-    private function sauvegarderFichierTdr(Projet $projet, $fichier, array $data): Fichier
+    private function sauvegarderFichierTdr(\App\Models\Tdr $tdr, $fichier, array $data): Fichier
     {
         // Générer les informations du fichier
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = 'tdr_faisabilite_' . $projet->id . '_' . time() . '.' . $extension;
-        $chemin = $fichier->storeAs('tdrs/faisabilite', $nomStockage, 'public');
+        $nomStockage = 'tdr_faisabilite_' . $tdr->id . '_' . time() . '.' . $extension;
+        $chemin = $fichier->storeAs("tdrs/{$tdr->id}/faisabilite", $nomStockage, 'public');
 
         // Créer l'enregistrement Fichier
         return Fichier::create([
@@ -1026,15 +1070,16 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             'commentaire' => $data['resume'] ?? null,
             'metadata' => [
                 'type_document' => 'tdr-faisabilite',
-                'projet_id' => $projet->id,
+                'tdr_id' => $tdr->id,
+                'projet_id' => $tdr->projet_id,
                 'resume' => $data['resume'] ?? null,
                 'tdr_faisabilite' => $data['tdr_faisabilite'] ?? null,
                 'type_tdr' => $data['type_tdr'] ?? 'faisabilite',
                 'soumis_par' => auth()->id(),
                 'soumis_le' => now()
             ],
-            'fichier_attachable_id' => $projet->id,
-            'fichier_attachable_type' => Projet::class,
+            'fichier_attachable_id' => $tdr->id,
+            'fichier_attachable_type' => \App\Models\Tdr::class,
             'categorie' => 'tdr-faisabilite',
             'ordre' => 1,
             'uploaded_by' => auth()->id(),

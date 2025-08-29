@@ -206,6 +206,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::post('{projetId}/confirmer-resultats-evaluation-note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'confirmerResultat']);
 
             // Routes pour les TDRs de préfaisabilité
+            Route::get('{projetId}/details-tdr-prefaisabilite', [TdrPrefaisabiliteController::class, 'getTdrDetails']);
             Route::post('{projetId}/soumettre-tdrs-prefaisabilite', [TdrPrefaisabiliteController::class, 'soumettreTdrs']);
             Route::post('{projetId}/apprecier-tdrs-prefaisabilite', [TdrPrefaisabiliteController::class, 'evaluerTdrs']);
             Route::get('{projetId}/details-appreciation-tdrs-prefaisabilite', [TdrPrefaisabiliteController::class, 'getEvaluationTdr']);
@@ -217,6 +218,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::post('{projetId}/valider-rapport-final', [TdrPrefaisabiliteController::class, 'validerRapportFinal']);
 
             // Routes pour les TDRs de faisabilité
+            Route::get('{projetId}/details-tdr-faisabilite', [TdrFaisabiliteController::class, 'getTdrDetails']);
             Route::post('{projetId}/soumettre-tdrs-faisabilite', [TdrFaisabiliteController::class, 'soumettreTdrs']);
             Route::post('{projetId}/apprecier-tdrs-faisabilite', [TdrFaisabiliteController::class, 'evaluerTdrs']);
             Route::get('{projetId}/details-appreciation-tdrs-faisabilite', [TdrFaisabiliteController::class, 'getEvaluationTdr']);

@@ -305,6 +305,50 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
+     * Récupérer les détails des TDRs de préfaisabilité soumis
+     */
+    public function getTdrDetails(int $projetId): JsonResponse
+    {
+        try {
+            // Récupérer le projet
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Récupérer le TDR le plus récent pour ce projet
+            $tdr = $this->tdrRepository->getModel()
+                ->where('projet_id', $projetId)
+                ->where('type', 'prefaisabilite')
+                ->with(['soumisPar', 'redigerPar', 'fichiers.uploadedBy'])
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if (!$tdr) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'projet' => new ProjetResource($projet),
+                    'tdr' => $tdr,
+                    'fichiers' => $tdr->fichiers,
+                    'peut_apprecier' => $projet->statut->value === StatutIdee::TDR_PREFAISABILITE->value,
+                    'statut_projet' => $projet->statut,
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "Erreur lors de la récupération des détails du TDR. " . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
+        }
+    }
+
+    /**
      * Soumettre les TDRs de préfaisabilité (SFD-010)
      */
     public function soumettreTdrs(int $projetId, array $data): JsonResponse
@@ -313,23 +357,23 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             DB::beginTransaction();
 
             // Vérifier les autorisations (DPAF uniquement)
-            if (!in_array(auth()->user()->type, ['dpaf', 'admin'])) {
+           /*  if (!in_array(auth()->user()->type, ['dpaf'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette soumission.'
                 ], 403);
-            }
+            } */
 
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if (!in_array($projet->statut->value, [StatutIdee::TDR_PREFAISABILITE->value, StatutIdee::R_TDR_PREFAISABILITE->value])) {
+            /* if (!in_array($projet->statut->value, [StatutIdee::TDR_PREFAISABILITE->value, StatutIdee::R_TDR_PREFAISABILITE->value])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de soumission des TDRs de préfaisabilité.'
                 ], 422);
-            }
+            } */
 
             // Extraire les données spécifiques au payload
             $estSoumise = $data['est_soumise'] ?? true;
@@ -398,7 +442,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Traitement et sauvegarde du fichier TDR (legacy)
             $fichierTdr = null;
             if (isset($data['tdr'])) {
-                $fichierTdr = $this->sauvegarderFichierTdr($projet, $data['tdr'], $data);
+                $fichierTdr = $this->sauvegarderFichierTdr($tdr, $data['tdr'], $data);
             }
 
             // Récupérer les commentaires des évaluations antérieures si c'est un retour
@@ -1486,13 +1530,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Sauvegarder le fichier TDR avec version
      */
-    private function sauvegarderFichierTdr(Projet $projet, $fichier, array $data, int $version = 1): Fichier
+    private function sauvegarderFichierTdr(\App\Models\Tdr $tdr, $fichier, array $data, int $version = 1): Fichier
     {
         // Générer les informations du fichier
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
         $nomStockage = "tdr_prefaisabilite_v{$version}.{$extension}";
-        $chemin = $fichier->storeAs("projets/{$projet->id}/prefaisabilite", $nomStockage, 'public');
+        $chemin = $fichier->storeAs("tdrs/{$tdr->id}/prefaisabilite", $nomStockage, 'public');
 
         // Créer l'enregistrement Fichier
         return Fichier::create([
@@ -1507,7 +1551,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             'commentaire' => $data['resume'] ?? null,
             'metadata' => [
                 'type_document' => 'tdr-prefaisabilite',
-                'projet_id' => $projet->id,
+                'tdr_id' => $tdr->id,
+                'projet_id' => $tdr->projet_id,
                 'version' => $version,
                 'statut' => 'actif',
                 'resume' => $data['resume'] ?? null,
@@ -1517,8 +1562,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'soumis_par' => auth()->id(),
                 'soumis_le' => now()
             ],
-            'fichier_attachable_id' => $projet->id,
-            'fichier_attachable_type' => Projet::class,
+            'fichier_attachable_id' => $tdr->id,
+            'fichier_attachable_type' => \App\Models\Tdr::class,
             'categorie' => 'tdr-prefaisabilite',
             'ordre' => 1,
             'uploaded_by' => auth()->id(),

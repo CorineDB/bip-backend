@@ -45,6 +45,18 @@ class ProjetsResource extends BaseApiResource
             'cout_estimatif_projet' => $this->cout_estimatif_projet ?? [],
             'secteur' => new SecteurResourcePublic($this->secteur),
             'noteConceptuelle' => new NoteConceptuelleResource($this->noteConceptuelle),
+            
+            // TDRs
+            'tdr_prefaisabilite' => $this->whenLoaded('tdrPrefaisabilite', function() {
+                return $this->tdrPrefaisabilite ? array_merge($this->tdrPrefaisabilite->toArray(), [
+                    'fichiers' => $this->tdrPrefaisabilite->fichiers
+                ]) : null;
+            }),
+            'tdr_faisabilite' => $this->whenLoaded('tdrFaisabilite', function() {
+                return $this->tdrFaisabilite ? array_merge($this->tdrFaisabilite->toArray(), [
+                    'fichiers' => $this->tdrFaisabilite->fichiers
+                ]) : null;
+            }),
         ];
     }
 
