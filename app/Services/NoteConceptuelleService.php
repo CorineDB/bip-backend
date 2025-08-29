@@ -300,6 +300,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Vérifier que le projet existe
             $projet = $this->projetRepository->findOrFail($projetId);
 
+            if (!auth()->user()->hasPermissionTo('valider-l-etude-de-profil') && (auth()->user()->profilable->ministere->id == $projet->ministere->id)) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             // Trouver la note conceptuelle associée au projet
             $noteConceptuelle = $this->repository->getModel()->where([
                 'id' => $noteId,
@@ -1254,6 +1258,15 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     public function confirmerResultatParNote(int $noteConceptuelleId, array $data): JsonResponse
     {
         try {
+
+            if (auth()->user()->profilable_type !== Dpaf::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
+            if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle')) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             // Récupérer la note conceptuelle
             $noteConceptuelle = $this->repository->findOrFail($noteConceptuelleId);
 
@@ -1305,23 +1318,30 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     public function validerEtudeDeProfil(int $projetId, array $data): JsonResponse
     {
         try {
-            if (auth()->user()->profilable_type !== Dpaf::class) {
-                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
-            }
-
-            if (!auth()->user()->hasPermissionTo('valider-l-etude-de-profil')) {
-                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
-            }
 
             // Vérifier les autorisations
             /* if (!in_array(auth()->user()->type, ['comite_ministeriel'])) {
                 throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
             } */
 
+            if (!auth()->user()->hasPermissionTo('valider-l-etude-de-profil')) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             DB::beginTransaction();
 
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
+
+            /*
+                if (auth()->user()->profilable_type !== Dpaf::class) {
+                    throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+                }
+            */
+
+            if (auth()->user()->profilable->ministere->id != $projet->ministere->id) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
 
             // Vérifier que le projet est au bon statut
             if ($projet->statut->value != StatutIdee::VALIDATION_PROFIL->value) {
