@@ -61,7 +61,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     {
         try {
 
-            if (auth()->user()->type !== 'responsable-projet') {
+            if (auth()->user()->type !== 'dpaf') {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -213,7 +213,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     {
         try {
 
-            if (auth()->user()->type !== 'responsable-projet') {
+            if (auth()->user()->type !== 'dpaf') {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
