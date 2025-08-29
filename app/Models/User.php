@@ -132,18 +132,7 @@ class User extends Authenticatable implements OAuthenticatable
 
     public function permissions()
     {
-        return Permission::where(function ($q) {
-            // permissions du rôle
-            $q->whereHas('roles', function ($qr) {
-                $qr->where('roles.id', $this->roleId);
-            });
-
-            // permissions des groupes
-            $q->orWhereHas('groupesUtilisateur', function ($qg) {
-                $qg->whereIn('groupes_utilisateurs.id', $this->groupesUtilisateur()->pluck('groupes_utilisateur.id'));
-            });
-        });
-
+        return $this->role?->permissions() ?? Permission::query();
         return $this->role->permissions();
         return $this->roles()->get()->last()->permissions();
     }
