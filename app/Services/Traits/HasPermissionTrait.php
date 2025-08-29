@@ -104,9 +104,9 @@ trait HasPermissionTrait
 
         $permissions = array_unique(array_merge($permissions, $this->role->permissions->toArray()));
         // Permissions via roles directs
-        $this->roles->each(function ($role) use (&$permissions) {
+       /*  $this->roles->each(function ($role) use (&$permissions) {
             $permissions = array_unique(array_merge($permissions, $role->permissions->toArray()));
-        });
+        }); */
 
         // Permissions via groupes (permissions directes)
         $this->groupesUtilisateur->each(function ($groupe) use (&$permissions) {
@@ -121,7 +121,7 @@ trait HasPermissionTrait
         });
 
         // Permissions directes de l'utilisateur
-        $permissions = array_unique(array_merge($permissions, $this->permissions->toArray()));
+        $permissions = array_unique(array_merge($permissions, $this->allPermissions()->toArray()));
 
         return $permissions;
     }
