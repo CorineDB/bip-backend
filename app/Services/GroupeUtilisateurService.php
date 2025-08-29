@@ -303,17 +303,17 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
                 }
             }
 
-            dump($permissions);
-
             // Supprimer doublons
             $permissions = array_unique($permissions);
 
-            dd($permissions);
+            dump($permissions);
 
             if(count($permissions)){
                 // Synchroniser les permissions
                 $groupe->permissions()->sync($permissions);
             }
+
+            dd($groupe->permissions);
 
             /**
              * ---- Gestion des Utilisateurs ----
@@ -361,6 +361,7 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
             }
 
             $groupe->refresh();
+
             DB::commit();
 
             $acteur = Auth::check() ? Auth::user()->nom . " " . Auth::user()->prenom : "Inconnu";
@@ -369,7 +370,7 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
             return response()->json([
                 'statut' => 'success',
                 'message' => 'Groupe d\'utilisateurs modifié avec succès',
-                'data' => $groupe->load(['permissions', 'users.personne', 'profilable']),
+                'data' => new GroupeUtilisateurResource($groupe->load(['permissions', 'users.personne', 'profilable'])),
                 'statutCode' => Response::HTTP_OK
             ], Response::HTTP_OK);
         } catch (Exception $e) {
