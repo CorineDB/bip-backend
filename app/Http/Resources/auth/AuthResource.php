@@ -4,6 +4,7 @@ namespace App\Http\Resources\auth;
 
 use App\Http\Resources\GroupeUtilisateurResource;
 use App\Http\Resources\OrganisationResource;
+use App\Http\Resources\PermissionResource;
 use App\Http\Resources\RoleResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -30,6 +31,7 @@ class AuthResource extends JsonResource
             }),
             "status"=> $this->status,
             "role" => $this->role ? new RoleResource($this->role->load("permissions")) : null,
+            "permissions" => PermissionResource::collection($this->permissions),
             "groupes_utilisateur" => GroupeUtilisateurResource::collection($this->groupesUtilisateur)
         ];
     }
