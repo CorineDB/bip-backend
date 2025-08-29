@@ -20,6 +20,7 @@ use App\Http\Resources\ChampResource;
 use App\Http\Resources\projets\ProjetsResource;
 use App\Http\Resources\UserResource;
 use App\Models\Decision;
+use App\Models\Dgpd;
 use App\Models\Dpaf;
 use App\Models\Workflow;
 use Carbon\Carbon;
@@ -1264,7 +1265,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             }
 
             //if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle')) {
-            if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle') && auth()->user()->type != 'dgpd' ) {
+            if (/* !auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle') &&  */auth()->user()->type !== 'dgpd' ) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -1325,7 +1326,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
             } */
 
-            if (!auth()->user()->hasPermissionTo('valider-l-etude-de-profil') && auth()->user()->type != 'dgpd' ) {
+            if (/* !auth()->user()->hasPermissionTo('valider-l-etude-de-profil') &&  */auth()->user()->type != 'dgpd' ) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
