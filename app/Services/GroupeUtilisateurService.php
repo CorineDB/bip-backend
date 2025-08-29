@@ -306,7 +306,7 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
             // Supprimer doublons
             $permissions = array_unique($permissions);
 
-            dump("Permissions a mettre a jour". json_encode($permissions));
+            //dump("Permissions a mettre a jour". json_encode($permissions));
 
             if(count($permissions)){
                 // Synchroniser les permissions
