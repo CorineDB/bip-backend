@@ -1326,7 +1326,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
             } */
 
-            if (/* !auth()->user()->hasPermissionTo('valider-l-etude-de-profil') &&  */auth()->user()->type != 'dgpd' ) {
+            if (!auth()->user()->hasPermissionTo('valider-l-etude-de-profil') && auth()->user()->type != 'dgpd' ) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
