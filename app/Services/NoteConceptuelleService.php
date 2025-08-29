@@ -1294,12 +1294,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            /*
-                if (auth()->user()->profilable_type !== Dpaf::class) {
-                    throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
-                }
-            */
-
             // Vérifier que le projet est au bon statut
             if ($projet->statut->value != StatutIdee::VALIDATION_PROFIL->value) {
                 return response()->json([
@@ -1350,7 +1344,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $nouveauStatut = $this->traiterDecisionValidation($projet, $data['decision'], $data);
 
             // Créer une évaluation pour tracer la validation
-            $evaluation = $noteConceptuelle->evaluations()->create([
+            $projet->evaluations()->create([
                 'type_evaluation' => 'validation-etude-profil',
                 'projetable_type' => get_class($projet),
                 'projetable_id' => $projet->id,
