@@ -309,12 +309,9 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
             //dump("Permissions a mettre a jour". json_encode($permissions));
 
             if(count($permissions)){
-                $groupe->refresh();
                 // Synchroniser les permissions
                 $groupe->permissions()->sync($permissions);
             }
-
-            dd("Permissions mis a jour". json_encode($groupe->permissions));
 
             /**
              * ---- Gestion des Utilisateurs ----
