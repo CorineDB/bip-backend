@@ -84,7 +84,7 @@ trait HasPermissionTrait
      */
     protected function hasPermission($permission)
     {
-        return (bool) $this->allPermissions->where('slug', $permission)->count();
+        return (bool) $this->allPermissions()->where('slug', $permission)->count();
     }
 
     /**
@@ -102,6 +102,7 @@ trait HasPermissionTrait
     {
         $permissions = [];
 
+        $permissions = array_unique(array_merge($permissions, $this->role->permissions->toArray()));
         // Permissions via roles directs
         $this->roles->each(function ($role) use (&$permissions) {
             $permissions = array_unique(array_merge($permissions, $role->permissions->toArray()));
