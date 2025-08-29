@@ -11,6 +11,7 @@ use App\Models\Decision;
 use App\Models\Workflow;
 use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
+use App\Http\Resources\TdrResource;
 use App\Http\Resources\projets\ProjetResource;
 use App\Http\Resources\UserResource;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
@@ -74,10 +75,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'projet' => new ProjetResource($projet),
-                    'tdr' => $tdr,
-                    'fichiers' => $tdr->fichiers,
-                    'peut_apprecier' => $projet->statut->value === StatutIdee::TDR_FAISABILITE->value,
+                    'tdr' => new TdrResource($tdr->load("projet")),
                     'statut_projet' => $projet->statut,
                 ]
             ]);
@@ -100,7 +98,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             DB::beginTransaction();
 
             // Vérifier les autorisations (DPAF uniquement)
-            if (!in_array(auth()->user()->type, ['dpaf', 'admin'])) {
+            if (!in_array(auth()->user()->type, ['dpaf'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette soumission.'
@@ -220,8 +218,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'success' => true,
                 'message' => $message,
                 'data' => [
-                    'tdr' => $tdr,
-                    'projet' => new ProjetResource($projet),
+                    'tdr' => new TdrResource($tdr),
                     'fichier_id' => $fichierTdr ? $fichierTdr->id : null,
                     'projet_id' => $projet->id,
                     'ancien_statut' => in_array($projet->statut->value, [StatutIdee::TDR_FAISABILITE->value, StatutIdee::R_TDR_FAISABILITE->value]) ? $projet->statut->value : StatutIdee::TDR_FAISABILITE->value,
@@ -1512,30 +1509,53 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
      */
     private function handleDocuments($tdr, array $documentsData): void
     {
-        foreach ($documentsData as $documentData) {
-            if (isset($documentData['file']) && $documentData['file']) {
-                $file = $documentData['file'];
-                $categorie = $documentData['categorie'] ?? 'tdr';
-
-                // Stocker le fichier et créer l'enregistrement
-                $path = \Illuminate\Support\Facades\Storage::putFile('tdrs', $file);
-
-                $tdr->fichiers()->create([
-                    'nom_original' => $file->getClientOriginalName(),
-                    'nom_stockage' => basename($path),
-                    'chemin' => $path,
-                    'extension' => $file->getClientOriginalExtension(),
-                    'mime_type' => $file->getMimeType(),
-                    'taille' => $file->getSize(),
-                    'hash_md5' => md5_file($file->getRealPath()),
-                    'description' => $documentData['description'] ?? null,
-                    'categorie' => $categorie,
-                    'uploaded_by' => auth()->id(),
-                    'is_public' => false,
-                    'is_active' => true
-                ]);
+        foreach ($documentsData as $index => $file) {
+            if ($file) {
+                // Sauvegarder le document avec la même logique que le fichier TDR
+                $this->sauvegarderAutreDocument($tdr, $file, [], $index + 1);
             }
         }
+    }
+
+    /**
+     * Sauvegarder un autre document avec version (même logique que sauvegarderFichierTdr)
+     */
+    private function sauvegarderAutreDocument($tdr, $fichier, array $data, int $ordre = 1): \App\Models\Fichier
+    {
+        // Générer les informations du fichier
+        $nomOriginal = $fichier->getClientOriginalName();
+        $extension = $fichier->getClientOriginalExtension();
+        $nomStockage = "autre_document_{$ordre}.{$extension}";
+        $chemin = $fichier->storeAs("tdrs/{$tdr->id}/autres-documents", $nomStockage, 'public');
+
+        // Créer l'enregistrement Fichier
+        return \App\Models\Fichier::create([
+            'nom_original' => $nomOriginal,
+            'nom_stockage' => $nomStockage,
+            'chemin' => $chemin,
+            'extension' => $extension,
+            'mime_type' => $fichier->getMimeType(),
+            'taille' => $fichier->getSize(),
+            'hash_md5' => md5_file($fichier->getRealPath()),
+            'description' => $data['description'] ?? 'Autre document pour TDR de faisabilité',
+            'commentaire' => $data['commentaire'] ?? null,
+            'metadata' => [
+                'type_document' => 'autre-document-faisabilite',
+                'tdr_id' => $tdr->id,
+                'projet_id' => $tdr->projet_id,
+                'ordre' => $ordre,
+                'statut' => 'actif',
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now()
+            ],
+            'fichier_attachable_id' => $tdr->id,
+            'fichier_attachable_type' => \App\Models\Tdr::class,
+            'categorie' => 'tdr-faisabilite',
+            'ordre' => $ordre,
+            'uploaded_by' => auth()->id(),
+            'is_public' => false,
+            'is_active' => true
+        ]);
     }
 
     // Méthodes utilitaires (à implémenter selon les besoins)

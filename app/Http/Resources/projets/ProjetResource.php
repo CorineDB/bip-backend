@@ -8,6 +8,7 @@ use App\Http\Resources\FinancementResource;
 use App\Http\Resources\LieuInterventionResource;
 use App\Http\Resources\NoteConceptuelleResource;
 use App\Http\Resources\OddResource;
+use App\Http\Resources\TdrResource;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -101,6 +102,14 @@ class ProjetResource extends BaseApiResource
             'responsable' => $this->whenLoaded('responsable'),
             'demandeur' => $this->whenLoaded('demandeur'),
             'noteConceptuelle' => new NoteConceptuelleResource($this->noteConceptuelle),
+
+            // TDRs
+            'tdr_prefaisabilite' => $this->whenLoaded('tdrPrefaisabilite', function() {
+                return $this->tdrPrefaisabilite->first() ? new TdrResource($this->tdrPrefaisabilite->first()) : null;
+            }),
+            'tdr_faisabilite' => $this->whenLoaded('tdrFaisabilite', function() {
+                return $this->tdrFaisabilite->first() ? new TdrResource($this->tdrFaisabilite->first()) : null;
+            }),
 
             'cibles' => $this->whenLoaded('cibles', CibleResource::collection($this->cibles)),
             'odds' => $this->whenLoaded('odds', OddResource::collection($this->odds)),

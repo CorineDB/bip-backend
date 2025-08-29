@@ -518,8 +518,21 @@ class Projet extends Model
      */
     public function tdrPrefaisabilite()
     {
+        return $this->tdrsPrefaisabilite()
+            ->whereIn('statut', [
+                'soumis',
+                'en_evaluation',
+                'valide',
+                'retour_travail_supplementaire'
+            ])
+            ->with([
+                'soumisPar',
+                'redigerPar',
+                'fichiers.uploadedBy'
+            ])
+            ->orderByDesc('created_at');
         return $this->tdrPrefaisabiliteActif()
-            ->with(['soumisPar', 'redigerPar', 'fichiers.uploadedBy']);
+            ->with(['soumisPar', 'redigerPar', 'fichiers.uploadedBy'])->first();
     }
 
     /**
@@ -527,8 +540,21 @@ class Projet extends Model
      */
     public function tdrFaisabilite()
     {
+        return $this->tdrsFaisabilite()
+            ->whereIn('statut', [
+                'soumis',
+                'en_evaluation',
+                'valide',
+                'retour_travail_supplementaire'
+            ])
+            ->with([
+                'soumisPar',
+                'redigerPar',
+                'fichiers.uploadedBy'
+            ])
+            ->orderByDesc('created_at');
         return $this->tdrFaisabiliteActif()
-            ->with(['soumisPar', 'redigerPar', 'fichiers.uploadedBy']);
+            ->with(['soumisPar', 'redigerPar', 'fichiers.uploadedBy'])->first();
     }
 
     // Méthodes pour récupérer les TDRs avec historique

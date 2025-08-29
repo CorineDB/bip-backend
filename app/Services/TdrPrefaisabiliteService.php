@@ -12,7 +12,7 @@ use App\Models\Decision;
 use App\Models\Workflow;
 use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
-use App\Http\Resources\projets\ProjetResource;
+use App\Http\Resources\TdrResource;
 use App\Http\Resources\UserResource;
 use App\Models\Tdr;
 use App\Services\Contracts\CategorieCritereServiceInterface;
@@ -48,12 +48,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
     protected function getResourceClass(): string
     {
-        return ProjetResource::class;
+        return TdrResource::class;
     }
 
     protected function getResourcesClass(): string
     {
-        return ProjetResource::class;
+        return TdrResource::class;
     }
 
     public function create(array $data): JsonResponse
@@ -220,30 +220,53 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
      */
     private function handleDocuments(Tdr $tdr, array $documentsData): void
     {
-        foreach ($documentsData as $documentData) {
-            if (isset($documentData['file']) && $documentData['file']) {
-                $file = $documentData['file'];
-                $categorie = $documentData['categorie'] ?? 'tdr';
-
-                // Stocker le fichier et créer l'enregistrement
-                $path = Storage::putFile('tdrs', $file);
-
-                $tdr->fichiers()->create([
-                    'nom_original' => $file->getClientOriginalName(),
-                    'nom_stockage' => basename($path),
-                    'chemin' => $path,
-                    'extension' => $file->getClientOriginalExtension(),
-                    'mime_type' => $file->getMimeType(),
-                    'taille' => $file->getSize(),
-                    'hash_md5' => md5_file($file->getRealPath()),
-                    'description' => $documentData['description'] ?? null,
-                    'categorie' => $categorie,
-                    'uploaded_by' => auth()->id(),
-                    'is_public' => false,
-                    'is_active' => true
-                ]);
+        foreach ($documentsData as $index => $file) {
+            if ($file) {
+                // Sauvegarder le document avec la même logique que le fichier TDR
+                $this->sauvegarderAutreDocument($tdr, $file, [], $index + 1);
             }
         }
+    }
+
+    /**
+     * Sauvegarder un autre document avec version (même logique que sauvegarderFichierTdr)
+     */
+    private function sauvegarderAutreDocument(Tdr $tdr, $fichier, array $data, int $ordre = 1): Fichier
+    {
+        // Générer les informations du fichier
+        $nomOriginal = $fichier->getClientOriginalName();
+        $extension = $fichier->getClientOriginalExtension();
+        $nomStockage = "autre_document_{$ordre}.{$extension}";
+        $chemin = $fichier->storeAs("tdrs/{$tdr->id}/autres-documents", $nomStockage, 'public');
+
+        // Créer l'enregistrement Fichier
+        return Fichier::create([
+            'nom_original' => $nomOriginal,
+            'nom_stockage' => $nomStockage,
+            'chemin' => $chemin,
+            'extension' => $extension,
+            'mime_type' => $fichier->getMimeType(),
+            'taille' => $fichier->getSize(),
+            'hash_md5' => md5_file($fichier->getRealPath()),
+            'description' => $data['description'] ?? 'Autre document pour TDR de préfaisabilité',
+            'commentaire' => $data['commentaire'] ?? null,
+            'metadata' => [
+                'type_document' => 'autre-document-prefaisabilite',
+                'tdr_id' => $tdr->id,
+                'projet_id' => $tdr->projet_id,
+                'ordre' => $ordre,
+                'statut' => 'actif',
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now()
+            ],
+            'fichier_attachable_id' => $tdr->id,
+            'fichier_attachable_type' => \App\Models\Tdr::class,
+            'categorie' => 'tdr-prefaisabilite',
+            'ordre' => $ordre,
+            'uploaded_by' => auth()->id(),
+            'is_public' => false,
+            'is_active' => true
+        ]);
     }
 
     /**
@@ -331,10 +354,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'projet' => new ProjetResource($projet),
-                    'tdr' => $tdr,
-                    'fichiers' => $tdr->fichiers,
-                    'peut_apprecier' => $projet->statut->value === StatutIdee::TDR_PREFAISABILITE->value,
+                    //'projet' => new ProjetsResource($projet->load('tdrPrefaisabilite')),
+                    'tdr' => new TdrResource($tdr->load("projet")),
+                    //'fichiers' => $tdr->fichiers,
+                    //'peut_apprecier' => $projet->statut->value === StatutIdee::TDR_PREFAISABILITE->value,
                     'statut_projet' => $projet->statut,
                 ]
             ]);
@@ -477,8 +500,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'success' => true,
                 'message' => $message,
                 'data' => [
-                    'tdr' => $tdr,
-                    'projet' => new ProjetResource($projet),
+                    'tdr' => new TdrResource($tdr),
                     'fichier_id' => $fichierTdr ? $fichierTdr->id : null,
                     'projet_id' => $projet->id,
                     'ancien_statut' => in_array($projet->statut->value, [StatutIdee::TDR_PREFAISABILITE->value, StatutIdee::R_TDR_PREFAISABILITE->value]) ? $projet->statut->value : StatutIdee::TDR_PREFAISABILITE->value,

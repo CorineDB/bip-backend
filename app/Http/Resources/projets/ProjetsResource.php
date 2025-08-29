@@ -5,6 +5,7 @@ namespace App\Http\Resources\projets;
 use App\Http\Resources\BaseApiResource;
 use App\Http\Resources\NoteConceptuelleResource;
 use App\Http\Resources\SecteurResourcePublic;
+use App\Http\Resources\TdrResource;
 use Illuminate\Http\Request;
 
 class ProjetsResource extends BaseApiResource
@@ -43,20 +44,18 @@ class ProjetsResource extends BaseApiResource
             'duree' => $this->duree,
             // Données JSON structurées
             'cout_estimatif_projet' => $this->cout_estimatif_projet ?? [],
+
             'secteur' => new SecteurResourcePublic($this->secteur),
+
             'noteConceptuelle' => new NoteConceptuelleResource($this->noteConceptuelle),
-            
+
             // TDRs
             'tdr_prefaisabilite' => $this->whenLoaded('tdrPrefaisabilite', function() {
-                return $this->tdrPrefaisabilite ? array_merge($this->tdrPrefaisabilite->toArray(), [
-                    'fichiers' => $this->tdrPrefaisabilite->fichiers
-                ]) : null;
+                return $this->tdrPrefaisabilite->first() ? new TdrResource($this->tdrPrefaisabilite->first()) : null;
             }),
             'tdr_faisabilite' => $this->whenLoaded('tdrFaisabilite', function() {
-                return $this->tdrFaisabilite ? array_merge($this->tdrFaisabilite->toArray(), [
-                    'fichiers' => $this->tdrFaisabilite->fichiers
-                ]) : null;
-            }),
+                return $this->tdrFaisabilite->first() ? new TdrResource($this->tdrFaisabilite->first()) : null;
+            })
         ];
     }
 
