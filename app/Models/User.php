@@ -132,7 +132,20 @@ class User extends Authenticatable implements OAuthenticatable
 
     public function permissions()
     {
-        return $this->role?->permissions() ?? Permission::query();
+
+        // IDs des permissions du rôle (si rôle existant)
+        $rolePermissions = $this->role ? $this->role->permissions()->pluck('permissions.id') : collect();
+
+        // IDs des permissions des groupes utilisateurs
+        $groupPermissions = Permission::whereHas('groupesUtilisateur', function ($q) {
+            $q->whereIn('groupes_utilisateurs.id', $this->groupesUtilisateur->pluck('id'));
+        })->pluck('permissions.id');
+
+        // Fusionner et supprimer les doublons
+        $allIds = $rolePermissions->merge($groupPermissions)->unique();
+
+        return Permission::whereIn('id', $allIds);
+
         return $this->role->permissions();
         return $this->roles()->get()->last()->permissions();
     }
@@ -230,8 +243,8 @@ class User extends Authenticatable implements OAuthenticatable
             ->withPivot('deleted_at'); */
 
         return $this->belongsToMany(GroupeUtilisateur::class, 'groupe_utilisateur_users', 'userId', 'groupeUtilisateurId')
-                    ->withTimestamps()
-                    ->withPivot('deleted_at');
+            ->withTimestamps()
+            ->withPivot('deleted_at');
     }
 
     /**
@@ -328,17 +341,17 @@ class User extends Authenticatable implements OAuthenticatable
 
         return $query->whereIn("profilable_type", [Organisation::class, Dpaf::class])
             ->where("status", "actif")
-            ->where(function($userQuery) use ($organisationIds, $dpafIds) {
-                $userQuery->where(function($q) use ($dpafIds) {
+            ->where(function ($userQuery) use ($organisationIds, $dpafIds) {
+                $userQuery->where(function ($q) use ($dpafIds) {
                     // Users avec profilable de type Dpaf
                     $q->where('profilable_type', Dpaf::class)
-                      ->whereIn('profilable_id', $dpafIds);
+                        ->whereIn('profilable_id', $dpafIds);
                 })
-                ->orWhere(function($q) use ($organisationIds) {
-                    // Users avec profilable de type Organisation
-                    $q->where('profilable_type', Organisation::class)
-                      ->whereIn('profilable_id', $organisationIds);
-                });
+                    ->orWhere(function ($q) use ($organisationIds) {
+                        // Users avec profilable de type Organisation
+                        $q->where('profilable_type', Organisation::class)
+                            ->whereIn('profilable_id', $organisationIds);
+                    });
             });
     }
 
@@ -352,19 +365,19 @@ class User extends Authenticatable implements OAuthenticatable
      */
     public function scopeWithPermission(Builder $query, $permission)
     {
-        return $query->where(function($subQuery) use ($permission) {
+        return $query->where(function ($subQuery) use ($permission) {
             // Via role direct (roleId)
-            $subQuery->whereHas('role.permissions', function($permQuery) use ($permission) {
+            $subQuery->whereHas('role.permissions', function ($permQuery) use ($permission) {
                 $permQuery->where('slug', $permission);
             })/*
             // Via roles multiples (user_roles)
             ->orWhereHas('roles.permissions', function($permQuery) use ($permission) {
                 $permQuery->where('slug', $permission);
             }) */
-            // Via groupes utilisateur
-            ->orWhereHas('groupesUtilisateur.permissions', function($permQuery) use ($permission) {
-                $permQuery->where('slug', $permission);
-            });
+                // Via groupes utilisateur
+                ->orWhereHas('groupesUtilisateur.permissions', function ($permQuery) use ($permission) {
+                    $permQuery->where('slug', $permission);
+                });
         });
     }
 }
