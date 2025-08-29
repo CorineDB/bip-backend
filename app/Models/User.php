@@ -152,7 +152,7 @@ class User extends Authenticatable implements OAuthenticatable
 
         return Permission::query()
             ->whereHas('roles', fn($q) => $q->whereIn('roles.id', $roleIds))
-            ->orWhereHas('groupesUtilisateur', fn($q) => $q->whereIn('groupes_utilisateurs.id', $groupIds));
+            ->orWhereHas('groupesUtilisateur', fn($q) => $q->whereIn('groupes_utilisateur.id', $groupIds));
 
         return $this->role->permissions
         ->merge($this->groupesUtilisateur->flatMap->permissions)

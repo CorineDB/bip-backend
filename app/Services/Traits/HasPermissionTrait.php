@@ -121,7 +121,7 @@ trait HasPermissionTrait
         });
 
         // Permissions directes de l'utilisateur
-        $permissions = array_unique(array_merge($permissions, $this->allPermissions()->toArray()));
+        $permissions = array_unique(array_merge($permissions, $this->permissions()->toArray()));
 
         return $permissions;
     }
