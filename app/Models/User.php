@@ -223,10 +223,14 @@ class User extends Authenticatable implements OAuthenticatable
      * Get the user groups.
      */
     public function groupesUtilisateur()
-    {
+    {/*
         return $this->belongsToMany(GroupeUtilisateur::class, 'groupe_utilisateur_users', 'userId', 'groupeUtilisateurId')
             ->withTimestamps()
-            ->withPivot('deleted_at');
+            ->withPivot('deleted_at'); */
+
+        return $this->belongsToMany(GroupeUtilisateur::class, 'groupe_utilisateur_users', 'userId', 'groupeUtilisateurId')
+                    ->withTimestamps()
+                    ->withPivot('deleted_at');
     }
 
     /**

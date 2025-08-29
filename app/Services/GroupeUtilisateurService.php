@@ -253,9 +253,6 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
     /**
      * Update an existing group of users.
      */
-    /**
-     * Update an existing group of users.
-     */
     public function update(int|string $id, array $data): JsonResponse
     {
         DB::beginTransaction();
@@ -306,11 +303,17 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
                 }
             }
 
+            dump($permissions);
+
             // Supprimer doublons
             $permissions = array_unique($permissions);
 
-            // Synchroniser les permissions
-            $groupe->permissions()->sync($permissions);
+            dd($permissions);
+
+            if(count($permissions)){
+                // Synchroniser les permissions
+                $groupe->permissions()->sync($permissions);
+            }
 
             /**
              * ---- Gestion des Utilisateurs ----
