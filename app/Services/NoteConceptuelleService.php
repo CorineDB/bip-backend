@@ -558,11 +558,11 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     {
 
         try {
-            if (auth()->user()->profilable_type !== Dpaf::class) {
+            if (auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
-            if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle')) {
+            if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle') && auth()->user()->type != 'dgpd' ) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -1259,11 +1259,12 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     {
         try {
 
-            if (auth()->user()->profilable_type !== Dpaf::class) {
+            if (auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
-            if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle')) {
+            //if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle')) {
+            if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle') && auth()->user()->type != 'dgpd' ) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -1324,7 +1325,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
             } */
 
-            if (!auth()->user()->hasPermissionTo('valider-l-etude-de-profil')) {
+            if (!auth()->user()->hasPermissionTo('valider-l-etude-de-profil') && auth()->user()->type != 'dgpd' ) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 

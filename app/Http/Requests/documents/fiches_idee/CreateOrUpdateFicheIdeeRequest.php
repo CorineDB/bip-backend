@@ -126,6 +126,7 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
             /*"ministereId",
             "responsableId",
             /*"demandeurId",*/
+            "demandeur",
             "titre_projet",
             "departements",
             "communes",

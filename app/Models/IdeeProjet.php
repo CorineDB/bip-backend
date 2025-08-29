@@ -87,6 +87,7 @@ class IdeeProjet extends Model
         "responsableId",
         "demandeurId",
         "demandeur_type",
+        'porteur_projet',
         "titre_projet"
     ];
 
