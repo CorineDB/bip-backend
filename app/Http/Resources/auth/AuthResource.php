@@ -29,8 +29,8 @@ class AuthResource extends JsonResource
                 return new OrganisationResource($this->organisation);
             }),
             "status"=> $this->status,
-            "role" => new RoleResource($this->role->load("permissions")),
-            "groupes_utilisateur" => new GroupeUtilisateurResource($this->groupesUtilisateur)
+            "role" => $this->role ? new RoleResource($this->role->load("permissions")) : null,
+            "groupes_utilisateur" => GroupeUtilisateurResource::collection($this->groupesUtilisateur)
         ];
     }
 }

@@ -361,7 +361,7 @@ class User extends Authenticatable implements OAuthenticatable
                 $permQuery->where('slug', $permission);
             })
             // Via groupes utilisateur
-            ->orWhereHas('groupesUtilisateur.roles.permissions', function($permQuery) use ($permission) {
+            ->orWhereHas('groupesUtilisateur.permissions', function($permQuery) use ($permission) {
                 $permQuery->where('slug', $permission);
             });
         });
