@@ -1767,6 +1767,9 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
                 // $this->cleanupRemovedElements($canevas, $payloadIds);
 
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($canevas);
+
                 DB::commit();
 
                 $canevas->refresh();
