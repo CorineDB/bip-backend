@@ -1765,7 +1765,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
 
                 // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
-                // $this->cleanupRemovedElements($canevas, $payloadIds);
+                $this->cleanupRemovedElements($canevas, $payloadIds);
 
                 // Générer et sauvegarder la structure JSON
                 $this->structureService->generateAndSaveStructure($canevas);
