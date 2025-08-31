@@ -12,6 +12,7 @@ use App\Models\Decision;
 use App\Models\Workflow;
 use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
+use App\Http\Resources\projets\ProjetResource;
 use App\Http\Resources\TdrResource;
 use App\Http\Resources\UserResource;
 use App\Models\Tdr;
@@ -548,18 +549,22 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ], 422);
             }
 
-            // Vérifier qu'il y a des TDRs soumis
-            $tdrsFichiers = $projet->fichiersParCategorie('tdr-prefaisabilite')->get();
+            // Vérifier qu'il y a un TDR soumis
+            $tdr = $this->tdrRepository->getModel()
+                ->where('projet_id', $projetId)
+                ->where('type', 'prefaisabilite')
+                ->orderBy('created_at', 'desc')
+                ->first();
 
-            if ($tdrsFichiers->isEmpty()) {
+            if (!$tdr) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucun TDR trouvé pour ce projet.'
+                    'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
                 ], 404);
             }
 
             // Créer ou mettre à jour l'évaluation
-            $evaluation = $this->creerEvaluationTdr($projet, $data);
+            $evaluation = $this->creerEvaluationTdr($tdr, $data);
 
             // Calculer le résultat de l'évaluation selon les règles SFD-011
             $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, $data);
@@ -638,7 +643,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     {
         try {
             // Vérifier les autorisations (DGPD uniquement)
-            if (in_array(auth()->user()->type, ['dgpd', 'admin'])) {
+            if (!in_array(auth()->user()->type, ['dgpd', 'admin'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour consulter cette évaluation.'
@@ -648,20 +653,18 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            // Vérifier que le projet est au bon statut
-            /* if ($projet->statut->value !== StatutIdee::EVALUATION_TDR_PF->value) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Le projet n\'est pas à l\'étape d\'évaluation des TDRs.'
-                ], 422);
-            } */
 
-            // Récupérer les TDRs soumis
-            $tdrsFichiers = $projet->fichiersParCategorie('tdr-prefaisabilite')->get();
-            if ($tdrsFichiers->isEmpty()) {
+            // Récupérer le TDR soumis
+            $tdr = $this->tdrRepository->getModel()
+                ->where('projet_id', $projetId)
+                ->where('type', 'prefaisabilite')
+                ->orderBy('created_at', 'desc')
+                ->first();
+                
+            if (!$tdr) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucun TDR trouvé pour ce projet.'
+                    'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
                 ], 404);
             }
 
@@ -686,12 +689,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     $grilleEvaluation[] = [
                         'champ_id' => isset($champ["champ_id"]) ? $champ["champ_id"] : null,
                         'label' => isset($champ["label"]) ? $champ["label"] : null,
-                        'attribut' => isset($champ["label"]) ? $champ["attribut"] : null,
+                        'attribut' => isset($champ["attribut"]) ? $champ["attribut"] : null,
                         'type_champ' => isset($champ["type_champ"]) ? $champ["type_champ"] : "textearea",
                         'ordre_affichage' => isset($champ["ordre_affichage"]) ? $champ["ordre_affichage"] : 0,
                         'appreciation' =>  isset($champ["appreciation"]) ? $champ["appreciation"] : null,
                         'commentaire_evaluateur' =>  isset($champ["commentaire_evaluateur"]) ? $champ["commentaire_evaluateur"] : null,
-                        'date_appreciation' =>  isset($champ["date_evaluation"]) ? $champ["date_evaluation"] : null,
+                        'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
                     ];
                 }
             } else {
@@ -744,12 +747,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     $evaluationsChamps[] = [
                         'champ_id' => isset($champ["champ_id"]) ? $champ["champ_id"] : null,
                         'label' => isset($champ["label"]) ? $champ["label"] : null,
-                        'attribut' => isset($champ["label"]) ? $champ["attribut"] : null,
+                        'attribut' => isset($champ["attribut"]) ? $champ["attribut"] : null,
                         'type_champ' => isset($champ["type_champ"]) ? $champ["type_champ"] : "textearea",
                         'ordre_affichage' => isset($champ["ordre_affichage"]) ? $champ["ordre_affichage"] : 0,
                         'appreciation' =>  isset($champ["appreciation"]) ? $champ["appreciation"] : null,
                         'commentaire_evaluateur' =>  isset($champ["commentaire_evaluateur"]) ? $champ["commentaire_evaluateur"] : null,
-                        'date_appreciation' =>  isset($champ["date_evaluation"]) ? $champ["date_evaluation"] : null,
+                        'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
                     ];
                 }
                 $resultatsEvaluation = $evaluation->resultats_evaluation;
@@ -797,17 +800,16 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'resultat_global' => $resultatsEvaluation['resultat_global'] ?? null,
                     'message_resultat' => $resultatsEvaluation['message_resultat'] ?? null,
                     'champs_evalues' => collect($champs_evalues)->map(function ($champ) {
-                        $champInter = (array)$champ;
-                        $champ =  (array)$champ;
+                        $champ = (array)$champ;
                         return [
                             'champ_id' => isset($champ["champ_id"]) ? $champ["champ_id"] : null,
                             'label' => isset($champ["label"]) ? $champ["label"] : null,
-                            'attribut' => isset($champ["label"]) ? $champ["attribut"] : null,
+                            'attribut' => isset($champ["attribut"]) ? $champ["attribut"] : null,
                             'type_champ' =>  isset($champ["type_champ"]) ? $champ["type_champ"] : "textearea",
                             'ordre_affichage' => isset($champ["ordre_affichage"]) ? $champ["ordre_affichage"] : 0,
                             'appreciation' =>  isset($champ["appreciation"]) ? $champ["appreciation"] : null,
                             'commentaire_evaluateur' =>  isset($champ["commentaire_evaluateur"]) ? $champ["commentaire_evaluateur"] : null,
-                            'date_appreciation' =>  isset($champ["date_evaluation"]) ? $champ["date_evaluation"] : null,
+                            'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
                         ];
                     })
                 ];
@@ -818,17 +820,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'message' => 'Détails de l\'évaluation TDR récupérés avec succès.',
                 'data' => [
                     'projet' => new ProjetResource($projet),
-                    'tdr' => $tdrsFichiers->map(function ($fichier) {
-                        return [
-                            'id' => $fichier->id,
-                            'nom_original' => $fichier->nom_original,
-                            'url' => $fichier->url,
-                            'taille' => $fichier->taille,
-                            'date_upload' => $fichier->created_at,
-                            'resume' => $fichier->metadata['resume'] ?? $fichier->description,
-                            'type_tdr' => $fichier->metadata['type_tdr'] ?? 'pre_faisabilite'
-                        ];
-                    }),
+                    'tdr' => new TdrResource($tdr->load(['fichiers', 'projet'])),
                     'resume_tdr' => $projet->resume_tdr_prefaisabilite,
                     'evaluation_existante' => $evaluation ? [
                         'id' => $evaluation->id,
@@ -1614,34 +1606,37 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Créer une évaluation TDR
      */
-    private function creerEvaluationTdr(Projet $projet, array $data)
+    private function creerEvaluationTdr(Tdr $tdr, array $data)
     {
-        // Récupérer une évaluation en cours existante ou en créer une nouvelle
-        $evaluation = $projet->evaluations()
-            ->where('type_evaluation', 'tdr-prefaisabilite')
-            ->where('statut', 0)
-            ->orderBy('created_at', 'desc')
-            ->first();
+        // Récupérer une évaluation en cours existante ou en créer une nouvelle pour ce TDR
+        $evaluationEnCours = $tdr->evaluationEnCours();
 
-        if (!$evaluation) {
+        if (!$evaluationEnCours) {
             // Récupérer l'évaluation parent si c'est une ré-évaluation
-            $evaluationParent = $projet->evaluations()
-                ->where('type_evaluation', 'tdr-prefaisabilite')
-                ->where('statut', 1)
-                ->orderBy('created_at', 'desc')
-                ->first();
+            $evaluationParent = $tdr->evaluationParent();
 
-            // Créer la grille d'évaluation basée sur le canevas
-            //$grilleEvaluation = $this->creerGrilleEvaluationTdr($canevasAppreciation);
-            $evaluation = $projet->evaluations()->create([
+            // Créer la nouvelle évaluation
+            $evaluationData = [
                 'type_evaluation' => 'tdr-prefaisabilite',
                 'evaluateur_id' => auth()->id(),
                 'evaluation' => [],
                 'resultats_evaluation' => [],
                 'date_debut_evaluation' => now(),
-                'statut' => 0, // En cours
+                'date_fin_evaluation' => isset($data['finaliser']) && $data['finaliser'] ? now() : null,
+                'statut' => isset($data['finaliser']) && $data['finaliser'] ? 1 : 0, // En cours ou finalisé
                 'id_evaluation' => $evaluationParent ? $evaluationParent->id : null
-            ]);
+            ];
+
+            $evaluationEnCours = $tdr->evaluations()->create($evaluationData);
+        } else {
+            // Finaliser l'évaluation si demandé
+            if (isset($data['finaliser']) && $data['finaliser']) {
+                $evaluationEnCours->fill([
+                    'date_fin_evaluation' => now(),
+                    'statut' => 1
+                ]);
+                $evaluationEnCours->save();
+            }
         }
 
         // Enregistrer les appréciations pour chaque champ
@@ -1657,19 +1652,24 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ];
             }
 
-            $evaluation->champs_evalue()->syncWithoutDetaching($syncData);
+            $evaluationEnCours->champs_evalue()->syncWithoutDetaching($syncData);
         }
 
-        // Finaliser l'évaluation si demandé
-        //if (isset($data['finaliser']) && $data['finaliser']) {
-        $evaluation->update([
-            'date_fin_evaluation' => now(),
-            'statut' => 1,
-            'commentaire' => $data['commentaire'] ?? null
-        ]);
-        //}
+        // Enregistrer le commentaire global si fourni
+        if (isset($data['commentaire'])) {
+            $evaluationEnCours->fill(['commentaire' => $data['commentaire']]);
+            $evaluationEnCours->save();
+        }
 
-        return $evaluation;
+        // Forcer la finalisation de l'évaluation lors de l'enregistrement dans evaluerTdrs
+        $evaluationEnCours->update([
+            'date_fin_evaluation' => now(),
+            'statut' => 1
+        ]);
+
+        $evaluationEnCours->refresh();
+
+        return $evaluationEnCours;
     }
 
     /**
@@ -2466,7 +2466,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Traitement et sauvegarde du rapport principal
             $fichierRapport = null;
-            if (isset($data['rapport_evaluation'])) {
+            if (isset($data['rapport_evaluation_ex_ante'])) {
                 $fichierRapport = $this->gererRapportEvaluationExAnte($projet, $data['rapport_evaluation_ex_ante'], $data);
             }
 

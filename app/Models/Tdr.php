@@ -188,6 +188,30 @@ class Tdr extends Model
             ->withTimestamps();
     }
 
+    /**
+     * Relation avec les évaluations du TDR
+     */
+    public function evaluations(): MorphMany
+    {
+        return $this->morphMany(Evaluation::class, 'projetable', 'projetable_type', 'projetable_id');
+    }
+
+    /**
+     * Obtenir l'évaluation en cours pour ce TDR
+     */
+    public function evaluationEnCours()
+    {
+        return $this->evaluations()->evaluationsEnCours('tdr-prefaisabilite')->first();
+    }
+
+    /**
+     * Obtenir l'évaluation parent (précédente) pour ce TDR
+     */
+    public function evaluationParent()
+    {
+        return $this->evaluations()->evaluationParent('tdr-prefaisabilite')->first();
+    }
+
     // Scopes pour les filtres
 
     /**
