@@ -81,6 +81,17 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ], 422);
             }
 
+            // Vérifier que le projet existe
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Vérifier que le projet est au bon statut
+            if ($projet->statut->value != StatutIdee::NOTE_CONCEPTUEL->value && $projet->statut->value != StatutIdee::R_VALIDATION_NOTE_AMELIORER->value) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le projet n\'est pas à l\'étape de redaction de la note conceptuelle.'
+                ], 403);
+            }
+
             // Déterminer le statut selon est_soumise
             $statut = $estSoumise ? 'soumise' : 'brouillon';
 
@@ -104,6 +115,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Chercher ou créer une note conceptuelle unique par projet
             $noteConceptuelle = $this->repository->getModel()
                 ->where('projetId', $projetId)
+                ->where('statut', '<>', 1)
                 ->orderBy("created_at", "desc")
                 ->first();
 
@@ -123,6 +135,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $message = 'Note conceptuelle mise à jour avec succès.';
                 $statusCode = 200;
             } else {
+
                 // Créer une nouvelle note
                 $noteData['projetId'] = $projetId;
                 $noteConceptuelle = $this->repository->create($noteData);
@@ -162,13 +175,15 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             $noteConceptuelle->save();
 
-            $noteConceptuelle->projet->fill([
-                'statut' => StatutIdee::EVALUATION_NOTE,
-                'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_NOTE),
-                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_NOTE),
+            if ($projet->statut->value == StatutIdee::NOTE_CONCEPTUEL->value && $noteConceptuelle->statut == 1 && $estSoumise) {
 
-                'type_projet' => TypesProjet::simple
-            ]);
+                $noteConceptuelle->projet->fill([
+                    'statut' => StatutIdee::EVALUATION_NOTE,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_NOTE),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_NOTE),
+                    'type_projet' => TypesProjet::simple
+                ]);
+            }
 
             $noteConceptuelle->projet->save();
             $noteConceptuelle->projet->refresh();
@@ -234,6 +249,18 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
+            // Vérifier que le projet est au bon statut
+            if ($noteConceptuelle->projet->statut->value != StatutIdee::NOTE_CONCEPTUEL->value && $noteConceptuelle->projet->statut->value != StatutIdee::R_VALIDATION_NOTE_AMELIORER->value) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le projet n\'est pas à l\'étape de redaction de la note conceptuelle.'
+                ], 403);
+            }
+
+            if ($noteConceptuelle->statut) {
+                throw new Exception("Vous ne pouvez pas effectuer cette action.", 403);
+            }
+
             if (auth()->user()->id !== $noteConceptuelle->rediger_par) {
                 throw new Exception("Vous n'avez pas les droits d'acces de modifier cette note conceptuelle", 403);
             }
@@ -287,6 +314,17 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             $noteConceptuelle->save();
 
+            if ($noteConceptuelle->projet->statut->value == StatutIdee::NOTE_CONCEPTUEL->value && $noteConceptuelle->statut == 1 && $estSoumise) {
+
+                $noteConceptuelle->projet->fill([
+                    'statut' => StatutIdee::EVALUATION_NOTE,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_NOTE),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_NOTE),
+                    'type_projet' => TypesProjet::simple
+                ]);
+            }
+            /*
+
             if ($noteConceptuelle->projet->statut == StatutIdee::NOTE_CONCEPTUEL) {
                 $noteConceptuelle->projet->update([
                     'statut' => StatutIdee::VALIDATION_NOTE_AMELIORER,
@@ -294,7 +332,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_NOTE_AMELIORER),
                     'type_projet' => TypesProjet::simple
                 ]);
-            }
+            } */
 
 
             return (new $this->resourceClass($noteConceptuelle))
@@ -458,9 +496,9 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             if (!$noteConceptuelle) {
                 return response()->json([
-                    'success' => false,
+                    'success' => true,
                     'message' => 'Note conceptuelle non trouvée pour ce projet.'
-                ], 404);
+                ], 206);
             }
 
             return (new $this->resourceClass($noteConceptuelle->load(["fichiers", "projet"])))
@@ -512,7 +550,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     public function creerEvaluation(int $noteConceptuelleId, array $data): JsonResponse
     {
-
         try {
             if (auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
@@ -525,6 +562,16 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             DB::beginTransaction();
 
             $noteConceptuelle = $this->repository->findOrFail($noteConceptuelleId);
+
+            //03b_EvaluationNote
+
+            // Vérifier que le projet est au bon statut
+            if ($noteConceptuelle->projet->statut->value != StatutIdee::EVALUATION_NOTE->value && ($noteConceptuelle->projet->statut->value != StatutIdee::R_VALIDATION_NOTE_AMELIORER->value) && ($noteConceptuelle->projet->statut->value == StatutIdee::R_VALIDATION_NOTE_AMELIORER->value && !$noteConceptuelle->evaluationTermine())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le projet n\'est pas à l\'étape de redaction de la note conceptuelle.'
+                ], 403);
+            }
 
             $evaluationEnCours = $noteConceptuelle->evaluationEnCours();
 
@@ -737,9 +784,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             if (!$evaluation) {
                 return response()->json([
-                    'success' => false,
+                    'success' => true,
+                    'data' => null,
                     'message' => 'Aucune évaluation trouvée pour cette note conceptuelle.'
-                ], 404);
+                ], 206);
             }
 
             // Calculer les résultats d'examen
@@ -1083,7 +1131,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 return response()->json([
                     'success' => false,
                     'message' => 'L\'évaluation doit être terminée avant de pouvoir confirmer le résultat.'
-                ], 422);
+                ], 403);
             }
 
             // Récupérer la note conceptuelle
@@ -1215,17 +1263,26 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     {
         try {
 
-            if (auth()->user()->profilable_type !== Dgpd::class) {
+            /* if (auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
             //if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle')) {
             if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle') &&  auth()->user()->type !== 'dgpd') {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
-            }
+            } */
 
             // Récupérer la note conceptuelle
             $noteConceptuelle = $this->repository->findOrFail($noteConceptuelleId);
+
+            // Vérifier que le projet est au bon statut
+            if ($noteConceptuelle->projet->statut->value != StatutIdee::EVALUATION_NOTE->value && ($noteConceptuelle->projet->statut->value != StatutIdee::R_VALIDATION_NOTE_AMELIORER->value) && !($noteConceptuelle->evaluationTermine())) {
+                return response()->json([
+                    'success' => false,
+                    'data' => null,
+                    'message' => "Le projet n\'est pas à l\'étape d'évaluation de la note conceptuelle."
+                ], 403);
+            }
 
             // Trouver l'évaluation terminée pour cette note
             $evaluation = $noteConceptuelle->evaluations()
@@ -1277,17 +1334,13 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         try {
 
             // Vérifier les autorisations
-            /* if (!in_array(auth()->user()->type, ['comite_ministeriel'])) {
-                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
-            } */
-
-            if (auth()->user()->profilable_type !== Dgpd::class) {
+            /* if (auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
             if (!auth()->user()->hasPermissionTo('valider-l-etude-de-profil') && auth()->user()->type != 'dgpd') {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
-            }
+            } */
 
             DB::beginTransaction();
 
@@ -1295,11 +1348,11 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if ($projet->statut->value != StatutIdee::VALIDATION_PROFIL->value) {
+            if ($projet->statut->value != StatutIdee::VALIDATION_PROFIL->value && !($projet->noteConceptuelle->evaluationTermine())) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de validation d\'étude de profil.'
-                ], 422);
+                ], 403);
             }
 
             // Récupérer la note conceptuelle du projet
@@ -1327,7 +1380,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'message' => 'Cette action n\'est pas autorisée selon le résultat de l\'évaluation.',
                     'actions_autorisees' => $actionsAutorisees,
                     'resultat_evaluation' => $resultatsEvaluation['resultat_global'] ?? 'non_defini'
-                ], 422);
+                ], 403);
             }
 
             if (isset($data["est_a_haut_risque"])) {
@@ -1418,7 +1471,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             }
 
             // Récupérer l'évaluation de validation la plus récente
-            $evaluation = $noteConceptuelle->evaluations()
+            $evaluation = $projet->evaluations()
                 ->where('type_evaluation', 'validation-etude-profil')
                 ->whereNotNull('valider_par')
                 ->whereNotNull('valider_le')
