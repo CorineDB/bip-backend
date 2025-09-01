@@ -129,7 +129,7 @@ class NoteConceptuelle extends Model
 
     public function evaluationParent()
     {
-        return $this->evaluations()->evaluationParent("note-conceptuelle")->first();
+        return $this->evaluations()->evaluationParent("note-conceptuelle")->where()->first();
     }
 
     public function fichiers()

@@ -530,7 +530,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             if (!$evaluationEnCours) {
 
-                $evaluationParent = $noteConceptuelle->evaluationParent();
+                $evaluationTermine = $noteConceptuelle->evaluationTermine();
 
                 // Créer la nouvelle évaluation
                 $evaluationData = [
@@ -541,7 +541,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'date_debut_evaluation' => now(),
                     'date_fin_evaluation' => $data["evaluer"] ? now() : null,
                     'statut' => $data["evaluer"] ? 1 : 0, // En cours
-                    'id_evaluation' => $evaluationParent ? $evaluationParent->id : null // Lien vers le parent
+                    'id_evaluation' => $evaluationTermine ? $evaluationTermine->id : null // Lien vers le parent
                 ];
 
                 $evaluationEnCours = $noteConceptuelle->evaluations()->create($evaluationData);
