@@ -836,7 +836,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'success' => true,
                 'message' => 'Détails de l\'évaluation TDR récupérés avec succès.',
                 'data' => [
-                    'projet' => new ProjetResource($projet),
                     'tdr' => new TdrResource($tdr->load(['fichiers', 'projet'])),
                     'resume_tdr' => $projet->resume_tdr_prefaisabilite,
                     'evaluation_existante' => $evaluation ? [

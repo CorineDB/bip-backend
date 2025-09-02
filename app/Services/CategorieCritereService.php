@@ -663,7 +663,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             if (isset($critereData["id"]) && $critereData["id"]) {
                 // Mise à jour d'un critère existant
                 $critere = Critere::find($critereData["id"]);
-                
+
                 if (!$critere || $critere->categorie_critere_id !== $checklistCategorie->id) {
                     continue; // Critère non trouvé ou pas dans la bonne catégorie
                 }
@@ -691,7 +691,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
             // Traiter les secteurs et leurs mesures
             $mesuresTraitees = [];
-            
+
             foreach ($critereData['secteurs'] as $secteurData) {
                 // Vérifier que secteur_id est fourni
                 if (!isset($secteurData['secteur_id'])) {
@@ -709,7 +709,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                         // Gestion des mesures existantes ou nouvelles
                         if (isset($mesureData['id']) && $mesureData['id']) {
                             $mesure = Notation::find($mesureData['id']);
-                            
+
                             if ($mesure && $mesure->critere_id === $critere->id) {
                                 // Mise à jour d'une mesure existante du bon critère
                                 $mesure->update([
@@ -773,7 +773,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             if ($criteresASupprimer->isNotEmpty()) {
                 // Supprimer d'abord les notations liées aux critères à supprimer
                 Notation::whereIn('critere_id', $criteresASupprimer)->delete();
-                
+
                 // Puis supprimer les critères
                 Critere::whereIn('id', $criteresASupprimer)->delete();
             }
