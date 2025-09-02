@@ -20,6 +20,7 @@ class TdrResource extends BaseApiResource
             'projet_id' => $this->projet_id,
             'type' => $this->type,
             'statut' => $this->statut,
+            'statutCode' => $this->statut == 'brouillon' ? 0 : 1,
             'resume' => $this->resume,
             'date_soumission' => $this->date_soumission,
             'date_evaluation' => $this->date_evaluation,
