@@ -26,15 +26,15 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        /*
-            $exceptions->render(function (Throwable $exception, Request $request) {
-
-                if ($request->expectsJson() || $request->wantsJson() || $request->isJson() || $request->is('api/*'))
-                {
-                    return $this->apiExceptions($request,$exception);
-                }
-                return response();
-            });
-        */
-        //
+        // Configuration des exceptions API en utilisant ExceptionTrait
+        $exceptions->render(function (Throwable $exception, $request) {
+            // Pour les requêtes API, retourner du JSON
+            if ($request->expectsJson() || $request->is('api/*')) {
+                $handler = new class {
+                    use \App\Services\Traits\ExceptionTrait;
+                };
+                return $handler->apiExceptions($request, $exception);
+            }
+            return null; // Laisser Laravel gérer les autres
+        });
     })->create();

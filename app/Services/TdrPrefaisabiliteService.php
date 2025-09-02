@@ -347,9 +347,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             if (!$tdr) {
                 return response()->json([
-                    'success' => false,
+                    'success' => true,
+                    'data' => null,
                     'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
-                ], 404);
+                ], 206);
             }
 
             return response()->json([
@@ -362,7 +363,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'statut_projet' => $projet->statut,
                 ]
             ]);
-
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -381,7 +381,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             DB::beginTransaction();
 
             // Vérifier les autorisations (DPAF uniquement)
-           /*  if (!in_array(auth()->user()->type, ['dpaf'])) {
+            /*  if (!in_array(auth()->user()->type, ['dpaf'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette soumission.'
@@ -482,6 +482,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF)
                 ]);
 
+
+
                 // Enregistrer le workflow et la décision
                 $this->enregistrerWorkflow($projet, StatutIdee::EVALUATION_TDR_PF);
                 $this->enregistrerDecision(
@@ -531,7 +533,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             DB::beginTransaction();
 
             // Vérifier les autorisations (DGPD uniquement)
-            if (!in_array(auth()->user()->type, ['dgpd', 'admin'])) {
+            if (!in_array(auth()->user()->type, ['dgpd'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette évaluation.'
@@ -562,6 +564,20 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
                 ], 404);
             }
+
+            // Vérifier que le TDR est soumis et peut être évalué
+            if (!$tdr->peutEtreEvalue()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le TDR doit être soumis avant de pouvoir être évalué.'
+                ], 422);
+            }
+
+            $tdr->statut = "en_evaluation";
+
+            $tdr->save();
+
+            $tdr->refresh();
 
             // Créer ou mettre à jour l'évaluation
             $evaluation = $this->creerEvaluationTdr($tdr, $data);
@@ -642,17 +658,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     public function getEvaluationTdr(int $projetId): JsonResponse
     {
         try {
-            // Vérifier les autorisations (DGPD uniquement)
-            if (!in_array(auth()->user()->type, ['dgpd', 'admin'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour consulter cette évaluation.'
-                ], 403);
-            }
 
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
-
 
             // Récupérer le TDR soumis
             $tdr = $this->tdrRepository->getModel()
@@ -660,22 +668,31 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ->where('type', 'prefaisabilite')
                 ->orderBy('created_at', 'desc')
                 ->first();
-                
+
             if (!$tdr) {
                 return response()->json([
                     'success' => false,
+                    'data' => null,
                     'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
                 ], 404);
             }
 
-            // Récupérer l'évaluation en cours ou la dernière évaluation
-            $evaluation = $projet->evaluations()
+            // Récupérer l'évaluation en cours ou la dernière évaluation via le TDR
+            $evaluation = $tdr->evaluations()
                 ->where('type_evaluation', 'tdr-prefaisabilite')
                 ->with(['champs_evalue' => function ($query) {
                     $query->orderBy('ordre_affichage');
                 }])
                 ->orderBy('created_at', 'desc')
                 ->first();
+
+            if (!$evaluation) {
+                return response()->json([
+                    'success' => true,
+                    'data' => null,
+                    'message' => 'Aucune évaluation trouvée pour cette tdr.'
+                ], 206);
+            }
 
             // Construire la grille d'évaluation avec les données existantes
             $grilleEvaluation = [];
@@ -850,7 +867,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             DB::beginTransaction();
 
             // Vérifier les autorisations (DGPD uniquement)
-            if (!in_array(auth()->user()->type, ['dgpd', 'admin'])) {
+            if (!in_array(auth()->user()->type, ['dgpd'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette validation.'
@@ -865,6 +882,14 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape d\'évaluation des TDRs.'
+                ], 422);
+            }
+
+            // Vérifier que le TDR est soumis et peut être évalué
+            if (!$projet->tdrPrefaisabilite->first()?->peutEtreValide()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le TDR doit être évalué avant de pouvoir être validé.'
                 ], 422);
             }
 
@@ -981,7 +1006,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             DB::beginTransaction();
 
             // Vérifier les autorisations (Comité de validation Ministériel uniquement)
-            if (in_array(auth()->user()->type, ['dgpd', 'admin'])) {
+            if (in_array(auth()->user()->type, ['dgpd'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette validation.'
@@ -1122,12 +1147,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     {
         try {
             // Vérifier les autorisations (DGPD uniquement)
-            /* if (in_array(auth()->user()->type, ['dgpd', 'admin'])) {
+            if (in_array(auth()->user()->type, ['dgpd'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour consulter ces détails.'
                 ], 403);
-            } */
+            }
 
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
@@ -1148,7 +1173,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Récupérer l'évaluation en cours ou la dernière évaluation
             $evaluation = $projet->evaluations()
-                ->where('type_evaluation', 'tdr-prefaisabilite')
+                ->where('type_evaluation', 'validation-etude-prefaisabilite')
                 ->with(['champs_evalue' => function ($query) {
                     $query->orderBy('ordre_affichage');
                 }])

@@ -334,7 +334,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ]);
             } */
 
-
             return (new $this->resourceClass($noteConceptuelle))
                 ->additional(['message' => $message])
                 ->response()
@@ -1263,14 +1262,14 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     {
         try {
 
-            /* if (auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
             //if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle')) {
             if (!auth()->user()->hasPermissionTo('evaluer-une-note-conceptulle') &&  auth()->user()->type !== 'dgpd') {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
-            } */
+            }
 
             // Récupérer la note conceptuelle
             $noteConceptuelle = $this->repository->findOrFail($noteConceptuelleId);
@@ -1334,13 +1333,13 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         try {
 
             // Vérifier les autorisations
-            /* if (auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
             if (!auth()->user()->hasPermissionTo('valider-l-etude-de-profil') && auth()->user()->type != 'dgpd') {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
-            } */
+            }
 
             DB::beginTransaction();
 

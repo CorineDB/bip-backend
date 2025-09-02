@@ -13,7 +13,7 @@ trait ResponseJsonTrait{
     public function successResponse($message, $result = [], $code = 200)
     {
     	$response = [
-            'statut'        => "success",
+            'success'       => true,
             'message'       => $message,
             'data'          => $result,
             'statutCode'    => $code
@@ -30,7 +30,7 @@ trait ResponseJsonTrait{
     public function errorResponse($message, $result = [], $code = 500)
     {
     	$response = [
-            'statut'        => "error",
+            'success'       => false,
             'message'       => $message,
             'errors'        => $result,
             'statutCode'    => $code

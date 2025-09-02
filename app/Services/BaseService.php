@@ -111,11 +111,89 @@ abstract class BaseService implements AbstractServiceInterface
     }
 
     protected function errorResponse(Exception $e): JsonResponse
-    {        // Tu peux logger l'erreur ici si tu veux
+    {
+        // Déterminer le code de statut selon le type d'exception
+        $statusCode = 500;
+        $message = 'Une erreur interne s\'est produite';
+
+        if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+            $statusCode = 404;
+            // Extraire le nom du modèle depuis l'exception
+            $model = class_basename($e->getModel());
+            $modelNames = [
+                'Projet' => 'Projet',
+                'User' => 'Utilisateur',
+                'IdeeProjet' => 'Idée de projet',
+                'Tdr' => 'Terme de reference',
+                'Evaluation' => 'Évaluation',
+                'Document' => 'Canevas ',
+                'Fichier' => 'Fichier',
+                'Champ' => 'Champ de formulaire',
+                'Decision' => 'Décision',
+                'Workflow' => 'Workflow',
+                'Notification' => 'Notification',
+                'Permission' => 'Permission',
+                'Role' => 'Rôle',
+                'GroupeUtilisateur' => 'Groupe d\'utilisateur',
+                'Ministere' => 'Ministère',
+                'Direction' => 'Direction',
+                'Service' => 'Service',
+                'CategorieCritere' => "Outil d'evaluation",
+                'Critere' => 'Critère d\'évaluation',
+                'NoteConceptuelle' => 'Note conceptuelle',
+                'Rapport' => 'Rapport',
+                'Commentaire' => 'Commentaire',
+                'Notation' => 'Notation',
+                'EvaluationCritere' => 'Évaluation de critère',
+                'Personne' => 'Personne',
+                'Organisation' => 'Organisation',
+                'CategorieDocument' => 'Catégorie de document',
+                'CategorieProjet' => 'Catégorie de projet',
+                'Statut' => 'Statut',
+                'TrackInfo' => 'Information de suivi',
+                'Commune' => 'Commune',
+                'Arrondissement' => 'Arrondissement',
+                'Departement' => 'Département',
+                'Village' => 'Village',
+                'LieuIntervention' => 'Lieu d\'intervention',
+                'Financement' => 'Financement',
+                'TypeIntervention' => 'Type d\'intervention',
+                'TypeProgramme' => 'Type de programme',
+                'ComposantProgramme' => 'Composant de programme',
+                'Secteur' => 'Secteur',
+                'Cible' => 'Cible',
+                'ChampSection' => 'Section de formulaire',
+                'ChampProjet' => 'Champ de formulaire',
+                'Dgpd' => 'DGPD',
+                'Dpaf' => 'DPAF',
+                'Odd' => 'Objectif de developpement durable'
+            ];
+            $resourceName = $modelNames[$model] ?? 'Ressource';
+            $message = $resourceName . ' non trouvé(e)';
+        } elseif ($e instanceof \Illuminate\Validation\ValidationException) {
+            $statusCode = 422;
+            $message = 'Erreurs de validation';
+        } elseif ($e instanceof \Illuminate\Auth\AuthenticationException) {
+            $statusCode = 401;
+            $message = 'Non authentifié';
+        } elseif ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+            $statusCode = 403;
+            $message = 'Action non autorisée';
+        } elseif ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+            $statusCode = $e->getStatusCode();
+            $message = $e->getMessage() ?: 'Erreur HTTP';
+        } else {
+            // En production, ne pas exposer les détails des erreurs internes
+            if (app()->environment('production')) {
+                $message = 'Une erreur interne s\'est produite';
+            } else {
+                $message = $e->getMessage();
+            }
+        }
+
         return response()->json([
             'success' => false,
-            'message' => 'An error occurred.',
-            'error' => $e->getMessage(),
-        ], 500);
+            'message' => $message,
+        ], $statusCode);
     }
 }

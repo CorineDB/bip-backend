@@ -197,6 +197,14 @@ class Tdr extends Model
     }
 
     /**
+     * Obtenir l'évaluation parent (précédente) pour ce TDR
+     */
+    public function evaluationTerminer()
+    {
+        return $this->evaluations()->evaluationTermine('tdr-prefaisabilite')->first();
+    }
+
+    /**
      * Obtenir l'évaluation en cours pour ce TDR
      */
     public function evaluationEnCours()

@@ -84,7 +84,7 @@ trait ExceptionTrait
         return $e instanceof UnauthorizedHttpException;
     }
 
-    protected function isValidation($e){
+    protected function isValidation($e, $request = null){
         return $e instanceof ValidationException;
     }
 
@@ -98,7 +98,58 @@ trait ExceptionTrait
     }
 
     protected function ModelResponse($e){
-        return $this->errorResponse('Aucun résultat trouvé dans les enrégistrement d\'' . strtolower(str_replace('App\\Models\\','',$e->getModel())), [], Response::HTTP_NOT_FOUND);
+        // Extraire le nom du modèle depuis l'exception
+        $model = class_basename($e->getModel());
+        $modelNames = [
+            'Projet' => 'Projet',
+            'User' => 'Utilisateur',
+            'IdeeProjet' => 'Idée de projet',
+            'Tdr' => 'Terme de reference',
+            'Evaluation' => 'Évaluation',
+            'Document' => 'Canevas',
+            'Fichier' => 'Fichier',
+            'Champ' => 'Champ de formulaire',
+            'Decision' => 'Décision',
+            'Workflow' => 'Workflow',
+            'Notification' => 'Notification',
+            'Permission' => 'Permission',
+            'Role' => 'Rôle',
+            'GroupeUtilisateur' => 'Groupe d\'utilisateur',
+            'Ministere' => 'Ministère',
+            'Direction' => 'Direction',
+            'Service' => 'Service',
+            'CategorieCritere' => 'Outil d\'évaluation',
+            'Critere' => 'Critère d\'évaluation',
+            'NoteConceptuelle' => 'Note conceptuelle',
+            'Rapport' => 'Rapport',
+            'Commentaire' => 'Commentaire',
+            'Notation' => 'Notation',
+            'EvaluationCritere' => 'Évaluation de critère',
+            'Personne' => 'Personne',
+            'Organisation' => 'Organisation',
+            'CategorieDocument' => 'Catégorie de document',
+            'CategorieProjet' => 'Catégorie de projet',
+            'Statut' => 'Statut',
+            'TrackInfo' => 'Information de suivi',
+            'Commune' => 'Commune',
+            'Arrondissement' => 'Arrondissement',
+            'Departement' => 'Département',
+            'Village' => 'Village',
+            'LieuIntervention' => 'Lieu d\'intervention',
+            'Financement' => 'Financement',
+            'TypeIntervention' => 'Type d\'intervention',
+            'TypeProgramme' => 'Type de programme',
+            'ComposantProgramme' => 'Composant de programme',
+            'Secteur' => 'Secteur',
+            'Cible' => 'Cible',
+            'ChampSection' => 'Section de formulaire',
+            'ChampProjet' => 'Champ de formulaire',
+            'Dgpd' => 'DGPD',
+            'Dpaf' => 'DPAF',
+            'Odd' => 'Objectif de developpement durable'
+        ];
+        $resourceName = $modelNames[$model] ?? 'Ressource';
+        return $this->errorResponse($resourceName . ' non trouvé(e)', [], Response::HTTP_NOT_FOUND);
     }
 
     protected function QueryResponse($e){
@@ -107,7 +158,7 @@ trait ExceptionTrait
 
     protected function NotAllowedResponse($e)
     {
-        return $this->errorResponse($e->getMessage(), [], Response::HTTP_METHOD_NOT_ALLOWED);
+        return $this->errorResponse("Méthode HTTP non autorisée pour cette route", [], Response::HTTP_METHOD_NOT_ALLOWED);
     }
 
     protected function ErrorsResponse($e)
@@ -122,23 +173,17 @@ trait ExceptionTrait
 
     protected function AuthenticationResponse($e)
     {
-        return $this->errorResponse("Connexion expiré. Veuillez vous connectez", [], Response::HTTP_UNAUTHORIZED);
-        return $this->errorResponse($e->getMessages() == "Unauthenticated" ? "Connexion expiré. Veuillez vous connectez" : $e->getMessages(), [], Response::HTTP_UNAUTHORIZED);
+        return $this->errorResponse("Connexion expiré. Veuillez vous connecter", [], Response::HTTP_UNAUTHORIZED);
     }
 
     protected function UnauthorizedResponse($e)
     {
-        return $this->errorResponse($e->getMessages() + "Vous n'avez pas le droit d'éffectuer cette année", [], Response::HTTP_FORBIDDEN);
+        return $this->errorResponse("Vous n'avez pas le droit d'effectuer cette action", [], Response::HTTP_FORBIDDEN);
     }
 
     protected function ValidationResponse($e,$request)
     {
         return $this->errorResponse("Erreur de validation du formulaire", $e->validator->errors()->getMessages(), Response::HTTP_UNPROCESSABLE_ENTITY);
-
-        $errors = $e->validator->errors()->getMessages();
-        return response()->json([
-            "errors" =>[ "message" => [$errors]]
-        ],Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     protected function TokenMismatchResponse($e){
