@@ -2132,4 +2132,112 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             return $this->errorResponse($e);
         }
     }
+
+    /**
+     * Récupérer le canevas d'appréciation des TDRs de préfaisabilité
+     */
+    public function canevasAppreciationTdrPrefaisabilite(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas d'appréciation des TDRs de préfaisabilité unique
+            $canevas = $this->repository->getCanevasAppreciationTdrPrefaisabilite();
+
+            if (!$canevas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas d\'appréciation des TDRs de préfaisabilité trouvé.'
+                ], 404);
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => 'Canevas d\'appréciation des TDRs de préfaisabilité récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas d'appréciation des TDRs de préfaisabilité
+     */
+    public function createOrUpdateCanevasAppreciationTdrPrefaisabilite(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasAppreciationTdrPrefaisabilite();
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-appreciation-tdrs-prefaisabilite')->firstOrFail()->id;
+
+            if ($canevas) {
+                unset($data["slug"]);
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['options_notation'])) {
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // Regénérer la structure après les modifications
+                $this->structureService->generateAndSaveStructure($canevas);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasAppreciationTdrPrefaisabilite();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas d\'appréciation des TDRs de préfaisabilité mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                $data["slug"] = "canevas-appreciation-tdrs-prefaisabilite";
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                if (isset($data['options_notation'])) {
+                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasAppreciationTdrPrefaisabilite();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => 'Canevas d\'appréciation des TDRs de préfaisabilité créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
 }

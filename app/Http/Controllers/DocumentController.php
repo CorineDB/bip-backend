@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\documents\CreateOrUpdateCanevasAppreciationTdrRequest;
+use App\Http\Requests\documents\CreateOrUpdateCanevasAppreciationTdrPrefaisabiliteRequest;
 use App\Http\Requests\documents\canevas_redaction_note_conceptuelle\CreateOrUpdateCanevasRedactionNoteConceptuelleRequest;
 use App\Http\Requests\documents\CreateOrUpdateCanevasChecklistMesuresAdaptationRequest;
 use App\Http\Requests\documents\etudes_faisabilite\CreateOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabiliteRequest;
@@ -583,5 +584,21 @@ class DocumentController extends Controller
     public function createOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite(CreateOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabiliteRequest $request): JsonResponse
     {
         return $this->service->createOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite($request->validated());
+    }
+
+    /**
+     * Récupérer le canevas d'appréciation TDR préfaisabilité
+     */
+    public function canevasAppreciationTdrPrefaisabilite(): JsonResponse
+    {
+        return $this->service->canevasAppreciationTdrPrefaisabilite();
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas d'appréciation TDR préfaisabilité
+     */
+    public function createOrUpdateCanevasAppreciationTdrPrefaisabilite(CreateOrUpdateCanevasAppreciationTdrPrefaisabiliteRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasAppreciationTdrPrefaisabilite($request->validated());
     }
 }
