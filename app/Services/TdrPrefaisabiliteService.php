@@ -882,7 +882,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
 
             // Vérifier qu'il y a une évaluation terminée avec résultat "non accepté"
-            $evaluation = $projet->evaluations()
+            $evaluation = $projet->tdrPrefaisabilite->first()?->evaluations()
                 ->where('type_evaluation', 'tdr-prefaisabilite')
                 ->where('statut', 1) // Évaluation terminée
                 ->orderBy('created_at', 'desc')
