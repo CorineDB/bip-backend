@@ -928,7 +928,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             switch ($data['action']) {
                 case 'reviser':
                     // Reviser malgré l'évaluation négative → retour au statut TDR_PREFAISABILITE
-                    $nouveauStatut = StatutIdee::TDR_PREFAISABILITE;
+                    $nouveauStatut = StatutIdee::R_TDR_PREFAISABILITE;
                     $projet->update([
                         'statut' => $nouveauStatut,
                         'phase' => $this->getPhaseFromStatut($nouveauStatut),
