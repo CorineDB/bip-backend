@@ -342,8 +342,8 @@ class Tdr extends Model
      */
     public function peutEtreValide(): bool
     {
-        return $this->statut === 'en_evaluation' &&
-               !empty($this->evaluations_detaillees);
+        return $this->statut === 'en_evaluation'/*  &&
+               !empty($this->evaluations_detaillees) */;
     }
 
     /**
