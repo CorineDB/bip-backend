@@ -500,7 +500,7 @@ class Projet extends Model
     public function tdrPrefaisabiliteActif()
     {
         return $this->tdrsPrefaisabilite()
-            ->whereIn('statut', ['soumis', 'en_evaluation', 'valide', 'retour_travail_supplementaire'])
+            ->whereIn('statut', ['brouillon', 'soumis', 'en_evaluation', 'valide', 'retour_travail_supplementaire'])
             ->orderBy('created_at', 'desc');
     }
 
@@ -510,7 +510,8 @@ class Projet extends Model
     public function tdrFaisabiliteActif()
     {
         return $this->tdrsFaisabilite()
-            ->whereIn('statut', ['soumis', 'en_evaluation', 'valide', 'retour_travail_supplementaire'])
+            ->whereIn('statut', [
+                'brouillon','soumis', 'en_evaluation', 'valide', 'retour_travail_supplementaire'])
             ->orderBy('created_at', 'desc');
     }
 
@@ -521,6 +522,7 @@ class Projet extends Model
     {
         return $this->tdrsPrefaisabilite()
             ->whereIn('statut', [
+                'brouillon',
                 'soumis',
                 'en_evaluation',
                 'valide',
@@ -543,6 +545,7 @@ class Projet extends Model
     {
         return $this->tdrsFaisabilite()
             ->whereIn('statut', [
+                'brouillon',
                 'soumis',
                 'en_evaluation',
                 'valide',
