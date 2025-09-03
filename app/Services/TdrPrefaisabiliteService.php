@@ -424,7 +424,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $tdrData['parent_id'] = $tdrExistant->id;
                 $tdr = \App\Models\Tdr::create($tdrData);
                 $message = 'Nouvelle version du TDR de préfaisabilité créée avec succès.';
-            } elseif ($tdrExistant && $tdrExistant->statut !== 'soumis') {
+            } elseif ($tdrExistant && ($tdrExistant->statut === 'brouillon' ||  $tdrExistant->statut === 'retour_travail_supplementaire')) {
                 // Si un TDR non soumis existe, le mettre à jour
                 $tdr = $tdrExistant;
                 $tdr->fill($tdrData);
@@ -473,8 +473,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF)
                 ]);
-
-
 
                 // Enregistrer le workflow et la décision
                 $this->enregistrerWorkflow($projet, StatutIdee::EVALUATION_TDR_PF);
@@ -936,6 +934,21 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'phase' => $this->getPhaseFromStatut($nouveauStatut),
                         'sous_phase' => $this->getSousPhaseFromStatut($nouveauStatut)
                     ]);
+
+                    $tdr = $projet->tdrPrefaisabilite->first();
+
+                    if (!$tdr) {
+                        return response()->json([
+                            'success' => false,
+                            'data' => null,
+                            'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
+                        ], 404);
+                    }
+
+                    $tdr->update([
+                        'statut' => 'retour_travail_supplementaire'
+                    ]);
+
                     $messageAction = 'Projet continue malgré l\'évaluation négative. Retour à la soumission des TDRs.';
                     break;
 
@@ -1283,7 +1296,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             DB::beginTransaction();
 
             // Vérifier les autorisations (DPAF uniquement)
-            if (in_array(auth()->user()->type, ['dpaf', 'admin'])) {
+            if (in_array(auth()->user()->type, ['dpaf'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette soumission.'
@@ -1294,12 +1307,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            /* if ($projet->statut->value !== StatutIdee::SOUMISSION_RAPPORT_PF->value) {
+            if ($projet->statut->value !== StatutIdee::SOUMISSION_RAPPORT_PF->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de soumission du rapport de préfaisabilité.'
                 ], 422);
-            } */
+            }
 
             // Déterminer si c'est une soumission ou un brouillon
             $action = $data['action'] ?? 'submit';
@@ -1800,6 +1813,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'phase' => $this->getPhaseFromStatut(StatutIdee::SOUMISSION_RAPPORT_PF),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::SOUMISSION_RAPPORT_PF)
                 ]);
+
+                $tdr->update([
+                    'statut' => 'valide'
+                ]);
+
                 return StatutIdee::SOUMISSION_RAPPORT_PF;
 
             case 'retour':
@@ -1811,7 +1829,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ]);
 
                 $tdr->update([
-                    'statut' => 'brouillon'
+                    'statut' => 'retour_travail_supplementaire'
                 ]);
 
                 return StatutIdee::R_TDR_PREFAISABILITE;
