@@ -380,24 +380,16 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         try {
             DB::beginTransaction();
 
-            // Vérifier les autorisations (DPAF uniquement)
-            /*  if (!in_array(auth()->user()->type, ['dpaf'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette soumission.'
-                ], 403);
-            } */
-
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            /* if (!in_array($projet->statut->value, [StatutIdee::TDR_PREFAISABILITE->value, StatutIdee::R_TDR_PREFAISABILITE->value])) {
+            if (!in_array($projet->statut->value, [StatutIdee::TDR_PREFAISABILITE->value, StatutIdee::R_TDR_PREFAISABILITE->value])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de soumission des TDRs de préfaisabilité.'
                 ], 422);
-            } */
+            }
 
             // Extraire les données spécifiques au payload
             $estSoumise = $data['est_soumise'] ?? true;
@@ -586,7 +578,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, $data);
 
             // Traiter la décision selon le résultat (changement automatique du statut)
-            $nouveauStatut = $this->traiterDecisionEvaluationTdrAutomatique($projet, $resultatsEvaluation);
+            $nouveauStatut = $this->traiterDecisionEvaluationTdrAutomatique($projet, $resultatsEvaluation, $tdr);
 
             // Préparer l'évaluation complète pour enregistrement
             $evaluationComplete = [
@@ -1798,7 +1790,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Traiter la décision d'évaluation automatiquement selon les règles SFD-011
      */
-    private function traiterDecisionEvaluationTdrAutomatique(Projet $projet, array $resultats): StatutIdee
+    private function traiterDecisionEvaluationTdrAutomatique(Projet $projet, array $resultats, null|Tdr $tdr): StatutIdee
     {
         switch ($resultats['resultat_global']) {
             case 'passe':
@@ -1817,6 +1809,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'phase' => $this->getPhaseFromStatut(StatutIdee::R_TDR_PREFAISABILITE),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_TDR_PREFAISABILITE)
                 ]);
+
+                $tdr->update([
+                    'statut' => 'brouillon'
+                ]);
+
                 return StatutIdee::R_TDR_PREFAISABILITE;
 
             case 'non-accepte':
