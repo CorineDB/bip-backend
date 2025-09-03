@@ -467,7 +467,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet->resume_tdr_prefaisabilite = $data["resume_tdr_prefaisabilite"];
 
             // Changer le statut du projet seulement si est_soumise est true
-            if ($estSoumise) {
+            if ($estSoumise && $projet->statut !== StatutIdee::R_TDR_PREFAISABILITE) {
                 $projet->update([
                     'statut' => StatutIdee::EVALUATION_TDR_PF,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF),
@@ -534,7 +534,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if ($projet->statut->value !== StatutIdee::EVALUATION_TDR_PF->value) {
+            if (!in_array($projet->statut->value, [StatutIdee::EVALUATION_TDR_PF->value, StatutIdee::R_TDR_PREFAISABILITE->value])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape d\'évaluation des TDRs.'
@@ -866,7 +866,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if ($projet->statut->value !== StatutIdee::EVALUATION_TDR_PF->value) {
+            if (!in_array($projet->statut->value, [StatutIdee::EVALUATION_TDR_PF->value, StatutIdee::R_TDR_PREFAISABILITE->value])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape d\'évaluation des TDRs.'

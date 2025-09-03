@@ -149,8 +149,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 $tdrData['parent_id'] = $tdrExistant->id;
                 $tdr = \App\Models\Tdr::create($tdrData);
                 $message = 'Nouvelle version du TDR de faisabilité créée avec succès.';
-            } elseif ($tdrExistant && $tdrExistant->statut !== 'soumis') {
-                // Si un TDR non soumis existe, le mettre à jour
+            } elseif ($tdrExistant && ($tdrExistant->statut === 'brouillon' || $tdrExistant->statut === 'retour_travail_supplementaire')) {
+                // Si un TDR en brouillon ou en retour de travail supplémentaire existe, le mettre à jour
                 $tdr = $tdrExistant;
                 $tdr->fill($tdrData);
                 $tdr->save();
@@ -248,7 +248,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             DB::beginTransaction();
 
             // Vérifier les autorisations (DGPD uniquement)
-            if (in_array(auth()->user()->type, ['dgpd', 'admin'])) {
+            if (!in_array(auth()->user()->type, ['dgpd'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette évaluation.'
@@ -258,24 +258,47 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            // Vérifier qu'il y a des TDRs soumis
-            $tdrsFichiers = $projet->fichiersParCategorie('tdr-faisabilite')->get();
-
-            if ($tdrsFichiers->isEmpty()) {
+            // Vérifier que le projet est au bon statut
+            if ($projet->statut->value !== StatutIdee::EVALUATION_TDR_F->value) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucun TDR trouvé pour ce projet.'
+                    'message' => 'Le projet n\'est pas à l\'étape d\'évaluation des TDRs.'
+                ], 422);
+            }
+
+            // Récupérer le TDR de faisabilité à évaluer
+            $tdr = \App\Models\Tdr::where('projet_id', $projetId)
+                ->where('type', 'faisabilite')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if (!$tdr) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun TDR de faisabilité trouvé pour ce projet.'
                 ], 404);
             }
 
+            // Vérifier que le TDR est soumis et peut être évalué
+            if (!$tdr->peutEtreEvalue()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le TDR doit être soumis avant de pouvoir être évalué.'
+                ], 422);
+            }
+
+            $tdr->statut = 'en_evaluation';
+            $tdr->save();
+            $tdr->refresh();
+
             // Créer ou mettre à jour l'évaluation
-            $evaluation = $this->creerEvaluationTdr($projet, $data);
+            $evaluation = $this->creerEvaluationTdr($tdr, $data);
 
             // Calculer le résultat de l'évaluation selon les règles SFD-015
             $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, $data);
 
             // Traiter la décision selon le résultat (changement automatique du statut)
-            $nouveauStatut = $this->traiterDecisionEvaluationTdrAutomatique($projet, $resultatsEvaluation);
+            $nouveauStatut = $this->traiterDecisionEvaluationTdrAutomatique($projet, $resultatsEvaluation, $tdr);
 
             // Préparer l'évaluation complète pour enregistrement
             $evaluationComplete = [
@@ -347,28 +370,26 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     public function getEvaluationTdr(int $projetId): JsonResponse
     {
         try {
-            // Vérifier les autorisations (DGPD uniquement)
-            if (in_array(auth()->user()->type, ['dgpd', 'admin'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour consulter cette évaluation.'
-                ], 403);
-            }
 
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            // Récupérer les TDRs soumis
-            $tdrsFichiers = $projet->fichiersParCategorie('tdr-faisabilite')->get();
-            if ($tdrsFichiers->isEmpty()) {
+            // Récupérer le TDR soumis
+            $tdr = \App\Models\Tdr::where('projet_id', $projetId)
+                ->where('type', 'faisabilite')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if (!$tdr) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucun TDR trouvé pour ce projet.'
+                    'data' => null,
+                    'message' => 'Aucun TDR de faisabilité trouvé pour ce projet.'
                 ], 404);
             }
 
-            // Récupérer l'évaluation en cours ou la dernière évaluation
-            $evaluation = $projet->evaluations()
+            // Récupérer l'évaluation en cours ou la dernière évaluation via le TDR
+            $evaluation = $tdr->evaluations()
                 ->where('type_evaluation', 'tdr-faisabilite')
                 ->with(['champs_evalue' => function ($query) {
                     $query->orderBy('ordre_affichage');
@@ -561,7 +582,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             DB::beginTransaction();
 
             // Vérifier les autorisations (DGPD uniquement)
-            if (in_array(auth()->user()->type, ['dgpd', 'admin'])) {
+            if (!in_array(auth()->user()->type, ['dgpd'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette validation.'
@@ -579,10 +600,22 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ], 422);
             }
 
-            // Vérifier qu'il y a une évaluation terminée avec résultat "non accepté"
-            $evaluation = $projet->evaluations()
+            // Vérifier que le TDR est soumis et peut être validé
+            $tdr = \App\Models\Tdr::where('projet_id', $projet->id)
+                ->where('type', 'faisabilite')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if (!$tdr || !$tdr->peutEtreValide()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le TDR doit être évalué avant de pouvoir être validé.'
+                ], 422);
+            }
+
+            // Récupérer l'évaluation
+            $evaluation = $tdr->evaluations()
                 ->where('type_evaluation', 'tdr-faisabilite')
-                ->where('statut', 1)
                 ->orderBy('created_at', 'desc')
                 ->first();
 
@@ -632,6 +665,11 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         'phase' => $this->getPhaseFromStatut($nouveauStatut),
                         'sous_phase' => $this->getSousPhaseFromStatut($nouveauStatut)
                     ]);
+
+                    $tdr->update([
+                        'statut' => 'retour_travail_supplementaire'
+                    ]);
+
                     $messageAction = 'Projet continue malgré l\'évaluation négative. Retour à la soumission des TDRs.';
                     break;
 
@@ -1105,10 +1143,10 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     /**
      * Créer une évaluation TDR
      */
-    private function creerEvaluationTdr(Projet $projet, array $data)
+    private function creerEvaluationTdr($tdr, array $data)
     {
         // Récupérer une évaluation en cours existante ou en créer une nouvelle
-        $evaluation = $projet->evaluations()
+        $evaluation = $tdr->evaluations()
             ->where('type_evaluation', 'tdr-faisabilite')
             ->where('statut', 0)
             ->orderBy('created_at', 'desc')
@@ -1116,13 +1154,13 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
         if (!$evaluation) {
             // Récupérer l'évaluation parent si c'est une ré-évaluation
-            $evaluationParent = $projet->evaluations()
+            $evaluationParent = $tdr->evaluations()
                 ->where('type_evaluation', 'tdr-faisabilite')
                 ->where('statut', 1)
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            $evaluation = $projet->evaluations()->create([
+            $evaluation = $tdr->evaluations()->create([
                 'type_evaluation' => 'tdr-faisabilite',
                 'evaluateur_id' => auth()->id(),
                 'evaluation' => [],
@@ -1261,7 +1299,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     /**
      * Traiter la décision d'évaluation automatiquement selon les règles SFD-015
      */
-    private function traiterDecisionEvaluationTdrAutomatique(Projet $projet, array $resultats): StatutIdee
+    private function traiterDecisionEvaluationTdrAutomatique(Projet $projet, array $resultats, $tdr = null): StatutIdee
     {
         switch ($resultats['resultat_global']) {
             case 'passe':
@@ -1271,6 +1309,14 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'phase' => $this->getPhaseFromStatut(StatutIdee::SOUMISSION_RAPPORT_F),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::SOUMISSION_RAPPORT_F)
                 ]);
+
+                // Mettre à jour le statut du TDR vers 'valide'
+                if ($tdr) {
+                    $tdr->update([
+                        'statut' => 'valide'
+                    ]);
+                }
+
                 return StatutIdee::SOUMISSION_RAPPORT_F;
 
             case 'retour':
@@ -1280,6 +1326,14 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'phase' => $this->getPhaseFromStatut(StatutIdee::R_TDR_FAISABILITE),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_TDR_FAISABILITE)
                 ]);
+
+                // Mettre à jour le statut du TDR vers 'retour_travail_supplementaire'
+                if ($tdr) {
+                    $tdr->update([
+                        'statut' => 'retour_travail_supplementaire'
+                    ]);
+                }
+
                 return StatutIdee::R_TDR_FAISABILITE;
 
             case 'non_accepte':
