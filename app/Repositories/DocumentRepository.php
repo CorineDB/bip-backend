@@ -184,7 +184,7 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
         return $this->model->whereHas('categorie', function ($query) {
             $query->where('slug', 'canevas-check-liste-suivi-rapport-prefaisabilite');
         })
-            ->where('type', 'formulaire')
+            ->where('type', 'checklist')
             ->with([
                 'sections.champs' => function($query) {
                     $query->orderBy('ordre_affichage');

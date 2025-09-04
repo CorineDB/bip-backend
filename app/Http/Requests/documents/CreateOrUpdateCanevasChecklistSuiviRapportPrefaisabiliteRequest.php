@@ -21,7 +21,7 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
         $this->canevas_checklist_suivi = Document::whereHas('categorie', function ($query) {
             $query->where('slug', 'canevas-check-liste-suivi-rapport-prefaisabilite');
         })
-        ->where('type', 'formulaire')
+        ->where('type', 'checklist')
         ->orderBy('created_at', 'desc')
         ->first();
     }
