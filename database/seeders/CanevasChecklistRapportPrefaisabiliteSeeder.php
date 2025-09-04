@@ -11,10 +11,9 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
 {
     protected $documentData = [
         "nom" => "Check liste de suivi rapport prefaisabilite",
-        "slug" => "check-liste-suivi-rapport-prefaisabilite",
+        "slug" => "canevas-check-liste-suivi-rapport-prefaisabilite",
         "description" => "Check liste de suivi rapport prefaisabilite",
-        "type" => "formulaire",
-        "categorieId" => 8,
+        "type" => "checklist",
         "forms" => [
             // Section 1: Identification du projet
             [
@@ -1189,12 +1188,11 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
         try {
             // Créer la catégorie de document pour les checklists
             $categorieDocument = CategorieDocument::updateOrCreate([
-                'slug' => "canevas-checklist-suivi-rapport-prefaisabilite",
+                'slug' => "canevas-check-liste-suivi-rapport-prefaisabilite",
             ], [
-                'nom' => "Canevas check liste de suivi rapport prefaisabilite",
-                'slug' => "canevas-checklist-suivi-rapport-prefaisabilite",
+                'nom' => "Canevas check liste de suivi rapport de préfaisabilité",
                 "description" => "Canevas standardisés pour les check-list de suivi de rédaction de rapports",
-                "format" => "formulaire"
+                "format" => "checklist"
             ]);
 
             // Extraire les données relationnelles avant création

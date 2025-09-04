@@ -182,7 +182,7 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
     public function getCanevasChecklistSuiviRapportPrefaisabilite()
     {
         return $this->model->whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-checklist-suivi-rapport-prefaisabilite');
+            $query->where('slug', 'canevas-check-liste-suivi-rapport-prefaisabilite');
         })
             ->where('type', 'formulaire')
             ->with([

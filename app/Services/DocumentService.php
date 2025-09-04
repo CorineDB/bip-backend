@@ -799,7 +799,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             DB::beginTransaction();
 
             $canevas = $this->repository->getCanevasChecklistSuiviRapportPrefaisabilite();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-suivi-rapport-prefaisabilite')->firstOrFail()->id;
+            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-check-liste-suivi-rapport-prefaisabilite')->firstOrFail()->id;
 
             if ($canevas) {
                 unset($data["slug"]);
@@ -842,7 +842,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     ->response()
                     ->setStatusCode(200);
             } else {
-                $data["slug"] = "canevas-checklist-suivi-rapport-prefaisabilite";
+                $data["slug"] = "canevas-check-liste-suivi-rapport-prefaisabilite";
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 

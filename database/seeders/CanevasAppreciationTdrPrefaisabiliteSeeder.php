@@ -14,7 +14,6 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
         "slug" => "canevas-appreciation-tdrs-prefaisabilite",
         "description" => "Canevas standardisé pour l'appréciation et l'évaluation des Termes de Référence de préfaisabilité",
         "type" => "formulaire",
-        "categorieId" => 8,
         "evaluation_configs" => [
             "guide_notation" => [
                 [
@@ -66,8 +65,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 1,
-                        "label" => "Réponse aux objectifs spécifiques des politiques gouvernementales",
-                        "info" => "Inclure références spécifiques avec numéros de page, critères politiques : création d'emplois, genre, changement climatique, contributions déterminées au niveau national",
+                        "label" => "Comment le projet répondrait-il aux objectifs spécifiques du Plan national de développement, du Plan sectoriel, de la Stratégie de croissance verte et de résilience climatique ou de toute autre politique gouvernementale ?",
+                        "info" => "Votre réponse doit inclure des références à des programmes spécifiques et inclure des références de documents spécifiques, avec le numéro de page et le paragraphe pertinents. Des critères politiques spécifiques tels que la création d'emplois, le genre et le changement climatique doivent également être mentionnés ici. Les questions liées au changement climatique en particulier sont une caractéristique de plus en plus importante des priorités de dépenses d'investissement du gouvernement, cela doit donc être pris en compte dans votre réponse. Indiquez si le projet est lié aux contributions déterminées au niveau national",
                         "attribut" => "reponse_objectifs_politiques",
                         "type_champ" => "textarea",
                         "placeholder" => "Comment le projet répondrait-il aux objectifs spécifiques du Plan national de développement, du Plan sectoriel, de la Stratégie de croissance verte et de résilience climatique ou de toute autre politique gouvernementale ?",
@@ -111,8 +110,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 2,
-                        "label" => "Nécessité du nouveau projet",
-                        "info" => "Décrire le problème à résoudre ou l'opportunité à exploiter et quelle est l'ampleur de ce problème ou de cette opportunité ? Inclure quelques estimations numériques de base pour étayer la justification",
+                        "label" => "Pourquoi ce nouveau projet est-il nécessaire ? Et quelle est l'ampleur de ce problème ou de cette opportunité ?",
+                        "info" => "Décrivez le problème à résoudre ou l'opportunité à exploiter. Incluez quelques estimations numériques de base pour étayer la justification",
                         "attribut" => "necessite_nouveau_projet",
                         "type_champ" => "textarea",
                         "placeholder" => "Pourquoi ce nouveau projet est-il nécessaire ?",
@@ -158,8 +157,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 3,
-                        "label" => "Possibilité de traitement par d'autres acteurs",
-                        "info" => "Écrire \"Oui\" ou \"Non\" et expliquer ensuite votre réponse en précisant pourquoi le ministère sectoriel est le seul responsable possible de la mise en œuvre du projet.",
+                        "label" => "Ce problème ou cette opportunité pourraient-ils être traités par les districts, le secteur privé ou une ONG ?",
+                        "info" => "Écrivez « Oui » ou « Non » et expliquez ensuite votre réponse en précisant pourquoi le ministère sectoriel est le seul responsable possible de la mise en œuvre du projet.",
                         "attribut" => "traitement_autres_acteurs",
                         "type_champ" => "textarea",
                         "placeholder" => "Ce problème ou cette opportunité pourraient-ils être traités par les districts, le secteur privé ou une ONG ?",
@@ -205,7 +204,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 4,
-                        "label" => "Possibilité de mise en œuvre en PPP",
+                        "label" => "Ce projet pourrait-il être mis en œuvre dans le cadre d'un PPP ?",
+                        "info" => "Répondez « oui » ou « non ». Expliquez la raison de la réponse, y compris les discussions tenues avec les responsables ou les experts concernés",
                         "attribut" => "possibilite_ppp",
                         "type_champ" => "textarea",
                         "placeholder" => "Ce projet pourrait-il être mis en œuvre dans le cadre d'un PPP ? (Répondre \"oui\" ou \"non\". Expliquer la raison de la réponse, y compris les discussions tenues avec les responsables ou les experts concernés)",
@@ -251,7 +251,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 5,
-                        "label" => "Priorité actuelle",
+                        "label" => "Pourquoi cette proposition devrait-elle être une priorité désormais ?",
+                        "info" => "Expliquez l'urgence du projet et pourquoi il devrait être mis en œuvre au cours du prochain exercice financier plutôt que du suivant",
                         "attribut" => "priorite_actuelle",
                         "type_champ" => "textarea",
                         "placeholder" => "Pourquoi cette proposition devrait-elle être une priorité désormais ? (Expliquer l'urgence du projet et pourquoi il devrait être mis en œuvre au cours du prochain exercice financier plutôt que du suivant)",
@@ -297,7 +298,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 6,
-                        "label" => "Conséquences de la non-mise en œuvre",
+                        "label" => "Quelles seraient les conséquences si cette proposition de projet n'était pas mise en œuvre ?",
+                        "info" => "Expliquez ce qui se passerait si le projet n'était pas approuvé. Les réponses pourraient inclure des scénarios allant de « peu de choses changeraient » à « des gens mourraient ». Considérez spécifiquement si le projet a des conséquences liées au changement climatique",
                         "attribut" => "consequences_non_mise_oeuvre",
                         "type_champ" => "textarea",
                         "placeholder" => "Quelles seraient les conséquences si cette proposition de projet n'était pas mise en œuvre ? (Expliquer ce qui se passerait si le projet n'était pas approuvé. Considérer spécifiquement si le projet a des conséquences liées au changement climatique)",
@@ -343,7 +345,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 7,
-                        "label" => "Projet faisant partie d'un programme",
+                        "label" => "Le projet fait-il partie d'un programme et des dépenses supplémentaires sont-elles nécessaires pour rendre le projet pleinement fonctionnel et opérationnel ?",
+                        "info" => "Répondez « Oui » ou « Non ». Si la réponse est « oui », veuillez fournir des détails. Si la réponse est « non », veuillez expliquer pourquoi.",
                         "attribut" => "projet_programme",
                         "type_champ" => "textarea",
                         "placeholder" => "Le projet fait-il partie d'un programme et des dépenses supplémentaires sont-elles nécessaires pour rendre le projet pleinement fonctionnel et opérationnel ? (Répondre \"Oui\" ou \"Non\". Si oui, fournir des détails. Si non, expliquer pourquoi)",
@@ -389,7 +392,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 8,
-                        "label" => "Projets similaires développés",
+                        "label" => "Des projets similaires ont-ils déjà été développés dans votre secteur ?",
+                        "info" => "Répondez « oui » ou « non ». Si la réponse est « oui », veuillez expliquer les leçons tirées des projets précédents. Si la réponse est « non », veuillez expliquer quelles mesures supplémentaires seront prises pour gérer ce risque d'inconnu",
                         "attribut" => "projets_similaires",
                         "type_champ" => "textarea",
                         "placeholder" => "Des projets similaires ont-ils déjà été développés dans votre secteur ? (Répondre \"oui\" ou \"non\". Si oui, expliquer les leçons tirées des projets précédents. Si non, expliquer quelles mesures supplémentaires seront prises pour gérer ce risque d'inconnu)",
@@ -435,7 +439,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 9,
-                        "label" => "Objectifs du projet",
+                        "label" => "Quels sont les objectifs du projet ?",
+                        "info" => "Décrivez ce que le projet vise à réaliser et dans quel délai",
                         "attribut" => "objectifs_projet",
                         "type_champ" => "textarea",
                         "placeholder" => "Quels sont les objectifs du projet ? (Décrire ce que le projet vise à réaliser et dans quel délai)",
@@ -481,7 +486,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 10,
-                        "label" => "Activités et résultats du projet",
+                        "label" => "Quelles seront les activités et les résultats du projet ?",
+                        "info" => "Les activités peuvent inclure la conception, la construction, l'acquisition d'équipements et de services. Les extrants sont souvent des preuves physiques que les activités ont été réalisées",
                         "attribut" => "activites_resultats",
                         "type_champ" => "textarea",
                         "placeholder" => "Quelles seront les activités et les résultats du projet ? (Les activités peuvent inclure la conception, la construction, l'acquisition d'équipements et de services. Les extrants sont souvent des preuves physiques que les activités ont été réalisées)",
@@ -527,7 +533,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 11,
-                        "label" => "Résultats attendus du projet",
+                        "label" => "Quels sont les résultats attendus du projet ?",
+                        "info" => "Les résultats peuvent être décrits comme les éléments qui ont été améliorés suite à la mise en œuvre réussie du projet. Veuillez indiquer ce qui doit être amélioré, dans quelle mesure et à quel moment",
                         "attribut" => "resultats_attendus",
                         "type_champ" => "textarea",
                         "placeholder" => "Quels sont les résultats attendus du projet ? (Les résultats peuvent être décrits comme les éléments qui ont été améliorés suite à la mise en œuvre réussie du projet. Indiquer ce qui doit être amélioré, dans quelle mesure et à quel moment)",
@@ -573,7 +580,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 12,
-                        "label" => "Méthodologie prévue",
+                        "label" => "Décrivez la méthodologie prévue pour réaliser le projet.",
+                        "info" => "Décrivez les processus par lesquels les résultats seront obtenus. Commencez par une description de tous les travaux d'évaluation et de conception qui devront être réalisés et continuez jusqu'à la mise en service et l'opérationnalisation du projet",
                         "attribut" => "methodologie_prevue",
                         "type_champ" => "textarea",
                         "placeholder" => "Décrire la méthodologie prévue pour réaliser le projet. (Décrire les processus par lesquels les résultats seront obtenus. Commencer par une description de tous les travaux d'évaluation et de conception qui devront être réalisés et continuer jusqu'à la mise en service et l'opérationnalisation du projet)",
@@ -619,7 +627,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 13,
-                        "label" => "Emplacement géographique et risques",
+                        "label" => "Décrivez l'emplacement ou les emplacements géographiques inclus dans la portée du projet et tous les risques liés à l'emplacement.",
+                        "info" => "Expliquez si le projet fait référence à un ou plusieurs emplacements et expliquez l'importance de cet ou ces emplacements par rapport aux vulnérabilités aux changements climatiques",
                         "attribut" => "emplacement_geographique",
                         "type_champ" => "textarea",
                         "placeholder" => "Décrire l'emplacement ou les emplacements géographiques inclus dans la portée du projet et tous les risques liés à l'emplacement. (Expliquer si le projet fait référence à un ou plusieurs emplacements et expliquer l'importance de cet ou ces emplacements par rapport aux vulnérabilités aux changements climatiques)",
@@ -665,7 +674,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 14,
-                        "label" => "Bénéficiaires directs",
+                        "label" => "Qui sont les bénéficiaires directs du projet et combien seront-ils ?",
+                        "info" => "Les bénéficiaires directs sont les personnes dont la vie devrait être améliorée par le projet. Veuillez préciser quels groupes bénéficieront de ces mesures selon les classifications PEDS, et combien. Assurez-vous que les bénéficiaires correspondent aux objectifs énoncés au point 1.9. Expliquez combien d'emplois seront créés dans le secteur de la construction et plus tard dans le cadre des activités du projet. Combien de ces emplois peuvent être classés comme « emplois verts » ?",
                         "attribut" => "beneficiaires_directs",
                         "type_champ" => "textarea",
                         "placeholder" => "Qui sont les bénéficiaires directs du projet et combien seront-ils ? (Les bénéficiaires directs sont les personnes dont la vie devrait être améliorée par le projet. Préciser quels groupes bénéficieront selon les classifications PEDS, et combien. S'assurer que les bénéficiaires correspondent aux objectifs énoncés au point 1.9. Expliquer combien d'emplois seront créés dans le secteur de la construction et plus tard dans le cadre des activités du projet. Combien de ces emplois peuvent être classés comme \"emplois verts\" ?)",
@@ -711,7 +721,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 15,
-                        "label" => "Bénéficiaires indirects",
+                        "label" => "Qui sont les bénéficiaires indirects et combien seront-ils ?",
+                        "info" => "Semblable à la question précédente qui concerne les bénéficiaires directs ; répondez maintenant à cette question concernant les bénéficiaires indirects",
                         "attribut" => "beneficiaires_indirects",
                         "type_champ" => "textarea",
                         "placeholder" => "Qui sont les bénéficiaires indirects et combien seront-ils ? (Semblable à la question précédente qui concerne les bénéficiaires directs ; répondre maintenant à cette question concernant les bénéficiaires indirects)",
@@ -757,7 +768,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 16,
-                        "label" => "Impacts liés au climat",
+                        "label" => "À quels impacts liés au climat peut-on s'attendre si le projet est mis en œuvre ?",
+                        "info" => "Lorsque vous répondez à cette question, tenez compte non seulement des émissions de gaz à effet de serre (GES) du projet, mais aussi de sa construction. D'autres impacts peuvent concerner le choix spécifique de la technologie qui devrait être pris en compte dans le cadre de l'évaluation initiale des options. Pour les petits projets ne nécessitant pas de FS, indiquez si le projet est positif en carbone, neutre en carbone ou négatif en carbone et pourquoi. En cas de doute, demandez conseil à un professionnel et joignez-le à ce PCN",
                         "attribut" => "impacts_climat",
                         "type_champ" => "textarea",
                         "placeholder" => "À quels impacts liés au climat peut-on s'attendre si le projet est mis en œuvre ? (Tenir compte non seulement des émissions de gaz à effet de serre (GES) du projet, mais aussi de sa construction. D'autres impacts peuvent concerner le choix spécifique de la technologie qui devrait être pris en compte dans le cadre de l'évaluation initiale des options. Pour les petits projets ne nécessitant pas de FS, indiquer si le projet est positif en carbone, neutre en carbone ou négatif en carbone et pourquoi. En cas de doute, demander conseil à un professionnel et le joindre à ce PCN)",
@@ -803,7 +815,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 17,
-                        "label" => "Vulnérabilités au changement climatique",
+                        "label" => "Quelles vulnérabilités au changement climatique doivent être prises en compte lors de la conception du projet et comment seront-elles atténuées ?",
+                        "info" => "Le changement climatique peut provoquer des phénomènes météorologiques extrêmes et d'autres conséquences telles que des risques accrus d'incendies, d'inondations et d'autres dégradations de l'environnement. Veuillez considérer comment tout événement extrême éventuel pourrait avoir un impact sur le projet et quelle résilience supplémentaire pourrait devoir être conçue et intégrée au projet afin de protéger le projet physiquement et d'éviter les interruptions de service. S'il n'y a que peu ou pas de vulnérabilités, vous devrez expliquer pourquoi.",
                         "attribut" => "vulnerabilites_climat",
                         "type_champ" => "textarea",
                         "placeholder" => "Quelles vulnérabilités au changement climatique doivent être prises en compte lors de la conception du projet et comment seront-elles atténuées ? (Le changement climatique peut provoquer des phénomènes météorologiques extrêmes et d'autres conséquences telles que des risques accrus d'incendies, d'inondations et d'autres dégradations de l'environnement. Considérer comment tout événement extrême éventuel pourrait avoir un impact sur le projet et quelle résilience supplémentaire pourrait devoir être conçue et intégrée au projet afin de protéger le projet physiquement et d'éviter les interruptions de service. S'il n'y a que peu ou pas de vulnérabilités, expliquer pourquoi)",
@@ -849,7 +862,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 18,
-                        "label" => "Autres impacts environnementaux",
+                        "label" => "Quels autres impacts environnementaux ont été identifiés dans la proposition et quelles autres recherches sur les mesures d'atténuation sont prévues ?",
+                        "info" => "La plupart des projets de construction causent des dommages environnementaux. Décrivez ces impacts. Décrivez également tout dommage environnemental qui pourrait résulter de l'exploitation à long terme du projet. Décrivez toutes les études ou travaux d'évaluation d'impact prévus visant à minimiser les dommages",
                         "attribut" => "impacts_environnementaux",
                         "type_champ" => "textarea",
                         "placeholder" => "Quels autres impacts environnementaux ont été identifiés dans la proposition et quelles autres recherches sur les mesures d'atténuation sont prévues ? (La plupart des projets de construction causent des dommages environnementaux. Décrire ces impacts. Décrire également tout dommage environnemental qui pourrait résulter de l'exploitation à long terme du projet. Décrire toutes les études ou travaux d'évaluation d'impact prévus visant à minimiser les dommages)",
@@ -895,7 +909,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 19,
-                        "label" => "Problèmes de genre",
+                        "label" => "Expliquez les problèmes de genre qui ont été identifiés dans la proposition et comment ils seront traités.",
+                        "info" => "Considérez l'effet du projet proposé sur les questions de genre, expliquez comment elles ont été identifiées, qui a été consulté et quelles stratégies pourraient aider à les résoudre",
                         "attribut" => "problemes_genre",
                         "type_champ" => "textarea",
                         "placeholder" => "Expliquer les problèmes de genre qui ont été identifiés dans la proposition et comment ils seront traités. (Considérer l'effet du projet proposé sur les questions de genre, expliquer comment elles ont été identifiées, qui a été consulté et quelles stratégies pourraient aider à les résoudre)",
@@ -941,7 +956,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 20,
-                        "label" => "Autres questions d'égalité et d'équité",
+                        "label" => "Quelles autres questions d'égalité et d'équité sont soulevées par ce projet proposé et comment seront-elles traitées ?",
+                        "info" => "Tenez compte de l'effet du projet proposé sur les questions de genre, sur les personnes à mobilité réduite et handicapées, ainsi que sur tous les autres groupes qui pourraient devoir être pris en compte pour un accès égal à l'installation ou aux services proposés. Réfléchissez à la manière dont ces besoins peuvent être pris en compte dans la planification et mise en œuvre du projet",
                         "attribut" => "questions_egalite_equite",
                         "type_champ" => "textarea",
                         "placeholder" => "Quelles autres questions d'égalité et d'équité sont soulevées par ce projet proposé et comment seront-elles traitées ? (Tenir compte de l'effet du projet proposé sur les questions de genre, sur les personnes à mobilité réduite et handicapées, ainsi que sur tous les autres groupes qui pourraient devoir être pris en compte pour un accès égal à l'installation ou aux services proposés. Réfléchir à la manière dont ces besoins peuvent être pris en compte dans la planification et mise en œuvre du projet)",
@@ -1000,7 +1016,7 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                         "element_type" => "field",
                         "ordre_affichage" => 1,
                         "label" => "Coût total estimé en capital pour achever le projet",
-                        "info" => "Inclure tous les éléments de coût nécessaires pour rendre le projet fonctionnel. Inclure toutes les études, travaux de conception, construction, terrain, équipement ou tout autre coût pour rendre le projet opérationnel. L'estimation complète du capital doit être incluse même lorsque le projet pourrait être financé par des ODA ou des PPP et doit inclure une estimation provisoire pour assurer la résilience climatique lorsque des vulnérabilités ont été identifiées.",
+                        "info" => "Inclure tous les éléments de coût nécessaires pour rendre le projet fonctionnel. Inclure toutes les études, travaux de conception, construction, terrain, équipement ou tout autre coût pour rendre le projet opérationnel. L'estimation complète du capital doit être incluse même lorsque le projet pourrait être financé par des ODA ou des PPP et doit inclure une estimation provisoire pour assurer la résilience climatique lorsque des vulnérabilités ont été identifiées",
                         "attribut" => "cout_total_capital",
                         "type_champ" => "number",
                         "placeholder" => "Montant en Francs CFA",
@@ -1047,7 +1063,7 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 2,
-                        "label" => "Besoins en capital pour chaque année de mise en œuvre",
+                        "label" => "Besoins en capital pour chaque année de mise en œuvre du projet",
                         "info" => "Si le projet peut être réalisé en un seul exercice financier, écrivez l'année avec le montant du capital étant le même que le nombre en 2.1. Si le projet s'étend sur plus d'un exercice financier, écrivez l'année et le montant demandé pour chaque année jusqu'à l'achèvement.",
                         "attribut" => "besoins_capital_annee",
                         "type_champ" => "textarea",
@@ -1094,6 +1110,7 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                         "element_type" => "field",
                         "ordre_affichage" => 3,
                         "label" => "Sources proposées de financement des capitaux",
+                        "info" => "D'où viendra le capital du projet ? S'il doit provenir de plusieurs sources, énumérez-les toutes. Indiquez le montant monétaire réel et le pourcentage des coûts totaux de chaque source. Lorsque le financement est libellé en devise étrangère, indiquez clairement laquelle et quel montant. Si un partenaire de développement finance partiellement ou totalement le projet, vous devez présenter une lettre d'intention",
                         "attribut" => "sources_financement",
                         "type_champ" => "radio",
                         "placeholder" => "Les sources de financement sont-elles complètes et cohérentes ?",
@@ -1136,7 +1153,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 4,
-                        "label" => "Dépenses d'investissement sur d'autres projets nécessaires",
+                        "label" => "Ce projet nécessiterait-il des dépenses d'investissement sur d'autres projets afin d'être pleinement opérationnel et efficace ?",
+                        "info" => "Répondez « oui » ou « non ». Certains projets dépendent d'autres projets connexes avant de pouvoir être pleinement efficaces. Si la réponse donnée est « oui », expliquez quel capital supplémentaire est requis et quand.",
                         "attribut" => "depenses_autres_projets",
                         "type_champ" => "radio",
                         "placeholder" => "La dépendance à d'autres projets est-elle bien expliquée ?",
@@ -1179,7 +1197,7 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 5,
-                        "label" => "Coûts récurrents estimés lorsque le projet est opérationnel",
+                        "label" => "Quels sont les coûts récurrents estimés lorsque le projet est opérationnel ?",
                         "info" => "Estimez les coûts annuels de fonctionnement du projet lorsqu'il sera opérationnel. Cela devrait inclure les salaires, les coûts des services publics, la maintenance et d'autres biens et services.",
                         "attribut" => "couts_recurrents_operation",
                         "type_champ" => "number",
@@ -1226,7 +1244,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 6,
-                        "label" => "Inclusion dans le CDMT du MINECOFIN",
+                        "label" => "Le projet est-il déjà inclus dans le CDMT du MINECOFIN ?",
+                        "info" => "Le MINECOFIN maintient un Cadre de dépenses à moyen terme (CDMT) pour aider à la planification budgétaire pour les années à venir. La question est donc de savoir si le projet proposé est déjà envisagé dans le CDMT actuel. Si vous ne le savez pas, demandez à un fonctionnaire compétent du MINECOFIN",
                         "attribut" => "inclusion_cdmt",
                         "type_champ" => "radio",
                         "placeholder" => "La réponse concernant l'inclusion dans le CDMT est-elle claire ?",
@@ -1270,6 +1289,7 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                         "element_type" => "field",
                         "ordre_affichage" => 7,
                         "label" => "Sources de coûts récurrents supplémentaires",
+                        "info" => "La réponse la plus probable à cette question est soit le budget de l'État, soit le budget local - veuillez indiquer laquelle. Dans le cas d'une source de financement alternative, telle que « l'autofinancement », veuillez en indiquer la source. Si un financement non budgétaire est disponible, indiquez son montant et sa durée",
                         "attribut" => "sources_couts_recurrents",
                         "type_champ" => "radio",
                         "placeholder" => "Les sources de financement récurrent sont-elles réalistes ?",
@@ -1312,7 +1332,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 8,
-                        "label" => "Expropriation des terres et/ou réinstallation",
+                        "label" => "Une expropriation des terres et/ou une réinstallation avec indemnisation sont-elles nécessaires ?",
+                        "info" => "Répondez « oui » ou « non ». Dans le cas de « oui », veuillez indiquer les coûts impliqués - qui auraient dû être inclus dans le point 2.1 - et le statut juridique de l'expropriation",
                         "attribut" => "expropriation_reinstallation",
                         "type_champ" => "radio",
                         "placeholder" => "Les aspects fonciers sont-ils bien traités ?",
@@ -1355,7 +1376,7 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 9,
-                        "label" => "Revenu annuel direct estimé",
+                        "label" => "Revenu annuel direct estimé (le cas échéant)",
                         "info" => "Si le projet génère des revenus grâce à ses activités, veuillez indiquer combien au cours de sa première année complète de fonctionnement et donner une explication ou une preuve pour le justifier. S'il n'y a pas de revenus, veuillez écrire « Aucun ».",
                         "attribut" => "revenu_annuel_direct",
                         "type_champ" => "textarea",
@@ -1458,6 +1479,7 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                         "element_type" => "field",
                         "ordre_affichage" => 2,
                         "label" => "Examen précoce des options de mise en œuvre",
+                        "info" => "Bien qu'une évaluation complète des options ne soit pas possible au stade de la présélection, il convient d'envisager dès le début d'exclure les options techniques qui peuvent représenter des « zones interdites » pour le gouvernement. Il peut s'agir d'options qui risqueraient de violer les protocoles et politiques environnementaux et de changement climatique. Par conséquent, décrivez tout travail qui a déjà été effectué sur l'évaluation précoce des options",
                         "attribut" => "options_mise_oeuvre",
                         "type_champ" => "radio",
                         "placeholder" => "L'évaluation des options techniques a-t-elle été effectuée ?",
@@ -1500,7 +1522,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 3,
-                        "label" => "Autres ministères et institutions impliqués",
+                        "label" => "Énumérez les autres ministères du secteur, agences gouvernementales, autorités de district, services publics ou institutions de réglementation qui devront être directement impliqués dans la planification et la mise en œuvre du projet, y compris les problèmes juridiques qui devront être résolus.",
+                        "info" => "Tous les projets dépendent de la coopération d'autres organismes. Sans cette coopération, les projets sont souvent retardés. Veuillez énumérer les organismes qui doivent être impliqués et dans quelle mesure ils ont déjà été consultés.",
                         "attribut" => "autres_institutions",
                         "type_champ" => "radio",
                         "placeholder" => "Les institutions partenaires nécessaires sont-elles identifiées ?",
@@ -1543,7 +1566,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 4,
-                        "label" => "Autres parties prenantes et consultation",
+                        "label" => "Énumérez toutes les autres parties prenantes du projet et expliquez comment chacune d'entre elles sera consultée.",
+                        "info" => "Les parties prenantes sont des individus ou des entités qui sont soit affectés par le projet, soit par des intérêts ou des connaissances spécifiques qui peuvent être utilisés dans la conception et la planification du projet",
                         "attribut" => "parties_prenantes",
                         "type_champ" => "radio",
                         "placeholder" => "Les parties prenantes et leur consultation sont-elles planifiées ?",
@@ -1586,7 +1610,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     [
                         "element_type" => "field",
                         "ordre_affichage" => 5,
-                        "label" => "Principaux risques et gestion",
+                        "label" => "Quels sont les principaux risques pour mener à bien un projet et comment peuvent-ils être gérés ?",
+                        "info" => "Un risque est un événement inattendu qui pourrait ralentir le projet et/ou entraîner des coûts supplémentaires. Veuillez énumérer les éléments qui pourraient mal se passer et qui auraient un impact négatif sur le projet. De plus, en vous appuyant sur les réponses de la question 1.17, concentrez-vous sur les vulnérabilités au changement climatique, expliquez l'ampleur et les impacts de la matérialisation de ces risques. Expliquez comment les risques peuvent être gérés",
                         "attribut" => "risques_gestion",
                         "type_champ" => "radio",
                         "placeholder" => "Les risques du projet et leur gestion sont-ils bien identifiés ?",
@@ -1641,7 +1666,7 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
         try {
             // Récupérer ou créer la catégorie de document pour l'appréciation des TDRs
             $categorieDocument = CategorieDocument::where('slug', 'canevas-appreciation-tdrs-prefaisabilite')->first();
-            
+
             if (!$categorieDocument) {
                 $categorieDocument = CategorieDocument::create([
                     'slug' => "canevas-appreciation-tdrs-prefaisabilite",

@@ -19,7 +19,7 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
     public function prepareForValidation()
     {
         $this->canevas_checklist_suivi = Document::whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-checklist-suivi-rapport-prefaisabilite');
+            $query->where('slug', 'canevas-check-liste-suivi-rapport-prefaisabilite');
         })
         ->where('type', 'formulaire')
         ->orderBy('created_at', 'desc')
@@ -133,7 +133,7 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
                 function ($attribute, $value, $fail) {
                     $exists = Document::where('nom', $value)
                         ->whereHas('categorie', function ($query) {
-                            $query->where('slug', 'canevas-checklist-suivi-rapport-prefaisabilite');
+                            $query->where('slug', 'canevas-check-liste-suivi-rapport-prefaisabilite');
                         })->when($this->canevas_checklist_suivi, function($query){
                             $query->where("id","<>", $this->canevas_checklist_suivi->id);
                         })->exists();
