@@ -84,6 +84,57 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->first();
     }
 
+    /**
+     * Get the unique canevas d'appreciation des TDRs préfaisabilité
+     */
+    public function getCanevasAppreciationTdrPrefaisabilite()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-appreciation-tdrs-prefaisabilite');
+        })
+            ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+
+    /**
+     * Get the unique canevas d'appreciation des TDRs faisabilité
+     */
+    public function getCanevasAppreciationTdrFaisabilite()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-appreciation-tdrs-faisabilite');
+        })
+            ->where('type', 'formulaire')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
     public function getCanevasRedactionTdrPrefaisabilite()
     {
         return $this->model->whereHas('categorie', function ($query) {
