@@ -14,6 +14,44 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
         "slug" => "canevas-check-liste-suivi-rapport-prefaisabilite",
         "description" => "Check liste de suivi rapport prefaisabilite",
         "type" => "checklist",
+        "evaluation_configs" => [
+            "guide_notation" => [
+                [
+                    "appreciation" => "passe",
+                    "label" => "Passé",
+                    "description" => "Répond aux critères d'acceptation",
+                    "couleur" => "#22c55e"
+                ],
+                [
+                    "appreciation" => "retour",
+                    "label" => "Retour",
+                    "description" => "Nécessite des améliorations ou éclaircissements",
+                    "couleur" => "#f59e0b"
+                ],
+                [
+                    "appreciation" => "non_accepte",
+                    "label" => "Non accepté",
+                    "description" => "Ne répond pas aux critères minimums",
+                    "couleur" => "#ef4444"
+                ]
+            ],
+            "criteres_evaluation" => [
+                "commentaire_obligatoire" => true,
+                "seuil_acceptation" => 0,
+                "regles_decision" => [
+                    "succes" => "La présélection a été un succès (passes reçues dans toutes les questions)",
+                    "retour" => "Retour pour un travail supplémentaire (Non, « Non accepté » contient des « Retours » mais pas suffisamment pour qu'il ne soit pas accepté)",
+                    "non_accepte" => "Non accepté - Si des questions n'ont pas été complétées OU Si une réponse à une question a été évaluée comme « Non acceptée » OU Si 10 ou plus des réponses ont été évaluées comme « Retour »"
+                ]
+            ],
+            "workflow" => [
+                "etapes" => [
+                    "soumission" => "Soumission du TDR pour appréciation",
+                    "appreciation" => "Évaluation par l'évaluateur",
+                    "decision" => "Décision finale basée sur les règles"
+                ]
+            ]
+        ],
         "forms" => [
             // Section 1: Identification du projet
             [
@@ -48,7 +86,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -63,7 +101,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -96,7 +134,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -111,7 +149,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -144,7 +182,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -159,7 +197,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -192,7 +230,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -207,7 +245,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -240,7 +278,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -255,7 +293,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -300,7 +338,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -315,7 +353,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -348,7 +386,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -363,7 +401,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -396,7 +434,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -411,7 +449,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -444,7 +482,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -459,7 +497,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -492,7 +530,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -507,7 +545,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -540,7 +578,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -555,7 +593,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -588,7 +626,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -603,7 +641,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -647,7 +685,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -662,7 +700,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -695,7 +733,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -710,7 +748,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -743,7 +781,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -758,7 +796,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -791,7 +829,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -806,7 +844,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -850,7 +888,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -865,7 +903,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -898,7 +936,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -913,7 +951,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -946,7 +984,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -961,7 +999,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -994,7 +1032,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -1009,7 +1047,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -1042,7 +1080,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -1057,7 +1095,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -1101,7 +1139,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -1116,7 +1154,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
@@ -1149,7 +1187,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                             ],
                                 "show_explanation" => true,
                                 "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_max_length" => 1000
+                                "explanation_min_length" => 50
                             ],
                             "conditions" => [
                                 "disable" => false,
@@ -1164,7 +1202,7 @@ class CanevasChecklistRapportPrefaisabiliteSeeder extends Seeder
                                 "string" => true,
                                 "required" => true,
                                 "explanation_validation" => [
-                                    "max" => 1000,
+                                    "min" => 50,
                                     "string" => true,
                                     "required" => false
                                 ]
