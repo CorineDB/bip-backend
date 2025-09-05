@@ -735,7 +735,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
     {
         $documentRepository = app(DocumentRepositoryInterface::class);
         $canevas = $documentRepository->getModel()
-            ->where('type', 'formulaire')
+            ->where('type', 'checklist')
             ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-check-liste-suivi-rapport-prefaisabilite'))
             ->orderBy('created_at', 'desc')
             ->first();

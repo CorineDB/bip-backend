@@ -1323,7 +1323,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 // Pour les brouillons, les fichiers ne sont pas requis
                 // Traiter seulement la checklist si présente
 
-                if ($projet->est_a_haut_risque && isset($data['checklist_controle_adaptation_haut_risque'])) {
+                if ($projet->est_a_haut_risque && isset($data['checklist_controle_adaptation_haut_risque']) && $data['checklist_controle_adaptation_haut_risque']) {
                     $resultChecklistValidation = $this->traiterChecklistControleAdaptation(
                         $projet,
                         $data['checklist_controle_adaptation_haut_risque'],
