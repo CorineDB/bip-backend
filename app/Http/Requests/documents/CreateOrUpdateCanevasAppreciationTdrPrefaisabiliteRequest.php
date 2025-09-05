@@ -20,7 +20,7 @@ class CreateOrUpdateCanevasAppreciationTdrPrefaisabiliteRequest extends FormRequ
         $this->canevas_appreciation_tdr_prefaisabilite = Document::whereHas('categorie', function ($query) {
             $query->where('slug', 'canevas-appreciation-tdr-prefaisabilite');
         })
-        ->where('type', 'formulaire')
+        ->where('type', 'checklist')
         ->orderBy('created_at', 'desc')
         ->first();
     }

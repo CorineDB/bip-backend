@@ -722,7 +722,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 // Récupérer le canevas d'appréciation des TDRs
                 $canevasAppreciation = $this->documentRepository->getModel()
-                    ->where('type', 'formulaire')
+                    ->where('type', 'checklist')
                     ->where('slug', 'canevas-appreciation-tdr-prefaisabilite')
                     ->with(['champs' => function ($query) {
                         $query->orderBy('ordre_affichage');
