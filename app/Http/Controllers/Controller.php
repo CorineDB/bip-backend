@@ -61,7 +61,12 @@ namespace App\Http\Controllers;
  *     description="Endpoints pour gérer les templates de documents dynamiques (fiches d'idées, canevas de notes conceptuelles)"
  * )
  */
-abstract class Controller
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Routing\Controller as BaseController;
+
+abstract class Controller extends BaseController
 {
-    //
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 }

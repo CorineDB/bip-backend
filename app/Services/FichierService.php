@@ -681,12 +681,17 @@ class FichierService extends BaseService implements FichierServiceInterface
             return $query;
         }
 
+        // Si l'utilisateur est de la DGPD, il voit tous les fichiers
+        if ($user->profilable_type === 'App\Models\Dgpd') {
+            return $query;
+        }
+
         // Sinon filtrer selon les permissions
         return $query->where(function($q) use ($user) {
             $q->where('uploaded_by', $user->id) // Ses propres fichiers
               ->orWhere('is_public', true) // Fichiers publics
               ->orWhereHas('fichierAttachable', function($subQ) use ($user) {
-                  // Fichiers attachés aux ressources accessibles
+                  // Fichiers attachés aux ressources accessibles du même ministère
                   $this->applyResourcePermissions($subQ, $user);
               });
         });
@@ -702,6 +707,11 @@ class FichierService extends BaseService implements FichierServiceInterface
             return true;
         }
 
+        // Si l'utilisateur est de la DGPD, il a accès à tous les fichiers
+        if ($user->profilable_type === 'App\Models\Dgpd') {
+            return true;
+        }
+
         // Propriétaire a toutes les permissions
         if ($fichier->uploaded_by === $user->id) {
             return true;
@@ -712,9 +722,53 @@ class FichierService extends BaseService implements FichierServiceInterface
             return true;
         }
 
-        // TODO: Vérifier permissions sur ressource attachée
+        // Vérifier permissions sur ressource attachée selon le ministère
+        if ($fichier->fichier_attachable_type && $fichier->fichier_attachable_id) {
+            return $this->aPermissionSurRessourceAttachee($user, $fichier);
+        }
 
         return false;
+    }
+
+    /**
+     * Vérifier si l'utilisateur a permission sur une ressource attachée selon son ministère
+     */
+    private function aPermissionSurRessourceAttachee(User $user, $fichier): bool
+    {
+        $userMinistereId = $user->profilable->ministere_id ?? null;
+        
+        if (!$userMinistereId) {
+            return false; // Si l'utilisateur n'a pas de ministère, pas d'accès
+        }
+
+        $resourceType = $fichier->fichier_attachable_type;
+        $resourceId = $fichier->fichier_attachable_id;
+
+        switch ($resourceType) {
+            case 'App\Models\Projet':
+            case 'App\Models\IdeeProjet':
+                // Vérifier directement sur le projet/idée de projet
+                $resource = app($resourceType)->find($resourceId);
+                return $resource && $resource->ministere_id === $userMinistereId;
+
+            case 'App\Models\NoteConceptuelle':
+                // Vérifier via le projet associé à la note conceptuelle
+                $noteConceptuelle = app($resourceType)->with('projet')->find($resourceId);
+                return $noteConceptuelle && 
+                       $noteConceptuelle->projet && 
+                       $noteConceptuelle->projet->ministere_id === $userMinistereId;
+
+            case 'App\Models\Tdr':
+            case 'App\Models\Rapport':
+                // Vérifier via le projet associé au TDR/rapport
+                $resource = app($resourceType)->with('projet')->find($resourceId);
+                return $resource && 
+                       $resource->projet && 
+                       $resource->projet->ministere_id === $userMinistereId;
+
+            default:
+                return false; // Type de ressource non géré
+        }
     }
 
     /**
@@ -765,12 +819,53 @@ class FichierService extends BaseService implements FichierServiceInterface
     }
 
     /**
-     * Appliquer les permissions sur les ressources attachées
+     * Appliquer les permissions sur les ressources attachées selon le ministère de l'utilisateur
      */
     private function applyResourcePermissions($query, User $user): void
     {
-        // TODO: Implémenter selon les types de ressources
-        // Exemple : projets, TDRs, etc.
+        $userMinistereId = $user->profilable->ministere_id ?? null;
+        
+        if (!$userMinistereId) {
+            return; // Si l'utilisateur n'a pas de ministère, pas d'accès
+        }
+
+        $query->where(function($q) use ($userMinistereId) {
+            // Fichiers attachés aux projets du même ministère
+            $q->orWhere(function($subQ) use ($userMinistereId) {
+                $subQ->where('fichier_attachable_type', 'App\Models\Projet')
+                     ->whereHas('fichierAttachable', function($projetQuery) use ($userMinistereId) {
+                         $projetQuery->where('ministere_id', $userMinistereId);
+                     });
+            })
+            // Fichiers attachés aux idées de projet du même ministère
+            ->orWhere(function($subQ) use ($userMinistereId) {
+                $subQ->where('fichier_attachable_type', 'App\Models\IdeeProjet')
+                     ->whereHas('fichierAttachable', function($ideeQuery) use ($userMinistereId) {
+                         $ideeQuery->where('ministere_id', $userMinistereId);
+                     });
+            })
+            // Fichiers attachés aux notes conceptuelles des projets du même ministère
+            ->orWhere(function($subQ) use ($userMinistereId) {
+                $subQ->where('fichier_attachable_type', 'App\Models\NoteConceptuelle')
+                     ->whereHas('fichierAttachable.projet', function($projetQuery) use ($userMinistereId) {
+                         $projetQuery->where('ministere_id', $userMinistereId);
+                     });
+            })
+            // Fichiers attachés aux TDR des projets du même ministère
+            ->orWhere(function($subQ) use ($userMinistereId) {
+                $subQ->where('fichier_attachable_type', 'App\Models\Tdr')
+                     ->whereHas('fichierAttachable.projet', function($projetQuery) use ($userMinistereId) {
+                         $projetQuery->where('ministere_id', $userMinistereId);
+                     });
+            })
+            // Fichiers attachés aux rapports des projets du même ministère
+            ->orWhere(function($subQ) use ($userMinistereId) {
+                $subQ->where('fichier_attachable_type', 'App\Models\Rapport')
+                     ->whereHas('fichierAttachable.projet', function($projetQuery) use ($userMinistereId) {
+                         $projetQuery->where('ministere_id', $userMinistereId);
+                     });
+            });
+        });
     }
 
     /**
@@ -891,124 +986,4 @@ class FichierService extends BaseService implements FichierServiceInterface
 
         return false;
     }
-
-
-      /**
-       * Déterminer le chemin de stockage selon le type de ressource
-       */
-      private function determinerCheminStockage(array $data): string
-      {
-          $user = Auth::user();
-          $basePath = "fichiers/{$user->id}";
-
-          // Si attaché à une ressource spécifique
-          if (isset($data['fichier_attachable_type']) && isset($data['fichier_attachable_id'])) {
-              $type = strtolower(class_basename($data['fichier_attachable_type']));
-              return "{$basePath}/{$type}/{$data['fichier_attachable_id']}";
-          }
-
-          // Si une catégorie est spécifiée
-         if (isset($data['categorie'])) {
-             return "{$basePath}/{$data['categorie']}";
-         }
-
-         // Chemin par défaut
-         return "{$basePath}/attachments";
-     }
-
-     /**
-      * Vérifier si l'utilisateur peut attacher un fichier à une ressource
-     */
-    private function peutAttacherFichierAResource(User $user, string $resourceType, int $resourceId): bool
-    {
-        // Admin peut tout faire
-        if ($user->hasRole('admin')) {
-            return true;
-        }
-
-        // TODO: Implémenter selon les types de ressources
-        // Pour l'instant, autoriser si l'utilisateur est propriétaire ou a les bonnes permissions
-
-          return true; // Temporaire - à implémenter selon la logique métier
-      }
-
-      /**
-       * Vérifier si l'utilisateur peut modifier un fichier
-       */
-      private function peutModifierFichier(User $user, $fichier): bool
-      {
-          // Admin peut tout modifier
-        if ($user->hasRole('admin')) {
-            return true;
-        }
-
-        // Propriétaire peut modifier ses fichiers
-        if ($fichier->uploaded_by === $user->id) {
-            return true;
-        }
-
-        // TODO: Vérifier permissions sur ressource attachée
-
-          return false;
-      }
-
-      /**
-       * Filtrer les données modifiables selon l'utilisateur et le fichier
-       */
-      private function filtrerDonneesModifiables(array $data, User $user, $fichier): array
-      {
-          $allowedFields = ['description', 'categorie', 'is_public', 'commentaire', 'metadata'];
-
-         // Admin peut modifier plus de champs
-         if ($user->hasRole('admin')) {
-             $allowedFields = array_merge($allowedFields, ['is_active', 'ordre']);
-         }
-
-         // Filtrer les données selon les champs autorisés
-         $filteredData = array_intersect_key($data, array_flip($allowedFields));
-
-         // Sécurité : ne pas permettre de rendre public un fichier attaché sans permissions
-         if (isset($filteredData['is_public']) && $filteredData['is_public'] && $fichier->fichier_attachable_id) {
-             if (!$this->peutRendrePublicFichierAttache($user, $fichier)) {
-                 unset($filteredData['is_public']);
-             }
-         }
-
-         return $filteredData;
-     }
-
-     /**
-      * Vérifier si l'utilisateur peut supprimer un fichier attaché
-      */
-     private function peutSupprimerFichierAttache(User $user, $fichier): bool
-     {
-         // Admin peut supprimer
-         if ($user->hasRole('admin')) {
-             return true;
-         }
-
-         // Propriétaire peut supprimer ses fichiers libres, mais pas les attachés critiques
-          if ($fichier->uploaded_by === $user->id) {
-              // TODO: Vérifier si la ressource attachée permet la suppression
-              return false; // Prudent : ne pas permettre par défaut
-          }
-
-          return false;
-      }
-
-      /**
-       * Vérifier si l'utilisateur peut rendre public un fichier attaché
-       */
-      private function peutRendrePublicFichierAttache(User $user, $fichier): bool
-      {
-          // Admin peut tout faire
-          if ($user->hasRole('admin')) {
-              return true;
-          }
-
-          // TODO: Implémenter selon la logique métier
-          // Généralement, les fichiers attachés ne doivent pas être rendus publics
-
-         return false;
-     }
 }

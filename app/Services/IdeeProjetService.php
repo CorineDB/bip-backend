@@ -113,13 +113,12 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             $relations = $this->extractRelationsFromChamps($champsData);
 
+            // Créer ou récupérer l'idée de projet
+            $idee = $this->getOrCreateIdeeProjet($data);
 
             if (auth()->user()->profilable->ministere->id !== $idee->ministere->id && auth()->user()->id != $idee->responsable?->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
-
-            // Créer ou récupérer l'idée de projet
-            $idee = $this->getOrCreateIdeeProjet($data);
 
             if (isset($data['est_soumise'])) {
                 $idee->est_soumise = $data["est_soumise"];

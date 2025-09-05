@@ -15,8 +15,8 @@ class FichierController extends Controller
 
     public function __construct(FichierServiceInterface $service)
     {
-        $this->service = $service;
         $this->middleware('auth:api');
+        $this->service = $service;
     }
 
     public function index(): JsonResponse

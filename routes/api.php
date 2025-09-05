@@ -646,3 +646,175 @@ Route::get('/test-json', function () {
 
     return response()->json(Village::all());
 });
+
+// Route de test pour Reverb
+Route::get('/test-reverb', function () {
+    try {
+        // Test simple avec Broadcast::channel
+        \Illuminate\Support\Facades\Broadcast::on('test-channel')
+            ->as('test-event')
+            ->with([
+                'message' => 'Test Reverb depuis Laravel Backend!',
+                'timestamp' => now()->toISOString(),
+                'status' => 'success',
+                'server_info' => [
+                    'broadcast_driver' => config('broadcasting.default'),
+                    'reverb_host' => config('broadcasting.connections.reverb.options.host'),
+                    'reverb_port' => config('broadcasting.connections.reverb.options.port'),
+                ]
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Event diffusé avec succès sur Reverb!',
+            'channel' => 'test-channel',
+            'event' => 'test-event',
+            'time' => now()->toISOString(),
+            'config' => [
+                'broadcast_driver' => config('broadcasting.default'),
+                'reverb_app_id' => config('broadcasting.connections.reverb.app_id'),
+                'reverb_host' => config('broadcasting.connections.reverb.options.host'),
+                'reverb_port' => config('broadcasting.connections.reverb.options.port'),
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors du broadcast: ' . $e->getMessage(),
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
+});
+
+// Route de test pour broadcaster vers un utilisateur spécifique
+Route::get('/test-user-broadcast/{userId}', function ($userId) {
+    try {
+        // Vérifier si l'utilisateur existe
+        $user = \App\Models\User::find($userId);
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Utilisateur non trouvé',
+            ], 404);
+        }
+
+        // Broadcaster vers le canal privé de l'utilisateur
+        \Illuminate\Support\Facades\Broadcast::on('private-user.' . $userId)
+            ->as('user-notification')
+            ->with([
+                'message' => 'Message personnel pour ' . ($user->name ?? $user->email),
+                'title' => 'Notification privée',
+                'type' => 'info',
+                'timestamp' => now()->toISOString(),
+                'user_data' => [
+                    'id' => $user->id,
+                    'name' => $user->name ?? $user->email,
+                    'email' => $user->email,
+                ],
+                'action_required' => false,
+                'metadata' => [
+                    'sender' => 'Laravel Backend Test',
+                    'channel_type' => 'private',
+                    'broadcast_driver' => config('broadcasting.default')
+                ]
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification envoyée à l\'utilisateur!',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name ?? $user->email,
+                'email' => $user->email,
+            ],
+            'channel' => 'private-user.' . $userId,
+            'event' => 'user-notification',
+            'time' => now()->toISOString()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors du broadcast: ' . $e->getMessage(),
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
+
+// Route pour envoyer une notification système existante
+Route::post('/test-notification/{userId}', function ($userId, \Illuminate\Http\Request $request) {
+    try {
+        $user = \App\Models\User::find($userId);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Utilisateur non trouvé'], 404);
+        }
+
+        // Utiliser le système de notification existant
+        $notification = new \App\Notifications\NouvelleIdeeProjetNotification(
+            // Créer une IdeeProjet factice pour le test ou utiliser une existante
+            new \App\Models\IdeeProjet([
+                'id' => 999,
+                'sigle' => 'TEST-REVERB',
+                'titre' => 'Test de notification Reverb',
+            ]),
+            85.5 // Score climatique de test
+        );
+
+        $user->notify($notification);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification système envoyée!',
+            'user_id' => $userId,
+            'notification_type' => 'NouvelleIdeeProjetNotification',
+            'channels' => ['database', 'broadcast', 'mail']
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur: ' . $e->getMessage(),
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
+
+
+// Route pour broadcaster vers les abonnés d'une idée de projet
+Route::get('/broadcast-to-idea/{ideeId}', function ($ideeId) {
+    try {
+        // Récupérer l'idée de projet
+        $idee = \App\Models\IdeeProjet::find($ideeId);
+        if (!$idee) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Idée de projet non trouvée',
+            ], 404);
+        }
+
+        // Broadcaster vers le canal de l'idée
+        \Illuminate\Support\Facades\Broadcast::on('idee.de.projet.creer.' . $ideeId)
+            ->as('idee.update')
+            ->with([
+                'message' => 'Mise à jour sur l\'idée de projet: ' . $idee->sigle,
+                'title' => 'Notification - ' . $idee->titre,
+                'type' => 'info',
+                'timestamp' => now()->toISOString(),
+                'idee_data' => [
+                    'id' => $idee->id,
+                    'sigle' => $idee->sigle,
+                    'titre' => $idee->titre,
+                    'statut' => $idee->statut,
+                ],
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification diffusée aux abonnés de l\'idée!',
+            'channel' => 'idee.de.projet.creer.' . $ideeId,
+            'event' => 'idee.update',
+            'time' => now()->toISOString()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+});

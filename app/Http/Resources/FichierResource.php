@@ -29,30 +29,30 @@ class FichierResource extends BaseApiResource
             'is_public' => $this->is_public,
             'is_active' => $this->is_active,
             'commentaire' => $this->commentaire,
-            
+
             // Informations calculées
             'is_image' => $this->is_image,
             'is_document' => $this->is_document,
-            
+
             // URLs sécurisées
             'urls' => [
-                'view' => route('fichiers.view', $this->id),
-                'download' => route('fichiers.telecharger', $this->id),
+                'view' => route('api.fichiers.show', $this->id),
+                'download' => Storage::url($this->chemin),
             ],
-            
+
             // Statistiques
             'statistiques' => [
                 'nb_telechargements' => $this->nb_telechargements ?? 0,
                 'nb_vues' => $this->nb_vues ?? 0,
             ],
-            
+
             // Relations
             'uploaded_by' => [
                 'id' => $this->uploaded_by,
                 'nom' => $this->whenLoaded('uploadedBy', fn() => $this->uploadedBy->nom),
                 'email' => $this->whenLoaded('uploadedBy', fn() => $this->uploadedBy->email),
             ],
-            
+
             // Ressource attachée si applicable
             'ressource_attachee' => $this->when(
                 $this->fichier_attachable_id && $this->fichier_attachable_type,
@@ -62,22 +62,22 @@ class FichierResource extends BaseApiResource
                     'nom' => $this->whenLoaded('fichierAttachable', fn() => $this->fichierAttachable->nom ?? $this->fichierAttachable->titre ?? 'Sans nom')
                 ]
             ),
-            
+
             // Permissions de l'utilisateur actuel
-            'permissions' => $this->when(
+            /* 'permissions' => $this->when(
                 auth()->check(),
                 [
                     'can_view' => $this->canView(),
-                    'can_download' => $this->canDownload(), 
+                    'can_download' => $this->canDownload(),
                     'can_delete' => $this->canDelete(),
                     'can_share' => $this->canShare(),
                 ]
-            ),
-            
+            ), */
+
             // Métadonnées
             'metadata' => $this->metadata,
             'hash_md5' => $this->hash_md5,
-            
+
             // Horodatage
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
@@ -119,15 +119,15 @@ class FichierResource extends BaseApiResource
 
         // Admin peut tout voir
         if ($user->hasRole('admin')) return true;
-        
+
         // Propriétaire peut voir
         if ($this->uploaded_by === $user->id) return true;
-        
+
         // Fichier public
         if ($this->is_public) return true;
-        
+
         // TODO: Vérifier permissions sur ressource attachée
-        
+
         return false;
     }
 
@@ -149,12 +149,12 @@ class FichierResource extends BaseApiResource
 
         // Admin peut tout supprimer
         if ($user->hasRole('admin')) return true;
-        
+
         // Propriétaire peut supprimer ses fichiers non attachés
         if ($this->uploaded_by === $user->id && !$this->fichier_attachable_id) {
             return true;
         }
-        
+
         return false;
     }
 
@@ -168,10 +168,10 @@ class FichierResource extends BaseApiResource
 
         // Admin peut partager
         if ($user->hasRole('admin')) return true;
-        
+
         // Propriétaire peut partager
         if ($this->uploaded_by === $user->id) return true;
-        
+
         return false;
     }
 }
