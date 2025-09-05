@@ -1286,10 +1286,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Récupérer la note conceptuelle
             $noteConceptuelle = $this->repository->findOrFail($noteConceptuelleId);
 
-            if (auth()->user()->profilable->ministere->id !== $noteConceptuelle->projet->ministere->id) {
-                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
-            }
-
             // Vérifier que le projet est au bon statut
             if ($noteConceptuelle->projet->statut->value != StatutIdee::EVALUATION_NOTE->value && ($noteConceptuelle->projet->statut->value != StatutIdee::R_VALIDATION_NOTE_AMELIORER->value) && !($noteConceptuelle->evaluationTermine())) {
                 return response()->json([
@@ -1485,7 +1481,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ], 404);
             }
 
-            if (auth()->user()->profilable->ministere->id !== $noteConceptuelle->projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable->ministere?->id !== $noteConceptuelle->projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
