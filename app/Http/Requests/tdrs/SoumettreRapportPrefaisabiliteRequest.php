@@ -798,7 +798,8 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
                 if (empty($explication)) {
                     $validator->errors()->add(
                         "checklist_suivi_rapport_prefaisabilite.{$index}.explication",
-                        "L'explication est obligatoire pour la soumission finale lorsque le champ d'explication est activé."
+                        //"L'explication est obligatoire pour la soumission finale lorsque le champ d'explication est activé."
+                        "L'explication est obligatoire lorsque la remarque est 'pas-encore-disponibles' et que le champ d'explication est activé."
                     );
                 } elseif (strlen($explication) < 10) {
                     $validator->errors()->add(

@@ -8,12 +8,14 @@ use App\Repositories\Contracts\EvaluationRepositoryInterface;
 use App\Repositories\Contracts\TdrRepositoryInterface;
 use App\Models\Fichier;
 use App\Models\Projet;
+use App\Models\Rapport;
 use App\Models\Decision;
 use App\Models\Workflow;
 use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
 use App\Http\Resources\projets\ProjetResource;
 use App\Http\Resources\TdrResource;
+use App\Http\Resources\RapportResource;
 use App\Http\Resources\UserResource;
 use App\Models\Tdr;
 use App\Services\Contracts\CategorieCritereServiceInterface;
@@ -1418,22 +1420,36 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ], 422);
                 }
             }
-            // Si pas de checklist de suivi, traiter quand même les fichiers de rapport
+            // Créer l'instance de Rapport
+            $rapport = Rapport::create([
+                'projet_id' => $projet->id,
+                'type' => 'prefaisabilite',
+                'statut' => 'soumis',
+                'intitule' => 'Rapport de préfaisabilité',
+                'checklist_suivi' => $data['checklist_suivi_rapport_prefaisabilite'] ?? null,
+                'info_cabinet_etude' => [
+                    'nom_cabinet' => $data['cabinet_etude']['nom_cabinet'] ?? null,
+                    'contact_cabinet' => $data['cabinet_etude']['contact_cabinet'] ?? null,
+                    'email_cabinet' => $data['cabinet_etude']['email_cabinet'] ?? null,
+                    'adresse_cabinet' => $data['cabinet_etude']['adresse_cabinet'] ?? null,
+                ],
+                'recommandation' => $data['recommandation'] ?? null,
+                'date_soumission' => now(),
+                'soumis_par_id' => auth()->id(),
+                'rediger_par_id' => auth()->id()
+            ]);
+
             // Traitement et sauvegarde du fichier rapport
             $fichierRapport = null;
             if (isset($data['rapport'])) {
-                $fichierRapport = $this->gererFichierRapport($projet, $data['rapport'], $data);
+                $fichierRapport = $this->gererFichierRapport($rapport, $data['rapport'], $data);
             }
 
             // Traitement et sauvegarde du procès verbal
             $fichierProcesVerbal = null;
             if (isset($data['proces_verbal'])) {
-                $fichierProcesVerbal = $this->gererFichierProcesVerbal($projet, $data['proces_verbal'], $data);
+                $fichierProcesVerbal = $this->gererFichierProcesVerbal($rapport, $data['proces_verbal'], $data);
             }
-
-
-            // Enregistrer les informations du cabinet et recommandations
-            $this->enregistrerInformationsCabinet($projet, $data);
 
             // Changer le statut du projet
             $projet->update([
@@ -1447,14 +1463,17 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $this->enregistrerDecision(
                 $projet,
                 "Soumission du rapport de préfaisabilité",
-                "Rapport soumis par cabinet: " . ($data['cabinet_etude']['nom_cabinet'] ?? 'N/A'),
+                "Rapport ID: {$rapport->id} soumis par cabinet: " . ($rapport->info_cabinet_etude['nom_cabinet'] ?? 'N/A'),
                 auth()->user()->personne->id
             );
 
             DB::commit();
 
             // Envoyer une notification
-            $this->envoyerNotificationSoumissionRapport($projet, $fichierRapport, $data);
+            $this->envoyerNotificationSoumissionRapport($projet, $rapport, $fichierRapport);
+
+            // Charger les relations nécessaires pour le resource
+            $rapport->load(['fichiers', 'soumisPar', 'projet']);
 
             return response()->json([
                 'success' => true,
@@ -1463,29 +1482,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'projet_id' => $projet->id,
                     'ancien_statut' => StatutIdee::SOUMISSION_RAPPORT_PF->value,
                     'nouveau_statut' => StatutIdee::VALIDATION_PF->value,
-                    'fichiers' => [
-                        'rapport' => $fichierRapport ? [
-                            'id' => $fichierRapport->id,
-                            'nom' => $fichierRapport->nom_original,
-                            'url' => $fichierRapport->url,
-                            'status' => 'traite'
-                        ] : null,
-                        'proces_verbal' => $fichierProcesVerbal ? [
-                            'id' => $fichierProcesVerbal->id,
-                            'nom' => $fichierProcesVerbal->nom_original,
-                            'url' => $fichierProcesVerbal->url,
-                            'status' => 'traite'
-                        ] : null
-                    ],
-                    'cabinet' => [
-                        'nom' => $data['cabinet_etude']['nom_cabinet'] ?? null,
-                        'contact' => $data['cabinet_etude']['contact_cabinet'] ?? null,
-                        'email' => $data['cabinet_etude']['email_cabinet'] ?? null,
-                        'adresse_cabinet' => $data['cabinet_etude']['adresse_cabinet'] ?? null
-                    ],
-                    'recommandation' => $data['recommandation'] ?? null,
-                    'soumis_par' => auth()->id(),
-                    'soumis_le' => now()->format('d/m/Y H:i:s')
+                    'rapport' => new RapportResource($rapport)
                 ]
             ]);
         } catch (Exception $e) {
@@ -1850,44 +1847,55 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Gérer le fichier rapport avec versioning intelligent
      */
-    private function gererFichierRapport(Projet $projet, $fichier, array $data): ?Fichier
+    private function gererFichierRapport(Rapport $rapport, $fichier, array $data): ?Fichier
     {
         // Calculer le hash du nouveau fichier
         $nouveauHash = md5_file($fichier->getRealPath());
 
-        // Vérifier s'il y a déjà un rapport actif avec le même hash
-        $rapportIdentique = $projet->rapports_prefaisabilite()
+        // Vérifier s'il y a déjà un fichier rapport avec le même hash lié à ce rapport
+        $fichierIdentique = $rapport->fichiersRapport()
             ->where('hash_md5', $nouveauHash)
             ->where('is_active', true)
             ->first();
 
-        if ($rapportIdentique) {
-            return $rapportIdentique;
+        if ($fichierIdentique) {
+            return $fichierIdentique;
         }
 
-        // Déterminer s'il faut une nouvelle version ou remplacer
-        $doitCreerNouvelleVersion = $this->doitCreerNouvelleVersionRapport($projet);
+        // Désactiver les anciens fichiers rapport de ce rapport
+        $rapport->fichiersRapport()
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
 
-        if ($doitCreerNouvelleVersion) {
-            // Nouvelle version après rejet - garder l'historique
-            return $this->creerNouvelleVersionRapport($projet, $fichier, $data);
-        } else {
-            // Modification du même cycle - remplacer
-            return $this->remplacerRapportExistant($projet, $fichier, $data);
-        }
+        // Créer le nouveau fichier et l'associer au rapport
+        $fichierCree = $this->fichierService->uploadAndStore(
+            $fichier,
+            'rapports/prefaisabilite',
+            'rapport',
+            [
+                'projet_id' => $rapport->projet_id,
+                'uploaded_by' => auth()->id(),
+                'hash_md5' => $nouveauHash,
+                'is_active' => true,
+                'commentaire' => $data['commentaire_rapport'] ?? null,
+                'fichier_attachable_type' => Rapport::class,
+                'fichier_attachable_id' => $rapport->id
+            ]
+        );
+
+        return $fichierCree;
     }
 
     /**
      * Gérer le fichier procès verbal avec versioning intelligent
      */
-    private function gererFichierProcesVerbal(Projet $projet, $fichier, array $data): ?Fichier
+    private function gererFichierProcesVerbal(Rapport $rapport, $fichier, array $data): ?Fichier
     {
         // Calculer le hash du nouveau fichier
         $nouveauHash = md5_file($fichier->getRealPath());
 
-        // Vérifier s'il y a déjà un procès verbal actif avec le même hash
-        $procesVerbalIdentique = $projet->fichiers()
-            ->where('categorie', 'proces-verbal-prefaisabilite')
+        // Vérifier s'il y a déjà un procès verbal avec le même hash lié à ce rapport
+        $procesVerbalIdentique = $rapport->procesVerbaux()
             ->where('hash_md5', $nouveauHash)
             ->where('is_active', true)
             ->first();
@@ -1896,16 +1904,28 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             return $procesVerbalIdentique;
         }
 
-        // Déterminer s'il faut une nouvelle version ou remplacer
-        $doitCreerNouvelleVersion = $this->doitCreerNouvelleVersionRapport($projet);
+        // Désactiver les anciens procès verbaux de ce rapport
+        $rapport->procesVerbaux()
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
 
-        if ($doitCreerNouvelleVersion) {
-            // Nouvelle version après rejet - garder l'historique
-            return $this->creerNouvelleVersionProcesVerbal($projet, $fichier, $data);
-        } else {
-            // Modification du même cycle - remplacer
-            return $this->remplacerProcesVerbalExistant($projet, $fichier, $data);
-        }
+        // Créer le nouveau fichier et l'associer au rapport
+        $fichierCree = $this->fichierService->uploadAndStore(
+            $fichier,
+            'rapports/prefaisabilite/pv',
+            'proces-verbal',
+            [
+                'projet_id' => $rapport->projet_id,
+                'uploaded_by' => auth()->id(),
+                'hash_md5' => $nouveauHash,
+                'is_active' => true,
+                'commentaire' => $data['commentaire_proces_verbal'] ?? null,
+                'fichier_attachable_type' => Rapport::class,
+                'fichier_attachable_id' => $rapport->id
+            ]
+        );
+
+        return $fichierCree;
     }
 
     /**
@@ -2091,7 +2111,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     private function envoyerNotificationEvaluation($projet, array $resultats)
     { /* À implémenter */
     }
-    private function envoyerNotificationSoumissionRapport($projet, $fichier, array $data)
+    private function envoyerNotificationSoumissionRapport($projet, $rapport, $fichier = null)
     { /* À implémenter */
     }
     private function envoyerNotificationValidation($projet, string $action, array $data)

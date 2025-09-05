@@ -2006,4 +2006,20 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             default => 99
         };
     }
+
+    /**
+     * Générer un hash d'accès unique pour un fichier
+     */
+    private function generateFileAccessHash(int $noteConceptuelleId, string $storageName, string $category): string
+    {
+        $data = [
+            'note_conceptuelle_id' => $noteConceptuelleId,
+            'storage_name' => $storageName,
+            'category' => $category,
+            'timestamp' => time(),
+            'salt' => config('app.key', 'default_salt')
+        ];
+        
+        return hash('sha256', json_encode($data));
+    }
 }

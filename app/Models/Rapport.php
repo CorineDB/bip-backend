@@ -5,6 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Projet;
+use App\Models\User;
+use App\Models\Champ;
+use App\Models\ChampProjet;
+use App\Models\Fichier;
+use App\Models\Commentaire;
 
 class Rapport extends Model
 {
