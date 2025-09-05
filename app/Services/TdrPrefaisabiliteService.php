@@ -17,6 +17,8 @@ use App\Http\Resources\projets\ProjetResource;
 use App\Http\Resources\TdrResource;
 use App\Http\Resources\RapportResource;
 use App\Http\Resources\UserResource;
+use App\Models\Dgpd;
+use App\Models\Dpaf;
 use App\Models\Tdr;
 use App\Services\Contracts\CategorieCritereServiceInterface;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
@@ -339,6 +341,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             // Récupérer le TDR le plus récent pour ce projet
             $tdr = $this->tdrRepository->getModel()
                 ->where('projet_id', $projetId)
@@ -380,6 +386,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     public function soumettreTdrs(int $projetId, array $data): JsonResponse
     {
         try {
+
+            if (!auth()->user()->hasPermissionTo('soumettre-un-tdr-de-prefaisabilite') && auth()->user()->type !== 'dpaf' && auth()->user()->profilable_type !== Dpaf::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             DB::beginTransaction();
 
             // Récupérer le projet
@@ -400,7 +411,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $statut = $estSoumise ? 'soumis' : 'brouillon';
 
             // Extraire les données spécifiques au payload
-            //$champsData = $data['champs'] ?? [];
+            $champsData = $data['champs'] ?? [];
             $documentsData = $data['autres_document'] ?? [];
 
             // Préparer les données du TDR
@@ -438,7 +449,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $message = 'TDR de préfaisabilité créé avec succès.';
             }
 
-            /*
                 // Récupérer le canevas de rédaction TDR préfaisabilité
                 $canevasTdr = $this->documentRepository->getModel()->where([
                     'type' => 'formulaire'
@@ -450,7 +460,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     // Sauvegarder les champs dynamiques basés sur le canevas
                     $this->saveDynamicFieldsFromCanevas($tdr, $champsData, $canevasTdr);
                 }
-            */
 
             // Gérer les documents/fichiers
             if (!empty($documentsData)) {
@@ -525,11 +534,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             DB::beginTransaction();
 
             // Vérifier les autorisations (DGPD uniquement)
-            if (!in_array(auth()->user()->type, ['dgpd'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette évaluation.'
-                ], 403);
+            if (!auth()->user()->hasPermissionTo('apprecier-un-tdr-de-prefaisabilite') && auth()->user()->type !== 'dgpd' && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n\'avez pas les droits pour effectuer cette évaluation.", 403);
             }
 
             // Récupérer le projet
@@ -653,6 +659,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
+
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
 
             // Récupérer le TDR soumis
             $tdr = $this->tdrRepository->getModel()
@@ -857,11 +867,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             DB::beginTransaction();
 
             // Vérifier les autorisations (DGPD uniquement)
-            if (!in_array(auth()->user()->type, ['dgpd'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette validation.'
-                ], 403);
+            if (!auth()->user()->hasPermissionTo('apprecier-un-tdr-de-prefaisabilite') && auth()->user()->type !== 'dgpd' && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n\'avez pas les droits pour effectuer cette évaluation.", 403);
             }
 
             // Récupérer le projet
@@ -875,8 +882,14 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ], 422);
             }
 
+            $tdr = $projet->tdrPrefaisabilite->first();
+
+            if (auth()->user()->id !== $tdr->soumisPar?->id) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             // Vérifier que le TDR est soumis et peut être évalué
-            if (!$projet->tdrPrefaisabilite->first()?->peutEtreValide()) {
+            if (!$tdr?->peutEtreValide()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le TDR doit être évalué avant de pouvoir être validé.'
@@ -884,7 +897,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
 
             // Vérifier qu'il y a une évaluation terminée avec résultat "non accepté"
-            $evaluation = $projet->tdrPrefaisabilite->first()?->evaluations()
+            $evaluation = $tdr?->evaluations()
                 ->where('type_evaluation', 'tdr-prefaisabilite')
                 ->where('statut', 1) // Évaluation terminée
                 ->orderBy('created_at', 'desc')
@@ -1010,12 +1023,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         try {
             DB::beginTransaction();
 
-            // Vérifier les autorisations (Comité de validation Ministériel uniquement)
-            if (in_array(auth()->user()->type, ['dgpd'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette validation.'
-                ], 403);
+            // Vérifier les autorisations (DGPD uniquement)
+            if (!auth()->user()->hasPermissionTo('valider-une-etude-de-prefaisabilite') && auth()->user()->type !== 'dgpd' && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n\'avez pas les droits pour effectuer cette évaluation.", 403);
             }
 
             // Récupérer le projet
@@ -1151,16 +1161,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     public function getDetailsValidation(int $projetId): JsonResponse
     {
         try {
-            // Vérifier les autorisations (DGPD uniquement)
-            if (in_array(auth()->user()->type, ['dgpd'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour consulter ces détails.'
-                ], 403);
-            }
 
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
+
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
 
             // Vérifier que le projet est à l'étape d'évaluation ou post-évaluation
             if (!in_array($projet->statut->value, [
@@ -1307,6 +1314,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
+
+            if (!auth()->user()->hasPermissionTo('soumettre-un-rapport-de-prefaisabilite') && auth()->user()->type !== 'dpaf' && auth()->user()->profilable_type !== Dpaf::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
 
             // Vérifier que le projet est au bon statut
             if ($projet->statut->value !== StatutIdee::SOUMISSION_RAPPORT_PF->value) {
@@ -2534,12 +2545,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         try {
             DB::beginTransaction();
 
-            // Vérifier les autorisations (Ministère sectoriel uniquement)
-            if (in_array(auth()->user()->type, ['dpaf', 'admin'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette soumission.'
-                ], 403);
+            // Vérifier les autorisations (DGPD uniquement)
+            if (!auth()->user()->hasPermissionTo('soumettre-un-rapport-d-evaluation-ex-ante') && auth()->user()->type !== 'dgpd' && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n\'avez pas les droits pour effectuer cette soumission.", 403);
             }
 
             // Récupérer le projet
@@ -2622,12 +2630,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         try {
             DB::beginTransaction();
 
-            // Vérifier les autorisations (Comité de validation Ministériel uniquement)
-            if (in_array(auth()->user()->type, ['dgpd', 'admin'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette validation.'
-                ], 403);
+            // Vérifier les autorisations (DGPD uniquement)
+            if (!auth()->user()->hasPermissionTo('valider-un-rapport-evaluation-ex-ante') && auth()->user()->type !== 'dgpd' && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n\'avez pas les droits pour effectuer cette soumission.", 403);
             }
 
             // Récupérer le projet
