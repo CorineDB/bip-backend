@@ -74,7 +74,7 @@ class EvaluerTdrsRequest extends FormRequest
 
     public function prepareForValidation(){
         $canevas = app()->make(DocumentRepository::class)->getModel()
-                                            ->where('type', 'formulaire')
+                                            ->where('type', 'checklist')
                                             ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-appreciation-tdr-prefaisabilite'))
                                             ->orderBy('created_at', 'desc')->first();
 
