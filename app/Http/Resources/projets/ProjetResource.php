@@ -31,6 +31,10 @@ class ProjetResource extends BaseApiResource
             'sigle' => $this->sigle,
             'titre_projet' => $this->titre_projet,
 
+            'est_a_haut_risque' => $this->est_a_haut_risque,
+            'est_dure' => $this->est_dure,
+            'est_ancien' => $this->est_ancien,
+
             // Statuts et phases
             'statut' => $this->statut?->value ?? $this->statut,
             'phase' => $this->phase?->value ?? $this->phase,
@@ -101,7 +105,7 @@ class ProjetResource extends BaseApiResource
             'categorie' => $this->whenLoaded('categorie'),
             'responsable' => $this->whenLoaded('responsable'),
             'demandeur' => $this->whenLoaded('demandeur'),
-            //'porteur_projet' => $this->porteur_projet,
+            'porteur_projet' => $this->porteur_projet,
             'noteConceptuelle' => new NoteConceptuelleResource($this->noteConceptuelle),
 
             // TDRs

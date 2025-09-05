@@ -26,15 +26,11 @@ class SoumettreTdrsRequest extends FormRequest
             'tdr'                                   => 'required|file|mimes:pdf,doc,xls,xlsx,docx|max:10240', // Max 10MB
             'autres_document'                       => 'nullable|array',
             'autres_document.*'                     => 'file|mimes:pdf,doc,xls,xlsx,docx,jpg,jpeg,png|max:10240', // Max 10MB par fichier
-            'resume_tdr_prefaisabilite'             => $estSoumise ? 'required|string|min:50|max:2000' : 'nullable|string|max:2000',
-
-            'numero_dossier'            => $estSoumise ? 'required|string|max:100' : 'nullable|string|max:100',
-            'numero_contrat'            => $estSoumise ? 'required|string|max:100' : 'nullable|string|max:100',
-
-            // ✅ accept_term doit être "true" si est_soumise est true
-            'accept_term'               => $estSoumise ? 'required|accepted' : 'nullable|boolean',
+            'resume_tdr_prefaisabilite'             => $estSoumise ? 'required|string|min:50|max:2000' : 'nullable|string|max:2000'
         ];
     }
+
+    //C'est une solution SAAS de revente de distribution et vente de connexion internet
 
     /**
      * Get the error messages for the defined validation rules.

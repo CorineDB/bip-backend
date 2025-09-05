@@ -28,7 +28,13 @@ class EvaluerTdrsRequest extends FormRequest
             'evaluations_champs' => 'required|array|min:'. count($this->champs),
             'evaluations_champs.*.champ_id' => ["required", "in:".implode(",", $this->champs), Rule::exists("champs", "id",)],
             'evaluations_champs.*.appreciation' => 'required|in:'.implode(",", $this->appreciations),
-            'evaluations_champs.*.commentaire' => 'required|string|min:10'
+            'evaluations_champs.*.commentaire' => 'required|string|min:10',
+
+            'numero_dossier'            => 'required|string|max:100',
+            'numero_contrat'            => 'required|string|max:100',
+
+            // ✅ accept_term doit être "true" si est_soumise est true
+            'accept_term'               => 'required|accepted',
         ];
     }
 

@@ -25,6 +25,11 @@ class TdrResource extends BaseApiResource
             'date_soumission' => $this->date_soumission,
             'date_evaluation' => $this->date_evaluation,
             'date_validation' => $this->date_validation,
+
+            'numero_contrat' => $this->numero_contrat,
+            'numero_dossier' => $this->numero_dossier,
+            'accept_term' => $this->accept_term,
+
             'evaluations_detaillees' => $this->evaluations_detaillees,
             'termes_de_reference' => $this->termes_de_reference,
             'commentaire_evaluation' => $this->commentaire_evaluation,

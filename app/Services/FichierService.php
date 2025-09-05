@@ -488,7 +488,7 @@ class FichierService extends BaseService implements FichierServiceInterface
 
         // Logger et incrémenter compteur
         $this->logAccesFichier($fichier, 'view');
-        $this->incrementerVues($fichier->id);
+        //$this->incrementerVues($fichier->id);
 
         $headers = [
             'Content-Type' => $fichier->mime_type,
@@ -657,7 +657,7 @@ class FichierService extends BaseService implements FichierServiceInterface
     public function getFichierAvecPermissionsParHash(string $hash): ?object
     {
         $user = Auth::user();
-        $fichier = Fichier::where('hash_md5', $hash)->first();
+        $fichier = Fichier::where('hash_md5', $hash)->latest('created_at')->first();
 
         if (!$fichier || !$this->aPermissionSurFichier($user, $fichier, 'view')) {
             return null;

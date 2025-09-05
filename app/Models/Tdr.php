@@ -58,7 +58,6 @@ class Tdr extends Model
         'nombre_passe',
         'nombre_retour',
         'nombre_non_accepte',
-
         'numero_contrat',
         'numero_dossier',
         'accept_term',
