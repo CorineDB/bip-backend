@@ -34,6 +34,7 @@ class Commentaire extends Model
         'date',
         'commentaireable_type',
         'commentaireable_id',
+        'commentaire_id',
         'commentateurId'
     ];
 
@@ -94,6 +95,18 @@ class Commentaire extends Model
         return $query->where('commentateurId', $commentateurId);
     }
 
+    /** Commentaire parent (nullable) */
+    public function parent()
+    {
+        return $this->belongsTo(Commentaire::class, 'commentaire_id');
+    }
+
+    /** Réponses / sous-commentaires */
+    public function enfants()
+    {
+        return $this->hasMany(Commentaire::class, 'commentaire_id');
+    }
+
     /**
      * The model's boot method.
      */
@@ -107,5 +120,52 @@ class Commentaire extends Model
                 $commentaire->date = now();
             }
         });
+    }
+
+    /*
+    *
+    * Mapping "type en minuscule" => Classe du modèle
+    */
+    public static function getCommentaireableMap(): array
+    {
+        return [
+            'fichier' => \App\Models\Fichier::class,
+            'idee_de_projet' => \App\Models\IdeeProjet::class,
+            'projet' => \App\Models\Projet::class,
+            'note' => \App\Models\NoteConceptuelle::class,
+            'tdr' => \App\Models\Tdr::class,
+            'rapport' => \App\Models\Rapport::class,
+            'evaluation' => \App\Models\Evaluation::class,
+            'decision' => \App\Models\Decision::class,
+            'champ_projet' => \App\Models\ChampProjet::class,
+            'evaluation_critere' => \App\Models\EvaluationCritere::class
+        ];
+    }
+
+    public static array $resourceArticles = [
+        'projet' => 'le',
+        'note' => 'la',
+        'tdr' => 'le',
+        'rapport' => 'le',
+        'idee_de_projet' => "l'",
+        'fichier' => 'le',
+        'evaluation' => "l'",
+        'decision' => 'la',
+        'champ_projet' => 'le',
+        'evaluation_critere' => "l'",
+    ];
+
+
+    /**
+     * Mutator pour convertir le type en classe
+     */
+    public function setCommentaireableTypeAttribute($value)
+    {
+        if (!class_exists($value)) {
+            $map = self::getCommentaireableMap();
+            $this->attributes['commentaireable_type'] = $map[strtolower($value)] ?? $value;
+        } else {
+            $this->attributes['commentaireable_type'] = $value;
+        }
     }
 }

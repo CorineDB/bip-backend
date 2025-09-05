@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\StatutIdee;
-use App\Http\Requests\evaluations\ModifierEvaluationClimatiqueRequest;
 use App\Http\Resources\EvaluationCritereResource;
 use Illuminate\Http\JsonResponse;
 use Exception;
@@ -25,7 +24,6 @@ use App\Models\Organisation;
 use App\Models\User;
 use App\Models\Workflow;
 use App\Models\Decision;
-use App\Notifications\EvaluationClimatiqueAssigneeNotification;
 use App\Notifications\EvaluationClimatiqueFinaliseeNotification;
 use App\Notifications\ProgressionEvaluationClimatiqueNotification;
 use App\Notifications\EvaluationClimatiqueTermineNotification;
@@ -37,12 +35,10 @@ use App\Notifications\ResultatAMCNotification;
 use App\Notifications\FinAMCAnalysteNotification;
 use App\Notifications\ComiteValidationMinisterielNotification;
 use App\Notifications\DecisionFinaleValidationNotification;
-use App\Notifications\NotificationRedactionNoteConceptuelleNotification;
 use App\Traits\GenerateUniqueId;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Schema;
 use App\Events\IdeeProjetTransformee;
 use App\Http\Resources\idees_projet\IdeesProjetResource;
 use App\Http\Resources\UserResource;
@@ -73,6 +69,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     public function validerIdeeDeProjet($ideeProjetId, array $attributs): JsonResponse
     {
         try {
+
             if (!auth()->user()->hasPermissionTo('valider-une-idee-de-projet-en-interne') && auth()->user()->type !== "dpaf") {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
@@ -80,6 +77,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             DB::beginTransaction();
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
+
+            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
 
             if ($ideeProjet->statut != StatutIdee::IDEE_DE_PROJET) {
                 throw new Exception("Vous le statut de l'idee de projet est a brouillon");
@@ -241,6 +242,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
+            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             // Récupérer les évaluations de validation par responsable hiérarchique
             $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
@@ -273,7 +278,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
         }
     }
-
     /**
      * Finalize evaluation and calculate final results.
      */
@@ -445,6 +449,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         try {
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
+            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             // Récupérer les évaluations de validation finale par analyste DGPD
             $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
@@ -490,6 +498,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             }
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
+
+            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
 
             // Vérifier que l'évaluation climatique existe
             $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
@@ -621,6 +633,14 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
+            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
+            if (auth()->id() !== $ideeProjet->responsable->id) {
+                throw new Exception("Vous n'avez pas les droits pour effectuer cette action", 403);
+            }
+
             // Vérifier que l'évaluation climatique existe
             $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
@@ -632,10 +652,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'success' => false,
                     'message' => 'Auto Evaluation climatique déja validé',
                 ], 400);
-            }
-
-            if (auth()->id() !== $ideeProjet->responsable->id) {
-                throw new Exception("Vous n'avez pas les droits pour effectuer cette action", 403);
             }
 
             $completionPercentage = $this->calculateCompletionPercentage($evaluation);
@@ -785,7 +801,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         ];
     }
 
-
     /**
      * Calculate variance of notes.
      */
@@ -809,12 +824,17 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     public function soumettreEvaluationClimatique(array $data, $ideeProjetId): JsonResponse
     {
         try {
+
             DB::beginTransaction();
 
             $evaluateurId = auth()->id();
             $reponses = $data['reponses'];
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
+
+            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
 
             // Vérifier si l'idée de projet est soumise - si non, refuser l'évaluation
             if ($ideeProjet->est_soumise !== true) {
@@ -1142,6 +1162,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
+            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             $evaluation = Evaluation::firstOrCreate([
                 'projetable_id' => $ideeProjet->id,
                 'projetable_type' => get_class($ideeProjet),
@@ -1447,6 +1471,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ], 500);
         }
     }
+
     /**
      * Calculer le score climatique d'une évaluation.
      * Le score climatique est la moyenne pondérée de tous les critères évalués.
@@ -1561,7 +1586,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             default => 'Impact climatique forte'
         };
     }
-
 
     /**
      * Calculer le score global de tous les critères d'une évaluation.
@@ -1730,7 +1754,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     {
         try {
 
-            if (auth()->user()->type !== 'analyste-dgpd' && auth()->user()->type !== 'super-admin' && auth()->user()->type !== 'dgpd') {
+            if (auth()->user()->type !== 'analyste-dgpd' && auth()->user()->type !== 'dgpd' && !auth()->user()->hasPermissionTo('effectuer-l-amc-d-une-idee-de-projet')) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -1986,6 +2010,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 throw new Exception("Veuillez effectuer l'auto evaluation climatique en interne", 403);
             } else if (($ideeProjet->statut == StatutIdee::IDEE_DE_PROJET)) {
                 throw new Exception("Veuillez faire valider l'idee de projet en interne par un responsable hierachique", 403);
+            }
+
+            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
             $evaluationClimatique = $ideeProjet->evaluations()

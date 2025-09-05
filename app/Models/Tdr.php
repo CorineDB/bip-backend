@@ -57,7 +57,11 @@ class Tdr extends Model
         'resultats_evaluation',
         'nombre_passe',
         'nombre_retour',
-        'nombre_non_accepte'
+        'nombre_non_accepte',
+
+        'numero_contrat',
+        'numero_dossier',
+        'accept_term',
     ];
 
     /**
@@ -71,7 +75,8 @@ class Tdr extends Model
         'date_validation'           => 'datetime',
         'nombre_passe'              => 'integer',
         'nombre_retour'             => 'integer',
-        'nombre_non_accepte'        => 'integer'
+        'nombre_non_accepte'        => 'integer',
+        'accept_term'               => 'boolean'
     ];
 
     /**

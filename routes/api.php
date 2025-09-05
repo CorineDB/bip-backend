@@ -28,8 +28,10 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VillageController;
 use App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CommentaireController;
 use App\Http\Controllers\DgpdController;
 use App\Http\Controllers\DpafController;
+use App\Http\Controllers\FichierController;
 use App\Http\Controllers\GroupeUtilisateurController;
 use App\Http\Controllers\OAuthController;
 use App\Http\Controllers\NotificationController;
@@ -378,6 +380,12 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         // Workflow & Process Management
         Route::apiResource('workflows', WorkflowController::class);
+
+        // Commentaire
+        Route::apiResource('commentaires', CommentaireController::class);
+
+        // Fichier
+        Route::apiResource('fichiers', FichierController::class);
 
         // Financial & Evaluation
         Route::controller(FinancementController::class)->group(function () {

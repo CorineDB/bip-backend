@@ -785,9 +785,9 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             }
 
             return (new CanevasAppreciationTdrResource($canevas))
-                ->additional(['message' => 'Canevas de checklist suivi rapport préfaisabilité récupéré avec succès.'])
-                ->response()
-                ->setStatusCode(200);
+                        ->additional(['message' => 'Canevas de checklist suivi rapport préfaisabilité récupéré avec succès.'])
+                        ->response()
+                        ->setStatusCode(200);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -828,7 +828,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
 
                 // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
-                // $this->cleanupRemovedElements($canevas, $payloadIds);
+                $this->cleanupRemovedElements($canevas, $payloadIds);
 
                 DB::commit();
 
@@ -846,9 +846,9 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_checking'])) {
 
-                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                    $documentData['evaluation_configs']['guide_checking'] = $data['guide_checking'];
                 }
 
                 $document = $this->repository->create($documentData);

@@ -500,6 +500,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ], 206);
             }
 
+            if (auth()->user()->profilable->ministere->id !== $noteConceptuelle->projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             return (new $this->resourceClass($noteConceptuelle->load(["fichiers", "projet"])))
                 ->additional(['message' => 'Note conceptuelle validée avec succès.'])
                 ->response()
@@ -527,6 +531,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'success' => false,
                     'message' => 'Note conceptuelle non trouvée pour ce projet.'
                 ], 404);
+            }
+
+            if (auth()->user()->profilable->ministere->id !== $noteConceptuelle->projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
             $validationDetails = [
@@ -1274,6 +1282,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Récupérer la note conceptuelle
             $noteConceptuelle = $this->repository->findOrFail($noteConceptuelleId);
 
+            if (auth()->user()->profilable->ministere->id !== $noteConceptuelle->projet->ministere->id) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             // Vérifier que le projet est au bon statut
             if ($noteConceptuelle->projet->statut->value != StatutIdee::EVALUATION_NOTE->value && ($noteConceptuelle->projet->statut->value != StatutIdee::R_VALIDATION_NOTE_AMELIORER->value) && !($noteConceptuelle->evaluationTermine())) {
                 return response()->json([
@@ -1467,6 +1479,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'success' => false,
                     'message' => 'Aucune note conceptuelle trouvée pour ce projet.'
                 ], 404);
+            }
+
+            if (auth()->user()->profilable->ministere->id !== $noteConceptuelle->projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
             // Récupérer l'évaluation de validation la plus récente
@@ -1895,6 +1911,57 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             'is_active' => true
         ]);
     }
+
+    private function storeFile(NoteConceptuelle $noteConceptuelle, $file, string $category): void
+    {
+        // Générer un nom unique pour le fichier
+        $originalName = $file->getClientOriginalName();
+        $extension = $file->getClientOriginalExtension();
+        $storageName = $this->generateStorageName($category, $noteConceptuelle->id, $extension);
+
+        // Hasher les IDs pour le chemin
+        $hashedProjectId = hash('sha256', $noteConceptuelle->projetId);
+        $hashedNoteId = hash('sha256', $noteConceptuelle->id);
+
+        // Stocker le fichier dans un disque local sécurisé
+        $storedPath = $file->storeAs(
+            "projets/{$hashedProjectId}/notes_conceptuelles/{$hashedNoteId}",
+            $storageName,
+            'local' // disque local sécurisé
+        );
+
+        // Déterminer la description selon la catégorie
+        $description = $this->getDescriptionByCategory($category);
+
+        // Créer l'entrée dans la table fichiers
+        $noteConceptuelle->fichiers()->create([
+            'nom_original' => $originalName,
+            'nom_stockage' => $storageName,
+            'chemin' => $storedPath,
+            'extension' => $extension,
+            'mime_type' => $file->getMimeType(),
+            'taille' => $file->getSize(),
+            'hash_md5' => md5_file($file->getRealPath()),
+            'description' => $description,
+            'commentaire' => null,
+            'metadata' => [
+                'type_document' => 'note-conceptuelle-' . str_replace('_', '-', $category),
+                'note_conceptuelle_id' => $noteConceptuelle->id,
+                'projet_id' => $noteConceptuelle->projetId,
+                'categorie_originale' => $category,
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now()
+            ],
+            'fichier_attachable_id' => $noteConceptuelle->id,
+            'fichier_attachable_type' => NoteConceptuelle::class,
+            'categorie' => $category,
+            'ordre' => $this->getOrderByCategory($category),
+            'uploaded_by' => auth()->id(),
+            'is_public' => false,
+            'is_active' => true
+        ]);
+    }
+
 
     /**
      * Générer un nom de stockage selon la catégorie

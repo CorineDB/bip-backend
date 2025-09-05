@@ -22,11 +22,17 @@ class SoumettreTdrsRequest extends FormRequest
         $estSoumise = $this->input('est_soumise', true);
 
         return [
-            'est_soumise' => 'sometimes|boolean',
-            'tdr' => 'required|file|mimes:pdf,doc,xls,xlsx,docx|max:10240', // Max 10MB
-            'autres_document' => 'nullable|array',
-            'autres_document.*' => 'file|mimes:pdf,doc,xls,xlsx,docx,jpg,jpeg,png|max:10240', // Max 10MB par fichier
-            'resume_tdr_prefaisabilite' => $estSoumise ? 'required|string|min:50|max:2000' : 'nullable|string|max:2000'
+            'est_soumise'                           => 'sometimes|boolean',
+            'tdr'                                   => 'required|file|mimes:pdf,doc,xls,xlsx,docx|max:10240', // Max 10MB
+            'autres_document'                       => 'nullable|array',
+            'autres_document.*'                     => 'file|mimes:pdf,doc,xls,xlsx,docx,jpg,jpeg,png|max:10240', // Max 10MB par fichier
+            'resume_tdr_prefaisabilite'             => $estSoumise ? 'required|string|min:50|max:2000' : 'nullable|string|max:2000',
+
+            'numero_dossier'            => $estSoumise ? 'required|string|max:100' : 'nullable|string|max:100',
+            'numero_contrat'            => $estSoumise ? 'required|string|max:100' : 'nullable|string|max:100',
+
+            // ✅ accept_term doit être "true" si est_soumise est true
+            'accept_term'               => $estSoumise ? 'required|accepted' : 'nullable|boolean',
         ];
     }
 

@@ -36,7 +36,10 @@ class NoteConceptuelle extends Model
         'valider_par',
         'rediger_par',
         'note_conceptuelle',
-        'decision'
+        'decision',
+        'numero_contrat',
+        'numero_dossier',
+        'accept_term',
     ];
 
     /**
@@ -49,6 +52,7 @@ class NoteConceptuelle extends Model
         'decision' => 'array',
         'statut' => 'integer',
         'date_validation' => 'datetime',
+        'accept_term'               => 'boolean',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',

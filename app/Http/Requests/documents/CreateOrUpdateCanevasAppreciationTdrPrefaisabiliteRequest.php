@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\documents;
 
-use App\Enums\EnumTypeChamp;
 use App\Models\Document;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -15,7 +14,6 @@ class CreateOrUpdateCanevasAppreciationTdrPrefaisabiliteRequest extends FormRequ
     {
         return true;
     }
-
 
     public function prepareForValidation()
     {
@@ -146,11 +144,12 @@ class CreateOrUpdateCanevasAppreciationTdrPrefaisabiliteRequest extends FormRequ
             ],
             'description' => 'nullable|string|max:65535',
             'type' => ['required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
-            'categorieId' => 'required|exists:categories_document,id',
-            'options_notation' => 'required|array|min:2',
-            'options_notation.*.libelle' => 'required|string|max:255',
-            'options_notation.*.appreciation' => 'required|string|max:255',
-            'options_notation.*.description' => 'nullable|string|max:1000',
+            'categorieId'                       => 'required|exists:categories_document,id',
+            'options_notation'                  => 'required|array|min:2',
+            'options_notation.*.libelle'        => 'required|string|max:255',
+            'options_notation.*.appreciation'   => 'required|string|max:255',
+            'options_notation.*.description'    => 'nullable|string|max:1000',
+            'accept_text'                       => 'required|string|max:10',
             // Forms array - structure flexible avec validation récursive
             'forms' => 'required|array|min:1',
             'forms.*' => 'required|array',
@@ -239,9 +238,9 @@ class CreateOrUpdateCanevasAppreciationTdrPrefaisabiliteRequest extends FormRequ
     private function validateFieldElement($element, $path, $validator)
     {
         // Label obligatoire
-        if (!isset($element['label']) || !is_string($element['label']) || strlen($element['label']) > 255) {
+        if (!isset($element['label']) || !is_string($element['label']) || strlen($element['label']) > 500) {
             $validator->errors()->add("{$path}.label",
-                'Le libellé du champ est obligatoire et ne doit pas dépasser 255 caractères.');
+                'Le libellé du champ est obligatoire et ne doit pas dépasser 500 caractères.');
         }
 
         // L'attribut est déjà validé dans validateFormsStructure
@@ -341,7 +340,7 @@ class CreateOrUpdateCanevasAppreciationTdrPrefaisabiliteRequest extends FormRequ
             // Messages pour les champs
             'forms.*.label.required_if' => 'Le libellé du champ est obligatoire.',
             'forms.*.label.string' => 'Le libellé du champ doit être une chaîne de caractères.',
-            'forms.*.label.max' => 'Le libellé du champ ne peut pas dépasser 255 caractères.',
+            'forms.*.label.max' => 'Le libellé du champ ne peut pas dépasser 500 caractères.',
             'forms.*.key.required' => 'La clé de l\'élément est obligatoire.',
             'forms.*.key.string' => 'La clé de l\'élément doit être une chaîne de caractères.',
             'forms.*.key.max' => 'La clé de l\'élément ne peut pas dépasser 255 caractères.',

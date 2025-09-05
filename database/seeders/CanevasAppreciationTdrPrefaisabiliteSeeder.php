@@ -39,9 +39,87 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                 "commentaire_obligatoire" => true,
                 "seuil_acceptation" => 0,
                 "regles_decision" => [
-                    "succes" => "La présélection a été un succès (passes reçues dans toutes les questions)",
-                    "retour" => "Retour pour un travail supplémentaire (Non, « Non accepté » contient des « Retours » mais pas suffisamment pour qu'il ne soit pas accepté)",
-                    "non_accepte" => "Non accepté - Si des questions n'ont pas été complétées OU Si une réponse à une question a été évaluée comme « Non acceptée » OU Si 10 ou plus des réponses ont été évaluées comme « Retour »"
+                    "passe" => [
+                        "condition" => "all_passed",
+                        "description" => "La présélection a été un succès (passes reçues dans toutes les questions)",
+                        "message" => "Toutes les questions ont été évaluées positivement",
+                        "statut_final" => "validé"
+                    ],
+                    "retour" => [
+                        "condition" => "has_retour_but_acceptable",
+                        "description" => "Retour pour un travail supplémentaire",
+                        "message" => "Des améliorations sont nécessaires avant validation",
+                        "statut_final" => "retour_travail_supplementaire",
+                        "max_retour_allowed" => 9
+                    ],
+                    "non_accepte" => [
+                        "condition" => "has_rejection_or_too_many_retour",
+                        "description" => "Non accepté",
+                        "message" => "Le TDR ne répond pas aux critères minimums",
+                        "statut_final" => "rejete",
+                        "triggers" => [
+                            "incomplete_questions" => "Si des questions n'ont pas été complétées",
+                            "has_non_accepte" => "Si une réponse à une question a été évaluée comme « Non acceptée »",
+                            "too_many_retour" => "Si 10 ou plus des réponses ont été évaluées comme « Retour »"
+                        ]
+                    ]
+                ],
+                "algorithme_decision" => [
+                    "etapes" => [
+                        [
+                            "ordre" => 1,
+                            "condition" => "check_completude",
+                            "description" => "Vérifier que toutes les questions ont une évaluation",
+                            "action_si_echec" => "non_accepte"
+                        ],
+                        [
+                            "ordre" => 2,
+                            "condition" => "check_non_accepte",
+                            "description" => "Vérifier qu'aucune question n'a été évaluée comme 'non_accepte'",
+                            "action_si_echec" => "non_accepte"
+                        ],
+                        [
+                            "ordre" => 3,
+                            "condition" => "count_retour",
+                            "description" => "Compter le nombre de 'retour'",
+                            "seuil_max" => 9,
+                            "action_si_depassement" => "non_accepte",
+                            "action_si_respecte" => "check_final"
+                        ],
+                        [
+                            "ordre" => 4,
+                            "condition" => "check_final",
+                            "description" => "Déterminer le résultat final",
+                            "logique" => [
+                                "si_aucun_retour" => "passe",
+                                "si_retour_dans_limite" => "retour"
+                            ]
+                        ]
+                    ]
+                ],
+                "compteurs" => [
+                    "total_questions" => 0,
+                    "passe" => 0,
+                    "retour" => 0,
+                    "non_accepte" => 0,
+                    "non_evaluees" => 0
+                ],
+                "notifications" => [
+                    "passe" => [
+                        "titre" => "TDR Validé",
+                        "message" => "Le TDR de préfaisabilité a été validé avec succès",
+                        "type" => "success"
+                    ],
+                    "retour" => [
+                        "titre" => "TDR à Améliorer",
+                        "message" => "Le TDR nécessite des améliorations avant validation",
+                        "type" => "warning"
+                    ],
+                    "non_accepte" => [
+                        "titre" => "TDR Rejeté",
+                        "message" => "Le TDR ne répond pas aux critères minimums requis",
+                        "type" => "error"
+                    ]
                 ]
             ],
             "workflow" => [
@@ -50,7 +128,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     "appreciation" => "Évaluation par l'évaluateur",
                     "decision" => "Décision finale basée sur les règles"
                 ]
-            ]
+            ],
+            "accept_text" => "En remplissant et en transmettant cette note conceptuelle de projet, je confirme que les informations sont complètes et exactes à ma connaissance. Je reconnais également que le fait de fournir intentionnellement des informations inexactes ou trompeuses peut entraîner des sanctions à mon encontre."
         ],
         "forms" => [
             // Section 1: Objectif et justification d'un nouveau projet
