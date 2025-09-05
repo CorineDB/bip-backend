@@ -91,7 +91,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
                 'array',
                 $this->input('action', 'submit') === 'draft' ? 'min:0' : "size:$nombreCriteresRequis"
             ],
-            'checklist_controle_adaptation_haut_risque.criteres.*' => 'array',
+            'checklist_controle_adaptation_haut_risque.criteres.*' => ['required_with:checklist_controle_adaptation_haut_risque.criteres','array'],
             'checklist_controle_adaptation_haut_risque.criteres.*.critere_id' => 'required|integer|exists:criteres,id',
 
             // Les mesures sont requises seulement si action != draft
