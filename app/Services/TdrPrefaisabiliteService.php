@@ -1958,11 +1958,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             ->where('is_active', true)
             ->update(['is_active' => false]);
 
+        // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_prefaisabilite/rapport/{hash_id}
+        $hashedProjectId = hash('sha256', $rapport->projet_id);
+        $hashedRapportId = hash('sha256', $rapport->id);
+
         // Stocker le fichier sur le disque
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
         $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
-        $chemin = $fichier->storeAs('rapports/prefaisabilite', $nomStockage, 'public');
+        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/etude_de_prefaisabilite/rapport/{$hashedRapportId}", $nomStockage, 'local');
 
         // Créer le nouveau fichier et l'associer au rapport
         $fichierCree = Fichier::create([
@@ -1984,7 +1988,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'projet_id' => $rapport->projet_id,
                 'statut' => 'actif',
                 'soumis_par' => auth()->id(),
-                'soumis_le' => now()
+                'soumis_le' => now(),
+                'folder_structure' => "projets/{$hashedProjectId}/etude_de_prefaisabilite/rapport/{$hashedRapportId}"
             ],
             'fichier_attachable_type' => Rapport::class,
             'fichier_attachable_id' => $rapport->id
@@ -2016,11 +2021,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             ->where('is_active', true)
             ->update(['is_active' => false]);
 
+        // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_prefaisabilite/rapport/{hash_id}
+        $hashedProjectId = hash('sha256', $rapport->projet_id);
+        $hashedRapportId = hash('sha256', $rapport->id);
+
         // Stocker le fichier sur le disque
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
         $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
-        $chemin = $fichier->storeAs('rapports/prefaisabilite/pv', $nomStockage, 'public');
+        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/etude_de_prefaisabilite/rapport/{$hashedRapportId}", $nomStockage, 'local');
 
         // Créer le nouveau fichier et l'associer au rapport
         $fichierCree = Fichier::create([
@@ -2042,7 +2051,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'projet_id' => $rapport->projet_id,
                 'statut' => 'actif',
                 'soumis_par' => auth()->id(),
-                'soumis_le' => now()
+                'soumis_le' => now(),
+                'folder_structure' => "projets/{$hashedProjectId}/etude_de_prefaisabilite/rapport/{$hashedRapportId}"
             ],
             'fichier_attachable_type' => Rapport::class,
             'fichier_attachable_id' => $rapport->id

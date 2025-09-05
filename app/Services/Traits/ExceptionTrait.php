@@ -168,7 +168,7 @@ trait ExceptionTrait
 
     protected function HttpResponse($e)
     {
-        return $this->errorResponse("Route inconnue. Veuillez revérifier la route de votre requête", [], Response::HTTP_NOT_FOUND);
+        return $this->errorResponse($e->getMessage() ?? " Route inconnue. Veuillez revérifier la route de votre requête", [], Response::HTTP_NOT_FOUND);
     }
 
     protected function AuthenticationResponse($e)

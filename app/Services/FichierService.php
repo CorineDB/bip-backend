@@ -457,16 +457,16 @@ class FichierService extends BaseService implements FichierServiceInterface
         $fichier = $this->getFichierAvecPermissionsParHash($hash);
 
         if (!$fichier) {
-            abort(404, 'Fichier non trouvé');
+            throw new ModelNotFoundException("Fichier non trouvé", 1);
         }
 
         if (!Storage::disk('local')->exists($fichier->chemin)) {
-            abort(404, 'Fichier physique non trouvé');
+            throw new ModelNotFoundException("Fichier physique n'a pas été trouvé", 1);
         }
 
         // Logger et incrémenter compteur
         $this->logAccesFichier($fichier, 'download');
-        $this->incrementerTelechargements($fichier->id);
+        //$this->incrementerTelechargements($fichier->id);
 
         return Storage::disk('local')->download($fichier->chemin, $fichier->nom_original);
     }
@@ -479,11 +479,11 @@ class FichierService extends BaseService implements FichierServiceInterface
         $fichier = $this->getFichierAvecPermissionsParHash($hash);
 
         if (!$fichier) {
-            abort(404, 'Fichier non trouvé');
+            throw new ModelNotFoundException("Fichier non trouvé", 1);
         }
 
         if (!Storage::disk('local')->exists($fichier->chemin)) {
-            abort(404, 'Fichier physique non trouvé');
+            throw new ModelNotFoundException("Fichier physique n'a pas été trouvé", 1);
         }
 
         // Logger et incrémenter compteur
@@ -644,9 +644,9 @@ class FichierService extends BaseService implements FichierServiceInterface
         $user = Auth::user();
         $fichier = $this->repository->find($id);
 
-        if (!$fichier || !$this->aPermissionSurFichier($user, $fichier, 'view')) {
+        /* if (!$fichier || !$this->aPermissionSurFichier($user, $fichier, 'view')) {
             return null;
-        }
+        } */
 
         return $fichier;
     }
@@ -718,7 +718,7 @@ class FichierService extends BaseService implements FichierServiceInterface
     private function aPermissionSurFichier(User $user, $fichier, string $permission): bool
     {
         // Admin a toutes les permissions
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole('super-admin')) {
             return true;
         }
 
@@ -751,7 +751,7 @@ class FichierService extends BaseService implements FichierServiceInterface
     private function aPermissionSurRessourceAttachee(User $user, $fichier): bool
     {
         $userMinistereId = $user->profilable->ministere_id ?? null;
-        
+
         if (!$userMinistereId) {
             return false; // Si l'utilisateur n'a pas de ministère, pas d'accès
         }
@@ -769,16 +769,16 @@ class FichierService extends BaseService implements FichierServiceInterface
             case 'App\Models\NoteConceptuelle':
                 // Vérifier via le projet associé à la note conceptuelle
                 $noteConceptuelle = app($resourceType)->with('projet')->find($resourceId);
-                return $noteConceptuelle && 
-                       $noteConceptuelle->projet && 
+                return $noteConceptuelle &&
+                       $noteConceptuelle->projet &&
                        $noteConceptuelle->projet->ministere_id === $userMinistereId;
 
             case 'App\Models\Tdr':
             case 'App\Models\Rapport':
                 // Vérifier via le projet associé au TDR/rapport
                 $resource = app($resourceType)->with('projet')->find($resourceId);
-                return $resource && 
-                       $resource->projet && 
+                return $resource &&
+                       $resource->projet &&
                        $resource->projet->ministere_id === $userMinistereId;
 
             default:
@@ -839,7 +839,7 @@ class FichierService extends BaseService implements FichierServiceInterface
     private function applyResourcePermissions($query, User $user): void
     {
         $userMinistereId = $user->profilable->ministere_id ?? null;
-        
+
         if (!$userMinistereId) {
             return; // Si l'utilisateur n'a pas de ministère, pas d'accès
         }

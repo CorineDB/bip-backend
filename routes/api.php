@@ -386,9 +386,9 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::apiResource('commentaires', CommentaireController::class);
 
         // Fichier - Routes personnalisées AVANT la resource
-        Route::get('fichiers/view/{hash}', [FichierController::class, 'visualiserFichierParHash'])->name('fichiers.view');
-        Route::get('fichiers/download/{hash}', [FichierController::class, 'telechargerFichierParHash'])->name('fichiers.download');
-        
+        Route::get('visualiserFichier/{hash}', [FichierController::class, 'visualiserFichierParHash'])->name('fichiers.view');
+        Route::get('telechargerFichier/{hash}', [FichierController::class, 'telechargerFichierParHash'])->name('fichiers.download');
+
         // Fichier - Routes resource
         Route::apiResource('fichiers', FichierController::class);
 

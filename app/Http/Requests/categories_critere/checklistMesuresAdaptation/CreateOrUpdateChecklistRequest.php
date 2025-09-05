@@ -26,7 +26,7 @@ class CreateOrUpdateChecklistRequest extends FormRequest
                     ->whereNull('deleted_at')
             ],
             'criteres.*.intitule' => ['required', 'string', 'max:255'],
-            'criteres.*.ponderation' => ['required', 'numeric', 'min:0', 'max:100'],
+            'criteres.*.ponderation' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'criteres.*.commentaire' => ['nullable', 'string'],
             'criteres.*.is_mandatory' => ['boolean'],
 
@@ -62,7 +62,7 @@ class CreateOrUpdateChecklistRequest extends FormRequest
         $validator->after(function ($validator) {
             $this->validateConsistentSecteurs($validator);
             //$this->validateSecteursExistence($validator);
-            $this->validateTotalPonderation($validator);
+            //$this->validateTotalPonderation($validator);
         });
     }
 

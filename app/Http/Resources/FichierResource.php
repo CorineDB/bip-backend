@@ -34,10 +34,11 @@ class FichierResource extends BaseApiResource
             'is_image' => $this->is_image,
             'is_document' => $this->is_document,
 
-            // URLs sécurisées
+            // URLs sécurisées via hash MD5
             'urls' => [
-                'view' => route('api.fichiers.show', $this->id),
-                'download' => Storage::url($this->chemin),
+                'view' => route('api.fichiers.view', ['hash' => $this->hash_md5]),
+                'download' => route('api.fichiers.download', ['hash' => $this->hash_md5]),
+                'details' => route('api.fichiers.show', $this->id), // Garder pour les détails par ID
             ],
 
             // Statistiques
