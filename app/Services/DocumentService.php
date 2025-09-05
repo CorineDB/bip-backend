@@ -1446,6 +1446,15 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     $canevas->update(['evaluation_configs' => $evaluationConfigs]);
                 }
 
+                if (isset($data['accept_text'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['accept_text'] = $data['accept_text'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
                 // Collecter tous les IDs présents dans le payload
                 $payloadIds = $this->collectAllIds($data['forms'] ?? []);
 
