@@ -46,7 +46,6 @@ class Rapport extends Model
         'recommandation',
         'date_soumission',
         'soumis_par_id',
-        'rediger_par_id',
         'date_validation',
         'validateur_id',
         'commentaire_validation',
@@ -161,11 +160,11 @@ class Rapport extends Model
     public function scopeDernierRapport($query, $projetId, $type = null)
     {
         $query = $query->where('projet_id', $projetId);
-        
+
         if ($type) {
             $query = $query->where('type', $type);
         }
-        
+
         return $query->latest('created_at');
     }
 

@@ -1435,8 +1435,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ],
                 'recommandation' => $data['recommandation'] ?? null,
                 'date_soumission' => now(),
-                'soumis_par_id' => auth()->id(),
-                'rediger_par_id' => auth()->id()
+                'soumis_par_id' => auth()->id()
             ]);
 
             // Traitement et sauvegarde du fichier rapport
