@@ -450,11 +450,11 @@ class FichierService extends BaseService implements FichierServiceInterface
     }
 
     /**
-     * Télécharger un fichier avec vérification des permissions
+     * Télécharger un fichier avec vérification des permissions par hash
      */
-    public function telechargerFichier(string $id): StreamedResponse
+    public function telechargerFichier(string $hash): StreamedResponse
     {
-        $fichier = $this->getFichierAvecPermissions($id);
+        $fichier = $this->getFichierAvecPermissionsParHash($hash);
 
         if (!$fichier) {
             abort(404, 'Fichier non trouvé');
@@ -466,17 +466,17 @@ class FichierService extends BaseService implements FichierServiceInterface
 
         // Logger et incrémenter compteur
         $this->logAccesFichier($fichier, 'download');
-        $this->incrementerTelechargements($id);
+        $this->incrementerTelechargements($fichier->id);
 
         return Storage::disk('local')->download($fichier->chemin, $fichier->nom_original);
     }
 
     /**
-     * Visualiser un fichier dans le navigateur
+     * Visualiser un fichier dans le navigateur par hash
      */
-    public function visualiserFichier(string $id): StreamedResponse
+    public function visualiserFichier(string $hash): StreamedResponse
     {
-        $fichier = $this->getFichierAvecPermissions($id);
+        $fichier = $this->getFichierAvecPermissionsParHash($hash);
 
         if (!$fichier) {
             abort(404, 'Fichier non trouvé');
@@ -488,7 +488,7 @@ class FichierService extends BaseService implements FichierServiceInterface
 
         // Logger et incrémenter compteur
         $this->logAccesFichier($fichier, 'view');
-        $this->incrementerVues($id);
+        $this->incrementerVues($fichier->id);
 
         $headers = [
             'Content-Type' => $fichier->mime_type,
@@ -643,6 +643,21 @@ class FichierService extends BaseService implements FichierServiceInterface
     {
         $user = Auth::user();
         $fichier = $this->repository->find($id);
+
+        if (!$fichier || !$this->aPermissionSurFichier($user, $fichier, 'view')) {
+            return null;
+        }
+
+        return $fichier;
+    }
+
+    /**
+     * Obtenir un fichier avec vérification des permissions par hash MD5
+     */
+    public function getFichierAvecPermissionsParHash(string $hash): ?object
+    {
+        $user = Auth::user();
+        $fichier = Fichier::where('hash_md5', $hash)->first();
 
         if (!$fichier || !$this->aPermissionSurFichier($user, $fichier, 'view')) {
             return null;

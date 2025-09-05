@@ -215,6 +215,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::post('{projetId}/valider-tdrs-prefaisabilite', [TdrPrefaisabiliteController::class, 'validerTdrs']);
             Route::get('{projetId}/details-validations-tdrs-prefaisabilite', [TdrPrefaisabiliteController::class, 'getDetailsValidation']);
             Route::post('{projetId}/soumettre-rapport-prefaisabilite', [TdrPrefaisabiliteController::class, 'soumettreRapportPrefaisabilite']);
+            Route::get('{projetId}/details-soumission-rapport-prefaisabilite', [TdrPrefaisabiliteController::class, 'getDetailsSoumissionRapportPrefaisabilite']);
             Route::post('{projetId}/valider-etude-prefaisabilite', [TdrPrefaisabiliteController::class, 'validerEtudePrefaisabilite']);
             Route::post('{projetId}/soumettre-rapport-evaluation-ex-ante', [TdrPrefaisabiliteController::class, 'soumettreRapportEvaluationExAnte']);
             Route::post('{projetId}/valider-rapport-final', [TdrPrefaisabiliteController::class, 'validerRapportFinal']);
@@ -386,6 +387,10 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         // Fichier
         Route::apiResource('fichiers', FichierController::class);
+        
+        // Routes personnalisées pour les fichiers avec hash
+        Route::get('fichiers/view/{hash}', [FichierController::class, 'visualiserFichierParHash'])->name('fichiers.view');
+        Route::get('fichiers/download/{hash}', [FichierController::class, 'telechargerFichierParHash'])->name('fichiers.download');
 
         // Financial & Evaluation
         Route::controller(FinancementController::class)->group(function () {
@@ -812,6 +817,44 @@ Route::get('/broadcast-to-idea/{ideeId}', function ($ideeId) {
             'message' => 'Notification diffusée aux abonnés de l\'idée!',
             'channel' => 'idee.de.projet.creer.' . $ideeId,
             'event' => 'idee.update',
+            'time' => now()->toISOString()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+});
+
+// Route pour broadcaster vers tous les membres d'un ministère
+Route::get('/broadcast-to-ministere/{ministereId}', function ($ministereId) {
+    try {
+        // Récupérer le ministère (organisation parent)
+        $ministere = \App\Models\Organisation::whereNull('parentId')->find($ministereId);
+        if (!$ministere) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ministère non trouvé',
+            ], 404);
+        }
+
+        // Broadcaster vers le canal du ministère
+        \Illuminate\Support\Facades\Broadcast::on('ministere.' . $ministereId)
+            ->as('ministere.notification')
+            ->with([
+                'message' => 'Notification pour tous les membres du ministère: ' . $ministere->nom,
+                'title' => 'Notification Ministère',
+                'type' => 'info',
+                'timestamp' => now()->toISOString(),
+                'ministere_data' => [
+                    'id' => $ministere->id,
+                    'nom' => $ministere->nom,
+                ],
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification diffusée à tous les membres du ministère!',
+            'channel' => 'ministere.' . $ministereId,
+            'event' => 'ministere.notification',
             'time' => now()->toISOString()
         ]);
     } catch (\Exception $e) {

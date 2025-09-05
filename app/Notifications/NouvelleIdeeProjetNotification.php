@@ -9,6 +9,7 @@ use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\DatabaseMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Broadcasting\PrivateChannel;
 
 class NouvelleIdeeProjetNotification extends Notification implements ShouldQueue
 {
@@ -31,7 +32,7 @@ class NouvelleIdeeProjetNotification extends Notification implements ShouldQueue
      */
     public function via($notifiable): array
     {
-        return ['database', 'broadcast', 'mail'];
+        return ['database', 'mail', 'broadcast'];
     }
 
     public function toMail($notifiable)
@@ -65,6 +66,14 @@ class NouvelleIdeeProjetNotification extends Notification implements ShouldQueue
             ],
             'action_url' => '/idees/' . $this->ideeProjet->id
         ]);
+    }
+
+    public function broadcastOn()
+    {
+        return [
+            new PrivateChannel('idee.de.projet.creer.' . $this->ideeProjet->id),
+            new PrivateChannel('App.Models.User.' . $this->ideeProjet->responsableId)
+        ];
     }
 
     /**

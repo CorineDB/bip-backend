@@ -106,6 +106,14 @@ class TdrPrefaisabiliteController extends Controller
     }
 
     /**
+     * Soumettre le rapport de préfaisabilité (SFD-012)
+     */
+    public function getDetailsSoumissionRapportPrefaisabilite(int $projetId): JsonResponse
+    {
+        return $this->service->getDetailsSoumissionRapportPrefaisabilite($projetId);
+    }
+
+    /**
      * Valider l'étude de préfaisabilité (SFD-013)
      */
     public function validerEtudePrefaisabilite(Request $request, int $projetId): JsonResponse

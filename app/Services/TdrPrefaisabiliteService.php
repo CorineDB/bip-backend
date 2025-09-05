@@ -411,7 +411,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $statut = $estSoumise ? 'soumis' : 'brouillon';
 
             // Extraire les données spécifiques au payload
-            $champsData = $data['champs'] ?? [];
+            //$champsData = $data['champs'] ?? [];
             $documentsData = $data['autres_document'] ?? [];
 
             // Préparer les données du TDR
@@ -449,17 +449,19 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $message = 'TDR de préfaisabilité créé avec succès.';
             }
 
-                // Récupérer le canevas de rédaction TDR préfaisabilité
-                $canevasTdr = $this->documentRepository->getModel()->where([
-                    'type' => 'formulaire'
-                ])->whereHas('categorie', function ($query) {
-                    $query->where('slug', 'canevas-redaction-tdr-prefaisabilite');
-                })->orderBy('created_at', 'desc')->first();
+            /*
+            // Récupérer le canevas de rédaction TDR préfaisabilité
+            $canevasTdr = $this->documentRepository->getModel()->where([
+                'type' => 'formulaire'
+            ])->whereHas('categorie', function ($query) {
+                $query->where('slug', 'canevas-redaction-tdr-prefaisabilite');
+            })->orderBy('created_at', 'desc')->first();
 
-                if ($canevasTdr) {
-                    // Sauvegarder les champs dynamiques basés sur le canevas
-                    $this->saveDynamicFieldsFromCanevas($tdr, $champsData, $canevasTdr);
-                }
+            if ($canevasTdr) {
+                // Sauvegarder les champs dynamiques basés sur le canevas
+                $this->saveDynamicFieldsFromCanevas($tdr, $champsData, $canevasTdr);
+            }
+            */
 
             // Gérer les documents/fichiers
             if (!empty($documentsData)) {
@@ -1304,14 +1306,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         try {
             DB::beginTransaction();
 
-            // Vérifier les autorisations (DPAF uniquement)
-            if (in_array(auth()->user()->type, ['dpaf'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette soumission.'
-                ], 403);
-            }
-
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
@@ -1498,6 +1492,93 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Récupérer le rapport soumis pour un projet
+     */
+    public function getDetailsSoumissionRapportPrefaisabilite(int $projetId): JsonResponse
+    {
+        try {
+            // Récupérer le projet
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Vérifier les permissions d'accès
+            /* if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== \App\Models\Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+            } */
+
+            // Récupérer le rapport soumis le plus récent
+            $rapport = \App\Models\Rapport::where('projet_id', $projetId)
+                ->where('type', 'prefaisabilite')
+                ->where('statut', 'soumis')
+                ->with(['fichiers', 'soumisPar', 'projet'])
+                ->latest('created_at')
+                ->first();
+
+            if (!$rapport) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun rapport soumis trouvé pour ce projet.',
+                    'data' => null
+                ], 404);
+            }
+
+            // Structurer les données de retour
+            $rapportData = [
+                'id' => $rapport->id,
+                'intitule' => $rapport->intitule,
+                'type' => $rapport->type,
+                'statut' => $rapport->statut,
+                'checklist_suivi' => $rapport->checklist_suivi,
+                'info_cabinet_etude' => $rapport->info_cabinet_etude,
+                'soumis_par' => $rapport->soumisPar ? [
+                    'id' => $rapport->soumisPar->id,
+                    'nom' => $rapport->soumisPar->nom,
+                    'prenoms' => $rapport->soumisPar->prenoms,
+                    'email' => $rapport->soumisPar->email
+                ] : null,
+                'soumis_le' => $rapport->soumis_le,
+                'created_at' => $rapport->created_at,
+                'updated_at' => $rapport->updated_at,
+                'fichiers' => $rapport->fichiers->map(function ($fichier) {
+                    return [
+                        'id' => $fichier->id,
+                        'nom_original' => $fichier->nom_original,
+                        'extension' => $fichier->extension,
+                        'taille' => $fichier->taille,
+                        'mime_type' => $fichier->mime_type,
+                        'description' => $fichier->description,
+                        'categorie' => $fichier->categorie,
+                        'hash_acces' => $fichier->hash_md5,
+                        'lien_view' => url('/api/fichiers/view/' . $fichier->hash_md5),
+                        'lien_download' => url('/api/fichiers/download/' . $fichier->hash_md5),
+                        'created_at' => $fichier->created_at
+                    ];
+                }),
+                'projet' => [
+                    'id' => $rapport->projet->id,
+                    'titre_projet' => $rapport->projet->titre_projet,
+                    'statut' => $rapport->projet->statut,
+                    'ministere' => [
+                        'id' => $rapport->projet->ministere->id,
+                        'nom' => $rapport->projet->ministere->nom
+                    ]
+                ]
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $rapportData,
+                'message' => 'Rapport soumis récupéré avec succès.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération du rapport soumis: ' . $e->getMessage(),
+                'data' => null
+            ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
         }
     }
 
@@ -2978,5 +3059,92 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
      */
     private function envoyerNotificationValidationFinale($projet, string $action, array $data)
     { /* À implémenter */
+    }
+
+    /**
+     * Récupérer le rapport soumis pour un projet
+     */
+    public function getRapportSoumis(int $projetId): JsonResponse
+    {
+        try {
+            // Récupérer le projet
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Vérifier les permissions d'accès
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== \App\Models\Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+            }
+
+            // Récupérer le rapport soumis le plus récent
+            $rapport = \App\Models\Rapport::where('projet_id', $projetId)
+                ->where('type', 'prefaisabilite')
+                ->where('statut', 'soumis')
+                ->with(['fichiers', 'soumisPar', 'projet'])
+                ->latest('created_at')
+                ->first();
+
+            if (!$rapport) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun rapport soumis trouvé pour ce projet.',
+                    'data' => null
+                ], 404);
+            }
+
+            // Structurer les données de retour
+            $rapportData = [
+                'id' => $rapport->id,
+                'intitule' => $rapport->intitule,
+                'type' => $rapport->type,
+                'statut' => $rapport->statut,
+                'checklist_suivi' => $rapport->checklist_suivi,
+                'info_cabinet_etude' => $rapport->info_cabinet_etude,
+                'soumis_par' => $rapport->soumisPar ? [
+                    'id' => $rapport->soumisPar->id,
+                    'nom' => $rapport->soumisPar->nom,
+                    'prenoms' => $rapport->soumisPar->prenoms,
+                    'email' => $rapport->soumisPar->email
+                ] : null,
+                'soumis_le' => $rapport->soumis_le,
+                'created_at' => $rapport->created_at,
+                'updated_at' => $rapport->updated_at,
+                'fichiers' => $rapport->fichiers->map(function ($fichier) {
+                    return [
+                        'id' => $fichier->id,
+                        'nom_original' => $fichier->nom_original,
+                        'extension' => $fichier->extension,
+                        'taille' => $fichier->taille,
+                        'mime_type' => $fichier->mime_type,
+                        'description' => $fichier->description,
+                        'categorie' => $fichier->categorie,
+                        'hash_acces' => $fichier->hash_md5,
+                        'lien_view' => url('/api/fichiers/view/' . $fichier->hash_md5),
+                        'lien_download' => url('/api/fichiers/download/' . $fichier->hash_md5),
+                        'created_at' => $fichier->created_at
+                    ];
+                }),
+                'projet' => [
+                    'id' => $rapport->projet->id,
+                    'titre_projet' => $rapport->projet->titre_projet,
+                    'statut' => $rapport->projet->statut,
+                    'ministere' => [
+                        'id' => $rapport->projet->ministere->id,
+                        'nom' => $rapport->projet->ministere->nom
+                    ]
+                ]
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $rapportData,
+                'message' => 'Rapport soumis récupéré avec succès.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération du rapport soumis: ' . $e->getMessage(),
+                'data' => null
+            ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
+        }
     }
 }

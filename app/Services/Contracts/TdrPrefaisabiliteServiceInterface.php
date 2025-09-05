@@ -27,6 +27,11 @@ interface TdrPrefaisabiliteServiceInterface extends AbstractServiceInterface
     public function soumettreRapportPrefaisabilite(int $projetId, array $data): JsonResponse;
 
     /**
+     * Soum
+     */
+    public function getDetailsSoumissionRapportPrefaisabilite(int $projetId): JsonResponse;
+
+    /**
      * Récupérer les détails d'évaluation d'un TDR
      */
     public function getEvaluationTdr(int $projetId): JsonResponse;

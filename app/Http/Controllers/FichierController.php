@@ -83,4 +83,20 @@ class FichierController extends Controller
     {
         return $this->service->supprimerFichier($id);
     }
+
+    /**
+     * Visualiser un fichier par hash d'accès
+     */
+    public function visualiserFichierParHash(string $hash)
+    {
+        return $this->service->visualiserFichier($hash);
+    }
+
+    /**
+     * Télécharger un fichier par hash d'accès
+     */
+    public function telechargerFichierParHash(string $hash)
+    {
+        return $this->service->telechargerFichier($hash);
+    }
 }
