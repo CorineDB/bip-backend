@@ -149,7 +149,7 @@ class CreateOrUpdateCanevasAppreciationTdrPrefaisabiliteRequest extends FormRequ
             'options_notation.*.libelle'        => 'required|string|max:255',
             'options_notation.*.appreciation'   => 'required|string|max:255',
             'options_notation.*.description'    => 'nullable|string|max:1000',
-            'accept_text'                       => 'required|string|max:10',
+            'accept_text'                       => 'required|string|min:10',
             // Forms array - structure flexible avec validation récursive
             'forms' => 'required|array|min:1',
             'forms.*' => 'required|array',
