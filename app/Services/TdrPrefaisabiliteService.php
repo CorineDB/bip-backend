@@ -1552,8 +1552,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'description' => $fichier->description,
                         'categorie' => $fichier->categorie,
                         'hash_acces' => $fichier->hash_md5,
-                        'lien_view' => url('/api/fichiers/view/' . $fichier->hash_md5),
-                        'lien_download' => url('/api/fichiers/download/' . $fichier->hash_md5),
+                        'lien_view' => route('api.fichiers.view', ['hash' => $fichier->hash_md5]),
+                        'lien_download' => route('api.fichiers.download', ['hash' => $fichier->hash_md5]),
                         'created_at' => $fichier->created_at
                     ];
                 }),
@@ -3118,8 +3118,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'description' => $fichier->description,
                         'categorie' => $fichier->categorie,
                         'hash_acces' => $fichier->hash_md5,
-                        'lien_view' => url('/api/fichiers/view/' . $fichier->hash_md5),
-                        'lien_download' => url('/api/fichiers/download/' . $fichier->hash_md5),
+                        'lien_view' => route('api.fichiers.view', ['hash' => $fichier->hash_md5]),
+                        'lien_download' => route('api.fichiers.download', ['hash' => $fichier->hash_md5]),
                         'created_at' => $fichier->created_at
                     ];
                 }),

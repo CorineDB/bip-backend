@@ -385,12 +385,12 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         // Commentaire
         Route::apiResource('commentaires', CommentaireController::class);
 
-        // Fichier
-        Route::apiResource('fichiers', FichierController::class);
-        
-        // Routes personnalisées pour les fichiers avec hash
+        // Fichier - Routes personnalisées AVANT la resource
         Route::get('fichiers/view/{hash}', [FichierController::class, 'visualiserFichierParHash'])->name('fichiers.view');
         Route::get('fichiers/download/{hash}', [FichierController::class, 'telechargerFichierParHash'])->name('fichiers.download');
+        
+        // Fichier - Routes resource
+        Route::apiResource('fichiers', FichierController::class);
 
         // Financial & Evaluation
         Route::controller(FinancementController::class)->group(function () {
