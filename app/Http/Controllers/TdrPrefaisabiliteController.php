@@ -62,7 +62,7 @@ class TdrPrefaisabiliteController extends Controller
      */
     public function soumettreTdrs(SoumettreTdrsRequest $request, int $projetId): JsonResponse
     {
-        return $this->service->soumettreTdrs($projetId, $request->validated());
+        return $this->service->soumettreTdrs($projetId, $request->all());
     }
 
     /**
@@ -70,7 +70,7 @@ class TdrPrefaisabiliteController extends Controller
      */
     public function evaluerTdrs(EvaluerTdrsRequest $request, int $projetId): JsonResponse
     {
-        return $this->service->evaluerTdrs($projetId, $request->validated());
+        return $this->service->evaluerTdrs($projetId, $request->all());
     }
 
     /**
@@ -86,7 +86,7 @@ class TdrPrefaisabiliteController extends Controller
      */
     public function validerTdrs(ValiderTdrsRequest $request, int $projetId): JsonResponse
     {
-        return $this->service->validerTdrs($projetId, $request->validated());
+        return $this->service->validerTdrs($projetId, $request->all());
     }
 
     /**
@@ -102,7 +102,7 @@ class TdrPrefaisabiliteController extends Controller
      */
     public function soumettreRapportPrefaisabilite(SoumettreRapportPrefaisabiliteRequest $request, int $projetId): JsonResponse
     {
-        return $this->service->soumettreRapportPrefaisabilite($projetId, $request->validated());
+        return $this->service->soumettreRapportPrefaisabilite($projetId, $request->all());
     }
 
     /**

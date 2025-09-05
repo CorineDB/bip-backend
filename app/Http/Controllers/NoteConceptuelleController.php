@@ -111,7 +111,7 @@ class NoteConceptuelleController extends Controller
      */
     public function validateNote(StoreNoteConceptuelleRequest $request, $projetId, $noteId): JsonResponse
     {
-        return $this->service->validateNote($projetId, $noteId, $request->validated());
+        return $this->service->validateNote($projetId, $noteId, $request->all());
     }
 
     /**
@@ -151,7 +151,7 @@ class NoteConceptuelleController extends Controller
      */
     public function creerEvaluation(AppreciationNoteConceptuelleRequest $request, $noteId): JsonResponse
     {
-        return $this->service->creerEvaluation($noteId, $request->validated());
+        return $this->service->creerEvaluation($noteId, $request->all());
     }
 
     /**
@@ -176,7 +176,7 @@ class NoteConceptuelleController extends Controller
      */
     public function configurerOptionsNotation(ConfigurerOptionsEvaluationRequest $request): JsonResponse
     {
-        return $this->service->configurerOptionsNotation($request->validated());
+        return $this->service->configurerOptionsNotation($request->all());
     }
 
     /**
@@ -192,7 +192,7 @@ class NoteConceptuelleController extends Controller
      */
     public function confirmerResultat(ConfirmerResultatRequest $request, $projetId, $noteId): JsonResponse
     {
-        return $this->service->confirmerResultatParNote($noteId, $request->validated());
+        return $this->service->confirmerResultatParNote($noteId, $request->all());
     }
 
     /**
@@ -208,6 +208,6 @@ class NoteConceptuelleController extends Controller
      */
     public function validerEtudeProfil(ValiderEtudeProfilRequest $request, $projetId): JsonResponse
     {
-        return $this->service->validerEtudeDeProfil($projetId, $request->validated());
+        return $this->service->validerEtudeDeProfil($projetId, $request->all());
     }
 }

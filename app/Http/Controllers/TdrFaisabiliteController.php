@@ -60,7 +60,7 @@ class TdrFaisabiliteController extends Controller
      */
     public function soumettreTdrs(SoumettreTdrsFaisabiliteRequest $request, int $projetId): JsonResponse
     {
-        return $this->service->soumettreTdrs($projetId, $request->validated());
+        return $this->service->soumettreTdrs($projetId, $request->all());
     }
 
     /**
@@ -68,7 +68,7 @@ class TdrFaisabiliteController extends Controller
      */
     public function evaluerTdrs(EvaluerTdrsFaisabiliteRequest $request, int $projetId): JsonResponse
     {
-        return $this->service->evaluerTdrs($projetId, $request->validated());
+        return $this->service->evaluerTdrs($projetId, $request->all());
     }
 
     /**
@@ -84,7 +84,7 @@ class TdrFaisabiliteController extends Controller
      */
     public function validerTdrs(ValiderTdrsRequest $request, int $projetId): JsonResponse
     {
-        return $this->service->validerTdrs($projetId, $request->validated());
+        return $this->service->validerTdrs($projetId, $request->all());
     }
 
     /**
@@ -100,7 +100,7 @@ class TdrFaisabiliteController extends Controller
      */
     public function soumettreRapportFaisabilite(SoumettreRapportFaisabiliteRequest $request, int $projetId): JsonResponse
     {
-        return $this->service->soumettreRapportFaisabilite($projetId, $request->validated());
+        return $this->service->soumettreRapportFaisabilite($projetId, $request->all());
     }
 
     /**

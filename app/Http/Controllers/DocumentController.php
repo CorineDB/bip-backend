@@ -396,7 +396,7 @@ class DocumentController extends Controller
      */
     public function createOrUpdateCanevasRedactionNoteConceptuelle(CreateOrUpdateCanevasRedactionNoteConceptuelleRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasRedactionNoteConceptuelle($request->validated());
+        return $this->service->createOrUpdateCanevasRedactionNoteConceptuelle($request->all());
     }
 
     public function canevasAppreciationTdr(): JsonResponse
@@ -406,7 +406,7 @@ class DocumentController extends Controller
 
     public function createOrUpdateCanevasAppreciationTdr(CreateOrUpdateCanevasAppreciationTdrRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasAppreciationTdr($request->validated());
+        return $this->service->createOrUpdateCanevasAppreciationTdr($request->all());
     }
 
     public function canevasRedactionTdrPrefaisabilite(): JsonResponse
@@ -416,12 +416,12 @@ class DocumentController extends Controller
 
     public function createOrUpdateCanevasRedactionTdrPrefaisabilite(CreateOrUpdateCanevasRedactionTdrPrefaisabiliteRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasRedactionTdrPrefaisabilite($request->validated());
+        return $this->service->createOrUpdateCanevasRedactionTdrPrefaisabilite($request->all());
     }
 
     public function configurerChecklistTdrPrefaisabilite(CreateOrUpdateChecklistTdrPrefaisabiliteRequest $request): JsonResponse
     {
-        return $this->service->configurerChecklistTdrPrefaisabilite($request->validated());
+        return $this->service->configurerChecklistTdrPrefaisabilite($request->all());
     }
 
     public function canevasRedactionTdrFaisabilite(): JsonResponse
@@ -431,12 +431,12 @@ class DocumentController extends Controller
 
     public function createOrUpdateCanevasRedactionTdrFaisabilite(CreateOrUpdateCanevasRedactionTdrFaisabiliteRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasRedactionTdrFaisabilite($request->validated());
+        return $this->service->createOrUpdateCanevasRedactionTdrFaisabilite($request->all());
     }
 
     public function configurerChecklistTdrFaisabilite(CreateOrUpdateChecklistTdrFaisabiliteRequest $request): JsonResponse
     {
-        return $this->service->configurerChecklistTdrFaisabilite($request->validated());
+        return $this->service->configurerChecklistTdrFaisabilite($request->all());
     }
 
     /**
@@ -452,7 +452,7 @@ class DocumentController extends Controller
      */
     public function createOrUpdateCanevasChecklistSuiviRapportPrefaisabilite(CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasChecklistSuiviRapportPrefaisabilite($request->validated());
+        return $this->service->createOrUpdateCanevasChecklistSuiviRapportPrefaisabilite($request->all());
     }
 
     /**
@@ -468,7 +468,7 @@ class DocumentController extends Controller
      */
     public function createOrUpdateCanevasChecklistMesuresAdaptation(CreateOrUpdateCanevasChecklistMesuresAdaptationRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasChecklistMesuresAdaptation($request->validated());
+        return $this->service->createOrUpdateCanevasChecklistMesuresAdaptation($request->all());
     }
 
 
@@ -487,7 +487,7 @@ class DocumentController extends Controller
      */
     public function createOrUpdateCanevasChecklistEtudeFaisabiliteMarche(CreateOrUpdateCanevasChecklistEtudeFaisabiliteMarcheRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteMarche($request->validated());
+        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteMarche($request->all());
     }
 
     /**
@@ -503,7 +503,7 @@ class DocumentController extends Controller
      */
     public function createOrUpdateCanevasChecklistEtudeFaisabiliteEconomique(CreateOrUpdateCanevasChecklistEtudeFaisabiliteEconomiqueRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteEconomique($request->validated());
+        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteEconomique($request->all());
     }
 
     /**
@@ -519,7 +519,7 @@ class DocumentController extends Controller
      */
     public function createOrUpdateCanevasChecklistEtudeFaisabiliteTechnique(CreateOrUpdateCanevasChecklistEtudeFaisabiliteTechniqueRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteTechnique($request->validated());
+        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteTechnique($request->all());
     }
 
     /**
@@ -535,7 +535,7 @@ class DocumentController extends Controller
      */
     public function createOrUpdateCanevasChecklistEtudeFaisabiliteFinanciere(CreateOrUpdateCanevasChecklistEtudeFaisabiliteFinanciereRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteFinanciere($request->validated());
+        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteFinanciere($request->all());
     }
 
     /**
@@ -551,7 +551,7 @@ class DocumentController extends Controller
      */
     public function createOrUpdateCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique(CreateOrUpdateCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridiqueRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique($request->validated());
+        return $this->service->createOrUpdateCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique($request->all());
     }
 
     /**
@@ -567,7 +567,7 @@ class DocumentController extends Controller
      */
     public function createOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale(CreateOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSocialeRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale($request->validated());
+        return $this->service->createOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale($request->all());
     }
 
     /**
@@ -583,7 +583,7 @@ class DocumentController extends Controller
      */
     public function createOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite(CreateOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabiliteRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite($request->validated());
+        return $this->service->createOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite($request->all());
     }
 
     /**
@@ -599,6 +599,6 @@ class DocumentController extends Controller
      */
     public function createOrUpdateCanevasAppreciationTdrPrefaisabilite(CreateOrUpdateCanevasAppreciationTdrPrefaisabiliteRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasAppreciationTdrPrefaisabilite($request->validated());
+        return $this->service->createOrUpdateCanevasAppreciationTdrPrefaisabilite($request->all());
     }
 }

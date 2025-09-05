@@ -723,7 +723,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 // Récupérer le canevas d'appréciation des TDRs
                 $canevasAppreciation = $this->documentRepository->getModel()
                     ->where('type', 'formulaire')
-                    ->where('slug', 'canevas-appreciation-tdr')
+                    ->where('slug', 'canevas-appreciation-tdr-prefaisabilite')
                     ->with(['champs' => function ($query) {
                         $query->orderBy('ordre_affichage');
                     }])
@@ -1054,9 +1054,26 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $messageAction = '';
             $typeProjet = null;
 
-            // Traiter les informations du projet à haut risque si applicable
-            if (isset($data['est_a_haut_risque']) && $data['est_a_haut_risque']) {
-                $this->traiterProjetHautRisque($projet, $data);
+            // Vérifier la cohérence du suivi rapport si des données de validation sont fournies
+            if (isset($data['checklist_suivi_validation'])) {
+                $resultVerificationCoherence = $this->verifierCoherenceSuiviRapport($projet, $data['checklist_suivi_validation']);
+                if (!$resultVerificationCoherence['success']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $resultVerificationCoherence['message'],
+                        'incoherences' => $resultVerificationCoherence['incoherences'] ?? []
+                    ], 422);
+                }
+
+                // Vérifier que tous les checkpoints obligatoires sont présents et complétés
+                $resultVerificationCompletude = $this->verifierCompletude($data['checklist_suivi_validation']);
+                if (!$resultVerificationCompletude['success']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $resultVerificationCompletude['message'],
+                        'checkpoints_incomplets' => $resultVerificationCompletude['checkpoints_incomplets'] ?? []
+                    ], 422);
+                }
             }
 
             switch ($data['action']) {
@@ -1303,6 +1320,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
      */
     public function soumettreRapportPrefaisabilite(int $projetId, array $data): JsonResponse
     {
+
         try {
             DB::beginTransaction();
 
@@ -1325,80 +1343,77 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $action = $data['action'] ?? 'submit';
             $estBrouillon = $action === 'draft';
 
-            // Si c'est un brouillon, on peut sauvegarder sans les fichiers
-            if ($estBrouillon) {
-                // Pour les brouillons, les fichiers ne sont pas requis
-                // Traiter seulement la checklist si présente
 
-                if ($projet->est_a_haut_risque && isset($data['checklist_controle_adaptation_haut_risque']) && $data['checklist_controle_adaptation_haut_risque']) {
-                    $resultChecklistValidation = $this->traiterChecklistControleAdaptation(
-                        $projet,
-                        $data['checklist_controle_adaptation_haut_risque'],
-                        true
-                    );
+            // Récupérer le dernier rapport de préfaisabilité s'il existe
+            $rapportExistant = $projet->rapportPrefaisabilite()->first();
 
-                    if (!$resultChecklistValidation['success']) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => $resultChecklistValidation['message']
-                        ], 422);
-                    }
-                }
+            // Préparer les données du rapport
+            $rapportData = [
+                'projet_id' => $projet->id,
+                'type' => 'prefaisabilite',
+                'statut' => $estBrouillon ? 'brouillon' : 'soumis',
+                'intitule' => 'Rapport de préfaisabilité',
+                'checklist_suivi' => $data['checklist_suivi_rapport_prefaisabilite'] ?? null,
+                'info_cabinet_etude' => [
+                    'nom_cabinet' => $data['cabinet_etude']['nom_cabinet'] ?? null,
+                    'contact_cabinet' => $data['cabinet_etude']['contact_cabinet'] ?? null,
+                    'email_cabinet' => $data['cabinet_etude']['email_cabinet'] ?? null,
+                    'adresse_cabinet' => $data['cabinet_etude']['adresse_cabinet'] ?? null,
+                ],
+                'recommandation' => $data['recommandation'] ?? null,
+                'soumis_par_id' => auth()->id()
+            ];
 
-                // Traiter la checklist de suivi si présente
-                if (isset($data['checklist_suivi_rapport_prefaisabilite'])) {
-                    // Préparer les fichiers pour le brouillon (si disponibles)
-                    $fichiersData = [
-                        'cabinet_etude' => $data['cabinet_etude'] ?? null,
-                        'recommandation' => $data['recommandation'] ?? null
-                    ];
-
-                    $resultChecklistSuivi = $this->traiterChecklistSuiviRapportPrefaisabilite(
-                        $projet,
-                        $data['checklist_suivi_rapport_prefaisabilite'],
-                        true,
-                        $fichiersData
-                    );
-
-                    if (!$resultChecklistSuivi['success']) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => $resultChecklistSuivi['message']
-                        ], 422);
-                    }
-                }
-
-                DB::commit();
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Checklist sauvegardée en brouillon.',
-                    'data' => [
-                        'projet_id' => $projet->id,
-                        'statut' => $projet->statut->value,
-                        'action' => 'draft',
-                        'checklist_brouillon' => true,
-                        'criteres_completes' => $resultChecklistValidation['criteres_completes'] ?? 0,
-                        'total_criteres' => $resultChecklistValidation['total_criteres'] ?? 0,
-                        'est_complete' => $resultChecklistValidation['est_complete'] ?? false,
-                        'sauvegarde_le' => now()->format('d/m/Y H:i:s')
-                    ]
-                ]);
+            // Définir la date de soumission seulement si c'est une soumission finale
+            if (!$estBrouillon) {
+                $rapportData['date_soumission'] = now();
             }
 
-            // Pour la soumission finale, traiter la checklist si présente
-            if ($projet->est_a_haut_risque && isset($data['checklist_controle_adaptation_haut_risque'])) {
-                $resultChecklistValidation = $this->traiterChecklistControleAdaptation(
+            // Créer ou mettre à jour le rapport
+            if ($rapportExistant && $rapportExistant->statut === 'brouillon') {
+                // Mettre à jour le rapport existant s'il est en brouillon
+                $rapport = $rapportExistant;
+                $rapport->fill($rapportData);
+                $rapport->save();
+                $message = $estBrouillon ? 'Rapport sauvegardé en brouillon.' : 'Rapport soumis avec succès.';
+            } elseif ($rapportExistant && $rapportExistant->statut === 'soumis' && !$estBrouillon) {
+                // Si un rapport soumis existe déjà et qu'on soumet à nouveau, créer une nouvelle version
+                $rapportData['parent_id'] = $rapportExistant->id;
+                $rapport = Rapport::create($rapportData);
+                $message = 'Nouvelle version du rapport soumise avec succès.';
+            } else {
+                // Créer un nouveau rapport (première version)
+                $rapport = Rapport::create($rapportData);
+                $message = $estBrouillon ? 'Rapport sauvegardé en brouillon.' : 'Rapport soumis avec succès.';
+            }
+
+            // Traiter les checklists (pour brouillons et soumissions)
+            $resultChecklistValidation = null;
+
+            // Traiter la checklist de contrôle d'adaptation si projet à haut risque
+            if ($projet->est_a_haut_risque && isset($data['checklist_controle_adaptation_haut_risque']) && $data['checklist_controle_adaptation_haut_risque']) {
+                // Log pour debug
+                \Log::info('Traitement checklist adaptation', [
+                    'projet_id' => $projet->id,
+                    'est_a_haut_risque' => $projet->est_a_haut_risque,
+                    'checklist_presente' => isset($data['checklist_controle_adaptation_haut_risque']),
+                    'est_brouillon' => $estBrouillon
+                ]);
+
+                $this->traiterChecklistControleAdaptation(
                     $projet,
                     $data['checklist_controle_adaptation_haut_risque'],
-                    false
+                    $estBrouillon
                 );
-
-                if (!$resultChecklistValidation['success']) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $resultChecklistValidation['message']
-                    ], 422);
-                }
+            } else {
+                // Log pour debug quand la checklist n'est pas traitée
+                \Log::warning('Checklist adaptation non traitée', [
+                    'projet_id' => $projet->id,
+                    'est_a_haut_risque' => $projet->est_a_haut_risque,
+                    'checklist_presente' => isset($data['checklist_controle_adaptation_haut_risque']),
+                    'checklist_non_vide' => !empty($data['checklist_controle_adaptation_haut_risque']),
+                    'data_keys' => array_keys($data)
+                ]);
             }
 
             // Traiter la checklist de suivi pour la soumission finale
@@ -1412,7 +1427,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ];
 
                 $resultChecklistSuivi = $this->traiterChecklistSuiviRapportPrefaisabilite(
-                    $projet,
+                    $rapport,
                     $data['checklist_suivi_rapport_prefaisabilite'],
                     false,
                     $fichiersData
@@ -1425,67 +1440,55 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ], 422);
                 }
             }
-            // Créer l'instance de Rapport
-            $rapport = Rapport::create([
-                'projet_id' => $projet->id,
-                'type' => 'prefaisabilite',
-                'statut' => 'soumis',
-                'intitule' => 'Rapport de préfaisabilité',
-                'checklist_suivi' => $data['checklist_suivi_rapport_prefaisabilite'] ?? null,
-                'info_cabinet_etude' => [
-                    'nom_cabinet' => $data['cabinet_etude']['nom_cabinet'] ?? null,
-                    'contact_cabinet' => $data['cabinet_etude']['contact_cabinet'] ?? null,
-                    'email_cabinet' => $data['cabinet_etude']['email_cabinet'] ?? null,
-                    'adresse_cabinet' => $data['cabinet_etude']['adresse_cabinet'] ?? null,
-                ],
-                'recommandation' => $data['recommandation'] ?? null,
-                'date_soumission' => now(),
-                'soumis_par_id' => auth()->id()
-            ]);
 
-            // Traitement et sauvegarde du fichier rapport
-            $fichierRapport = null;
-            if (isset($data['rapport'])) {
-                $fichierRapport = $this->gererFichierRapport($rapport, $data['rapport'], $data);
+            // Changer le statut du projet seulement pour les soumissions finales
+            if (!$estBrouillon) {
+
+                // Traitement et sauvegarde du fichier rapport
+                $fichierRapport = null;
+                if (isset($data['rapport'])) {
+                    $fichierRapport = $this->gererFichierRapport($rapport, $data['rapport'], $data);
+                }
+
+                // Traitement et sauvegarde du procès verbal
+                $fichierProcesVerbal = null;
+                if (isset($data['proces_verbal'])) {
+                    $fichierProcesVerbal = $this->gererFichierProcesVerbal($rapport, $data['proces_verbal'], $data);
+                }
+
+                $projet->update([
+                    'statut' => StatutIdee::VALIDATION_PF,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_PF),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_PF)
+                ]);
+
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($projet, StatutIdee::VALIDATION_PF);
+                $this->enregistrerDecision(
+                    $projet,
+                    "Soumission du rapport de préfaisabilité",
+                    "Rapport ID: {$rapport->id} soumis par cabinet: " . ($rapport->info_cabinet_etude['nom_cabinet'] ?? 'N/A'),
+                    auth()->user()->personne->id
+                );
+
+                // Envoyer une notification
+                $this->envoyerNotificationSoumissionRapport($projet, $rapport, $fichierRapport);
             }
-
-            // Traitement et sauvegarde du procès verbal
-            $fichierProcesVerbal = null;
-            if (isset($data['proces_verbal'])) {
-                $fichierProcesVerbal = $this->gererFichierProcesVerbal($rapport, $data['proces_verbal'], $data);
-            }
-
-            // Changer le statut du projet
-            $projet->update([
-                'statut' => StatutIdee::VALIDATION_PF,
-                'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_PF),
-                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_PF)
-            ]);
-
-            // Enregistrer le workflow et la décision
-            $this->enregistrerWorkflow($projet, StatutIdee::VALIDATION_PF);
-            $this->enregistrerDecision(
-                $projet,
-                "Soumission du rapport de préfaisabilité",
-                "Rapport ID: {$rapport->id} soumis par cabinet: " . ($rapport->info_cabinet_etude['nom_cabinet'] ?? 'N/A'),
-                auth()->user()->personne->id
-            );
 
             DB::commit();
-
-            // Envoyer une notification
-            $this->envoyerNotificationSoumissionRapport($projet, $rapport, $fichierRapport);
 
             // Charger les relations nécessaires pour le resource
             $rapport->load(['fichiers', 'soumisPar', 'projet']);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Rapport de préfaisabilité soumis avec succès.',
+                'message' => $message,
                 'data' => [
+                    'rapport_id' => $rapport->id,
                     'projet_id' => $projet->id,
-                    'ancien_statut' => StatutIdee::SOUMISSION_RAPPORT_PF->value,
-                    'nouveau_statut' => StatutIdee::VALIDATION_PF->value,
+                    'statut_rapport' => $rapport->statut,
+                    'statut_projet' => $projet->statut->value,
+                    'action' => $estBrouillon ? 'draft' : 'submit',
                     'rapport' => new RapportResource($rapport)
                 ]
             ]);
@@ -1505,7 +1508,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier les permissions d'accès
-            /* if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== \App\Models\Dgpd::class) {
+            /* if (auth()->user()->profilable?->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== \App\Models\Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
             } */
 
@@ -1513,7 +1516,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $rapport = \App\Models\Rapport::where('projet_id', $projetId)
                 ->where('type', 'prefaisabilite')
                 ->where('statut', 'soumis')
-                ->with(['fichiers', 'soumisPar', 'projet'])
+                ->with(['fichiersRapport', 'procesVerbaux', 'soumisPar', 'projet', 'champs', 'documentsAnnexes'])
                 ->latest('created_at')
                 ->first();
 
@@ -1525,53 +1528,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ], 404);
             }
 
-            // Structurer les données de retour
-            $rapportData = [
-                'id' => $rapport->id,
-                'intitule' => $rapport->intitule,
-                'type' => $rapport->type,
-                'statut' => $rapport->statut,
-                'checklist_suivi' => $rapport->checklist_suivi,
-                'info_cabinet_etude' => $rapport->info_cabinet_etude,
-                'soumis_par' => $rapport->soumisPar ? [
-                    'id' => $rapport->soumisPar->id,
-                    'nom' => $rapport->soumisPar->nom,
-                    'prenoms' => $rapport->soumisPar->prenoms,
-                    'email' => $rapport->soumisPar->email
-                ] : null,
-                'soumis_le' => $rapport->soumis_le,
-                'created_at' => $rapport->created_at,
-                'updated_at' => $rapport->updated_at,
-                'fichiers' => $rapport->fichiers->map(function ($fichier) {
-                    return [
-                        'id' => $fichier->id,
-                        'nom_original' => $fichier->nom_original,
-                        'extension' => $fichier->extension,
-                        'taille' => $fichier->taille,
-                        'mime_type' => $fichier->mime_type,
-                        'description' => $fichier->description,
-                        'categorie' => $fichier->categorie,
-                        'hash_acces' => $fichier->hash_md5,
-                        'lien_view' => route('api.fichiers.view', ['hash' => $fichier->hash_md5]),
-                        'lien_download' => route('api.fichiers.download', ['hash' => $fichier->hash_md5]),
-                        'created_at' => $fichier->created_at
-                    ];
-                }),
-                'projet' => [
-                    'id' => $rapport->projet->id,
-                    'titre_projet' => $rapport->projet->titre_projet,
-                    'statut' => $rapport->projet->statut,
-                    'ministere' => [
-                        'id' => $rapport->projet->ministere->id,
-                        'nom' => $rapport->projet->ministere->nom
-                    ]
-                ]
-            ];
-
             return response()->json([
                 'success' => true,
-                'data' => $rapportData,
-                'message' => 'Rapport soumis récupéré avec succès.'
+                'data' => new \App\Http\Resources\RapportResource($rapport),
+                'message' => 'Détails de soumission du rapport de préfaisabilité récupérés avec succès.'
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -2306,56 +2266,100 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Charger les relations nécessaires
             $projet->load('secteur.parent');
 
-            $mesuresValidees = [];
             $criteresCompletes = 0;
             $totalCriteres = count($checklistData['criteres']);
 
+            // Récupérer tous les critères et mesures nécessaires avec leurs détails
+            $criteresIds = collect($checklistData['criteres'])->pluck('critere_id')->unique();
+            $criteres = \App\Models\Critere::whereIn('id', $criteresIds)
+                ->with(['categorie_critere'])
+                ->get()
+                ->keyBy('id');
+
+            $allMesuresIds = collect($checklistData['criteres'])
+                ->flatMap(fn($critere) => $critere['mesures_selectionnees'] ?? [])
+                ->unique();
+            $mesures = \App\Models\Notation::whereIn('id', $allMesuresIds)
+                ->with(['critere', 'secteur'])
+                ->get()
+                ->keyBy('id');
+
+            // Récupérer les détails du secteur principal
+            $secteurPrincipal = $projet->secteur->parent;
+            $secteurDetails = [
+                'id' => $secteurPrincipal->id,
+                'nom' => $secteurPrincipal->nom
+            ];
+
             // Traiter chaque critère de la checklist
+            $criteresFormates = [];
             foreach ($checklistData['criteres'] as $critere) {
                 $critereId = $critere['critere_id'];
                 $mesuresSelectionnees = $critere['mesures_selectionnees'] ?? [];
+                $critereDetail = $criteres->get($critereId);
 
                 // Pour les brouillons, on peut avoir des critères sans mesures
                 if (empty($mesuresSelectionnees) && $estBrouillon) {
                     continue; // Passer au critère suivant pour les brouillons
                 }
 
-                // Enregistrer les mesures validées
-                foreach ($mesuresSelectionnees as $mesureId) {
-                    $mesuresValidees[] = [
-                        'critere_id' => $critereId,
-                        'mesure_id' => $mesureId,
-                        'secteur_id' => $projet->secteur->parent->id
-                    ];
-                }
-
                 if (!empty($mesuresSelectionnees)) {
+                    // Formater les mesures sélectionnées avec leurs détails
+                    $mesuresFormatees = [];
+                    foreach ($mesuresSelectionnees as $mesureId) {
+                        $mesureDetail = $mesures->get($mesureId);
+                        $mesuresFormatees[] = [
+                            'id' => $mesureDetail->id,
+                            'libelle' => $mesureDetail->libelle,
+                            'valeur' => $mesureDetail->valeur,
+                            'commentaire' => $mesureDetail->commentaire
+                        ];
+                    }
+
+                    // Ajouter le critère formaté
+                    $criteresFormates[] = [
+                            'id' => $critereDetail->id,
+                            'intitule' => $critereDetail->intitule,
+                            'ponderation' => $critereDetail->ponderation,
+                            'commentaire' => $critereDetail->commentaire,
+                        'secteur' => array_merge($secteurDetails, ['mesures_selectionnees' => $mesuresFormatees]),
+
+                    ];
+
                     $criteresCompletes++;
                 }
             }
 
-            // Enregistrer la validation de la checklist dans les métadonnées du projet
-            $metadata = $projet->metadata ?? [];
-            $metadata['checklist_controle_adaptation_haut_risque'] = [
+            // Enregistrer la validation de la checklist dans le champ mesures_adaptation du projet
+            $mesuresAdaptationData = [
                 'est_brouillon' => $estBrouillon,
                 'valide' => !$estBrouillon && $criteresCompletes === $totalCriteres,
-                'mesures_validees' => $mesuresValidees,
+                'criteres' => $criteresFormates,
                 'criteres_completes' => $criteresCompletes,
                 'total_criteres' => $totalCriteres,
-                'secteur_id' => $projet->secteur->parent->id,
+                'secteur_principal' => $secteurDetails,
                 'sous_secteur_id' => $projet->secteurId,
                 'derniere_mise_a_jour' => now(),
                 'mis_a_jour_par' => auth()->id()
             ];
 
-            $projet->update(['metadata' => $metadata]);
+            $projet->update(['mesures_adaptation' => $mesuresAdaptationData]);
+
+            // Log pour confirmer la sauvegarde
+            \Log::info('Checklist adaptation sauvegardée', [
+                'projet_id' => $projet->id,
+                'criteres_traites' => count($criteresFormates),
+                'criteres_completes' => $criteresCompletes,
+                'total_criteres' => $totalCriteres,
+                'est_brouillon' => $estBrouillon
+            ]);
 
             return [
                 'success' => true,
                 'message' => $estBrouillon ?
                     'Checklist sauvegardée en brouillon.' :
                     'Checklist de contrôle des adaptations validée avec succès.',
-                'mesures_validees' => count($mesuresValidees),
+                'criteres_traites' => count($criteresFormates),
                 'criteres_completes' => $criteresCompletes,
                 'total_criteres' => $totalCriteres,
                 'est_complete' => $criteresCompletes === $totalCriteres
@@ -2371,11 +2375,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Traiter la checklist de suivi du rapport de préfaisabilité
      */
-    private function traiterChecklistSuiviRapportPrefaisabilite($projet, array $checklistData, bool $estBrouillon = false, array $fichiers = []): array
+    private function traiterChecklistSuiviRapportPrefaisabilite($rapport, array $checklistData, bool $estBrouillon = false, array $fichiers = []): array
     {
         try {
             DB::beginTransaction();
-
+            /*
             // Récupérer le dernier rapport de préfaisabilité s'il existe
             $rapportExistant = $projet->rapportPrefaisabilite()->first();
 
@@ -2387,17 +2391,18 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Créer le nouveau rapport
             $rapport = \App\Models\Rapport::create([
-                'projet_id' => $projet->id,
+                'projet_id' => $rapport->projet->id,
                 'parent_id' => $parentId,
                 'type' => 'prefaisabilite',
                 'statut' => $estBrouillon ? 'brouillon' : 'soumis',
-                'intitule' => 'Rapport de préfaisabilité - ' . $projet->titre_projet,
+                'intitule' => 'Rapport de préfaisabilité - ' . $rapport->projet->titre_projet,
                 'checklist_suivi' => $checklistData, // Stocker directement les données
                 'info_cabinet_etude' => $fichiers['cabinet_etude'] ?? null,
                 'recommandation' => $fichiers['recommandation'] ?? null,
                 'date_soumission' => $estBrouillon ? null : now(),
                 'soumis_par_id' => $estBrouillon ? null : auth()->id()
             ]);
+            */
 
             // Associer les fichiers au rapport si ils existent
             if (!empty($fichiers)) {
@@ -2423,7 +2428,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'Checklist de suivi sauvegardée en brouillon.' :
                     'Checklist de suivi du rapport de préfaisabilité validée avec succès.',
                 'rapport_id' => $rapport->id,
-                'projet_id' => $projet->id,
+                'projet_id' => $rapport->projet->id,
                 'est_brouillon' => $estBrouillon
             ];
         } catch (\Exception $e) {
@@ -2484,17 +2489,17 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     private function traiterChampsChecklistSuivi($rapport, array $checklistData)
     {
         foreach ($checklistData as $evaluation) {
-            $checkpointId = $evaluation['checkpoint_id'];
-            $remarque = $evaluation['remarque'] ?? null;
-            $explication = $evaluation['explication'] ?? null;
+            $checkpointId   = $evaluation['checkpoint_id'];
+            $remarque       = $evaluation['remarque'] ?? null;
+            $explication    = $evaluation['explication'] ?? null;
 
             // Préparer la valeur à stocker (remarque + explication)
-            $valeur = [
+            $valeur = $remarque;/* [
                 'remarque' => $remarque,
                 'explication' => $explication,
                 'checkpoint_id' => $checkpointId,
                 'date_evaluation' => now()
-            ];
+            ]; */
 
             // Créer ou mettre à jour la relation champ-rapport
             $rapport->champs()->syncWithoutDetaching([
@@ -2506,6 +2511,21 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ]
             ]);
         }
+
+        $rapport->checklist_suivi = $rapport->champs->map(function ($champ) {
+            return [
+                'id' => $champ->id,
+                'label' => $champ->label,
+                'attribut' => $champ->attribut,
+                'ordre_affichage' => $champ['ordre_affichage'],
+                'type_champ' => $champ['type_champ'],
+                'valeur' => $champ->pivot->valeur,
+                'commentaire' => $champ->pivot->commentaire,
+                'updated_at' => Carbon::parse($champ->pivot->updated_at)->format("Y-m-d H:i:s")
+            ];
+        });
+
+        $rapport->save();
     }
 
 
@@ -3155,6 +3175,241 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'message' => 'Erreur lors de la récupération du rapport soumis: ' . $e->getMessage(),
                 'data' => null
             ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
+        }
+    }
+
+    /**
+     * Vérifier la cohérence du suivi rapport entre soumission et validation
+     */
+    private function verifierCoherenceSuiviRapport($projet, array $checklistSuiviValidation): array
+    {
+        try {
+            // Récupérer le dernier rapport de préfaisabilité soumis
+            $rapportPrefaisabilite = $projet->rapportPrefaisabilite()
+                ->where('statut', 'soumis')
+                ->latest('created_at')
+                ->first();
+
+            if (!$rapportPrefaisabilite) {
+                return [
+                    'success' => false,
+                    'message' => 'Aucun rapport de préfaisabilité soumis trouvé pour effectuer la vérification de cohérence.'
+                ];
+            }
+
+            // Récupérer la checklist de suivi du rapport de préfaisabilité
+            $checklistSuiviSoumission = $rapportPrefaisabilite->checklist_suivi;
+
+            if (!$checklistSuiviSoumission || !is_array($checklistSuiviSoumission)) {
+                return [
+                    'success' => false,
+                    'message' => 'Aucune checklist de suivi trouvée dans le rapport de préfaisabilité soumis.'
+                ];
+            }
+
+            // Comparer les checkpoints entre soumission et validation
+            $incoherences = [];
+            $checkpointsSoumission = collect($checklistSuiviSoumission);
+            $checkpointsValidation = collect($checklistSuiviValidation);
+
+            // Log pour debug
+            \Log::info('Vérification cohérence suivi rapport', [
+                'projet_id' => $projet->id,
+                'checkpoints_soumission' => $checkpointsSoumission->count(),
+                'checkpoints_validation' => $checkpointsValidation->count()
+            ]);
+
+            // Vérifier que tous les checkpoints de la soumission sont présents dans la validation
+            foreach ($checkpointsSoumission as $index => $checkpointSoumis) {
+                $checkpointId = $checkpointSoumis['checkpoint_id'] ?? null;
+
+                if (!$checkpointId) {
+                    continue;
+                }
+
+                $checkpointValidation = $checkpointsValidation->firstWhere('checkpoint_id', $checkpointId);
+
+                if (!$checkpointValidation) {
+                    $incoherences[] = [
+                        'type' => 'checkpoint_manquant',
+                        'checkpoint_id' => $checkpointId,
+                        'message' => "Le checkpoint {$checkpointId} présent lors de la soumission n'est pas trouvé dans la validation."
+                    ];
+                }
+
+                // Comparer les données entre soumission et validation
+                if ($checkpointValidation) {
+                    // Comparer les remarques
+                    $remarqueSoumission = $checkpointSoumis['remarque'] ?? null;
+                    $remarqueValidation = $checkpointValidation['remarque'] ?? null;
+
+                    // Vérifier si une remarque était présente à la soumission mais absente à la validation
+                    if (!empty($remarqueSoumission) && empty($remarqueValidation)) {
+                        $incoherences[] = [
+                            'type' => 'remarque_manquante',
+                            'checkpoint_id' => $checkpointId,
+                            'soumission' => $remarqueSoumission,
+                            'validation' => 'vide',
+                            'message' => "Le checkpoint {$checkpointId} avait une remarque lors de la soumission mais n'en a pas lors de la validation."
+                        ];
+                    }
+
+                    // Vérifier si les remarques sont différentes (changement significatif)
+                    if (!empty($remarqueSoumission) && !empty($remarqueValidation) && $remarqueSoumission !== $remarqueValidation) {
+                        $incoherences[] = [
+                            'type' => 'remarque_modifiee',
+                            'checkpoint_id' => $checkpointId,
+                            'soumission' => $remarqueSoumission,
+                            'validation' => $remarqueValidation,
+                            'message' => "Le checkpoint {$checkpointId} a une remarque différente entre la soumission et la validation."
+                        ];
+                    }
+
+                    // Comparer les explications
+                    $explicationSoumission = $checkpointSoumis['explication'] ?? null;
+                    $explicationValidation = $checkpointValidation['explication'] ?? null;
+
+                    // Vérifier si une explication était présente à la soumission mais absente à la validation
+                    if (!empty($explicationSoumission) && empty($explicationValidation)) {
+                        $incoherences[] = [
+                            'type' => 'explication_manquante',
+                            'checkpoint_id' => $checkpointId,
+                            'soumission' => $explicationSoumission,
+                            'validation' => 'vide',
+                            'message' => "Le checkpoint {$checkpointId} avait une explication lors de la soumission mais n'en a pas lors de la validation."
+                        ];
+                    }
+
+                    // Vérifier si les explications sont différentes
+                    if (!empty($explicationSoumission) && !empty($explicationValidation) && $explicationSoumission !== $explicationValidation) {
+                        $incoherences[] = [
+                            'type' => 'explication_modifiee',
+                            'checkpoint_id' => $checkpointId,
+                            'soumission' => $explicationSoumission,
+                            'validation' => $explicationValidation,
+                            'message' => "Le checkpoint {$checkpointId} a une explication différente entre la soumission et la validation."
+                        ];
+                    }
+                }
+            }
+
+            // Vérifier s'il y a des checkpoints supplémentaires dans la validation
+            foreach ($checkpointsValidation as $checkpointValidation) {
+                $checkpointId = $checkpointValidation['checkpoint_id'] ?? null;
+
+                if (!$checkpointId) {
+                    continue;
+                }
+
+                $checkpointSoumis = $checkpointsSoumission->firstWhere('checkpoint_id', $checkpointId);
+
+                if (!$checkpointSoumis) {
+                    $incoherences[] = [
+                        'type' => 'checkpoint_supplementaire',
+                        'checkpoint_id' => $checkpointId,
+                        'message' => "Le checkpoint {$checkpointId} est présent dans la validation mais n'était pas dans la soumission."
+                    ];
+                }
+            }
+
+            // S'il y a des incohérences, retourner une erreur
+            if (!empty($incoherences)) {
+                \Log::warning('Incohérences détectées lors de la validation', [
+                    'projet_id' => $projet->id,
+                    'nb_incoherences' => count($incoherences),
+                    'incoherences' => $incoherences
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => 'Incohérences détectées entre le rapport soumis et les données de validation.',
+                    'incoherences' => $incoherences
+                ];
+            }
+
+            \Log::info('Vérification cohérence réussie', [
+                'projet_id' => $projet->id,
+                'checkpoints_verifies' => $checkpointsSoumission->count()
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Vérification de cohérence réussie.',
+                'checkpoints_verifies' => $checkpointsSoumission->count()
+            ];
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de la vérification de cohérence', [
+                'projet_id' => $projet->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Erreur lors de la vérification de cohérence: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Vérifier que tous les checkpoints sont complétés avant validation
+     */
+    private function verifierCompletude(array $checklistSuiviValidation): array
+    {
+        try {
+            $checkpointsIncomplets = [];
+
+            foreach ($checklistSuiviValidation as $checkpoint) {
+                $checkpointId = $checkpoint['checkpoint_id'] ?? null;
+                $remarque = $checkpoint['remarque'] ?? null;
+                $explication = $checkpoint['explication'] ?? null;
+
+                if (!$checkpointId) {
+                    continue;
+                }
+
+                // Vérifier que le checkpoint a au moins une remarque OU une explication
+                if (empty($remarque) && empty($explication)) {
+                    $checkpointsIncomplets[] = [
+                        'checkpoint_id' => $checkpointId,
+                        'message' => "Le checkpoint {$checkpointId} doit avoir au moins une remarque ou une explication."
+                    ];
+                }
+            }
+
+            // S'il y a des checkpoints incomplets, empêcher la validation
+            if (!empty($checkpointsIncomplets)) {
+                \Log::warning('Tentative de validation avec checkpoints incomplets', [
+                    'nb_checkpoints_incomplets' => count($checkpointsIncomplets),
+                    'checkpoints_incomplets' => array_column($checkpointsIncomplets, 'checkpoint_id')
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => 'Impossible de valider le projet : ' . count($checkpointsIncomplets) . ' checkpoint(s) sont incomplets. Tous les checkpoints doivent avoir au moins une remarque ou une explication.',
+                    'checkpoints_incomplets' => $checkpointsIncomplets
+                ];
+            }
+
+            \Log::info('Tous les checkpoints sont complétés', [
+                'nb_checkpoints_verifies' => count($checklistSuiviValidation)
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Tous les checkpoints sont complétés.',
+                'nb_checkpoints_complets' => count($checklistSuiviValidation)
+            ];
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de la vérification de complétude des checkpoints', [
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Erreur lors de la vérification de complétude: ' . $e->getMessage()
+            ];
         }
     }
 }

@@ -51,7 +51,7 @@ class GroupeUtilisateurController extends Controller
      */
     public function assignRoles(AssignRolesRequest $request, $id): JsonResponse
     {
-        return $this->service->assignRoles($id, $request->validated()['roles']);
+        return $this->service->assignRoles($id, $request->all()['roles']);
     }
 
     /**
@@ -67,7 +67,7 @@ class GroupeUtilisateurController extends Controller
      */
     public function assignPermissions(AssignRolesRequest $request, $id): JsonResponse
     {
-        return $this->service->assignPermissions($id, $request->validated()['permissions']);
+        return $this->service->assignPermissions($id, $request->all()['permissions']);
     }
 
     /**
@@ -83,7 +83,7 @@ class GroupeUtilisateurController extends Controller
      */
     public function addUsers(AddUsersRequest $request, $id): JsonResponse
     {
-        return $this->service->addUsers($id, $request->validated()['users']);
+        return $this->service->addUsers($id, $request->all()['users']);
     }
 
     /**
@@ -115,6 +115,6 @@ class GroupeUtilisateurController extends Controller
      */
     public function createUserInGroup(CreateUserInGroupRequest $request, $id): JsonResponse
     {
-        return $this->service->createUserInGroup($id, $request->validated());
+        return $this->service->createUserInGroup($id, $request->all());
     }
 }

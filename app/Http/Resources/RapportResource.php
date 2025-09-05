@@ -32,23 +32,41 @@ class RapportResource extends BaseApiResource
             'decision' => $this->decision,
 
             // Relations
+            /*
+            'projet' => $this->whenLoaded('projet', function() {
+                $projetResource = new ProjetsResource($this->projet);
+                // Ajouter les checklists de mesures d'adaptation si projet à haut risque
+                if ($this->projet->est_a_haut_risque) {
+                    $projetResource->additional([
+                        'checklist_mesures_adaptation' => $this->projet->metadata['checklist_controle_adaptation_haut_risque'] ?? null
+                    ]);
+                }
+                return $projetResource;
+            }),
+            */
             'projet' => $this->whenLoaded('projet', new ProjetsResource($this->projet)),
             'soumis_par' => $this->whenLoaded('soumisPar', new UserResource($this->soumisPar)),
-            'rediger_par' => $this->whenLoaded('redigerPar', new UserResource($this->redigerPar)),
-            'validateur' => $this->whenLoaded('validateur', new UserResource($this->validateur)),
+            'validateur' => $this->whenLoaded('validateur', new UserResource($this->validateur)),/*
             'parent' => $this->whenLoaded('parent', new self($this->parent)),
-            'enfants' => $this->whenLoaded('enfants', self::collection($this->enfants)),
+            'enfants' => $this->whenLoaded('enfants', self::collection($this->enfants)), */
+
+            // Checklists de mesures d'adaptation (si projet à haut risque)
+            'checklist_mesures_adaptation' => $this->whenLoaded('projet', function() {
+                return $this->projet->est_a_haut_risque ?
+                    ($this->projet->mesures_adaptation ?? null) :
+                    null;
+            }),
 
             // Fichiers par type
-            'fichiers_rapport' => $this->whenLoaded('fichiers', function() {
+            'fichiers_rapport' => $this->whenLoaded('fichiersRapport', function() {
                 return FichierResource::collection($this->fichiersRapport);
             }),
 
-            'proces_verbaux' => $this->whenLoaded('fichiers', function() {
+            'proces_verbaux' => $this->whenLoaded('procesVerbaux', function() {
                 return FichierResource::collection($this->procesVerbaux);
             }),
 
-            'documents_annexes' => $this->whenLoaded('fichiers', function() {
+            'documents_annexes' => $this->whenLoaded('documentsAnnexes', function() {
                 return FichierResource::collection($this->documentsAnnexes);
             }),
 
@@ -59,11 +77,6 @@ class RapportResource extends BaseApiResource
             // Commentaires
             'commentaires' => $this->whenLoaded('commentaires', function() {
                 return CommentaireResource::collection($this->commentaires);
-            }),
-
-            // Champs de la checklist
-            'champs' => $this->whenLoaded('champs', function() {
-                return ChampResource::collection($this->champs);
             }),
 
             // Informations métadonnées

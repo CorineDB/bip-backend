@@ -356,7 +356,7 @@ class CategorieCritereController extends Controller
      */
     public function createOrUpdateChecklistMesuresAdaptation(CreateOrUpdateChecklistRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateChecklistMesuresAdaptation($request->validated());
+        return $this->service->createOrUpdateChecklistMesuresAdaptation($request->all());
     }
 
 }

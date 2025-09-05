@@ -28,7 +28,7 @@ class ProjetsResource extends BaseApiResource
             'titre_projet' => $this->titre_projet,
             'porteur_projet' => $this->porteur_projet,
             'est_a_haut_risque' => $this->est_a_haut_risque,
-            'est_dure' => $this->est_dure,
+            'est_dur' => $this->est_dur,
             'est_ancien' => $this->est_ancien,
 
             // Statuts et phases

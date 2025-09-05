@@ -94,7 +94,8 @@ class Projet extends Model
         'info_cabinet_etude_prefaisabilite',
         'info_cabinet_etude_faisabilite',
         'est_a_haut_risque',
-        'est_dur'
+        'est_dur',
+        'mesures_adaptation'
     ];
 
     /**
@@ -119,6 +120,7 @@ class Projet extends Model
         'info_cabinet_etude_prefaisabilite' => 'array',
         'info_cabinet_etude_faisabilite' => 'array',
         'body_projet' => 'array',
+        'mesures_adaptation' => 'array',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
