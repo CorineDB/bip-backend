@@ -107,6 +107,11 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
     public function create(array $data): JsonResponse
     {
         try {
+
+            if (!auth()->user()->hasPermissionTo('creer-une-idee-de-projet') && !in_array(auth()->user()->profilable_type, [Dpaf::class, Organisation::class]) && !auth()->user()->profilable->ministere) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             DB::beginTransaction();
 
             $champsData = $data['champs'] ?? [];
@@ -928,7 +933,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             $idee = $this->repository->findOrFail($id);
 
-            if (auth()->user()->profilable->ministere->id !== $idee->ministere->id && auth()->user()->id != $idee->responsable?->id) {
+            if (!auth()->user()->hasPermissionTo('modifier-une-idee-de-projet') && auth()->user()->profilable->ministere->id !== $idee->ministere->id && auth()->user()->id != $idee->responsable?->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
