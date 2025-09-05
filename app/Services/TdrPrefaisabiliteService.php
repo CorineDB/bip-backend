@@ -1886,6 +1886,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             'commentaire' => $data['commentaire_rapport'] ?? null,
             'categorie' => 'rapport',
             'is_active' => true,
+            'uploaded_by' => auth()->id(),
             'metadata' => [
                 'type_document' => 'rapport-prefaisabilite',
                 'rapport_id' => $rapport->id,
@@ -1943,6 +1944,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             'commentaire' => $data['commentaire_proces_verbal'] ?? null,
             'categorie' => 'proces-verbal',
             'is_active' => true,
+            'uploaded_by' => auth()->id(),
             'metadata' => [
                 'type_document' => 'proces-verbal-prefaisabilite',
                 'rapport_id' => $rapport->id,
