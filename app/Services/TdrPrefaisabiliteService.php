@@ -1867,21 +1867,36 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             ->where('is_active', true)
             ->update(['is_active' => false]);
 
+        // Stocker le fichier sur le disque
+        $nomOriginal = $fichier->getClientOriginalName();
+        $extension = $fichier->getClientOriginalExtension();
+        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
+        $chemin = $fichier->storeAs('rapports/prefaisabilite', $nomStockage, 'public');
+
         // Créer le nouveau fichier et l'associer au rapport
-        $fichierCree = $this->fichierService->uploadAndStore(
-            $fichier,
-            'rapports/prefaisabilite',
-            'rapport',
-            [
+        $fichierCree = Fichier::create([
+            'nom_original' => $nomOriginal,
+            'nom_stockage' => $nomStockage,
+            'chemin' => $chemin,
+            'extension' => $extension,
+            'mime_type' => $fichier->getMimeType(),
+            'taille' => $fichier->getSize(),
+            'hash_md5' => $nouveauHash,
+            'description' => 'Rapport de préfaisabilité',
+            'commentaire' => $data['commentaire_rapport'] ?? null,
+            'categorie' => 'rapport',
+            'is_active' => true,
+            'metadata' => [
+                'type_document' => 'rapport-prefaisabilite',
+                'rapport_id' => $rapport->id,
                 'projet_id' => $rapport->projet_id,
-                'uploaded_by' => auth()->id(),
-                'hash_md5' => $nouveauHash,
-                'is_active' => true,
-                'commentaire' => $data['commentaire_rapport'] ?? null,
-                'fichier_attachable_type' => Rapport::class,
-                'fichier_attachable_id' => $rapport->id
-            ]
-        );
+                'statut' => 'actif',
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now()
+            ],
+            'fichier_attachable_type' => Rapport::class,
+            'fichier_attachable_id' => $rapport->id
+        ]);
 
         return $fichierCree;
     }
@@ -1909,21 +1924,36 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             ->where('is_active', true)
             ->update(['is_active' => false]);
 
+        // Stocker le fichier sur le disque
+        $nomOriginal = $fichier->getClientOriginalName();
+        $extension = $fichier->getClientOriginalExtension();
+        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
+        $chemin = $fichier->storeAs('rapports/prefaisabilite/pv', $nomStockage, 'public');
+
         // Créer le nouveau fichier et l'associer au rapport
-        $fichierCree = $this->fichierService->uploadAndStore(
-            $fichier,
-            'rapports/prefaisabilite/pv',
-            'proces-verbal',
-            [
+        $fichierCree = Fichier::create([
+            'nom_original' => $nomOriginal,
+            'nom_stockage' => $nomStockage,
+            'chemin' => $chemin,
+            'extension' => $extension,
+            'mime_type' => $fichier->getMimeType(),
+            'taille' => $fichier->getSize(),
+            'hash_md5' => $nouveauHash,
+            'description' => 'Procès-verbal de préfaisabilité',
+            'commentaire' => $data['commentaire_proces_verbal'] ?? null,
+            'categorie' => 'proces-verbal',
+            'is_active' => true,
+            'metadata' => [
+                'type_document' => 'proces-verbal-prefaisabilite',
+                'rapport_id' => $rapport->id,
                 'projet_id' => $rapport->projet_id,
-                'uploaded_by' => auth()->id(),
-                'hash_md5' => $nouveauHash,
-                'is_active' => true,
-                'commentaire' => $data['commentaire_proces_verbal'] ?? null,
-                'fichier_attachable_type' => Rapport::class,
-                'fichier_attachable_id' => $rapport->id
-            ]
-        );
+                'statut' => 'actif',
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now()
+            ],
+            'fichier_attachable_type' => Rapport::class,
+            'fichier_attachable_id' => $rapport->id
+        ]);
 
         return $fichierCree;
     }
