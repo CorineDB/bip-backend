@@ -312,7 +312,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasAppreciationTdr']);
         });
 
-        Route::prefix('canevas-appreciation-tdr-prefaisabilite')->group(function () {
+        Route::prefix('canevas-appreciation-tdrs-prefaisabilite')->group(function () {
             Route::get('', [DocumentController::class, 'canevasAppreciationTdrPrefaisabilite']);
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasAppreciationTdrPrefaisabilite']);
         });

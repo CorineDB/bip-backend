@@ -18,7 +18,7 @@ class CreateOrUpdateCanevasAppreciationTdrPrefaisabiliteRequest extends FormRequ
     public function prepareForValidation()
     {
         $this->canevas_appreciation_tdr_prefaisabilite = Document::whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-appreciation-tdr-prefaisabilite');
+            $query->where('slug', 'canevas-appreciation-tdrs-prefaisabilite');
         })
         ->where('type', 'checklist')
         ->orderBy('created_at', 'desc')
@@ -132,7 +132,7 @@ class CreateOrUpdateCanevasAppreciationTdrPrefaisabiliteRequest extends FormRequ
                 function ($attribute, $value, $fail) {
                     $exists = Document::where('nom', $value)
                         ->whereHas('categorie', function ($query) {
-                            $query->where('slug', 'canevas-appreciation-tdr-prefaisabilite');
+                            $query->where('slug', 'canevas-appreciation-tdrs-prefaisabilite');
                         })->when($this->canevas_appreciation_tdr_prefaisabilite, function($query){
                             $query->where("id","<>", $this->canevas_appreciation_tdr_prefaisabilite->id);
                         })->exists();
