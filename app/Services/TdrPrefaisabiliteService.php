@@ -2325,9 +2325,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $fichierCree = null;
 
             if ($categorie === 'rapport') {
-                $fichierCree = $this->gererFichierRapport($rapport->projet, $fichier, []);
+                $fichierCree = $this->gererFichierRapport($rapport, $fichier, []);
             } elseif ($categorie === 'proces-verbal') {
-                $fichierCree = $this->gererFichierProcesVerbal($rapport->projet, $fichier, []);
+                $fichierCree = $this->gererFichierProcesVerbal($rapport, $fichier, []);
             }
 
             // Associer le fichier créé au rapport si il a été créé avec succès

@@ -12,6 +12,7 @@ use App\Repositories\Contracts\NoteConceptuelleRepositoryInterface;
 use App\Repositories\Contracts\ProjetRepositoryInterface;
 use App\Repositories\Contracts\EvaluationRepositoryInterface;
 use App\Services\Contracts\NoteConceptuelleServiceInterface;
+use App\Repositories\Contracts\FichierRepositoryInterface;
 use App\Enums\StatutEvaluationNoteConceptuelle;
 use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
@@ -34,18 +35,21 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     protected DocumentRepositoryInterface $documentRepository;
     protected ProjetRepositoryInterface $projetRepository;
     protected EvaluationRepositoryInterface $evaluationRepository;
+    protected FichierRepositoryInterface $fichierRepository;
 
     public function __construct(
         NoteConceptuelleRepositoryInterface $repository,
         DocumentRepositoryInterface $documentRepository,
         ProjetRepositoryInterface $projetRepository,
-        EvaluationRepositoryInterface $evaluationRepository
+        EvaluationRepositoryInterface $evaluationRepository,
+        FichierRepositoryInterface $fichierRepository
     ) {
         parent::__construct($repository);
 
         $this->documentRepository = $documentRepository;
         $this->projetRepository = $projetRepository;
         $this->evaluationRepository = $evaluationRepository;
+        $this->fichierRepository = $fichierRepository;
     }
 
     protected function getResourceClass(): string
@@ -155,9 +159,9 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $this->saveDynamicFieldsFromCanevas($noteConceptuelle, $champsData, $canevasNoteConceptuelle);
             }
 
-            // Gérer les documents/fichiers
+            // Gérer les documents/fichiers avec FichierRepository
             if (!empty($documentsData)) {
-                $this->handleDocuments($noteConceptuelle, $documentsData);
+                $this->handleDocumentsWithFichierRepository($noteConceptuelle, $documentsData);
             }
 
             $noteConceptuelle->note_conceptuelle = $noteConceptuelle->champs->map(function ($champ) {
@@ -1846,6 +1850,86 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     }
 
     /**
+     * Gérer les documents/fichiers associés à la note conceptuelle avec FichierRepository
+     */
+    private function handleDocumentsWithFichierRepository(NoteConceptuelle $noteConceptuelle, array $documentsData): void
+    {
+        foreach ($documentsData as $category => $files) {
+            if (is_array($files)) {
+                // Pour les documents multiples (ex: autres)
+                foreach ($files as $file) {
+                    if ($file) {
+                        $this->storeDocumentWithFichierRepository($noteConceptuelle, $file, $category);
+                    }
+                }
+            } else {
+                // Pour un seul document
+                if ($files) {
+                    $this->storeDocumentWithFichierRepository($noteConceptuelle, $files, $category);
+                }
+            }
+        }
+    }
+
+    /**
+     * Stocker un document/fichier avec FichierRepository
+     */
+    private function storeDocumentWithFichierRepository(NoteConceptuelle $noteConceptuelle, $file, string $category): void
+    {
+        // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_profil/note_conceptuelle/{hash_id}
+        $hashedProjectId = hash('sha256', $noteConceptuelle->projetId);
+        $hashedNoteId = hash('sha256', $noteConceptuelle->id);
+
+        // Générer un nom unique pour le fichier
+        $originalName = $file->getClientOriginalName();
+        $extension = $file->getClientOriginalExtension();
+        $storageName = $this->generateStorageName($category, $noteConceptuelle->id, $extension);
+
+        // Stocker le fichier selon la nouvelle structure
+        $storedPath = $file->storeAs(
+            "projets/{$hashedProjectId}/etude_de_profil/note_conceptuelle/{$hashedNoteId}",
+            $storageName,
+            'local'
+        );
+
+        // Générer le hash d'accès public
+        $hashAcces = $this->generateFileAccessHash($noteConceptuelle->id, $storageName, $category);
+
+        // Préparer les données pour FichierRepository
+        $fichierData = [
+            'nom_original' => $originalName,
+            'nom_stockage' => $storageName,
+            'chemin' => $storedPath,
+            'extension' => $extension,
+            'mime_type' => $file->getMimeType(),
+            'taille' => $file->getSize(),
+            'hash_md5' => md5_file($file->getRealPath()),
+            'hash_acces' => $hashAcces,
+            'description' => $this->getDescriptionByCategory($category),
+            'commentaire' => null,
+            'metadata' => [
+                'type_document' => 'note-conceptuelle-' . str_replace('_', '-', $category),
+                'note_conceptuelle_id' => $noteConceptuelle->id,
+                'projet_id' => $noteConceptuelle->projetId,
+                'categorie_originale' => $category,
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now(),
+                'folder_structure' => "projets/{$hashedProjectId}/etude_de_profil/note_conceptuelle/{$hashedNoteId}"
+            ],
+            'fichier_attachable_id' => $noteConceptuelle->id,
+            'fichier_attachable_type' => NoteConceptuelle::class,
+            'categorie' => $category,
+            'ordre' => $this->getOrderByCategory($category),
+            'uploaded_by' => auth()->id(),
+            'is_public' => false,
+            'is_active' => true
+        ];
+
+        // Utiliser FichierRepository pour créer le fichier
+        $this->fichierRepository->create($fichierData);
+    }
+
+    /**
      * Gérer les documents/fichiers associés à la note conceptuelle
      */
     private function handleDocuments(NoteConceptuelle $noteConceptuelle, array $documentsData): void
@@ -1877,11 +1961,22 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         $extension = $file->getClientOriginalExtension();
         $storageName = $this->generateStorageName($category, $noteConceptuelle->id, $extension);
 
-        // Stocker le fichier
-        $storedPath = $file->storeAs('notes_conceptuelles/' . $noteConceptuelle->id, $storageName, 'public');
+        // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_profil/note_conceptuelle/{hash_id}
+        $hashedProjectId = hash('sha256', $noteConceptuelle->projetId);
+        $hashedNoteId = hash('sha256', $noteConceptuelle->id);
+
+        // Stocker le fichier selon la nouvelle structure
+        $storedPath = $file->storeAs(
+            "projets/{$hashedProjectId}/etude_de_profil/note_conceptuelle/{$hashedNoteId}",
+            $storageName,
+            'local'
+        );
 
         // Déterminer la description selon la catégorie
         $description = $this->getDescriptionByCategory($category);
+
+        // Générer le hash d'accès public
+        $hashAcces = $this->generateFileAccessHash($noteConceptuelle->id, $storageName, $category);
 
         // Créer l'entrée dans la table fichiers
         $noteConceptuelle->fichiers()->create([
@@ -1892,6 +1987,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             'mime_type' => $file->getMimeType(),
             'taille' => $file->getSize(),
             'hash_md5' => md5_file($file->getRealPath()),
+            'hash_acces' => $hashAcces,
             'description' => $description,
             'commentaire' => null,
             'metadata' => [
@@ -1900,7 +1996,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'projet_id' => $noteConceptuelle->projetId,
                 'categorie_originale' => $category,
                 'soumis_par' => auth()->id(),
-                'soumis_le' => now()
+                'soumis_le' => now(),
+                'folder_structure' => "projets/{$hashedProjectId}/etude_de_profil/note_conceptuelle/{$hashedNoteId}"
             ],
             'fichier_attachable_id' => $noteConceptuelle->id,
             'fichier_attachable_type' => NoteConceptuelle::class,
@@ -1919,19 +2016,22 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         $extension = $file->getClientOriginalExtension();
         $storageName = $this->generateStorageName($category, $noteConceptuelle->id, $extension);
 
-        // Hasher les IDs pour le chemin
+        // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_profil/note_conceptuelle/{hash_id}
         $hashedProjectId = hash('sha256', $noteConceptuelle->projetId);
         $hashedNoteId = hash('sha256', $noteConceptuelle->id);
 
-        // Stocker le fichier dans un disque local sécurisé
+        // Stocker le fichier selon la nouvelle structure
         $storedPath = $file->storeAs(
-            "projets/{$hashedProjectId}/notes_conceptuelles/{$hashedNoteId}",
+            "projets/{$hashedProjectId}/etude_de_profil/note_conceptuelle/{$hashedNoteId}",
             $storageName,
             'local' // disque local sécurisé
         );
 
         // Déterminer la description selon la catégorie
         $description = $this->getDescriptionByCategory($category);
+
+        // Générer le hash d'accès public
+        $hashAcces = $this->generateFileAccessHash($noteConceptuelle->id, $storageName, $category);
 
         // Créer l'entrée dans la table fichiers
         $noteConceptuelle->fichiers()->create([
@@ -1942,6 +2042,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             'mime_type' => $file->getMimeType(),
             'taille' => $file->getSize(),
             'hash_md5' => md5_file($file->getRealPath()),
+            'hash_acces' => $hashAcces,
             'description' => $description,
             'commentaire' => null,
             'metadata' => [
@@ -1950,7 +2051,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'projet_id' => $noteConceptuelle->projetId,
                 'categorie_originale' => $category,
                 'soumis_par' => auth()->id(),
-                'soumis_le' => now()
+                'soumis_le' => now(),
+                'folder_structure' => "projets/{$hashedProjectId}/etude_de_profil/note_conceptuelle/{$hashedNoteId}"
             ],
             'fichier_attachable_id' => $noteConceptuelle->id,
             'fichier_attachable_type' => NoteConceptuelle::class,
@@ -2019,7 +2121,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             'timestamp' => time(),
             'salt' => config('app.key', 'default_salt')
         ];
-        
+
         return hash('sha256', json_encode($data));
     }
 }
