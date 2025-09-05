@@ -1462,7 +1462,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
 
                 // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
-                // $this->cleanupRemovedElements($canevas, $payloadIds);
+                $this->cleanupRemovedElements($canevas, $payloadIds);
 
                 DB::commit();
 
@@ -2192,6 +2192,15 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 if (isset($data['options_notation'])) {
                     // Mettre à jour les options de notation
                     $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                if (isset($data['accept_text'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['accept_text'] = $data['accept_text'];
 
                     // Sauvegarder la configuration
                     $canevas->update(['evaluation_configs' => $evaluationConfigs]);
