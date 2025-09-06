@@ -12,7 +12,6 @@ use App\Services\Contracts\CategorieCritereServiceInterface;
 use App\Http\Resources\CategorieCritereResource;
 use App\Http\Resources\ChecklistMesuresAdaptationResource;
 use App\Http\Resources\ChecklistMesuresAdaptationSecteurResource;
-use App\Http\Resources\SecteurResource;
 use App\Models\Secteur;
 use App\Models\Critere;
 use App\Models\Notation;
@@ -511,9 +510,23 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             // Vérifier que le secteur existe et n'est pas un grand secteur
             $secteur = Secteur::whereIn('type', ['secteur', 'sous-secteur'])->findOrFail($idSecteur);
 
-            // Récupérer le secteur principal pour le filtrage
-            $secteurPrincipal = $secteur->getSecteurPrincipal();
-            $secteurIdPourFiltrage = $secteurPrincipal ? $secteurPrincipal->id : $idSecteur;
+            // Déterminer l'ID du secteur à utiliser pour le filtrage
+            $secteurIdPourFiltrage = $idSecteur;
+
+            // Si c'est un sous-secteur, remonter jusqu'au secteur principal
+            if ($secteur->type->value === 'sous-secteur') {
+                $secteurCourant = $secteur;
+
+                // Remonter dans la hiérarchie jusqu'à trouver un secteur de type 'secteur'
+                while ($secteurCourant && $secteurCourant->type->value === 'sous-secteur') {
+                    $secteurCourant = $secteurCourant->parent;
+                }
+
+                // Si on a trouvé un secteur principal, l'utiliser pour le filtrage
+                if ($secteurCourant && $secteurCourant->type->value === 'secteur') {
+                    $secteurIdPourFiltrage = $secteurCourant->id;
+                }
+            }
 
             $checklistCategorie = $this->repository->findByAttribute('slug', 'checklist-mesures-adaptation-haut-risque');
 
@@ -536,7 +549,12 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 'success' => true,
                 'message' => 'Checklist des mesures d\'adaptation récupérée avec succès pour le secteur "' . $secteur->nom . '".',
                 'data' => new ChecklistMesuresAdaptationSecteurResource($checklistCategorie),
-                'secteur' => new SecteurResource($secteur)
+                'secteur' => [
+                    'id' => $secteur->id,
+                    'nom' => $secteur->nom,
+                    'type' => $secteur->type->value,
+                    'parent' => $secteur->parent->nom
+                ]
             ]);
         } catch (Exception $e) {
             return $this->errorResponse($e);
