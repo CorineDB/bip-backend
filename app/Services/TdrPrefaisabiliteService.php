@@ -549,7 +549,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape d\'évaluation des TDRs.'
                 ], 422);
-            } */
+            }
 
             // Vérifier qu'il y a un TDR soumis
             $tdr = $this->tdrRepository->getModel()

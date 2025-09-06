@@ -2466,100 +2466,198 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                         "description" => "Investissements",
 
                         "elements" => [
-                            "element_type" => "field",
-                            "ordre_affichage" => 1,
-                            "label" => "Evaluation des coûts du projet",
-                            "attribut" => "evaluation_couts_projet",
-                            "type_champ" => "radio",
-                            "placeholder" => "Evaluation des coûts du projet",
-                            "is_required" => true,
-                            "default_value" => null,
-                            "isEvaluated" => true,
-                            "meta_options" => [
-                                "configs" => [
-                                    "options" => [
-                                        [
-                                            "label" => "Disponible",
-                                            "value" => "disponible"
+                            [
+                                "element_type" => "field",
+                                "ordre_affichage" => 1,
+                                "label" => "Evaluation des coûts du projet",
+                                "attribut" => "evaluation_couts_projet",
+                                "type_champ" => "radio",
+                                "placeholder" => "Evaluation des coûts du projet",
+                                "is_required" => true,
+                                "default_value" => null,
+                                "isEvaluated" => true,
+                                "meta_options" => [
+                                    "configs" => [
+                                        "options" => [
+                                            [
+                                                "label" => "Disponible",
+                                                "value" => "disponible"
+                                            ],
+                                            [
+                                                "label" => "Pas encore disponibles",
+                                                "value" => "pas-encore-disponibles"
+                                            ]
                                         ],
-                                        [
-                                            "label" => "Pas encore disponibles",
-                                            "value" => "pas-encore-disponibles"
-                                        ]
+                                        "show_explanation" => true,
+                                        "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                        "explanation_min_length" => 50
                                     ],
-                                    "show_explanation" => true,
-                                    "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                    "explanation_min_length" => 50
-                                ],
-                                "conditions" => [
-                                    "disable" => false,
-                                    "visible" => true,
-                                    "conditions" => []
-                                ],
-                                "validations_rules" => [
-                                    "in" => [
-                                        "disponible",
-                                        "pas-encore-disponibles"
+                                    "conditions" => [
+                                        "disable" => false,
+                                        "visible" => true,
+                                        "conditions" => []
                                     ],
-                                    "string" => true,
-                                    "required" => true,
-                                    "explanation_validation" => [
-                                        "min" => 50,
-                                        "string" => true,
-                                        "required" => false
-                                    ]
-                                ]
-                            ],
-                            "champ_standard" => true,
-                            "startWithNewLine" => false
-                        ],
-                        [
-                            "element_type" => "field",
-                            "ordre_affichage" => 2,
-                            "label" => "Étalement des investissements dans le temps : calendrier des dépenses",
-                            "attribut" => "etalement_investissements",
-                            "type_champ" => "radio",
-                            "placeholder" => "Étalement des investissements dans le temps : calendrier des dépenses",
-                            "is_required" => true,
-                            "default_value" => null,
-                            "isEvaluated" => true,
-                            "meta_options" => [
-                                "configs" => [
-                                    "options" => [
-                                        [
-                                            "label" => "Disponible",
-                                            "value" => "disponible"
+                                    "validations_rules" => [
+                                        "in" => [
+                                            "disponible",
+                                            "pas-encore-disponibles"
                                         ],
-                                        [
-                                            "label" => "Pas encore disponibles",
-                                            "value" => "pas-encore-disponibles"
-                                        ]
-                                    ],
-                                    "show_explanation" => true,
-                                    "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                    "explanation_min_length" => 50
-                                ],
-                                "conditions" => [
-                                    "disable" => false,
-                                    "visible" => true,
-                                    "conditions" => []
-                                ],
-                                "validations_rules" => [
-                                    "in" => [
-                                        "disponible",
-                                        "pas-encore-disponibles"
-                                    ],
-                                    "string" => true,
-                                    "required" => true,
-                                    "explanation_validation" => [
-                                        "min" => 50,
                                         "string" => true,
-                                        "required" => false
+                                        "required" => true,
+                                        "explanation_validation" => [
+                                            "min" => 50,
+                                            "string" => true,
+                                            "required" => false
+                                        ]
                                     ]
-                                ]
+                                ],
+                                "champ_standard" => true,
+                                "startWithNewLine" => false
                             ],
-                            "champ_standard" => true,
-                            "startWithNewLine" => false
+                            [
+                                "element_type" => "field",
+                                "ordre_affichage" => 2,
+                                "label" => "Étalement des investissements dans le temps : calendrier des dépenses",
+                                "attribut" => "etalement_investissements",
+                                "type_champ" => "radio",
+                                "placeholder" => "Étalement des investissements dans le temps : calendrier des dépenses",
+                                "is_required" => true,
+                                "default_value" => null,
+                                "isEvaluated" => true,
+                                "meta_options" => [
+                                    "configs" => [
+                                        "options" => [
+                                            [
+                                                "label" => "Disponible",
+                                                "value" => "disponible"
+                                            ],
+                                            [
+                                                "label" => "Pas encore disponibles",
+                                                "value" => "pas-encore-disponibles"
+                                            ]
+                                        ],
+                                        "show_explanation" => true,
+                                        "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                        "explanation_min_length" => 50
+                                    ],
+                                    "conditions" => [
+                                        "disable" => false,
+                                        "visible" => true,
+                                        "conditions" => []
+                                    ],
+                                    "validations_rules" => [
+                                        "in" => [
+                                            "disponible",
+                                            "pas-encore-disponibles"
+                                        ],
+                                        "string" => true,
+                                        "required" => true,
+                                        "explanation_validation" => [
+                                            "min" => 50,
+                                            "string" => true,
+                                            "required" => false
+                                        ]
+                                    ]
+                                ],
+                                "champ_standard" => true,
+                                "startWithNewLine" => false
+                            ],
+                            [
+                                "element_type" => "field",
+                                "ordre_affichage" => 3,
+                                "label" => "Incidence des incertitudes techniques sur les délais et les coûts",
+                                "attribut" => "incidence_incertitudes_techniques",
+                                "type_champ" => "radio",
+                                "placeholder" => "Incidence des incertitudes techniques sur les délais et les coûts",
+                                "is_required" => true,
+                                "default_value" => null,
+                                "isEvaluated" => true,
+                                "meta_options" => [
+                                    "configs" => [
+                                        "options" => [
+                                            [
+                                                "label" => "Disponible",
+                                                "value" => "disponible"
+                                            ],
+                                            [
+                                                "label" => "Pas encore disponibles",
+                                                "value" => "pas-encore-disponibles"
+                                            ]
+                                        ],
+                                        "show_explanation" => true,
+                                        "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                        "explanation_min_length" => 50
+                                    ],
+                                    "conditions" => [
+                                        "disable" => false,
+                                        "visible" => true,
+                                        "conditions" => []
+                                    ],
+                                    "validations_rules" => [
+                                        "in" => [
+                                            "disponible",
+                                            "pas-encore-disponibles"
+                                        ],
+                                        "string" => true,
+                                        "required" => true,
+                                        "explanation_validation" => [
+                                            "min" => 50,
+                                            "string" => true,
+                                            "required" => false
+                                        ]
+                                    ]
+                                ],
+                                "champ_standard" => true,
+                                "startWithNewLine" => false
+                            ],
+                            [
+                                "element_type" => "field",
+                                "ordre_affichage" => 4,
+                                "label" => "Évaluation des amortissements techniques",
+                                "attribut" => "evaluation_amortissements_techniques",
+                                "type_champ" => "radio",
+                                "placeholder" => "Évaluation des amortissements techniques",
+                                "is_required" => true,
+                                "default_value" => null,
+                                "isEvaluated" => true,
+                                "meta_options" => [
+                                    "configs" => [
+                                        "options" => [
+                                            [
+                                                "label" => "Disponible",
+                                                "value" => "disponible"
+                                            ],
+                                            [
+                                                "label" => "Pas encore disponibles",
+                                                "value" => "pas-encore-disponibles"
+                                            ]
+                                        ],
+                                        "show_explanation" => true,
+                                        "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                        "explanation_min_length" => 50
+                                    ],
+                                    "conditions" => [
+                                        "disable" => false,
+                                        "visible" => true,
+                                        "conditions" => []
+                                    ],
+                                    "validations_rules" => [
+                                        "in" => [
+                                            "disponible",
+                                            "pas-encore-disponibles"
+                                        ],
+                                        "string" => true,
+                                        "required" => true,
+                                        "explanation_validation" => [
+                                            "min" => 50,
+                                            "string" => true,
+                                            "required" => false
+                                        ]
+                                    ]
+                                ],
+                                "champ_standard" => true,
+                                "startWithNewLine" => false
+                            ]
                         ]
                     ]
                 ]
