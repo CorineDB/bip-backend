@@ -143,9 +143,9 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
                     }
                 }
             ],
-            'description' => 'nullable|string|max:65535',
+            'description' => 'nullable|string|max:65535',/*
             'type' => ['required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
-            'categorieId' => 'required|exists:categories_document,id',
+            'categorieId' => 'required|exists:categories_document,id', */
             // Forms array - structure flexible avec validation récursive
             'forms' => 'required|array|min:1',
             'forms.*' => 'required|array',

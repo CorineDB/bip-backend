@@ -2,14 +2,13 @@
 
 namespace App\Http\Requests\documents;
 
-use App\Enums\EnumTypeChamp;
 use App\Models\Document;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class CreateOrUpdateCanevasRedactionTdrFaisabiliteRequest extends FormRequest
+class CreateOrUpdateCanevasAppreciationTdrFaisabiliteRequest extends FormRequest
 {
-    private $canevas_appreciation_tdr = null;
+    private $canevas_appreciation_tdr_faisabilite = null;
 
     public function authorize(): bool
     {
@@ -18,10 +17,10 @@ class CreateOrUpdateCanevasRedactionTdrFaisabiliteRequest extends FormRequest
 
     public function prepareForValidation()
     {
-        $this->canevas_appreciation_tdr = Document::whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-tdr-faisabilite');
+        $this->canevas_appreciation_tdr_faisabilite = Document::whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-appreciation-tdrs-faisabilite');
         })
-        ->where('type', 'formulaire')
+        ->where('type', 'checklist')
         ->orderBy('created_at', 'desc')
         ->first();
     }
@@ -133,9 +132,9 @@ class CreateOrUpdateCanevasRedactionTdrFaisabiliteRequest extends FormRequest
                 function ($attribute, $value, $fail) {
                     $exists = Document::where('nom', $value)
                         ->whereHas('categorie', function ($query) {
-                            $query->where('slug', 'canevas-tdr-faisabilite');
-                        })->when($this->canevas_appreciation_tdr, function($query){
-                            $query->where("id","<>", $this->canevas_appreciation_tdr->id);
+                            $query->where('slug', 'canevas-appreciation-tdrs-faisabilite');
+                        })->when($this->canevas_appreciation_tdr_faisabilite, function($query){
+                            $query->where("id","<>", $this->canevas_appreciation_tdr_faisabilite->id);
                         })->exists();
 
                     if ($exists) {
@@ -143,12 +142,18 @@ class CreateOrUpdateCanevasRedactionTdrFaisabiliteRequest extends FormRequest
                     }
                 }
             ],
-            'description' => 'nullable|string|max:65535',
+            'description' => 'nullable|string|max:65535',/*
             'type' => ['required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
-            'categorieId' => 'required|exists:categories_document,id',
+            'categorieId'                       => 'required|exists:categories_document,id', */
+            'options_notation'                  => 'required|array|min:2',
+            'options_notation.*.libelle'        => 'required|string|max:255',
+            'options_notation.*.appreciation'   => 'required|string|max:255',
+            'options_notation.*.description'    => 'nullable|string|max:1000',
+            'accept_text'                       => 'required|string|min:10',
             // Forms array - structure flexible avec validation récursive
             'forms' => 'required|array|min:1',
             'forms.*' => 'required|array',
+            //'forms.*.startWithNewLine' => 'required|in:false,true'
         ];
     }
 
@@ -233,9 +238,9 @@ class CreateOrUpdateCanevasRedactionTdrFaisabiliteRequest extends FormRequest
     private function validateFieldElement($element, $path, $validator)
     {
         // Label obligatoire
-        if (!isset($element['label']) || !is_string($element['label']) || strlen($element['label']) > 255) {
+        if (!isset($element['label']) || !is_string($element['label']) || strlen($element['label']) > 500) {
             $validator->errors()->add("{$path}.label",
-                'Le libellé du champ est obligatoire et ne doit pas dépasser 255 caractères.');
+                'Le libellé du champ est obligatoire et ne doit pas dépasser 500 caractères.');
         }
 
         // L'attribut est déjà validé dans validateFormsStructure
@@ -335,7 +340,7 @@ class CreateOrUpdateCanevasRedactionTdrFaisabiliteRequest extends FormRequest
             // Messages pour les champs
             'forms.*.label.required_if' => 'Le libellé du champ est obligatoire.',
             'forms.*.label.string' => 'Le libellé du champ doit être une chaîne de caractères.',
-            'forms.*.label.max' => 'Le libellé du champ ne peut pas dépasser 255 caractères.',
+            'forms.*.label.max' => 'Le libellé du champ ne peut pas dépasser 500 caractères.',
             'forms.*.key.required' => 'La clé de l\'élément est obligatoire.',
             'forms.*.key.string' => 'La clé de l\'élément doit être une chaîne de caractères.',
             'forms.*.key.max' => 'La clé de l\'élément ne peut pas dépasser 255 caractères.',

@@ -13,7 +13,7 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
         "nom" => "Canevas d'appréciation des TDRs de préfaisabilité",
         "slug" => "canevas-appreciation-tdrs-prefaisabilite",
         "description" => "Canevas standardisé pour l'appréciation et l'évaluation des Termes de Référence de préfaisabilité",
-        "type" => "formulaire",
+        "type" => "checklist",
         "evaluation_configs" => [
             "guide_notation" => [
                 [
@@ -1751,7 +1751,7 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     'slug' => "canevas-appreciation-tdrs-prefaisabilite",
                     'nom' => "Canevas d'appréciation d'appreciation d'un TDR de préfaisabilité",
                     "description" => "Canevas standardisé pour l'évaluation et l'appréciation des Termes de Référence de préfaisabilité",
-                    "format" => "formulaire"
+                    "format" => "checklist"
                 ]);
             }
 

@@ -142,9 +142,9 @@ class CreateOrUpdateCanevasAppreciationTdrPrefaisabiliteRequest extends FormRequ
                     }
                 }
             ],
-            'description' => 'nullable|string|max:65535',
+            'description' => 'nullable|string|max:65535',/*
             'type' => ['required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
-            'categorieId'                       => 'required|exists:categories_document,id',
+            'categorieId'                       => 'required|exists:categories_document,id', */
             'options_notation'                  => 'required|array|min:2',
             'options_notation.*.libelle'        => 'required|string|max:255',
             'options_notation.*.appreciation'   => 'required|string|max:255',

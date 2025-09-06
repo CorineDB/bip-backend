@@ -828,9 +828,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 "format" => "checklist"
             ]);
             $data['categorieId'] = $categorieDocument->id;
+            $data["type"] = "checklist";
+            $data["slug"] = "canevas-check-liste-suivi-rapport-prefaisabilite";
 
             if ($canevas) {
-                unset($data["slug"]);
                 // Mode mise à jour intelligente
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
                 $canevas->fill($documentData);
@@ -870,7 +871,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     ->response()
                     ->setStatusCode(200);
             } else {
-                $data["slug"] = "canevas-check-liste-suivi-rapport-prefaisabilite";
+
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
@@ -2325,8 +2326,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             ]);
             $data['categorieId'] = $categorieDocument->id;
 
+            $data["type"] = "checklist";
+            $data["slug"] = "canevas-appreciation-tdrs-prefaisabilite";
+
             if ($canevas) {
-                unset($data["slug"]);
                 // Mode mise à jour intelligente
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
                 $canevas->fill($documentData);
@@ -2374,7 +2377,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     ->response()
                     ->setStatusCode(200);
             } else {
-                $data["slug"] = "canevas-appreciation-tdrs-prefaisabilite";
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
@@ -2449,9 +2451,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 'format' => 'document'
             ]);
             $data['categorieId'] = $categorieDocument->id;
+            $data["type"] = "checklist";
+            $data["slug"] = "canevas-appreciation-tdrs-faisabilite";
 
             if ($canevas) {
-                unset($data["slug"]);
                 // Mode mise à jour intelligente
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
                 $canevas->fill($documentData);
@@ -2499,7 +2502,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     ->response()
                     ->setStatusCode(200);
             } else {
-                $data["slug"] = "canevas-appreciation-tdrs-faisabilite";
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
