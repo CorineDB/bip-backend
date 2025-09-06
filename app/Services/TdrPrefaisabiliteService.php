@@ -341,7 +341,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable?->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -543,7 +543,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            /* // Vérifier que le projet est au bon statut
+            // Vérifier que le projet est au bon statut
             if (!in_array($projet->statut->value, [StatutIdee::EVALUATION_TDR_PF->value, StatutIdee::R_TDR_PREFAISABILITE->value])) {
                 return response()->json([
                     'success' => false,
@@ -566,12 +566,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
 
             // Vérifier que le TDR est soumis et peut être évalué
-            /* if (!$tdr->peutEtreEvalue()) {
+            if (!$tdr->peutEtreEvalue()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le TDR doit être soumis avant de pouvoir être évalué.'
                 ], 422);
-            } */
+            }
 
             $tdr->statut = "en_evaluation";
 
@@ -662,7 +662,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable?->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -1184,7 +1184,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable?->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -3101,7 +3101,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier les permissions d'accès
-            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== \App\Models\Dgpd::class) {
+            if (auth()->user()->profilable?->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== \App\Models\Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
             }
 
