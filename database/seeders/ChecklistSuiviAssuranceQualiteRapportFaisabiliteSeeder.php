@@ -2446,109 +2446,121 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                 ]
             ],
 
-            // Section 5: Conformité légale et réglementaire
+            // Section 5: COÛT DU PROJET
             [
                 "element_type" => "section",
                 "ordre_affichage" => 5,
-                "label" => "Conformité légale et réglementaire",
-                "attribut" => "section_conformite_legale_reglementaire",
-                "description" => "Respect du cadre légal et réglementaire applicable",
+                "label" => "COÛT DU PROJET",
+                "attribut" => "section_cout_projet",
+                "description" => "COÛT DU PROJET",
                 "elements" => [
                     [
-                        "element_type" => "field",
-                        "ordre_affichage" => 1,
-                        "label" => "Cadre législatif et réglementaire",
-                        "attribut" => "cadre_legislatif_reglementaire",
-                        "type_champ" => "radio",
-                        "placeholder" => "Le cadre législatif et réglementaire est-il analysé ?",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => true,
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [
-                                    [
-                                        "label" => "Disponible",
-                                        "value" => "disponible"
+
+                        // --- Sous-section Investissements ---
+                        "element_type" => "section",
+                        "ordre_affichage" => 7,
+
+                        "label" => "Investissements",
+                        "attribut" => "section_investissements",
+                        "key" => "section_investissements",
+                        "description" => "Investissements",
+
+                        "elements" => [
+                            "element_type" => "field",
+                            "ordre_affichage" => 1,
+                            "label" => "Evaluation des coûts du projet",
+                            "attribut" => "evaluation_couts_projet",
+                            "type_champ" => "radio",
+                            "placeholder" => "Evaluation des coûts du projet",
+                            "is_required" => true,
+                            "default_value" => null,
+                            "isEvaluated" => true,
+                            "meta_options" => [
+                                "configs" => [
+                                    "options" => [
+                                        [
+                                            "label" => "Disponible",
+                                            "value" => "disponible"
+                                        ],
+                                        [
+                                            "label" => "Pas encore disponibles",
+                                            "value" => "pas-encore-disponibles"
+                                        ]
                                     ],
-                                    [
-                                        "label" => "Pas encore disponibles",
-                                        "value" => "pas-encore-disponibles"
-                                    ]
+                                    "show_explanation" => true,
+                                    "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                    "explanation_min_length" => 50
                                 ],
-                                "show_explanation" => true,
-                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_min_length" => 50
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "in" => [
-                                    "disponible",
-                                    "pas-encore-disponibles"
+                                "conditions" => [
+                                    "disable" => false,
+                                    "visible" => true,
+                                    "conditions" => []
                                 ],
-                                "string" => true,
-                                "required" => true,
-                                "explanation_validation" => [
-                                    "min" => 50,
-                                    "string" => true,
-                                    "required" => false
-                                ]
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => false
-                    ],
-                    [
-                        "element_type" => "field",
-                        "ordre_affichage" => 2,
-                        "label" => "Conformité avec les accords internationaux",
-                        "attribut" => "conformite_accords_internationaux",
-                        "type_champ" => "radio",
-                        "placeholder" => "La conformité avec les accords internationaux est-elle analysée ?",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => true,
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [
-                                    [
-                                        "label" => "Disponible",
-                                        "value" => "disponible"
+                                "validations_rules" => [
+                                    "in" => [
+                                        "disponible",
+                                        "pas-encore-disponibles"
                                     ],
-                                    [
-                                        "label" => "Pas encore disponibles",
-                                        "value" => "pas-encore-disponibles"
-                                    ]
-                                ],
-                                "show_explanation" => true,
-                                "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
-                                "explanation_min_length" => 50
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "in" => [
-                                    "disponible",
-                                    "pas-encore-disponibles"
-                                ],
-                                "string" => true,
-                                "required" => true,
-                                "explanation_validation" => [
-                                    "min" => 50,
                                     "string" => true,
-                                    "required" => false
+                                    "required" => true,
+                                    "explanation_validation" => [
+                                        "min" => 50,
+                                        "string" => true,
+                                        "required" => false
+                                    ]
                                 ]
-                            ]
+                            ],
+                            "champ_standard" => true,
+                            "startWithNewLine" => false
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => false
+                        [
+                            "element_type" => "field",
+                            "ordre_affichage" => 2,
+                            "label" => "Étalement des investissements dans le temps : calendrier des dépenses",
+                            "attribut" => "etalement_investissements",
+                            "type_champ" => "radio",
+                            "placeholder" => "Étalement des investissements dans le temps : calendrier des dépenses",
+                            "is_required" => true,
+                            "default_value" => null,
+                            "isEvaluated" => true,
+                            "meta_options" => [
+                                "configs" => [
+                                    "options" => [
+                                        [
+                                            "label" => "Disponible",
+                                            "value" => "disponible"
+                                        ],
+                                        [
+                                            "label" => "Pas encore disponibles",
+                                            "value" => "pas-encore-disponibles"
+                                        ]
+                                    ],
+                                    "show_explanation" => true,
+                                    "explanation_placeholder" => "Fournissez des détails ou justifications (optionnel)",
+                                    "explanation_min_length" => 50
+                                ],
+                                "conditions" => [
+                                    "disable" => false,
+                                    "visible" => true,
+                                    "conditions" => []
+                                ],
+                                "validations_rules" => [
+                                    "in" => [
+                                        "disponible",
+                                        "pas-encore-disponibles"
+                                    ],
+                                    "string" => true,
+                                    "required" => true,
+                                    "explanation_validation" => [
+                                        "min" => 50,
+                                        "string" => true,
+                                        "required" => false
+                                    ]
+                                ]
+                            ],
+                            "champ_standard" => true,
+                            "startWithNewLine" => false
+                        ]
                     ]
                 ]
             ]
