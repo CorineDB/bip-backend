@@ -16,6 +16,7 @@ use App\Models\CategorieDocument;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Services\Contracts\DocumentServiceInterface;
 use App\Services\DocumentStructureService;
+use Illuminate\Support\Facades\Artisan;
 
 class DocumentService extends BaseService implements DocumentServiceInterface
 {
@@ -1711,9 +1712,17 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
 
             if (!$canevas) {
+                // Lancer le seeder si rien n’existe
+                Artisan::call('db:seed', [
+                    '--class' => 'Database\\Seeders\\ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder',
+                ]);
+
+                // Recharger après le seed
+                $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+
                 return response()->json([
                     'success' => false,
-                    'message' => "Aucun canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité."
+                    'message' => "Impossible de trouver ou créer le canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité."
                 ], 404);
             }
 
