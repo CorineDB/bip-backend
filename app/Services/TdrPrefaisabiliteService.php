@@ -543,13 +543,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            // Vérifier que le projet est au bon statut
+            /* // Vérifier que le projet est au bon statut
             if (!in_array($projet->statut->value, [StatutIdee::EVALUATION_TDR_PF->value, StatutIdee::R_TDR_PREFAISABILITE->value])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape d\'évaluation des TDRs.'
                 ], 422);
-            }
+            } */
 
             // Vérifier qu'il y a un TDR soumis
             $tdr = $this->tdrRepository->getModel()
