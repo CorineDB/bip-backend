@@ -12,6 +12,7 @@ use App\Services\Contracts\CategorieCritereServiceInterface;
 use App\Http\Resources\CategorieCritereResource;
 use App\Http\Resources\ChecklistMesuresAdaptationResource;
 use App\Http\Resources\ChecklistMesuresAdaptationSecteurResource;
+use App\Http\Resources\SecteurResource;
 use App\Models\Secteur;
 use App\Models\Critere;
 use App\Models\Notation;
@@ -513,18 +514,11 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             // Déterminer l'ID du secteur à utiliser pour le filtrage
             $secteurIdPourFiltrage = $idSecteur;
 
-            // Si c'est un sous-secteur, remonter jusqu'au secteur principal
+            // Si c'est un sous-secteur, récupérer son secteur parent pour le filtrage
             if ($secteur->type->value === 'sous-secteur') {
-                $secteurCourant = $secteur;
-
-                // Remonter dans la hiérarchie jusqu'à trouver un secteur de type 'secteur'
-                while ($secteurCourant && $secteurCourant->type->value === 'sous-secteur') {
-                    $secteurCourant = $secteurCourant->parent;
-                }
-
-                // Si on a trouvé un secteur principal, l'utiliser pour le filtrage
-                if ($secteurCourant && $secteurCourant->type->value === 'secteur') {
-                    $secteurIdPourFiltrage = $secteurCourant->id;
+                $secteurParent = $secteur->parent;
+                if ($secteurParent) {
+                    $secteurIdPourFiltrage = $secteurParent->id;
                 }
             }
 
@@ -549,12 +543,11 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 'success' => true,
                 'message' => 'Checklist des mesures d\'adaptation récupérée avec succès pour le secteur "' . $secteur->nom . '".',
                 'data' => new ChecklistMesuresAdaptationSecteurResource($checklistCategorie),
-                'secteur' => [
+                'secteur' => new SecteurResource($secteur)/* [
                     'id' => $secteur->id,
                     'nom' => $secteur->nom,
-                    'type' => $secteur->type->value,
-                    'parent' => $secteur->parent->nom
-                ]
+                    'type' => $secteur->type->value
+                ] */
             ]);
         } catch (Exception $e) {
             return $this->errorResponse($e);
