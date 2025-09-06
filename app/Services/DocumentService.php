@@ -210,7 +210,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
             if ($sectionId) {
                 // Mettre à jour section existante
-                $section = $document->sections()->find($sectionId);
+                $section = $document->all_sections()->find($sectionId);
                 if ($section) {
                     $section->fill($sectionAttributes);
                     $section->save();
@@ -696,6 +696,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         if ($element['element_type'] === 'field') {
             $this->createOrUpdateField($document, $element, $parentSection);
         } elseif ($element['element_type'] === 'section') {
+
             $section = $this->createOrUpdateSection($document, $element, $parentSection);
 
             // Traiter récursivement les éléments enfants
@@ -753,13 +754,14 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             'description' => $sectionData['description'] ?? '',
             'ordre_affichage' => $sectionData['ordre_affichage'],
             'type' => $sectionData['type'] ?? 'formulaire',
-            'slug' => $sectionData['key'] ?? \Illuminate\Support\Str::slug($sectionData['intitule']),
+            'slug' => $sectionData['key'] /* ?? \Illuminate\Support\Str::slug($sectionData['intitule']) */,
             'parentSectionId' => $parentSection ? $parentSection->id : null
         ];
 
         if (isset($sectionData['id']) && $sectionData['id']) {
             // Mise à jour d'une section existante
-            $section = $document->sections()->find($sectionData['id']);
+            $section = $document->all_sections()->find($sectionData['id']);
+
             if ($section) {
                 $section->update($sectionAttributes);
                 return $section;
@@ -768,6 +770,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 return $document->sections()->create($sectionAttributes);
             }
         } else {
+
             // Création d'une nouvelle section
             $newSection = $document->sections()->create($sectionAttributes);
             \Log::info('Nouvelle section créée', ['section_id' => $newSection->id, 'intitule' => $sectionAttributes['intitule']]);
@@ -807,9 +810,9 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             }
 
             return (new CanevasAppreciationTdrResource($canevas))
-                        ->additional(['message' => 'Canevas de la check liste de suivi de rapport de préfaisabilité récupéré avec succès.'])
-                        ->response()
-                        ->setStatusCode(200);
+                ->additional(['message' => 'Canevas de la check liste de suivi de rapport de préfaisabilité récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -1059,9 +1062,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             ]);
 
             $data['categorieId'] = $categorieDocument->id;
+            $data["type"] = "checklist";
+            $data["slug"] = "canevas-check-liste-etude-faisabilite-marche";
 
             if ($canevas) {
-                unset($data["slug"]);
                 // Mode mise à jour intelligente
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
                 $canevas->fill($documentData);
@@ -1071,10 +1075,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Récupérer la configuration existante ou créer une nouvelle
                 $evaluationConfigs = $canevas->evaluation_configs ?? [];
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_suivi'])) {
 
                     // Mettre à jour les options de notation
-                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+                    $evaluationConfigs['guide_suivi'] = $data['guide_suivi'];
 
                     // Sauvegarder la configuration
                     $canevas->update(['evaluation_configs' => $evaluationConfigs]);
@@ -1101,13 +1105,12 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     ->response()
                     ->setStatusCode(200);
             } else {
-                $data["slug"] = "canevas-check-liste-etude-faisabilite-marche";
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_suivi'])) {
 
-                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                    $documentData['evaluation_configs']['guide_suivi'] = $data['guide_suivi'];
                 }
 
                 $document = $this->repository->create($documentData);
@@ -1409,10 +1412,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Récupérer la configuration existante ou créer une nouvelle
                 $evaluationConfigs = $canevas->evaluation_configs ?? [];
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_suivi'])) {
 
                     // Mettre à jour les options de notation
-                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+                    $evaluationConfigs['guide_suivi'] = $data['guide_suivi'];
 
                     // Sauvegarder la configuration
                     $canevas->update(['evaluation_configs' => $evaluationConfigs]);
@@ -1443,9 +1446,9 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_suivi'])) {
 
-                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                    $documentData['evaluation_configs']['guide_suivi'] = $data['guide_suivi'];
                 }
 
                 $document = $this->repository->create($documentData);
@@ -1521,10 +1524,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Récupérer la configuration existante ou créer une nouvelle
                 $evaluationConfigs = $canevas->evaluation_configs ?? [];
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_suivi'])) {
 
                     // Mettre à jour les options de notation
-                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+                    $evaluationConfigs['guide_suivi'] = $data['guide_suivi'];
 
                     // Sauvegarder la configuration
                     $canevas->update(['evaluation_configs' => $evaluationConfigs]);
@@ -1564,9 +1567,9 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_suivi'])) {
 
-                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                    $documentData['evaluation_configs']['guide_suivi'] = $data['guide_suivi'];
                 }
 
                 $document = $this->repository->create($documentData);
@@ -1642,10 +1645,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Récupérer la configuration existante ou créer une nouvelle
                 $evaluationConfigs = $canevas->evaluation_configs ?? [];
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_suivi'])) {
 
                     // Mettre à jour les options de notation
-                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+                    $evaluationConfigs['guide_suivi'] = $data['guide_suivi'];
 
                     // Sauvegarder la configuration
                     $canevas->update(['evaluation_configs' => $evaluationConfigs]);
@@ -1676,9 +1679,9 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_suivi'])) {
 
-                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                    $documentData['evaluation_configs']['guide_suivi'] = $data['guide_suivi'];
                 }
 
                 $document = $this->repository->create($documentData);
@@ -1720,10 +1723,12 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Recharger après le seed
                 $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
 
-                return response()->json([
-                    'success' => false,
-                    'message' => "Impossible de trouver ou créer le canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité."
-                ], 404);
+                if (!$canevas) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Impossible de trouver ou créer le canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité."
+                    ], 404);
+                }
             }
 
             return (new CanevasAppreciationTdrResource($canevas))
@@ -1749,9 +1754,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 'format' => 'document'
             ]);
             $data['categorieId'] = $categorieDocument->id;
+            $data["type"] = "checklist";
+            $data["slug"] = 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite';
 
             if ($canevas) {
-                unset($data["slug"]);
                 // Mode mise à jour intelligente
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
                 $canevas->fill($documentData);
@@ -1761,10 +1767,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Récupérer la configuration existante ou créer une nouvelle
                 $evaluationConfigs = $canevas->evaluation_configs ?? [];
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_suivi'])) {
 
                     // Mettre à jour les options de notation
-                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+                    $evaluationConfigs['guide_suivi'] = $data['guide_suivi'];
 
                     // Sauvegarder la configuration
                     $canevas->update(['evaluation_configs' => $evaluationConfigs]);
@@ -1791,13 +1797,12 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     ->response()
                     ->setStatusCode(200);
             } else {
-                $data["slug"] = "canevas-appreciation-tdr";
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_suivi'])) {
 
-                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                    $documentData['evaluation_configs']['guide_suivi'] = $data['guide_suivi'];
                 }
 
                 $document = $this->repository->create($documentData);
@@ -1815,121 +1820,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
                 return (new CanevasAppreciationTdrResource($document))
                     ->additional(['message' => "Canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité."])
-                    ->response()
-                    ->setStatusCode(201);
-            }
-        } catch (Exception $e) {
-            DB::rollBack();
-            return $this->errorResponse($e);
-        }
-    }
-
-    public function canevasAppreciationTDR(): JsonResponse
-    {
-        try {
-            // Récupérer le canevas de note conceptuelle unique
-            $canevas = $this->repository->getCanevasAppreciationTdr();
-
-            if (!$canevas) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Aucun canevas de rédaction de note conceptuelle trouvé.'
-                ], 404);
-            }
-
-            return (new CanevasAppreciationTdrResource($canevas))
-                ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
-                ->response()
-                ->setStatusCode(200);
-        } catch (Exception $e) {
-            return $this->errorResponse($e);
-        }
-    }
-
-    public function createOrUpdateCanevasAppreciationTDR(array $data): JsonResponse
-    {
-        try {
-            DB::beginTransaction();
-
-            $canevas = $this->repository->getCanevasAppreciationTdr();
-            $categorieDocument = CategorieDocument::firstOrCreate([
-                'slug' => 'canevas-appreciation-tdr'
-            ], [
-                'nom' => 'Appréciation des TDR',
-                'slug' => 'canevas-appreciation-tdr',
-                'description' => 'Formulaire d\'appréciation des termes de référence',
-                'format' => 'document'
-            ]);
-            $data['categorieId'] = $categorieDocument->id;
-
-            if ($canevas) {
-                unset($data["slug"]);
-                // Mode mise à jour intelligente
-                $documentData = collect($data)->except(['forms', 'id'])->toArray();
-                $canevas->fill($documentData);
-                $canevas->save();
-                $canevas->refresh();
-
-                // Récupérer la configuration existante ou créer une nouvelle
-                $evaluationConfigs = $canevas->evaluation_configs ?? [];
-
-                if (isset($data['options_notation'])) {
-
-                    // Mettre à jour les options de notation
-                    $evaluationConfigs['options_notation'] = $data['options_notation'];
-
-                    // Sauvegarder la configuration
-                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
-                }
-
-                // Collecter tous les IDs présents dans le payload
-                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
-
-                // Traiter la structure forms avec mise à jour intelligente
-                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
-
-                // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
-                $this->cleanupRemovedElements($canevas, $payloadIds);
-
-                // Générer et sauvegarder la structure JSON
-                $this->structureService->generateAndSaveStructure($canevas);
-
-                DB::commit();
-
-                $canevas->refresh();
-
-                // Recharger avec relations
-                $canevas = $this->repository->getCanevasAppreciationTdr();
-
-                return (new CanevasAppreciationTdrResource($canevas))
-                    ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
-                    ->response()
-                    ->setStatusCode(200);
-            } else {
-                $data["slug"] = "canevas-appreciation-tdr";
-                // Mode création
-                $documentData = collect($data)->except(['forms', 'id'])->toArray();
-
-                if (isset($data['options_notation'])) {
-
-                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
-                }
-
-                $document = $this->repository->create($documentData);
-
-                // Traiter la structure forms (création)
-                $this->processFormsData($document, $data['forms'] ?? []);
-
-                // Générer et sauvegarder la structure JSON
-                $this->structureService->generateAndSaveStructure($document);
-
-                DB::commit();
-
-                // Recharger avec relations
-                $document = $this->repository->getCanevasAppreciationTdr();
-
-                return (new CanevasAppreciationTdrResource($document))
-                    ->additional(['message' => 'Canevas de note conceptuelle créé avec succès.'])
                     ->response()
                     ->setStatusCode(201);
             }
@@ -2290,6 +2180,121 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
     */
+
+    public function canevasAppreciationTDR(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas de note conceptuelle unique
+            $canevas = $this->repository->getCanevasAppreciationTdr();
+
+            if (!$canevas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas de rédaction de note conceptuelle trouvé.'
+                ], 404);
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function createOrUpdateCanevasAppreciationTDR(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasAppreciationTdr();
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-appreciation-tdr'
+            ], [
+                'nom' => 'Appréciation des TDR',
+                'slug' => 'canevas-appreciation-tdr',
+                'description' => 'Formulaire d\'appréciation des termes de référence',
+                'format' => 'document'
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
+
+            if ($canevas) {
+                unset($data["slug"]);
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['options_notation'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
+                $this->cleanupRemovedElements($canevas, $payloadIds);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($canevas);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasAppreciationTdr();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                $data["slug"] = "canevas-appreciation-tdr";
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                if (isset($data['options_notation'])) {
+
+                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasAppreciationTdr();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => 'Canevas de note conceptuelle créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
 
     /**
      * Récupérer le canevas d'appréciation des TDRs de préfaisabilité

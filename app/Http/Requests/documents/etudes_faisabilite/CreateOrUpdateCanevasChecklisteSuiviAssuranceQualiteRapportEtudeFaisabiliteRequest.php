@@ -20,11 +20,10 @@ class CreateOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilit
     {
         $this->canevas_appreciation_tdr = Document::whereHas('categorie', function ($query) {
             $query->where('slug', 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite');
-            
         })
-        ->where('type', 'checklist')
-        ->orderBy('created_at', 'desc')
-        ->first();
+            ->where('type', 'checklist')
+            ->orderBy('created_at', 'desc')
+            ->first();
     }
 
     /**
@@ -97,8 +96,10 @@ class CreateOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilit
         foreach ($elements as $index => $element) {
             $order = $element['ordre_affichage'] ?? null;
             if ($order && in_array($order, $orders)) {
-                $validator->errors()->add("{$path}.{$index}.ordre_affichage",
-                    "L'ordre d'affichage {$order} est déjà utilisé à ce niveau.");
+                $validator->errors()->add(
+                    "{$path}.{$index}.ordre_affichage",
+                    "L'ordre d'affichage {$order} est déjà utilisé à ce niveau."
+                );
             } else if ($order) {
                 $orders[] = $order;
             }
@@ -130,13 +131,14 @@ class CreateOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilit
         return [
             // Document fields
             'nom' => [
-                'required', 'bail',
+                'required',
+                'bail',
                 function ($attribute, $value, $fail) {
                     $exists = Document::where('nom', $value)
                         ->whereHas('categorie', function ($query) {
                             $query->where('slug', 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite');
-                        })->when($this->canevas_appreciation_tdr, function($query){
-                            $query->where("id","<>", $this->canevas_appreciation_tdr->id);
+                        })->when($this->canevas_appreciation_tdr, function ($query) {
+                            $query->where("id", "<>", $this->canevas_appreciation_tdr->id);
                         })->exists();
 
                     if ($exists) {
@@ -144,9 +146,13 @@ class CreateOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilit
                     }
                 }
             ],
-            'description' => 'nullable|string|max:65535',
+            'description' => 'nullable|string|max:65535',/*
             'type' => ['required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
-            'categorieId' => 'required|exists:categories_document,id',
+            'categorieId' => 'required|exists:categories_document,id', */
+            'guide_suivi'                  => 'required|array|min:2',
+            'guide_suivi.*.libelle'        => 'required|string|max:255',
+            'guide_suivi.*.option'   => 'required|string|max:255',
+            'guide_suivi.*.description'    => 'nullable|string|max:1000',
             // Forms array - structure flexible avec validation récursive
             'forms' => 'required|array|min:1',
             'forms.*' => 'required|array',
@@ -185,29 +191,37 @@ class CreateOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilit
 
             // Validation du type d'élément
             if (!isset($element['element_type']) || !in_array($element['element_type'], ['field', 'section'])) {
-                $validator->errors()->add("{$currentPath}.element_type",
-                    'Le type d\'élément doit être "field" ou "section".');
+                $validator->errors()->add(
+                    "{$currentPath}.element_type",
+                    'Le type d\'élément doit être "field" ou "section".'
+                );
                 continue;
             }
 
             // Validation de l'ordre d'affichage
             if (!isset($element['ordre_affichage']) || !is_integer($element['ordre_affichage']) || $element['ordre_affichage'] < 1) {
-                $validator->errors()->add("{$currentPath}.ordre_affichage",
-                    'L\'ordre d\'affichage est obligatoire et doit être un entier positif.');
+                $validator->errors()->add(
+                    "{$currentPath}.ordre_affichage",
+                    'L\'ordre d\'affichage est obligatoire et doit être un entier positif.'
+                );
             }
 
             // Validation de la clé selon le type d'élément
             if ($element['element_type'] === 'field') {
                 // Pour les fields, on utilise 'attribut'
                 if (!isset($element['attribut']) || !is_string($element['attribut']) || strlen($element['attribut']) > 255) {
-                    $validator->errors()->add("{$currentPath}.attribut",
-                        'L\'attribut est obligatoire pour les champs et ne doit pas dépasser 255 caractères.');
+                    $validator->errors()->add(
+                        "{$currentPath}.attribut",
+                        'L\'attribut est obligatoire pour les champs et ne doit pas dépasser 255 caractères.'
+                    );
                 }
             } elseif ($element['element_type'] === 'section') {
                 // Pour les sections, on utilise 'key'
                 if (!isset($element['key']) || !is_string($element['key']) || strlen($element['key']) > 255) {
-                    $validator->errors()->add("{$currentPath}.key",
-                        'La clé est obligatoire pour les sections et ne doit pas dépasser 255 caractères.');
+                    $validator->errors()->add(
+                        "{$currentPath}.key",
+                        'La clé est obligatoire pour les sections et ne doit pas dépasser 255 caractères.'
+                    );
                 }
             }
 
@@ -235,22 +249,28 @@ class CreateOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilit
     {
         // Label obligatoire
         if (!isset($element['label']) || !is_string($element['label']) || strlen($element['label']) > 255) {
-            $validator->errors()->add("{$path}.label",
-                'Le libellé du champ est obligatoire et ne doit pas dépasser 255 caractères.');
+            $validator->errors()->add(
+                "{$path}.label",
+                'Le libellé du champ est obligatoire et ne doit pas dépasser 255 caractères.'
+            );
         }
 
         // L'attribut est déjà validé dans validateFormsStructure
 
         // Type de champ obligatoire
         if (!isset($element['type_champ']) || !is_string($element['type_champ'])) {
-            $validator->errors()->add("{$path}.type_champ",
-                'Le type de champ est obligatoire.');
+            $validator->errors()->add(
+                "{$path}.type_champ",
+                'Le type de champ est obligatoire.'
+            );
         }
 
         // Meta options obligatoires
         if (!isset($element['meta_options']) || !is_array($element['meta_options'])) {
-            $validator->errors()->add("{$path}.meta_options",
-                'Les options métadonnées sont obligatoires pour les champs.');
+            $validator->errors()->add(
+                "{$path}.meta_options",
+                'Les options métadonnées sont obligatoires pour les champs.'
+            );
         } else {
             $this->validateMetaOptions($element['meta_options'], $path, $validator);
         }
@@ -263,8 +283,10 @@ class CreateOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilit
     {
         // Intitulé obligatoire
         if (!isset($element['intitule']) || !is_string($element['intitule']) || strlen($element['intitule']) > 255) {
-            $validator->errors()->add("{$path}.intitule",
-                'L\'intitulé de la section est obligatoire et ne doit pas dépasser 255 caractères.');
+            $validator->errors()->add(
+                "{$path}.intitule",
+                'L\'intitulé de la section est obligatoire et ne doit pas dépasser 255 caractères.'
+            );
         }
     }
 
@@ -275,32 +297,114 @@ class CreateOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilit
     {
         // Configs obligatoire
         if (!isset($metaOptions['configs']) || !is_array($metaOptions['configs'])) {
-            $validator->errors()->add("{$path}.meta_options.configs",
-                'La section configs est obligatoire dans les options métadonnées.');
+            $validator->errors()->add(
+                "{$path}.meta_options.configs",
+                'La section configs est obligatoire dans les options métadonnées.'
+            );
         }
 
         // Conditions obligatoire
         if (!isset($metaOptions['conditions']) || !is_array($metaOptions['conditions'])) {
-            $validator->errors()->add("{$path}.meta_options.conditions",
-                'La section conditions est obligatoire dans les options métadonnées.');
+            $validator->errors()->add(
+                "{$path}.meta_options.conditions",
+                'La section conditions est obligatoire dans les options métadonnées.'
+            );
         } else {
             $conditions = $metaOptions['conditions'];
 
             if (!isset($conditions['disable']) || !is_bool($conditions['disable'])) {
-                $validator->errors()->add("{$path}.meta_options.conditions.disable",
-                    'Le champ disable est obligatoire et doit être un booléen.');
+                $validator->errors()->add(
+                    "{$path}.meta_options.conditions.disable",
+                    'Le champ disable est obligatoire et doit être un booléen.'
+                );
             }
 
             if (!isset($conditions['visible']) || !is_bool($conditions['visible'])) {
-                $validator->errors()->add("{$path}.meta_options.conditions.visible",
-                    'Le champ visible est obligatoire et doit être un booléen.');
+                $validator->errors()->add(
+                    "{$path}.meta_options.conditions.visible",
+                    'Le champ visible est obligatoire et doit être un booléen.'
+                );
             }
         }
 
         // Validation rules obligatoire
         if (!isset($metaOptions['validations_rules']) || !is_array($metaOptions['validations_rules'])) {
-            $validator->errors()->add("{$path}.meta_options.validations_rules",
-                'La section validations_rules est obligatoire dans les options métadonnées.');
+            $validator->errors()->add(
+                "{$path}.meta_options.validations_rules",
+                'La section validations_rules est obligatoire dans les options métadonnées.'
+            );
+        }
+
+        // 🔥 Validation des appreciations dans meta_options
+        $this->validateAppreciationsInMetaOptions($validator);
+    }
+
+    private function validateAppreciationsInMetaOptions($validator)
+    {
+        $expectedValues = collect($this->input('guide_suivi', []))
+            ->pluck('option')
+            ->filter()
+            ->toArray();
+
+        foreach ($this->input('forms', []) as $index => $element) {
+            $this->checkAppreciationsRecursive($element, "forms.{$index}", $expectedValues, $validator);
+        }
+    }
+
+    private function checkAppreciationsRecursive($element, $path, $expectedValues, $validator)
+    {
+        if (($element['element_type'] ?? null) === 'field' && isset($element['meta_options'])) {
+
+            $metaOptions = $element['meta_options'];
+
+            // 1️⃣ Vérifier que les appreciations existent dans meta_options (par ex. dans configs.options)
+            if (!isset($metaOptions['configs']['options']) || !is_array($metaOptions['configs']['options'])) {
+                $validator->errors()->add(
+                    "{$path}.meta_options.configs.options",
+                    "Les options doivent contenir les appréciations attendues : " . implode(', ', $expectedValues)
+                );
+            } else {
+                $optionValues = array_column($metaOptions['configs']['options'], 'value');
+                foreach ($expectedValues as $val) {
+                    if (!in_array($val, $optionValues)) {
+                        $validator->errors()->add("{$path}.meta_options.configs.options",
+                            "L'appréciation '{$val}' doit être définie dans les options (value).");
+                    }
+                }
+                /* foreach ($expectedValues as $val) {
+                    if (!in_array($val, $metaOptions['configs']['options'])) {
+                        $validator->errors()->add(
+                            "{$path}.meta_options.configs.options",
+                            "L'appréciation '{$val}' doit être définie comme option."
+                        );
+                    }
+                } */
+            }
+
+            // 2️⃣ Vérifier que validations_rules.in contient ces appreciations
+            if (!isset($metaOptions['validations_rules']['in']) || !is_array($metaOptions['validations_rules']['in'])) {
+                $validator->errors()->add(
+                    "{$path}.meta_options.validations_rules.in",
+                    "La règle 'in' est obligatoire et doit inclure les appréciations."
+                );
+            } else {
+                $allowed = $metaOptions['validations_rules']['in'];
+                foreach ($expectedValues as $val) {
+                    if (!in_array($val, $allowed)) {
+                        $validator->errors()->add(
+                            "{$path}.meta_options.validations_rules.in",
+                            "L'appréciation '{$val}' doit être incluse dans la règle 'in:'."
+                        );
+                    }
+                }
+            }
+        }
+
+        // Recurse si section
+        if (($element['element_type'] ?? null) === 'section' && isset($element['elements'])) {
+            foreach ($element['elements'] as $subIndex => $subElement) {
+                $this->checkAppreciationsRecursive($subElement, "{$path}.elements.{$subIndex}", $expectedValues, $validator);
+            }
         }
     }
 

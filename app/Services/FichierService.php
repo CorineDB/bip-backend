@@ -44,10 +44,83 @@ class FichierService extends BaseService implements FichierServiceInterface
      * Réécriture de all() avec permissions et filtres
      */
     public function all(): JsonResponse
+
     {
         try {
-            // Utiliser la méthode sécurisée avec filtres
-            return $this->getFichiersAccessibles();
+            $user = Auth::user();
+
+            // Mes fichiers
+            $mesFichiersQuery = Fichier::query()
+                ->with(['uploadedBy', 'permissions'])
+                ->where('uploaded_by', $user->id);
+
+            // Fichiers partagés avec moi
+            $fichiersPartagesQuery = Fichier::query()
+                ->with(['uploadedBy', 'permissions.grantedBy'])
+                ->where('uploaded_by', '!=', $user->id)
+                ->where(function ($q) use ($user) {
+                    $q->where('is_public', true)
+                      ->orWhereHas('permissions', function($permQuery) use ($user) {
+                          $permQuery->active()->forUser($user->id);
+                      });
+                });
+
+            // Appliquer les filtres communs
+            if (!empty($filters['dossier_id'])) {
+                if ($filters['dossier_id'] === 'null') {
+                    $mesFichiersQuery->whereNull('dossier_id');
+                    $fichiersPartagesQuery->whereNull('dossier_id');
+                } else {
+                    $mesFichiersQuery->where('dossier_id', $filters['dossier_id']);
+                    $fichiersPartagesQuery->where('dossier_id', $filters['dossier_id']);
+                }
+            }
+
+            if (!empty($filters['extension'])) {
+                $mesFichiersQuery->where('extension', $filters['extension']);
+                $fichiersPartagesQuery->where('extension', $filters['extension']);
+            }
+
+            if (!empty($filters['search'])) {
+                $searchTerm = '%' . $filters['search'] . '%';
+                $mesFichiersQuery->where(function($q) use ($searchTerm) {
+                    $q->where('nom_original', 'ILIKE', $searchTerm)
+                      ->orWhere('description', 'ILIKE', $searchTerm);
+                });
+                $fichiersPartagesQuery->where(function($q) use ($searchTerm) {
+                    $q->where('nom_original', 'ILIKE', $searchTerm)
+                      ->orWhere('description', 'ILIKE', $searchTerm);
+                });
+            }
+
+            // Exécuter les requêtes
+            $mesFichiers = $mesFichiersQuery
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $fichiersPartages = $fichiersPartagesQuery
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Statistiques
+            $stats = [
+                'mes_fichiers_count' => $mesFichiers->count(),
+                'mes_fichiers_size' => $mesFichiers->sum('taille'),
+                'fichiers_partages_count' => $fichiersPartages->count(),
+                'fichiers_partages_size' => $fichiersPartages->sum('taille'),
+                'total_count' => $mesFichiers->count() + $fichiersPartages->count(),
+                'total_size' => $mesFichiers->sum('taille') + $fichiersPartages->sum('taille')
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'mes_fichiers' => FichierResource::collection($mesFichiers),
+                    'fichiers_partages' => FichierResource::collection($fichiersPartages),
+                    'stats' => $stats
+                ],
+                'message' => 'Fichiers récupérés avec succès'
+            ]);
 
         } catch (\Exception $e) {
             return $this->errorResponse($e);
@@ -89,6 +162,12 @@ class FichierService extends BaseService implements FichierServiceInterface
             return $this->errorResponse($e);
         }
     }
+
+    /**
+     * Lister tous les fichiers accessibles à l'utilisateur
+     * Séparés en "Mes fichiers" et "Partagés avec moi"
+     */
+    public function index(array $filters = []): JsonResponse
 
     /**
      * Réécriture de create() pour les fichiers attachés à des ressources
@@ -500,6 +579,9 @@ class FichierService extends BaseService implements FichierServiceInterface
 
         return response()->stream(function() use ($fichier) {
             $stream = Storage::disk('local')->readStream($fichier->chemin);
+            if ($stream === false) {
+                abort(500, "Impossible de lire le fichier");
+            }
             fpassthru($stream);
             if (is_resource($stream)) {
                 fclose($stream);
@@ -1000,5 +1082,141 @@ class FichierService extends BaseService implements FichierServiceInterface
         // Généralement, les fichiers attachés ne doivent pas être rendus publics
 
         return false;
+    }
+
+    /**
+     * Obtenir les fichiers "Partagés avec moi" (équivalent Google Drive)
+     */
+    public function getFichiersPartagesAvecMoi(array $filters = []): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+
+            $query = Fichier::query()
+                ->with(['uploadedBy', 'permissions.grantedBy'])
+                ->where('uploaded_by', '!=', $user->id) // Pas mes propres fichiers
+                ->whereHas('permissions', function($permQuery) use ($user) {
+                    $permQuery->active()->forUser($user->id);
+                });
+
+            // Appliquer filtres
+            if (!empty($filters['permission_type'])) {
+                $query->whereHas('permissions', function($permQuery) use ($user, $filters) {
+                    $permQuery->active()
+                             ->forUser($user->id)
+                             ->byType($filters['permission_type']);
+                });
+            }
+
+            if (!empty($filters['search'])) {
+                $query->where('nom_original', 'ILIKE', '%' . $filters['search'] . '%');
+            }
+
+            $fichiers = $query->orderBy('created_at', 'desc')
+                            ->paginate($filters['per_page'] ?? 20);
+
+            return response()->json([
+                'success' => true,
+                'data' => FichierResource::collection($fichiers),
+                'message' => 'Fichiers partagés récupérés avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Partager un fichier avec des utilisateurs spécifiques
+     */
+    public function partagerFichierAvecUtilisateurs(string $id, array $data): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+            $fichier = $this->repository->findOrFail($id);
+
+            // Vérifier permissions de partage
+            if (!$this->peutPartagerFichier($user, $fichier)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vous n\'avez pas les permissions pour partager ce fichier'
+                ], 403);
+            }
+
+            $userIds = $data['user_ids'] ?? [];
+            $permissions = $data['permissions'] ?? ['view'];
+            $expiresAt = isset($data['expires_at']) ? new \Carbon\Carbon($data['expires_at']) : null;
+
+            $results = [];
+            foreach ($userIds as $userId) {
+                $targetUser = User::find($userId);
+                if ($targetUser) {
+                    foreach ($permissions as $permission) {
+                        $results[] = $fichier->grantPermission($targetUser, $permission, $user, $expiresAt);
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $results,
+                'message' => 'Fichier partagé avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Obtenir la file d'attente des fichiers récents
+     */
+    public function getFileQueue(): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+
+            $fichiers = Fichier::query()
+                ->with(['uploadedBy'])
+                ->where(function ($q) use ($user) {
+                    $q->where('uploaded_by', $user->id)
+                      ->orWhere('is_public', true)
+                      ->orWhereHas('permissions', function($permQuery) use ($user) {
+                          $permQuery->active()->forUser($user->id);
+                      });
+                })
+                ->where('created_at', '>=', now()->subDays(7))
+                ->orderBy('created_at', 'desc')
+                ->limit(50)
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => FichierResource::collection($fichiers),
+                'message' => 'File d\'attente récupérée avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Vérifier si l'utilisateur peut partager un fichier
+     */
+    private function peutPartagerFichier(User $user, $fichier): bool
+    {
+        // Admin peut tout partager
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        // Propriétaire peut partager ses fichiers
+        if ($fichier->uploaded_by === $user->id) {
+            return true;
+        }
+
+        // Vérifier si l'utilisateur a la permission 'share'
+        return $fichier->hasPermission($user, 'share');
     }
 }

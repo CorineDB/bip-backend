@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\HasResourcePermissions;
 
 class Fichier extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasResourcePermissions;
 
     /**
      * The table associated with the model.
@@ -40,7 +41,8 @@ class Fichier extends Model
         'uploaded_by',
         'is_public',
         'is_active',
-        "commentaire"
+        "commentaire",
+        'dossier_id'
     ];
 
     /**
@@ -82,6 +84,14 @@ class Fichier extends Model
     public function uploadedBy()
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    /**
+     * Dossier parent du fichier
+     */
+    public function dossier()
+    {
+        return $this->belongsTo(Dossier::class, 'dossier_id');
     }
 
     // Accessors

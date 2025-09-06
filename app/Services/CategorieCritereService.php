@@ -11,6 +11,7 @@ use App\Repositories\Contracts\CategorieCritereRepositoryInterface;
 use App\Services\Contracts\CategorieCritereServiceInterface;
 use App\Http\Resources\CategorieCritereResource;
 use App\Http\Resources\ChecklistMesuresAdaptationResource;
+use App\Http\Resources\ChecklistMesuresAdaptationSecteurResource;
 use App\Models\Secteur;
 use App\Models\Critere;
 use App\Models\Notation;
@@ -238,35 +239,56 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                         ->where('categorie', 'guide-referentiel-appreciation')
                         ->first();
 
-                    // Stocker le nouveau fichier
-                    $path = $file->store('documents/referentiel', 'public');
+                    // Stocker le nouveau fichier dans le dossier structuré sur disque local avec sous-dossiers publics
+                    $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $file->hashName();
+                    $path = $file->storeAs(
+                        'public/Canevas, guides et outils/Analyse d\'idee de projet/Analyse preliminaire de l\'impact climatique',
+                        $nomStockage,
+                        'local'
+                    );
 
                     if ($fichierExistant) {
-                        // Mettre à jour le fichier existant
+                        // Mettre à jour le fichier existant avec détails complets
                         $fichierExistant->update([
-                            'nom_stockage' => $file->hashName(),
+                            'nom_stockage' => $nomStockage,
                             'chemin' => $path,
                             'extension' => $file->getClientOriginalExtension(),
                             'mime_type' => $file->getMimeType(),
                             'taille' => $file->getSize(),
                             'hash_md5' => md5_file($file->getRealPath()),
                             'uploaded_by' => auth()->id(),
-                            'is_active' => true
+                            'is_public' => true,
+                            'is_active' => true,
+                            'metadata' => array_merge($fichierExistant->metadata ?? [], [
+                                'last_updated' => now()->toISOString(),
+                                'updated_by' => auth()->id(),
+                                'version_updated' => ($fichierExistant->metadata['version'] ?? 0) + 1
+                            ])
                         ]);
                     } else {
-                        // Créer un nouveau fichier
+                        // Créer un nouveau fichier avec détails complets
                         $grille->fichiers()->create([
                             'nom_original' => $nomOriginal,
-                            'nom_stockage' => $file->hashName(),
+                            'nom_stockage' => $nomStockage,
                             'chemin' => $path,
                             'extension' => $file->getClientOriginalExtension(),
                             'mime_type' => $file->getMimeType(),
                             'taille' => $file->getSize(),
                             'hash_md5' => md5_file($file->getRealPath()),
+                            'description' => 'Guide référentiel pour l\'appreciation de l\'impact climatique des idées de projet.',
+                            'commentaire' => 'Document de référence pour l\'analyse climatique',
                             'categorie' => 'guide-referentiel-appreciation',
                             'uploaded_by' => auth()->id(),
-                            'is_public' => false,
-                            'is_active' => true
+                            'is_public' => true,
+                            'is_active' => true,
+                            'metadata' => [
+                                'type_document' => 'guide-referentiel-appreciation',
+                                'grille_id' => $grille->id,
+                                'uploaded_context' => 'evaluation-preliminaire-impact-climatique',
+                                'soumis_par' => auth()->id(),
+                                'soumis_le' => now()->toISOString(),
+                                'dossier_public' => 'Canevas, guides et outils/Analyse d\'idee de projet/Analyse preliminaire de l\'impact climatique'
+                            ]
                         ]);
                     }
                 }
@@ -379,35 +401,56 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                         ->where('categorie', 'guide-referentiel-amc')
                         ->first();
 
-                    // Stocker le nouveau fichier
-                    $path = $file->store('documents/referentiel', 'public');
+                    // Stocker le nouveau fichier dans le dossier structuré sur disque local avec sous-dossiers publics
+                    $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $file->hashName();
+                    $path = $file->storeAs(
+                        'public/Canevas, guides et outils/Analyse d\'idee de projet/Analyse multicritere',
+                        $nomStockage,
+                        'local'
+                    );
 
                     if ($fichierExistant) {
-                        // Mettre à jour le fichier existant
+                        // Mettre à jour le fichier existant avec détails complets
                         $fichierExistant->update([
-                            'nom_stockage' => $file->hashName(),
+                            'nom_stockage' => $nomStockage,
                             'chemin' => $path,
                             'extension' => $file->getClientOriginalExtension(),
                             'mime_type' => $file->getMimeType(),
                             'taille' => $file->getSize(),
                             'hash_md5' => md5_file($file->getRealPath()),
                             'uploaded_by' => auth()->id(),
-                            'is_active' => true
+                            'is_public' => true,
+                            'is_active' => true,
+                            'metadata' => array_merge($fichierExistant->metadata ?? [], [
+                                'last_updated' => now()->toISOString(),
+                                'updated_by' => auth()->id(),
+                                'version_updated' => ($fichierExistant->metadata['version'] ?? 0) + 1
+                            ])
                         ]);
                     } else {
-                        // Créer un nouveau fichier
+                        // Créer un nouveau fichier avec détails complets
                         $grille->fichiers()->create([
                             'nom_original' => $nomOriginal,
-                            'nom_stockage' => $file->hashName(),
+                            'nom_stockage' => $nomStockage,
                             'chemin' => $path,
                             'extension' => $file->getClientOriginalExtension(),
                             'mime_type' => $file->getMimeType(),
                             'taille' => $file->getSize(),
                             'hash_md5' => md5_file($file->getRealPath()),
+                            'description' => 'Guide référentiel pour l\'analyse multicritère',
+                            'commentaire' => 'Document de référence pour l\'analyse multicritère (AMC)',
                             'categorie' => 'guide-referentiel-amc',
                             'uploaded_by' => auth()->id(),
-                            'is_public' => false,
-                            'is_active' => true
+                            'is_public' => true,
+                            'is_active' => true,
+                            'metadata' => [
+                                'type_document' => 'guide-referentiel-amc',
+                                'grille_id' => $grille->id,
+                                'uploaded_context' => 'analyse-multicritere',
+                                'soumis_par' => auth()->id(),
+                                'soumis_le' => now()->toISOString(),
+                                'dossier_public' => 'Canevas, guides et outils/Analyse d\'idee de projet/Analyse multicritere'
+                            ]
                         ]);
                     }
                 }
@@ -452,6 +495,65 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 'success' => true,
                 'message' => 'Checklist des mesures d\'adaptation récupérée avec succès.',
                 'data' => new ChecklistMesuresAdaptationResource($checklistCategorie->load(['criteres.notations.secteur', 'fichiers']))
+            ]);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Récupérer la checklist des mesures d'adaptation pour projets à haut risque
+     */
+    public function getChecklistMesuresAdaptationSecteur($idSecteur): JsonResponse
+    {
+        try {
+            // Vérifier que le secteur existe et n'est pas un grand secteur
+            $secteur = Secteur::whereIn('type', ['secteur', 'sous-secteur'])->findOrFail($idSecteur);
+
+            // Déterminer l'ID du secteur à utiliser pour le filtrage
+            $secteurIdPourFiltrage = $idSecteur;
+
+            // Si c'est un sous-secteur, remonter jusqu'au secteur principal
+            if ($secteur->type->value === 'sous-secteur') {
+                $secteurCourant = $secteur;
+                
+                // Remonter dans la hiérarchie jusqu'à trouver un secteur de type 'secteur'
+                while ($secteurCourant && $secteurCourant->type->value === 'sous-secteur') {
+                    $secteurCourant = $secteurCourant->parent;
+                }
+                
+                // Si on a trouvé un secteur principal, l'utiliser pour le filtrage
+                if ($secteurCourant && $secteurCourant->type->value === 'secteur') {
+                    $secteurIdPourFiltrage = $secteurCourant->id;
+                }
+            }
+
+            $checklistCategorie = $this->repository->findByAttribute('slug', 'checklist-mesures-adaptation-haut-risque');
+
+            if (!$checklistCategorie) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Checklist des mesures d\'adaptation non trouvée. Veuillez exécuter les seeders.',
+                ], 404);
+            }
+
+            // Charger la checklist avec les critères et notations filtrés par secteur
+            $checklistCategorie->load([
+                'criteres' => function($query) use ($secteurIdPourFiltrage) {
+                    $query->withNotationsDuSecteur($secteurIdPourFiltrage);
+                },
+                'fichiers'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Checklist des mesures d\'adaptation récupérée avec succès pour le secteur "' . $secteur->nom . '".',
+                'data' => new ChecklistMesuresAdaptationSecteurResource($checklistCategorie),
+                'secteur' => [
+                    'id' => $secteur->id,
+                    'nom' => $secteur->nom,
+                    'type' => $secteur->type->value
+                ]
             ]);
         } catch (Exception $e) {
             return $this->errorResponse($e);

@@ -1327,7 +1327,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            /* if (!auth()->user()->hasPermissionTo('soumettre-un-rapport-de-prefaisabilite') && auth()->user()->type !== 'dpaf' && auth()->user()->profilable_type !== Dpaf::class) {
+            if (!auth()->user()->hasPermissionTo('soumettre-un-rapport-de-prefaisabilite') && auth()->user()->type !== 'dpaf' && auth()->user()->profilable_type !== Dpaf::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -1337,7 +1337,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de soumission du rapport de préfaisabilité.'
                 ], 422);
-            } */
+            }
 
             // Déterminer si c'est une soumission ou un brouillon
             $action = $data['action'] ?? 'submit';

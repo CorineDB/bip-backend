@@ -91,4 +91,14 @@ class Critere extends Model
     {
         return $this->hasMany(EvaluationCritere::class, 'evaluation_id');
     }
+
+    /**
+     * Scope pour récupérer les notations d'un secteur spécifique
+     */
+    public function scopeWithNotationsDuSecteur($query, $secteurId)
+    {
+        return $query->with(['notations' => function ($query) use ($secteurId) {
+            $query->where('secteur_id', $secteurId)->with('secteur');
+        }]);
+    }
 }

@@ -17,14 +17,14 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
         "description" => "Check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité",
         "type" => "checklist",
         "evaluation_configs" => [
-            "guide_checking" => [
+            "guide_suivi" => [
                 [
-                    "value" => "disponible",
+                    "option" => "disponible",
                     "label" => "Disponible",
                     "description" => "Répond aux critères d'acceptation"
                 ],
                 [
-                    "check_option" => "pas-encore-disponibles",
+                    "option" => "pas-encore-disponibles",
                     "label" => "Pas encore disponibles",
                     "description" => "Nécessite des améliorations ou éclaircissements"
                 ]
@@ -349,8 +349,8 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 1,
 
                         "label" => "Cadre juridique du projet",
-                        "attribut" => "cadre_juridique_projet",
-                        "key" => "section_structures_projet",
+                        "attribut" => "section_cadre_juridique_projet",
+                        "key" => "section_cadre_juridique_projet",
                         "description" => "Cette section décrit le cadre juridique, les conventions et les organismes impliqués dans la mise en œuvre du projet.",
 
                         "elements" => [
@@ -505,7 +505,8 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 2,
 
                         "label" => "Organismes intéressés au projet",
-                        "attribut" => "organisme_interesse_projet",
+                        "attribut" => "section_organisme_interesse_projet",
+                        "key" => "section_organisme_interesse_projet",
                         "description" => "Cette section décrit le cadre juridique, les conventions et les organismes impliqués dans la mise en œuvre du projet.",
 
                         "elements" => [
@@ -725,8 +726,8 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 1,
 
                         "label" => "Étude du marché",
-                        "attribut" => "etude_marche",
-                        "key" => "etude_marche",
+                        "attribut" => "section_etude_marche",
+                        "key" => "section_etude_marche",
                         "description" => "Analyse du marché, des perspectives et de la concurrence.",
 
                         "elements" => [
@@ -981,8 +982,8 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                         "ordre_affichage" => 2,
 
                         "label" => "Commercialisation",
-                        "attribut" => "commercialisation",
-                        "key" => "commercialisation",
+                        "attribut" => "section_commercialisation",
+                        "key" => "section_commercialisation",
                         "description" => "Analyse de la commercialisation, de la distribution et de l’adéquation à la demande.",
 
                         "elements" => [
@@ -1493,7 +1494,7 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                         "element_type" => "section",
                         "ordre_affichage" => 3,
                         "label" => "Investissements spécifiques du projet",
-                        "attribut" => "section_autres_investissements",
+                        "attribut" => "section_investissements_specifiques",
                         "key" => "section_investissements_specifiques",
                         "description" => "Investissements spécifiques du projet",
 

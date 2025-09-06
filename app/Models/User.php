@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\EnumTypeOrganisation;
 use App\Services\Traits\HasPermissionTrait;
+use App\Traits\HasScopedPermissions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,7 +21,7 @@ use Illuminate\Support\Str;
 
 class User extends Authenticatable implements OAuthenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasPermissionTrait, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, HasPermissionTrait, HasScopedPermissions, SoftDeletes;
 
     /**
      * The table associated with the model.

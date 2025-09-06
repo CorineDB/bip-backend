@@ -346,6 +346,14 @@ class CategorieCritereController extends Controller
     /**
      * Récupérer la checklist des mesures d'adaptation pour projets à haut risque
      */
+    public function getChecklistMesuresAdaptationSecteur($idSecteur): JsonResponse
+    {
+        return $this->service->getChecklistMesuresAdaptationSecteur($idSecteur);
+    }
+
+    /**
+     * Récupérer la checklist des mesures d'adaptation pour projets à haut risque
+     */
     public function getChecklistMesuresAdaptation(): JsonResponse
     {
         return $this->service->getChecklistMesuresAdaptation();
