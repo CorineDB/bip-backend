@@ -13,7 +13,7 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
 {
     protected $documentData = [
         "nom" => "Check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité",
-        "slug" => "canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite",
+        "slug" => "check-liste-suivi-assurance-qualite-rapport-etude-faisabilite",
         "description" => "Check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité",
         "type" => "checklist",
         "evaluation_configs" => [
@@ -1258,7 +1258,7 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                                 ],
                                 "champ_standard" => true,
                                 "startWithNewLine" => false
-                            ],,
+                            ],
                             [
                                 "element_type" => "field",
                                 "ordre_affichage" => 7,
