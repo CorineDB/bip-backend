@@ -21,7 +21,7 @@ return new class extends Migration
             $table->softDeletes();
 
             // Index pour optimiser les requêtes
-            $table->index(['permissionable_type', 'permissionable_id']);
+            $table->index(['permissionable_type', 'permissionable_id'], 'resource_permissions_perm_type_id_index');
             $table->index(['user_id', 'permission_type']);
             $table->index(['is_active', 'expires_at']);
         });
