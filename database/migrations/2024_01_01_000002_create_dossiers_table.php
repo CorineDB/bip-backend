@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('dossiers', function (Blueprint $table) {
             $table->id();
             $table->string('nom');
+            $table->string('slug')->nullable();
             $table->text('description')->nullable();
             $table->foreignId('parent_id')->nullable()->constrained('dossiers')->onDelete('cascade');
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
