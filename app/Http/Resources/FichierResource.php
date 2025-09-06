@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -80,8 +81,8 @@ class FichierResource extends BaseApiResource
             'hash_md5' => $this->hash_md5,
 
             // Horodatage
-            'created_at' => $this->created_at?->toISOString(),
-            'updated_at' => $this->updated_at?->toISOString(),
+            'created_at' => Carbon::parse($this->created_at)?->format("Y-m-d H:i:s"),
+            'updated_at' => Carbon::parse($this->updated_at)?->format("Y-m-d H:i:s"),
         ];
     }
 

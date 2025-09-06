@@ -92,7 +92,7 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
         return $this->model->whereHas('categorie', function ($query) {
             $query->where('slug', 'canevas-appreciation-tdrs-prefaisabilite');
         })
-            ->where('type', 'formulaire')
+            ->where('type', 'checklist')
             ->with([
                 'sections.champs' => function($query) {
                     $query->orderBy('ordre_affichage');
@@ -118,7 +118,7 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
         return $this->model->whereHas('categorie', function ($query) {
             $query->where('slug', 'canevas-appreciation-tdrs-faisabilite');
         })
-            ->where('type', 'formulaire')
+            ->where('type', 'checklist')
             ->with([
                 'sections.champs' => function($query) {
                     $query->orderBy('ordre_affichage');
