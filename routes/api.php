@@ -317,64 +317,69 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasAppreciationTdrPrefaisabilite']);
         });
 
-        Route::prefix('canevas-checklist-suivi-rapport-prefaisabilite')->group(function () {
+        Route::prefix('canevas-appreciation-tdr-faisabilite')->group(function () {
+            Route::get('', [DocumentController::class, 'canevasAppreciationTdrFaisabilite']);
+            Route::post('', [DocumentController::class, 'createOrUpdateCanevasAppreciationTdrFaisabilite']);
+        });
+
+        Route::prefix('canevas-check-liste-suivi-rapport-prefaisabilite')->group(function () {
             Route::get('', [DocumentController::class, 'canevasChecklistSuiviRapportPrefaisabilite']);
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklistSuiviRapportPrefaisabilite']);
         });
 
-        Route::prefix('canevas-checklist-mesures-adaptation')->group(function () {
+        /* Route::prefix('canevas-check-liste-mesures-adaptation')->group(function () {
             Route::get('', [DocumentController::class, 'canevasChecklistMesuresAdaptation']);
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklistMesuresAdaptation']);
-        });
+        }); */
 
         //ChecklistEtudeFaisabiliteMarche
-        Route::prefix('canevas-checklist-etude-faisabilite-marche')->group(function () {
-            Route::get('', [DocumentController::class, 'canevasChecklistEtudeFaisabiliteMarche']);
-            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklistEtudeFaisabiliteMarche']);
+        Route::prefix('canevas-check-liste-etude-faisabilite-marche')->group(function () {
+            Route::get('', [DocumentController::class, 'canevasChecklisteEtudeFaisabiliteMarche']);
+            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklisteEtudeFaisabiliteMarche']);
         });
 
-        Route::prefix('canevas-checklist-etude-faisabilite-technique')->group(function () {
-            Route::get('', [DocumentController::class, 'canevasChecklistEtudeFaisabiliteTechnique']);
-            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklistEtudeFaisabiliteTechnique']);
+        Route::prefix('canevas-check-liste-etude-faisabilite-technique')->group(function () {
+            Route::get('', [DocumentController::class, 'canevasChecklisteEtudeFaisabiliteTechnique']);
+            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklisteEtudeFaisabiliteTechnique']);
         });
 
-        Route::prefix('canevas-checklist-etude-faisabilite-economique')->group(function () {
-            Route::get('', [DocumentController::class, 'canevasChecklistEtudeFaisabiliteEconomique']);
-            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklistEtudeFaisabiliteEconomique']);
+        Route::prefix('canevas-check-liste-etude-faisabilite-economique')->group(function () {
+            Route::get('', [DocumentController::class, 'canevasChecklisteEtudeFaisabiliteEconomique']);
+            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklisteEtudeFaisabiliteEconomique']);
         });
 
-        Route::prefix('canevas-checklist-analyse-faisabilite-financiere')->group(function () {
-            Route::get('', [DocumentController::class, 'canevasChecklistEtudeFaisabiliteFinanciere']);
-            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklistEtudeFaisabiliteFinanciere']);
+        Route::prefix('canevas-check-liste-de-suivi-analyse-de-faisabilite-financiere')->group(function () {
+            Route::get('', [DocumentController::class, 'canevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere']);
+            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere']);
         });
 
-        Route::prefix('canevas-checklist-etude-faisabilite-organisationnelle-juridique')->group(function () {
-            Route::get('', [DocumentController::class, 'canevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique']);
-            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique']);
+        Route::prefix('canevas-check-liste-de-suivi-etude-de-faisabilite-organisationnelle-juridique')->group(function () {
+            Route::get('', [DocumentController::class, 'canevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique']);
+            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique']);
         });
 
-        Route::prefix('canevas-checklist-etude-faisabilite-environnemental-sociale')->group(function () {
-            Route::get('', [DocumentController::class, 'canevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale']);
-            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale']);
+        Route::prefix('canevas-check-liste-de-suivi-etude-analyse-impact-environnementale-sociale')->group(function () {
+            Route::get('', [DocumentController::class, 'canevasChecklisteSuiviEtudeAnalyseImpactEnvironnementaleEtSociale']);
+            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklisteSuiviEtudeAnalyseImpactEnvironnementaleEtSociale']);
         });
 
-        Route::prefix('canevas-checklist-suivi-assurance-qualite-etude-faisabilite')->group(function () {
-            Route::get('', [DocumentController::class, 'canevasChecklistSuiviAssuranceQualiteEtudeFaisabilite']);
-            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite']);
+        Route::prefix('canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite')->group(function () {
+            Route::get('', [DocumentController::class, 'canevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite']);
+            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite']);
         });
 
-        Route::prefix('canevas-tdr-prefaisabilite')->group(function () {
+        /* Route::prefix('canevas-tdr-prefaisabilite')->group(function () {
             Route::get('', [DocumentController::class, 'canevasRedactionTdrPrefaisabilite']);
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasRedactionTdrPrefaisabilite']);
         });
         Route::post('configurer-checklist-tdr-prefaisabilite', [DocumentController::class, 'configurerChecklistTdrPrefaisabilite']);
-
-        Route::prefix('canevas-tdr-faisabilite')->group(function () {
+        */
+        /* Route::prefix('canevas-tdr-faisabilite')->group(function () {
             Route::get('', [DocumentController::class, 'canevasRedactionTdrFaisabilite']);
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasRedactionTdrFaisabilite']);
         });
 
-        Route::post('configurer-checklist-tdr-faisabilite', [DocumentController::class, 'configurerChecklistTdrFaisabilite']);
+        Route::post('configurer-checklist-tdr-faisabilite', [DocumentController::class, 'configurerChecklistTdrFaisabilite']); */
 
         Route::apiResource('categories-document', CategorieDocumentController::class)
             ->parameters(['categories-document' => 'categorie_document']);

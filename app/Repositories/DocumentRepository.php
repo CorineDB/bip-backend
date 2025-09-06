@@ -109,7 +109,6 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->first();
     }
 
-
     /**
      * Get the unique canevas d'appreciation des TDRs faisabilité
      */
@@ -135,49 +134,51 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->first();
     }
 
-    public function getCanevasRedactionTdrPrefaisabilite()
-    {
-        return $this->model->whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-tdr-prefaisabilite');
-        })
-            ->where('type', 'formulaire')
-            ->with([
-                'sections.champs' => function($query) {
-                    $query->orderBy('ordre_affichage');
-                },
-                'sections.childSections.champs' => function($query) {
-                    $query->orderBy('ordre_affichage');
-                },
-                'champs' => function($query) {
-                    $query->orderBy('ordre_affichage');
-                },
-                'categorie'
-            ])
-            ->orderBy('created_at', 'desc')
-            ->first();
-    }
+    /*
+        public function getCanevasRedactionTdrPrefaisabilite()
+        {
+            return $this->model->whereHas('categorie', function ($query) {
+                $query->where('slug', 'canevas-tdr-prefaisabilite');
+            })
+                ->where('type', 'formulaire')
+                ->with([
+                    'sections.champs' => function($query) {
+                        $query->orderBy('ordre_affichage');
+                    },
+                    'sections.childSections.champs' => function($query) {
+                        $query->orderBy('ordre_affichage');
+                    },
+                    'champs' => function($query) {
+                        $query->orderBy('ordre_affichage');
+                    },
+                    'categorie'
+                ])
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
 
-    public function getCanevasRedactionTdrFaisabilite()
-    {
-        return $this->model->whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-tdr-faisabilite');
-        })
-            ->where('type', 'formulaire')
-            ->with([
-                'sections.champs' => function($query) {
-                    $query->orderBy('ordre_affichage');
-                },
-                'sections.childSections.champs' => function($query) {
-                    $query->orderBy('ordre_affichage');
-                },
-                'champs' => function($query) {
-                    $query->orderBy('ordre_affichage');
-                },
-                'categorie'
-            ])
-            ->orderBy('created_at', 'desc')
-            ->first();
-    }
+        public function getCanevasRedactionTdrFaisabilite()
+        {
+            return $this->model->whereHas('categorie', function ($query) {
+                $query->where('slug', 'canevas-tdr-faisabilite');
+            })
+                ->where('type', 'formulaire')
+                ->with([
+                    'sections.champs' => function($query) {
+                        $query->orderBy('ordre_affichage');
+                    },
+                    'sections.childSections.champs' => function($query) {
+                        $query->orderBy('ordre_affichage');
+                    },
+                    'champs' => function($query) {
+                        $query->orderBy('ordre_affichage');
+                    },
+                    'categorie'
+                ])
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
+    */
 
     public function getCanevasChecklistSuiviRapportPrefaisabilite()
     {
@@ -223,12 +224,12 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->first();
     }
 
-    public function getCanevasChecklistEtudeFaisabiliteMarche()
+    public function getCanevasChecklisteEtudeFaisabiliteMarche()
     {
         return $this->model->whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-checklist-etude-faisabilite-marche');
+            $query->where('slug', 'canevas-check-liste-etude-faisabilite-marche');
         })
-            ->where('type', 'formulaire')
+            ->where('type', 'checklist')
             ->with([
                 'sections.champs' => function($query) {
                     $query->orderBy('ordre_affichage');
@@ -245,12 +246,12 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->first();
     }
 
-    public function getCanevasChecklistEtudeFaisabiliteEconomique()
+    public function getCanevasChecklisteEtudeFaisabiliteEconomique()
     {
         return $this->model->whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-checklist-etude-faisabilite-economique');
+            $query->where('slug', 'canevas-check-liste-etude-faisabilite-economique');
         })
-            ->where('type', 'formulaire')
+            ->where('type', 'checklist')
             ->with([
                 'sections.champs' => function($query) {
                     $query->orderBy('ordre_affichage');
@@ -267,12 +268,12 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->first();
     }
 
-    public function getCanevasChecklistEtudeFaisabiliteTechnique()
+    public function getCanevasChecklisteEtudeFaisabiliteTechnique()
     {
         return $this->model->whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-checklist-etude-faisabilite-technique');
+            $query->where('slug', 'canevas-check-liste-etude-faisabilite-technique');
         })
-            ->where('type', 'formulaire')
+            ->where('type', 'checklist')
             ->with([
                 'sections.champs' => function($query) {
                     $query->orderBy('ordre_affichage');
@@ -289,12 +290,12 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->first();
     }
 
-    public function getCanevasChecklistEtudeFaisabiliteFinanciere()
+    public function getCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere()
     {
         return $this->model->whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-checklist-analyse-faisabilite-financiere');
+            $query->where('slug', 'canevas-check-liste-de-suivi-analyse-de-faisabilite-financiere');
         })
-            ->where('type', 'formulaire')
+            ->where('type', 'checklist')
             ->with([
                 'sections.champs' => function($query) {
                     $query->orderBy('ordre_affichage');
@@ -311,12 +312,12 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->first();
     }
 
-    public function getCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique()
+    public function getCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique()
     {
         return $this->model->whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-checklist-etude-faisabilite-organisationnelle-juridique');
+            $query->where('slug', 'canevas-check-liste-de-suivi-etude-de-faisabilite-organisationnelle-juridique');
         })
-            ->where('type', 'formulaire')
+            ->where('type', 'checklist')
             ->with([
                 'sections.champs' => function($query) {
                     $query->orderBy('ordre_affichage');
@@ -333,12 +334,12 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->first();
     }
 
-    public function getCanevasChecklistEtudeImpactEnvironnementalEtSociale()
+    public function getCanevasChecklisteSuiviEtudeImpactEnvironnementaleEtSociale()
     {
         return $this->model->whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-checklist-etude-faisabilite-environnemental-sociale');
+            $query->where('slug', 'canevas-check-liste-de-suivi-etude-analyse-impact-environnementale-sociale');
         })
-            ->where('type', 'formulaire')
+            ->where('type', 'checklist')
             ->with([
                 'sections.champs' => function($query) {
                     $query->orderBy('ordre_affichage');
@@ -355,12 +356,12 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->first();
     }
 
-    public function getCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite()
+    public function getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite()
     {
         return $this->model->whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-checklist-suivi-assurance-qualite-etude-faisabilite');
+            $query->where('slug', 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite');
         })
-            ->where('type', 'formulaire')
+            ->where('type', 'checklist')
             ->with([
                 'sections.champs' => function($query) {
                     $query->orderBy('ordre_affichage');

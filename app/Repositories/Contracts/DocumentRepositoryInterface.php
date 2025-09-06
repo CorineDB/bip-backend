@@ -32,12 +32,12 @@ interface DocumentRepositoryInterface extends BaseRepositoryInterface
     /**
      * Get the unique canevas de rédaction TDR préfaisabilité
      */
-    public function getCanevasRedactionTdrPrefaisabilite();
+    //public function getCanevasRedactionTdrPrefaisabilite();
 
     /**
      * Get the unique canevas de rédaction TDR faisabilité
      */
-    public function getCanevasRedactionTdrFaisabilite();
+    //public function getCanevasRedactionTdrFaisabilite();
 
     /**
      * Get the unique canevas de checklist suivi rapport préfaisabilité
@@ -52,35 +52,35 @@ interface DocumentRepositoryInterface extends BaseRepositoryInterface
     /**
      * Get the unique canevas de checklist etude faisabilite marche
      */
-    public function getCanevasChecklistEtudeFaisabiliteMarche();
+    public function getCanevasChecklisteEtudeFaisabiliteMarche();
 
     /**
      * Get the unique canevas de checklist etude faisabilite economique
      */
-    public function getCanevasChecklistEtudeFaisabiliteEconomique();
+    public function getCanevasChecklisteEtudeFaisabiliteEconomique();
 
     /**
      * Get the unique canevas de checklist etude faisabilite technique
      */
-    public function getCanevasChecklistEtudeFaisabiliteTechnique();
+    public function getCanevasChecklisteEtudeFaisabiliteTechnique();
 
     /**
      * Get the unique canevas de checklist etude faisabilite financiere
      */
-    public function getCanevasChecklistEtudeFaisabiliteFinanciere();
+    public function getCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere();
 
     /**
      * Get the unique canevas de checklist etude faisabilite organisationnelle et juridique
      */
-    public function getCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique();
+    public function getCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique();
 
     /**
      * Get the unique canevas de checklist etude analyse impact environnemental et sociale
      */
-    public function getCanevasChecklistEtudeImpactEnvironnementalEtSociale();
+    public function getCanevasChecklisteSuiviEtudeImpactEnvironnementaleEtSociale();
 
     /**
      * Get the unique canevas de checklist suivi assurance qualite etude faisabilite
      */
-    public function getCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite();
+    public function getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
 }

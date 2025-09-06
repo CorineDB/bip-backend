@@ -954,11 +954,11 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
     /** Etude de Faisabilite */
 
-    public function canevasChecklistEtudeFaisabiliteMarche(): JsonResponse
+    public function canevasChecklisteEtudeFaisabiliteMarche(): JsonResponse
     {
         try {
             // Récupérer le canevas de checklist etude faisabilite marche unique
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteMarche();
+            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteMarche();
 
             if (!$canevas) {
                 return response()->json([
@@ -976,12 +976,12 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteMarche(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteEtudeFaisabiliteMarche(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
 
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteMarche();
+            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteMarche();
             $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-etude-faisabilite-marche')->firstOrFail()->id;
 
             if ($canevas) {
@@ -1018,7 +1018,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $canevas->refresh();
 
                 // Recharger avec relations
-                $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteMarche();
+                $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteMarche();
 
                 return (new CanevasAppreciationTdrResource($canevas))
                     ->additional(['message' => 'Canevas de checklist etude faisabilite marche mis à jour avec succès.'])
@@ -1045,7 +1045,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 DB::commit();
 
                 // Recharger avec relations
-                $document = $this->repository->getCanevasChecklistEtudeFaisabiliteMarche();
+                $document = $this->repository->getCanevasChecklisteEtudeFaisabiliteMarche();
 
                 return (new CanevasAppreciationTdrResource($document))
                     ->additional(['message' => 'Canevas de checklist etude faisabilite marche créé avec succès.'])
@@ -1058,11 +1058,11 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function canevasChecklistEtudeFaisabiliteEconomique(): JsonResponse
+    public function canevasChecklisteEtudeFaisabiliteEconomique(): JsonResponse
     {
         try {
             // Récupérer le canevas de checklist etude faisabilite economique unique
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteEconomique();
+            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteEconomique();
 
             if (!$canevas) {
                 return response()->json([
@@ -1080,12 +1080,12 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteEconomique(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteEtudeFaisabiliteEconomique(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
 
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteEconomique();
+            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteEconomique();
             $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-etude-faisabilite-economique')->firstOrFail()->id;
 
             if ($canevas) {
@@ -1122,7 +1122,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $canevas->refresh();
 
                 // Recharger avec relations
-                $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteEconomique();
+                $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteEconomique();
 
                 return (new CanevasAppreciationTdrResource($canevas))
                     ->additional(['message' => 'Canevas de checklist etude faisabilite economique mis à jour avec succès.'])
@@ -1149,7 +1149,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 DB::commit();
 
                 // Recharger avec relations
-                $document = $this->repository->getCanevasChecklistEtudeFaisabiliteEconomique();
+                $document = $this->repository->getCanevasChecklisteEtudeFaisabiliteEconomique();
 
                 return (new CanevasAppreciationTdrResource($document))
                     ->additional(['message' => 'Canevas de checklist etude faisabilite economique créé avec succès.'])
@@ -1162,11 +1162,11 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function canevasChecklistEtudeFaisabiliteTechnique(): JsonResponse
+    public function canevasChecklisteEtudeFaisabiliteTechnique(): JsonResponse
     {
         try {
             // Récupérer le canevas de checklist etude faisabilite technique unique
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteTechnique();
+            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteTechnique();
 
             if (!$canevas) {
                 return response()->json([
@@ -1184,7 +1184,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteTechnique(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteEtudeFaisabiliteTechnique(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -1266,7 +1266,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function canevasChecklistEtudeFaisabiliteFinanciere(): JsonResponse
+    public function canevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere(): JsonResponse
     {
         try {
             // Récupérer le canevas de note conceptuelle unique
@@ -1288,7 +1288,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteFinanciere(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -1370,7 +1370,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function canevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique(): JsonResponse
+    public function canevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique(): JsonResponse
     {
         try {
             // Récupérer le canevas de note conceptuelle unique
@@ -1392,7 +1392,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -1474,7 +1474,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function canevasChecklistEtudeFaisabiliteOrganisationnelle(): JsonResponse
+    public function canevasChecklisteEtudeFaisabiliteOrganisationnelle(): JsonResponse
     {
         try {
             // Récupérer le canevas de note conceptuelle unique
@@ -1496,7 +1496,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteOrganisationnelle(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteEtudeFaisabiliteOrganisationnelle(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -1578,7 +1578,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function canevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale(): JsonResponse
+    public function canevasChecklisteSuiviEtudeAnalyseImpactEnvironnementaleEtSociale(): JsonResponse
     {
         try {
             // Récupérer le canevas de note conceptuelle unique
@@ -1600,7 +1600,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteSuiviEtudeAnalyseImpactEnvironnementaleEtSociale(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -1682,7 +1682,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function canevasChecklistSuiviAssuranceQualiteEtudeFaisabilite(): JsonResponse
+    public function canevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite(): JsonResponse
     {
         try {
             // Récupérer le canevas de note conceptuelle unique
@@ -1704,7 +1704,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();

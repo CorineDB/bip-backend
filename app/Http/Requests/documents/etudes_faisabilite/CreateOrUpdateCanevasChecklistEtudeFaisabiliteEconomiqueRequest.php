@@ -7,7 +7,7 @@ use App\Models\Document;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class CreateOrUpdateCanevasChecklistEtudeFaisabiliteEconomiqueRequest extends FormRequest
+class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteEconomiqueRequest extends FormRequest
 {
     private $canevas_appreciation_tdr = null;
 
@@ -19,9 +19,9 @@ class CreateOrUpdateCanevasChecklistEtudeFaisabiliteEconomiqueRequest extends Fo
     public function prepareForValidation()
     {
         $this->canevas_appreciation_tdr = Document::whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-checklist-etude-faisabilite-economique');
+            $query->where('slug', 'canevas-check-liste-etude-faisabilite-economique');
         })
-        ->where('type', 'formulaire')
+        ->where('type', 'checklist')
         ->orderBy('created_at', 'desc')
         ->first();
     }
@@ -133,7 +133,7 @@ class CreateOrUpdateCanevasChecklistEtudeFaisabiliteEconomiqueRequest extends Fo
                 function ($attribute, $value, $fail) {
                     $exists = Document::where('nom', $value)
                         ->whereHas('categorie', function ($query) {
-                            $query->where('slug', 'canevas-checklist-etude-faisabilite-economique');
+                            $query->where('slug', 'canevas-check-liste-etude-faisabilite-economique');
                         })->when($this->canevas_appreciation_tdr, function($query){
                             $query->where("id","<>", $this->canevas_appreciation_tdr->id);
                         })->exists();

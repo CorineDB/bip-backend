@@ -7,7 +7,7 @@ use App\Models\Document;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class CreateOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSocialeRequest extends FormRequest
+class CreateOrUpdateCanevasChecklisteSuiviEtudeAnalyseImpactEnvironnementaleEtSocialeRequest extends FormRequest
 {
     private $canevas_appreciation_tdr = null;
 
@@ -19,9 +19,9 @@ class CreateOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSocialeRe
     public function prepareForValidation()
     {
         $this->canevas_appreciation_tdr = Document::whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-checklist-etude-faisabilite-environnemental-sociale');
+            $query->where('slug', 'canevas-check-liste-de-suivi-etude-analyse-impact-environnementale-sociale');
         })
-        ->where('type', 'formulaire')
+        ->where('type', 'checklist')
         ->orderBy('created_at', 'desc')
         ->first();
     }
@@ -133,7 +133,7 @@ class CreateOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSocialeRe
                 function ($attribute, $value, $fail) {
                     $exists = Document::where('nom', $value)
                         ->whereHas('categorie', function ($query) {
-                            $query->where('slug', 'canevas-checklist-etude-faisabilite-environnemental-sociale');
+                            $query->where('slug', 'canevas-check-liste-de-suivi-etude-analyse-impact-environnementale-sociale');
                         })->when($this->canevas_appreciation_tdr, function($query){
                             $query->where("id","<>", $this->canevas_appreciation_tdr->id);
                         })->exists();

@@ -19,6 +19,28 @@ interface DocumentServiceInterface extends AbstractServiceInterface
 
     public function createOrUpdateCanevasAppreciationTdr(array $data): JsonResponse;
 
+
+    /**
+     * Récupérer le canevas d'appréciation des TDRs de préfaisabilité
+     */
+    public function canevasAppreciationTdrPrefaisabilite(): JsonResponse;
+
+    /**
+     * Récupérer le canevas d'appréciation des TDRs de faisabilité
+     */
+    public function canevasAppreciationTdrFaisabilite(): JsonResponse;
+
+    /**
+     * Créer ou mettre à jour le canevas d'appréciation des TDRs de préfaisabilité
+     */
+    public function createOrUpdateCanevasAppreciationTdrPrefaisabilite(array $data): JsonResponse;
+
+    /**
+     * Créer ou mettre à jour le canevas d'appréciation des TDRs de faisabilité
+     */
+    public function createOrUpdateCanevasAppreciationTdrFaisabilite(array $data): JsonResponse;
+
+    /*
     public function canevasRedactionTdrPrefaisabilite(): JsonResponse;
 
     public function createOrUpdateCanevasRedactionTdrPrefaisabilite(array $data): JsonResponse;
@@ -30,40 +52,41 @@ interface DocumentServiceInterface extends AbstractServiceInterface
     public function createOrUpdateCanevasRedactionTdrFaisabilite(array $data): JsonResponse;
 
     public function configurerChecklistTdrFaisabilite(array $data): JsonResponse;
+    */
+
+    //public function canevasChecklistMesuresAdaptation(): JsonResponse;
+
+    //public function createOrUpdateCanevasChecklistMesuresAdaptation(array $data): JsonResponse;
 
     public function canevasChecklistSuiviRapportPrefaisabilite(): JsonResponse;
 
     public function createOrUpdateCanevasChecklistSuiviRapportPrefaisabilite(array $data): JsonResponse;
 
-    public function canevasChecklistMesuresAdaptation(): JsonResponse;
+    public function canevasChecklisteEtudeFaisabiliteMarche(): JsonResponse;
 
-    public function createOrUpdateCanevasChecklistMesuresAdaptation(array $data): JsonResponse;
+    public function createOrUpdateCanevasChecklisteEtudeFaisabiliteMarche(array $data): JsonResponse;
 
-    public function canevasChecklistEtudeFaisabiliteMarche(): JsonResponse;
+    public function canevasChecklisteEtudeFaisabiliteEconomique(): JsonResponse;
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteMarche(array $data): JsonResponse;
+    public function createOrUpdateCanevasChecklisteEtudeFaisabiliteEconomique(array $data): JsonResponse;
 
-    public function canevasChecklistEtudeFaisabiliteEconomique(): JsonResponse;
+    public function canevasChecklisteEtudeFaisabiliteTechnique(): JsonResponse;
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteEconomique(array $data): JsonResponse;
+    public function createOrUpdateCanevasChecklisteEtudeFaisabiliteTechnique(array $data): JsonResponse;
 
-    public function canevasChecklistEtudeFaisabiliteTechnique(): JsonResponse;
+    public function canevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere(): JsonResponse;
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteTechnique(array $data): JsonResponse;
+    public function createOrUpdateCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere(array $data): JsonResponse;
 
-    public function canevasChecklistEtudeFaisabiliteFinanciere(): JsonResponse;
+    public function canevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique(): JsonResponse;
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteFinanciere(array $data): JsonResponse;
+    public function createOrUpdateCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique(array $data): JsonResponse;
 
-    public function canevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique(): JsonResponse;
+    public function canevasChecklisteSuiviEtudeAnalyseImpactEnvironnementaleEtSociale(): JsonResponse;
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique(array $data): JsonResponse;
+    public function createOrUpdateCanevasChecklisteSuiviEtudeAnalyseImpactEnvironnementaleEtSociale(array $data): JsonResponse;
 
-    public function canevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale(): JsonResponse;
+    public function canevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite(): JsonResponse;
 
-    public function createOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale(array $data): JsonResponse;
-
-    public function canevasChecklistSuiviAssuranceQualiteEtudeFaisabilite(): JsonResponse;
-
-    public function createOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite(array $data): JsonResponse;
+    public function createOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite(array $data): JsonResponse;
 }

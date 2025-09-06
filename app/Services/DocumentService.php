@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Http\Resources\CanevasAppreciationTdrResource;
-use App\Http\Resources\CanevasRedactionTdrPrefaisabiliteResource;
-use App\Http\Resources\CanevasRedactionTdrFaisabiliteResource;
+/* use App\Http\Resources\CanevasRedactionTdrPrefaisabiliteResource;
+use App\Http\Resources\CanevasRedactionTdrFaisabiliteResource; */
 use Illuminate\Http\JsonResponse;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -361,7 +361,20 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
             $ficheIdee = $this->repository->getFicheIdee();
 
-            $data['categorieId'] = CategorieDocument::where('slug', 'fiche-idee')->firstOrFail()->id;
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'fiche-idee',
+            ], [
+                /* 'type' => 'Fiche idée',
+                'slug' => 'fiche-idee',
+                'is_mandatory' => true, */
+
+                'nom' => "Canevas standardise d'ideation de projet",
+                'slug' => "fiche-idee",
+                "description" => "Formulaire standard d'ideation de projet",
+                "format" => "document"
+            ]);
+
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($ficheIdee) {
                 // Mode mise à jour
@@ -495,7 +508,15 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             DB::beginTransaction();
 
             $canevas = $this->repository->getCanevasRedactionNoteConceptuelle();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-redaction-note-conceptuelle')->firstOrFail()->id;
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-redaction-note-conceptuelle',
+            ], [
+                'nom' => "Canevas de rédaction de note conceptuelle",
+                'slug' => "canevas-redaction-note-conceptuelle",
+                "description" => "Formulaire standard de rédaction de note conceptuelle",
+                "format" => "document"
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 // Mode mise à jour intelligente
@@ -510,7 +531,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
 
                 // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
-                // $this->cleanupRemovedElements($canevas, $payloadIds);
+                $this->cleanupRemovedElements($canevas, $payloadIds);
 
                 // Regénérer la structure après les modifications
                 $this->structureService->generateAndSaveStructure($canevas);
@@ -774,18 +795,18 @@ class DocumentService extends BaseService implements DocumentServiceInterface
     public function canevasChecklistSuiviRapportPrefaisabilite(): JsonResponse
     {
         try {
-            // Récupérer le canevas de checklist suivi rapport préfaisabilité unique
+            // Récupérer le Canevas de la check liste de suivi de rapport de préfaisabilité unique
             $canevas = $this->repository->getCanevasChecklistSuiviRapportPrefaisabilite();
 
             if (!$canevas) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucun canevas de checklist suivi rapport préfaisabilité trouvé.'
+                    'message' => 'Aucun Canevas de la check liste de suivi de rapport de préfaisabilité trouvé.'
                 ], 404);
             }
 
             return (new CanevasAppreciationTdrResource($canevas))
-                        ->additional(['message' => 'Canevas de checklist suivi rapport préfaisabilité récupéré avec succès.'])
+                        ->additional(['message' => 'Canevas de la check liste de suivi de rapport de préfaisabilité récupéré avec succès.'])
                         ->response()
                         ->setStatusCode(200);
         } catch (Exception $e) {
@@ -799,7 +820,14 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             DB::beginTransaction();
 
             $canevas = $this->repository->getCanevasChecklistSuiviRapportPrefaisabilite();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-check-liste-suivi-rapport-prefaisabilite')->firstOrFail()->id;
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-check-liste-suivi-rapport-prefaisabilite'
+            ], [
+                'nom' => "Canevasla check liste de suivi de rapport de préfaisabilité",
+                "description" => "Canevas standardisés dela check liste de suivi de rapport de préfaisabilité",
+                "format" => "checklist"
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 unset($data["slug"]);
@@ -838,7 +866,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $canevas = $this->repository->getCanevasChecklistSuiviRapportPrefaisabilite();
 
                 return (new CanevasAppreciationTdrResource($canevas))
-                    ->additional(['message' => 'Canevas de checklist suivi rapport préfaisabilité mis à jour avec succès.'])
+                    ->additional(['message' => 'Canevas de la check liste de suivi de rapport de préfaisabilité mis à jour avec succès.'])
                     ->response()
                     ->setStatusCode(200);
             } else {
@@ -865,7 +893,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $document = $this->repository->getCanevasChecklistSuiviRapportPrefaisabilite();
 
                 return (new CanevasAppreciationTdrResource($document))
-                    ->additional(['message' => 'Canevas de checklist suivi rapport préfaisabilité créé avec succès.'])
+                    ->additional(['message' => 'Canevas de la check liste de suivi de rapport de préfaisabilité créé avec succès.'])
                     ->response()
                     ->setStatusCode(201);
             }
@@ -875,34 +903,44 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
+    /*
     public function canevasChecklistMesuresAdaptation(): JsonResponse
     {
         try {
-            // Récupérer le canevas de checklist mesures adaptation unique
+            // Récupérer le Canevas de la check liste mesures adaptation unique
             $canevas = $this->repository->getCanevasChecklistMesuresAdaptation();
 
             if (!$canevas) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucun canevas de checklist mesures adaptation trouvé.'
+                    'message' => 'Aucun Canevas de la check liste mesures adaptation trouvé.'
                 ], 404);
             }
 
             return (new CanevasAppreciationTdrResource($canevas))
-                ->additional(['message' => 'Canevas de checklist mesures adaptation récupéré avec succès.'])
+                ->additional(['message' => 'Canevas de la check liste mesures adaptation récupéré avec succès.'])
                 ->response()
                 ->setStatusCode(200);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
     }
+
     public function createOrUpdateCanevasChecklistMesuresAdaptation(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
 
             $canevas = $this->repository->getCanevasChecklistMesuresAdaptation();
-            $data['categorieId'] = CategorieDocument::where('slug', 'checklist-mesures-adaptation-haut-risque')->firstOrFail()->id;
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'checklist-mesures-adaptation-haut-risque'
+            ], [
+                'nom' => 'Checklist mesures adaptation haut risque',
+                'slug' => 'checklist-mesures-adaptation-haut-risque',
+                'description' => 'Formulaire de checklist pour mesures d\'adaptation haut risque',
+                'format' => 'document'
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 unset($data["slug"]);
@@ -931,7 +969,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
 
                 // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
-                // $this->cleanupRemovedElements($canevas, $payloadIds);
+                $this->cleanupRemovedElements($canevas, $payloadIds);
 
                 DB::commit();
 
@@ -941,7 +979,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $canevas = $this->repository->getCanevasChecklistMesuresAdaptation();
 
                 return (new CanevasAppreciationTdrResource($canevas))
-                    ->additional(['message' => 'Canevas de checklist mesures adaptation mis à jour avec succès.'])
+                    ->additional(['message' => 'Canevas de la check liste mesures adaptation mis à jour avec succès.'])
                     ->response()
                     ->setStatusCode(200);
             } else {
@@ -968,7 +1006,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $document = $this->repository->getCanevasChecklistMesuresAdaptation();
 
                 return (new CanevasAppreciationTdrResource($document))
-                    ->additional(['message' => 'Canevas de checklist mesures adaptation créé avec succès.'])
+                    ->additional(['message' => 'Canevas de la check liste mesures adaptation créé avec succès.'])
                     ->response()
                     ->setStatusCode(201);
             }
@@ -977,24 +1015,25 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             return $this->errorResponse($e);
         }
     }
+    */
 
     /** Etude de Faisabilite */
 
-    public function canevasChecklistEtudeFaisabiliteMarche(): JsonResponse
+    public function canevasChecklisteEtudeFaisabiliteMarche(): JsonResponse
     {
         try {
-            // Récupérer le canevas de checklist etude faisabilite marche unique
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteMarche();
+            // Récupérer le Canevas de la check liste etude faisabilite marche unique
+            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteMarche();
 
             if (!$canevas) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucun canevas de checklist etude faisabilite marche trouvé.'
+                    'message' => "Aucun canevas de la check liste d'étude de faisabilité de marché trouvé."
                 ], 404);
             }
 
             return (new CanevasAppreciationTdrResource($canevas))
-                ->additional(['message' => 'Canevas de checklist etude faisabilite marche récupéré avec succès.'])
+                ->additional(['message' => "Canevas de la check liste d'étude de faisabilité de marché récupéré avec succès."])
                 ->response()
                 ->setStatusCode(200);
         } catch (Exception $e) {
@@ -1002,13 +1041,22 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteMarche(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteEtudeFaisabiliteMarche(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
 
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteMarche();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-etude-faisabilite-marche')->firstOrFail()->id;
+            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteMarche();
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-check-liste-etude-faisabilite-marche'
+            ], [
+                'format' => 'document',
+                'nom' => "Canevas de la check liste d'étude de faisabilité marché",
+                'slug' => 'canevas-check-liste-etude-faisabilite-marche',
+                "description" => "Canevas standardisés de la check liste d'étude de faisabilité marché"
+            ]);
+
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 unset($data["slug"]);
@@ -1037,21 +1085,21 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
 
                 // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
-                // $this->cleanupRemovedElements($canevas, $payloadIds);
+                $this->cleanupRemovedElements($canevas, $payloadIds);
 
                 DB::commit();
 
                 $canevas->refresh();
 
                 // Recharger avec relations
-                $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteMarche();
+                $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteMarche();
 
                 return (new CanevasAppreciationTdrResource($canevas))
-                    ->additional(['message' => 'Canevas de checklist etude faisabilite marche mis à jour avec succès.'])
+                    ->additional(['message' => 'Canevas de la check liste étude faisabilité marché mis à jour avec succès.'])
                     ->response()
                     ->setStatusCode(200);
             } else {
-                $data["slug"] = "canevas-checklist-etude-faisabilite-marche";
+                $data["slug"] = "canevas-check-liste-etude-faisabilite-marche";
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
@@ -1071,10 +1119,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 DB::commit();
 
                 // Recharger avec relations
-                $document = $this->repository->getCanevasChecklistEtudeFaisabiliteMarche();
+                $document = $this->repository->getCanevasChecklisteEtudeFaisabiliteMarche();
 
                 return (new CanevasAppreciationTdrResource($document))
-                    ->additional(['message' => 'Canevas de checklist etude faisabilite marche créé avec succès.'])
+                    ->additional(['message' => 'Canevas de la check liste étude faisabilité marché créé avec succès.'])
                     ->response()
                     ->setStatusCode(201);
             }
@@ -1084,21 +1132,21 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function canevasChecklistEtudeFaisabiliteEconomique(): JsonResponse
+    public function canevasChecklisteEtudeFaisabiliteEconomique(): JsonResponse
     {
         try {
             // Récupérer le canevas de note conceptuelle unique
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteEconomique();
+            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteEconomique();
 
             if (!$canevas) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucun canevas de rédaction de note conceptuelle trouvé.'
+                    'message' => "Aucun canevas de la check liste d'étude de faisabilité économique."
                 ], 404);
             }
 
             return (new CanevasAppreciationTdrResource($canevas))
-                ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
+                ->additional(['message' => "Canevas de la check liste d'étude de faisabilité économique récupéré avec succès."])
                 ->response()
                 ->setStatusCode(200);
         } catch (Exception $e) {
@@ -1106,13 +1154,22 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteEconomique(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteEtudeFaisabiliteEconomique(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
 
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteEconomique();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-etude-faisabilite-economique')->firstOrFail()->id;
+            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteEconomique();
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-check-liste-etude-faisabilite-economique'
+            ], [
+                'format' => 'document',
+                'nom' => "Canevas de la check liste d'étude de faisabilité économique",
+                'slug' => 'canevas-check-liste-e-etude-faisabilite-economique',
+                "description" => "Canevas standardisés de la check liste d'étude de faisabilité économique",
+            ]);
+
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 unset($data["slug"]);
@@ -1141,21 +1198,21 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
 
                 // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
-                // $this->cleanupRemovedElements($canevas, $payloadIds);
+                $this->cleanupRemovedElements($canevas, $payloadIds);
 
                 DB::commit();
 
                 $canevas->refresh();
 
                 // Recharger avec relations
-                $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteEconomique();
+                $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteEconomique();
 
                 return (new CanevasAppreciationTdrResource($canevas))
-                    ->additional(['message' => 'Canevas de checklist etude faisabilite economique mis à jour avec succès.'])
+                    ->additional(['message' => "Canevas de la check liste d'étude faisabilité économique mis à jour avec succès."])
                     ->response()
                     ->setStatusCode(200);
             } else {
-                $data["slug"] = "canevas-checklist-etude-faisabilite-economique";
+                $data["slug"] = "canevas-check-liste-etude-faisabilite-economique";
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
@@ -1175,10 +1232,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 DB::commit();
 
                 // Recharger avec relations
-                $document = $this->repository->getCanevasChecklistEtudeFaisabiliteEconomique();
+                $document = $this->repository->getCanevasChecklisteEtudeFaisabiliteEconomique();
 
                 return (new CanevasAppreciationTdrResource($document))
-                    ->additional(['message' => 'Canevas de checklist etude faisabilite economique créé avec succès.'])
+                    ->additional(['message' => 'Canevas de la check liste étude faisabilité économique créé avec succès.'])
                     ->response()
                     ->setStatusCode(201);
             }
@@ -1188,21 +1245,21 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function canevasChecklistEtudeFaisabiliteTechnique(): JsonResponse
+    public function canevasChecklisteEtudeFaisabiliteTechnique(): JsonResponse
     {
         try {
-            // Récupérer le canevas de checklist etude faisabilite technique unique
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteTechnique();
+            // Récupérer le Canevas de la check liste etude faisabilite technique unique
+            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteTechnique();
 
             if (!$canevas) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucun canevas de checklist etude faisabilite technique trouvé.'
+                    'message' => 'Aucun canevas de check liste étude faisabilité technique trouvé.'
                 ], 404);
             }
 
             return (new CanevasAppreciationTdrResource($canevas))
-                ->additional(['message' => 'Canevas de checklist etude faisabilite technique récupéré avec succès.'])
+                ->additional(['message' => 'Canevas de check liste étude faisabilité technique récupéré avec succès.'])
                 ->response()
                 ->setStatusCode(200);
         } catch (Exception $e) {
@@ -1210,13 +1267,21 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteTechnique(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteEtudeFaisabiliteTechnique(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
 
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteTechnique();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-etude-faisabilite-technique')->firstOrFail()->id;
+            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteTechnique();
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-check-liste-etude-faisabilite-technique'
+            ], [
+                'format' => 'document',
+                'nom' => "Canevas de la check liste d'étude de faisabilité technique",
+                'slug' => 'canevas-check-liste-etude-faisabilite-technique',
+                "description" => "Canevas standardisés de la check liste d'étude de faisabilité technique",
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 unset($data["slug"]);
@@ -1245,17 +1310,17 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
 
                 // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
-                // $this->cleanupRemovedElements($canevas, $payloadIds);
+                $this->cleanupRemovedElements($canevas, $payloadIds);
 
                 DB::commit();
 
                 $canevas->refresh();
 
                 // Recharger avec relations
-                $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteTechnique();
+                $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteTechnique();
 
                 return (new CanevasAppreciationTdrResource($canevas))
-                    ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
+                    ->additional(['message' => "Canevas de la check liste d'étude de faisabilité technique mis à jour avec succès."])
                     ->response()
                     ->setStatusCode(200);
             } else {
@@ -1279,10 +1344,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 DB::commit();
 
                 // Recharger avec relations
-                $document = $this->repository->getCanevasChecklistEtudeFaisabiliteTechnique();
+                $document = $this->repository->getCanevasChecklisteEtudeFaisabiliteTechnique();
 
                 return (new CanevasAppreciationTdrResource($document))
-                    ->additional(['message' => 'Canevas de note conceptuelle créé avec succès.'])
+                    ->additional(['message' => "Canevas de la check liste d'étude de faisabilité technique créé avec succès."])
                     ->response()
                     ->setStatusCode(201);
             }
@@ -1292,21 +1357,21 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function canevasChecklistEtudeFaisabiliteFinanciere(): JsonResponse
+    public function canevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere(): JsonResponse
     {
         try {
             // Récupérer le canevas de note conceptuelle unique
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteFinanciere();
+            $canevas = $this->repository->getCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere();
 
             if (!$canevas) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucun canevas de rédaction de note conceptuelle trouvé.'
+                    'message' => "Aucun canevas de la check liste de suivi d'analyse de faisabilité financière trouvé."
                 ], 404);
             }
 
             return (new CanevasAppreciationTdrResource($canevas))
-                ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
+                ->additional(['message' => "Canevas de la check liste de suivi d'analyse de faisabilité financière récupéré avec succès."])
                 ->response()
                 ->setStatusCode(200);
         } catch (Exception $e) {
@@ -1314,13 +1379,22 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteFinanciere(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
 
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteFinanciere();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-analyse-faisabilite-financiere')->firstOrFail()->id;
+            $canevas = $this->repository->getCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere();
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-check-liste-de-suivi-analyse-de-faisabilite-financiere'
+            ], [
+                'format' => 'document',
+                'nom' => "Canevas de la check liste de suivi d'analyse de faisabilité financière",
+                'slug' => 'canevas-check-liste-de-suivi-analyse-de-faisabilite-financiere',
+                "description" => "Canevas standardisés de la check liste de suivi d'analyse de faisabilité financière",
+            ]);
+
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 unset($data["slug"]);
@@ -1349,17 +1423,17 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
 
                 // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
-                // $this->cleanupRemovedElements($canevas, $payloadIds);
+                $this->cleanupRemovedElements($canevas, $payloadIds);
 
                 DB::commit();
 
                 $canevas->refresh();
 
                 // Recharger avec relations
-                $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteFinanciere();
+                $canevas = $this->repository->getCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere();
 
                 return (new CanevasAppreciationTdrResource($canevas))
-                    ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
+                    ->additional(['message' => "Canevas de la check liste de suivi d'analyse de faisabilité financière mis à jour avec succès."])
                     ->response()
                     ->setStatusCode(200);
             } else {
@@ -1383,10 +1457,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 DB::commit();
 
                 // Recharger avec relations
-                $document = $this->repository->getCanevasChecklistEtudeFaisabiliteFinanciere();
+                $document = $this->repository->getCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere();
 
                 return (new CanevasAppreciationTdrResource($document))
-                    ->additional(['message' => 'Canevas de note conceptuelle créé avec succès.'])
+                    ->additional(['message' => "Canevas de la check liste de suivi d'analyse de faisabilité financière créé avec succès."])
                     ->response()
                     ->setStatusCode(201);
             }
@@ -1396,21 +1470,21 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function canevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique(): JsonResponse
+    public function canevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique(): JsonResponse
     {
         try {
             // Récupérer le canevas de note conceptuelle unique
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique();
+            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique();
 
             if (!$canevas) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucun canevas de rédaction de note conceptuelle trouvé.'
+                    'message' => "Aucun canevas de la check liste de suivi d'étude de faisabilité organisationnelle et juridique."
                 ], 404);
             }
 
             return (new CanevasAppreciationTdrResource($canevas))
-                ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
+                ->additional(['message' => "Canevas de la check liste de suivi d'étude de faisabilité organisationnelle et juridique."])
                 ->response()
                 ->setStatusCode(200);
         } catch (Exception $e) {
@@ -1418,13 +1492,21 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
 
-            $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-etude-faisabilite-organisationnelle-juridique')->firstOrFail()->id;
+            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique();
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-check-liste-de-suivi-etude-de-faisabilite-organisationnelle-juridique'
+            ], [
+                'format' => 'document',
+                'nom' => "Canevas de la check liste de suivi d'étude de faisabilité organisationnelle et juridique",
+                'slug' => 'canevas-check-liste-de-suivi-etude-de-faisabilite-organisationnelle-juridique',
+                "description" => "Canevas standardisés de la check liste de suivi d'étude de faisabilité organisationnelle et juridique",
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 unset($data["slug"]);
@@ -1469,10 +1551,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $canevas->refresh();
 
                 // Recharger avec relations
-                $canevas = $this->repository->getCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique();
+                $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique();
 
                 return (new CanevasAppreciationTdrResource($canevas))
-                    ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
+                    ->additional(['message' => "Canevas de la check liste de suivi d'étude de faisabilité organisationnelle et juridique mis à jour avec succès."])
                     ->response()
                     ->setStatusCode(200);
             } else {
@@ -1496,10 +1578,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 DB::commit();
 
                 // Recharger avec relations
-                $document = $this->repository->getCanevasChecklistEtudeFaisabiliteOrganisationnelleEtJuridique();
+                $document = $this->repository->getCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique();
 
                 return (new CanevasAppreciationTdrResource($document))
-                    ->additional(['message' => 'Canevas de note conceptuelle créé avec succès.'])
+                    ->additional(['message' => "Canevas de la check liste de suivi d'étude de faisabilité organisationnelle et juridique créé avec succès."])
                     ->response()
                     ->setStatusCode(201);
             }
@@ -1509,21 +1591,21 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function canevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale(): JsonResponse
+    public function canevasChecklisteSuiviEtudeAnalyseImpactEnvironnementaleEtSociale(): JsonResponse
     {
         try {
             // Récupérer le canevas de note conceptuelle unique
-            $canevas = $this->repository->getCanevasChecklistEtudeImpactEnvironnementalEtSociale();
+            $canevas = $this->repository->getCanevasChecklisteSuiviEtudeImpactEnvironnementaleEtSociale();
 
             if (!$canevas) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucun canevas de rédaction de note conceptuelle trouvé.'
+                    'message' => "Aucun canevas de la check liste de suivi d'étude de faisabilité d'impact environnementale et sociale trouvé."
                 ], 404);
             }
 
             return (new CanevasAppreciationTdrResource($canevas))
-                ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
+                ->additional(['message' => "Canevas de la check liste de suivi d'étude de faisabilité d'impact environnementale et sociale récupéré avec succès."])
                 ->response()
                 ->setStatusCode(200);
         } catch (Exception $e) {
@@ -1531,13 +1613,21 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistEtudeAnalyseImpactEnvironnementalEtSociale(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteSuiviEtudeAnalyseImpactEnvironnementaleEtSociale(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
 
-            $canevas = $this->repository->getCanevasChecklistEtudeImpactEnvironnementalEtSociale();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-etude-faisabilite-environnemental-sociale')->firstOrFail()->id;
+            $canevas = $this->repository->getCanevasChecklisteSuiviEtudeImpactEnvironnementaleEtSociale();
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-check-liste-de-suivi-etude-analyse-impact-environnementale-sociale'
+            ], [
+                'format' => 'document',
+                'nom' => "Canevas de la check liste de suivi d'étude de faisabilité d'impact environnementale et sociale",
+                'slug' => 'canevas-check-liste-de-suivi-etude-analyse-impact-environnementale-sociale',
+                "description" => "Canevas standardisés de la check liste de suivi d'étude de faisabilité d'impact environnementale et sociale",
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 unset($data["slug"]);
@@ -1566,17 +1656,17 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
 
                 // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
-                // $this->cleanupRemovedElements($canevas, $payloadIds);
+                $this->cleanupRemovedElements($canevas, $payloadIds);
 
                 DB::commit();
 
                 $canevas->refresh();
 
                 // Recharger avec relations
-                $canevas = $this->repository->getCanevasChecklistEtudeImpactEnvironnementalEtSociale();
+                $canevas = $this->repository->getCanevasChecklisteSuiviEtudeImpactEnvironnementaleEtSociale();
 
                 return (new CanevasAppreciationTdrResource($canevas))
-                    ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
+                    ->additional(['message' => "Canevas de la check liste de suivi d'étude de faisabilité d'impact environnementale et sociale mis à jour avec succès."])
                     ->response()
                     ->setStatusCode(200);
             } else {
@@ -1600,10 +1690,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 DB::commit();
 
                 // Recharger avec relations
-                $document = $this->repository->getCanevasChecklistEtudeImpactEnvironnementalEtSociale();
+                $document = $this->repository->getCanevasChecklisteSuiviEtudeImpactEnvironnementaleEtSociale();
 
                 return (new CanevasAppreciationTdrResource($document))
-                    ->additional(['message' => 'Canevas de note conceptuelle créé avec succès.'])
+                    ->additional(['message' => "Canevas de la check liste de suivi d'étude de faisabilité d'impact environnementale et sociale créé avec succès."])
                     ->response()
                     ->setStatusCode(201);
             }
@@ -1613,21 +1703,21 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function canevasChecklistSuiviAssuranceQualiteEtudeFaisabilite(): JsonResponse
+    public function canevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite(): JsonResponse
     {
         try {
             // Récupérer le canevas de note conceptuelle unique
-            $canevas = $this->repository->getCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite();
+            $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
 
             if (!$canevas) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucun canevas de rédaction de note conceptuelle trouvé.'
+                    'message' => "Aucun canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité."
                 ], 404);
             }
 
             return (new CanevasAppreciationTdrResource($canevas))
-                ->additional(['message' => 'Canevas de note conceptuelle récupéré avec succès.'])
+                ->additional(['message' => "Canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité"])
                 ->response()
                 ->setStatusCode(200);
         } catch (Exception $e) {
@@ -1635,13 +1725,20 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
 
-            $canevas = $this->repository->getCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-checklist-suivi-assurance-qualite-etude-faisabilite')->firstOrFail()->id;
+            $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite'
+            ], [
+                'nom' => "Canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité",
+                'slug' => 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite',
+                'format' => 'document'
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 unset($data["slug"]);
@@ -1670,14 +1767,14 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
 
                 // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
-                // $this->cleanupRemovedElements($canevas, $payloadIds);
+                $this->cleanupRemovedElements($canevas, $payloadIds);
 
                 DB::commit();
 
                 $canevas->refresh();
 
                 // Recharger avec relations
-                $canevas = $this->repository->getCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite();
+                $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
 
                 return (new CanevasAppreciationTdrResource($canevas))
                     ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
@@ -1704,10 +1801,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 DB::commit();
 
                 // Recharger avec relations
-                $document = $this->repository->getCanevasChecklistSuiviAssuranceQualiteEtudeFaisabilite();
+                $document = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
 
                 return (new CanevasAppreciationTdrResource($document))
-                    ->additional(['message' => 'Canevas de note conceptuelle créé avec succès.'])
+                    ->additional(['message' => "Canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité."])
                     ->response()
                     ->setStatusCode(201);
             }
@@ -1745,7 +1842,15 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             DB::beginTransaction();
 
             $canevas = $this->repository->getCanevasAppreciationTdr();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-appreciation-tdr')->firstOrFail()->id;
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-appreciation-tdr'
+            ], [
+                'nom' => 'Appréciation des TDR',
+                'slug' => 'canevas-appreciation-tdr',
+                'description' => 'Formulaire d\'appréciation des termes de référence',
+                'format' => 'document'
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 unset($data["slug"]);
@@ -1824,6 +1929,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
+    /*
     public function canevasRedactionTdrPrefaisabilite(): JsonResponse
     {
         try {
@@ -1852,7 +1958,15 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             DB::beginTransaction();
 
             $canevas = $this->repository->getCanevasRedactionTdrPrefaisabilite();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-tdr-prefaisabilite')->firstOrFail()->id;
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-tdr-prefaisabilite'
+            ], [
+                'nom' => 'Canevas TDR préfaisabilité',
+                'slug' => 'canevas-tdr-prefaisabilite',
+                'description' => 'Canevas pour rédaction des TDR de préfaisabilité',
+                'format' => 'document'
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 // Mode mise à jour intelligente
@@ -1917,7 +2031,15 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             DB::beginTransaction();
 
             $canevas = $this->repository->getCanevasRedactionTdrPrefaisabilite();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-tdr-prefaisabilite')->firstOrFail()->id;
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-tdr-prefaisabilite'
+            ], [
+                'nom' => 'Canevas TDR préfaisabilité',
+                'slug' => 'canevas-tdr-prefaisabilite',
+                'description' => 'Canevas pour rédaction des TDR de préfaisabilité',
+                'format' => 'document'
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 // Mode mise à jour intelligente
@@ -2010,7 +2132,15 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             DB::beginTransaction();
 
             $canevas = $this->repository->getCanevasRedactionTdrFaisabilite();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-tdr-faisabilite')->firstOrFail()->id;
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-tdr-faisabilite'
+            ], [
+                'nom' => 'Canevas TDR faisabilité',
+                'slug' => 'canevas-tdr-faisabilite',
+                'description' => 'Canevas pour rédaction des TDR de faisabilité',
+                'format' => 'document'
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 // Mode mise à jour intelligente
@@ -2077,7 +2207,15 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             DB::beginTransaction();
 
             $canevas = $this->repository->getCanevasRedactionTdrFaisabilite();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-tdr-faisabilite')->firstOrFail()->id;
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-tdr-faisabilite'
+            ], [
+                'nom' => 'Canevas TDR faisabilité',
+                'slug' => 'canevas-tdr-faisabilite',
+                'description' => 'Canevas pour rédaction des TDR de faisabilité',
+                'format' => 'document'
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 // Mode mise à jour intelligente
@@ -2141,6 +2279,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             return $this->errorResponse($e);
         }
     }
+    */
 
     /**
      * Récupérer le canevas d'appréciation des TDRs de préfaisabilité
@@ -2176,7 +2315,15 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             DB::beginTransaction();
 
             $canevas = $this->repository->getCanevasAppreciationTdrPrefaisabilite();
-            $data['categorieId'] = CategorieDocument::where('slug', 'canevas-appreciation-tdrs-prefaisabilite')->firstOrFail()->id;
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-appreciation-tdrs-prefaisabilite'
+            ], [
+                'nom' => 'Appréciation des TDRs de préfaisabilité',
+                'slug' => 'canevas-appreciation-tdrs-prefaisabilite',
+                'description' => 'Formulaire d\'appréciation des TDRs de préfaisabilité',
+                'format' => 'document'
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
 
             if ($canevas) {
                 unset($data["slug"]);
@@ -2250,6 +2397,131 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
                 return (new CanevasAppreciationTdrResource($document))
                     ->additional(['message' => 'Canevas d\'appréciation des TDRs de préfaisabilité créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Récupérer le canevas d'appréciation des TDRs de faisabilité
+     */
+    public function canevasAppreciationTdrFaisabilite(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas d'appréciation des TDRs de faisabilité unique
+            $canevas = $this->repository->getCanevasAppreciationTdrFaisabilite();
+
+            if (!$canevas) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun canevas d\'appréciation des TDRs de faisabilité trouvé.'
+                ], 404);
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => 'Canevas d\'appréciation des TDRs de faisabilité récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas d'appréciation des TDRs de faisabilité
+     */
+    public function createOrUpdateCanevasAppreciationTdrFaisabilite(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasAppreciationTdrFaisabilite();
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-appreciation-tdrs-faisabilite'
+            ], [
+                'nom' => 'Appréciation des TDRs de faisabilité',
+                'slug' => 'canevas-appreciation-tdrs-faisabilite',
+                'description' => 'Formulaire d\'appréciation des TDRs de faisabilité',
+                'format' => 'document'
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
+
+            if ($canevas) {
+                unset($data["slug"]);
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['options_notation'])) {
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                if (isset($data['accept_text'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['accept_text'] = $data['accept_text'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // Regénérer la structure après les modifications
+                $this->structureService->generateAndSaveStructure($canevas);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasAppreciationTdrFaisabilite();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas d\'appréciation des TDRs de faisabilité mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                $data["slug"] = "canevas-appreciation-tdrs-faisabilite";
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                if (isset($data['options_notation'])) {
+                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasAppreciationTdrFaisabilite();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => 'Canevas d\'appréciation des TDRs de faisabilité créé avec succès.'])
                     ->response()
                     ->setStatusCode(201);
             }
