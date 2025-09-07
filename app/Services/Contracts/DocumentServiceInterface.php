@@ -15,6 +15,16 @@ interface DocumentServiceInterface extends AbstractServiceInterface
 
     public function createOrUpdateCanevasRedactionNoteConceptuelle(array $data): JsonResponse;
 
+    /**
+     * Récupérer le canevas d'appréciation des notes conceptuelle
+     */
+    public function canevasAppreciationNoteConceptuelle(): JsonResponse;
+
+    /**
+     * Créer ou mettre à jour le canevas d'appréciation des notes conceptuelle
+     */
+    public function createOrUpdateCanevasAppreciationNoteConceptuelle(array $data): JsonResponse;
+
     public function canevasAppreciationTdr(): JsonResponse;
 
     public function createOrUpdateCanevasAppreciationTdr(array $data): JsonResponse;

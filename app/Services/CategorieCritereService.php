@@ -16,6 +16,7 @@ use App\Http\Resources\SecteurResource;
 use App\Models\Secteur;
 use App\Models\Critere;
 use App\Models\Notation;
+use App\Models\Dossier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -230,6 +231,9 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             if (isset($data['documents_referentiel']) && !empty($data['documents_referentiel'])) {
                 $nomsFilesSoumis = [];
 
+                // Créer ou récupérer la structure de dossiers
+                $dossierCanevas = $this->getOrCreateCanvasFolderStructure('appreciation');
+
                 foreach ($data['documents_referentiel'] as $file) {
                     $nomOriginal = $file->getClientOriginalName();
                     $nomsFilesSoumis[] = $nomOriginal;
@@ -279,6 +283,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                             'description' => 'Guide référentiel pour l\'appreciation de l\'impact climatique des idées de projet.',
                             'commentaire' => 'Document de référence pour l\'analyse climatique',
                             'categorie' => 'guide-referentiel-appreciation',
+                            'dossier_id' => $dossierCanevas?->id,
                             'uploaded_by' => auth()->id(),
                             'is_public' => true,
                             'is_active' => true,
@@ -391,6 +396,9 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             // Traiter les documents référentiels s'il y en a
             if (isset($data['documents_referentiel']) && !empty($data['documents_referentiel'])) {
                 $nomsFilesSoumis = [];
+                
+                // Créer ou récupérer la structure de dossiers pour AMC
+                $dossierCanevas = $this->getOrCreateCanvasFolderStructure('amc');
 
                 foreach ($data['documents_referentiel'] as $file) {
                     $nomOriginal = $file->getClientOriginalName();
@@ -422,6 +430,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                             'uploaded_by' => auth()->id(),
                             'is_public' => true,
                             'is_active' => true,
+                            'dossier_id' => $dossierCanevas?->id,
                             'metadata' => array_merge($fichierExistant->metadata ?? [], [
                                 'last_updated' => now()->toISOString(),
                                 'updated_by' => auth()->id(),
@@ -441,6 +450,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                             'description' => 'Guide référentiel pour l\'analyse multicritère',
                             'commentaire' => 'Document de référence pour l\'analyse multicritère (AMC)',
                             'categorie' => 'guide-referentiel-amc',
+                            'dossier_id' => $dossierCanevas?->id,
                             'uploaded_by' => auth()->id(),
                             'is_public' => true,
                             'is_active' => true,
@@ -543,11 +553,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 'success' => true,
                 'message' => 'Checklist des mesures d\'adaptation récupérée avec succès pour le secteur "' . $secteur->nom . '".',
                 'data' => new ChecklistMesuresAdaptationSecteurResource($checklistCategorie),
-                'secteur' => new SecteurResource($secteur)/* [
-                    'id' => $secteur->id,
-                    'nom' => $secteur->nom,
-                    'type' => $secteur->type->value
-                ] */
+                'secteur' => new SecteurResource($secteur)
             ]);
         } catch (Exception $e) {
             return $this->errorResponse($e);
@@ -895,5 +901,82 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
         ]);
 
         return $secteur->id;
+    }
+
+    /**
+     * Créer ou récupérer la structure de dossiers hiérarchique pour les canevas
+     */
+    private function getOrCreateCanvasFolderStructure(string $type = 'appreciation'): ?Dossier
+    {
+        try {
+            // 1. Dossier racine : "Canevas, guides et outils"
+            $dossierRacine = Dossier::firstOrCreate([
+                'nom' => 'Canevas, guides et outils',
+                'parent_id' => null
+            ], [
+                'nom' => 'Canevas, guides et outils',
+                'description' => 'Dossier principal contenant tous les canevas, guides et outils',
+                'parent_id' => null,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#2563EB',
+                'icone' => 'folder-open',
+                'profondeur' => 0,
+                'path' => 'Canevas, guides et outils'
+            ]);
+
+            // 2. Sous-dossier : "Analyse d'idee de projet"
+            $dossierAnalyse = Dossier::firstOrCreate([
+                'nom' => "Analyse d'idee de projet",
+                'parent_id' => $dossierRacine->id
+            ], [
+                'nom' => "Analyse d'idee de projet",
+                'description' => 'Outils et guides pour l\'analyse des idées de projet',
+                'parent_id' => $dossierRacine->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#059669',
+                'icone' => 'chart-bar',
+                'profondeur' => 1,
+                'path' => "Canevas, guides et outils/Analyse d'idee de projet"
+            ]);
+
+            // 3. Sous-sous-dossier selon le type
+            $nomSousDossier = $type === 'appreciation' ? 
+                'Analyse preliminaire de l\'impact climatique' : 
+                'Analyse multicritere';
+                
+            $descriptionSousDossier = $type === 'appreciation' ?
+                'Documents pour l\'analyse préliminaire de l\'impact climatique des projets' :
+                'Documents pour l\'analyse multicritère (AMC) des projets';
+                
+            $couleurSousDossier = $type === 'appreciation' ? '#DC2626' : '#7C3AED';
+            $iconeSousDossier = $type === 'appreciation' ? 'fire' : 'adjustments';
+
+            $sousSousDossier = Dossier::firstOrCreate([
+                'nom' => $nomSousDossier,
+                'parent_id' => $dossierAnalyse->id
+            ], [
+                'nom' => $nomSousDossier,
+                'description' => $descriptionSousDossier,
+                'parent_id' => $dossierAnalyse->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => $couleurSousDossier,
+                'icone' => $iconeSousDossier,
+                'profondeur' => 2,
+                'path' => "Canevas, guides et outils/Analyse d'idee de projet/{$nomSousDossier}"
+            ]);
+
+            return $sousSousDossier;
+
+        } catch (\Exception $e) {
+            // En cas d'erreur, retourner null et laisser le fichier sans dossier
+            \Log::warning('Erreur lors de la création de la structure de dossiers canevas', [
+                'error' => $e->getMessage(),
+                'type' => $type
+            ]);
+            return null;
+        }
     }
 }

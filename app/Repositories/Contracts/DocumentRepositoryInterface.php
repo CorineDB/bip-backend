@@ -16,6 +16,11 @@ interface DocumentRepositoryInterface extends BaseRepositoryInterface
      */
     public function getCanevasRedactionNoteConceptuelle();
 
+    /**
+     * Get the unique canevas d'appreciation des TDRs faisabilité
+     */
+    public function getCanevasAppreciationNoteConceptuelle();
+
 
     public function getCanevasAppreciationTdr();
 

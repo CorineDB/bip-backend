@@ -2306,10 +2306,20 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             $canevas = $this->repository->getCanevasAppreciationTdrPrefaisabilite();
 
             if (!$canevas) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Aucun canevas d\'appréciation des TDRs de préfaisabilité trouvé.'
-                ], 404);
+                // Lancer le seeder si rien n’existe
+                Artisan::call('db:seed', [
+                    '--class' => 'Database\\Seeders\\CanevasAppreciationTdrPrefaisabiliteSeeder',
+                ]);
+
+                // Recharger après le seed
+                $canevas = $this->repository->getCanevasAppreciationTdrPrefaisabilite();
+
+                if (!$canevas) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Impossible de trouver ou créer le canevas d\'appréciation des TDRs de préfaisabilité trouvé."
+                    ], 404);
+                }
             }
 
             return (new CanevasAppreciationTdrResource($canevas))
@@ -2330,6 +2340,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             DB::beginTransaction();
 
             $canevas = $this->repository->getCanevasAppreciationTdrPrefaisabilite();
+
             $categorieDocument = CategorieDocument::firstOrCreate([
                 'slug' => 'canevas-appreciation-tdrs-prefaisabilite'
             ], [
@@ -2338,6 +2349,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 'description' => 'Formulaire d\'appréciation des TDRs de préfaisabilité',
                 'format' => 'document'
             ]);
+
             $data['categorieId'] = $categorieDocument->id;
 
             $data["type"] = "checklist";
@@ -2432,10 +2444,20 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             $canevas = $this->repository->getCanevasAppreciationTdrFaisabilite();
 
             if (!$canevas) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Aucun canevas d\'appréciation des TDRs de faisabilité trouvé.'
-                ], 404);
+                // Lancer le seeder si rien n’existe
+                Artisan::call('db:seed', [
+                    '--class' => 'Database\\Seeders\\CanevasAppreciationTdrFaisabiliteSeeder',
+                ]);
+
+                // Recharger après le seed
+                $canevas = $this->repository->getCanevasAppreciationTdrFaisabilite();
+
+                if (!$canevas) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Impossible de trouver ou créer le canevas d\'appréciation des TDRs de faisabilité trouvé."
+                    ], 404);
+                }
             }
 
             return (new CanevasAppreciationTdrResource($canevas))
@@ -2535,6 +2557,143 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
                 // Recharger avec relations
                 $document = $this->repository->getCanevasAppreciationTdrFaisabilite();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => 'Canevas d\'appréciation des TDRs de faisabilité créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Récupérer le canevas d'appréciation des notes conceptuelle
+     */
+    public function canevasAppreciationNoteConceptuelle(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas d'appréciation des notes conceptuelle unique
+            $canevas = $this->repository->getCanevasAppreciationNoteConceptuelle();
+
+            if (!$canevas) {
+                // Lancer le seeder si rien n’existe
+                Artisan::call('db:seed', [
+                    '--class' => 'Database\\Seeders\\CanevasAppreciationNoteConceptuelleSeeder',
+                ]);
+
+                // Recharger après le seed
+                $canevas = $this->repository->getCanevasAppreciationNoteConceptuelle();
+
+                if (!$canevas) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Impossible de trouver ou créer le canevas d\'appréciation des notes conceptuelle trouvé."
+                    ], 404);
+                }
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => 'Canevas d\'appréciation des notes conceptuelle récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas d'appréciation des notes conceptuelle
+     */
+    public function createOrUpdateCanevasAppreciationNoteConceptuelle(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasAppreciationNoteConceptuelle();
+
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-appreciation-note-conceptuelle'
+            ], [
+                'nom' => "Canevas d'appréciation des notes conceptuelle",
+                'slug' => 'canevas-appreciation-note-conceptuelle',
+                'description' => 'Formulaire d\'appréciation des notes conceptuelle',
+                'format' => 'document'
+            ]);
+
+            $data['categorieId'] = $categorieDocument->id;
+            $data["type"] = "checklist";
+            $data["slug"] = "canevas-appreciation-note-conceptuelle";
+
+            if ($canevas) {
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['guide_notation'])) {
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['guide_notation'] = $data['guide_notation'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                if (isset($data['accept_text'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['accept_text'] = $data['accept_text'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // Regénérer la structure après les modifications
+                $this->structureService->generateAndSaveStructure($canevas);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasAppreciationNoteConceptuelle();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas d\'appréciation des TDRs de faisabilité mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                if (isset($data['guide_notation'])) {
+                    $documentData['evaluation_configs']['guide_notation'] = $data['guide_notation'];
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasAppreciationNoteConceptuelle();
 
                 return (new CanevasAppreciationTdrResource($document))
                     ->additional(['message' => 'Canevas d\'appréciation des TDRs de faisabilité créé avec succès.'])

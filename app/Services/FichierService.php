@@ -9,6 +9,7 @@ use App\Services\BaseService;
 use App\Repositories\Contracts\BaseRepositoryInterface;
 use App\Http\Resources\Contracts\ApiResourceInterface;
 use App\Http\Resources\FichierResource;
+use App\Http\Resources\DossierResource;
 use App\Repositories\Contracts\FichierRepositoryInterface;
 use App\Services\Contracts\FichierServiceInterface;
 use Illuminate\Support\Facades\Storage;
@@ -19,6 +20,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Str;
 use App\Models\Fichier;
 use App\Models\User;
+use App\Models\Dossier;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class FichierService extends BaseService implements FichierServiceInterface
@@ -41,22 +43,21 @@ class FichierService extends BaseService implements FichierServiceInterface
     }
 
     /**
-     * Réécriture de all() avec permissions et filtres
+     * Réécriture de all() avec permissions et filtres, groupement par dossier
      */
-    public function all(): JsonResponse
-
+    public function all(array $filters = []): JsonResponse
     {
         try {
             $user = Auth::user();
 
             // Mes fichiers
             $mesFichiersQuery = Fichier::query()
-                ->with(['uploadedBy', 'permissions'])
+                ->with(['uploadedBy', 'permissions', 'dossier'])
                 ->where('uploaded_by', $user->id);
 
             // Fichiers partagés avec moi
             $fichiersPartagesQuery = Fichier::query()
-                ->with(['uploadedBy', 'permissions.grantedBy'])
+                ->with(['uploadedBy', 'permissions.grantedBy', 'dossier'])
                 ->where('uploaded_by', '!=', $user->id)
                 ->where(function ($q) use ($user) {
                     $q->where('is_public', true)
@@ -102,6 +103,23 @@ class FichierService extends BaseService implements FichierServiceInterface
                 ->orderBy('created_at', 'desc')
                 ->get();
 
+            // Grouper par dossier si demandé
+            $groupByFolder = $filters['group_by_folder'] ?? false;
+            $data = [];
+
+            if ($groupByFolder) {
+                $data = [
+                    'mes_fichiers' => $this->groupFichiersByFolder($mesFichiers),
+                    'fichiers_partages' => $this->groupFichiersByFolder($fichiersPartages),
+                    'structure_dossiers' => $this->getFolderStructure($user),
+                ];
+            } else {
+                $data = [
+                    'mes_fichiers' => FichierResource::collection($mesFichiers),
+                    'fichiers_partages' => FichierResource::collection($fichiersPartages),
+                ];
+            }
+
             // Statistiques
             $stats = [
                 'mes_fichiers_count' => $mesFichiers->count(),
@@ -109,17 +127,82 @@ class FichierService extends BaseService implements FichierServiceInterface
                 'fichiers_partages_count' => $fichiersPartages->count(),
                 'fichiers_partages_size' => $fichiersPartages->sum('taille'),
                 'total_count' => $mesFichiers->count() + $fichiersPartages->count(),
-                'total_size' => $mesFichiers->sum('taille') + $fichiersPartages->sum('taille')
+                'total_size' => $mesFichiers->sum('taille') + $fichiersPartages->sum('taille'),
+                'dossiers_count' => $groupByFolder ? $this->countActiveFolders($user) : 0
             ];
+
+            $data['stats'] = $stats;
+
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'message' => 'Fichiers récupérés avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Obtenir tous les fichiers groupés par dossier avec structure hiérarchique
+     */
+    public function getAllGroupedByFolder(array $filters = []): JsonResponse
+    {
+        $filters['group_by_folder'] = true;
+        return $this->all($filters);
+    }
+
+    /**
+     * Obtenir les fichiers d'un dossier spécifique
+     */
+    public function getFichiersByFolder(int $dossierId, array $filters = []): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+            
+            // Vérifier que le dossier existe et est accessible
+            $dossier = Dossier::where('id', $dossierId)
+                ->where(function($q) use ($user) {
+                    $q->where('is_public', true)
+                      ->orWhere('created_by', $user->id);
+                })
+                ->firstOrFail();
+
+            // Récupérer les fichiers du dossier
+            $fichiersQuery = $this->buildPermissionsQuery($user)
+                ->where('dossier_id', $dossierId)
+                ->with(['dossier']);
+
+            // Appliquer les filtres
+            if (!empty($filters['extension'])) {
+                $fichiersQuery->where('extension', $filters['extension']);
+            }
+
+            if (!empty($filters['search'])) {
+                $searchTerm = '%' . $filters['search'] . '%';
+                $fichiersQuery->where(function($q) use ($searchTerm) {
+                    $q->where('nom_original', 'ILIKE', $searchTerm)
+                      ->orWhere('description', 'ILIKE', $searchTerm);
+                });
+            }
+
+            $fichiers = $fichiersQuery
+                ->orderBy('created_at', 'desc')
+                ->get();
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'mes_fichiers' => FichierResource::collection($mesFichiers),
-                    'fichiers_partages' => FichierResource::collection($fichiersPartages),
-                    'stats' => $stats
+                    'dossier' => new DossierResource($dossier->load(['createdBy'])),
+                    'fichiers' => FichierResource::collection($fichiers),
+                    'stats' => [
+                        'count' => $fichiers->count(),
+                        'taille_totale' => $fichiers->sum('taille'),
+                        'taille_formatee' => $this->formatBytes($fichiers->sum('taille'))
+                    ]
                 ],
-                'message' => 'Fichiers récupérés avec succès'
+                'message' => 'Fichiers du dossier récupérés avec succès'
             ]);
 
         } catch (\Exception $e) {
@@ -162,12 +245,6 @@ class FichierService extends BaseService implements FichierServiceInterface
             return $this->errorResponse($e);
         }
     }
-
-    /**
-     * Lister tous les fichiers accessibles à l'utilisateur
-     * Séparés en "Mes fichiers" et "Partagés avec moi"
-     */
-    public function index(array $filters = []): JsonResponse
 
     /**
      * Réécriture de create() pour les fichiers attachés à des ressources
@@ -1218,5 +1295,181 @@ class FichierService extends BaseService implements FichierServiceInterface
 
         // Vérifier si l'utilisateur a la permission 'share'
         return $fichier->hasPermission($user, 'share');
+    }
+
+    /**
+     * Grouper les fichiers par dossier avec structure hiérarchique
+     */
+    private function groupFichiersByFolder($fichiers): array
+    {
+        $grouped = [];
+        
+        // Grouper par dossier_id
+        $fichiersGroupes = $fichiers->groupBy('dossier_id');
+        
+        foreach ($fichiersGroupes as $dossierId => $fichiersDuDossier) {
+            if ($dossierId === null) {
+                // Fichiers sans dossier
+                $grouped['sans_dossier'] = [
+                    'dossier' => null,
+                    'nom_dossier' => 'Fichiers sans dossier',
+                    'path' => null,
+                    'description' => 'Fichiers qui ne sont pas classés dans un dossier',
+                    'couleur' => '#6B7280',
+                    'icone' => 'folder',
+                    'fichiers' => FichierResource::collection($fichiersDuDossier),
+                    'count' => $fichiersDuDossier->count(),
+                    'taille_totale' => $fichiersDuDossier->sum('taille'),
+                    'taille_formatee' => $this->formatBytes($fichiersDuDossier->sum('taille'))
+                ];
+            } else {
+                // Fichiers avec dossier
+                $dossier = $fichiersDuDossier->first()->dossier;
+                if ($dossier) {
+                    $grouped['dossier_' . $dossierId] = [
+                        'dossier' => new DossierResource($dossier),
+                        'nom_dossier' => $dossier->nom,
+                        'path' => $dossier->path,
+                        'description' => $dossier->description,
+                        'couleur' => $dossier->couleur,
+                        'icone' => $dossier->icone,
+                        'fichiers' => FichierResource::collection($fichiersDuDossier),
+                        'count' => $fichiersDuDossier->count(),
+                        'taille_totale' => $fichiersDuDossier->sum('taille'),
+                        'taille_formatee' => $this->formatBytes($fichiersDuDossier->sum('taille'))
+                    ];
+                }
+            }
+        }
+        
+        return $grouped;
+    }
+
+    /**
+     * Obtenir la structure hiérarchique des dossiers accessibles
+     */
+    private function getFolderStructure(User $user): array
+    {
+        // Récupérer tous les dossiers accessibles
+        $dossiers = Dossier::query()
+            ->with(['createdBy'])
+            ->where(function($q) use ($user) {
+                $q->where('is_public', true)
+                  ->orWhere('created_by', $user->id);
+            })
+            ->orderBy('profondeur')
+            ->orderBy('nom')
+            ->get();
+
+        return $this->buildFolderTreeWithResource($dossiers);
+    }
+
+    /**
+     * Construire l'arbre hiérarchique des dossiers
+     */
+    private function buildFolderTree($dossiers): array
+    {
+        $tree = [];
+        $indexed = [];
+        
+        // Indexer tous les dossiers par ID
+        foreach ($dossiers as $dossier) {
+            $indexed[$dossier->id] = [
+                'id' => $dossier->id,
+                'nom' => $dossier->nom,
+                'description' => $dossier->description,
+                'path' => $dossier->path,
+                'profondeur' => $dossier->profondeur,
+                'parent_id' => $dossier->parent_id,
+                'couleur' => $dossier->couleur,
+                'icone' => $dossier->icone,
+                'is_public' => $dossier->is_public,
+                'created_at' => $dossier->created_at,
+                'enfants' => []
+            ];
+        }
+        
+        // Construire l'arbre
+        foreach ($indexed as $id => $dossier) {
+            if ($dossier['parent_id'] === null) {
+                // Dossier racine
+                $tree[] = &$indexed[$id];
+            } else {
+                // Dossier enfant
+                if (isset($indexed[$dossier['parent_id']])) {
+                    $indexed[$dossier['parent_id']]['enfants'][] = &$indexed[$id];
+                }
+            }
+        }
+        
+        return $tree;
+    }
+
+    /**
+     * Construire l'arbre hiérarchique avec DossierResource
+     */
+    private function buildFolderTreeWithResource($dossiers): array
+    {
+        $tree = [];
+        $indexed = [];
+        
+        // Créer les resources et indexer
+        foreach ($dossiers as $dossier) {
+            $resource = new DossierResource($dossier);
+            $indexed[$dossier->id] = [
+                'resource' => $resource,
+                'parent_id' => $dossier->parent_id,
+                'enfants' => []
+            ];
+        }
+        
+        // Construire l'arbre
+        foreach ($indexed as $id => $item) {
+            if ($item['parent_id'] === null) {
+                // Dossier racine
+                $tree[] = array_merge($item['resource']->toArray(request()), [
+                    'enfants' => &$indexed[$id]['enfants']
+                ]);
+            } else {
+                // Dossier enfant
+                if (isset($indexed[$item['parent_id']])) {
+                    $indexed[$item['parent_id']]['enfants'][] = array_merge(
+                        $item['resource']->toArray(request()), 
+                        ['enfants' => &$indexed[$id]['enfants']]
+                    );
+                }
+            }
+        }
+        
+        return $tree;
+    }
+
+    /**
+     * Compter le nombre de dossiers actifs
+     */
+    private function countActiveFolders(User $user): int
+    {
+        return Dossier::query()
+            ->where(function($q) use ($user) {
+                $q->where('is_public', true)
+                  ->orWhere('created_by', $user->id);
+            })
+            ->count();
+    }
+
+    /**
+     * Formater les bytes en format lisible
+     */
+    private function formatBytes(int $bytes): string
+    {
+        if ($bytes == 0) return '0 B';
+        
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        
+        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
+            $bytes /= 1024;
+        }
+        
+        return round($bytes, 2) . ' ' . $units[$i];
     }
 }

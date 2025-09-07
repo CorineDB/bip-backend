@@ -104,6 +104,27 @@ class Secteur extends Model
     }
 
     /**
+     * Récupérer le secteur principal en remontant la hiérarchie
+     */
+    public function getSecteurPrincipal()
+    {
+        $secteurCourant = $this;
+        
+        // Si c'est déjà un secteur principal, le retourner
+        if ($secteurCourant->type->value === 'secteur') {
+            return $secteurCourant;
+        }
+        
+        // Remonter dans la hiérarchie jusqu'à trouver un secteur de type 'secteur'
+        while ($secteurCourant && $secteurCourant->type->value === 'sous-secteur') {
+            $secteurCourant = $secteurCourant->parent;
+        }
+        
+        // Retourner le secteur principal trouvé ou null
+        return ($secteurCourant && $secteurCourant->type->value === 'secteur') ? $secteurCourant : null;
+    }
+
+    /**
      *
      *
      * @param  string  $value

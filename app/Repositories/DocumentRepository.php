@@ -61,6 +61,31 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->first();
     }
 
+    /**
+     * Get the unique canevas d'appreciation des TDRs faisabilité
+     */
+    public function getCanevasAppreciationNoteConceptuelle()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-appreciation-note-conceptuelle');
+        })
+            ->where('type', 'checklist')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
 
     public function getCanevasAppreciationTdr()
     {

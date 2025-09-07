@@ -307,6 +307,12 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasRedactionNoteConceptuelle']);
         });
 
+        Route::prefix('canevas-appreciation-note-conceptuelle')->group(function () {
+            // Public routes
+            Route::get('', [DocumentController::class, 'canevasAppreciationNoteConceptuelle']);
+            Route::post('', [DocumentController::class, 'createOrUpdateCanevasAppreciationNoteConceptuelle']);
+        });
+
         Route::prefix('canevas-appreciation-tdr')->group(function () {
             Route::get('', [DocumentController::class, 'canevasAppreciationTdr']);
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasAppreciationTdr']);

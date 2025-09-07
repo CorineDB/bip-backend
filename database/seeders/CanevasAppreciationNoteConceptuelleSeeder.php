@@ -7,15 +7,15 @@ use App\Models\Document;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
+class CanevasAppreciationNoteConceptuelleSeeder extends Seeder
 {
     protected $documentData = [
-        "nom" => "Canevas d'appréciation des TDRs de préfaisabilité",
-        "slug" => "canevas-appreciation-tdrs-prefaisabilite",
-        "description" => "Canevas standardisé pour l'appréciation et l'évaluation des Termes de Référence de préfaisabilité",
+        "nom" => "Check liste d'appréciation des notes conceptuelle",
+        "slug" => "check-liste-appreciation-note-conceptuelle",
+        "description" => "Check liste standardisé pour l'appréciation et l'évaluation des notes conceptuelle",
         "type" => "checklist",
         "evaluation_configs" => [
-            "options_notation" => [
+            "guide_notation" => [
                 [
                     "appreciation" => "passe",
                     "label" => "Passé",
@@ -55,7 +55,7 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                     "non_accepte" => [
                         "condition" => "has_rejection_or_too_many_retour",
                         "description" => "Non accepté",
-                        "message" => "Le TDR ne répond pas aux critères minimums",
+                        "message" => "La note conceptuelle ne répond pas aux critères minimums",
                         "statut_final" => "rejete",
                         "triggers" => [
                             "incomplete_questions" => "Si des questions n'ont pas été complétées",
@@ -106,25 +106,25 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                 ],
                 "notifications" => [
                     "passe" => [
-                        "titre" => "TDR Validé",
-                        "message" => "Le TDR de préfaisabilité a été validé avec succès",
+                        "titre" => "Note conceptuelle Validé",
+                        "message" => "La note conceptuelle a été validé avec succès",
                         "type" => "success"
                     ],
                     "retour" => [
-                        "titre" => "TDR à Améliorer",
-                        "message" => "Le TDR nécessite des améliorations avant validation",
+                        "titre" => "Note conceptuelle à Améliorer",
+                        "message" => "La note conceptuelle nécessite des améliorations avant validation",
                         "type" => "warning"
                     ],
                     "non_accepte" => [
-                        "titre" => "TDR Rejeté",
-                        "message" => "Le TDR ne répond pas aux critères minimums requis",
+                        "titre" => "Note conceptuelle Rejeté",
+                        "message" => "La note conceptuelle ne répond pas aux critères minimums requis",
                         "type" => "error"
                     ]
                 ]
             ],
             "workflow" => [
                 "etapes" => [
-                    "soumission" => "Soumission du TDR pour appréciation",
+                    "soumission" => "Soumission de la note conceptuelle pour appréciation",
                     "appreciation" => "Évaluation par l'évaluateur",
                     "decision" => "Décision finale basée sur les règles"
                 ]
@@ -1506,7 +1506,7 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
                 "label" => "Planification de la mise en œuvre",
                 "attribut" => "section_planification_mise_oeuvre",
                 "key" => "section_planification_mise_oeuvre",
-                "description" => "Évaluation de la planification et de la faisabilité de mise en œuvre du projet",
+                "description" => "Évaluation de la planification",
                 "elements" => [
                     [
                         "element_type" => "field",
@@ -1743,14 +1743,14 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
         DB::beginTransaction();
 
         try {
-            // Récupérer ou créer la catégorie de document pour l'appréciation des TDRs
-            $categorieDocument = CategorieDocument::where('slug', 'canevas-appreciation-tdrs-prefaisabilite')->first();
+            // Récupérer ou créer la catégorie de document pour l'appréciation des notes conceptuelle
+            $categorieDocument = CategorieDocument::where('slug', 'canevas-appreciation-note-conceptuelle')->first();
 
             if (!$categorieDocument) {
                 $categorieDocument = CategorieDocument::create([
-                    'slug' => "canevas-appreciation-tdrs-prefaisabilite",
-                    'nom' => "Canevas d'appréciation d'appreciation d'un TDR de préfaisabilité",
-                    "description" => "Canevas standardisé pour l'évaluation et l'appréciation des Termes de Référence de préfaisabilité",
+                    'slug' => "canevas-appreciation-note-conceptuelle",
+                    'nom' => "Canevas d'appréciation d'appreciation d'une note conceptuelle",
+                    "description" => "Canevas standardisé pour l'évaluation et l'appréciation des notes conceptulle",
                     "format" => "checklist"
                 ]);
             }

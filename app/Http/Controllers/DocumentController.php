@@ -613,4 +613,20 @@ class DocumentController extends Controller
     {
         return $this->service->createOrUpdateCanevasAppreciationTdrFaisabilite($request->all());
     }
+
+    /**
+     * Récupérer le canevas d'appréciation TDR faisabilité
+     */
+    public function canevasAppreciationNoteConceptuelle(): JsonResponse
+    {
+        return $this->service->canevasAppreciationNoteConceptuelle();
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas d'appréciation TDR faisabilité
+     */
+    public function createOrUpdateCanevasAppreciationNoteConceptuelle(CreateOrUpdateCanevasAppreciationNoteConceptuelleRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasAppreciationNoteConceptuelle($request->all());
+    }
 }
