@@ -52,7 +52,7 @@ class DpafService extends BaseService implements DpafServiceInterface
         try {
             $dpafs = $this->repository->getModel()
                 ->when(Auth::user()->profilable_id && Auth::user()->profilable_type == Organisation::class, function ($query) {
-                    $query->where("id_ministere", auth()->user()->profilable->ministere->id);
+                    $query->where("id_ministere", auth()->user()->profilable?->ministere?->id);
                 })->latest()->get();
 
             return ($this->resourceClass::collection($dpafs))->response();
@@ -67,7 +67,7 @@ class DpafService extends BaseService implements DpafServiceInterface
 
         try {
 
-            $attributs['id_ministere'] = auth()->user()->profilable->ministere->id;
+            $attributs['id_ministere'] = auth()->user()->profilable?->ministere?->id;
 
             $dpaf = $this->repository->getModel()->firstOrCreate(['id_ministere' => $attributs['id_ministere']], $attributs);
 

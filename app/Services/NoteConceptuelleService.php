@@ -125,7 +125,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             if ($noteConceptuelle) {
 
-                if (auth()->user()->profilable->ministere->id !== $noteConceptuelle->projet->ministere->id) {
+                if (auth()->user()->profilable?->ministere?->id !== $noteConceptuelle->projet->ministere->id) {
                     throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
                 }
 
@@ -249,7 +249,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Récupérer la note conceptuelle pour obtenir le projetId
             $noteConceptuelle = $this->repository->findOrFail($id);
 
-            if (auth()->user()->profilable->ministere->id !== $noteConceptuelle->projet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $noteConceptuelle->projet->ministere->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -360,7 +360,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Vérifier que le projet existe
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            if (!auth()->user()->hasPermissionTo('valider-l-etude-de-profil') && (auth()->user()->profilable->ministere->id !== $projet->ministere->id)) {
+            if (!auth()->user()->hasPermissionTo('valider-l-etude-de-profil') && (auth()->user()->profilable?->ministere?->id !== $projet->ministere->id)) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -537,7 +537,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ], 404);
             }
 
-            if (auth()->user()->profilable->ministere->id !== $noteConceptuelle->projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable?->ministere?->id !== $noteConceptuelle->projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 

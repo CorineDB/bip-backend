@@ -929,7 +929,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             $idee = $this->repository->findOrFail($id);
 
-            if (!auth()->user()->hasPermissionTo('modifier-une-idee-de-projet') && auth()->user()->profilable->ministere->id !== $idee->ministere->id && auth()->user()->id != $idee->responsable?->id) {
+            if (!auth()->user()->hasPermissionTo('modifier-une-idee-de-projet') && auth()->user()->profilable?->ministere?->id !== $idee->ministere->id && auth()->user()->id != $idee->responsable?->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 

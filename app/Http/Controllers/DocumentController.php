@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\documents\canevas_redaction_note_conceptuelle\CreateOrUpdateCanevasAppreciationNoteConceptuelleRequest;
 use App\Http\Requests\documents\CreateOrUpdateCanevasAppreciationTdrRequest;
 use App\Http\Requests\documents\CreateOrUpdateCanevasAppreciationTdrPrefaisabiliteRequest;
 use App\Http\Requests\documents\canevas_redaction_note_conceptuelle\CreateOrUpdateCanevasRedactionNoteConceptuelleRequest;

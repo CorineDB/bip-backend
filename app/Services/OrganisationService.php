@@ -51,9 +51,9 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
         try {
             $organisations = $this->repository->getModel()
                 ->when(Auth::user()->profilable_id && Auth::user()->profilable_type == Organisation::class, function ($query) {
-                    $query->descendantsFromMinistere(auth()->user()->profilable->ministere->id);
+                    $query->descendantsFromMinistere(auth()->user()->profilable?->ministere?->id);
                 })->when(Auth::user()->profilable_id && Auth::user()->profilable_type == Dpaf::class, function ($query) {
-                    $query->descendantsFromMinistere(auth()->user()->profilable->ministere->id);
+                    $query->descendantsFromMinistere(auth()->user()->profilable?->ministere?->id);
                 })->latest()->get();
 
             return ($this->resourceClass::collection($organisations))->response();

@@ -50,48 +50,49 @@ class FichierService extends BaseService implements FichierServiceInterface
         try {
             $user = Auth::user();
 
-            // Mes fichiers
+            // Mes fichiers (privés seulement)
             $mesFichiersQuery = Fichier::query()
                 ->with(['uploadedBy', 'permissions', 'dossier'])
-                ->where('uploaded_by', $user->id);
+                ->where('uploaded_by', $user->id)
+                ->where('is_public', false);
 
-            // Fichiers partagés avec moi
+            // Fichiers partagés avec moi (privés avec permissions)
             $fichiersPartagesQuery = Fichier::query()
                 ->with(['uploadedBy', 'permissions.grantedBy', 'dossier'])
                 ->where('uploaded_by', '!=', $user->id)
-                ->where(function ($q) use ($user) {
-                    $q->where('is_public', true)
-                      ->orWhereHas('permissions', function($permQuery) use ($user) {
-                          $permQuery->active()->forUser($user->id);
-                      });
+                ->where('is_public', false)
+                ->whereHas('permissions', function($permQuery) use ($user) {
+                    $permQuery->active()->forUser($user->id);
                 });
 
-            // Appliquer les filtres communs
-            if (!empty($filters['dossier_id'])) {
-                if ($filters['dossier_id'] === 'null') {
-                    $mesFichiersQuery->whereNull('dossier_id');
-                    $fichiersPartagesQuery->whereNull('dossier_id');
-                } else {
-                    $mesFichiersQuery->where('dossier_id', $filters['dossier_id']);
-                    $fichiersPartagesQuery->where('dossier_id', $filters['dossier_id']);
+            // Fichiers publics (accessibles à tous)
+            $fichiersPublicsQuery = Fichier::query()
+                ->with(['uploadedBy', 'dossier'])
+                ->where('is_public', true);
+
+            // Appliquer les filtres communs aux trois catégories
+            $queries = [$mesFichiersQuery, $fichiersPartagesQuery, $fichiersPublicsQuery];
+            
+            foreach ($queries as $query) {
+                if (!empty($filters['dossier_id'])) {
+                    if ($filters['dossier_id'] === 'null') {
+                        $query->whereNull('dossier_id');
+                    } else {
+                        $query->where('dossier_id', $filters['dossier_id']);
+                    }
                 }
-            }
 
-            if (!empty($filters['extension'])) {
-                $mesFichiersQuery->where('extension', $filters['extension']);
-                $fichiersPartagesQuery->where('extension', $filters['extension']);
-            }
+                if (!empty($filters['extension'])) {
+                    $query->where('extension', $filters['extension']);
+                }
 
-            if (!empty($filters['search'])) {
-                $searchTerm = '%' . $filters['search'] . '%';
-                $mesFichiersQuery->where(function($q) use ($searchTerm) {
-                    $q->where('nom_original', 'ILIKE', $searchTerm)
-                      ->orWhere('description', 'ILIKE', $searchTerm);
-                });
-                $fichiersPartagesQuery->where(function($q) use ($searchTerm) {
-                    $q->where('nom_original', 'ILIKE', $searchTerm)
-                      ->orWhere('description', 'ILIKE', $searchTerm);
-                });
+                if (!empty($filters['search'])) {
+                    $searchTerm = '%' . $filters['search'] . '%';
+                    $query->where(function($q) use ($searchTerm) {
+                        $q->where('nom_original', 'ILIKE', $searchTerm)
+                          ->orWhere('description', 'ILIKE', $searchTerm);
+                    });
+                }
             }
 
             // Exécuter les requêtes
@@ -103,20 +104,26 @@ class FichierService extends BaseService implements FichierServiceInterface
                 ->orderBy('created_at', 'desc')
                 ->get();
 
+            $fichiersPublics = $fichiersPublicsQuery
+                ->orderBy('created_at', 'desc')
+                ->get();
+
             // Grouper par dossier si demandé
             $groupByFolder = $filters['group_by_folder'] ?? false;
             $data = [];
 
             if ($groupByFolder) {
                 $data = [
-                    'mes_fichiers' => $this->groupFichiersByFolder($mesFichiers),
-                    'fichiers_partages' => $this->groupFichiersByFolder($fichiersPartages),
+                    'mes_fichiers' => $this->groupFichiersByDossierAvecProfondeur($mesFichiers, $user),
+                    'fichiers_partages' => $this->groupFichiersByDossierAvecProfondeur($fichiersPartages, $user),
+                    'public' => $this->groupFichiersByDossierAvecProfondeur($fichiersPublics, $user),
                     'structure_dossiers' => $this->getFolderStructure($user),
                 ];
             } else {
                 $data = [
                     'mes_fichiers' => FichierResource::collection($mesFichiers),
                     'fichiers_partages' => FichierResource::collection($fichiersPartages),
+                    'public' => FichierResource::collection($fichiersPublics),
                 ];
             }
 
@@ -124,10 +131,20 @@ class FichierService extends BaseService implements FichierServiceInterface
             $stats = [
                 'mes_fichiers_count' => $mesFichiers->count(),
                 'mes_fichiers_size' => $mesFichiers->sum('taille'),
+                'mes_fichiers_size_formatted' => $this->formatBytes($mesFichiers->sum('taille')),
+                
                 'fichiers_partages_count' => $fichiersPartages->count(),
                 'fichiers_partages_size' => $fichiersPartages->sum('taille'),
-                'total_count' => $mesFichiers->count() + $fichiersPartages->count(),
-                'total_size' => $mesFichiers->sum('taille') + $fichiersPartages->sum('taille'),
+                'fichiers_partages_size_formatted' => $this->formatBytes($fichiersPartages->sum('taille')),
+                
+                'public_count' => $fichiersPublics->count(),
+                'public_size' => $fichiersPublics->sum('taille'),
+                'public_size_formatted' => $this->formatBytes($fichiersPublics->sum('taille')),
+                
+                'total_count' => $mesFichiers->count() + $fichiersPartages->count() + $fichiersPublics->count(),
+                'total_size' => $mesFichiers->sum('taille') + $fichiersPartages->sum('taille') + $fichiersPublics->sum('taille'),
+                'total_size_formatted' => $this->formatBytes($mesFichiers->sum('taille') + $fichiersPartages->sum('taille') + $fichiersPublics->sum('taille')),
+                
                 'dossiers_count' => $groupByFolder ? $this->countActiveFolders($user) : 0
             ];
 
@@ -145,6 +162,68 @@ class FichierService extends BaseService implements FichierServiceInterface
     }
 
     /**
+     * Obtenir uniquement les fichiers publics
+     */
+    public function getFichiersPublics(array $filters = []): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+            
+            // Fichiers publics seulement
+            $fichiersPublicsQuery = Fichier::query()
+                ->with(['uploadedBy', 'dossier'])
+                ->where('is_public', true);
+
+            // Appliquer les filtres
+            if (!empty($filters['dossier_id'])) {
+                if ($filters['dossier_id'] === 'null') {
+                    $fichiersPublicsQuery->whereNull('dossier_id');
+                } else {
+                    $fichiersPublicsQuery->where('dossier_id', $filters['dossier_id']);
+                }
+            }
+
+            if (!empty($filters['extension'])) {
+                $fichiersPublicsQuery->where('extension', $filters['extension']);
+            }
+
+            if (!empty($filters['search'])) {
+                $searchTerm = '%' . $filters['search'] . '%';
+                $fichiersPublicsQuery->where(function($q) use ($searchTerm) {
+                    $q->where('nom_original', 'ILIKE', $searchTerm)
+                      ->orWhere('description', 'ILIKE', $searchTerm);
+                });
+            }
+
+            $fichiersPublics = $fichiersPublicsQuery
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $groupByFolder = $filters['group_by_folder'] ?? false;
+            
+            $data = $groupByFolder ? 
+                $this->groupFichiersByDossierAvecProfondeur($fichiersPublics, $user) :
+                FichierResource::collection($fichiersPublics);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'public' => $data,
+                    'stats' => [
+                        'count' => $fichiersPublics->count(),
+                        'taille_totale' => $fichiersPublics->sum('taille'),
+                        'taille_formatee' => $this->formatBytes($fichiersPublics->sum('taille'))
+                    ]
+                ],
+                'message' => 'Fichiers publics récupérés avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
      * Obtenir tous les fichiers groupés par dossier avec structure hiérarchique
      */
     public function getAllGroupedByFolder(array $filters = []): JsonResponse
@@ -154,7 +233,7 @@ class FichierService extends BaseService implements FichierServiceInterface
     }
 
     /**
-     * Obtenir les fichiers d'un dossier spécifique
+     * Obtenir un dossier avec ses fichiers et permissions
      */
     public function getFichiersByFolder(int $dossierId, array $filters = []): JsonResponse
     {
@@ -162,47 +241,130 @@ class FichierService extends BaseService implements FichierServiceInterface
             $user = Auth::user();
             
             // Vérifier que le dossier existe et est accessible
-            $dossier = Dossier::where('id', $dossierId)
+            $dossierQuery = Dossier::where('id', $dossierId)
                 ->where(function($q) use ($user) {
                     $q->where('is_public', true)
                       ->orWhere('created_by', $user->id);
+                });
+
+            // Charger le dossier avec ses fichiers filtrés
+            $dossier = $dossierQuery->with([
+                'createdBy',
+                'fichiers' => function($query) use ($user, $filters) {
+                    // Appliquer les permissions sur les fichiers
+                    $query->where(function($q) use ($user) {
+                        $q->where('uploaded_by', $user->id)
+                          ->orWhere('is_public', true);
+                    });
+                    
+                    // Appliquer les filtres
+                    if (!empty($filters['extension'])) {
+                        $query->where('extension', $filters['extension']);
+                    }
+
+                    if (!empty($filters['search'])) {
+                        $searchTerm = '%' . $filters['search'] . '%';
+                        $query->where(function($q) use ($searchTerm) {
+                            $q->where('nom_original', 'ILIKE', $searchTerm)
+                              ->orWhere('description', 'ILIKE', $searchTerm);
+                        });
+                    }
+                    
+                    $query->orderBy('created_at', 'desc');
+                },
+                'children' // Pour les sous-dossiers si nécessaire
+            ])->firstOrFail();
+
+            return response()->json([
+                'success' => true,
+                'data' => new DossierResource($dossier),
+                'message' => 'Dossier et ses fichiers récupérés avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Obtenir tous les dossiers avec leurs fichiers (structure complète)
+     */
+    public function getAllDossiersWithFichiers(array $filters = []): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+            
+            // Récupérer tous les dossiers accessibles avec leurs fichiers
+            $dossiers = Dossier::where(function($q) use ($user) {
+                    $q->where('is_public', true)
+                      ->orWhere('created_by', $user->id);
                 })
-                ->firstOrFail();
+                ->with([
+                    'createdBy',
+                    'fichiers' => function($query) use ($user, $filters) {
+                        // Appliquer les permissions
+                        $query->where(function($q) use ($user) {
+                            $q->where('uploaded_by', $user->id)
+                              ->orWhere('is_public', true);
+                        });
+                        
+                        // Appliquer les filtres si fournis
+                        if (!empty($filters['extension'])) {
+                            $query->where('extension', $filters['extension']);
+                        }
+                        if (!empty($filters['search'])) {
+                            $searchTerm = '%' . $filters['search'] . '%';
+                            $query->where(function($q) use ($searchTerm) {
+                                $q->where('nom_original', 'ILIKE', $searchTerm)
+                                  ->orWhere('description', 'ILIKE', $searchTerm);
+                            });
+                        }
+                        
+                        $query->orderBy('created_at', 'desc');
+                    }
+                ])
+                ->orderBy('profondeur')
+                ->orderBy('nom')
+                ->get();
 
-            // Récupérer les fichiers du dossier
-            $fichiersQuery = $this->buildPermissionsQuery($user)
-                ->where('dossier_id', $dossierId)
-                ->with(['dossier']);
-
-            // Appliquer les filtres
+            // Fichiers sans dossier
+            $fichiersSansDossier = $this->buildPermissionsQuery($user)
+                ->whereNull('dossier_id');
+                
+            // Appliquer les filtres aux fichiers sans dossier
             if (!empty($filters['extension'])) {
-                $fichiersQuery->where('extension', $filters['extension']);
+                $fichiersSansDossier->where('extension', $filters['extension']);
             }
-
             if (!empty($filters['search'])) {
                 $searchTerm = '%' . $filters['search'] . '%';
-                $fichiersQuery->where(function($q) use ($searchTerm) {
+                $fichiersSansDossier->where(function($q) use ($searchTerm) {
                     $q->where('nom_original', 'ILIKE', $searchTerm)
                       ->orWhere('description', 'ILIKE', $searchTerm);
                 });
             }
+            
+            $fichiersSansDossier = $fichiersSansDossier->orderBy('created_at', 'desc')->get();
 
-            $fichiers = $fichiersQuery
-                ->orderBy('created_at', 'desc')
-                ->get();
+            $data = [
+                'dossiers' => DossierResource::collection($dossiers),
+                'fichiers_sans_dossier' => [
+                    'type' => 'sans_dossier',
+                    'nom_dossier' => 'Fichiers sans dossier',
+                    'description' => 'Fichiers qui ne sont pas classés dans un dossier',
+                    'couleur' => '#6B7280',
+                    'icone' => 'folder',
+                    'fichiers' => FichierResource::collection($fichiersSansDossier),
+                    'count' => $fichiersSansDossier->count(),
+                    'taille_totale' => $fichiersSansDossier->sum('taille'),
+                    'taille_formatee' => $this->formatBytes($fichiersSansDossier->sum('taille'))
+                ],
+                'structure_hierarchique' => $this->buildFolderTreeWithResource($dossiers)
+            ];
 
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'dossier' => new DossierResource($dossier->load(['createdBy'])),
-                    'fichiers' => FichierResource::collection($fichiers),
-                    'stats' => [
-                        'count' => $fichiers->count(),
-                        'taille_totale' => $fichiers->sum('taille'),
-                        'taille_formatee' => $this->formatBytes($fichiers->sum('taille'))
-                    ]
-                ],
-                'message' => 'Fichiers du dossier récupérés avec succès'
+                'data' => $data,
+                'message' => 'Tous les dossiers avec fichiers récupérés avec succès'
             ]);
 
         } catch (\Exception $e) {
@@ -1311,7 +1473,7 @@ class FichierService extends BaseService implements FichierServiceInterface
             if ($dossierId === null) {
                 // Fichiers sans dossier
                 $grouped['sans_dossier'] = [
-                    'dossier' => null,
+                    'type' => 'sans_dossier',
                     'nom_dossier' => 'Fichiers sans dossier',
                     'path' => null,
                     'description' => 'Fichiers qui ne sont pas classés dans un dossier',
@@ -1323,26 +1485,141 @@ class FichierService extends BaseService implements FichierServiceInterface
                     'taille_formatee' => $this->formatBytes($fichiersDuDossier->sum('taille'))
                 ];
             } else {
-                // Fichiers avec dossier
-                $dossier = $fichiersDuDossier->first()->dossier;
+                // Fichiers avec dossier - charger le dossier avec ses fichiers
+                $dossier = Dossier::with(['fichiers', 'createdBy'])
+                    ->find($dossierId);
+                    
                 if ($dossier) {
-                    $grouped['dossier_' . $dossierId] = [
-                        'dossier' => new DossierResource($dossier),
-                        'nom_dossier' => $dossier->nom,
-                        'path' => $dossier->path,
-                        'description' => $dossier->description,
-                        'couleur' => $dossier->couleur,
-                        'icone' => $dossier->icone,
-                        'fichiers' => FichierResource::collection($fichiersDuDossier),
-                        'count' => $fichiersDuDossier->count(),
-                        'taille_totale' => $fichiersDuDossier->sum('taille'),
-                        'taille_formatee' => $this->formatBytes($fichiersDuDossier->sum('taille'))
-                    ];
+                    $grouped['dossier_' . $dossierId] = new DossierResource($dossier);
                 }
             }
         }
         
         return $grouped;
+    }
+
+    /**
+     * Grouper les fichiers par dossier avec structure hiérarchique complète
+     */
+    private function groupFichiersByDossierAvecProfondeur($fichiers, User $user): array
+    {
+        $result = [];
+        
+        // 1. Récupérer tous les dossiers concernés et leurs parents
+        $dossierIds = $fichiers->whereNotNull('dossier_id')->pluck('dossier_id')->unique();
+        $todosDossiers = collect();
+        
+        // Récupérer tous les dossiers et remonter jusqu'aux racines
+        foreach ($dossierIds as $dossierId) {
+            $dossier = Dossier::with(['parent', 'createdBy'])->find($dossierId);
+            if ($dossier) {
+                // Ajouter le dossier et tous ses parents
+                $current = $dossier;
+                while ($current) {
+                    if (!$todosDossiers->contains('id', $current->id)) {
+                        $todosDossiers->push($current);
+                    }
+                    $current = $current->parent;
+                }
+            }
+        }
+        
+        // 2. Grouper les fichiers par dossier
+        $fichiersParDossier = $fichiers->groupBy('dossier_id');
+        
+        // 3. Construire la structure hiérarchique
+        $dossiersRacine = $todosDossiers->where('parent_id', null);
+        
+        foreach ($dossiersRacine as $dossierRacine) {
+            $result[$dossierRacine->id] = $this->buildDossierHierarchyWithFiles(
+                $dossierRacine, 
+                $todosDossiers, 
+                $fichiersParDossier
+            );
+        }
+        
+        // 4. Ajouter les fichiers sans dossier
+        $fichiersSansDossier = $fichiersParDossier->get(null);
+        if ($fichiersSansDossier && $fichiersSansDossier->count() > 0) {
+            $result['sans_dossier'] = [
+                'type' => 'sans_dossier',
+                'dossier' => null,
+                'nom_dossier' => 'Fichiers sans dossier',
+                'path' => null,
+                'profondeur' => 0,
+                'description' => 'Fichiers qui ne sont pas classés dans un dossier',
+                'couleur' => '#6B7280',
+                'icone' => 'folder',
+                'fichiers' => FichierResource::collection($fichiersSansDossier),
+                'sous_dossiers' => [],
+                'count_fichiers' => $fichiersSansDossier->count(),
+                'count_total' => $fichiersSansDossier->count(),
+                'taille_totale' => $fichiersSansDossier->sum('taille'),
+                'taille_formatee' => $this->formatBytes($fichiersSansDossier->sum('taille'))
+            ];
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Construire la hiérarchie d'un dossier avec ses fichiers et sous-dossiers
+     */
+    private function buildDossierHierarchyWithFiles($dossier, $todosDossiers, $fichiersParDossier): array
+    {
+        // Fichiers directs du dossier
+        $fichiersDuDossier = $fichiersParDossier->get($dossier->id, collect());
+        
+        // Sous-dossiers
+        $sousDossiers = $todosDossiers->where('parent_id', $dossier->id);
+        $sousDossiersData = [];
+        $totalFichiers = $fichiersDuDossier->count();
+        $totalTaille = $fichiersDuDossier->sum('taille');
+        
+        foreach ($sousDossiers as $sousDossier) {
+            $sousDossierData = $this->buildDossierHierarchyWithFiles(
+                $sousDossier, 
+                $todosDossiers, 
+                $fichiersParDossier
+            );
+            $sousDossiersData[] = $sousDossierData;
+            
+            // Ajouter aux totaux
+            $totalFichiers += $sousDossierData['count_total'];
+            $totalTaille += $sousDossierData['taille_totale'];
+        }
+        
+        // Charger les fichiers dans le dossier pour DossierResource
+        $dossier->setRelation('fichiers', $fichiersDuDossier);
+        
+        return [
+            'type' => 'dossier',
+            'dossier' => new DossierResource($dossier),
+            'nom_dossier' => $dossier->nom,
+            'path' => $dossier->path,
+            'profondeur' => $dossier->profondeur,
+            'parent_id' => $dossier->parent_id,
+            'couleur' => $dossier->couleur,
+            'icone' => $dossier->icone,
+            'description' => $dossier->description,
+            
+            // Fichiers directs
+            'fichiers' => FichierResource::collection($fichiersDuDossier),
+            'count_fichiers' => $fichiersDuDossier->count(),
+            
+            // Sous-dossiers
+            'sous_dossiers' => $sousDossiersData,
+            'count_sous_dossiers' => count($sousDossiersData),
+            
+            // Totaux (incluant sous-dossiers)
+            'count_total' => $totalFichiers,
+            'taille_totale' => $totalTaille,
+            'taille_formatee' => $this->formatBytes($totalTaille),
+            
+            // Navigation
+            'breadcrumb' => $dossier->getBreadcrumb(),
+            'can_navigate_up' => $dossier->parent_id !== null
+        ];
     }
 
     /**

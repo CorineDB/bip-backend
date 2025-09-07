@@ -78,7 +78,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -242,7 +242,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -449,7 +449,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         try {
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -499,7 +499,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -633,7 +633,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -832,7 +832,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -1162,7 +1162,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -2012,7 +2012,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 throw new Exception("Veuillez faire valider l'idee de projet en interne par un responsable hierachique", 403);
             }
 
-            if (auth()->user()->profilable->ministere->id !== $ideeProjet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 

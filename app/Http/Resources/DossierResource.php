@@ -43,6 +43,11 @@ class DossierResource extends BaseApiResource
                 ];
             }),
 
+            // Fichiers du dossier
+            'fichiers' => $this->when($this->relationLoaded('fichiers'), function() {
+                return FichierResource::collection($this->fichiers);
+            }),
+
             // Statistiques des fichiers
             'stats_fichiers' => $this->when($this->relationLoaded('fichiers'), function() {
                 return [

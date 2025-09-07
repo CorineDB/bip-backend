@@ -18,19 +18,19 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
             "options_notation" => [
                 [
                     "appreciation" => "passe",
-                    "label" => "Passé",
+                    "libelle" => "Passé",
                     "description" => "Répond aux critères d'acceptation",
                     "couleur" => "#22c55e"
                 ],
                 [
                     "appreciation" => "retour",
-                    "label" => "Retour",
+                    "libelle" => "Retour",
                     "description" => "Nécessite des améliorations ou éclaircissements",
                     "couleur" => "#f59e0b"
                 ],
                 [
                     "appreciation" => "non_accepte",
-                    "label" => "Non accepté",
+                    "libelle" => "Non accepté",
                     "description" => "Ne répond pas aux critères minimums",
                     "couleur" => "#ef4444"
                 ]

@@ -149,7 +149,7 @@ class NoteConceptuelleController extends Controller
     /**
      * Créer une évaluation pour une note conceptuelle
      */
-    public function creerEvaluation(AppreciationNoteConceptuelleRequest $request, $noteId): JsonResponse
+    public function creerEvaluation(CreateOrUpdateCanevasAppreciationNoteConceptuelleRequest $request, $noteId): JsonResponse
     {
         return $this->service->creerEvaluation($noteId, $request->all());
     }
