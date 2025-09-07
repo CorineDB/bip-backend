@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\fichiers\FilterRequest;
 use Illuminate\Http\Request;
 use App\Http\Requests\fichiers\StoreFichierRequest;
 use App\Http\Requests\fichiers\UpdateFichierRequest;
@@ -19,9 +20,9 @@ class FichierController extends Controller
         $this->service = $service;
     }
 
-    public function index(): JsonResponse
+    public function index(FilterRequest $request): JsonResponse
     {
-        return $this->service->all();
+        return $this->service->all($request->validated());
     }
 
     public function show($id): JsonResponse

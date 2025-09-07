@@ -121,7 +121,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 Notation::where('categorie_critere_id', $categorieCritere->id)
                     ->whereNull('critere_id')
                     ->whereNotIn('id', $notationIdsFromRequest)
-                    ->delete();
+                    ->forceDelete();
             }
 
             // ======= 3. GESTION DES CRITERES =======
@@ -162,15 +162,15 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                         // Supprimer les anciennes notations du critère qui ne sont plus présentes
                         Notation::where('critere_id', $critere->id)
                             ->whereNotIn('id', $notationIdsCritere)
-                            ->delete();
+                            ->forceDelete();
                     }
                 }
                 // Supprimer les anciens critères (et leurs notations) qui ne figurent plus dans la requête
                 $criteresToDelete = $categorieCritere->criteres()->whereNotIn('id', $critereIdsFromRequest)->get();
                 foreach ($criteresToDelete as $critere) {
                     // Supprimer les notations liées à ce critère
-                    Notation::where('critere_id', $critere->id)->delete();
-                    $critere->delete();
+                    Notation::where('critere_id', $critere->id)->forceDelete();
+                    $critere->forceDelete();
                 }
             }
 
@@ -247,7 +247,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                     // Stocker le nouveau fichier dans le dossier structuré sur disque local avec sous-dossiers publics
                     $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $file->hashName();
                     $path = $file->storeAs(
-                        'public/Canevas, guides et outils/Analyse d\'idee de projet/Analyse preliminaire de l\'impact climatique',
+                        'public/Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Analyse preliminaire de l\'impact climatique',
                         $nomStockage,
                         'local'
                     );
@@ -293,7 +293,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                                 'uploaded_context' => 'evaluation-preliminaire-impact-climatique',
                                 'soumis_par' => auth()->id(),
                                 'soumis_le' => now()->toISOString(),
-                                'dossier_public' => 'Canevas, guides et outils/Analyse d\'idee de projet/Analyse preliminaire de l\'impact climatique'
+                                'dossier_public' => 'Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Analyse preliminaire de l\'impact climatique'
                             ]
                         ]);
                     }
@@ -303,7 +303,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 $grille->fichiers()
                     ->where('categorie', 'guide-referentiel-appreciation')
                     ->whereNotIn('nom_original', $nomsFilesSoumis)
-                    ->delete();
+                    ->forceDelete();
             }
 
             // Enlever les fichiers des données avant mise à jour
@@ -396,7 +396,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             // Traiter les documents référentiels s'il y en a
             if (isset($data['documents_referentiel']) && !empty($data['documents_referentiel'])) {
                 $nomsFilesSoumis = [];
-                
+
                 // Créer ou récupérer la structure de dossiers pour AMC
                 $dossierCanevas = $this->getOrCreateCanvasFolderStructure('amc');
 
@@ -413,7 +413,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                     // Stocker le nouveau fichier dans le dossier structuré sur disque local avec sous-dossiers publics
                     $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $file->hashName();
                     $path = $file->storeAs(
-                        'public/Canevas, guides et outils/Analyse d\'idee de projet/Analyse multicritere',
+                        'public/Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Analyse multicritere',
                         $nomStockage,
                         'local'
                     );
@@ -460,7 +460,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                                 'uploaded_context' => 'analyse-multicritere',
                                 'soumis_par' => auth()->id(),
                                 'soumis_le' => now()->toISOString(),
-                                'dossier_public' => 'Canevas, guides et outils/Analyse d\'idee de projet/Analyse multicritere'
+                                'dossier_public' => 'Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Analyse multicritere'
                             ]
                         ]);
                     }
@@ -470,7 +470,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 $grille->fichiers()
                     ->where('categorie', 'guide-referentiel-amc')
                     ->whereNotIn('nom_original', $nomsFilesSoumis)
-                    ->delete();
+                    ->forceDelete();
             }
 
             // Enlever les fichiers des données avant mise à jour
@@ -743,15 +743,15 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
         // Supprimer toutes les notations liées aux critères de cette catégorie
         Notation::whereHas('critere', function ($query) use ($checklistCategorie) {
             $query->where('categorie_critere_id', $checklistCategorie->id);
-        })->delete();
+        })->forceDelete();
 
         // Supprimer les notations directes de la catégorie (si il y en a)
         Notation::where('categorie_critere_id', $checklistCategorie->id)
             ->whereNull('critere_id')
-            ->delete();
+            ->forceDelete();
 
         // Supprimer tous les critères de cette catégorie
-        Critere::where('categorie_critere_id', $checklistCategorie->id)->delete();
+        Critere::where('categorie_critere_id', $checklistCategorie->id)->forceDelete();
     }
 
     /**
@@ -862,7 +862,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             if (!empty($mesuresTraitees)) {
                 Notation::where('critere_id', $critere->id)
                     ->whereNotIn('id', $mesuresTraitees)
-                    ->delete();
+                    ->forceDelete();
             }
         }
 
@@ -874,10 +874,10 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
             if ($criteresASupprimer->isNotEmpty()) {
                 // Supprimer d'abord les notations liées aux critères à supprimer
-                Notation::whereIn('critere_id', $criteresASupprimer)->delete();
+                Notation::whereIn('critere_id', $criteresASupprimer)->forceDelete();
 
                 // Puis supprimer les critères
-                Critere::whereIn('id', $criteresASupprimer)->delete();
+                Critere::whereIn('id', $criteresASupprimer)->forceDelete();
             }
         }
     }
@@ -942,14 +942,14 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             ]);
 
             // 3. Sous-sous-dossier selon le type
-            $nomSousDossier = $type === 'appreciation' ? 
-                'Analyse preliminaire de l\'impact climatique' : 
+            $nomSousDossier = $type === 'appreciation' ?
+                'Analyse preliminaire de l\'impact climatique' :
                 'Analyse multicritere';
-                
+
             $descriptionSousDossier = $type === 'appreciation' ?
                 'Documents pour l\'analyse préliminaire de l\'impact climatique des projets' :
                 'Documents pour l\'analyse multicritère (AMC) des projets';
-                
+
             $couleurSousDossier = $type === 'appreciation' ? '#DC2626' : '#7C3AED';
             $iconeSousDossier = $type === 'appreciation' ? 'fire' : 'adjustments';
 

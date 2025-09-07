@@ -72,7 +72,7 @@ class FichierService extends BaseService implements FichierServiceInterface
 
             // Appliquer les filtres communs aux trois catégories
             $queries = [$mesFichiersQuery, $fichiersPartagesQuery, $fichiersPublicsQuery];
-            
+
             foreach ($queries as $query) {
                 if (!empty($filters['dossier_id'])) {
                     if ($filters['dossier_id'] === 'null') {
@@ -109,7 +109,7 @@ class FichierService extends BaseService implements FichierServiceInterface
                 ->get();
 
             // Grouper par dossier si demandé
-            $groupByFolder = $filters['group_by_folder'] ?? false;
+            $groupByFolder = $filters['group_by_folder'] ?? true;
             $data = [];
 
             if ($groupByFolder) {
@@ -132,19 +132,19 @@ class FichierService extends BaseService implements FichierServiceInterface
                 'mes_fichiers_count' => $mesFichiers->count(),
                 'mes_fichiers_size' => $mesFichiers->sum('taille'),
                 'mes_fichiers_size_formatted' => $this->formatBytes($mesFichiers->sum('taille')),
-                
+
                 'fichiers_partages_count' => $fichiersPartages->count(),
                 'fichiers_partages_size' => $fichiersPartages->sum('taille'),
                 'fichiers_partages_size_formatted' => $this->formatBytes($fichiersPartages->sum('taille')),
-                
+
                 'public_count' => $fichiersPublics->count(),
                 'public_size' => $fichiersPublics->sum('taille'),
                 'public_size_formatted' => $this->formatBytes($fichiersPublics->sum('taille')),
-                
+
                 'total_count' => $mesFichiers->count() + $fichiersPartages->count() + $fichiersPublics->count(),
                 'total_size' => $mesFichiers->sum('taille') + $fichiersPartages->sum('taille') + $fichiersPublics->sum('taille'),
                 'total_size_formatted' => $this->formatBytes($mesFichiers->sum('taille') + $fichiersPartages->sum('taille') + $fichiersPublics->sum('taille')),
-                
+
                 'dossiers_count' => $groupByFolder ? $this->countActiveFolders($user) : 0
             ];
 
@@ -168,7 +168,7 @@ class FichierService extends BaseService implements FichierServiceInterface
     {
         try {
             $user = Auth::user();
-            
+
             // Fichiers publics seulement
             $fichiersPublicsQuery = Fichier::query()
                 ->with(['uploadedBy', 'dossier'])
@@ -200,8 +200,8 @@ class FichierService extends BaseService implements FichierServiceInterface
                 ->get();
 
             $groupByFolder = $filters['group_by_folder'] ?? false;
-            
-            $data = $groupByFolder ? 
+
+            $data = $groupByFolder ?
                 $this->groupFichiersByDossierAvecProfondeur($fichiersPublics, $user) :
                 FichierResource::collection($fichiersPublics);
 
@@ -239,7 +239,7 @@ class FichierService extends BaseService implements FichierServiceInterface
     {
         try {
             $user = Auth::user();
-            
+
             // Vérifier que le dossier existe et est accessible
             $dossierQuery = Dossier::where('id', $dossierId)
                 ->where(function($q) use ($user) {
@@ -256,7 +256,7 @@ class FichierService extends BaseService implements FichierServiceInterface
                         $q->where('uploaded_by', $user->id)
                           ->orWhere('is_public', true);
                     });
-                    
+
                     // Appliquer les filtres
                     if (!empty($filters['extension'])) {
                         $query->where('extension', $filters['extension']);
@@ -269,7 +269,7 @@ class FichierService extends BaseService implements FichierServiceInterface
                               ->orWhere('description', 'ILIKE', $searchTerm);
                         });
                     }
-                    
+
                     $query->orderBy('created_at', 'desc');
                 },
                 'children' // Pour les sous-dossiers si nécessaire
@@ -293,7 +293,7 @@ class FichierService extends BaseService implements FichierServiceInterface
     {
         try {
             $user = Auth::user();
-            
+
             // Récupérer tous les dossiers accessibles avec leurs fichiers
             $dossiers = Dossier::where(function($q) use ($user) {
                     $q->where('is_public', true)
@@ -307,7 +307,7 @@ class FichierService extends BaseService implements FichierServiceInterface
                             $q->where('uploaded_by', $user->id)
                               ->orWhere('is_public', true);
                         });
-                        
+
                         // Appliquer les filtres si fournis
                         if (!empty($filters['extension'])) {
                             $query->where('extension', $filters['extension']);
@@ -319,7 +319,7 @@ class FichierService extends BaseService implements FichierServiceInterface
                                   ->orWhere('description', 'ILIKE', $searchTerm);
                             });
                         }
-                        
+
                         $query->orderBy('created_at', 'desc');
                     }
                 ])
@@ -330,7 +330,7 @@ class FichierService extends BaseService implements FichierServiceInterface
             // Fichiers sans dossier
             $fichiersSansDossier = $this->buildPermissionsQuery($user)
                 ->whereNull('dossier_id');
-                
+
             // Appliquer les filtres aux fichiers sans dossier
             if (!empty($filters['extension'])) {
                 $fichiersSansDossier->where('extension', $filters['extension']);
@@ -342,7 +342,7 @@ class FichierService extends BaseService implements FichierServiceInterface
                       ->orWhere('description', 'ILIKE', $searchTerm);
                 });
             }
-            
+
             $fichiersSansDossier = $fichiersSansDossier->orderBy('created_at', 'desc')->get();
 
             $data = [
@@ -1465,10 +1465,10 @@ class FichierService extends BaseService implements FichierServiceInterface
     private function groupFichiersByFolder($fichiers): array
     {
         $grouped = [];
-        
+
         // Grouper par dossier_id
         $fichiersGroupes = $fichiers->groupBy('dossier_id');
-        
+
         foreach ($fichiersGroupes as $dossierId => $fichiersDuDossier) {
             if ($dossierId === null) {
                 // Fichiers sans dossier
@@ -1488,13 +1488,13 @@ class FichierService extends BaseService implements FichierServiceInterface
                 // Fichiers avec dossier - charger le dossier avec ses fichiers
                 $dossier = Dossier::with(['fichiers', 'createdBy'])
                     ->find($dossierId);
-                    
+
                 if ($dossier) {
                     $grouped['dossier_' . $dossierId] = new DossierResource($dossier);
                 }
             }
         }
-        
+
         return $grouped;
     }
 
@@ -1504,11 +1504,11 @@ class FichierService extends BaseService implements FichierServiceInterface
     private function groupFichiersByDossierAvecProfondeur($fichiers, User $user): array
     {
         $result = [];
-        
+
         // 1. Récupérer tous les dossiers concernés et leurs parents
         $dossierIds = $fichiers->whereNotNull('dossier_id')->pluck('dossier_id')->unique();
         $todosDossiers = collect();
-        
+
         // Récupérer tous les dossiers et remonter jusqu'aux racines
         foreach ($dossierIds as $dossierId) {
             $dossier = Dossier::with(['parent', 'createdBy'])->find($dossierId);
@@ -1523,21 +1523,21 @@ class FichierService extends BaseService implements FichierServiceInterface
                 }
             }
         }
-        
+
         // 2. Grouper les fichiers par dossier
         $fichiersParDossier = $fichiers->groupBy('dossier_id');
-        
+
         // 3. Construire la structure hiérarchique
         $dossiersRacine = $todosDossiers->where('parent_id', null);
-        
+
         foreach ($dossiersRacine as $dossierRacine) {
             $result[$dossierRacine->id] = $this->buildDossierHierarchyWithFiles(
-                $dossierRacine, 
-                $todosDossiers, 
+                $dossierRacine,
+                $todosDossiers,
                 $fichiersParDossier
             );
         }
-        
+
         // 4. Ajouter les fichiers sans dossier
         $fichiersSansDossier = $fichiersParDossier->get(null);
         if ($fichiersSansDossier && $fichiersSansDossier->count() > 0) {
@@ -1558,10 +1558,10 @@ class FichierService extends BaseService implements FichierServiceInterface
                 'taille_formatee' => $this->formatBytes($fichiersSansDossier->sum('taille'))
             ];
         }
-        
+
         return $result;
     }
-    
+
     /**
      * Construire la hiérarchie d'un dossier avec ses fichiers et sous-dossiers
      */
@@ -1569,29 +1569,29 @@ class FichierService extends BaseService implements FichierServiceInterface
     {
         // Fichiers directs du dossier
         $fichiersDuDossier = $fichiersParDossier->get($dossier->id, collect());
-        
+
         // Sous-dossiers
         $sousDossiers = $todosDossiers->where('parent_id', $dossier->id);
         $sousDossiersData = [];
         $totalFichiers = $fichiersDuDossier->count();
         $totalTaille = $fichiersDuDossier->sum('taille');
-        
+
         foreach ($sousDossiers as $sousDossier) {
             $sousDossierData = $this->buildDossierHierarchyWithFiles(
-                $sousDossier, 
-                $todosDossiers, 
+                $sousDossier,
+                $todosDossiers,
                 $fichiersParDossier
             );
             $sousDossiersData[] = $sousDossierData;
-            
+
             // Ajouter aux totaux
             $totalFichiers += $sousDossierData['count_total'];
             $totalTaille += $sousDossierData['taille_totale'];
         }
-        
+
         // Charger les fichiers dans le dossier pour DossierResource
         $dossier->setRelation('fichiers', $fichiersDuDossier);
-        
+
         return [
             'type' => 'dossier',
             'dossier' => new DossierResource($dossier),
@@ -1602,20 +1602,20 @@ class FichierService extends BaseService implements FichierServiceInterface
             'couleur' => $dossier->couleur,
             'icone' => $dossier->icone,
             'description' => $dossier->description,
-            
+
             // Fichiers directs
             'fichiers' => FichierResource::collection($fichiersDuDossier),
             'count_fichiers' => $fichiersDuDossier->count(),
-            
+
             // Sous-dossiers
             'sous_dossiers' => $sousDossiersData,
             'count_sous_dossiers' => count($sousDossiersData),
-            
+
             // Totaux (incluant sous-dossiers)
             'count_total' => $totalFichiers,
             'taille_totale' => $totalTaille,
             'taille_formatee' => $this->formatBytes($totalTaille),
-            
+
             // Navigation
             'breadcrumb' => $dossier->getBreadcrumb(),
             'can_navigate_up' => $dossier->parent_id !== null
@@ -1648,7 +1648,7 @@ class FichierService extends BaseService implements FichierServiceInterface
     {
         $tree = [];
         $indexed = [];
-        
+
         // Indexer tous les dossiers par ID
         foreach ($dossiers as $dossier) {
             $indexed[$dossier->id] = [
@@ -1665,7 +1665,7 @@ class FichierService extends BaseService implements FichierServiceInterface
                 'enfants' => []
             ];
         }
-        
+
         // Construire l'arbre
         foreach ($indexed as $id => $dossier) {
             if ($dossier['parent_id'] === null) {
@@ -1678,7 +1678,7 @@ class FichierService extends BaseService implements FichierServiceInterface
                 }
             }
         }
-        
+
         return $tree;
     }
 
@@ -1689,7 +1689,7 @@ class FichierService extends BaseService implements FichierServiceInterface
     {
         $tree = [];
         $indexed = [];
-        
+
         // Créer les resources et indexer
         foreach ($dossiers as $dossier) {
             $resource = new DossierResource($dossier);
@@ -1699,7 +1699,7 @@ class FichierService extends BaseService implements FichierServiceInterface
                 'enfants' => []
             ];
         }
-        
+
         // Construire l'arbre
         foreach ($indexed as $id => $item) {
             if ($item['parent_id'] === null) {
@@ -1711,13 +1711,13 @@ class FichierService extends BaseService implements FichierServiceInterface
                 // Dossier enfant
                 if (isset($indexed[$item['parent_id']])) {
                     $indexed[$item['parent_id']]['enfants'][] = array_merge(
-                        $item['resource']->toArray(request()), 
+                        $item['resource']->toArray(request()),
                         ['enfants' => &$indexed[$id]['enfants']]
                     );
                 }
             }
         }
-        
+
         return $tree;
     }
 
@@ -1740,13 +1740,13 @@ class FichierService extends BaseService implements FichierServiceInterface
     private function formatBytes(int $bytes): string
     {
         if ($bytes == 0) return '0 B';
-        
+
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        
+
         for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
             $bytes /= 1024;
         }
-        
+
         return round($bytes, 2) . ' ' . $units[$i];
     }
 }

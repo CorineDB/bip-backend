@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests\notes_conceptuelle;
 
-use App\Models\NoteConceptuelle;
 use App\Repositories\DocumentRepository;
-use App\Repositories\NoteConceptuelleRepository;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -13,14 +11,12 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
     protected $champs = [];
 
     protected $appreciations = [];
-
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
-        /*return auth()->check()  && auth()->user()->type === 'dpaf' */;
+        return true; //auth()->check() && in_array(auth()->user()->type, ['dgpd', 'admin']);
     }
 
     /**
@@ -30,11 +26,16 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
     {
         return [
             'evaluer' => 'required|boolean:true',
-            'evaluations_champs' => 'required|array|min:'. /* $this->input("evaluer") ? count($this->champs) :  */1,
+            'evaluations_champs' => 'required|array|min:'. count($this->champs),
             'evaluations_champs.*.champ_id' => ["required", "in:".implode(",", $this->champs), Rule::exists("champs", "id",)],
             'evaluations_champs.*.appreciation' => 'required|in:'.implode(",", $this->appreciations),
-            'evaluations_champs.*.commentaire' => 'required|string|min:50',
-            //'raison' => [Rule::requiredIf($this->input("evaluer") == true), "string", "min:50"],
+            'evaluations_champs.*.commentaire' => 'required|string|min:10',
+
+            'numero_dossier'            => 'required|string|max:100',
+            'numero_contrat'            => 'required|string|max:100',
+
+            // ✅ accept_term doit être "true" si est_soumise est true
+            'accept_term'               => 'required|accepted',
         ];
     }
 
@@ -44,17 +45,18 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'options_notation.required' => 'Les options de notation sont obligatoires.',
-            'options_notation.array' => 'Les options de notation doivent être un tableau.',
-            'options_notation.min' => 'Au moins 2 options de notation sont requises.',
-            'options_notation.*.required' => 'Chaque option de notation doit avoir une valeur.',
-            'options_notation.*.string' => 'Les options de notation doivent être du texte.',
-            'options_notation.*.max' => 'Chaque option ne peut dépasser 255 caractères.',
-            'criteres_evaluation.array' => 'Les critères d\'évaluation doivent être un tableau.',
-            'criteres_evaluation.seuil_acceptation.numeric' => 'Le seuil d\'acceptation doit être un nombre.',
-            'criteres_evaluation.seuil_acceptation.min' => 'Le seuil d\'acceptation ne peut être inférieur à 0.',
-            'criteres_evaluation.seuil_acceptation.max' => 'Le seuil d\'acceptation ne peut dépasser 100.',
-            'criteres_evaluation.commentaire_obligatoire.boolean' => 'Le champ commentaire obligatoire doit être vrai ou faux.',
+            'evaluations_champs.required' => 'Les évaluations des champs sont obligatoires.',
+            'evaluations_champs.array' => 'Les évaluations doivent être un tableau.',
+            'evaluations_champs.min' => 'Au moins une évaluation de champ est requise.',
+            'evaluations_champs.*.appreciation.required' => 'Une appréciation est obligatoire pour chaque champ.',
+            'evaluations_champs.*.appreciation.in' => 'L\'appréciation doit être : Passe, Retour, ou Non accepté.',
+            'evaluations_champs.*.commentaire.required' => 'Un commentaire est obligatoire pour chaque évaluation.',
+            'evaluations_champs.*.commentaire.min' => 'Le commentaire doit contenir au moins 10 caractères.',
+            'evaluations_champs.*.commentaire.max' => 'Le commentaire ne peut dépasser 500 caractères.',
+            'commentaire.max' => 'Le commentaire global ne peut dépasser 2000 caractères.',
+            'finaliser.required' => 'Vous devez spécifier si l\'évaluation doit être finalisée.',
+            'finaliser.boolean' => 'La finalisation doit être vraie ou fausse.',
+            'action.in' => 'L\'action doit être : réviser ou abandonner.'
         ];
     }
 
@@ -64,60 +66,23 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'options_notation' => 'options de notation',
-            'criteres_evaluation.seuil_acceptation' => 'seuil d\'acceptation',
-            'criteres_evaluation.commentaire_obligatoire' => 'commentaire obligatoire',
+            'evaluations_champs' => 'évaluations des champs',
+            'commentaire' => 'commentaire global',
+            'finaliser' => 'finalisation',
+            'action' => 'action'
         ];
     }
 
     public function prepareForValidation(){
         $canevas = app()->make(DocumentRepository::class)->getModel()
-                                            ->where('type', 'formulaire')
-                                            ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-redaction-note-conceptuelle'))
+                                            ->where('type', 'checklist')
+                                            ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-appreciation-note-conceptuelle'))
                                             ->orderBy('created_at', 'desc')->first();
 
-        $evaluationConfigs = $canevas->evaluation_configs;
+        $evaluationConfigs = $canevas?->evaluation_configs;
 
-        $this->appreciations = collect($evaluationConfigs['options_notation'] ?? [])->pluck('appreciation')->toArray();
+        $this->appreciations = collect($evaluationConfigs['guide_notation'] ?? [])->pluck('appreciation')->toArray();
 
-        $noteConceptuelle = app()->make(NoteConceptuelleRepository::class)->getModel()
-            ->findOrFail($this->route("noteId"));
-
-        $this->champs = collect($noteConceptuelle->note_conceptuelle)->pluck("id")->toArray();
-    }
-
-    /**
-     * Configure the validator instance.
-     */
-    public function withValidator($validator): void
-    {
-
-        /*
-        $validator->after(function ($validator) {
-            // Vérifier que les clés des options sont valides
-            $optionsNotation = $this->input('options_notation', []);
-            $clesValides = ['passe', 'retour', 'non_accepte'];
-
-            foreach (array_keys($optionsNotation) as $cle) {
-                if (!in_array($cle, $clesValides)) {
-                    $validator->errors()->add(
-                        "options_notation.{$cle}",
-                        "La clé '{$cle}' n'est pas une option de notation valide. Utilisez: " . implode(', ', $clesValides)
-                    );
-                }
-            }
-
-            // Vérifier qu'au moins les options essentielles sont présentes
-            $optionsEssentielles = ['passe', 'retour', 'non_accepte'];
-            foreach ($optionsEssentielles as $option) {
-                if (!isset($optionsNotation[$option]) || empty($optionsNotation[$option])) {
-                    $validator->errors()->add(
-                        "options_notation.{$option}",
-                        "L'option '{$option}' est obligatoire."
-                    );
-                }
-            }
-        });
-        */
+        $this->champs = $canevas->all_champs->pluck("id")->toArray();
     }
 }
