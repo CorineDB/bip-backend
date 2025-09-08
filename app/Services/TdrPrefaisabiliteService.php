@@ -1056,8 +1056,65 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $messageAction = '';
             $typeProjet = null;
 
+            // Créer une évaluation pour tracer la validation
+            $evaluationValidation = $projet->evaluations()->create([
+                'type_evaluation' => 'validation-etude-prefaisabilite',
+                'projetable_type' => get_class($projet),
+                'projetable_id' => $projet->id,
+                'date_debut_evaluation' => now(),
+                'date_fin_evaluation' => now(),
+                'valider_le' => now(),
+                'evaluateur_id' => auth()->id(),
+                'valider_par' => auth()->id(),
+                'commentaire' => $data['commentaire'] ?? $messageAction,
+                'evaluation' => $data,
+                'resultats_evaluation' => $data['action'],
+                'statut' => 1
+            ]);
+
             // Vérifier la cohérence du suivi rapport si des données de validation sont fournies
             if (isset($data['checklist_suivi_validation'])) {
+
+
+                // Enregistrer les appréciations pour chaque champ
+
+                $syncData = [];
+
+                foreach ($data['checklist_suivi_validation'] as $evaluationChamp) {
+                    $syncData[$evaluationChamp['champ_id']] = [
+                        'note' => $evaluationChamp['appreciation'],
+                        'date_note' => now(),
+                        'commentaires' => $evaluationChamp['commentaire'] ?? null,
+                    ];
+                }
+
+                $evaluationValidation->champs_evalue()->syncWithoutDetaching($syncData);
+
+                // Préparer l'évaluation complète pour enregistrement
+                $evaluationComplete = [
+                    'champs_evalues' => collect($this->documentRepository->getCanevasChecklistSuiviRapportPrefaisabilite()->all_champs)->map(function ($champ) use ($evaluationValidation) {
+                        $champEvalue = collect($evaluationValidation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                        return [
+                            'champ_id' => $champ['id'],
+                            'label' => $champ['label'],
+                            'attribut' => $champ['attribut'],
+                            'ordre_affichage' => $champ['ordre_affichage'],
+                            'type_champ' => $champ['type_champ'],
+                            'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                            'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+                            'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                        ];
+                    })->toArray(),
+                    'decision' => ['decision' => $data['action'], 'commentaire' => $data['commentaire']],
+                ];
+
+                // Mettre à jour l'évaluation avec les données complètes
+                $evaluationValidation->fill([
+                    'evaluation' => json_encode($evaluationComplete),
+                ]);
+
+                $evaluationValidation->save();
+
                 $resultVerificationCoherence = $this->verifierCoherenceSuiviRapport($projet, $data['checklist_suivi_validation']);
                 if (!$resultVerificationCoherence['success']) {
                     return response()->json([
@@ -1137,22 +1194,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     break;
             }
 
-            // Créer une évaluation pour tracer la validation
-            $evaluationValidation = $projet->evaluations()->create([
-                'type_evaluation' => 'validation-etude-prefaisabilite',
-                'projetable_type' => get_class($projet),
-                'projetable_id' => $projet->id,
-                'date_debut_evaluation' => now(),
-                'date_fin_evaluation' => now(),
-                'valider_le' => now(),
-                'evaluateur_id' => auth()->id(),
-                'valider_par' => auth()->id(),
-                'commentaire' => $data['commentaire'] ?? $messageAction,
-                'evaluation' => $data,
-                'resultats_evaluation' => $data['action'],
-                'statut' => 1
-            ]);
-
             // Attacher le fichier rapport de validation si fourni
             if (isset($data['fichier_rapport_validation']) && $data['action'] !== 'sauvegarder') {
                 $this->attacherFichierRapportValidation($projet, $data['fichier_rapport_validation'], $evaluationValidation);
@@ -1218,6 +1259,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 StatutIdee::VALIDATION_PF->value,
                 StatutIdee::R_TDR_PREFAISABILITE->value,
                 StatutIdee::TDR_PREFAISABILITE->value,
+
+                StatutIdee::EVALUATION_TDR_F->value,
+                StatutIdee::SOUMISSION_RAPPORT_F->value,
+                StatutIdee::VALIDATION_F->value,
+                StatutIdee::R_TDR_FAISABILITE->value,
+                StatutIdee::TDR_FAISABILITE->value,
+
                 StatutIdee::ABANDON->value
             ])) {
                 return response()->json([
@@ -1227,58 +1275,28 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
 
             // Récupérer l'évaluation en cours ou la dernière évaluation selon le statut
-            $evaluation = null;
             $evaluationValidation = null;
 
-                // Pour le statut VALIDATION_PF, récupérer l'évaluation de validation
-                $evaluationValidation = $projet->evaluations()
-                    ->where('type_evaluation', 'validation-etude-prefaisabilite')
-                    ->with(['champs_evalue' => function ($query) {
-                        $query->orderBy('ordre_affichage');
-                    }])
-                    ->orderBy('created_at', 'desc')
-                    ->first();
+            // Pour le statut VALIDATION_PF, récupérer l'évaluation de validation
+            $evaluationValidation = $projet->evaluations()
+                ->where('type_evaluation', 'validation-etude-prefaisabilite')
+                ->with(['champs_evalue' => function ($query) {
+                    $query->orderBy('ordre_affichage');
+                }])
+                ->orderBy('created_at', 'desc')
+                ->first();
 
             // Récupérer les données spécifiques au statut VALIDATION_PF
             $rapportPrefaisabilite = null;
             $fichiersValidation = null;
             $checklistSuiviValidation = null;
 
-                // Récupérer les fichiers de validation attachés au projet
-                $fichiersValidation = $projet->fichiers()
-                    ->where('categorie', 'rapport-validation-prefaisabilite')
-                    ->where('is_active', true)
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                // Récupérer les données de checklist sauvegardées pour la validation
-                $checklistSuiviValidation = $projet->checklistsSuivi()
-                    ->where('type', 'validation_etude_prefaisabilite')
-                    ->orderBy('created_at', 'desc')
-                    ->first();
-
-            // Récupérer les décisions liées aux TDRs et à la validation
-            $decisions = $projet->decisions()
-                ->where(function($query) {
-                    $query->where('valeur', 'like', '%TDR%')
-                          ->orWhere('valeur', 'like', '%préfaisabilité%')
-                          ->orWhere('valeur', 'like', '%Validation%');
-                })
+            // Récupérer les fichiers de validation attachés au projet
+            $fichiersValidation = $projet->fichiers()
+                ->where('categorie', 'rapport-validation-prefaisabilite')
+                ->where('is_active', true)
                 ->orderBy('created_at', 'desc')
                 ->get();
-
-            // Construire l'historique des décisions
-            $historiqueDecisions = $decisions->map(function ($decision) {
-                return [
-                    'id' => $decision->id,
-                    'valeur' => $decision->valeur,
-                    'observations' => $decision->observations,
-                    'date' => Carbon::parse($decision->date)->format("Y-m-d h:i:s"),
-                    'observateur_id' => $decision->observateur_id,
-                    'observateur_nom' => $decision->observateur->nom ?? 'N/A',
-                    'observateur_prenom' => $decision->observateur->prenom ?? 'N/A'
-                ];
-            });
 
             return response()->json([
                 'success' => true,
@@ -1288,7 +1306,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'tdr' => new TdrResource($projet->tdrPrefaisabilite->first()),
                     'rapport' => new RapportResource($projet->rapportPrefaisabilite()->first()),
                     // Données pour statut VALIDATION_PF
-                    'rapport_prefaisabilite' => $rapportPrefaisabilite ? [
+                    /* 'rapport_prefaisabilite' => $rapportPrefaisabilite ? [
                         'id' => $rapportPrefaisabilite->id,
                         'statut' => $rapportPrefaisabilite->statut,
                         'date_soumission' => $rapportPrefaisabilite->date_soumission?->format('d/m/Y H:i:s'),
@@ -1296,7 +1314,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'info_cabinet_etude' => $rapportPrefaisabilite->info_cabinet_etude,
                         'checklist_suivi' => $rapportPrefaisabilite->checklist_suivi,
                         'soumis_par_id' => $rapportPrefaisabilite->soumis_par_id,
-                        'fichiers' => $rapportPrefaisabilite->fichiers?->map(function($fichier) {
+                        'fichiers' => $rapportPrefaisabilite->fichiers?->map(function ($fichier) {
                             return [
                                 'id' => $fichier->id,
                                 'nom_original' => $fichier->nom_original,
@@ -1305,7 +1323,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                                 'chemin' => $fichier->chemin
                             ];
                         })
-                    ] : null,
+                    ] : null, */
                     'evaluation_validation' => $evaluationValidation ?/*  [
                         'id' => $evaluationValidation->id,
                         'valider_le' => $evaluationValidation->valider_le?->format('d/m/Y H:i:s'),
@@ -1314,6 +1332,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'commentaire' => $evaluationValidation->commentaire
                     ] : null, ? */ [
                         'id' => $evaluationValidation->id,
+                        'evaluation' => $evaluationValidation->evaluation,
                         'statut' => $evaluationValidation->statut, // 0=en cours, 1=terminée
                         'evaluateur' => new UserResource($evaluationValidation->evaluateur),
                         'date_debut' => Carbon::parse($evaluationValidation->date_debut_evaluation)->format("Y-m-d h:i:s"),
@@ -1321,7 +1340,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'commentaire_global' => $evaluationValidation->commentaire
                     ] : null,
                     'fichiers_validation' => FichierResource::collection($fichiersValidation),
-                    'checklist_suivi_validation' => $checklistSuiviValidation?->checklist ?? null
+                    'checklist_suivi_validation' => ($evaluationValidation && $evaluationValidation->evaluation && isset($evaluationValidation->evaluation["champs_evalues"])) ? $evaluationValidation->evaluation["champs_evalues"] : null
                 ]
             ]);
         } catch (Exception $e) {
@@ -2423,10 +2442,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                     // Ajouter le critère formaté
                     $criteresFormates[] = [
-                            'id' => $critereDetail->id,
-                            'intitule' => $critereDetail->intitule,
-                            'ponderation' => $critereDetail->ponderation,
-                            'commentaire' => $critereDetail->commentaire,
+                        'id' => $critereDetail->id,
+                        'intitule' => $critereDetail->intitule,
+                        'ponderation' => $critereDetail->ponderation,
+                        'commentaire' => $critereDetail->commentaire,
                         'secteur' => array_merge($secteurDetails, ['mesures_selectionnees' => $mesuresFormatees]),
 
                     ];
@@ -3442,7 +3461,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'message' => 'Vérification de cohérence réussie.',
                 'checkpoints_verifies' => $checkpointsSoumission->count()
             ];
-
         } catch (\Exception $e) {
             \Log::error('Erreur lors de la vérification de cohérence', [
                 'projet_id' => $projet->id,
@@ -3572,7 +3590,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
 
             return $dossierProjet;
-
         } catch (\Exception $e) {
             \Log::warning('Erreur lors de la création de la structure de dossiers étude préfaisabilité', [
                 'error' => $e->getMessage(),
@@ -3634,7 +3651,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'message' => 'Tous les checkpoints sont complétés.',
                 'nb_checkpoints_complets' => count($checklistSuiviValidation)
             ];
-
         } catch (\Exception $e) {
             \Log::error('Erreur lors de la vérification de complétude des checkpoints', [
                 'error' => $e->getMessage()
