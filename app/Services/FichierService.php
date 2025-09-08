@@ -1071,7 +1071,7 @@ class FichierService extends BaseService implements FichierServiceInterface
      */
     private function aPermissionSurRessourceAttachee(User $user, $fichier): bool
     {
-        $userMinistereId = $user->profilable->ministere_id ?? null;
+        $userMinistereId = $user->profilable?->ministere_id ?? null;
 
         if (!$userMinistereId) {
             return false; // Si l'utilisateur n'a pas de ministère, pas d'accès
@@ -1085,14 +1085,14 @@ class FichierService extends BaseService implements FichierServiceInterface
             case 'App\Models\IdeeProjet':
                 // Vérifier directement sur le projet/idée de projet
                 $resource = app($resourceType)->find($resourceId);
-                return $resource && $resource->ministere_id === $userMinistereId;
+                return $resource && $resource->ministereId === $userMinistereId;
 
             case 'App\Models\NoteConceptuelle':
                 // Vérifier via le projet associé à la note conceptuelle
                 $noteConceptuelle = app($resourceType)->with('projet')->find($resourceId);
                 return $noteConceptuelle &&
                        $noteConceptuelle->projet &&
-                       $noteConceptuelle->projet->ministere_id === $userMinistereId;
+                       $noteConceptuelle->projet->ministereId === $userMinistereId;
 
             case 'App\Models\Tdr':
             case 'App\Models\Rapport':
@@ -1100,7 +1100,7 @@ class FichierService extends BaseService implements FichierServiceInterface
                 $resource = app($resourceType)->with('projet')->find($resourceId);
                 return $resource &&
                        $resource->projet &&
-                       $resource->projet->ministere_id === $userMinistereId;
+                       $resource->projet->ministereId === $userMinistereId;
 
             default:
                 return false; // Type de ressource non géré
