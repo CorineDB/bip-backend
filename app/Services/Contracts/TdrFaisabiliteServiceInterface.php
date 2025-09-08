@@ -44,5 +44,5 @@ interface TdrFaisabiliteServiceInterface extends AbstractServiceInterface
     /**
      * Récupérer les détails de validation des TDRs
      */
-    public function getDetailsValidation(int $projetId): JsonResponse;
+    public function getDetailsValidationEtude(int $projetId): JsonResponse;
 }

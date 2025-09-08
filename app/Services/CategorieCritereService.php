@@ -246,11 +246,13 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
                     // Stocker le nouveau fichier dans le dossier structuré sur disque local avec sous-dossiers publics
                     $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $file->hashName();
-                    $path = $file->storeAs(
-                        'public/Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Analyse preliminaire de l\'impact climatique',
-                        $nomStockage,
-                        'local'
-                    );
+                    
+                    // Créer le chemin basé sur la structure de dossiers en base de données
+                    $cheminStockage = $dossierCanevas ? 
+                        'public/' . $dossierCanevas->full_path :
+                        'public/Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Analyse preliminaire de l\'impact climatique';
+                        
+                    $path = $file->storeAs($cheminStockage, $nomStockage, 'local');
 
                     if ($fichierExistant) {
                         // Mettre à jour le fichier existant avec détails complets
@@ -293,7 +295,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                                 'uploaded_context' => 'evaluation-preliminaire-impact-climatique',
                                 'soumis_par' => auth()->id(),
                                 'soumis_le' => now()->toISOString(),
-                                'dossier_public' => 'Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Analyse preliminaire de l\'impact climatique'
+                                'dossier_public' => $dossierCanevas ? $dossierCanevas->full_path : 'Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Analyse preliminaire de l\'impact climatique'
                             ]
                         ]);
                     }
@@ -412,11 +414,13 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
                     // Stocker le nouveau fichier dans le dossier structuré sur disque local avec sous-dossiers publics
                     $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $file->hashName();
-                    $path = $file->storeAs(
-                        'public/Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Analyse multicritere',
-                        $nomStockage,
-                        'local'
-                    );
+                    
+                    // Créer le chemin basé sur la structure de dossiers en base de données
+                    $cheminStockage = $dossierCanevas ? 
+                        'public/' . $dossierCanevas->full_path :
+                        'public/Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Analyse multicritere';
+                        
+                    $path = $file->storeAs($cheminStockage, $nomStockage, 'local');
 
                     if ($fichierExistant) {
                         // Mettre à jour le fichier existant avec détails complets
@@ -460,7 +464,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                                 'uploaded_context' => 'analyse-multicritere',
                                 'soumis_par' => auth()->id(),
                                 'soumis_le' => now()->toISOString(),
-                                'dossier_public' => 'Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Analyse multicritere'
+                                'dossier_public' => $dossierCanevas ? $dossierCanevas->full_path : 'Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Analyse multicritere'
                             ]
                         ]);
                     }
@@ -920,28 +924,41 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 'is_public' => true,
                 'created_by' => auth()->id(),
                 'couleur' => '#2563EB',
-                'icone' => 'folder-open',
-                'profondeur' => 0,
-                'path' => 'Canevas, guides et outils'
+                'icone' => 'folder-open'
+                // profondeur et path sont calculés automatiquement par le modèle
             ]);
 
-            // 2. Sous-dossier : "Analyse d'idee de projet"
-            $dossierAnalyse = Dossier::firstOrCreate([
-                'nom' => "Analyse d'idee de projet",
+            // 2. Sous-dossier : "Phase d'Identification"
+            $dossierPhase = Dossier::firstOrCreate([
+                'nom' => "Phase d'Identification",
                 'parent_id' => $dossierRacine->id
             ], [
-                'nom' => "Analyse d'idee de projet",
-                'description' => 'Outils et guides pour l\'analyse des idées de projet',
+                'nom' => "Phase d'Identification",
+                'description' => 'Documents de la phase d\'identification des projets',
                 'parent_id' => $dossierRacine->id,
                 'is_public' => true,
                 'created_by' => auth()->id(),
                 'couleur' => '#059669',
-                'icone' => 'chart-bar',
-                'profondeur' => 1,
-                'path' => "Canevas, guides et outils/Analyse d'idee de projet"
+                'icone' => 'document-text'
+                // profondeur et path sont calculés automatiquement par le modèle
             ]);
 
-            // 3. Sous-sous-dossier selon le type
+            // 3. Sous-dossier : "Analyse d'idee de projet"
+            $dossierAnalyse = Dossier::firstOrCreate([
+                'nom' => "Analyse d'idee de projet",
+                'parent_id' => $dossierPhase->id
+            ], [
+                'nom' => "Analyse d'idee de projet",
+                'description' => 'Outils et guides pour l\'analyse des idées de projet',
+                'parent_id' => $dossierPhase->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#059669',
+                'icone' => 'chart-bar'
+                // profondeur et path sont calculés automatiquement par le modèle
+            ]);
+
+            // 4. Sous-sous-dossier selon le type
             $nomSousDossier = $type === 'appreciation' ?
                 'Analyse preliminaire de l\'impact climatique' :
                 'Analyse multicritere';
@@ -963,9 +980,8 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 'is_public' => true,
                 'created_by' => auth()->id(),
                 'couleur' => $couleurSousDossier,
-                'icone' => $iconeSousDossier,
-                'profondeur' => 2,
-                'path' => "Canevas, guides et outils/Analyse d'idee de projet/{$nomSousDossier}"
+                'icone' => $iconeSousDossier
+                // profondeur et path sont calculés automatiquement par le modèle
             ]);
 
             return $sousSousDossier;

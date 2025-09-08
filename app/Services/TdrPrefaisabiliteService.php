@@ -11,8 +11,10 @@ use App\Models\Projet;
 use App\Models\Rapport;
 use App\Models\Decision;
 use App\Models\Workflow;
+use App\Models\Dossier;
 use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
+use App\Http\Resources\FichierResource;
 use App\Http\Resources\projets\ProjetResource;
 use App\Http\Resources\TdrResource;
 use App\Http\Resources\RapportResource;
@@ -1135,6 +1137,27 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     break;
             }
 
+            // Créer une évaluation pour tracer la validation
+            $evaluationValidation = $projet->evaluations()->create([
+                'type_evaluation' => 'validation-etude-prefaisabilite',
+                'projetable_type' => get_class($projet),
+                'projetable_id' => $projet->id,
+                'date_debut_evaluation' => now(),
+                'date_fin_evaluation' => now(),
+                'valider_le' => now(),
+                'evaluateur_id' => auth()->id(),
+                'valider_par' => auth()->id(),
+                'commentaire' => $data['commentaire'] ?? $messageAction,
+                'evaluation' => $data,
+                'resultats_evaluation' => $data['action'],
+                'statut' => 1
+            ]);
+
+            // Attacher le fichier rapport de validation si fourni
+            if (isset($data['fichier_rapport_validation']) && $data['action'] !== 'sauvegarder') {
+                $this->attacherFichierRapportValidation($projet, $data['fichier_rapport_validation'], $evaluationValidation);
+            }
+
             // Enregistrer le workflow et la décision si le statut a changé
             if ($nouveauStatut) {
                 $this->enregistrerWorkflow($projet, $nouveauStatut);
@@ -1177,7 +1200,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Récupérer les détails de validation des TDRs
      */
-    public function getDetailsValidation(int $projetId): JsonResponse
+    public function getDetailsValidationEtude(int $projetId): JsonResponse
     {
         try {
 
@@ -1192,6 +1215,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             if (!in_array($projet->statut->value, [
                 StatutIdee::EVALUATION_TDR_PF->value,
                 StatutIdee::SOUMISSION_RAPPORT_PF->value,
+                StatutIdee::VALIDATION_PF->value,
                 StatutIdee::R_TDR_PREFAISABILITE->value,
                 StatutIdee::TDR_PREFAISABILITE->value,
                 StatutIdee::ABANDON->value
@@ -1202,18 +1226,44 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ], 422);
             }
 
-            // Récupérer l'évaluation en cours ou la dernière évaluation
-            $evaluation = $projet->evaluations()
-                ->where('type_evaluation', 'validation-etude-prefaisabilite')
-                ->with(['champs_evalue' => function ($query) {
-                    $query->orderBy('ordre_affichage');
-                }])
-                ->orderBy('created_at', 'desc')
-                ->first();
+            // Récupérer l'évaluation en cours ou la dernière évaluation selon le statut
+            $evaluation = null;
+            $evaluationValidation = null;
 
-            // Récupérer les décisions liées aux TDRs
+                // Pour le statut VALIDATION_PF, récupérer l'évaluation de validation
+                $evaluationValidation = $projet->evaluations()
+                    ->where('type_evaluation', 'validation-etude-prefaisabilite')
+                    ->with(['champs_evalue' => function ($query) {
+                        $query->orderBy('ordre_affichage');
+                    }])
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+            // Récupérer les données spécifiques au statut VALIDATION_PF
+            $rapportPrefaisabilite = null;
+            $fichiersValidation = null;
+            $checklistSuiviValidation = null;
+
+                // Récupérer les fichiers de validation attachés au projet
+                $fichiersValidation = $projet->fichiers()
+                    ->where('categorie', 'rapport-validation-prefaisabilite')
+                    ->where('is_active', true)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                // Récupérer les données de checklist sauvegardées pour la validation
+                $checklistSuiviValidation = $projet->checklistsSuivi()
+                    ->where('type', 'validation_etude_prefaisabilite')
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+            // Récupérer les décisions liées aux TDRs et à la validation
             $decisions = $projet->decisions()
-                ->where('valeur', 'like', '%TDR%')
+                ->where(function($query) {
+                    $query->where('valeur', 'like', '%TDR%')
+                          ->orWhere('valeur', 'like', '%préfaisabilité%')
+                          ->orWhere('valeur', 'like', '%Validation%');
+                })
                 ->orderBy('created_at', 'desc')
                 ->get();
 
@@ -1232,18 +1282,46 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             return response()->json([
                 'success' => true,
-                'message' => 'Détails de validation des TDRs récupérés avec succès.',
+                'message' => 'Détails de validation récupérés avec succès.',
                 'data' => [
                     'projet' => new ProjetResource($projet),
-                    'resume_tdr' => $projet->resume_tdr_prefaisabilite,
-                    'historique_decisions' => $historiqueDecisions,
-                    'statut_actuel' => [
-                        'code' => $projet->statut->value,
-                        'label' => $projet->statut->name,
-                        'phase' => $projet->phase,
-                        'sous_phase' => $projet->sous_phase
-                    ],
-                    'actions_possibles' => $this->getActionsPossibles($projet->statut, $evaluation['resultat_global'] ?? null)
+                    'tdr' => new TdrResource($projet->tdrPrefaisabilite->first()),
+                    'rapport' => new RapportResource($projet->rapportPrefaisabilite()->first()),
+                    // Données pour statut VALIDATION_PF
+                    'rapport_prefaisabilite' => $rapportPrefaisabilite ? [
+                        'id' => $rapportPrefaisabilite->id,
+                        'statut' => $rapportPrefaisabilite->statut,
+                        'date_soumission' => $rapportPrefaisabilite->date_soumission?->format('d/m/Y H:i:s'),
+                        'recommandation' => $rapportPrefaisabilite->recommandation,
+                        'info_cabinet_etude' => $rapportPrefaisabilite->info_cabinet_etude,
+                        'checklist_suivi' => $rapportPrefaisabilite->checklist_suivi,
+                        'soumis_par_id' => $rapportPrefaisabilite->soumis_par_id,
+                        'fichiers' => $rapportPrefaisabilite->fichiers?->map(function($fichier) {
+                            return [
+                                'id' => $fichier->id,
+                                'nom_original' => $fichier->nom_original,
+                                'type' => $fichier->mime_type ?? $fichier->type,
+                                'taille' => $fichier->taille,
+                                'chemin' => $fichier->chemin
+                            ];
+                        })
+                    ] : null,
+                    'evaluation_validation' => $evaluationValidation ?/*  [
+                        'id' => $evaluationValidation->id,
+                        'valider_le' => $evaluationValidation->valider_le?->format('d/m/Y H:i:s'),
+                        'valider_par' => $evaluationValidation->valider_par,
+                        'decision' => $evaluationValidation->resultats_evaluation,
+                        'commentaire' => $evaluationValidation->commentaire
+                    ] : null, ? */ [
+                        'id' => $evaluationValidation->id,
+                        'statut' => $evaluationValidation->statut, // 0=en cours, 1=terminée
+                        'evaluateur' => new UserResource($evaluationValidation->evaluateur),
+                        'date_debut' => Carbon::parse($evaluationValidation->date_debut_evaluation)->format("Y-m-d h:i:s"),
+                        'date_fin' => Carbon::parse($evaluationValidation->date_fin_evaluation)->format("Y-m-d h:i:s"),
+                        'commentaire_global' => $evaluationValidation->commentaire
+                    ] : null,
+                    'fichiers_validation' => FichierResource::collection($fichiersValidation),
+                    'checklist_suivi_validation' => $checklistSuiviValidation?->checklist ?? null
                 ]
             ]);
         } catch (Exception $e) {
@@ -1264,6 +1342,33 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'reviser' => 'Reviser tdr malgré l\'évaluation négative',
                     'abandonner' => 'Abandonner le projet'
                 ] : [])
+            ],
+            StatutIdee::VALIDATION_PF => [
+                'maturite' => [
+                    'libelle' => 'Projet à maturité',
+                    'description' => 'Valider le projet comme étant à maturité',
+                    'consequence' => 'Statut MATURITE - Projet complexe de type 1'
+                ],
+                'faisabilite' => [
+                    'libelle' => 'Étude de faisabilité',
+                    'description' => 'Orienter vers une étude de faisabilité',
+                    'consequence' => 'Statut TDR_FAISABILITE - Projet complexe de type 2'
+                ],
+                'reprendre' => [
+                    'libelle' => 'Reprendre l\'étude',
+                    'description' => 'Renvoyer pour reprendre l\'étude de préfaisabilité',
+                    'consequence' => 'Retour au statut SOUMISSION_RAPPORT_PF'
+                ],
+                'abandonner' => [
+                    'libelle' => 'Abandonner le projet',
+                    'description' => 'Mettre fin au projet',
+                    'consequence' => 'Statut ABANDON'
+                ],
+                'sauvegarder' => [
+                    'libelle' => 'Sauvegarder',
+                    'description' => 'Sauvegarder les données sans changer le statut',
+                    'consequence' => 'Aucun changement de statut'
+                ]
             ],
             default => []
         };
@@ -3348,6 +3453,135 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'success' => false,
                 'message' => 'Erreur lors de la vérification de cohérence: ' . $e->getMessage()
             ];
+        }
+    }
+
+    /**
+     * Attacher le fichier rapport de validation de l'étude de préfaisabilité
+     */
+    private function attacherFichierRapportValidation($projet, $fichier, $evaluation)
+    {
+        if (!$fichier instanceof \Illuminate\Http\UploadedFile) {
+            return null;
+        }
+
+        // Hasher l'identifiant BIP selon le pattern projets/{hash_identifiant_bip}/Evaluation-ex-ante/etude_prefaisabilite/rapport_validation
+        $hashedIdentifiantBip = hash('sha256', $projet->identifiant_bip);
+
+        // Générer un nom de fichier unique
+        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $fichier->hashName();
+
+        // Stocker le fichier selon le pattern de hash avec structure Evaluation-ex-ante
+        $path = $fichier->storeAs(
+            "projets/{$hashedIdentifiantBip}/evaluation_ex_ante/etude-prefaisabilite/rapport-validation",
+            $nomStockage,
+            'local'
+        );
+
+        // Créer l'enregistrement du fichier via la relation polymorphe
+        $fichierCree = $projet->fichiers()->create([
+            'nom_original' => $fichier->getClientOriginalName(),
+            'nom_stockage' => $nomStockage,
+            'chemin' => $path,
+            'extension' => $fichier->getClientOriginalExtension(),
+            'mime_type' => $fichier->getMimeType(),
+            'taille' => $fichier->getSize(),
+            'hash_md5' => md5_file($fichier->getRealPath()),
+            'description' => 'Rapport de validation de l\'étude de préfaisabilité',
+            'commentaire' => 'Document de validation soumis par la DGPD',
+            'categorie' => 'rapport-validation-prefaisabilite',
+            'uploaded_by' => auth()->id(),
+            'is_public' => false,
+            'is_active' => true,
+            'metadata' => [
+                'evaluation_id' => $evaluation->id,
+                'type_validation' => 'etude-prefaisabilite',
+                'action_validation' => $evaluation->resultats_evaluation,
+                'uploaded_context' => 'validation-etude-prefaisabilite',
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now()->toISOString(),
+                'folder_structure' => "projets/{$hashedIdentifiantBip}/evaluation_ex_ante/etude_prefaisabilite/rapport_validation"
+            ]
+        ]);
+
+        return $fichierCree;
+    }
+
+    /**
+     * Créer ou récupérer la structure de dossiers pour un projet
+     */
+    private function getOrCreateProjetFolderStructure($projet, $sousType = null)
+    {
+        try {
+            // Hasher l'identifiant BIP selon le nouveau pattern projets/{hash_identifiant_bip}/Evaluation-ex-ante/etude_prefaisabilite/{sousType}
+            $hashedIdentifiantBip = hash('sha256', $projet->identifiant_bip);
+            $cheminBase = "Projets/{$hashedIdentifiantBip}/Evaluation-ex-ante/etude_prefaisabilite";
+            $cheminComplet = $sousType ? $cheminBase . '/' . $sousType : $cheminBase;
+
+            // Chercher si le dossier existe déjà
+            $dossierExistant = Dossier::where('full_path', $cheminComplet)->first();
+
+            if ($dossierExistant) {
+                return $dossierExistant;
+            }
+
+            // Créer la structure de dossiers si elle n'existe pas
+            $dossierParent = null;
+
+            // Créer d'abord le dossier racine du projet avec la nouvelle structure
+            $dossierProjet = Dossier::firstOrCreate(
+                ['full_path' => $cheminBase],
+                [
+                    'nom' => 'etude_prefaisabilite',
+                    'description' => 'Dossier étude de préfaisabilité du projet ' . $projet->titre_projet . ' (' . $projet->identifiant_bip . ')',
+                    'parent_id' => null,
+                    'is_public' => false,
+                    'created_by' => auth()->id(),
+                    'metadata' => [
+                        'type' => 'dossier-etude-prefaisabilite',
+                        'projet_id' => $projet->id,
+                        'identifiant_bip' => $projet->identifiant_bip,
+                        'hashed_identifiant_bip' => $hashedIdentifiantBip,
+                        'structure' => 'Evaluation-ex-ante/etude_prefaisabilite'
+                    ]
+                ]
+            );
+
+            // Si un sous-type est spécifié, créer le sous-dossier
+            if ($sousType) {
+                $dossierSousType = Dossier::firstOrCreate(
+                    ['full_path' => $cheminComplet],
+                    [
+                        'nom' => $sousType,
+                        'description' => 'Dossier ' . $sousType . ' du projet ' . $projet->identifiant_bip,
+                        'parent_id' => $dossierProjet->id,
+                        'is_public' => false,
+                        'created_by' => auth()->id(),
+                        'metadata' => [
+                            'type' => 'sous-dossier-etude-prefaisabilite',
+                            'sous_type' => $sousType,
+                            'projet_id' => $projet->id,
+                            'identifiant_bip' => $projet->identifiant_bip,
+                            'hashed_identifiant_bip' => $hashedIdentifiantBip,
+                            'structure' => "Evaluation-ex-ante/etude_prefaisabilite/{$sousType}"
+                        ]
+                    ]
+                );
+
+                return $dossierSousType;
+            }
+
+            return $dossierProjet;
+
+        } catch (\Exception $e) {
+            \Log::warning('Erreur lors de la création de la structure de dossiers étude préfaisabilité', [
+                'error' => $e->getMessage(),
+                'projet_id' => $projet->id,
+                'identifiant_bip' => $projet->identifiant_bip,
+                'hashed_identifiant_bip' => hash('sha256', $projet->identifiant_bip),
+                'sous_type' => $sousType
+            ]);
+            return null;
         }
     }
 

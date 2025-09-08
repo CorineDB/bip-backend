@@ -44,7 +44,7 @@ interface TdrPrefaisabiliteServiceInterface extends AbstractServiceInterface
     /**
      * Récupérer les détails de validation des TDRs
      */
-    public function getDetailsValidation(int $projetId): JsonResponse;
+    public function getDetailsValidationEtude(int $projetId): JsonResponse;
 
     /**
      * Valider l'étude de préfaisabilité (SFD-013)

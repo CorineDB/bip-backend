@@ -92,9 +92,9 @@ class TdrPrefaisabiliteController extends Controller
     /**
      * Récupérer les détails de validation des TDRs
      */
-    public function getDetailsValidation(int $projetId): JsonResponse
+    public function getDetailsValidationEtude(int $projetId): JsonResponse
     {
-        return $this->service->getDetailsValidation($projetId);
+        return $this->service->getDetailsValidationEtude($projetId);
     }
 
     /**

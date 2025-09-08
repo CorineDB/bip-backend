@@ -7,6 +7,7 @@ use App\Repositories\Contracts\ProjetRepositoryInterface;
 use App\Repositories\Contracts\EvaluationRepositoryInterface;
 use App\Models\Fichier;
 use App\Models\Projet;
+use App\Models\Rapport;
 use App\Models\Decision;
 use App\Models\Workflow;
 use App\Enums\StatutIdee;
@@ -49,6 +50,51 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     }
 
     /**
+     * Créer un nouveau TDR de faisabilité
+     */
+    public function create(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            // Créer le TDR
+            $tdr = $this->repository->create($data);
+
+            DB::commit();
+
+            return (new TdrResource($tdr->load(['soumisPar', 'redigerPar', 'fichiers.uploadedBy'])))
+                ->additional(['message' => 'TDR de faisabilité créé avec succès.'])
+                ->response()
+                ->setStatusCode(201);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Mettre à jour un TDR de faisabilité
+     */
+    public function update(int|string $id, array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $tdr = $this->repository->findOrFail($id);
+            $tdr->update($data);
+
+            DB::commit();
+
+            return (new TdrResource($tdr->load(['soumisPar', 'redigerPar', 'fichiers.uploadedBy'])))
+                ->additional(['message' => 'TDR de faisabilité mis à jour avec succès.'])
+                ->response();
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
      * Récupérer les détails des TDRs de faisabilité soumis
      */
     public function getTdrDetails(int $projetId): JsonResponse
@@ -57,9 +103,14 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
+            // Vérifications des droits d'accès (similaire à préfaisabilité)
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && !in_array(auth()->user()->type, ['dgpd', 'admin'])) {
+                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+            }
+
             // Récupérer le TDR le plus récent pour ce projet
             $tdr = $this->repository->getModel()
-                ->where('projetId', $projetId)
+                ->where('projet_id', $projetId)
                 ->where('type', 'faisabilite')
                 ->with(['soumisPar', 'redigerPar', 'fichiers.uploadedBy'])
                 ->orderBy('created_at', 'desc')
@@ -67,9 +118,10 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             if (!$tdr) {
                 return response()->json([
-                    'success' => false,
+                    'success' => true,
+                    'data' => null,
                     'message' => 'Aucun TDR de faisabilité trouvé pour ce projet.'
-                ], 404);
+                ], 206);
             }
 
             return response()->json([
@@ -77,6 +129,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'data' => [
                     'tdr' => new TdrResource($tdr->load("projet")),
                     'statut_projet' => $projet->statut,
+                    'peut_apprecier' => $projet->statut->value === StatutIdee::TDR_FAISABILITE->value,
                 ]
             ]);
 
@@ -97,12 +150,9 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         try {
             DB::beginTransaction();
 
-            // Vérifier les autorisations (DPAF uniquement)
-            if (!in_array(auth()->user()->type, ['dpaf'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette soumission.'
-                ], 403);
+            // Vérifications des permissions avancées (similaire à préfaisabilité)
+            if (!auth()->user()->hasPermissionTo('soumettre-un-tdr-de-faisabilite') && auth()->user()->type !== 'dpaf' && auth()->user()->profilable_type !== 'App\\Models\\Dpaf') {
+                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
             }
 
             // Récupérer le projet
@@ -724,7 +774,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     /**
      * Récupérer les détails de validation des TDRs
      */
-    public function getDetailsValidation(int $projetId): JsonResponse
+    public function getDetailsValidationEtude(int $projetId): JsonResponse
     {
         try {
             // Vérifier les autorisations (DGPD uniquement)
@@ -813,46 +863,92 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         try {
             DB::beginTransaction();
 
-            // Vérifier les autorisations (DPAF uniquement)
-            if (in_array(auth()->user()->type, ['dpaf', 'admin'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette soumission.'
-                ], 403);
-            }
-
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            // Traitement et sauvegarde du fichier rapport
+            // Vérifications des permissions avancées
+            if (!auth()->user()->hasPermissionTo('soumettre-un-rapport-de-faisabilite') && auth()->user()->type !== 'dpaf' && auth()->user()->profilable_type !== 'App\\Models\\Dpaf') {
+                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+            }
+
+            // Vérifier que le projet est au bon statut
+            if ($projet->statut->value !== StatutIdee::SOUMISSION_RAPPORT_F->value) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le projet n\'est pas à l\'étape de soumission du rapport de faisabilité.'
+                ], 422);
+            }
+
+            // Déterminer si c'est une soumission ou un brouillon
+            $action = $data['action'] ?? 'submit';
+            $estBrouillon = $action === 'draft';
+
+            // Récupérer le dernier rapport de faisabilité s'il existe
+            $rapportExistant = $projet->rapportFaisabilite()->first();
+
+            // Préparer les données du rapport
+            $checklistData = [];
+            $this->collecterDonneesChecklists($data, $checklistData);
+
+            $rapportData = [
+                'projet_id' => $projet->id,
+                'type' => 'faisabilite',
+                'statut' => $estBrouillon ? 'brouillon' : 'soumis',
+                'intitule' => 'Rapport de faisabilité - ' . $projet->titre_projet,
+                'checklist_suivi' => $checklistData,
+                'info_cabinet_etude' => $data['cabinet_etude'] ?? null,
+                'recommandation' => $data['recommandation'] ?? null,
+                'date_soumission' => $estBrouillon ? null : now(),
+                'soumis_par_id' => $estBrouillon ? null : auth()->id()
+            ];
+
+            // Créer ou mettre à jour le rapport
+            $rapport = null;
+            $message = '';
+
+            if ($rapportExistant && $rapportExistant->statut === 'brouillon') {
+                // Mettre à jour le rapport existant s'il est en brouillon
+                $rapport = $rapportExistant;
+                $rapport->fill($rapportData);
+                $rapport->save();
+                $message = $estBrouillon ? 'Rapport sauvegardé en brouillon.' : 'Rapport soumis avec succès.';
+            } elseif ($rapportExistant && $rapportExistant->statut === 'soumis' && !$estBrouillon) {
+                // Si un rapport soumis existe déjà et qu'on soumet à nouveau, créer une nouvelle version
+                $rapportData['parent_id'] = $rapportExistant->id;
+                $rapport = Rapport::create($rapportData);
+                $message = 'Nouvelle version du rapport soumise avec succès.';
+            } else {
+                // Créer un nouveau rapport (première version)
+                $rapport = Rapport::create($rapportData);
+                $message = $estBrouillon ? 'Rapport sauvegardé en brouillon.' : 'Rapport soumis avec succès.';
+            }
+
+            // Associer les fichiers au rapport
             $fichierRapport = null;
-            if (isset($data['rapport_faisabilite'])) {
-                $fichierRapport = $this->sauvegarderFichierRapport($projet, $data['rapport_faisabilite'], $data);
+            if (isset($data['rapport_faisabilite']) || isset($data['rapport_couts_avantages'])) {
+                $fichierRapport = $this->associerFichiersAuRapport($rapport, $data);
             }
 
-            if (isset($data['rapport_couts_avantages'])) {
-                $fichierRapport = $this->sauvegarderFichierRapport($projet, $data['rapport_couts_avantages'], $data);
+            // Ne changer le statut du projet que si ce n'est pas un brouillon
+            if (!$estBrouillon) {
+                $projet->update([
+                    'statut' => StatutIdee::VALIDATION_F,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_F),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_F)
+                ]);
+
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($projet, StatutIdee::VALIDATION_F);
+                $this->enregistrerDecision(
+                    $projet,
+                    "Soumission du rapport de faisabilité",
+                    "Rapport soumis par cabinet: " . ($data['cabinet_etude']['nom_cabinet'] ?? 'N/A'),
+                    auth()->user()->personne->id
+                );
+
+                // Envoyer une notification
+                $this->envoyerNotificationSoumissionRapport($projet, $fichierRapport, $data);
             }
-
-
-            // Enregistrer les informations du cabinet et recommandations
-            $this->enregistrerInformationsCabinet($projet, $data);
-
-            // Changer le statut du projet
-            $projet->update([
-                'statut' => StatutIdee::VALIDATION_F,
-                'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_F),
-                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_F)
-            ]);
-
-            // Enregistrer le workflow et la décision
-            $this->enregistrerWorkflow($projet, StatutIdee::VALIDATION_F);
-            $this->enregistrerDecision(
-                $projet,
-                "Soumission du rapport de faisabilité",
-                "Rapport soumis par cabinet: " . ($data['cabinet_etude']['nom_cabinet'] ?? 'N/A'),
-                auth()->user()->personne->id
-            );
 
             DB::commit();
 
@@ -861,27 +957,104 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             return response()->json([
                 'success' => true,
-                'message' => 'Rapport de faisabilité soumis avec succès.',
+                'message' => $message,
                 'data' => [
-                    'fichier_id' => $fichierRapport ? $fichierRapport->id : null,
+                    'rapport_id' => $rapport->id,
                     'projet_id' => $projet->id,
                     'ancien_statut' => StatutIdee::SOUMISSION_RAPPORT_F->value,
-                    'nouveau_statut' => StatutIdee::VALIDATION_F->value,
-                    'cabinet' => [
-                        'nom' => $data['cabinet_etude']['nom_cabinet'] ?? null,
-                        'contact' => $data['cabinet_etude']['contact_cabinet'] ?? null,
-                        'email' => $data['cabinet_etude']['email_cabinet'] ?? null,
-                        'adresse_cabinet' => $data['cabinet_etude']['adresse_cabinet'] ?? null
-                    ],
-                    'recommandation' => $data['recommandation'] ?? null,
-                    'fichier_url' => $fichierRapport ? $fichierRapport->url : null,
-                    'soumis_par' => auth()->id(),
-                    'soumis_le' => now()->format('d/m/Y H:i:s')
+                    'nouveau_statut' => $estBrouillon ? null : StatutIdee::VALIDATION_F->value,
+                    'rapport' => new \App\Http\Resources\RapportResource($rapport)
                 ]
             ]);
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Récupérer les détails de soumission du rapport de faisabilité
+     */
+    public function getDetailsSoumissionRapportFaisabilite(int $projetId): JsonResponse
+    {
+        try {
+            // Récupérer le projet
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Vérifier les permissions d'accès
+            if (auth()->user()->profilable?->ministere?->id !== $projet->ministere->id && !in_array(auth()->user()->type, ['dgpd', 'admin'])) {
+                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+            }
+
+            // Récupérer le rapport soumis le plus récent
+            $rapport = $projet->rapportFaisabilite()
+                ->where('statut', 'soumis')
+                ->with(['fichiersRapport', 'procesVerbaux', 'soumisPar', 'projet', 'champs', 'documentsAnnexes'])
+                ->first();
+
+            if (!$rapport) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun rapport soumis trouvé pour ce projet.',
+                    'data' => null
+                ], 404);
+            }
+
+            // Récupérer les workflows pour l'historique
+            $historique = $projet->workflows()
+                ->orderBy('date', 'desc')
+                ->take(5)
+                ->get()
+                ->map(function ($workflow) {
+                    return [
+                        'statut' => $workflow->statut,
+                        'phase' => $workflow->phase,
+                        'sous_phase' => $workflow->sous_phase,
+                        'date' => Carbon::parse($workflow->date)->format('d/m/Y H:i:s')
+                    ];
+                });
+
+            // Récupérer les évaluations liées au TDR de faisabilité
+            $tdr = $projet->tdrs()
+                ->where('type', 'faisabilite')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $evaluationTdr = null;
+            if ($tdr) {
+                $evaluationTdr = $tdr->evaluations()
+                    ->where('type_evaluation', 'tdr-faisabilite')
+                    ->where('statut', 1)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+            }
+
+            // Récupérer les décisions prises
+            $decisions = $projet->decisions()
+                ->orderBy('date', 'desc')
+                ->take(3)
+                ->get()
+                ->map(function ($decision) {
+                    return [
+                        'valeur' => $decision->valeur,
+                        'observations' => $decision->observations,
+                        'date' => Carbon::parse($decision->date)->format('d/m/Y H:i:s'),
+                        'observateur' => $decision->observateur ? new UserResource($decision->observateur) : null
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => new \App\Http\Resources\RapportResource($rapport),
+                'message' => 'Détails de soumission du rapport de faisabilité récupérés avec succès.'
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "Erreur lors de la récupération des détails de soumission. " . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
         }
     }
 
@@ -894,7 +1067,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             DB::beginTransaction();
 
             // Vérifier les autorisations (Comité de validation Ministériel uniquement)
-            if (in_array(auth()->user()->type, ['dgpd', 'admin'])) {
+            if (!in_array(auth()->user()->type, ['comite_validation', 'admin']) && !auth()->user()->hasPermissionTo('valider-etude-faisabilite')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette validation.'
@@ -1015,7 +1188,293 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         }
     }
 
+    /**
+     * Récupérer le rapport soumis pour un projet
+     */
+    public function getRapportSoumis(int $projetId): JsonResponse
+    {
+        try {
+            // Récupérer le projet
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Récupérer le rapport de faisabilité soumis
+            $fichierRapport = $projet->fichiers()
+                ->where('categorie', 'rapport-faisabilite')
+                ->where('is_active', true)
+                ->with('uploadedBy.personne')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if (!$fichierRapport) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun rapport de faisabilité soumis trouvé pour ce projet.'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Rapport récupéré avec succès.',
+                'data' => [
+                    'projet' => [
+                        'id' => $projet->id,
+                        'intitule' => $projet->intitule,
+                        'statut' => $projet->statut,
+                        'phase' => $projet->phase,
+                        'sous_phase' => $projet->sous_phase
+                    ],
+                    'rapport' => [
+                        'id' => $fichierRapport->id,
+                        'nom_original' => $fichierRapport->nom_original,
+                        'nom_stockage' => $fichierRapport->nom_stockage,
+                        'extension' => $fichierRapport->extension,
+                        'taille' => $fichierRapport->taille,
+                        'taille_formatee' => $fichierRapport->taille_formatee,
+                        'date_soumission' => Carbon::parse($fichierRapport->created_at)->format('d/m/Y H:i:s'),
+                        'soumis_par' => new UserResource($fichierRapport->uploadedBy),
+                        'url_telechargement' => $fichierRapport->url,
+                        'metadata' => $fichierRapport->metadata
+                    ],
+                    'cabinet_etude' => $fichierRapport->metadata['cabinet'] ?? null,
+                    'recommandation_adaptation' => $fichierRapport->metadata['recommandation_adaptation'] ?? null
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => "Erreur lors de la récupération du rapport. " . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
+        }
+    }
+
+    /**
+     * Traiter toutes les checklists d'étude de faisabilité
+     */
+    private function traiterToutesLesChecklistsEtudeFaisabilite(Projet $projet, array $data, bool $estBrouillon): void
+    {
+        $checklistsEtudeFaisabilite = [
+            'checklist_etude_faisabilite_marche' => 'traiterChecklistEtudeFaisabiliteMarche',
+            'checklist_etude_faisabilite_economique' => 'traiterChecklistEtudeFaisabiliteEconomique',
+            'checklist_etude_faisabilite_technique' => 'traiterChecklistEtudeFaisabiliteTechnique',
+            'checklist_etude_faisabilite_organisationnelle_et_juridique' => 'traiterChecklistEtudeFaisabiliteOrganisationnelleEtJuridique',
+            'checklist_suivi_analyse_faisabilite_financiere' => 'traiterChecklistSuiviAnalyseFaisabiliteFinanciere',
+            'checklist_suivi_etude_analyse_impact_environnementale_et_sociale' => 'traiterChecklistSuiviEtudeAnalyseImpactEnvironnementaleEtSociale'
+        ];
+
+        foreach ($checklistsEtudeFaisabilite as $checklistKey => $methodName) {
+            if (isset($data[$checklistKey]) && !empty($data[$checklistKey])) {
+                $this->$methodName($projet, $data[$checklistKey], $estBrouillon);
+            }
+        }
+    }
+
+    /**
+     * Traiter la checklist d'étude de faisabilité marché
+     */
+    private function traiterChecklistEtudeFaisabiliteMarche(Projet $projet, array $checklistData, bool $estBrouillon): void
+    {
+        // Récupérer les métadonnées existantes
+        $metadata = $projet->metadata ?? [];
+
+        // Ajouter ou mettre à jour les informations de checklist d'étude faisabilité marché
+        $metadata['checklist_etude_faisabilite_marche'] = [
+            'data' => $checklistData,
+            'est_brouillon' => $estBrouillon,
+            'date_traitement' => now(),
+            'traite_par' => auth()->id(),
+            'statut' => $estBrouillon ? 'brouillon' : 'soumis'
+        ];
+
+        // Mettre à jour le projet
+        $projet->update(['metadata' => $metadata]);
+
+        // Log pour traçabilité
+        \Log::info('Checklist étude faisabilité marché traitée', [
+            'projet_id' => $projet->id,
+            'est_brouillon' => $estBrouillon,
+            'traite_par' => auth()->id()
+        ]);
+    }
+
+    /**
+     * Traiter la checklist d'étude de faisabilité économique
+     */
+    private function traiterChecklistEtudeFaisabiliteEconomique(Projet $projet, array $checklistData, bool $estBrouillon): void
+    {
+        $this->traiterChecklistGenerique($projet, $checklistData, $estBrouillon, 'checklist_etude_faisabilite_economique', 'Checklist étude faisabilité économique traitée');
+    }
+
+    /**
+     * Traiter la checklist d'étude de faisabilité technique
+     */
+    private function traiterChecklistEtudeFaisabiliteTechnique(Projet $projet, array $checklistData, bool $estBrouillon): void
+    {
+        $this->traiterChecklistGenerique($projet, $checklistData, $estBrouillon, 'checklist_etude_faisabilite_technique', 'Checklist étude faisabilité technique traitée');
+    }
+
+    /**
+     * Traiter la checklist d'étude de faisabilité organisationnelle et juridique
+     */
+    private function traiterChecklistEtudeFaisabiliteOrganisationnelleEtJuridique(Projet $projet, array $checklistData, bool $estBrouillon): void
+    {
+        $this->traiterChecklistGenerique($projet, $checklistData, $estBrouillon, 'checklist_etude_faisabilite_organisationnelle_et_juridique', 'Checklist étude faisabilité organisationnelle et juridique traitée');
+    }
+
+    /**
+     * Traiter la checklist de suivi analyse faisabilité financière
+     */
+    private function traiterChecklistSuiviAnalyseFaisabiliteFinanciere(Projet $projet, array $checklistData, bool $estBrouillon): void
+    {
+        $this->traiterChecklistGenerique($projet, $checklistData, $estBrouillon, 'checklist_suivi_analyse_faisabilite_financiere', 'Checklist suivi analyse faisabilité financière traitée');
+    }
+
+    /**
+     * Traiter la checklist de suivi étude analyse impact environnementale et sociale
+     */
+    private function traiterChecklistSuiviEtudeAnalyseImpactEnvironnementaleEtSociale(Projet $projet, array $checklistData, bool $estBrouillon): void
+    {
+        $this->traiterChecklistGenerique($projet, $checklistData, $estBrouillon, 'checklist_suivi_etude_analyse_impact_environnementale_et_sociale', 'Checklist suivi étude analyse impact environnementale et sociale traitée');
+    }
+
+    /**
+     * Méthode générique pour traiter une checklist
+     */
+    private function traiterChecklistGenerique(Projet $projet, array $checklistData, bool $estBrouillon, string $checklistKey, string $logMessage): void
+    {
+        // Récupérer les métadonnées existantes
+        $metadata = $projet->metadata ?? [];
+
+        // Ajouter ou mettre à jour les informations de la checklist
+        $metadata[$checklistKey] = [
+            'data' => $checklistData,
+            'est_brouillon' => $estBrouillon,
+            'date_traitement' => now(),
+            'traite_par' => auth()->id(),
+            'statut' => $estBrouillon ? 'brouillon' : 'soumis'
+        ];
+
+        // Mettre à jour le projet
+        $projet->update(['metadata' => $metadata]);
+
+        // Log pour traçabilité
+        \Log::info($logMessage, [
+            'projet_id' => $projet->id,
+            'checklist_key' => $checklistKey,
+            'est_brouillon' => $estBrouillon,
+            'traite_par' => auth()->id()
+        ]);
+    }
+
+    /**
+     * Traiter la checklist de suivi assurance qualité rapport faisabilité
+     */
+    private function traiterChecklistSuiviAssuranceQualiteRapportFaisabilite(
+        Projet $projet,
+        array $checklistData,
+        bool $estBrouillon,
+        array $fichiersData = []
+    ): array {
+        try {
+            // Récupérer les métadonnées existantes
+            $metadata = $projet->metadata ?? [];
+
+            // Valider les données de la checklist si nécessaire
+            if (!$estBrouillon && !$this->validerChecklistSuiviAssuranceQualite($checklistData, $fichiersData)) {
+                return [
+                    'success' => false,
+                    'message' => 'La checklist de suivi assurance qualité est incomplète ou invalide.'
+                ];
+            }
+
+            // Ajouter ou mettre à jour les informations de checklist de suivi
+            $metadata['checklist_suivi_assurance_qualite_faisabilite'] = [
+                'data' => $checklistData,
+                'fichiers_associes' => [
+                    'rapport_faisabilite' => $fichiersData['rapport_faisabilite'] ? 'présent' : 'absent',
+                    'rapport_couts_avantages' => $fichiersData['rapport_couts_avantages'] ? 'présent' : 'absent',
+                    'cabinet_renseigne' => !empty($fichiersData['cabinet_etude']),
+                    'recommandation_fournie' => !empty($fichiersData['recommandation'])
+                ],
+                'est_brouillon' => $estBrouillon,
+                'date_traitement' => now(),
+                'traite_par' => auth()->id(),
+                'statut' => $estBrouillon ? 'brouillon' : 'validee'
+            ];
+
+            // Mettre à jour le projet
+            $projet->update(['metadata' => $metadata]);
+
+            // Log pour traçabilité
+            \Log::info('Checklist suivi assurance qualité faisabilité traitée', [
+                'projet_id' => $projet->id,
+                'est_brouillon' => $estBrouillon,
+                'traite_par' => auth()->id(),
+                'fichiers_status' => $metadata['checklist_suivi_assurance_qualite_faisabilite']['fichiers_associes']
+            ]);
+
+            return ['success' => true];
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors du traitement de la checklist suivi assurance qualité', [
+                'projet_id' => $projet->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Erreur lors du traitement de la checklist de suivi assurance qualité.'
+            ];
+        }
+    }
+
+    /**
+     * Valider la checklist de suivi assurance qualité
+     */
+    private function validerChecklistSuiviAssuranceQualite(array $checklistData, array $fichiersData): bool
+    {
+        // Vérifications de base
+        if (empty($checklistData)) {
+            return false;
+        }
+
+        // Vérifier la présence des fichiers essentiels pour la soumission finale
+        $fichiersEssentiels = [
+            'rapport_faisabilite' => $fichiersData['rapport_faisabilite'] ?? null,
+            'cabinet_etude' => $fichiersData['cabinet_etude'] ?? null
+        ];
+
+        foreach ($fichiersEssentiels as $cle => $valeur) {
+            if (empty($valeur)) {
+                \Log::warning("Fichier essentiel manquant pour validation checklist: {$cle}");
+                return false;
+            }
+        }
+
+        // Ici on pourrait ajouter d'autres validations spécifiques selon les règles métier
+        // Par exemple, vérifier que certains champs obligatoires de la checklist sont remplis
+
+        return true;
+    }
+
     // === MÉTHODES UTILITAIRES (identiques à TdrPrefaisabiliteService) ===
+
+    /**
+     * Obtenir les actions possibles pour la validation
+     */
+    private function getActionsPossiblesValidation($statut): array
+    {
+        return match ($statut) {
+            StatutIdee::VALIDATION_F => [
+                'maturite' => 'Valider le projet à maturité',
+                'reprendre' => 'Reprendre l\'étude de faisabilité',
+                'abandonner' => 'Abandonner le projet',
+                'sauvegarder' => 'Sauvegarder sans changer le statut'
+            ],
+            default => []
+        };
+    }
 
     /**
      * Obtenir les actions possibles selon le statut et le résultat d'évaluation
@@ -1352,7 +1811,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     /**
      * Sauvegarder le fichier rapport de faisabilité
      */
-    private function sauvegarderFichierRapport(Projet $projet, $fichier, array $data): Fichier
+    private function sauvegarderFichierRapport(Projet $projet, $fichier, array $data, bool $estBrouillon = false): Fichier
     {
         // Générer les informations du fichier
         $nomOriginal = $fichier->getClientOriginalName();
@@ -1397,7 +1856,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     /**
      * Enregistrer les informations du cabinet dans les métadonnées du projet
      */
-    private function enregistrerInformationsCabinet(Projet $projet, array $data): void
+    private function enregistrerInformationsCabinet(Projet $projet, array $data, bool $estBrouillon = false): void
     {
         // Récupérer les métadonnées existantes ou créer un nouveau tableau
         $metadata = $projet->metadata ?? [];
@@ -1412,7 +1871,19 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             ],
             'recommandation_adaptation' => $data['recommandation_adaptation'] ?? null,
             'date_soumission_rapport' => now(),
-            'soumis_par' => auth()->id()
+            'soumis_par' => auth()->id(),
+            'est_brouillon' => $estBrouillon,
+            'statut' => $estBrouillon ? 'brouillon' : 'soumis',
+            // Inclure les références à toutes les checklists si elles existent
+            'checklists' => [
+                'etude_faisabilite_marche_traitee' => isset($data['checklist_etude_faisabilite_marche']) && !empty($data['checklist_etude_faisabilite_marche']),
+                'etude_faisabilite_economique_traitee' => isset($data['checklist_etude_faisabilite_economique']) && !empty($data['checklist_etude_faisabilite_economique']),
+                'etude_faisabilite_technique_traitee' => isset($data['checklist_etude_faisabilite_technique']) && !empty($data['checklist_etude_faisabilite_technique']),
+                'etude_faisabilite_organisationnelle_et_juridique_traitee' => isset($data['checklist_etude_faisabilite_organisationnelle_et_juridique']) && !empty($data['checklist_etude_faisabilite_organisationnelle_et_juridique']),
+                'suivi_analyse_faisabilite_financiere_traitee' => isset($data['checklist_suivi_analyse_faisabilite_financiere']) && !empty($data['checklist_suivi_analyse_faisabilite_financiere']),
+                'suivi_etude_analyse_impact_environnementale_et_sociale_traitee' => isset($data['checklist_suivi_etude_analyse_impact_environnementale_et_sociale']) && !empty($data['checklist_suivi_etude_analyse_impact_environnementale_et_sociale']),
+                'suivi_assurance_qualite_traitee' => isset($data['checklist_suivi_assurance_qualite_rapport_etude_faisabilite']) && !empty($data['checklist_suivi_assurance_qualite_rapport_etude_faisabilite'])
+            ]
         ];
 
         // Mettre à jour le projet
@@ -1627,5 +2098,72 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     }
     private function envoyerNotificationValidationFaisabilite($projet, string $action, array $data)
     { /* À implémenter */
+    }
+    private function envoyerNotificationValidationRapportFinal($projet, string $action, array $data)
+    { /* À implémenter */
+    }
+
+    /**
+     * Collecter toutes les données de checklists pour le rapport
+     */
+    private function collecterDonneesChecklists(array $data, array &$checklistData): void
+    {
+        $checklistsEtudeFaisabilite = [
+            'checklist_etude_faisabilite_marche',
+            'checklist_etude_faisabilite_economique',
+            'checklist_etude_faisabilite_technique',
+            'checklist_etude_faisabilite_organisationnelle_et_juridique',
+            'checklist_suivi_analyse_faisabilite_financiere',
+            'checklist_suivi_etude_analyse_impact_environnementale_et_sociale',
+            'checklist_suivi_assurance_qualite_rapport_etude_faisabilite'
+        ];
+
+        foreach ($checklistsEtudeFaisabilite as $checklistKey) {
+            if (isset($data[$checklistKey])) {
+                $checklistData[$checklistKey] = $data[$checklistKey];
+            }
+        }
+    }
+
+    /**
+     * Associer les fichiers au rapport
+     */
+    private function associerFichiersAuRapport(\App\Models\Rapport $rapport, array $data): ?\App\Models\Fichier
+    {
+        $fichierRapport = null;
+
+        // Associer le fichier rapport de faisabilité
+        if (isset($data['rapport_faisabilite'])) {
+            $fichierRapport = $this->sauvegarderFichierPourRapport($rapport, $data['rapport_faisabilite'], 'rapport-faisabilite');
+        }
+
+        // Associer le fichier rapport coûts-avantages
+        if (isset($data['rapport_couts_avantages'])) {
+            $fichierRapport = $this->sauvegarderFichierPourRapport($rapport, $data['rapport_couts_avantages'], 'rapport-couts-avantages');
+        }
+
+        return $fichierRapport;
+    }
+
+    /**
+     * Sauvegarder un fichier pour un rapport
+     */
+    private function sauvegarderFichierPourRapport(\App\Models\Rapport $rapport, $fichierData, string $categorie): \App\Models\Fichier
+    {
+        $fichier = new \App\Models\Fichier();
+        $fichier->fill([
+            'nom' => $fichierData->getClientOriginalName(),
+            'chemin' => $fichierData->store('rapports/faisabilite', 'public'),
+            'taille' => $fichierData->getSize(),
+            'type_mime' => $fichierData->getMimeType(),
+            'uploaded_by_id' => auth()->id(),
+            'categorie' => $categorie,
+            'is_active' => true,
+            'fichier_attachable_type' => Rapport::class,
+            'fichier_attachable_id' => $rapport->id
+        ]);
+        $fichier->save();
+
+        return $fichier;
     }
 }
