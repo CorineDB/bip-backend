@@ -980,9 +980,9 @@ class FichierService extends BaseService implements FichierServiceInterface
         $user = Auth::user();
         $fichier = Fichier::where('hash_md5', $hash)->latest('created_at')->first();
 
-        if (!$fichier || !$this->aPermissionSurFichier($user, $fichier, 'view')) {
+        /* if (!$fichier || !$this->aPermissionSurFichier($user, $fichier, 'view')) {
             return null;
-        }
+        } */
 
         return $fichier;
     }
