@@ -43,6 +43,7 @@ class NoteConceptuelleResource extends BaseApiResource
                 });
             }),
             'fichiers' => $this->whenLoaded('fichiers', function() {
+                return FichierResource::collection($this->fichiers->sortBy('ordre'));
                 return $this->fichiers->sortBy('ordre')->map(function ($fichier) {
                     return [
                         'id' => $fichier->id,
