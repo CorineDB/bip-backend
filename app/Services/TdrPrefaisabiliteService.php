@@ -2790,12 +2790,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            /*if ($projet->statut->value !== StatutIdee::MATURITE->value) {
+            if ($projet->statut->value !== StatutIdee::MATURITE->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de maturité pour la soumission du rapport d\'évaluation ex-ante.'
                 ], 422);
-            }*/
+            }
 
             // Traitement et sauvegarde du rapport principal
             $rapport = null;
@@ -2972,34 +2972,36 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
      */
     private function gererRapportEvaluationExAnte(Projet $projet, $fichier, array $data): ?Rapport
     {
-        // Calculer le hash du nouveau fichier
-        $nouveauHash = md5_file($fichier->getRealPath());
+        // Récupérer le dernier rapport d'évaluation ex-ante s'il existe
+        $rapportExistant = $projet->rapportEvaluationExAnte()->first();
 
-        // Vérifier s'il y a déjà un rapport avec le même hash
-        $rapportExistant = $projet->rapportsEvaluationExAnte()
-            ->whereHas('fichiersRapport', function($query) use ($nouveauHash) {
-                $query->where('hash_md5', $nouveauHash);
-            })
-            ->first();
-
-        if ($rapportExistant) {
-            return $rapportExistant;
-        }
-
-        // Récupérer le dernier rapport d'évaluation ex-ante
-        $dernierRapport = $projet->rapportEvaluationExAnte()->first();
-
-        // Créer un nouveau rapport
-        $rapport = new Rapport([
+        // Préparer les données du rapport
+        $rapportData = [
             'projet_id' => $projet->id,
             'type' => 'evaluation_ex_ante',
-            'statut' => 'brouillon',
+            'statut' => 'soumis',
             'intitule' => 'Rapport d\'évaluation ex-ante',
-            'parent_id' => $dernierRapport ? $dernierRapport->id : null
-        ]);
-        $rapport->save();
+            'recommandation' => $data['recommandation'] ?? null,
+            'info_cabinet_etude' => [
+                'nom_cabinet' => $data['cabinet_etude']['nom_cabinet'] ?? null,
+                'contact_cabinet' => $data['cabinet_etude']['contact_cabinet'] ?? null,
+            ],
+            'date_soumission' => now(),
+            'soumis_par_id' => auth()->id()
+        ];
+
+        // Créer ou mettre à jour le rapport selon la même logique que préfaisabilité
+        if ($rapportExistant && $rapportExistant->statut === 'soumis') {
+            // Si un rapport soumis existe déjà, créer une nouvelle version
+            $rapportData['parent_id'] = $rapportExistant->id;
+            $rapport = Rapport::create($rapportData);
+        } else {
+            // Créer un nouveau rapport (première version)
+            $rapport = Rapport::create($rapportData);
+        }
 
         // Attacher le fichier au rapport
+        $nouveauHash = md5_file($fichier->getRealPath());
         $fichierData = array_merge($data, [
             'hash_md5' => $nouveauHash,
             'categorie' => 'rapport',
