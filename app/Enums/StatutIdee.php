@@ -33,6 +33,15 @@ enum StatutIdee: string
     case SOUMISSION_RAPPORT_PF = '04b_SoumissionRapportPF';
     case VALIDATION_PF = '04c_ValidationPF';
 
+    case ADMISSIBLE = '00_Admissible ';
+    case REJETE = '00_Rejete ';
+    case SELECTION = '01_Selection';
+    case HIERARCHISE = '02_Hierarchise';
+    case EN_ATTENTE_DE_VALIDATION_FINALE = '03_En_attente_de_validation_finale';
+    case R_REJETE = '03_Rejete';
+    case PRIORISE = '04_Priorise';
+    case CLOTURE = 'Cloture';
+
     /**
      * Get all enum values
      */

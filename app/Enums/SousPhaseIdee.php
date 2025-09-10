@@ -9,6 +9,10 @@ enum SousPhaseIdee: string
     case etude_de_profil = 'etude_de_profil';
     case etude_de_prefaisabilite = 'etude_de_prefaisabilite';
     case faisabilite = 'etude_de_faisabilite';
+    case selection = 'selection';
+    case programmation = 'programmation';
+    case financement = 'financement';
+    case execution = 'execution';
 
     /**
      * Get all enum values
