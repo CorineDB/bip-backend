@@ -2317,6 +2317,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             StatutIdee::SOUMISSION_RAPPORT_PF => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
             StatutIdee::VALIDATION_PF => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
             StatutIdee::ABANDON => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
+            StatutIdee::EVALUATION_TDR_F => \App\Enums\SousPhaseIdee::faisabilite,
             default => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
         };
     }
@@ -2797,16 +2798,16 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }*/
 
             // Traitement et sauvegarde du rapport principal
-            $fichierRapport = null;
+            $rapport = null;
             if (isset($data['rapport_evaluation_ex_ante'])) {
-                $fichierRapport = $this->gererRapportEvaluationExAnte($projet, $data['rapport_evaluation_ex_ante'], $data);
+                $rapport = $this->gererRapportEvaluationExAnte($projet, $data['rapport_evaluation_ex_ante'], $data);
             }
 
             // Traitement et sauvegarde des annexes
             $fichiersAnnexes = [];
-            if (isset($data['documents_annexe']) && is_array($data['documents_annexe'])) {
+            if ($rapport && isset($data['documents_annexe']) && is_array($data['documents_annexe'])) {
                 foreach ($data['documents_annexe'] as $index => $annexe) {
-                    $fichiersAnnexes[] = $this->gererAnnexeRapportExAnte($projet, $annexe, $index, $data);
+                    $fichiersAnnexes[] = $this->gererAnnexeRapportExAnte($rapport, $annexe, $index, $data);
                 }
             }
 
@@ -2829,7 +2830,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             DB::commit();
 
             // Envoyer une notification
-            $this->envoyerNotificationSoumissionRapportExAnte($projet, $fichierRapport, $fichiersAnnexes);
+            $this->envoyerNotificationSoumissionRapportExAnte($projet, $rapport, $fichiersAnnexes);
 
             return response()->json([
                 'success' => true,
@@ -2969,43 +2970,99 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Gérer le rapport d'évaluation ex-ante avec versioning
      */
-    private function gererRapportEvaluationExAnte(Projet $projet, $fichier, array $data): ?Fichier
+    private function gererRapportEvaluationExAnte(Projet $projet, $fichier, array $data): ?Rapport
     {
         // Calculer le hash du nouveau fichier
         $nouveauHash = md5_file($fichier->getRealPath());
 
-        // Vérifier s'il y a déjà un rapport actif avec le même hash
-        $rapportIdentique = $projet->rapports_evaluation_ex_ante()
-            ->where('hash_md5', $nouveauHash)
-            ->where('is_active', true)
+        // Vérifier s'il y a déjà un rapport avec le même hash
+        $rapportExistant = $projet->rapportsEvaluationExAnte()
+            ->whereHas('fichiersRapport', function($query) use ($nouveauHash) {
+                $query->where('hash_md5', $nouveauHash);
+            })
             ->first();
 
-        if ($rapportIdentique) {
-            return $rapportIdentique;
+        if ($rapportExistant) {
+            return $rapportExistant;
         }
 
-        // Déterminer s'il faut une nouvelle version ou remplacer
-        $doitCreerNouvelleVersion = $this->doitCreerNouvelleVersionEvaluationExAnte($projet);
+        // Récupérer le dernier rapport d'évaluation ex-ante
+        $dernierRapport = $projet->rapportEvaluationExAnte()->first();
 
-        if ($doitCreerNouvelleVersion) {
-            return $this->creerNouvelleVersionRapportExAnte($projet, $fichier, $data);
-        } else {
-            return $this->remplacerRapportExAnteExistant($projet, $fichier, $data);
-        }
+        // Créer un nouveau rapport
+        $rapport = new Rapport([
+            'projet_id' => $projet->id,
+            'type' => 'evaluation_ex_ante',
+            'statut' => 'brouillon',
+            'intitule' => 'Rapport d\'évaluation ex-ante',
+            'parent_id' => $dernierRapport ? $dernierRapport->id : null
+        ]);
+        $rapport->save();
+
+        // Attacher le fichier au rapport
+        $fichierData = array_merge($data, [
+            'hash_md5' => $nouveauHash,
+            'categorie' => 'rapport',
+            'ordre' => 1
+        ]);
+
+        $fichierRapport = $this->sauvegarderFichierEvaluationExAnte($rapport, $fichier, $fichierData);
+
+        return $rapport;
     }
 
     /**
-     * Gérer les annexes avec versioning
+     * Sauvegarder le fichier d'évaluation ex-ante lié à un rapport
      */
-    private function gererAnnexeRapportExAnte(Projet $projet, $fichier, int $index, array $data): ?Fichier
+    private function sauvegarderFichierEvaluationExAnte(Rapport $rapport, $fichier, array $data): Fichier
+    {
+        // Générer les informations du fichier
+        $nomOriginal = $fichier->getClientOriginalName();
+        $extension = $fichier->getClientOriginalExtension();
+        $nomStockage = "evaluation_ex_ante_{$rapport->id}_{$data['ordre']}.{$extension}";
+
+        // Structure du chemin : projets/hash(projet->identifiantBip)/evaluation_ex_ante/validation_final/
+        $hashProjet = hash('sha256', $rapport->projet->identifiant_bip ?? $rapport->projet_id);
+        $chemin = $fichier->storeAs("projets/{$hashProjet}/evaluation_ex_ante/validation_final", $nomStockage, 'public');
+
+        // Créer l'enregistrement Fichier
+        return Fichier::create([
+            'nom_original' => $nomOriginal,
+            'nom_stockage' => $nomStockage,
+            'chemin' => $chemin,
+            'extension' => $extension,
+            'mime_type' => $fichier->getMimeType(),
+            'taille' => $fichier->getSize(),
+            'hash_md5' => $data['hash_md5'],
+            'description' => 'Rapport d\'évaluation ex-ante',
+            'commentaire' => $data['commentaire'] ?? null,
+            'metadata' => [
+                'type_document' => 'evaluation-ex-ante',
+                'rapport_id' => $rapport->id,
+                'projet_id' => $rapport->projet_id,
+                'version' => 1,
+                'statut' => 'actif'
+            ],
+            'ordre' => $data['ordre'],
+            'categorie' => $data['categorie'],
+            'is_active' => true,
+            'uploaded_by' => auth()->id(),
+            'fichier_attachable_type' => 'App\\Models\\Rapport',
+            'fichier_attachable_id' => $rapport->id
+        ]);
+    }
+
+    /**
+     * Gérer les annexes du rapport d'évaluation ex-ante
+     */
+    private function gererAnnexeRapportExAnte(Rapport $rapport, $fichier, int $index, array $data): ?Fichier
     {
         // Calculer le hash du nouveau fichier
         $nouveauHash = md5_file($fichier->getRealPath());
 
-        // Vérifier s'il y a déjà une annexe identique
-        $annexeIdentique = $projet->documents_annexe_rapports_evaluation_ex_ante()
+        // Vérifier s'il y a déjà une annexe identique dans ce rapport
+        $annexeIdentique = $rapport->documentsAnnexes()
             ->where('hash_md5', $nouveauHash)
-            ->where('is_active', true)
             ->where('ordre', $index + 2)
             ->first();
 
@@ -3013,198 +3070,21 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             return $annexeIdentique;
         }
 
-        // Les annexes suivent la même logique que le rapport principal
-        $doitCreerNouvelleVersion = $this->doitCreerNouvelleVersionEvaluationExAnte($projet);
-
-        if ($doitCreerNouvelleVersion) {
-            return $this->creerNouvelleVersionAnnexeExAnte($projet, $fichier, $index, $data);
-        } else {
-            return $this->remplacerAnnexeExAnteExistante($projet, $fichier, $index, $data);
-        }
-    }
-
-    /**
-     * Créer une nouvelle version du rapport ex-ante
-     */
-    private function creerNouvelleVersionRapportExAnte(Projet $projet, $fichier, array $data): Fichier
-    {
-        // Récupérer la dernière version
-        $derniereVersion = $projet->rapports_evaluation_ex_ante()
-            ->orderBy('created_at', 'desc')
-            ->first();
-
-        $nouvelleVersion = 1;
-        if ($derniereVersion) {
-            $versionActuelle = $derniereVersion->metadata['version'] ?? 1;
-            $nouvelleVersion = $versionActuelle + 1;
-
-            // Archiver l'ancienne version
-            $derniereVersion->update([
-                'is_active' => false,
-                'metadata' => array_merge($derniereVersion->metadata ?? [], [
-                    'statut' => 'archive',
-                    'archive_le' => now(),
-                    'remplace_par_version' => $nouvelleVersion
-                ])
-            ]);
-        }
-
-        return $this->sauvegarderRapportEvaluationExAnte($projet, $fichier, $data, $nouvelleVersion);
-    }
-
-    /**
-     * Remplacer le rapport ex-ante existant
-     */
-    private function remplacerRapportExAnteExistant(Projet $projet, $fichier, array $data): Fichier
-    {
-        $rapportExistant = $projet->rapports_evaluation_ex_ante()->where('is_active', true)->first();
-        $version = 1;
-
-        if ($rapportExistant) {
-            $version = $rapportExistant->metadata['version'] ?? 1;
-            Storage::disk('public')->delete($rapportExistant->chemin);
-            $rapportExistant->delete();
-        }
-
-        return $this->sauvegarderRapportEvaluationExAnte($projet, $fichier, $data, $version);
-    }
-
-    /**
-     * Créer une nouvelle version d'annexe ex-ante
-     */
-    private function creerNouvelleVersionAnnexeExAnte(Projet $projet, $fichier, int $index, array $data): Fichier
-    {
-        // Récupérer la dernière version de cette annexe
-        $derniereVersion = $projet->documents_annexe_rapports_evaluation_ex_ante()
-            ->where('ordre', $index + 2)
-            ->orderBy('created_at', 'desc')
-            ->first();
-
-        $nouvelleVersion = 1;
-        if ($derniereVersion) {
-            $versionActuelle = $derniereVersion->metadata['version'] ?? 1;
-            $nouvelleVersion = $versionActuelle + 1;
-
-            // Archiver l'ancienne version
-            $derniereVersion->update([
-                'is_active' => false,
-                'metadata' => array_merge($derniereVersion->metadata ?? [], [
-                    'statut' => 'archive',
-                    'archive_le' => now(),
-                    'remplace_par_version' => $nouvelleVersion
-                ])
-            ]);
-        }
-
-        return $this->sauvegarderAnnexeRapport($projet, $fichier, $index, $data, $nouvelleVersion);
-    }
-
-    /**
-     * Remplacer l'annexe ex-ante existante
-     */
-    private function remplacerAnnexeExAnteExistante(Projet $projet, $fichier, int $index, array $data): Fichier
-    {
-        $annexeExistante = $projet->documents_annexe_rapports_evaluation_ex_ante()
-            ->where('ordre', $index + 2)
-            ->where('is_active', true)
-            ->first();
-
-        $version = 1;
-
-        if ($annexeExistante) {
-            $version = $annexeExistante->metadata['version'] ?? 1;
-            Storage::disk('public')->delete($annexeExistante->chemin);
-            $annexeExistante->delete();
-        }
-
-        return $this->sauvegarderAnnexeRapport($projet, $fichier, $index, $data, $version);
-    }
-
-    /**
-     * Sauvegarder le rapport d'évaluation ex-ante avec version
-     */
-    private function sauvegarderRapportEvaluationExAnte(Projet $projet, $fichier, array $data, int $version = 1): Fichier
-    {
-        // Générer les informations du fichier
-        $nomOriginal = $fichier->getClientOriginalName();
-        $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = "rapport_evaluation_ex_ante_v{$version}.{$extension}";
-        $chemin = $fichier->storeAs("projets/{$projet->id}/evaluation-ex-ante", $nomStockage, 'public');
-
-        // Créer l'enregistrement Fichier
-        return Fichier::create([
-            'nom_original' => $nomOriginal,
-            'nom_stockage' => $nomStockage,
-            'chemin' => $chemin,
-            'extension' => $extension,
-            'mime_type' => $fichier->getMimeType(),
-            'taille' => $fichier->getSize(),
-            'hash_md5' => md5_file($fichier->getRealPath()),
-            'description' => 'Rapport d\'évaluation ex-ante',
-            'commentaire' => $data['commentaire'] ?? null,
-            'metadata' => [
-                'type_document' => 'rapport-evaluation-ex-ante',
-                'projet_id' => $projet->id,
-                'version' => $version,
-                'statut' => 'actif',
-                'soumis_par' => auth()->id(),
-                'soumis_le' => now()
-            ],
-            'fichier_attachable_id' => $projet->id,
-            'fichier_attachable_type' => Projet::class,
-            'categorie' => 'rapport-evaluation-ex-ante',
-            'ordre' => 1,
-            'uploaded_by' => auth()->id(),
-            'is_public' => false,
-            'is_active' => true
+        // Attacher l'annexe au rapport
+        $annexeData = array_merge($data, [
+            'hash_md5' => $nouveauHash,
+            'categorie' => 'annexe',
+            'ordre' => $index + 2
         ]);
+
+        return $this->sauvegarderFichierEvaluationExAnte($rapport, $fichier, $annexeData);
     }
 
-    /**
-     * Sauvegarder une annexe du rapport avec version
-     */
-    private function sauvegarderAnnexeRapport(Projet $projet, $fichier, int $index, array $data, int $version = 1): Fichier
-    {
-        // Générer les informations du fichier
-        $nomOriginal = $fichier->getClientOriginalName();
-        $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = "annexe_{$index}_v{$version}.{$extension}";
-        $chemin = $fichier->storeAs("projets/{$projet->id}/evaluation-ex-ante", $nomStockage, 'public');
-
-        // Créer l'enregistrement Fichier
-        return Fichier::create([
-            'nom_original' => $nomOriginal,
-            'nom_stockage' => $nomStockage,
-            'chemin' => $chemin,
-            'extension' => $extension,
-            'mime_type' => $fichier->getMimeType(),
-            'taille' => $fichier->getSize(),
-            'hash_md5' => md5_file($fichier->getRealPath()),
-            'description' => 'Annexe ' . ($index + 1) . ' du rapport d\'évaluation ex-ante',
-            'commentaire' => $data['commentaire_annexe_' . $index] ?? null,
-            'metadata' => [
-                'type_document' => 'annexe-rapport-evaluation-ex-ante',
-                'projet_id' => $projet->id,
-                'numero_annexe' => $index + 1,
-                'version' => $version,
-                'statut' => 'actif',
-                'soumis_par' => auth()->id(),
-                'soumis_le' => now()
-            ],
-            'fichier_attachable_id' => $projet->id,
-            'fichier_attachable_type' => Projet::class,
-            'categorie' => 'annexe-rapport-evaluation-ex-ante',
-            'ordre' => $index + 2, // +2 pour être après le rapport principal
-            'uploaded_by' => auth()->id(),
-            'is_public' => false,
-            'is_active' => true
-        ]);
-    }
 
     /**
      * Envoyer une notification pour la soumission du rapport ex-ante
      */
-    private function envoyerNotificationSoumissionRapportExAnte($projet, $fichierRapport, array $fichiersAnnexes)
+    private function envoyerNotificationSoumissionRapportExAnte($projet, $rapport, array $fichiersAnnexes)
     { /* À implémenter */
     }
 
