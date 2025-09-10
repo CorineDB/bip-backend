@@ -2790,12 +2790,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if ($projet->statut->value !== StatutIdee::MATURITE->value) {
+            /* if ($projet->statut->value !== StatutIdee::MATURITE->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de maturité pour la soumission du rapport d\'évaluation ex-ante.'
                 ], 422);
-            }
+            } */
 
             // Traitement et sauvegarde du rapport principal
             $rapport = null;
