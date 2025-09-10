@@ -2839,7 +2839,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'projet_id' => $projet->id,
                     'ancien_statut' => StatutIdee::MATURITE->value,
                     'nouveau_statut' => StatutIdee::RAPPORT->value,
-                    'rapport_principal' => $fichierRapport ? $fichierRapport : null,
+                    'rapport_principal' => $rapport ? $rapport : null,
                     'annexes' => collect($fichiersAnnexes)->map(function ($fichier) {
                         return [
                             'id' => $fichier->id,
