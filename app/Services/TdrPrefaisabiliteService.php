@@ -243,8 +243,25 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         // Générer les informations du fichier
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = "autre_document_{$ordre}.{$extension}";
-        $chemin = $fichier->storeAs("tdrs/{$tdr->id}/autres-documents", $nomStockage, 'public');
+
+        // Créer ou récupérer la structure de dossiers pour autres documents
+        $dossierTdr = $this->getOrCreateTdrFolderStructure($tdr->projet_id, 'autres-documents');
+
+        // Hasher l'identifiant BIP pour le stockage physique
+        $hashedIdentifiantBip = hash('sha256', $tdr->projet->identifiant_bip);
+
+        // Générer un nom de fichier unique avec timestamp
+        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
+
+        // Créer le chemin basé sur la structure de dossiers en base de données (avec hash pour stockage)
+        $cheminStockage = $dossierTdr ?
+            $dossierTdr->full_path :
+            'Projets/' . $hashedIdentifiantBip . '/Evaluation ex-ante/Etude de préfaisabilité/Termes de référence/Autres documents';
+
+        // Créer le dossier s'il n'existe pas
+        \Storage::disk('local')->makeDirectory($cheminStockage);
+
+        $chemin = $fichier->storeAs($cheminStockage, $nomStockage, 'local');
 
         // Créer l'enregistrement Fichier
         return Fichier::create([
@@ -264,11 +281,14 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'ordre' => $ordre,
                 'statut' => 'actif',
                 'soumis_par' => auth()->id(),
-                'soumis_le' => now()
+                'soumis_le' => now()->toISOString(),
+                'uploaded_context' => 'tdr-prefaisabilite-autres-documents',
+                'dossier_public' => $dossierTdr ? $dossierTdr->full_path : 'Projets/' . $tdr->projet->identifiant_bip . '/Evaluation ex-ante/Etude de préfaisabilité/Termes de référence/Autres documents'
             ],
             'fichier_attachable_id' => $tdr->id,
             'fichier_attachable_type' => \App\Models\Tdr::class,
             'categorie' => 'tdr-prefaisabilite',
+            'dossier_id' => $dossierTdr?->id,
             'ordre' => $ordre,
             'uploaded_by' => auth()->id(),
             'is_public' => false,
@@ -1749,8 +1769,24 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         // Générer les informations du fichier
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = "tdr_prefaisabilite_v{$version}.{$extension}";
-        $chemin = $fichier->storeAs("tdrs/{$tdr->id}/prefaisabilite", $nomStockage, 'public');
+        // Créer ou récupérer la structure de dossiers pour TDR
+        $dossierTdr = $this->getOrCreateTdrFolderStructure($tdr->projet_id, 'tdr');
+
+        // Hasher l'identifiant BIP pour le stockage physique
+        $hashedIdentifiantBip = hash('sha256', $tdr->projet->identifiant_bip);
+
+        // Générer un nom de fichier unique avec timestamp
+        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
+
+        // Créer le chemin basé sur la structure de dossiers en base de données (avec hash pour stockage)
+        $cheminStockage = $dossierTdr ?
+            $dossierTdr->full_path :
+            'Projets/' . $hashedIdentifiantBip . '/Evaluation ex-ante/Etude de préfaisabilité/Termes de référence/Documents TDR';
+
+        // Créer le dossier s'il n'existe pas
+        \Storage::disk('local')->makeDirectory($cheminStockage);
+
+        $chemin = $fichier->storeAs($cheminStockage, $nomStockage, 'local');
 
         // Créer l'enregistrement Fichier
         return Fichier::create([
@@ -1774,7 +1810,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'tdr_pre_faisabilite' => $data['tdr_pre_faisabilite'] ?? null,
                 'type_tdr' => $data['type_tdr'] ?? 'pre_faisabilite',
                 'soumis_par' => auth()->id(),
-                'soumis_le' => now()
+                'soumis_le' => now()->toISOString(),
+                'uploaded_context' => 'tdr-prefaisabilite',
+                'dossier_public' => $dossierTdr ? $dossierTdr->full_path : 'Projets/' . $tdr->projet->identifiant_bip . '/Evaluation ex-ante/Etude de préfaisabilité/Termes de référence'
+
             ],
             'fichier_attachable_id' => $tdr->id,
             'fichier_attachable_type' => \App\Models\Tdr::class,
@@ -2050,7 +2089,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
         $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
-        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/etude_de_prefaisabilite/rapport/{$hashedRapportId}", $nomStockage, 'local');
+        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_prefaisabilite/rapport_prefaisabilite/{$hashedRapportId}", $nomStockage, 'local');
 
         // Créer le nouveau fichier et l'associer au rapport
         $fichierCree = Fichier::create([
@@ -2073,7 +2112,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'statut' => 'actif',
                 'soumis_par' => auth()->id(),
                 'soumis_le' => now(),
-                'folder_structure' => "projets/{$hashedProjectId}/etude_de_prefaisabilite/rapport/{$hashedRapportId}"
+                'folder_structure' => "projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_prefaisabilite/rapport_prefaisabilite/{$hashedRapportId}"
             ],
             'fichier_attachable_type' => Rapport::class,
             'fichier_attachable_id' => $rapport->id
@@ -2113,7 +2152,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
         $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
-        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/etude_de_prefaisabilite/rapport/{$hashedRapportId}", $nomStockage, 'local');
+        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_prefaisabilite/rapport_prefaisabilite/{$hashedRapportId}", $nomStockage, 'local');
 
         // Créer le nouveau fichier et l'associer au rapport
         $fichierCree = Fichier::create([
@@ -2136,7 +2175,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'statut' => 'actif',
                 'soumis_par' => auth()->id(),
                 'soumis_le' => now(),
-                'folder_structure' => "projets/{$hashedProjectId}/etude_de_prefaisabilite/rapport/{$hashedRapportId}"
+                'folder_structure' => "projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_prefaisabilite/rapport_prefaisabilite/{$hashedRapportId}"
             ],
             'fichier_attachable_type' => Rapport::class,
             'fichier_attachable_id' => $rapport->id
@@ -2154,7 +2193,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
         $nomStockage = "rapport_prefaisabilite_v{$version}.{$extension}";
-        $chemin = $fichier->storeAs("projets/{$projet->id}/prefaisabilite", $nomStockage, 'public');
+        $chemin = $fichier->storeAs("projets/{$projet->id}/evaluation_ex_ante/prefaisabilite", $nomStockage, 'public');
 
         // Créer l'enregistrement Fichier
         return Fichier::create([
@@ -2791,12 +2830,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            /* if ($projet->statut->value !== StatutIdee::MATURITE->value) {
+            if ($projet->statut->value !== StatutIdee::MATURITE->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de maturité pour la soumission du rapport d\'évaluation ex-ante.'
                 ], 422);
-            } */
+            }
 
             // Traitement et sauvegarde du rapport principal
             $rapport = null;
@@ -2876,12 +2915,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            /* if ($projet->statut->value !== StatutIdee::RAPPORT->value) {
+            if ($projet->statut->value !== StatutIdee::RAPPORT->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de validation du rapport.'
                 ], 422);
-            } */
+            }
 
             // Valider l'action demandée
             $actionsPermises = ['valider', 'corriger'];
@@ -3026,7 +3065,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
         // Structure du chemin : projets/hash(projet->identifiantBip)/evaluation_ex_ante/validation_final/
         $hashProjet = hash('sha256', $rapport->projet->identifiant_bip ?? $rapport->projet_id);
-        $chemin = $fichier->storeAs("projets/{$hashProjet}/evaluation_ex_ante/validation_final", $nomStockage, 'public');
+        $chemin = $fichier->storeAs("projets/{$hashProjet}/evaluation_ex_ante/validation_final", $nomStockage, 'local');
 
         // Créer l'enregistrement Fichier
         return Fichier::create([
@@ -3374,7 +3413,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
         // Stocker le fichier selon le pattern de hash avec structure Evaluation-ex-ante
         $path = $fichier->storeAs(
-            "projets/{$hashedIdentifiantBip}/evaluation_ex_ante/etude-prefaisabilite/rapport-validation",
+            "projets/{$hashedIdentifiantBip}/evaluation_ex_ante/etude_prefaisabilite/rapport-validation",
             $nomStockage,
             'local'
         );
@@ -3543,6 +3582,143 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'success' => false,
                 'message' => 'Erreur lors de la vérification de complétude: ' . $e->getMessage()
             ];
+        }
+    }
+
+    /**
+     * Créer ou récupérer la structure de dossiers pour les TDRs de préfaisabilité
+     */
+    private function getOrCreateTdrFolderStructure(int $projetId, string $type = 'tdr'): ?Dossier
+    {
+        try {
+            // Récupérer le projet pour avoir l'identifiant BIP
+            $projet = \App\Models\Projet::find($projetId);
+            if (!$projet) {
+                return null;
+            }
+
+            // 1. Dossier racine : "Projets"
+            $dossierRacine = Dossier::firstOrCreate([
+                'nom' => 'Projets',
+                'parent_id' => null
+            ], [
+                'nom' => 'Projets',
+                'description' => 'Dossier principal contenant tous les projets BIP',
+                'parent_id' => null,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#2563EB',
+                'icone' => 'collection'
+            ]);
+
+            // 2. Sous-dossier : Identifiant BIP du projet
+            $dossierProjet = Dossier::firstOrCreate([
+                'nom' => $projet->identifiant_bip,
+                'parent_id' => $dossierRacine->id
+            ], [
+                'nom' => $projet->identifiant_bip,
+                'description' => 'Documents du projet ' . $projet->identifiant_bip,
+                'parent_id' => $dossierRacine->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#059669',
+                'icone' => 'folder'
+            ]);
+
+            // 3. Sous-dossier : "Evaluation ex-ante"
+            $dossierEvaluation = Dossier::firstOrCreate([
+                'nom' => 'Evaluation ex-ante',
+                'parent_id' => $dossierProjet->id
+            ], [
+                'nom' => 'Evaluation ex-ante',
+                'description' => 'Documents d\'évaluation ex-ante du projet',
+                'parent_id' => $dossierProjet->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#7C3AED',
+                'icone' => 'chart-pie'
+            ]);
+
+            // 4. Sous-dossier : "Etude de préfaisabilité"
+            $dossierEtude = Dossier::firstOrCreate([
+                'nom' => 'Etude de préfaisabilité',
+                'parent_id' => $dossierEvaluation->id
+            ], [
+                'nom' => 'Etude de préfaisabilité',
+                'description' => 'Documents de l\'étude de préfaisabilité',
+                'parent_id' => $dossierEvaluation->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#DC2626',
+                'icone' => 'document-text'
+            ]);
+
+            // 5. Sous-dossier : "Termes de référence"
+            $dossierTdr = Dossier::firstOrCreate([
+                'nom' => 'Termes de référence',
+                'parent_id' => $dossierEtude->id
+            ], [
+                'nom' => 'Termes de référence',
+                'description' => 'Termes de référence pour l\'étude de préfaisabilité',
+                'parent_id' => $dossierEtude->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#F59E0B',
+                'icone' => 'clipboard-list'
+            ]);
+
+            // 6. Sous-dossier selon le type
+            $nomSousDossier = match($type) {
+                'autres-documents' => 'Autres documents',
+                'tdr' => 'Documents TDR',
+                'rapports' => 'Rapports',
+                default => 'Documents TDR'
+            };
+
+            $descriptionSousDossier = match($type) {
+                'autres-documents' => 'Autres documents annexes aux TDR',
+                'tdr' => 'Documents des termes de référence',
+                'rapports' => 'Rapports d\'étude de préfaisabilité',
+                default => 'Documents des termes de référence'
+            };
+
+            $couleurSousDossier = match($type) {
+                'autres-documents' => '#6B7280',
+                'tdr' => '#10B981',
+                'rapports' => '#EF4444',
+                default => '#10B981'
+            };
+
+            $iconeSousDossier = match($type) {
+                'autres-documents' => 'document-duplicate',
+                'tdr' => 'document-text',
+                'rapports' => 'document-report',
+                default => 'document-text'
+            };
+
+            $sousDossierFinal = Dossier::firstOrCreate([
+                'nom' => $nomSousDossier,
+                'parent_id' => $dossierTdr->id
+            ], [
+                'nom' => $nomSousDossier,
+                'description' => $descriptionSousDossier,
+                'parent_id' => $dossierTdr->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => $couleurSousDossier,
+                'icone' => $iconeSousDossier
+            ]);
+
+            return $sousDossierFinal;
+
+        } catch (\Exception $e) {
+            // En cas d'erreur, retourner null et laisser le fichier sans dossier
+            \Log::warning('Erreur lors de la création de la structure de dossiers TDR', [
+                'error' => $e->getMessage(),
+                'projet_id' => $projetId,
+                'type' => $type
+            ]);
+            return null;
         }
     }
 }
