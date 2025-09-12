@@ -51,12 +51,13 @@ class TdrResource extends BaseApiResource
             // Fichiers par type
             'fichier_tdr' => $this->whenLoaded('fichiers', function() {
                 $typeDocument = $this->type === 'faisabilite' ? 'tdr-faisabilite' : 'tdr-prefaisabilite';
-                return $this->fichiers->where('metadata.type_document', $typeDocument)->first();
+                $fichier = $this->fichiers->where('metadata.type_document', $typeDocument)->first();
+                return new FichierResource($fichier);
             }),
 
             'autres_documents' => $this->whenLoaded('fichiers', function() {
                 $typeDocument = $this->type === 'faisabilite' ? 'autre-document-faisabilite' : 'autre-document-prefaisabilite';
-                return $this->fichiers->where('metadata.type_document', $typeDocument)->values();
+                return FichierResource::collection($this->fichiers->where('metadata.type_document', $typeDocument)->values());
             }),
         ];
     }
