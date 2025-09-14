@@ -5,6 +5,7 @@ namespace App\Http\Resources\projets;
 use App\Http\Resources\BaseApiResource;
 use App\Http\Resources\CibleResource;
 use App\Http\Resources\FinancementResource;
+use App\Http\Resources\idees_projet\IdeeProjetResource;
 use App\Http\Resources\LieuInterventionResource;
 use App\Http\Resources\NoteConceptuelleResource;
 use App\Http\Resources\OddResource;
@@ -106,6 +107,7 @@ class ProjetResource extends BaseApiResource
             'responsable' => $this->whenLoaded('responsable'),
             'demandeur' => $this->whenLoaded('demandeur'),
             'porteur_projet' => $this->porteur_projet,
+            'ideeProjet' => new IdeeProjetResource($this->ideeProjet),
             'noteConceptuelle' => new NoteConceptuelleResource($this->noteConceptuelle),
 
             // TDRs
