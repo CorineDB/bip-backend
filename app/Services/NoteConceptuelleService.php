@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Services\BaseService;
 use App\Repositories\Contracts\BaseRepositoryInterface;
-use App\Http\Resources\DocumentResource;
 use App\Http\Resources\NoteConceptuelleResource;
 use App\Models\NoteConceptuelle;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
@@ -22,12 +21,14 @@ use App\Http\Resources\projets\ProjetsResource;
 use App\Http\Resources\UserResource;
 use App\Models\Decision;
 use App\Models\Dgpd;
+use App\Models\Dossier;
 use App\Models\Dpaf;
 use App\Models\Workflow;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class NoteConceptuelleService extends BaseService implements NoteConceptuelleServiceInterface
@@ -1957,6 +1958,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     private function handleDocumentsWithFichierRepository(NoteConceptuelle $noteConceptuelle, array $documentsData): void
     {
         foreach ($documentsData as $category => $files) {
+            // Récupérer les fichiers existants pour cette catégorie avant de faire quoi que ce soit
+            $existingFiles = $this->getExistingFilesForCategory($noteConceptuelle, $category);
+
+            // Enregistrer les nouveaux fichiers
             if (is_array($files)) {
                 // Pour les documents multiples (ex: autres)
                 foreach ($files as $file) {
@@ -1970,6 +1975,9 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $this->storeDocumentWithFichierRepository($noteConceptuelle, $files, $category);
                 }
             }
+
+            // Supprimer les anciens fichiers maintenant que les nouveaux sont enregistrés
+            $this->removeSpecificFiles($existingFiles);
         }
     }
 
@@ -1978,8 +1986,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     private function storeDocumentWithFichierRepository(NoteConceptuelle $noteConceptuelle, $file, string $category): void
     {
-        // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_profil/note_conceptuelle/{hash_id}
-        $hashedProjectId = hash('sha256', $noteConceptuelle->projetId);
+        // Utiliser identifiantBip pour le chemin selon le pattern projets/{identifiantBip}/evaluation_ex_ante/etude_profil/note_conceptuelle/{hash_id}
+        $identifiantBip = $noteConceptuelle->projet->identifiantBip;
         $hashedNoteId = hash('sha256', $noteConceptuelle->id);
 
         // Générer un nom unique pour le fichier
@@ -1989,10 +1997,18 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
         // Stocker le fichier selon la nouvelle structure
         $storedPath = $file->storeAs(
-            "projets/{$hashedProjectId}/etude_de_profil/note_conceptuelle/{$hashedNoteId}",
+            "projets/{$identifiantBip}/evaluation_ex_ante/etude_profil/note_conceptuelle/{$hashedNoteId}",
             $storageName,
             'local'
         );
+
+        // Créer ou récupérer la structure de dossiers pour TDR
+        $dossierNoteConceptuelle = $this->getOrCreateNoteConceptuelleFolderStructure($noteConceptuelle->projetId, 'tdr');
+/*
+        'analyse_pre_risque_facteurs_reussite' => 'Analyse pré-risque et facteurs de réussite',
+        'etude_pre_faisabilite' => 'Étude de pré-faisabilité',
+        'note_conceptuelle' => 'Note conceptuelle',
+        'autres' => 'Autres documents',*/
 
         // Générer le hash d'accès public
         $hashAcces = $this->generateFileAccessHash($noteConceptuelle->id, $storageName, $category);
@@ -2009,6 +2025,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             'hash_acces' => $hashAcces,
             'description' => $this->getDescriptionByCategory($category),
             'commentaire' => null,
+            'dossier_id' => $dossierNoteConceptuelle?->id,
             'metadata' => [
                 'type_document' => 'note-conceptuelle-' . str_replace('_', '-', $category),
                 'note_conceptuelle_id' => $noteConceptuelle->id,
@@ -2016,7 +2033,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'categorie_originale' => $category,
                 'soumis_par' => auth()->id(),
                 'soumis_le' => now(),
-                'folder_structure' => "projets/{$hashedProjectId}/etude_de_profil/note_conceptuelle/{$hashedNoteId}"
+                'folder_structure' => "projets/{$identifiantBip}/evaluation_ex_ante/etude_profil/note_conceptuelle/{$hashedNoteId}"
             ],
             'fichier_attachable_id' => $noteConceptuelle->id,
             'fichier_attachable_type' => NoteConceptuelle::class,
@@ -2063,13 +2080,13 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         $extension = $file->getClientOriginalExtension();
         $storageName = $this->generateStorageName($category, $noteConceptuelle->id, $extension);
 
-        // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_profil/note_conceptuelle/{hash_id}
-        $hashedProjectId = hash('sha256', $noteConceptuelle->projetId);
+        // Utiliser identifiantBip pour le chemin selon le pattern projets/{identifiantBip}/evaluation_ex_ante/etude_profil/note_conceptuelle/{hash_id}
+        $identifiantBip = $noteConceptuelle->projet->identifiantBip;
         $hashedNoteId = hash('sha256', $noteConceptuelle->id);
 
         // Stocker le fichier selon la nouvelle structure
         $storedPath = $file->storeAs(
-            "projets/{$hashedProjectId}/etude_de_profil/note_conceptuelle/{$hashedNoteId}",
+            "projets/{$identifiantBip}/evaluation_ex_ante/etude_profil/note_conceptuelle/{$hashedNoteId}",
             $storageName,
             'local'
         );
@@ -2099,7 +2116,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'categorie_originale' => $category,
                 'soumis_par' => auth()->id(),
                 'soumis_le' => now(),
-                'folder_structure' => "projets/{$hashedProjectId}/etude_de_profil/note_conceptuelle/{$hashedNoteId}"
+                'folder_structure' => "projets/{$identifiantBip}/evaluation_ex_ante/etude_profil/note_conceptuelle/{$hashedNoteId}"
             ],
             'fichier_attachable_id' => $noteConceptuelle->id,
             'fichier_attachable_type' => NoteConceptuelle::class,
@@ -2118,13 +2135,13 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         $extension = $file->getClientOriginalExtension();
         $storageName = $this->generateStorageName($category, $noteConceptuelle->id, $extension);
 
-        // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_profil/note_conceptuelle/{hash_id}
-        $hashedProjectId = hash('sha256', $noteConceptuelle->projetId);
+        // Utiliser identifiantBip pour le chemin selon le pattern projets/{identifiantBip}/evaluation_ex_ante/etude_profil/note_conceptuelle/{hash_id}
+        $identifiantBip = $noteConceptuelle->projet->identifiantBip;
         $hashedNoteId = hash('sha256', $noteConceptuelle->id);
 
         // Stocker le fichier selon la nouvelle structure
         $storedPath = $file->storeAs(
-            "projets/{$hashedProjectId}/etude_de_profil/note_conceptuelle/{$hashedNoteId}",
+            "projets/{$identifiantBip}/evaluation_ex_ante/etude_profil/note_conceptuelle/{$hashedNoteId}",
             $storageName,
             'local' // disque local sécurisé
         );
@@ -2154,7 +2171,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'categorie_originale' => $category,
                 'soumis_par' => auth()->id(),
                 'soumis_le' => now(),
-                'folder_structure' => "projets/{$hashedProjectId}/etude_de_profil/note_conceptuelle/{$hashedNoteId}"
+                'folder_structure' => "projets/{$identifiantBip}/evaluation_ex_ante/etude_profil/note_conceptuelle/{$hashedNoteId}"
             ],
             'fichier_attachable_id' => $noteConceptuelle->id,
             'fichier_attachable_type' => NoteConceptuelle::class,
@@ -2225,5 +2242,177 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         ];
 
         return hash('sha256', json_encode($data));
+    }
+
+    /**
+     * Récupérer les fichiers existants pour une catégorie donnée
+     */
+    private function getExistingFilesForCategory(NoteConceptuelle $noteConceptuelle, string $category)
+    {
+        return $this->fichierRepository->getInstance()
+            ->where('fichier_attachable_id', $noteConceptuelle->id)
+            ->where('fichier_attachable_type', NoteConceptuelle::class)
+            ->where('categorie', $category)
+            ->get();
+    }
+
+    /**
+     * Supprimer une liste spécifique de fichiers
+     */
+    private function removeSpecificFiles($files): void
+    {
+        foreach ($files as $file) {
+            // Supprimer le fichier physique du storage
+            if (Storage::disk('local')->exists($file->chemin)) {
+                Storage::disk('local')->delete($file->chemin);
+            }
+
+            // Supprimer l'enregistrement de la base de données
+            $this->fichierRepository->delete($file->id);
+        }
+    }
+
+    /**
+     * Créer ou récupérer la structure de dossiers pour les notes conceptuelle de l'etude de profil
+     */
+    private function getOrCreateNoteConceptuelleFolderStructure(int $projetId, string $type = 'note-conceptuelle'): ?Dossier
+    {
+        try {
+            // Récupérer le projet pour avoir l'identifiant BIP
+            $projet = \App\Models\Projet::find($projetId);
+            if (!$projet) {
+                return null;
+            }
+
+            // 1. Dossier racine : "Projets"
+            $dossierRacine = Dossier::firstOrCreate([
+                'nom' => 'Projets',
+                'parent_id' => null
+            ], [
+                'nom' => 'Projets',
+                'description' => 'Dossier principal contenant tous les projets BIP',
+                'parent_id' => null,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#2563EB',
+                'icone' => 'collection'
+            ]);
+
+            // 2. Sous-dossier : Identifiant BIP du projet
+            $dossierProjet = Dossier::firstOrCreate([
+                'nom' => $projet->identifiant_bip,
+                'parent_id' => $dossierRacine->id
+            ], [
+                'nom' => $projet->identifiant_bip,
+                'description' => 'Documents du projet ' . $projet->identifiant_bip,
+                'parent_id' => $dossierRacine->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#059669',
+                'icone' => 'folder'
+            ]);
+
+            // 3. Sous-dossier : "Evaluation ex-ante"
+            $dossierEvaluation = Dossier::firstOrCreate([
+                'nom' => 'Evaluation ex-ante',
+                'parent_id' => $dossierProjet->id
+            ], [
+                'nom' => 'Evaluation ex-ante',
+                'description' => 'Documents d\'évaluation ex-ante du projet',
+                'parent_id' => $dossierProjet->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#7C3AED',
+                'icone' => 'chart-pie'
+            ]);
+
+            // 4. Sous-dossier : "Etude de profil"
+            $dossierEtude = Dossier::firstOrCreate([
+                'nom' => 'Etude de profil',
+                'parent_id' => $dossierEvaluation->id
+            ], [
+                'nom' => 'Etude de profil',
+                'description' => 'Documents de l\'étude de profil',
+                'parent_id' => $dossierEvaluation->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#DC2626',
+                'icone' => 'document-text'
+            ]);
+
+            // 5. Sous-dossier : "Note conceptuelle"
+            $dossierNoteConceptuelle = Dossier::firstOrCreate([
+                'nom' => 'Note conceptuelle',
+                'parent_id' => $dossierEtude->id
+            ], [
+                'nom' => 'Note conceptuelle',
+                'description' => 'Note conceptuelle pour l\'étude de profil',
+                'parent_id' => $dossierEtude->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#F59E0B',
+                'icone' => 'clipboard-list'
+            ]);
+            if($type != "autres-documents" || $type != "autres_documents"){
+                return $dossierNoteConceptuelle;
+            }
+
+            // 6. Sous-dossier selon le type
+            $nomSousDossier = match($type) {
+                'autres-documents' => 'Autres documents',
+                'autres_documents' => 'Autres documents',
+                'note-conceptuelle' => 'Documents de la note conceptuelle',
+                'rapports' => 'Rapports',
+                default => 'Documents de la note conceptuelle'
+            };
+
+            $descriptionSousDossier = match($type) {
+                'autres-documents' => 'Autres documents annexes a la note conceptuelle',
+                'autres_documents' => 'Autres documents annexes a la note conceptuelle',
+                'note-conceptuelle' => 'Documents des termes de référence',
+                'rapports' => 'Rapports d\'étude de profil',
+                default => 'Documents des termes de référence'
+            };
+
+            $couleurSousDossier = match($type) {
+                'autres-documents' => '#6B7280',
+                'autres_documents' => '#6B7280',
+                'note-conceptuelle' => '#10B981',
+                'rapports' => '#EF4444',
+                default => '#10B981'
+            };
+
+            $iconeSousDossier = match($type) {
+                'autres-documents' => 'document-duplicate',
+                'autres_documents' => 'document-duplicate',
+                'note-conceptuelle' => 'document-text',
+                'rapports' => 'document-report',
+                default => 'document-text'
+            };
+
+            $sousDossierFinal = Dossier::firstOrCreate([
+                'nom' => $nomSousDossier,
+                'parent_id' => $dossierNoteConceptuelle->id
+            ], [
+                'nom' => $nomSousDossier,
+                'description' => $descriptionSousDossier,
+                'parent_id' => $dossierNoteConceptuelle->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => $couleurSousDossier,
+                'icone' => $iconeSousDossier
+            ]);
+
+            return $sousDossierFinal;
+
+        } catch (\Exception $e) {
+            // En cas d'erreur, retourner null et laisser le fichier sans dossier
+            \Log::warning('Erreur lors de la création de la structure de dossiers TDR', [
+                'error' => $e->getMessage(),
+                'projet_id' => $projetId,
+                'type' => $type
+            ]);
+            return null;
+        }
     }
 }
