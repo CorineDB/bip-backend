@@ -276,7 +276,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Déterminer le statut selon est_soumise
             $statut = $estSoumise ? 'soumise' : 'brouillon';
 
-
             // Convertir le statut en numérique selon l'enum de la table
             $statutNumeric = match ($statut) {
                 'soumise'   => 1,
@@ -288,6 +287,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $noteData = [
                 'statut' => $statutNumeric,
             ];
+
+            $documentsData = $data['documents'] ?? [];
 
             // Mettre à jour la note existante
             $noteConceptuelle->update(array_merge($data, $noteData));
@@ -305,6 +306,11 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             if ($canevasNoteConceptuelle) {
                 // Sauvegarder les champs dynamiques basés sur le canevas
                 $this->saveDynamicFieldsFromCanevas($noteConceptuelle, $data, $canevasNoteConceptuelle);
+            }
+
+            // Gérer les documents/fichiers avec FichierRepository
+            if (!empty($documentsData)) {
+                $this->handleDocumentsWithFichierRepository($noteConceptuelle, $documentsData);
             }
 
             $noteConceptuelle->note_conceptuelle = $noteConceptuelle->champs->map(function ($champ) {
