@@ -283,7 +283,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 default     => 0 // brouillon
             };
 
-
             $noteData = [
                 'statut' => $statutNumeric,
             ];
@@ -1992,8 +1991,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     private function storeDocumentWithFichierRepository(NoteConceptuelle $noteConceptuelle, $file, string $category): void
     {
-        // Utiliser identifiantBip pour le chemin selon le pattern projets/{identifiantBip}/evaluation_ex_ante/etude_profil/note_conceptuelle/{hash_id}
-        $identifiantBip = $noteConceptuelle->projet->identifiantBip;
+        // Hasher l'identifiant BIP pour le stockage physique
+        $hashedIdentifiantBip = hash('sha256', $noteConceptuelle->projet->identifiant_bip);
         $hashedNoteId = hash('sha256', $noteConceptuelle->id);
 
         // Générer un nom unique pour le fichier
@@ -2003,18 +2002,13 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
         // Stocker le fichier selon la nouvelle structure
         $storedPath = $file->storeAs(
-            "projets/{$identifiantBip}/evaluation_ex_ante/etude_profil/note_conceptuelle/{$hashedNoteId}",
+            "projets/{$hashedIdentifiantBip}/evaluation_ex_ante/etude_profil/note_conceptuelle/{$hashedNoteId}",
             $storageName,
             'local'
         );
 
         // Créer ou récupérer la structure de dossiers pour TDR
         $dossierNoteConceptuelle = $this->getOrCreateNoteConceptuelleFolderStructure($noteConceptuelle->projetId, 'tdr');
-/*
-        'analyse_pre_risque_facteurs_reussite' => 'Analyse pré-risque et facteurs de réussite',
-        'etude_pre_faisabilite' => 'Étude de pré-faisabilité',
-        'note_conceptuelle' => 'Note conceptuelle',
-        'autres' => 'Autres documents',*/
 
         // Générer le hash d'accès public
         $hashAcces = $this->generateFileAccessHash($noteConceptuelle->id, $storageName, $category);
@@ -2039,7 +2033,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'categorie_originale' => $category,
                 'soumis_par' => auth()->id(),
                 'soumis_le' => now(),
-                'folder_structure' => "projets/{$identifiantBip}/evaluation_ex_ante/etude_profil/note_conceptuelle/{$hashedNoteId}"
+                'dossier_public' => $dossierNoteConceptuelle ? $dossierNoteConceptuelle->full_path : 'Projets/' . $hashedIdentifiantBip . '/Evaluation ex-ante/Etude de profil/Note conceptuelle'.($category != 'autres_documents' || $category != 'autres-documents' ? '' :('/Autres documents')),
             ],
             'fichier_attachable_id' => $noteConceptuelle->id,
             'fichier_attachable_type' => NoteConceptuelle::class,
