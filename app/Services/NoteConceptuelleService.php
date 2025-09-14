@@ -621,6 +621,42 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $this->sauvegarderEvaluation($evaluationEnCours, $data['evaluations_champs']);
                 }
 
+
+                if ($data["evaluer"]) {
+
+                    $evaluationEnCours->refresh();
+
+                    // Calculer les résultats d'examen finaux
+                    $resultatsExamen = $this->calculerResultatsExamen($noteConceptuelle, $evaluationEnCours);
+
+                    // Préparer l'évaluation complète pour enregistrement
+                    $evaluationComplete = [
+                        'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluationEnCours) {
+                            $champEvalue = collect($evaluationEnCours->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                            return [
+                                'champ_id' => $champ['id'],
+                                'label' => $champ['label'],
+                                'attribut' => $champ['attribut'],
+                                'ordre_affichage' => $champ['ordre_affichage'],
+                                'type_champ' => $champ['type_champ'],
+                                'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                                'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                            ];
+                        })->toArray(),
+                        'statistiques' => $resultatsExamen
+                    ];
+
+                    $evaluationEnCours->fill([
+                        'date_fin_evaluation' => now(),
+                        'statut' => 1,
+                        'resultats_evaluation' => $resultatsExamen,
+                        'evaluation' => $evaluationComplete,
+                    ]);
+
+                    $evaluationEnCours->save();
+                }
+
             } else {
                 if ($data["evaluer"]) {
 
@@ -873,6 +909,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             if (!$evaluation) {
                 $evaluation = $noteConceptuelle->evaluationTermine();
+
+                /* if ($evaluation['resultat_global'] === 'retour') {
+                    $this->creerNouvelleEvaluationPourReprise($noteConceptuelle, $evaluation);
+                } */
             }
 
             if (!$evaluation) {
