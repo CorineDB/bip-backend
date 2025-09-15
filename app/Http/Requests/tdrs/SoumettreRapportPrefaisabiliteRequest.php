@@ -122,7 +122,9 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
+            if($this->projet->est_a_haut_risque){
             $this->validateChecklistAgainstProjectSector($validator);
+        }
             $this->validateChecklistSuiviPrefaisabilite($validator);
         });
     }
