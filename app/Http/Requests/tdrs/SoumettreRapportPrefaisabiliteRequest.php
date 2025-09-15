@@ -88,9 +88,9 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
                 ],
             */
             'checklist_controle_adaptation_haut_risque.criteres' => [
-                $this->projet->est_a_haut_risque ? 'required_with:checklist_controle_adaptation_haut_risque|array' : 'nullable',
-                $this->input('action', 'submit') === 'draft' ? 'min:0' : "size:$nombreCriteresRequis"
+                $this->projet->est_a_haut_risque ? 'required_with:checklist_controle_adaptation_haut_risque|array' . ($this->input('action', 'submit') === 'draft' ? '|min:0' : "|size:$nombreCriteresRequis") : 'nullable',
             ],
+
             'checklist_controle_adaptation_haut_risque.criteres.*' => ['required_with:checklist_controle_adaptation_haut_risque.criteres', 'array'],
             'checklist_controle_adaptation_haut_risque.criteres.*.critere_id' => 'required|integer|exists:criteres,id',
 
