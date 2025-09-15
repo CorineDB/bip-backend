@@ -1513,6 +1513,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $rapportData['date_soumission'] = now();
             }
 
+            dd($rapportData);
+
             // Créer ou mettre à jour le rapport
             if ($rapportExistant && $rapportExistant->statut === 'brouillon') {
                 // Mettre à jour le rapport existant s'il est en brouillon
