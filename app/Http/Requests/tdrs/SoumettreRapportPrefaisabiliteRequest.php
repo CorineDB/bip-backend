@@ -78,7 +78,9 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
             'recommandation' => 'required_unless:action,draft|string|max:500',
 
             // Checklist contrôle des adaptations pour projets à haut risque
-            'checklist_controle_adaptation_haut_risque' => ['nullable', Rule::requiredIf($this->projet->est_a_haut_risque), 'array'],
+            'checklist_controle_adaptation_haut_risque' => [
+                $this->projet->est_a_haut_risque ? 'required_with:checklist_controle_adaptation_haut_risque' : 'nullable',
+                'array',
             /*
                 'checklist_controle_adaptation_haut_risque.criteres' => [
                     'required_with:checklist_controle_adaptation_haut_risque',
