@@ -3,6 +3,7 @@
 namespace App\Http\Resources\projets;
 
 use App\Http\Resources\BaseApiResource;
+use App\Http\Resources\idees_projet\IdeeProjetResource;
 use App\Http\Resources\NoteConceptuelleResource;
 use App\Http\Resources\SecteurResourcePublic;
 use App\Http\Resources\TdrResource;
@@ -48,6 +49,8 @@ class ProjetsResource extends BaseApiResource
             'duree' => $this->duree,
             // Données JSON structurées
             'cout_estimatif_projet' => $this->cout_estimatif_projet ?? [],
+
+            'ideeProjet' =>  $this->whenLoaded('ideeProjet',new IdeeProjetResource($this->ideeProjet)),
 
             'secteur' => new SecteurResourcePublic($this->secteur),
 
