@@ -1535,7 +1535,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $resultChecklistValidation = null;
 
             // Traiter la checklist de contrôle d'adaptation si projet à haut risque
-            /*if ($projet->est_a_haut_risque) {
+            if ($projet->est_a_haut_risque) {
                 if(!$estBrouillon && (!isset($data['checklist_controle_adaptation_haut_risque']) || $data['checklist_controle_adaptation_haut_risque'] == null)){
                     throw new Exception("Error Processing Request", 1);
 
@@ -1565,7 +1565,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'data_keys' => array_keys($data)
                     ]);
                 }
-            }*/
+            }
 
             // Traiter la checklist de suivi pour la soumission finale
             if (isset($data['checklist_suivi_rapport_prefaisabilite'])) {
@@ -1626,6 +1626,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $this->envoyerNotificationSoumissionRapport($projet, $rapport, $fichierRapport);
             }
 
+
+            dd($rapport);
             DB::commit();
 
             // Charger les relations nécessaires pour le resource
