@@ -256,7 +256,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         // Créer le chemin basé sur la structure de dossiers en base de données (avec hash pour stockage)
         $cheminStockage = $dossierTdr ?
             $dossierTdr->full_path :
-            'Projets/' . $hashedIdentifiantBip . '/Evaluation ex-ante/Etude de préfaisabilité/Termes de référence/Autres documents';
+            'projets/' . $hashedIdentifiantBip . '/Evaluation ex-ante/Etude de préfaisabilité/Termes de référence/Autres documents';
 
         // Créer le dossier s'il n'existe pas
         \Storage::disk('local')->makeDirectory($cheminStockage);
@@ -1535,29 +1535,36 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $resultChecklistValidation = null;
 
             // Traiter la checklist de contrôle d'adaptation si projet à haut risque
-            if ($projet->est_a_haut_risque && isset($data['checklist_controle_adaptation_haut_risque']) && $data['checklist_controle_adaptation_haut_risque']) {
-                // Log pour debug
-                \Log::info('Traitement checklist adaptation', [
-                    'projet_id' => $projet->id,
-                    'est_a_haut_risque' => $projet->est_a_haut_risque,
-                    'checklist_presente' => isset($data['checklist_controle_adaptation_haut_risque']),
-                    'est_brouillon' => $estBrouillon
-                ]);
+            if ($projet->est_a_haut_risque) {
+                if(!$estBrouillon && (!isset($data['checklist_controle_adaptation_haut_risque']) || $data['checklist_controle_adaptation_haut_risque'] == null)){
+                    throw new Exception("Error Processing Request", 1);
 
-                $this->traiterChecklistControleAdaptation(
-                    $projet,
-                    $data['checklist_controle_adaptation_haut_risque'],
-                    $estBrouillon
-                );
-            } else {
-                // Log pour debug quand la checklist n'est pas traitée
-                \Log::warning('Checklist adaptation non traitée', [
-                    'projet_id' => $projet->id,
-                    'est_a_haut_risque' => $projet->est_a_haut_risque,
-                    'checklist_presente' => isset($data['checklist_controle_adaptation_haut_risque']),
-                    'checklist_non_vide' => !empty($data['checklist_controle_adaptation_haut_risque']),
-                    'data_keys' => array_keys($data)
-                ]);
+                }
+
+                if (isset($data['checklist_controle_adaptation_haut_risque']) && $data['checklist_controle_adaptation_haut_risque']) {
+                    // Log pour debug
+                    \Log::info('Traitement checklist adaptation', [
+                        'projet_id' => $projet->id,
+                        'est_a_haut_risque' => $projet->est_a_haut_risque,
+                        'checklist_presente' => isset($data['checklist_controle_adaptation_haut_risque']),
+                        'est_brouillon' => $estBrouillon
+                    ]);
+
+                    $this->traiterChecklistControleAdaptation(
+                        $projet,
+                        $data['checklist_controle_adaptation_haut_risque'],
+                        $estBrouillon
+                    );
+                } else {
+                    // Log pour debug quand la checklist n'est pas traitée
+                    \Log::warning('Checklist adaptation non traitée', [
+                        'projet_id' => $projet->id,
+                        'est_a_haut_risque' => $projet->est_a_haut_risque,
+                        'checklist_presente' => isset($data['checklist_controle_adaptation_haut_risque']),
+                        'checklist_non_vide' => !empty($data['checklist_controle_adaptation_haut_risque']),
+                        'data_keys' => array_keys($data)
+                    ]);
+                }
             }
 
             // Traiter la checklist de suivi pour la soumission finale
@@ -1781,7 +1788,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         // Créer le chemin basé sur la structure de dossiers en base de données (avec hash pour stockage)
         $cheminStockage = $dossierTdr ?
             $dossierTdr->full_path :
-            'Projets/' . $hashedIdentifiantBip . '/Evaluation ex-ante/Etude de préfaisabilité/Termes de référence/Documents TDR';
+            'projets/' . $hashedIdentifiantBip . '/Evaluation ex-ante/Etude de préfaisabilité/Termes de référence/Documents TDR';
 
         // Créer le dossier s'il n'existe pas
         \Storage::disk('local')->makeDirectory($cheminStockage);
@@ -1815,6 +1822,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'dossier_public' => $dossierTdr ? $dossierTdr->full_path : 'Projets/' . $tdr->projet->identifiant_bip . '/Evaluation ex-ante/Etude de préfaisabilité/Termes de référence'
 
             ],
+            'dossier_id' => $dossierTdr?->id,
             'fichier_attachable_id' => $tdr->id,
             'fichier_attachable_type' => \App\Models\Tdr::class,
             'categorie' => 'tdr-prefaisabilite',
@@ -3668,28 +3676,28 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             ]);
 
             // 6. Sous-dossier selon le type
-            $nomSousDossier = match($type) {
+            $nomSousDossier = match ($type) {
                 'autres-documents' => 'Autres documents',
                 'tdr' => 'Documents TDR',
                 'rapports' => 'Rapports',
                 default => 'Documents TDR'
             };
 
-            $descriptionSousDossier = match($type) {
+            $descriptionSousDossier = match ($type) {
                 'autres-documents' => 'Autres documents annexes aux TDR',
                 'tdr' => 'Documents des termes de référence',
                 'rapports' => 'Rapports d\'étude de préfaisabilité',
                 default => 'Documents des termes de référence'
             };
 
-            $couleurSousDossier = match($type) {
+            $couleurSousDossier = match ($type) {
                 'autres-documents' => '#6B7280',
                 'tdr' => '#10B981',
                 'rapports' => '#EF4444',
                 default => '#10B981'
             };
 
-            $iconeSousDossier = match($type) {
+            $iconeSousDossier = match ($type) {
                 'autres-documents' => 'document-duplicate',
                 'tdr' => 'document-text',
                 'rapports' => 'document-report',
@@ -3710,7 +3718,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             ]);
 
             return $sousDossierFinal;
-
         } catch (\Exception $e) {
             // En cas d'erreur, retourner null et laisser le fichier sans dossier
             \Log::warning('Erreur lors de la création de la structure de dossiers TDR', [
