@@ -79,7 +79,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
 
             // Checklist contrôle des adaptations pour projets à haut risque
             'checklist_controle_adaptation_haut_risque' =>
-                $this->projet->est_a_haut_risque ? 'required|array' : 'nullable',
+            $this->projet->est_a_haut_risque ? 'required|array' : 'nullable',
             /*
                 'checklist_controle_adaptation_haut_risque.criteres' => [
                     'required_with:checklist_controle_adaptation_haut_risque',
@@ -88,11 +88,10 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
                 ],
             */
             'checklist_controle_adaptation_haut_risque.criteres' => [
-                $this->projet->est_a_haut_risque ? 'required_with:checklist_controle_adaptation_haut_risque' : 'nullable',
-                'array',
+                $this->projet->est_a_haut_risque ? 'required_with:checklist_controle_adaptation_haut_risque|array' : 'nullable',
                 $this->input('action', 'submit') === 'draft' ? 'min:0' : "size:$nombreCriteresRequis"
             ],
-            'checklist_controle_adaptation_haut_risque.criteres.*' => ['required_with:checklist_controle_adaptation_haut_risque.criteres','array'],
+            'checklist_controle_adaptation_haut_risque.criteres.*' => ['required_with:checklist_controle_adaptation_haut_risque.criteres', 'array'],
             'checklist_controle_adaptation_haut_risque.criteres.*.critere_id' => 'required|integer|exists:criteres,id',
 
             // Les mesures sont requises seulement si action != draft
@@ -122,9 +121,9 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
-            if($this->projet->est_a_haut_risque){
-            $this->validateChecklistAgainstProjectSector($validator);
-        }
+            if ($this->projet->est_a_haut_risque) {
+                $this->validateChecklistAgainstProjectSector($validator);
+            }
             $this->validateChecklistSuiviPrefaisabilite($validator);
         });
     }
