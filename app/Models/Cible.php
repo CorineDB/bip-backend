@@ -31,7 +31,7 @@ class Cible extends Model
      * @var array
      */
     protected $fillable = [
-        'cible', 'slug'
+        'cible', 'slug', 'oddId'
     ];
 
     /**

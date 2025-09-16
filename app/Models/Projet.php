@@ -95,7 +95,9 @@ class Projet extends Model
         'info_cabinet_etude_faisabilite',
         'est_a_haut_risque',
         'est_dur',
-        'mesures_adaptation'
+        'mesures_adaptation',
+        'info_etude_prefaisabilite',
+        'info_etude_faisabilite'
     ];
 
     /**
@@ -496,6 +498,38 @@ class Projet extends Model
     public function tdrsFaisabilite()
     {
         return $this->tdrs()->faisabilite();
+    }
+
+    /**
+     * Récupérer le dernier rapport d'évaluation ex-ante
+     */
+    public function rapportEvaluationExAnte()
+    {
+        return $this->rapports()->evaluationExAnte()->latest('created_at');
+    }
+
+    /**
+     * Récupérer tous les rapports d'évaluation ex-ante
+     */
+    public function rapportsEvaluationExAnte()
+    {
+        return $this->rapports()->evaluationExAnte()->orderBy('created_at');
+    }
+
+    /**
+     * Rapports d'évaluation ex-ante (alias pour compatibilité)
+     */
+    public function rapports_evaluation_ex_ante()
+    {
+        return $this->rapports()->evaluationExAnte();
+    }
+
+    /**
+     * Documents annexes des rapports d'évaluation ex-ante
+     */
+    public function documents_annexe_rapports_evaluation_ex_ante()
+    {
+        return $this->fichiersParCategorie('annexe_rapport_evaluation_ex_ante');
     }
 
     /**
