@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Helpers\SlugHelper;
+use App\Models\ComposantProgramme;
 use App\Models\Secteur;
 use App\Models\TypeIntervention;
 use App\Models\TypeProgramme;
@@ -17,6 +19,79 @@ class ProgrammeSeeder extends Seeder
     public function run(): void
     {
         //$pag = TypeProgramme::where("slug", 'pag')->first()
+
+        $pag_structure = [
+            "Renforcer la démocratie, l’État de droit et la bonne gouvernance" => [
+                "axes" => [
+                    "Renforcement de la démocratie et de l’État de droit" => [
+                        "actions" => [
+                            "Consolider la démocratie, l’État de droit et les libertés",
+                            "Promouvoir une justice moderne, indépendante, efficace et accessible à tous",
+                            "Renforcer la liberté de presse et l’accès public à l’information"
+                        ]
+                    ],
+                    "Consolidation de la bonne gouvernance" => [
+                        "actions" => [
+                            "Accélérer la modernisation de l’administration publique",
+                            "Améliorer la gouvernance locale et l’intercommunalité",
+                            "Poursuivre le renforcement de la protection des droits des personnes",
+                            "Renforcer la diplomatie de développement"
+                        ]
+                    ],
+                    "Renforcement du cadre macro-économique et maintien de sa stabilité" => [
+                        "actions" => [
+                            "Renforcer le cadre macro-économique et l’intégration régionale",
+                            "Poursuivre l’assainissement de la gestion des finances publiques",
+                            "Poursuivre l’amélioration du climat des affaires"
+                        ]
+                    ],
+                ]
+            ],
+
+            "Poursuivre la transformation structurelle de l’économie" => [
+                "axes" => [
+                    "Accélération de la croissance économique" => [
+                        "actions" => [
+                            "Intensifier la construction des infrastructures modernes",
+                            "Réaliser l’autonomie énergétique",
+                            "Accroître les investissements dans les infrastructures et services numériques",
+                            "Consolider les performances du secteur agricole",
+                            "Faire du Bénin une destination touristique majeure",
+                            "Stimuler l’industrialisation",
+                            "Promouvoir la création d’emplois pour les jeunes et les femmes"
+                        ]
+                    ],
+                    "Promotion d’une éducation de qualité et de l’EFTP" => [
+                        "actions" => [
+                            "Poursuivre la restructuration du système éducatif",
+                            "Développer l’enseignement et la formation technique et professionnelle",
+                            "Promouvoir la recherche et l’innovation",
+                            "Promouvoir l’alphabétisation et l’éducation des adultes"
+                        ]
+                    ],
+                ]
+            ],
+
+            "Poursuivre l’amélioration du bien-être social des populations" => [
+                "axes" => [
+                    "Amélioration de l’accès des populations aux services sociaux de base et à la protection sociale" => [
+                        "actions" => [
+                            "Généraliser le programme d’assurance pour le renforcement du capital humain",
+                            "Renforcer le système de santé et assurer une couverture sanitaire efficace",
+                            "Garantir l’accès universel à l’eau potable",
+                            "Renforcer les infrastructures sportives et la professionnalisation des acteurs"
+                        ]
+                    ],
+                    "Renforcement du développement équilibré et durable de l’espace national" => [
+                        "actions" => [
+                            "Poursuivre l’amélioration du cadre de vie et l’aménagement équilibré du territoire",
+                            "Renforcer la préservation de l’environnement et la résilience aux changements climatiques",
+                            "Promouvoir le développement local et l’accès des communes aux ressources de qualité"
+                        ]
+                    ]
+                ]
+            ]
+        ];
 
         DB::table("types_programme")->truncate();
         $pag = TypeProgramme::updateOrCreate([
@@ -59,34 +134,34 @@ class ProgrammeSeeder extends Seeder
         ];
 
         # code...
-        \App\Models\TypeProgramme::updateOrCreate([
-            'slug' => Str::slug("pilier-pag"),
+        $pilier = \App\Models\TypeProgramme::updateOrCreate([
+            'slug' => SlugHelper::generate(Str::slug("pilier-pag")),
         ], [
-            'type_programme' => "Piliers du PAG",
+            'type_programme' => "Pilier du programme d'action du gouvernement",
             "typeId" => $pag->id
         ]);
 
         $axe = \App\Models\TypeProgramme::updateOrCreate([
-            'slug' => Str::slug("axe-pag"),
+            'slug' => SlugHelper::generate(Str::slug("axe-pag")),
         ], [
-            'type_programme' => "Axes du PAG",
-            "typeId" => $pag->id
+            'type_programme' => "Axe du programme d'action du gouvernement",
+            "typeId" => $pilier->id
         ]);
 
-        \App\Models\TypeProgramme::updateOrCreate([
-            'slug' => Str::slug("action-pag"),
+        $action = \App\Models\TypeProgramme::updateOrCreate([
+            'slug' => SlugHelper::generate(Str::slug("action-pag")),
         ], [
-            'type_programme' => "Actions du PAG",
+            'type_programme' => "Action du programme d'action du gouvernement",
             "typeId" => $axe->id
         ]);
 
         DB::table("composants_programme")->truncate();
-        foreach ($pag->children as $key => $child) {
+        /* foreach ($pag->children as $key => $child) {
             if ($child->slug === 'pilier-pag') {
                 foreach ($pilier_pag as $key => $pilier) {
                     # code...
                     \App\Models\ComposantProgramme::updateOrCreate([
-                        'slug' => Str::slug($pilier),
+                        'slug' => SlugHelper::generate(Str::slug($pilier)),
                     ], [
                         'indice' => $key,
                         'intitule' => $pilier,
@@ -95,11 +170,12 @@ class ProgrammeSeeder extends Seeder
                     ]);
                 }
             }
+
             if ($child->slug === 'axe-pag') {
                 foreach ($axe_pag as $key => $axe) {
                     # code...
                     \App\Models\ComposantProgramme::updateOrCreate([
-                        'slug' => Str::slug($axe),
+                        'slug' => SlugHelper::generate(Str::slug($axe)),
                     ], [
                         'indice' => $key,
                         'intitule' => $axe,
@@ -112,7 +188,7 @@ class ProgrammeSeeder extends Seeder
                 foreach ($action_pag as $key => $action) {
                     # code...
                     \App\Models\ComposantProgramme::updateOrCreate([
-                        'slug' => Str::slug($action),
+                        'slug' => SlugHelper::generate(Str::slug($action)),
                     ], [
                         'indice' => $key,
                         'intitule' => $action,
@@ -121,6 +197,73 @@ class ProgrammeSeeder extends Seeder
                     ]);
                 }
             }
+        } */
+
+        $pilierCount = 1;
+        foreach ($pag_structure as $pilierData => $axes) {
+            /**
+             * create([
+             *    'libelle' => $pilier,
+             *     'type'    => 'pilier',
+             *     'parent_id' => null
+             * ]);
+             */
+            // Création du pilier
+            $pilierModel = ComposantProgramme::updateOrCreate([
+                'slug' => SlugHelper::generate(Str::slug($pilierData)),
+            ], [
+                'indice' => $pilierCount,
+                'intitule' => $pilierData,
+                "slug" => Str::slug($pilierData),
+                'parentId' => null,
+                "typeId" => $pilier->id
+            ]);
+
+            $axeCount = 1;
+            foreach ($axes['axes'] as $axeData => $details) {
+                // Création de l’axe rattaché au pilier
+                $axeModel = ComposantProgramme::updateOrCreate([
+                    'slug' => SlugHelper::generate(Str::slug($axeData)),
+                ], [
+                    'indice' => $axeCount,
+                    'intitule' => $axeData,
+                    "slug" => Str::slug($axeData),
+                    'parentId' => $pilierModel->id,
+                    "typeId" => $axe->id
+                ]);
+
+                /*create([
+                    'libelle' => $axe,
+                    'type'    => 'axe',
+                    'parent_id' => $pilierModel->id
+                ]);*/
+
+                $actionCount = 1;
+                foreach ($details['actions'] as $actionData) {
+                    // Création des actions rattachées à l’axe
+                    ComposantProgramme::updateOrCreate([
+                        'slug' => SlugHelper::generate(Str::slug($actionData)),
+                    ], [
+                        'indice' => $actionCount,
+                        'intitule' => $actionData,
+                        "slug" => SlugHelper::generate(Str::slug($actionData)),
+                        'parentId' => $axeModel->id,
+                        "typeId" => $action->id
+                    ]);
+                    /*create([
+                        'libelle' => $action,
+                        'type'    => 'action',
+                        'parent_id' => $axeModel->id
+                    ]);
+                    */
+
+                    $actionCount++;
+                }
+
+                $axeCount++;
+            }
+
+            $pilierCount++;
         }
 
 
@@ -232,7 +375,7 @@ class ProgrammeSeeder extends Seeder
 
             # code...
             $type = \App\Models\TypeProgramme::updateOrCreate([
-                'slug' => Str::slug("orientation-strategique-pnd"),
+                'slug' => SlugHelper::generate(Str::slug("orientation-strategique-pnd")),
             ], [
                 'type_programme' => "Orientation stratégique du PND",
                 "slug" => Str::slug("orientation-strategique-pnd"),
@@ -241,17 +384,17 @@ class ProgrammeSeeder extends Seeder
 
             # code...
             \App\Models\ComposantProgramme::updateOrCreate([
-                'slug' => Str::slug($key),
+                'slug' => SlugHelper::generate(Str::slug($key)),
             ], [
                 'indice' => $orientationCount,
                 'intitule' => $key,
-                "slug" => Str::slug($key),
+                "slug" => SlugHelper::generate(Str::slug($key)),
                 "typeId" => $type->id
             ]);
 
             # code...
             $objectif = \App\Models\TypeProgramme::updateOrCreate([
-                'slug' => Str::slug("objectif-strategique-pnd"),
+                'slug' => SlugHelper::generate(Str::slug("objectif-strategique-pnd")),
             ], [
                 'type_programme' => "Objectif stratégique du PND",
                 "slug" => Str::slug("objectif-strategique-pnd"),
@@ -263,7 +406,7 @@ class ProgrammeSeeder extends Seeder
 
                 # code...
                 \App\Models\ComposantProgramme::updateOrCreate([
-                    'slug' => Str::slug($objectif_str),
+                    'slug' => SlugHelper::generate(Str::slug($objectif_str)),
                 ], [
                     'indice' => $objectifCount,
                     'intitule' => $objectif_str,
@@ -274,7 +417,7 @@ class ProgrammeSeeder extends Seeder
 
                 # code...
                 $resultats = \App\Models\TypeProgramme::updateOrCreate([
-                    'slug' => Str::slug("resultats-strategique-pnd"),
+                    'slug' => SlugHelper::generate(Str::slug("resultats-strategique-pnd")),
                 ], [
                     'type_programme' => "Resultats stratégique du PND",
                     "slug" => Str::slug("resultats-strategique-pnd"),
@@ -287,7 +430,7 @@ class ProgrammeSeeder extends Seeder
 
                     # code...
                     \App\Models\ComposantProgramme::updateOrCreate([
-                        'slug' => Str::slug($resultats_str),
+                        'slug' => SlugHelper::generate(Str::slug($resultats_str)),
                     ], [
                         'indice' => $resultatCount,
                         'intitule' => $resultats_str,
@@ -297,7 +440,7 @@ class ProgrammeSeeder extends Seeder
 
                     # code...
                     $axe = \App\Models\TypeProgramme::updateOrCreate([
-                        'slug' => Str::slug("axe-strategique-pnd"),
+                        'slug' => SlugHelper::generate(Str::slug("axe-strategique-pnd")),
                     ], [
                         'type_programme' => "Axes stratégique du PND",
                         "typeId" => $objectif->id
@@ -309,7 +452,7 @@ class ProgrammeSeeder extends Seeder
 
                         # code...
                         \App\Models\ComposantProgramme::updateOrCreate([
-                            'slug' => Str::slug($axe_str),
+                            'slug' => SlugHelper::generate(Str::slug($axe_str)),
                         ], [
                             'indice' => $axeCount,
                             'intitule' => $axe_str,
@@ -851,30 +994,30 @@ class ProgrammeSeeder extends Seeder
         // Insertion dans la table `secteurs`
         foreach ($grands_secteur as $grandNom => $secteurs) {
             $grand = Secteur::updateOrCreate([
-                'slug' => Str::slug($grandNom)
+                'slug' => SlugHelper::generate(Str::slug($grandNom))
             ], [
                 'nom' => $grandNom,
-                'slug' => Str::slug($grandNom),
+                'slug' => SlugHelper::generate(Str::slug($grandNom)),
                 'type' => 'grand-secteur',
                 'secteurId' => null,
             ]);
 
             foreach ($secteurs as $secteurNom => $sousSecteurs) {
                 $secteur = Secteur::updateOrCreate([
-                    'slug' => Str::slug($secteurNom)
+                    'slug' => SlugHelper::generate(Str::slug($secteurNom))
                 ], [
                     'nom' => $secteurNom,
-                    'slug' => Str::slug($secteurNom),
+                    'slug' => SlugHelper::generate(Str::slug($secteurNom)),
                     'type' => 'secteur',
                     'secteurId' => $grand->id,
                 ]);
 
                 foreach ($sousSecteurs as $sousNom => $typesIntervention) {
                     $secteur = Secteur::updateOrCreate([
-                        'slug' => Str::slug($sousNom)
+                        'slug' => SlugHelper::generate(Str::slug($sousNom))
                     ], [
                         'nom' => $sousNom,
-                        'slug' => Str::slug($sousNom),
+                        'slug' => SlugHelper::generate(Str::slug($sousNom)),
                         'type' => 'sous-secteur',
                         'secteurId' => $secteur->id,
                     ]);
