@@ -501,22 +501,6 @@ class Projet extends Model
     }
 
     /**
-     * Récupérer le dernier rapport d'évaluation ex-ante
-     */
-    public function rapportEvaluationExAnte()
-    {
-        return $this->rapports()->evaluationExAnte()->latest('created_at');
-    }
-
-    /**
-     * Récupérer tous les rapports d'évaluation ex-ante
-     */
-    public function rapportsEvaluationExAnte()
-    {
-        return $this->rapports()->evaluationExAnte()->orderBy('created_at');
-    }
-
-    /**
      * Rapports d'évaluation ex-ante (alias pour compatibilité)
      */
     public function rapports_evaluation_ex_ante()
