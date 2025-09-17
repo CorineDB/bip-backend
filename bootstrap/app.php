@@ -20,7 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'json.response' => \App\Http\Middleware\ForceJsonResponse::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,
-            'auth.client' => \Laravel\Passport\Http\Middleware\CheckTokenForAnyScope::class,
+            'auth.client' => \Laravel\Passport\Http\Middleware\CheckToken::class,
+            'scope' => \Laravel\Passport\Http\Middleware\CheckTokenForAnyScope::class,
         ]);
         $middleware->use([
             \App\Http\Middleware\CorsMiddleware::class
