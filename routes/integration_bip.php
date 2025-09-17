@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('integration-bip')->middleware(['auth.client', 'scopes:integration-bip'])->group(function () {
 
-    Route::middleware([/* 'scopes:integration-bip' */])->group(function () {
+    Route::middleware([/* 'scopes:sync-sigfp' */])->group(function () {
         Route::get('/projets-mature', [IntegrationController::class, 'index'])
             ->name('projets.mature');
     });
