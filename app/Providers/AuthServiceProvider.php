@@ -39,12 +39,17 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerPolicies();
 
         // Configuration Passport si nécessaire
-        if (class_exists(Passport::class)) {            
-            // Configuration des tokens d'accès (optionnel)
-            Passport::tokensExpireIn(now()->addDays(15));
-            Passport::refreshTokensExpireIn(now()->addDays(30));
-            Passport::personalAccessTokensExpireIn(now()->addMonths(6));
-        }
+        // Configuration des tokens d'accès (optionnel)
+        Passport::tokensExpireIn(now()->addDays(15));
+        Passport::refreshTokensExpireIn(now()->addDays(30));
+        Passport::personalAccessTokensExpireIn(now()->addMonths(6));
+
+        Passport::tokensCan([
+            'read-projects' => 'Read project data',
+            'manage-projects' => 'Create, update, delete projects',
+            'sync-sigfp' => 'Allow SIGFP to sync data with BIP',
+            'integration-bip' => 'Allow Integration with BIP'
+        ]);
 
         // Gates supplémentaires si nécessaire
         Gate::define('super-admin', function ($user) {

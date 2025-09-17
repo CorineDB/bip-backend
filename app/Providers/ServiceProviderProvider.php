@@ -54,6 +54,7 @@ class ServiceProviderProvider extends ServiceProvider
             'TdrFaisabiliteServiceInterface' => 'TdrFaisabiliteService',
             'CommentaireServiceInterface' => 'CommentaireService',
             'FichierServiceInterface' => 'FichierService',
+            'IntegrationBipServiceInterface' => 'IntegrationBipService'
 
         ];
 
