@@ -112,6 +112,13 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
             // Les règles dynamiques seront ajoutées dans withValidator
             //'checklist_suivi_rapport_prefaisabilite.*.reponse' => 'required_unless:action,draft|string',
             //'checklist_suivi_rapport_prefaisabilite.*.commentaire' => 'required_unless:action,draft|string|min:10|max:1000',
+
+            "etude_prefaisabilite"                  => "required_unless:action,draft|array|min:1",
+            'etude_prefaisabilite.est_finance'      => 'required_with:etude_prefaisabilite|boolean|enum:true,false',
+            /*'etude_prefaisabilite.date_demande'   => 'required_with:etude_prefaisabilite|date|date_format:Y-m-d',
+            'etude_prefaisabilite.date_obtention'   => 'required_with:etude_prefaisabilite|date|date_format:Y-m-d|after_or_equal:etude_prefaisabilite.date_demande',
+            'etude_prefaisabilite.montant'          => 'required_with:etude_prefaisabilite|numeric|min:0',
+            'etude_prefaisabilite.reference'        => 'required_with:etude_prefaisabilite|string|max:25',*/
         ];
     }
 

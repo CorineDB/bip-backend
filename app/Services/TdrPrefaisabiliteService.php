@@ -30,6 +30,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteServiceInterface
 {
@@ -1063,6 +1064,31 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ], 422);
             }
 
+            if ($data['action'] != 'sauvegarder') {
+
+                if (empty(data_get($data, 'checklist_suivi_validation'))) {
+                    throw ValidationException::withMessages([
+                        "checklist_suivi_validation" => "Veuillez faire le suivi du rapport de préfaisabilité pour la validation !"
+                    ]);
+                }
+
+                if (
+                    isset($projet->info_etude_prefaisabilite['est_finance']) &&
+                    $projet->info_etude_prefaisabilite['est_finance'] === true
+                ) {
+                    $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
+
+                    foreach ($requiredFields as $field) {
+                        if (empty($projet->info_etude_prefaisabilite[$field] ?? null)) {
+                            throw ValidationException::withMessages([
+                                "etude_prefaisabilite.$field" => "Le champ $field est obligatoire lorsque le projet est financé."
+                            ]);
+                        }
+                    }
+                }
+
+            }
+
             // Valider l'action demandée
             $actionsPermises = ['maturite', 'faisabilite', 'reprendre', 'abandonner', 'sauvegarder'];
             if (!isset($data['action']) || !in_array($data['action'], $actionsPermises)) {
@@ -1212,6 +1238,22 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     $messageAction = 'Données de validation sauvegardées sans changement de statut.';
                     // Pas de changement de statut
                     break;
+                default:
+                    // Récupérer l'ancien contenu JSON ou un tableau vide
+                    $info = $projet->info_etude_prefaisabilite ?? [];
+
+                    // Fusionner avec les nouvelles valeurs provenant de $data
+                    $info = array_merge($info, [
+                        'date_demande'   => $data['etude_prefaisabilite']['date_demande'] ?? null,
+                        'date_obtention' => $data['etude_prefaisabilite']['date_obtention'] ?? null,
+                        'montant'        => $data['etude_prefaisabilite']['montant'] ?? null,
+                        'reference'      => $data['etude_prefaisabilite']['reference'] ?? null,
+                    ]);
+
+                    // Mettre à jour le modèle
+                    $projet->update([
+                        'info_etude_prefaisabilite' => $info,
+                    ]);
             }
 
             // Attacher le fichier rapport de validation si fourni
@@ -1487,6 +1529,20 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $action = $data['action'] ?? 'submit';
             $estBrouillon = $action === 'draft';
 
+            if (!$estBrouillon) {
+
+                if (empty(data_get($data, 'checklist_suivi_rapport_prefaisabilite'))) {
+                    throw ValidationException::withMessages([
+                        "checklist_suivi_rapport_prefaisabilite" => "Veuillez faire le suivi du rapport de préfaisabilité !"
+                    ]);
+                }
+
+                if (!isset($data['etude_prefaisabilite']['est_finance'])) {
+                    throw ValidationException::withMessages([
+                        "est_finance" => "Veuillez préciser si l'etude de préfaisabilité est financé ou pas !"
+                    ]);
+                }
+            }
 
             // Récupérer le dernier rapport de préfaisabilité s'il existe
             $rapportExistant = $projet->rapportPrefaisabilite()->first();
@@ -1536,7 +1592,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Traiter la checklist de contrôle d'adaptation si projet à haut risque
             if ($projet->est_a_haut_risque) {
-                if(!$estBrouillon && (!isset($data['checklist_controle_adaptation_haut_risque']) || $data['checklist_controle_adaptation_haut_risque'] == null)){
+                if (!$estBrouillon && (!isset($data['checklist_controle_adaptation_haut_risque']) || $data['checklist_controle_adaptation_haut_risque'] == null)) {
                     throw new Exception("Il faut faire le suivi des mesures d'adaptation", 1);
                 }
 
@@ -1607,6 +1663,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 }
 
                 $projet->update([
+                    'info_etude_prefaisabilite' => $data['etude_prefaisabilite'],
                     'statut' => StatutIdee::VALIDATION_PF,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_PF),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_PF)

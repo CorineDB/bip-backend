@@ -31,6 +31,8 @@ class ProjetsResource extends BaseApiResource
             'est_a_haut_risque' => $this->est_a_haut_risque,
             'est_dur' => $this->est_dur,
             'est_ancien' => $this->est_ancien,
+            'info_etude_prefaisabilite' => $this->info_etude_prefaisabilite,
+            'info_etude_faisabilite' => $this->info_etude_faisabilite,
 
             // Statuts et phases
             'statut' => $this->statut?->value ?? $this->statut,
