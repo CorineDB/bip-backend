@@ -29,5 +29,11 @@ class AppServiceProvider extends ServiceProvider
         Passport::refreshTokensExpireIn(CarbonInterval::hours(3));
         Passport::personalAccessTokensExpireIn(CarbonInterval::days(15));
         Passport::enablePasswordGrant();
+
+        Passport::tokensCan([
+            'sync-sigfp' => 'Allow SIGFP to sync data with BIP',
+            'integration-bip' => 'Allow Integration with BIP'
+        ]);
+
     }
 }
