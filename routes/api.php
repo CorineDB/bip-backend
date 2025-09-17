@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ArrondissementController;
 use App\Http\Controllers\CategorieDocumentController;
 use App\Http\Controllers\CategorieProjetController;
-use App\Http\Controllers\ChampController;
 use App\Http\Controllers\CibleController;
 use App\Http\Controllers\CommuneController;
 use App\Http\Controllers\ComposantProgrammeController;
@@ -200,7 +199,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::put('{projetId}/note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'updateForProject']);
             Route::get('{projetId}/note-conceptuelle', [NoteConceptuelleController::class, 'getForProject']);
             Route::delete('{projetId}/note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'deleteForProject']);
-            Route::get('{projetId}/details-validation-note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'getValidationDetails']);
+            //Route::get('{projetId}/details-validation-note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'getValidationDetails']);
             // Route pour la validation à l'étape étude de profil
             Route::get('{projetId}/details-etude-profil', [NoteConceptuelleController::class, 'getDetailsEtudeProfil']);
             Route::post('{projetId}/valider-etude-profil', [NoteConceptuelleController::class, 'validerEtudeProfil']);
@@ -416,7 +415,6 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::apiResource('financements', FinancementController::class);
 
         Route::apiResource('evaluations', EvaluationController::class);
-        Route::apiResource('champs', ChampController::class);
 
         // Routes spécifiques pour les évaluations
         Route::prefix('evaluations')->group(function () {
@@ -502,6 +500,8 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::apiResource('odds', OddController::class);
     });
 
+    require __DIR__.'/integration_bip.php';
+
 
     // =============================================================================
     // ENUM ROUTES - For Frontend Dropdown Options
@@ -572,6 +572,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             ];
         });
     });
+
 });
 // =============================================================================
 // AUTHENTICATION ROUTES (Keycloak)
