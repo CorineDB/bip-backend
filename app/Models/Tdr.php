@@ -205,7 +205,7 @@ class Tdr extends Model
      */
     public function evaluationsPrefaisabilite(): MorphMany
     {
-        return $this->evaluations()->where('type', 'tdr-prefaisabilite');
+        return $this->evaluations()->where('type_evaluation', 'tdr-prefaisabilite');
     }
 
     /**
@@ -237,7 +237,7 @@ class Tdr extends Model
      */
     public function evaluationsFaisabilite(): MorphMany
     {
-        return $this->evaluations()->where('type', 'tdr-faisabilite');
+        return $this->evaluations()->where('type_evaluation', 'tdr-faisabilite');
     }
 
     /**
