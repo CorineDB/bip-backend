@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\StatutIdee;
-use App\Http\Resources\projets\integration\ProjetResource;
 use App\Http\Resources\projets\ProjetsResource;
 use App\Services\BaseService;
 use App\Repositories\Contracts\BaseRepositoryInterface;
@@ -25,7 +24,7 @@ class ProjetService extends BaseService implements ProjetServiceInterface
 
     protected function getResourceClass(): string
     {
-        return ProjetResource::class; //ProjetsResource::class;
+        return ProjetsResource::class;
     }
 
     /**
