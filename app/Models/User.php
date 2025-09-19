@@ -392,4 +392,31 @@ class User extends Authenticatable implements OAuthenticatable
                 });
         });
     }
+
+    public function userScope(){
+        if($this->profilable){
+
+            switch ($this->profilable_type) {
+                case 'App\Models\Dpaf':
+                    return 'dpaf';
+
+                case 'App\Models\Dgpd':
+                    return 'dgpd';
+
+                case 'App\Models\Organisation':
+                    return $this->profilable->type;
+
+                    // Pour une organisation, on peut retourner le type ou l'ID du ministère
+                    if ($this->profilable && $this->profilable->type === EnumTypeOrganisation::MINISTERE) {
+                        return 'ministere';
+                    }
+                    return 'organisation';
+
+                default:
+                    return 'super-admin';
+            }
+        }
+
+        return "super-admin";
+    }
 }
