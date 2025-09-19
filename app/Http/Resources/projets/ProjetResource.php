@@ -9,6 +9,7 @@ use App\Http\Resources\idees_projet\IdeeProjetResource;
 use App\Http\Resources\LieuInterventionResource;
 use App\Http\Resources\NoteConceptuelleResource;
 use App\Http\Resources\OddResource;
+use App\Http\Resources\RapportResource;
 use App\Http\Resources\TdrResource;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -120,6 +121,19 @@ class ProjetResource extends BaseApiResource
                 return $this->tdrFaisabilite->first() ? new TdrResource($this->tdrFaisabilite->first()) : null;
             }),
 
+            // Rapports etudes (prefaisabilite et faisabilite)
+            'rapport_prefaisabilite' => $this->whenLoaded('rapportPrefaisabilite', function() {
+                return $this->rapportPrefaisabilite->first() ? new RapportResource($this->rapportPrefaisabilite->first()) : null;
+            }),
+
+            'rapport_faisabilite' => $this->whenLoaded('rapportFaisabilite', function() {
+                return $this->rapportFaisabilite->first() ? new TdrResource($this->rapportFaisabilite->first()) : null;
+            }),
+
+            'rapport_evaluation_ex_ante' => $this->whenLoaded('rapportEvaluationExAnte', function() {
+                return $this->rapportEvaluationExAnte->first() ? new TdrResource($this->rapportEvaluationExAnte->first()) : null;
+            }),
+
             'cibles' => $this->whenLoaded('cibles', CibleResource::collection($this->cibles)),
             'odds' => $this->whenLoaded('odds', OddResource::collection($this->odds)),
 
@@ -144,7 +158,7 @@ class ProjetResource extends BaseApiResource
                 });
             }),
 
-            'tdrs_prefaisabilite' => [
+            /*'tdrs_prefaisabilite' => [
                 "document" => $this->tdrs_prefaisabilite,
                 "resume" => $this->resume_tdr_prefaisabilite
             ],
@@ -172,7 +186,7 @@ class ProjetResource extends BaseApiResource
             'rapports_evaluation_ex_ante' => [
                 "rapports_evaluation_ex_ante" => $this->rapports_evaluation_ex_ante,
                 "documents_annexe_rapports_evaluation_ex_ante" => $this->documents_annexe_rapports_evaluation_ex_ante
-            ],
+            ],*/
 
             // Timestamps
             'created_at' => Carbon::parse($this->created_at)->format("Y-m-d H:i:s"),
