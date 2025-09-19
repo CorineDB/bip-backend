@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\StatutIdee;
+use App\Http\Resources\projets\integration\ProjetResource;
 use Illuminate\Http\JsonResponse;
 use Exception;
 use App\Services\BaseService;
@@ -19,7 +20,7 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
 
     protected function getResourceClass(): string
     {
-        return ProjetsResource::class;
+        return ProjetResource::class;
     }
 
     /**

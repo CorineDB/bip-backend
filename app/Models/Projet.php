@@ -378,6 +378,24 @@ class Projet extends Model
             ->ordered();
     }
 
+    public function evaluationsClimatique()
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')->where("type", "climatique");
+    }
+
+    /**
+     * Récupérer le dernier rapport de faisabilité
+     */
+    public function evaluationClimatique()
+    {
+        return $this->evaluationsClimatique()->latest('created_at');
+    }
+
+    public function evaluationAMC()
+    {
+        return $this->evaluationsAMC()->latest('created_at');
+    }
+
     public function tdrs_prefaisabilite()
     {
         return $this->fichiers()->where('categorie', 'tdr-prefaisabilite');

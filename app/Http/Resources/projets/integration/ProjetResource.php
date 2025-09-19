@@ -3,15 +3,19 @@
 namespace App\Http\Resources\projets\integration;
 
 use App\Http\Resources\BaseApiResource;
+use App\Http\Resources\CategorieProjetResource;
 use App\Http\Resources\CibleResource;
+use App\Http\Resources\EvaluationResource;
 use App\Http\Resources\FinancementResource;
 use App\Http\Resources\idees_projet\IdeeProjetResource;
 use App\Http\Resources\LieuInterventionResource;
 use App\Http\Resources\NoteConceptuelleResource;
 use App\Http\Resources\OddResource;
+use App\Http\Resources\OrganisationResource;
 use App\Http\Resources\RapportResource;
 use App\Http\Resources\SecteurResourcePublic;
 use App\Http\Resources\TdrResource;
+use App\Http\Resources\UserResource;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -33,7 +37,6 @@ class ProjetResource extends BaseApiResource
             'identifiant_sigfp' => $this->identifiant_sigfp,
             'sigle' => $this->sigle,
             'titre_projet' => $this->titre_projet,
-
             'est_a_haut_risque' => $this->est_a_haut_risque,
             'est_dur' => $this->est_dur,
             'est_ancien' => $this->est_ancien,
@@ -105,51 +108,66 @@ class ProjetResource extends BaseApiResource
                 ];
             }),
             // Relations principales (loaded when needed)
-            'secteur' => $this->whenLoaded('secteur', new SecteurResourcePublic($this->secteur)),
-            'ministere' => $this->whenLoaded('ministere'),
+            'secteur' => new SecteurResourcePublic($this->secteur),
+            'responsable' => new UserResource($this->responsable),
+            'demandeur' => new UserResource($this->demandeur),
+            'categorie' => new CategorieProjetResource($this->categorie),
+            'ministere' => new OrganisationResource($this->ministere),
+
+            /*'ministere' => $this->whenLoaded('ministere'),
             'categorie' => $this->whenLoaded('categorie'),
             'responsable' => $this->whenLoaded('responsable'),
-            'demandeur' => $this->whenLoaded('demandeur'),
-            'porteur_projet' => $this->porteur_projet,
-            'ideeProjet' => new IdeeProjetResource($this->ideeProjet),
+            'demandeur' => $this->whenLoaded('demandeur'),*/
 
-            'noteConceptuelle' => $this->whenLoaded('noteConceptuelle', function() {
-                return new NoteConceptuelleResource($this->noteConceptuelle);
-            }),
+            'porteur_projet' => $this->porteur_projet,
+            //'ideeProjet' => new IdeeProjetResource($this->ideeProjet),
+
+            'evaluationClimatique' => $this->evaluationClimatique->first() ? new EvaluationResource($this->evaluationClimatique->first()) : null,
+            'evaluationAmc' => $this->evaluationAMC->first() ? new EvaluationResource($this->evaluationAMC->first()) : null,
+
+            'noteConceptuelle' => (new NoteConceptuelleResource($this->noteConceptuelle))
+                ->additional([
+                    'appreciation' => $this->noteConceptuelle->evaluationTermine() ? new EvaluationResource($this->noteConceptuelle->evaluationTermine()) : null,
+                ]),
 
             // TDRs
-            'tdr_prefaisabilite' => $this->whenLoaded('tdrPrefaisabilite', function() {
-                return $this->tdrPrefaisabilite->first() ? new TdrResource($this->tdrPrefaisabilite->first()) : null;
-            }),
-            'tdr_faisabilite' => $this->whenLoaded('tdrFaisabilite', function() {
-                return $this->tdrFaisabilite->first() ? new TdrResource($this->tdrFaisabilite->first()) : null;
-            }),
-
+            'tdr_prefaisabilite' => /* $this->whenLoaded('tdrPrefaisabilite', function() {
+                return*/ $this->tdrPrefaisabilite->first() ? (new TdrResource($this->tdrPrefaisabilite->first()))
+                ->additional([
+                    'appreciation' => $this->tdrPrefaisabilite->first()->evaluationPrefaisabiliteTermine() ? new EvaluationResource($this->tdrPrefaisabilite->first()->evaluationPrefaisabiliteTermine()) : null,
+                ]) : null/*;
+            }) */,
+            'tdr_faisabilite' => /* $this->whenLoaded('tdrFaisabilite', function() {
+                return  */ $this->tdrFaisabilite->first() ? (new TdrResource($this->tdrFaisabilite->first()))
+                ->additional([
+                    'appreciation' => $this->tdrFaisabilite->first()->evaluationFaisabiliteTermine() ? new EvaluationResource($this->tdrFaisabilite->first()->evaluationFaisabiliteTermine()) : null,
+                ]) : null/*;
+            }) */,
 
             // Rapports etudes (prefaisabilite et faisabilite)
-            'rapport_prefaisabilite' => $this->whenLoaded('rapportPrefaisabilite', function() {
-                return $this->rapportPrefaisabilite->first() ? new RapportResource($this->rapportPrefaisabilite->first()) : null;
-            }),
+            'rapport_prefaisabilite' => /* $this->whenLoaded('rapportPrefaisabilite', function() {
+                return */ $this->rapportPrefaisabilite->first() ? new RapportResource($this->rapportPrefaisabilite->first()) : null/* ;
+            }) */,
 
-            'rapport_faisabilite' => $this->whenLoaded('rapportFaisabilite', function() {
-                return $this->rapportFaisabilite->first() ? new TdrResource($this->rapportFaisabilite->first()) : null;
-            }),
+            'rapport_faisabilite' => /* $this->whenLoaded('rapportFaisabilite', function() {
+                return */ $this->rapportFaisabilite->first() ? new TdrResource($this->rapportFaisabilite->first()) : null/* ;
+            }) */,
 
-            'rapport_evaluation_ex_ante' => $this->whenLoaded('rapportEvaluationExAnte', function() {
-                return $this->rapportEvaluationExAnte->first() ? new TdrResource($this->rapportEvaluationExAnte->first()) : null;
-            }),
+            'rapport_evaluation_ex_ante' => /* $this->whenLoaded('rapportEvaluationExAnte', function() {
+                return */ $this->rapportEvaluationExAnte->first() ? new TdrResource($this->rapportEvaluationExAnte->first()) : null/* ;
+            }) */,
 
-            'cibles' => $this->whenLoaded('cibles', CibleResource::collection($this->cibles)),
-            'odds' => $this->whenLoaded('odds', OddResource::collection($this->odds)),
+            'cibles' => /* $this->whenLoaded('cibles',*/ CibleResource::collection($this->cibles)/* ) */,
+            'odds' => /* $this->whenLoaded('odds', */ OddResource::collection($this->odds)/* ) */,
 
-            'sources_de_financement' => $this->whenLoaded('sources_de_financement', FinancementResource::collection($this->sources_de_financement)),
+            'sources_de_financement' => /* $this->whenLoaded('sources_de_financement',  */ FinancementResource::collection($this->sources_de_financement)/* ) */,
 
             'composants' => $this->composants->map(function ($composant) {
-                    return [
-                        'id' => $composant->id,
-                        'intitule' => $composant->intitule,
-                        'type_programme' => $composant->typeProgramme->id ?? null
-                    ];
+                return [
+                    'id' => $composant->id,
+                    'intitule' => $composant->intitule,
+                    'type_programme' => $composant->typeProgramme->id ?? null
+                ];
             }),
 
             'lieux_intervention' => LieuInterventionResource::collection($this->lieuxIntervention),

@@ -201,6 +201,70 @@ class Tdr extends Model
     }
 
     /**
+     * Relation avec les évaluations du TDR de prefaisabilite
+     */
+    public function evaluationsPrefaisabilite(): MorphMany
+    {
+        return $this->evaluations()->where('type', 'tdr-prefaisabilite');
+    }
+
+    /**
+     * Obtenir l'évaluation parent (précédente) pour ce TDR
+     */
+    public function evaluationPrefaisabiliteTerminer()
+    {
+        return $this->evaluationsPrefaisabilite()->evaluationTermine('tdr-prefaisabilite')->first();
+    }
+
+    /**
+     * Obtenir l'évaluation en cours pour ce TDR
+     */
+    public function evaluationPrefaisabiliteEnCours()
+    {
+        return $this->evaluationsPrefaisabilite()->evaluationsEnCours('tdr-prefaisabilite')->first();
+    }
+
+    /**
+     * Obtenir l'évaluation parent (précédente) pour ce TDR
+     */
+    public function evaluationPrefaisabiliteParent()
+    {
+        return $this->evaluationsPrefaisabilite()->evaluationParent('tdr-prefaisabilite')->first();
+    }
+
+    /**
+     * Relation avec les évaluations du TDR de faisabilite
+     */
+    public function evaluationsFaisabilite(): MorphMany
+    {
+        return $this->evaluations()->where('type', 'tdr-faisabilite');
+    }
+
+    /**
+     * Obtenir l'évaluation parent (précédente) pour ce TDR
+     */
+    public function evaluationFaisabiliteTerminer()
+    {
+        return $this->evaluationsFaisabilite()->evaluationTermine('tdr-faisabilite')->first();
+    }
+
+    /**
+     * Obtenir l'évaluation en cours pour ce TDR
+     */
+    public function evaluationFaisabiliteEnCours()
+    {
+        return $this->evaluationsFaisabilite()->evaluationsEnCours('tdr-faisabilite')->first();
+    }
+
+    /**
+     * Obtenir l'évaluation parent (précédente) pour ce TDR
+     */
+    public function evaluationFaisabiliteParent()
+    {
+        return $this->evaluationsFaisabilite()->evaluationParent('tdr-faisabilite')->first();
+    }
+
+    /**
      * Obtenir l'évaluation parent (précédente) pour ce TDR
      */
     public function evaluationTerminer()
