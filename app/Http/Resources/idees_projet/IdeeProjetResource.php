@@ -35,6 +35,7 @@ class IdeeProjetResource extends BaseApiResource
             'type_projet' => $this->type_projet?->value ?? $this->type_projet,
             'est_coherent' => $this->est_coherent,
             'est_soumise' => $this->est_soumise,
+            'est_un_projet' => $this->projet ? true : false,
 
             // Descriptions et contenus principaux
             'description' => $this->description,
@@ -100,7 +101,7 @@ class IdeeProjetResource extends BaseApiResource
             'categorie' => $this->whenLoaded('categorie'),
             'responsable' => $this->whenLoaded('responsable'),
             'demandeur' => $this->whenLoaded('demandeur'),
-            //'porteur_projet' => $this->porteur_projet,
+            'porteur_projet' => $this->porteur_projet,
 
             'cibles' => $this->whenLoaded('cibles', CibleResource::collection($this->cibles)),
             'odds' => $this->whenLoaded('odds', OddResource::collection($this->odds)),
