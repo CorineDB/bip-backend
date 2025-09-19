@@ -36,6 +36,9 @@ class IdeeProjetResource extends BaseApiResource
             'est_coherent' => $this->est_coherent,
             'est_soumise' => $this->est_soumise,
             'est_un_projet' => $this->projet ? true : false,
+            'projetId' => $this->when($this->projet, function(){
+                return $this->projet->id;
+            }),
 
             // Descriptions et contenus principaux
             'description' => $this->description,

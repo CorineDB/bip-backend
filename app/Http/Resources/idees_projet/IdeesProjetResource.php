@@ -29,6 +29,9 @@ class IdeesProjetResource extends BaseApiResource
             'titre_projet' => $this->titre_projet,
             'porteur_projet' => $this->porteur_projet,
             'est_un_projet' => $this->projet ? true : false,
+            'projetId' => $this->when($this->projet, function(){
+                return $this->projet->id;
+            }),
 
             // Statuts et phases
             'statut' => $this->statut?->value ?? $this->statut,
