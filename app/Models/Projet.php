@@ -380,7 +380,12 @@ class Projet extends Model
 
     public function evaluationsClimatique()
     {
-        return $this->morphMany(Evaluation::class, 'projetable')->where("type", "climatique");
+        return $this->morphMany(Evaluation::class, 'projetable')->where("type_evaluation", "climatique");
+    }
+
+    public function evaluationsAMC()
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')->where("type_evaluation", "amc");
     }
 
     /**
