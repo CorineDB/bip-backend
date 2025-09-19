@@ -42,11 +42,21 @@ class TdrResource extends BaseApiResource
             'nombre_non_accepte' => $this->nombre_non_accepte,
 
             // Relations
-            'projet' => $this->whenLoaded('projet', new ProjetsResource($this->projet)),
-            'soumis_par' => $this->whenLoaded('soumisPar', new UserResource($this->soumisPar)),
-            'rediger_par' => $this->whenLoaded('redigerPar', new UserResource($this->redigerPar)),
-            'evaluateur' => $this->whenLoaded('evaluateur', new UserResource($this->evaluateur)),
-            'validateur' => $this->whenLoaded('validateur', new UserResource($this->validateur)),
+            'projet' => $this->whenLoaded('projet', function(){
+                return new ProjetsResource($this->projet);
+            }),
+            'soumis_par' => $this->whenLoaded('soumisPar', function(){
+                return new UserResource($this->soumisPar);
+            }),
+            'validateur' => $this->whenLoaded('validateur', function(){
+                return new UserResource($this->validateur);
+            }),
+            'rediger_par' => $this->whenLoaded('redigerPar', function(){
+                return new UserResource($this->redigerPar);
+            }),
+            'evaluateur' => $this->whenLoaded('evaluateur', function(){
+                return new UserResource($this->evaluateur);
+            }),
 
             // Fichiers par type
             'fichier_tdr' => $this->whenLoaded('fichiers', function() {

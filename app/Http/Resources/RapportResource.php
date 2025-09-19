@@ -18,7 +18,7 @@ class RapportResource extends BaseApiResource
         return [
             'id' => $this->id,
             'projet_id' => $this->projet_id,
-            'parent_id' => $this->parent_id,
+            //'parent_id' => $this->parent_id,
             'type' => $this->type,
             'statut' => $this->statut,
             'statutCode' => $this->statut === 'validé' ? 2 : ($this->statut === 'soumis' ? 1 : 0),
@@ -44,9 +44,15 @@ class RapportResource extends BaseApiResource
                 return $projetResource;
             }),
             */
-            'projet' => $this->whenLoaded('projet', new ProjetsResource($this->projet)),
-            'soumis_par' => $this->whenLoaded('soumisPar', new UserResource($this->soumisPar)),
-            'validateur' => $this->whenLoaded('validateur', new UserResource($this->validateur)),/*
+            'projet' => $this->whenLoaded('projet', function(){
+                return new ProjetsResource($this->projet);
+            }),
+            'soumis_par' => $this->whenLoaded('soumisPar', function(){
+                return new UserResource($this->soumisPar);
+            }),
+            'validateur' => $this->whenLoaded('validateur', function(){
+                return new UserResource($this->validateur);
+            }),/*
             'parent' => $this->whenLoaded('parent', new self($this->parent)),
             'enfants' => $this->whenLoaded('enfants', self::collection($this->enfants)), */
 
