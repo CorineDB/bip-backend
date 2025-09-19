@@ -96,6 +96,9 @@ class ProjetService extends BaseService implements ProjetServiceInterface
                     // Relations TDRs avec détails complets
                     'tdrPrefaisabilite',
                     'tdrFaisabilite',
+                    'rapportPrefaisabilite',
+                    'rapportFaisabilite',
+                    'rapportEvaluationExAnte',
 
                     // Relations rapports
                     /* 'rapportsPrefaisabilite' => function($query) {
