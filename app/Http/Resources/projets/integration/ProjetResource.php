@@ -134,13 +134,13 @@ class ProjetResource extends BaseApiResource
             'tdr_prefaisabilite' => /* $this->whenLoaded('tdrPrefaisabilite', function() {
                 return*/ $this->tdrPrefaisabilite->first() ? (new TdrResource($this->tdrPrefaisabilite->first()))
                 ->additional([
-                    'appreciation' => $this->tdrPrefaisabilite->first()->evaluationPrefaisabiliteTermine() ? new EvaluationResource($this->tdrPrefaisabilite->first()->evaluationPrefaisabiliteTermine()) : null,
+                    'appreciation' => $this->tdrPrefaisabilite->first()->evaluationPrefaisabiliteTerminer() ? new EvaluationResource($this->tdrPrefaisabilite->first()->evaluationPrefaisabiliteTerminer()) : null,
                 ]) : null/*;
             }) */,
             'tdr_faisabilite' => /* $this->whenLoaded('tdrFaisabilite', function() {
                 return  */ $this->tdrFaisabilite->first() ? (new TdrResource($this->tdrFaisabilite->first()))
                 ->additional([
-                    'appreciation' => $this->tdrFaisabilite->first()->evaluationFaisabiliteTermine() ? new EvaluationResource($this->tdrFaisabilite->first()->evaluationFaisabiliteTermine()) : null,
+                    'appreciation' => $this->tdrFaisabilite->first()->evaluationFaisabiliteTerminer() ? new EvaluationResource($this->tdrFaisabilite->first()->evaluationFaisabiliteTerminer()) : null,
                 ]) : null/*;
             }) */,
 
