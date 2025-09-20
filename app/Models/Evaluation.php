@@ -190,9 +190,8 @@ class Evaluation extends Model
     public function evaluateurs()
     {
         return $this->belongsToMany(User::class, 'evaluation_criteres', 'evaluation_id', 'evaluateur_id')
-                    ->using(EvaluationCritere::class) // si tu veux un modèle pivot personnalisé
-                    ->withPivot('critere_id', 'note', 'notation_id', 'categorie_critere_id', 'is_auto_evaluation')
-                    ->withTimestamps()
+            ->withPivot('critere_id', 'note', 'notation_id', 'categorie_critere_id', 'is_auto_evaluation')
+            ->withTimestamps()
             /* ->distinct() */;
     }
 
