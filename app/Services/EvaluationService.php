@@ -1813,8 +1813,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 throw new Exception("Evaluation de l'amc deja effectuer", 403);
             }
 
-            throw new Exception(json_encode($evaluation["evaluation"]), 403);
-
             // Vérifier que l'évaluation climatique existe
             $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
@@ -1832,6 +1830,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 "resultats_evaluation" => [...($evaluation->evaluation ??  [])]
             ]);
 
+            throw new Exception(json_encode($evaluation["evaluation"]), 403);
 
             // Vérifier et mettre à jour les réponses
             foreach ($reponses as $reponse) {
