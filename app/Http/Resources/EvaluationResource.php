@@ -37,7 +37,11 @@ class EvaluationResource extends BaseApiResource
                     "evaluation_individuel" => $evaluationIndividuel
                 ];
 
-            })
+            }),
+
+            'parent_evaluation' => $this->when($this->parentEvaluation, function(){
+                return new EvaluationResource($this->parentEvaluation);
+            }),
         ];
         return parent::toArray($request);
     }
