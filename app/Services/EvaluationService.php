@@ -1024,12 +1024,13 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     "type_evaluation" => "amc",
                     "statut"  => 0,
                     "date_debut_evaluation" => now(),
-                    "evaluation" => ["climatique" =>
-                    [
-                        "score_climatique" => $score_climatique,
-                        "scores_pondere_par_critere" => array_values($score_pondere_par_critere->toArray()),
-                        "evaluation_effectuer" => EvaluationCritereResource::collection($evaluationClimatiqueReponses)
-                    ]],
+                    "evaluation" => [
+                        "climatique" => [
+                            "score_climatique" => $score_climatique,
+                            "scores_pondere_par_critere" => array_values($score_pondere_par_critere->toArray()),
+                            "evaluation_effectuer" => EvaluationCritereResource::collection($evaluationClimatiqueReponses)
+                        ]
+                    ],
                     "resultats_evaluation" => []
                 ]);
 
