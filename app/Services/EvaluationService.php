@@ -1025,8 +1025,11 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     "statut"  => 0,
                     "date_debut_evaluation" => now(),
                     "evaluation" => ["climatique" =>
-                    ["score_climatique" => $score_climatique,
-                    "scores_pondere_par_critere" => array_values($score_pondere_par_critere->toArray()), "evaluation_effectuer" => EvaluationCritereResource::collection($evaluationClimatiqueReponses)]],
+                    [
+                        "score_climatique" => $score_climatique,
+                        "scores_pondere_par_critere" => array_values($score_pondere_par_critere->toArray()),
+                        "evaluation_effectuer" => EvaluationCritereResource::collection($evaluationClimatiqueReponses)
+                    ]],
                     "resultats_evaluation" => []
                 ]);
 
@@ -1061,6 +1064,13 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ->byEvaluateur($evaluateurId)
                     ->with(['critere', 'notation', 'categorieCritere'])
                     ->get();
+
+                if ($evaluation->statut == 0) {
+                    $evaluation->update([
+                        "evaluation" => EvaluationCritereResource::collection($evaluationClimatiqueReponses),
+                        //"resultats_evaluation" => []
+                    ]);
+                }
             }
 
             DB::commit();
