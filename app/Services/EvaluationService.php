@@ -1826,8 +1826,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ], [
                 "statut"  => 0,
                 "date_debut_evaluation" => now(),
-                "evaluation" => [...($evaluation->evaluation ?? [])],
-                "resultats_evaluation" => [...($evaluation->evaluation ??  [])]
+                //"evaluation" => [...($evaluation->evaluation ?? [])],
+                //"resultats_evaluation" => [...($evaluation->evaluation ??  [])]
             ]);
 
             throw new Exception(json_encode($evaluation->evaluation), 403);
