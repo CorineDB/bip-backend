@@ -1931,7 +1931,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 "statut"  => 1,
                 "date_fin_evaluation" => now(),
                 'resultats_evaluation' => [...$finalResults, ...["score_amc" => collect($finalResults['scores_ponderes_par_critere'])->avg("score_pondere")]],
-                'evaluation' => [...$evaluation->evaluation, "amc" => EvaluationCritereResource::collection($evaluateurReponses)],
+                'evaluation' => [$evaluation->evaluation, "amc" => EvaluationCritereResource::collection($evaluateurReponses)],
                 'valider_le' => now(),
                 'statut' => 1  // Marquer comme terminée
             ]);
@@ -1939,7 +1939,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $ideeProjet->update([
                 'score_amc' => collect($finalResults["scores_ponderes_par_critere"])->avg("score_pondere"),
                 'statut' => StatutIdee::VALIDATION,  // Marquer comme terminée
-
                 'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION),
                 'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION),
             ]);
