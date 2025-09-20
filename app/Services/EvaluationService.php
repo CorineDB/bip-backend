@@ -2112,7 +2112,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 });
             }
 
-            $finalResults = $this->calculateFinalResults($aggregatedScores);
+            //$finalResults = $this->calculateFinalResults($aggregatedScores);
 
             return response()->json([
                 'success' => true,
@@ -2125,7 +2125,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                         "evaluation_effectuer" => EvaluationCritereResource::collection($critereClimatiqueEvaluer)
                     ],
                     'evaluation_amc' => $evaluation ? new EvaluationResource($evaluation) : null,
-                    ...$finalResults
+                    //...$finalResults
                 ]
             ]);
         } catch (Exception $e) {
