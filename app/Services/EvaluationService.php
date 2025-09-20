@@ -977,8 +977,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $evaluation->save();
             }
 
-            $evaluation->refresh();
-
             $evaluationClimatiqueReponses = new Collection([]);
 
             if (auth()->user()->type == "analyste-dgpd") {
