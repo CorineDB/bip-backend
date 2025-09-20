@@ -2041,7 +2041,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             }
 
             $evaluation = $ideeProjet->evaluations()
-                ->where('type_evaluation', 'amc')->where("statut", 1)
+                ->where('type_evaluation', 'amc')->whereIn("statut", [0,1])
                 ->first();
 
             /* if (($ideeProjet->statut != StatutIdee::AMC || $ideeProjet->statut != StatutIdee::ANALYSE) && $evaluation->statut == 1) {
@@ -2114,7 +2114,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             if ($evaluation) {
                 $aggregatedScores = $evaluation->getAMCAggregatedScores();
             } else {
-
                 $aggregatedScores = $categorie->criteres->map(function ($critere) {
                     return [
                         'critere' => $critere,
