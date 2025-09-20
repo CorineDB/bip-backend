@@ -1814,10 +1814,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             }
 
             // Vérifier que l'évaluation climatique existe
-            $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
+            /* $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'climatique')
-                ->firstOrFail();
+                ->firstOrFail(); */
 
             $evaluation = Evaluation::updateOrCreate([
                 'projetable_id' => $ideeProjet->id,
@@ -1826,8 +1826,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ], [
                 "statut"  => 0,
                 "date_debut_evaluation" => now(),
-                //"evaluation" => [...($evaluation->evaluation ?? [])],
-                //"resultats_evaluation" => [...($evaluation->evaluation ??  [])]
+                "evaluation" => [...($evaluation->evaluation ?? [])],
+                "resultats_evaluation" => [...($evaluation->evaluation ??  [])]
             ]);
 
             throw new Exception(json_encode($evaluation->evaluation), 403);
