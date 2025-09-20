@@ -155,7 +155,7 @@ class ProgrammeSeeder extends Seeder
             "typeId" => $axe->id
         ]);
 
-        DB::table("composants_programme")->truncate();
+        //DB::table("composants_programme")->truncate();
         /* foreach ($pag->children as $key => $child) {
             if ($child->slug === 'pilier-pag') {
                 foreach ($pilier_pag as $key => $pilier) {
