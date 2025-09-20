@@ -1815,7 +1815,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 get_class($ideeProjet)
             )->where('type_evaluation', "amc")->first();
 
-            throw new Exception($evaluation->evaluation == null || empty($evaluation->evaluation) || !isset($evaluation->evaluation["climatique"]), 403);
+            //throw new Exception($evaluation->evaluation == null || empty($evaluation->evaluation) || !isset($evaluation->evaluation["climatique"]), 403);
 
             if($evaluation->evaluation == null || empty($evaluation->evaluation) || !isset($evaluation->evaluation["climatique"])){
 
