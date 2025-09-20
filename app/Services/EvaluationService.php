@@ -1826,6 +1826,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ->with(['critere', 'notation'])
                     ->get();
 
+                throw new Exception("Error Processing Request" . json_encode($evaluateurReponses), 403);
                 if(empty($evaluateurReponses)){
                     throw new Exception("Error Processing Request" . json_encode($evaluateurReponses), 403);
                 }
