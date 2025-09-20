@@ -1827,8 +1827,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 "type_evaluation" => "amc",
                 "statut"  => 0,
                 "date_debut_evaluation" => now(),
-                "evaluation" => [],
-                "resultats_evaluation" => []
+                "evaluation" => $evaluation->evaluation ?? [],
+                "resultats_evaluation" => $evaluation->resultats_evaluation ??  []
             ]);
 
 
