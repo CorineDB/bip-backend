@@ -1917,7 +1917,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 "statut"  => 1,
                 "date_fin_evaluation" => now(),
                 'resultats_evaluation' => [...$finalResults, ...["score_amc" => collect($finalResults['scores_ponderes_par_critere'])->sum("score_pondere")]],
-                'evaluation' => EvaluationCritereResource::collection($evaluateurReponses),
+                'evaluation' => ["amc" => EvaluationCritereResource::collection($evaluateurReponses)],
                 'valider_le' => now(),
                 'statut' => 1  // Marquer comme terminée
             ]);
@@ -2118,6 +2118,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'success' => true,
                 'data' => [
                     "idee_projet" => new IdeesProjetResource($ideeProjet),
+                    "evaluation" => $evaluation,
                     'evaluation_climatique' => [
                         "score_climatique" => ($score_pondere_par_critere->sum('score_pondere') / $categorie->criteres->count()),
                         "scores_pondere_par_critere" => array_values($score_pondere_par_critere->toArray()),/*  EvaluationCritereResource::collection($critereClimatiqueEvaluer)->resource->toArray()) */
