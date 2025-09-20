@@ -1801,12 +1801,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 throw new Exception("Veuillez effectuez l'evaluation climatique d'abord", 403);
             }
 
-            // Vérifier que l'évaluation climatique existe
-            $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
-                ->where('projetable_id', $ideeProjet->id)
-                ->where('type_evaluation', 'climatique')
-                ->firstOrFail();
-
             $evaluation = Evaluation::where(
                 'projetable_id',
                 $ideeProjet->id
@@ -1815,52 +1809,25 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 get_class($ideeProjet)
             )->where('type_evaluation', "amc")->first();
 
-            //throw new Exception($evaluation->evaluation == null || empty($evaluation->evaluation) || !isset($evaluation->evaluation["climatique"]), 403);
-
-            if($evaluation->evaluation == null || empty($evaluation->evaluation) || !isset($evaluation->evaluation["climatique"])){
-
-                // Récupérer les réponses de l'évaluateur connecté
-                $evaluateurReponses = EvaluationCritere::forEvaluation($evaluation->id)
-                    ->evaluationExterne()
-                    ->active()
-                    ->with(['critere', 'notation'])
-                    ->get();
-
-                throw new Exception("Error Processing Request" . json_encode($evaluateurReponses), 403);
-                if(empty($evaluateurReponses)){
-                    throw new Exception("Error Processing Request" . json_encode($evaluateurReponses), 403);
-                }
-
-                $evaluation->update([
-                    "date_debut_evaluation" => now(),
-                    'resultats_evaluation' => [],
-                    'evaluation' => [...($evaluation->evaluation?? []), ...[
-                        "climatique" => [
-                            "score_climatique" => $score_climatique,
-                            "scores_pondere_par_critere" => array_values($score_pondere_par_critere->toArray()),
-                            "evaluation_effectuer" => EvaluationCritereResource::collection($evaluateurReponses)
-                        ]
-                    ]],
-                    'valider_le' => now(),
-                    'statut' => 1  // Marquer comme terminée
-                ]);
+            if ($evaluation->statut == 1) {
+                throw new Exception("Evaluation de l'amc deja effectuer", 403);
             }
 
-            /* if ($evaluation->statut == 1) {
-                throw new Exception("Evaluation de l'amc deja effectuer", 403);
-            } */
-
+            // Vérifier que l'évaluation climatique existe
+            $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
+                ->where('projetable_id', $ideeProjet->id)
+                ->where('type_evaluation', 'climatique')
+                ->firstOrFail();
 
             $evaluation = Evaluation::updateOrCreate([
                 'projetable_id' => $ideeProjet->id,
                 'projetable_type' => get_class($ideeProjet),
                 "type_evaluation" => "amc"
             ], [
-                "type_evaluation" => "amc",
                 "statut"  => 0,
                 "date_debut_evaluation" => now(),
                 "evaluation" => [...($evaluation->evaluation ?? [])],
-                "resultats_evaluation" => [...($evaluation->resultats_evaluation ?? [])]
+                "resultats_evaluation" => [...($evaluation->evaluation ??  [])]
             ]);
 
 
@@ -1950,12 +1917,19 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $finalResults = $this->calculateFinalResults($aggregatedScores, 'amc');
             }
 
+            // Récupérer les réponses de l'évaluateur connecté
+            $evaluateurReponses = EvaluationCritere::forEvaluation($evaluation->id)
+                ->evaluationExterne()
+                ->active()
+                ->with(['critere', 'notation'])
+                ->get();
+
             $evaluation->update([
                 "type_evaluation" => "amc",
                 "statut"  => 1,
                 "date_fin_evaluation" => now(),
                 'resultats_evaluation' => [...$finalResults, ...["score_amc" => collect($finalResults['scores_ponderes_par_critere'])->avg("score_pondere")]],
-                'evaluation' => [...$evaluation->evaluation, "amc" => EvaluationCritereResource::collection($evaluateurReponses)],
+                'evaluation' => [$evaluation->evaluation, "amc" => EvaluationCritereResource::collection($evaluateurReponses)],
                 'valider_le' => now(),
                 'statut' => 1  // Marquer comme terminée
             ]);
