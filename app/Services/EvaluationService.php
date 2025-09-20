@@ -1065,12 +1065,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ->with(['critere', 'notation', 'categorieCritere'])
                     ->get();
 
-                if ($evaluation->statut == 0) {
                     $evaluation->update([
                         "evaluation" => EvaluationCritereResource::collection($evaluationClimatiqueReponses),
                         //"resultats_evaluation" => []
                     ]);
-                }
             }
 
             DB::commit();
