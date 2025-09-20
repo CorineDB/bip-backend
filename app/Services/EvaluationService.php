@@ -1024,7 +1024,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     "type_evaluation" => "amc",
                     "statut"  => 0,
                     "date_debut_evaluation" => now(),
-                    "evaluation" => [],
+                    "evaluation" => ["climatique" =>
+                    ["score_climatique" => $score_climatique,
+                    "scores_pondere_par_critere" => array_values($score_pondere_par_critere->toArray()), "evaluation_effectuer" => EvaluationCritereResource::collection($evaluationClimatiqueReponses)]],
                     "resultats_evaluation" => []
                 ]);
 
@@ -1916,8 +1918,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 "type_evaluation" => "amc",
                 "statut"  => 1,
                 "date_fin_evaluation" => now(),
-                'resultats_evaluation' => [...$finalResults, ...["score_amc" => collect($finalResults['scores_ponderes_par_critere'])->sum("score_pondere")]],
-                'evaluation' => ["amc" => EvaluationCritereResource::collection($evaluateurReponses)],
+                'resultats_evaluation' => [...$finalResults, ...["score_amc" => collect($finalResults['scores_ponderes_par_critere'])->avg("score_pondere")]],
+                'evaluation' => [...$evaluation->evaluation, "amc" => EvaluationCritereResource::collection($evaluateurReponses)],
                 'valider_le' => now(),
                 'statut' => 1  // Marquer comme terminée
             ]);
@@ -2043,11 +2045,11 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $critereClimatiqueEvaluer = $evaluationClimatique->evaluationCriteres()->evaluationExterne()->active()
                 ->with(['critere', 'notation', 'categorieCritere'])->get();
 
-            $outilClimatique = CategorieCritere::with("criteres")->where("slug", 'evaluation-preliminaire-multi-projet-impact-climatique')->first();
+            //$outilClimatique = CategorieCritere::with("criteres")->where("slug", 'evaluation-preliminaire-multi-projet-impact-climatique')->first();
 
             $score_pondere_par_critere = [];
 
-            $scoreClimatique = 0;
+            //$scoreClimatique = 0;
             $score_pondere_par_critere = new Collection([]);
             /*if ($outilClimatique->criteres->count()) {
                 $evaluation_climatique = $outilClimatique->criteres->map(function ($critereClimatique) use ($evaluationClimatique) {
