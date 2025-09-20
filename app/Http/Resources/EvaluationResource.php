@@ -39,6 +39,8 @@ class EvaluationResource extends BaseApiResource
 
             }),
 
+            'test' => $this->evaluateursDeEvalPreliminaireClimatique,
+
             'parent_evaluation' => $this->when($this->parentEvaluation, function(){
                 return new EvaluationResource($this->parentEvaluation);
             }),
