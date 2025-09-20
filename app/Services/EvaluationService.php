@@ -1778,9 +1778,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (($ideeProjet->statut != StatutIdee::AMC && $ideeProjet->statut != StatutIdee::ANALYSE)) {
+            /* if (($ideeProjet->statut != StatutIdee::AMC && $ideeProjet->statut != StatutIdee::ANALYSE)) {
                 throw new Exception("AMC deja effectuer", 403);
-            }
+            } */
 
             $evaluationClimatique = Evaluation::where(
                 'projetable_id',
@@ -1809,15 +1809,25 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 get_class($ideeProjet)
             )->where('type_evaluation', "amc")->first();
 
-            if ($evaluation->statut == 1) {
+            /* if ($evaluation->statut == 1) {
                 throw new Exception("Evaluation de l'amc deja effectuer", 403);
-            }
+            } */
 
             // Vérifier que l'évaluation climatique existe
             $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'climatique')
                 ->firstOrFail();
+
+            // Récupérer les réponses de l'évaluateur connecté
+            $evaluateurReponses = EvaluationCritere::forEvaluation($evaluation->id)
+                ->evaluationExterne()
+                ->active()
+                ->with(['critere', 'notation'])
+                ->get();
+
+            throw new Exception("Error Processing Request" . json_encode($evaluateurReponses), 403);
+
 
             $evaluation = Evaluation::updateOrCreate([
                 'projetable_id' => $ideeProjet->id,
@@ -1917,13 +1927,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $aggregatedScores = $evaluation->getAMCAggregatedScores();
                 $finalResults = $this->calculateFinalResults($aggregatedScores, 'amc');
             }
-
-            // Récupérer les réponses de l'évaluateur connecté
-            $evaluateurReponses = EvaluationCritere::forEvaluation($evaluation->id)
-                ->evaluationExterne()
-                ->active()
-                ->with(['critere', 'notation'])
-                ->get();
 
             $evaluation->update([
                 "type_evaluation" => "amc",
