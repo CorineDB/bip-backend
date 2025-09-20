@@ -754,7 +754,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     /**
      * Calculate final results from aggregated scores with ponderation.
      */
-    private function calculateFinalResults(object $aggregatedScores): array
+    private function calculateFinalResults(object $aggregatedScores, $outil = "climatique"): array
     {
         $results = [];
         $total_score_pondere = 0;
@@ -791,7 +791,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         $score_final_pondere = $total_ponderation > 0 ?
             (($total_score_pondere / $total_ponderation) * 100) : 0;
 
-        $critereCount = CategorieCritere::where("slug", "evaluation-preliminaire-multi-projet-impact-climatique")->first()->criteres->count(); //count($results);
+        $critereCount = CategorieCritere::where("slug", $outil == "climatique" ? "evaluation-preliminaire-multi-projet-impact-climatique" : 'grille-analyse-multi-critere')->first()->criteres->count(); //count($results);
 
         return [
             'scores_ponderes_par_critere' => $results,
@@ -1902,7 +1902,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             if ($evaluation) {
                 $aggregatedScores = $evaluation->getAMCAggregatedScores();
-                $finalResults = $this->calculateFinalResults($aggregatedScores);
+                $finalResults = $this->calculateFinalResults($aggregatedScores, 'amc');
             }
 
             // Récupérer les réponses de l'évaluateur connecté
@@ -2112,7 +2112,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 });
             }
 
-            //$finalResults = $this->calculateFinalResults($aggregatedScores);
+            $finalResults = $this->calculateFinalResults($aggregatedScores, 'amc');
 
             return response()->json([
                 'success' => true,
@@ -2125,7 +2125,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                         "evaluation_effectuer" => EvaluationCritereResource::collection($critereClimatiqueEvaluer)
                     ],
                     'evaluation_amc' => $evaluation ? new EvaluationResource($evaluation) : null,
-                    //...$finalResults
+                    ...$finalResults,
+                    "resultats_evaluation" => $evaluation ? $evaluation["resultats_evaluation"] : null,
                 ]
             ]);
         } catch (Exception $e) {
