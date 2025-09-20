@@ -40,7 +40,7 @@ class EvaluationResource extends BaseApiResource
             }),
 
             'test' => $this->evaluateursDeEvalPreliminaireClimatique()
-                            ->with(['evaluateur', 'critere', 'notation', 'categorieCritere'])
+                            ->with(['critere', 'notation', 'categorieCritere'])
                             ->get()
                             ->groupBy('evaluateur_id'),
 
