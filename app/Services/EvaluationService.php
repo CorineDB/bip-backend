@@ -1830,7 +1830,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 "resultats_evaluation" => [...($evaluation->evaluation ??  [])]
             ]);
 
-            throw new Exception(json_encode($evaluation["evaluation"]), 403);
+            throw new Exception(json_encode($evaluation->evaluation), 403);
 
             // Vérifier et mettre à jour les réponses
             foreach ($reponses as $reponse) {
