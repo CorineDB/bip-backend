@@ -606,10 +606,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 Notification::send($responsablesHierarchiques, new NouvelleIdeeProjetNotification($ideeProjet, $scoreClimatique));
             }
 
+            $evaluation->refresh();
+
             return response()->json([
                 'success' => true,
                 'message' => "Score de l'auto-Évaluation climatique finalisée avec succès",
-                'data' => null
+                'data' => $evaluation
             ]);
         } catch (Exception $e) {
             return response()->json([
