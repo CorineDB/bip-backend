@@ -39,7 +39,10 @@ class EvaluationResource extends BaseApiResource
 
             }),
 
-            'test' => $this->evaluateursDeEvalPreliminaireClimatique,
+            'test' => $this->evaluateursDeEvalPreliminaireClimatique()
+                            ->with(['evaluateur', 'critere', 'notation', 'categorieCritere'])
+                            ->get()
+                            ->groupBy('evaluateur_id'),
 
             'parent_evaluation' => $this->when($this->parentEvaluation, function(){
                 return new EvaluationResource($this->parentEvaluation);
