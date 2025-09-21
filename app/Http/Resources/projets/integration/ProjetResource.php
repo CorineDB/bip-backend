@@ -152,11 +152,11 @@ class ProjetResource extends BaseApiResource
             }) */,
 
             'rapport_faisabilite' => /* $this->whenLoaded('rapportFaisabilite', function() {
-                return */ $this->rapportFaisabilite->first() ? new TdrResource($this->rapportFaisabilite->first()) : null/* ;
+                return */ $this->rapportFaisabilite->first() ? new RapportResource($this->rapportFaisabilite->first()) : null/* ;
             }) */,
 
             'rapport_evaluation_ex_ante' => /* $this->whenLoaded('rapportEvaluationExAnte', function() {
-                return */ $this->rapportEvaluationExAnte->first() ? new TdrResource($this->rapportEvaluationExAnte->first()) : null/* ;
+                return */ $this->rapportEvaluationExAnte->first() ? new RapportResource($this->rapportEvaluationExAnte->first()) : null/* ;
             }) */,
 
             'cibles' => /* $this->whenLoaded('cibles',*/ CibleResource::collection($this->cibles)/* ) */,
