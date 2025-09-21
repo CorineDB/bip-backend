@@ -99,6 +99,7 @@ class ProjetResource extends BaseApiResource
             'resultats_attendus' => $this->resultats_attendus ?? [],
             'body_projet' => $this->body_projet ?? [],
             'description_decision' => $this->description_decision,
+            /*
 
             'champs' => $this->champs->map(function ($champ) {
                 return [
@@ -107,6 +108,7 @@ class ProjetResource extends BaseApiResource
                     'value' => $champ->pivot->valeur
                 ];
             }),
+            */
             // Relations principales (loaded when needed)
             'secteur' => new SecteurResourcePublic($this->secteur),
             'responsable' => new UserResource($this->responsable),
@@ -162,6 +164,7 @@ class ProjetResource extends BaseApiResource
 
             'sources_de_financement' => /* $this->whenLoaded('sources_de_financement',  */ FinancementResource::collection($this->sources_de_financement)/* ) */,
 
+            'piliers_pag' => $this->pilliers_pag,
             'composants' => $this->composants->map(function ($composant) {
                 return [
                     'id' => $composant->id,
