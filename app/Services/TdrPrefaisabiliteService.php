@@ -1161,14 +1161,14 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 $evaluationValidation->save();
 
-                $resultVerificationCoherence = $this->verifierCoherenceSuiviRapport($projet, $data['checklist_suivi_validation']);
+                /*$resultVerificationCoherence = $this->verifierCoherenceSuiviRapport($projet, $data['checklist_suivi_validation']);
                 if (!$resultVerificationCoherence['success']) {
                     return response()->json([
                         'success' => false,
                         'message' => $resultVerificationCoherence['message'],
                         'incoherences' => $resultVerificationCoherence['incoherences'] ?? []
                     ], 422);
-                }
+                }*/
 
                 // Vérifier que tous les checkpoints obligatoires sont présents et complétés
                 $resultVerificationCompletude = $this->verifierCompletude($data['checklist_suivi_validation']);
