@@ -174,7 +174,8 @@ class ProjetResource extends BaseApiResource
                 return [
                     'id' => $composant->id,
                     'intitule' => $composant->intitule,
-                    'type_programme' => $composant->typeProgramme->id ?? null
+                    'type_programme_id' => $composant->typeProgramme->id ?? null,
+                    'intitule_composant_programme' => $composant->typeProgramme->type_programme ?? null
                 ];
             }),
 
