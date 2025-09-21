@@ -148,7 +148,7 @@ class ProjetResource extends BaseApiResource
 
             // Rapports etudes (prefaisabilite et faisabilite)
             'rapport_prefaisabilite' => /* $this->whenLoaded('rapportPrefaisabilite', function() {
-                return */ $this->rapportPrefaisabilite->first() ? new RapportResource($this->rapportPrefaisabilite->first()->load(['fichiersRapport', 'procesVerbaux', 'documentsAnnexes', 'commentaires'])) : null/* ;
+                return */ $this->rapportPrefaisabilite->first() ? new RapportResource($this->rapportPrefaisabilite->first()->load(['fichiersRapport', 'procesVerbaux', 'documentsAnnexes'])) : null/* ;
             }) */,
 
             'rapport_faisabilite' => /* $this->whenLoaded('rapportFaisabilite', function() {
@@ -156,7 +156,7 @@ class ProjetResource extends BaseApiResource
             }) */,
 
             'rapport_evaluation_ex_ante' => /* $this->whenLoaded('rapportEvaluationExAnte', function() {
-                return */ $this->rapportEvaluationExAnte->first() ? new RapportResource($this->rapportEvaluationExAnte->first()->load(['fichiersRapport', 'procesVerbaux', 'documentsAnnexes', 'commentaires'])) : null/* ;
+                return */ $this->rapportEvaluationExAnte->first() ? new RapportResource($this->rapportEvaluationExAnte->first()->load(['fichiersRapport', 'procesVerbaux', 'documentsAnnexes'])) : null/* ;
             }) */,
 
             'cibles' => /* $this->whenLoaded('cibles',*/ CibleResource::collection($this->cibles)/* ) */,
