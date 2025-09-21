@@ -1129,7 +1129,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 throw new Exception("Error Processing Request", 503);
 
                 foreach ($data['checklist_suivi_validation'] as $evaluationChamp) {
-                    $syncData[$evaluationChamp['champ_id']] = [
+                    $syncData[$evaluationChamp['checkpoint_id']] = [
                         'note' => $evaluationChamp['appreciation'],
                         'date_note' => now(),
                         'commentaires' => $evaluationChamp['commentaire'] ?? null,
