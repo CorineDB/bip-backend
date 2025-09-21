@@ -131,6 +131,10 @@ class ProjetResource extends BaseApiResource
                 ->additional([
                     'appreciation' => $this->noteConceptuelle->evaluationTermine() ? new EvaluationResource($this->noteConceptuelle->evaluationTermine()) : null,
                 ]),
+                $this->when($this->evaluationTermine(), [
+                    (new NoteConceptuelleResource($this->noteConceptuelle)),
+                    'appreciation' => new EvaluationResource($this->evaluationTermine()),
+                ]),
 
             // TDRs
             'tdr_prefaisabilite' => /* $this->whenLoaded('tdrPrefaisabilite', function() {
