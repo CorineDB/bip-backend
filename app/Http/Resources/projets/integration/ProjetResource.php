@@ -155,11 +155,22 @@ class ProjetResource extends BaseApiResource
                 : null,
 
             'tdr_faisabilite' => /* $this->whenLoaded('tdrFaisabilite', function() {
-                return  */ $this->tdrFaisabilite->first() ? (new TdrResource($this->tdrFaisabilite->first()))
+                return $this->tdrFaisabilite->first() ? (new TdrResource($this->tdrFaisabilite->first()))
                 ->additional([
                     'appreciation' => $this->tdrFaisabilite->first()->evaluationFaisabiliteTerminer() ? new EvaluationResource($this->tdrFaisabilite->first()->evaluationFaisabiliteTerminer()) : null,
-                ]) : null/*;
-            }) */,
+                ]) : null;
+            }),*/
+
+            $this->tdrFaisabilite->first()
+                ? array_merge(
+                    (new TdrResource($this->tdrFaisabilite->first()))->toArray(request()),
+                    [
+                        'appreciation' => $this->tdrFaisabilite->first()->evaluationPrefaisabiliteTerminer()
+                            ? new EvaluationResource($this->tdrFaisabilite->first()->evaluationPrefaisabiliteTerminer())
+                            : null,
+                    ]
+                )
+                : null,
 
             // Rapports etudes (prefaisabilite et faisabilite)
             'rapport_prefaisabilite' => /* $this->whenLoaded('rapportPrefaisabilite', function() {
