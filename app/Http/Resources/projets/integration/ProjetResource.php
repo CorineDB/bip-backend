@@ -164,7 +164,12 @@ class ProjetResource extends BaseApiResource
 
             'sources_de_financement' => /* $this->whenLoaded('sources_de_financement',  */ FinancementResource::collection($this->sources_de_financement)/* ) */,
 
+            'orientations_strategique_png' => $this->orientations_strategique_png,
+            'objectifs_strategique_png' => $this->objectifs_strategique_png,
+            'resultats_strategique_png' => $this->resultats_strategique_png,
             'piliers_pag' => $this->pilliers_pag,
+            'axes_pag' => $this->axes_pag,
+            'actions_pag' => $this->actions_pag,
             'composants' => $this->composants->map(function ($composant) {
                 return [
                     'id' => $composant->id,
