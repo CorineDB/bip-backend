@@ -115,6 +115,7 @@ abstract class BaseService implements AbstractServiceInterface
         // Déterminer le code de statut selon le type d'exception
         $statusCode = 500;
         $message = 'Une erreur interne s\'est produite';
+        $errors = [];
 
         if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
             $statusCode = 404;
@@ -172,7 +173,8 @@ abstract class BaseService implements AbstractServiceInterface
             $message = $resourceName . ' non trouvé(e)';
         } elseif ($e instanceof \Illuminate\Validation\ValidationException) {
             $statusCode = 422;
-            $message = 'Erreurs de validation';
+            $message = 'Erreurs de validation' ;
+            $errors = $e->errors(); ;
         } elseif ($e instanceof \Illuminate\Auth\AuthenticationException) {
             $statusCode = 401;
             $message = 'Non authentifié';
@@ -194,6 +196,7 @@ abstract class BaseService implements AbstractServiceInterface
         return response()->json([
             'success' => false,
             'message' => $message,
+            'errors' => $errors,
         ], $statusCode);
     }
 }
