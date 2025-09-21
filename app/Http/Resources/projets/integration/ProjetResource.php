@@ -127,26 +127,33 @@ class ProjetResource extends BaseApiResource
             'evaluationClimatique' => $this->evaluationClimatique->first() ? new EvaluationResource($this->evaluationClimatique->first()) : null,
             'evaluationAmc' => $this->evaluationAMC->first() ? new EvaluationResource($this->evaluationAMC->first()) : null,
 
-            'noteConceptuelle' => /* (new NoteConceptuelleResource($this->noteConceptuelle))
-                ->additional([
-                    'appreciation' => $this->noteConceptuelle->evaluationTermine() ? new EvaluationResource($this->noteConceptuelle->evaluationTermine()) : null,
-                ]), */
-                array_merge(
-                    (new NoteConceptuelleResource($this->noteConceptuelle))->toArray(request()),
-                    [
-                        'appreciation' => $this->noteConceptuelle->evaluationTermine()
-                            ? new EvaluationResource($this->noteConceptuelle->evaluationTermine())
-                            : [],
-                    ]
-                ),
+            'noteConceptuelle' => array_merge(
+                (new NoteConceptuelleResource($this->noteConceptuelle))->toArray(request()),
+                [
+                    'appreciation' => $this->noteConceptuelle->evaluationTermine()
+                        ? new EvaluationResource($this->noteConceptuelle->evaluationTermine())
+                        : [],
+                ]
+            ),
 
             // TDRs
-            'tdr_prefaisabilite' => /* $this->whenLoaded('tdrPrefaisabilite', function() {
-                return*/ $this->tdrPrefaisabilite->first() ? (new TdrResource($this->tdrPrefaisabilite->first()))
+            'tdr_prefaisabilite' => /*$this->whenLoaded('tdrPrefaisabilite', function() {
+                return $this->tdrPrefaisabilite->first() ? (new TdrResource($this->tdrPrefaisabilite->first()))
                 ->additional([
                     'appreciation' => $this->tdrPrefaisabilite->first()->evaluationPrefaisabiliteTerminer() ? new EvaluationResource($this->tdrPrefaisabilite->first()->evaluationPrefaisabiliteTerminer()) : null,
-                ]) : null/*;
-            }) */,
+                ]) : null;
+            })*/
+            $this->tdrPrefaisabilite->first()
+                ? array_merge(
+                    (new TdrResource($this->tdrPrefaisabilite->first()))->toArray(request()),
+                    [
+                        'appreciation' => $this->tdrPrefaisabilite->first()->evaluationPrefaisabiliteTerminer()
+                            ? new EvaluationResource($this->tdrPrefaisabilite->first()->evaluationPrefaisabiliteTerminer())
+                            : null,
+                    ]
+                )
+                : null,
+
             'tdr_faisabilite' => /* $this->whenLoaded('tdrFaisabilite', function() {
                 return  */ $this->tdrFaisabilite->first() ? (new TdrResource($this->tdrFaisabilite->first()))
                 ->additional([
