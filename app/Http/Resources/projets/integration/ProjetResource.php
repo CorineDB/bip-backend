@@ -156,7 +156,7 @@ class ProjetResource extends BaseApiResource
             }) */,
 
             'rapport_evaluation_ex_ante' => /* $this->whenLoaded('rapportEvaluationExAnte', function() {
-                return */ $this->rapportEvaluationExAnte->first() ? new RapportResource($this->rapportEvaluationExAnte->first()->load(['fichiersRapport', 'procesVerbaux', 'documentsAnnexes'])) : null/* ;
+                return */ $this->rapportEvaluationExAnte->first() ? new RapportResource($this->rapportEvaluationExAnte->first()->load(['fichiersRapport', 'documentsAnnexes'])) : null/* ;
             }) */,
 
             'cibles' => /* $this->whenLoaded('cibles',*/ CibleResource::collection($this->cibles)/* ) */,
