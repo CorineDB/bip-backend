@@ -1126,6 +1126,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 $syncData = [];
 
+                throw new Exception("Error Processing Request", 503);
+
                 foreach ($data['checklist_suivi_validation'] as $evaluationChamp) {
                     $syncData[$evaluationChamp['champ_id']] = [
                         'note' => $evaluationChamp['appreciation'],
@@ -2419,6 +2421,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             StatutIdee::EVALUATION_TDR_PF => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
             StatutIdee::SOUMISSION_RAPPORT_PF => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
             StatutIdee::VALIDATION_PF => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
+            StatutIdee::MATURITE => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
+            StatutIdee::RAPPORT => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
             StatutIdee::ABANDON => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
             StatutIdee::EVALUATION_TDR_F => \App\Enums\SousPhaseIdee::faisabilite,
             StatutIdee::PRET => \App\Enums\SousPhaseIdee::selection,
