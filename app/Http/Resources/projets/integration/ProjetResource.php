@@ -127,14 +127,18 @@ class ProjetResource extends BaseApiResource
             'evaluationClimatique' => $this->evaluationClimatique->first() ? new EvaluationResource($this->evaluationClimatique->first()) : null,
             'evaluationAmc' => $this->evaluationAMC->first() ? new EvaluationResource($this->evaluationAMC->first()) : null,
 
-            'noteConceptuelle' => (new NoteConceptuelleResource($this->noteConceptuelle))
+            'noteConceptuelle' => /* (new NoteConceptuelleResource($this->noteConceptuelle))
                 ->additional([
                     'appreciation' => $this->noteConceptuelle->evaluationTermine() ? new EvaluationResource($this->noteConceptuelle->evaluationTermine()) : null,
-                ]),
-                $this->when($this->noteConceptuelle->evaluationTermine(), [
-                    (new NoteConceptuelleResource($this->noteConceptuelle)),
-                    'appreciation' => new EvaluationResource($this->noteConceptuelle->evaluationTermine()),
-                ]),
+                ]), */
+                array_merge(
+                    (new NoteConceptuelleResource($this->noteConceptuelle))->toArray(request()),
+                    [
+                        'appreciation' => $this->noteConceptuelle->evaluationTermine()
+                            ? new EvaluationResource($this->noteConceptuelle->evaluationTermine())
+                            : [],
+                    ]
+                ),
 
             // TDRs
             'tdr_prefaisabilite' => /* $this->whenLoaded('tdrPrefaisabilite', function() {
