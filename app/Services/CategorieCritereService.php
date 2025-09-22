@@ -6,6 +6,7 @@ use App\Helpers\SlugHelper;
 use Illuminate\Http\JsonResponse;
 use Exception;
 use App\Services\BaseService;
+use App\Services\Traits\CachableService;
 use App\Repositories\Contracts\BaseRepositoryInterface;
 use App\Repositories\Contracts\CategorieCritereRepositoryInterface;
 use App\Services\Contracts\CategorieCritereServiceInterface;
@@ -22,7 +23,14 @@ use Illuminate\Support\Str;
 
 class CategorieCritereService extends BaseService implements CategorieCritereServiceInterface
 {
+    use CachableService;
+
     protected BaseRepositoryInterface $repository;
+
+    protected int $cacheTtl = 43200; // 12h - critères changent moins souvent
+    protected array $cacheTags = ['reference', 'categories_criteres'];
+    protected string $cachePrefix = 'bip';
+    protected bool $cacheEnabled = true;
 
     public function __construct(
         CategorieCritereRepositoryInterface $repository
@@ -246,12 +254,12 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
                     // Stocker le nouveau fichier dans le dossier structuré sur disque local avec sous-dossiers publics
                     $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $file->hashName();
-                    
+
                     // Créer le chemin basé sur la structure de dossiers en base de données
-                    $cheminStockage = $dossierCanevas ? 
+                    $cheminStockage = $dossierCanevas ?
                         'public/' . $dossierCanevas->full_path :
                         'public/Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Analyse preliminaire de l\'impact climatique';
-                        
+
                     $path = $file->storeAs($cheminStockage, $nomStockage, 'local');
 
                     if ($fichierExistant) {
@@ -337,7 +345,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 ], 404);
             }
 
-            return (new $this->resourceClass($grille))
+            return (new $this->resourceClass($grille->load(['criteres.notations', 'notations', 'fichiers'])))
                 ->response();
         } catch (Exception $e) {
             return $this->errorResponse($e);
@@ -414,12 +422,12 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
                     // Stocker le nouveau fichier dans le dossier structuré sur disque local avec sous-dossiers publics
                     $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $file->hashName();
-                    
+
                     // Créer le chemin basé sur la structure de dossiers en base de données
-                    $cheminStockage = $dossierCanevas ? 
+                    $cheminStockage = $dossierCanevas ?
                         'public/' . $dossierCanevas->full_path :
                         'public/Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Analyse multicritere';
-                        
+
                     $path = $file->storeAs($cheminStockage, $nomStockage, 'local');
 
                     if ($fichierExistant) {
