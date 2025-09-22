@@ -23,7 +23,7 @@ use Illuminate\Support\Str;
 
 class CategorieCritereService extends BaseService implements CategorieCritereServiceInterface
 {
-    use CachableService;
+    //use CachableService;
 
     protected BaseRepositoryInterface $repository;
 
@@ -345,7 +345,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 ], 404);
             }
 
-            return (new $this->resourceClass($grille->load(['criteres.notations', 'notations', 'fichiers'])))
+            return (new $this->resourceClass($grille->load(['notations', 'fichiers'])))
                 ->response();
         } catch (Exception $e) {
             return $this->errorResponse($e);
