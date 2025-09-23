@@ -8,7 +8,6 @@ use App\Http\Resources\Contracts\ApiResourceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
-use Throwable;
 
 abstract class BaseService implements AbstractServiceInterface
 {
@@ -32,7 +31,7 @@ abstract class BaseService implements AbstractServiceInterface
         try {
             $data = $this->repository->all();
             return $this->resourceClass::collection($data)->response();
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             return $this->errorResponse($e);
         }
     }
@@ -47,7 +46,7 @@ abstract class BaseService implements AbstractServiceInterface
                 'success' => false,
                 'message' => 'Resource not found.',
             ], 404);
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             return $this->errorResponse($e);
         }
     }
@@ -60,7 +59,7 @@ abstract class BaseService implements AbstractServiceInterface
                 ->additional(['message' => 'Resource created successfully.'])
                 ->response()
                 ->setStatusCode(201);
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             return $this->errorResponse($e);
         }
     }
@@ -86,7 +85,7 @@ abstract class BaseService implements AbstractServiceInterface
                 'success' => false,
                 'message' => 'Resource not found.',
             ], 404);
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             return $this->errorResponse($e);
         }
     }
@@ -106,15 +105,15 @@ abstract class BaseService implements AbstractServiceInterface
                 'success' => true,
                 'message' => 'Resource deleted successfully.',
             ]);
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             return $this->errorResponse($e);
         }
     }
 
-    protected function errorResponse(Throwable $e): JsonResponse
+    protected function errorResponse(Exception $e): JsonResponse
     {
         // Déterminer le code de statut selon le type d'exception
-        $statusCode = $e->getCode() ?? 500;
+        $statusCode = 500;
         $message = 'Une erreur interne s\'est produite';
         $errors = [];
 
