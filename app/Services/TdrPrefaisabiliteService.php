@@ -1128,9 +1128,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 foreach ($data['checklist_suivi_validation'] as $evaluationChamp) {
                     $syncData[$evaluationChamp['checkpoint_id']] = [
-                        'note' => $evaluationChamp['appreciation'],
+                        'note' => $evaluationChamp['remarque'],
                         'date_note' => now(),
-                        'commentaires' => $evaluationChamp['commentaire'] ?? null,
+                        'commentaires' => $evaluationChamp['explication'] ?? null,
                     ];
                 }
 
@@ -1161,14 +1161,14 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 $evaluationValidation->save();
 
-                /*$resultVerificationCoherence = $this->verifierCoherenceSuiviRapport($projet, $data['checklist_suivi_validation']);
+                $resultVerificationCoherence = $this->verifierCoherenceSuiviRapport($projet, $data['checklist_suivi_validation']);
                 if (!$resultVerificationCoherence['success']) {
                     return response()->json([
                         'success' => false,
                         'message' => $resultVerificationCoherence['message'],
                         'incoherences' => $resultVerificationCoherence['incoherences'] ?? []
                     ], 422);
-                }*/
+                }
 
                 // Vérifier que tous les checkpoints obligatoires sont présents et complétés
                 $resultVerificationCompletude = $this->verifierCompletude($data['checklist_suivi_validation']);
@@ -3333,7 +3333,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Vérifier que tous les checkpoints de la soumission sont présents dans la validation
             foreach ($checkpointsSoumission as $index => $checkpointSoumis) {
-                $checkpointId = $checkpointSoumis['checkpoint_id'] ?? null;
+                $checkpointId = $checkpointSoumis['id'] ?? null;
 
                 if (!$checkpointId) {
                     continue;
@@ -3350,7 +3350,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 }
 
                 // Comparer les données entre soumission et validation
-                if ($checkpointValidation) {
+                /*if ($checkpointValidation) {
                     // Comparer les remarques
                     $remarqueSoumission = $checkpointSoumis['remarque'] ?? null;
                     $remarqueValidation = $checkpointValidation['remarque'] ?? null;
@@ -3402,7 +3402,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             'message' => "Le checkpoint {$checkpointId} a une explication différente entre la soumission et la validation."
                         ];
                     }
-                }
+                }*/
             }
 
             // Vérifier s'il y a des checkpoints supplémentaires dans la validation
@@ -3413,7 +3413,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     continue;
                 }
 
-                $checkpointSoumis = $checkpointsSoumission->firstWhere('checkpoint_id', $checkpointId);
+                $checkpointSoumis = $checkpointsSoumission->firstWhere('id', $checkpointId);
 
                 if (!$checkpointSoumis) {
                     $incoherences[] = [
