@@ -1072,26 +1072,69 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ]);
                 }
 
-                throw new Exception("Form data : " . $projet->info_etude_prefaisabilite ? json_encode($projet->info_etude_prefaisabilite) : 'null', 422);
-
-                /*
-                 * . " \n " . (
-                    isset($projet->info_etude_prefaisabilite['est_finance']) &&
-                    $projet->info_etude_prefaisabilite['est_finance'] === true
-                )
-                 */
+                // Valider les informations de financement si le projet est marqué comme financé
                 if (
                     isset($projet->info_etude_prefaisabilite['est_finance']) &&
-                    $projet->info_etude_prefaisabilite['est_finance'] === true
+                    !empty($projet->info_etude_prefaisabilite['est_finance'])
                 ) {
-                    $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
+                    $est_finance = $projet->info_etude_prefaisabilite['est_finance'];
+                    // Convertir en booléen si nécessaire
+                    if (is_string($est_finance)) {
+                        $est_finance = strtolower($est_finance) === 'true' || $est_finance === '1';
+                    } else {
+                        $est_finance = filter_var($est_finance, FILTER_VALIDATE_BOOLEAN);
+                    }
 
-                    foreach ($requiredFields as $field) {
-                        if (empty($projet->info_etude_prefaisabilite[$field] ?? null)) {
-                            throw ValidationException::withMessages([
-                                "etude_prefaisabilite.$field" => "Le champ $field est obligatoire lorsque le projet est financé."
-                            ]);
+                    if($est_finance) {
+                        // Le projet est financé
+
+                        $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
+
+                        foreach ($requiredFields as $field) {
+                            // validation de présence de $data['info_etude_prefaisabilite'][$field]
+                            if (empty($data['info_etude_prefaisabilite'][$field] ?? null)) {
+                                throw ValidationException::withMessages([
+                                    "etude_prefaisabilite.$field" => "Le champ $field est obligatoire lorsque le projet est financé."
+                                ]);
+                            }
+                            // validations supplémentaires pour les champs spécifiques
+                            if ($field === 'montant' && (!is_numeric($data['info_etude_prefaisabilite'][$field]) || $data['info_etude_prefaisabilite'][$field] <= 0)) {
+                                throw ValidationException::withMessages([
+                                    "etude_prefaisabilite.$field" => "Le montant doit être un nombre positif."
+                                ]);
+                            }
+
+                            // Ajouter d'autres validations spécifiques si nécessaire
+                            if (in_array($field, ['date_demande', 'date_obtention'])) {
+                                $date = \DateTime::createFromFormat('Y-m-d', $data['info_etude_prefaisabilite'][$field]);
+                                if (!$date || $date->format('Y-m-d') !== $data['info_etude_prefaisabilite'][$field]) {
+                                    throw ValidationException::withMessages([
+                                        "etude_prefaisabilite.$field" => "Le champ $field doit être une date valide au format AAAA-MM-JJ."
+                                    ]);
+                                }
+                            }
+
+                            if ($field === 'reference' && strlen($data['info_etude_prefaisabilite'][$field]) > 100) {
+                                throw ValidationException::withMessages([
+                                    "etude_prefaisabilite.$field" => "La référence ne doit pas dépasser 100 caractères."
+                                ]);
+                            }
                         }
+                        // Toutes les validations sont passées, on peut enregistrer les informations
+                        // enregistrer les informations de financement dans le projet info etude de préfaisabilité
+                        // merge avec les données existantes pour ne pas écraser d'autres infos
+                        $projet->info_etude_prefaisabilite = array_merge($projet->info_etude_prefaisabilite ?? [], [
+                            'est_finance' => $est_finance, // pourquoi cette ligne ?
+                            // recuperer les autres champs depuis $data
+
+                            'date_demande' => $data['info_etude_prefaisabilite']['date_demande'],
+                            'date_obtention' => $data['info_etude_prefaisabilite']['date_obtention'],
+                            'montant' => $data['info_etude_prefaisabilite']['montant'],
+                            'reference' => $data['info_etude_prefaisabilite']['reference'],
+                        ]);
+
+
+                        $projet->save();
                     }
                 }
 
@@ -1673,8 +1716,68 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     $fichierProcesVerbal = $this->gererFichierProcesVerbal($rapport, $data['proces_verbal'], $data);
                 }
 
+                $info_etude_prefaisabilite = $projet->info_etude_prefaisabilite ?? [];
+
+                //validation des informations de si l'étude de préfaisabilité est financée
+                if (!isset($data['etude_prefaisabilite']['est_finance'])) {
+                    throw ValidationException::withMessages([
+                        "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' est obligatoire."
+                    ]);
+                }
+
+                // on doit valider si c'est une valeur booléenne
+                // par exemple une chaîne de caractères, un entier, un tableau, etc.
+                // mais si la valeur est 0 ou 1, on peut la considérer comme booléenne
+
+                if (is_string($data['etude_prefaisabilite']['est_finance'])) {
+                    $valeur = strtolower($data['etude_prefaisabilite']['est_finance']);
+                    if ($valeur === 'true' || $valeur === '1') {
+                        $data['etude_prefaisabilite']['est_finance'] = true;
+                    } elseif ($valeur === 'false' || $valeur === '0') {
+                        $data['etude_prefaisabilite']['est_finance'] = false;
+                    } else {
+                        throw ValidationException::withMessages([
+                            "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                        ]);
+                    }
+                } elseif (is_int($data['etude_prefaisabilite']['est_finance'])) {
+                    if ($data['etude_prefaisabilite']['est_finance'] === 1) {
+                        $data['etude_prefaisabilite']['est_finance'] = true;
+                    } elseif ($data['etude_prefaisabilite']['est_finance'] === 0) {
+                        $data['etude_prefaisabilite']['est_finance'] = false;
+                    } else {
+                        throw ValidationException::withMessages([
+                            "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                        ]);
+                    }
+                } elseif (is_array($data['etude_prefaisabilite']['est_finance']) || is_null($data['etude_prefaisabilite']['est_finance'])) {
+                    throw ValidationException::withMessages([
+                        "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                    ]);
+                }
+                else{
+                    // Si c'est déjà une valeur booléenne, ne rien faire
+                }
+
+                if (!is_bool($data['etude_prefaisabilite']['est_finance'])) {
+                    throw ValidationException::withMessages([
+                        "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                    ]);
+                }
+
+                $est_finance = $data['etude_prefaisabilite']['est_finance'] ?? ($info_etude_prefaisabilite['est_finance'] ?? false);
+
+                // Mettre à jour les informations de l'étude de préfaisabilité dans le projet
                 $projet->update([
-                    'info_etude_prefaisabilite' => $data['etude_prefaisabilite'],
+                    // Fusionner avec les nouvelles valeurs provenant de $data
+                    'info_etude_prefaisabilite' => array_merge($info_etude_prefaisabilite, [
+                        'date_demande'   => $data['etude_prefaisabilite']['date_demande'] ?? ($info_etude_prefaisabilite['date_demande'] ?? null),
+                        'date_obtention' => $data['etude_prefaisabilite']['date_obtention'] ?? ($info_etude_prefaisabilite['date_obtention'] ?? null),
+                        'montant'        => $data['etude_prefaisabilite']['montant'] ?? ($info_etude_prefaisabilite['montant'] ?? null),
+                        'reference'      => $data['etude_prefaisabilite']['reference'] ?? ($info_etude_prefaisabilite['reference'] ?? null),
+                        'est_finance'    => $est_finance,
+                    ]),
+
                     'statut' => StatutIdee::VALIDATION_PF,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_PF),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_PF)
