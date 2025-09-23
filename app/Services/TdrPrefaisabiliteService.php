@@ -31,6 +31,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteServiceInterface
 {
@@ -186,7 +187,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'message' => $message,
                 'data' => $tdrFinal
             ], $statusCode);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             return $this->errorResponse($e);
         }
@@ -350,7 +351,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ->additional(['message' => $message])
                 ->response()
                 ->setStatusCode($statusCode);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
     }
@@ -394,7 +395,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'statut_projet' => $projet->statut,
                 ]
             ]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => "Erreur lors de la récupération des détails du TDR. " . $e->getMessage(),
@@ -543,7 +544,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'commentaires_anterieurs' => $commentairesAnterieurs
                 ]
             ]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             return $this->errorResponse($e);
         }
@@ -669,7 +670,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'statistiques' => $resultatsEvaluation
                 ]
             ]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             return $this->errorResponse($e);
         }
@@ -878,7 +879,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'historique_evaluations' => $historiqueEvaluations,
                 ]
             ]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
     }
@@ -1034,7 +1035,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'resultats_evaluation' => $resultatsEvaluation
                 ]
             ]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             return $this->errorResponse($e);
         }
@@ -1302,7 +1303,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'date_fin_etude' => in_array($data['action'], ['maturite', 'abandonner']) ? now()->format('d/m/Y H:i:s') : null
                 ]
             ]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             return $this->errorResponse($e);
         }
@@ -1416,7 +1417,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'checklist_suivi_validation' => ($evaluationValidation && $evaluationValidation->evaluation && isset($evaluationValidation->evaluation["champs_evalues"])) ? $evaluationValidation->evaluation["champs_evalues"] : null
                 ]
             ]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return $this->errorResponse($e);
         }
     }
@@ -1710,7 +1711,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'rapport' => new RapportResource($rapport)
                 ]
             ]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             return $this->errorResponse($e);
         }
@@ -2969,7 +2970,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'soumis_le' => now()->format('d/m/Y H:i:s')
                 ]
             ]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             return $this->errorResponse($e);
         }
@@ -3065,7 +3066,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'pret_pour_selection' => $data['action'] === 'valider'
                 ]
             ]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             return $this->errorResponse($e);
         }
