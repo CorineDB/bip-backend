@@ -1091,14 +1091,14 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
 
                         foreach ($requiredFields as $field) {
-                            // validation de présence de $data['info_etude_prefaisabilite'][$field]
-                            if (empty($data['info_etude_prefaisabilite'][$field] ?? null)) {
+                            // validation de présence de $data['etude_prefaisabilite'][$field]
+                            if (empty($data['etude_prefaisabilite'][$field] ?? null)) {
                                 throw ValidationException::withMessages([
                                     "etude_prefaisabilite.$field" => "Le champ $field est obligatoire lorsque le projet est financé."
                                 ]);
                             }
                             // validations supplémentaires pour les champs spécifiques
-                            if ($field === 'montant' && (!is_numeric($data['info_etude_prefaisabilite'][$field]) || $data['info_etude_prefaisabilite'][$field] <= 0)) {
+                            if ($field === 'montant' && (!is_numeric($data['etude_prefaisabilite'][$field]) || $data['etude_prefaisabilite'][$field] <= 0)) {
                                 throw ValidationException::withMessages([
                                     "etude_prefaisabilite.$field" => "Le montant doit être un nombre positif."
                                 ]);
@@ -1106,15 +1106,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                             // Ajouter d'autres validations spécifiques si nécessaire
                             if (in_array($field, ['date_demande', 'date_obtention'])) {
-                                $date = \DateTime::createFromFormat('Y-m-d', $data['info_etude_prefaisabilite'][$field]);
-                                if (!$date || $date->format('Y-m-d') !== $data['info_etude_prefaisabilite'][$field]) {
+                                $date = \DateTime::createFromFormat('Y-m-d', $data['etude_prefaisabilite'][$field]);
+                                if (!$date || $date->format('Y-m-d') !== $data['etude_prefaisabilite'][$field]) {
                                     throw ValidationException::withMessages([
                                         "etude_prefaisabilite.$field" => "Le champ $field doit être une date valide au format AAAA-MM-JJ."
                                     ]);
                                 }
                             }
 
-                            if ($field === 'reference' && strlen($data['info_etude_prefaisabilite'][$field]) > 100) {
+                            if ($field === 'reference' && strlen($data['etude_prefaisabilite'][$field]) > 100) {
                                 throw ValidationException::withMessages([
                                     "etude_prefaisabilite.$field" => "La référence ne doit pas dépasser 100 caractères."
                                 ]);
@@ -1127,10 +1127,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             'est_finance' => $est_finance, // pourquoi cette ligne ?
                             // recuperer les autres champs depuis $data
 
-                            'date_demande' => $data['info_etude_prefaisabilite']['date_demande'],
-                            'date_obtention' => $data['info_etude_prefaisabilite']['date_obtention'],
-                            'montant' => $data['info_etude_prefaisabilite']['montant'],
-                            'reference' => $data['info_etude_prefaisabilite']['reference'],
+                            'date_demande' => $data['etude_prefaisabilite']['date_demande'],
+                            'date_obtention' => $data['etude_prefaisabilite']['date_obtention'],
+                            'montant' => $data['etude_prefaisabilite']['montant'],
+                            'reference' => $data['etude_prefaisabilite']['reference'],
                         ]);
 
 
