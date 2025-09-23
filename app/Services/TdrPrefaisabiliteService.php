@@ -1089,6 +1089,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     if($est_finance) {
                         // Le projet est financé
 
+                        throw new Exception("Error Processing Request : " . $data['etude_prefaisabilite']["montant"], 1);
                         $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
 
                          foreach ($requiredFields as $field) {
@@ -1103,6 +1104,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             // Il faut savoir que les donnees sont soumis dans un formdata donc tout est string
                             // donc il faut convertir les types si nécessaire
                             // En faisant quoi ?
+                            throw new Exception("Error Processing Request : " . $data['etude_prefaisabilite'][$field], 1);
                             if($field  === 'montant'){
                                 //convertir en float
                                 $data['etude_prefaisabilite'][$field] = floatval(str_replace(',', '.', $data['etude_prefaisabilite'][$field]));
