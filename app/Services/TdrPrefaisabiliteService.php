@@ -1053,16 +1053,18 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 throw new Exception("Vous n\'avez pas les droits pour effectuer cette évaluation.", 403);
             }
 
+            throw ValidationException::withMessages(["Form data" => $data]);
+
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if ($projet->statut->value !== StatutIdee::VALIDATION_PF->value) {
+            /* if ($projet->statut->value !== StatutIdee::VALIDATION_PF->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de validation de préfaisabilité.'
                 ], 422);
-            }
+            } */
 
             if ($data['action'] != 'sauvegarder') {
 
@@ -1330,7 +1332,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 StatutIdee::PRET->value,
                 StatutIdee::MATURITE->value,
                 StatutIdee::RAPPORT->value,
-
                 StatutIdee::ABANDON->value
             ])) {
                 return response()->json([
