@@ -1090,7 +1090,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                         $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
 
-                        foreach ($requiredFields as $field) {
+                        /*foreach ($requiredFields as $field) {
                             // validation de présence de $data['etude_prefaisabilite'][$field]
                             if (!isset($data['etude_prefaisabilite'][$field]) || empty($data['etude_prefaisabilite'][$field])) {
                                 throw ValidationException::withMessages([
@@ -1119,7 +1119,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                                     "etude_prefaisabilite.$field" => "La référence ne doit pas dépasser 100 caractères."
                                 ]);
                             }
-                        }
+                        }*/
                         // Toutes les validations sont passées, on peut enregistrer les informations
                         // enregistrer les informations de financement dans le projet info etude de préfaisabilité
                         // merge avec les données existantes pour ne pas écraser d'autres infos
