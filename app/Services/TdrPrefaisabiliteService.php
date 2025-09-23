@@ -1085,13 +1085,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         $est_finance = filter_var($est_finance, FILTER_VALIDATE_BOOLEAN);
                     }
 
-                    throw new Exception($est_finance, 1);
 
-
-                    /* if($est_finance) {
+                    if($est_finance) {
                         // Le projet est financé
 
                         $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
+
+                        throw new Exception("Est_finance : " . json_encode($requiredFields), 1);
 
                         foreach ($requiredFields as $field) {
                             // validation de présence de $data['etude_prefaisabilite'][$field]
@@ -1139,7 +1139,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
 
                         $projet->save();
-                    } */
+                    }
                 }
 
             }
