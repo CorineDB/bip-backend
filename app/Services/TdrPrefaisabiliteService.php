@@ -1092,7 +1092,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         // décoder les données JSON
                         $data['etude_prefaisabilite'] = (array) json_decode($data['etude_prefaisabilite'], true);
 
-                        throw new Exception("Error Processing Request : " . ($data['etude_prefaisabilite']), 1);
+                        throw new Exception("Error Processing Request : " . ($data['etude_prefaisabilite']['montant']), 1);
                         $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
 
                          foreach ($requiredFields as $field) {
