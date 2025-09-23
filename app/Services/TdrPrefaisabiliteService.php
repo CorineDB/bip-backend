@@ -1053,7 +1053,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 throw new Exception("Vous n\'avez pas les droits pour effectuer cette évaluation.", 403);
             }
 
-            throw ValidationException::withMessages(["Form data" => $data]);
+            throw new Exception("Form data : " . json_encode($data));
 
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
