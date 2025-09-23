@@ -1188,7 +1188,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'evaluateur_id' => auth()->id(),
                 'valider_par' => auth()->id(),
                 'commentaire' => $data['commentaire'] ?? $messageAction,
-                'evaluation' => json_encode($data),
+                'evaluation' => $data,
                 'resultats_evaluation' => $data['action'],
                 'statut' => 1
             ]);
