@@ -1087,11 +1087,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
 
                     if($est_finance) {
-                        // Le projet est financé
-
-                        // décoder les données JSON
-
-                        // Decoder les données JSON
                         if (!isset($data['etude_prefaisabilite']) || empty($data['etude_prefaisabilite'])) {
                             throw ValidationException::withMessages([
                                 "etude_prefaisabilite" => "Les informations de financement sont obligatoires lorsque le projet est financé."
@@ -1118,8 +1113,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             }
                             // validations supplémentaires pour les champs spécifiques
                             // Il faut savoir que les donnees sont soumis dans un formdata donc tout est string
-                            // donc il faut convertir les types si nécessaire
-                            // En faisant quoi ?
 
                             if ($field === 'montant' && (!is_numeric($data['etude_prefaisabilite'][$field]) || $data['etude_prefaisabilite'][$field] <= 0)) {
                                 throw ValidationException::withMessages([
@@ -1330,6 +1323,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'info_etude_prefaisabilite' => $info,
                     ]);
             }
+
+            throw new Exception("Error Processing Request" . $data["fichier_rapport_validation"], 1);
 
             // Attacher le fichier rapport de validation si fourni
             if (isset($data['fichier_rapport_validation']) && $data['action'] !== 'sauvegarder') {
