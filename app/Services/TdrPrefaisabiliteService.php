@@ -2517,6 +2517,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             StatutIdee::EVALUATION_TDR_PF => \App\Enums\PhasesIdee::evaluation_ex_tante,
             StatutIdee::SOUMISSION_RAPPORT_PF => \App\Enums\PhasesIdee::evaluation_ex_tante,
             StatutIdee::VALIDATION_PF => \App\Enums\PhasesIdee::evaluation_ex_tante,
+            StatutIdee::TDR_FAISABILITE => \App\Enums\PhasesIdee::evaluation_ex_tante,
             StatutIdee::MATURITE => \App\Enums\PhasesIdee::evaluation_ex_tante,
             StatutIdee::RAPPORT => \App\Enums\PhasesIdee::evaluation_ex_tante,
             StatutIdee::PRET => \App\Enums\PhasesIdee::selection,
@@ -2537,6 +2538,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             StatutIdee::RAPPORT => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
             StatutIdee::ABANDON => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
             StatutIdee::EVALUATION_TDR_F => \App\Enums\SousPhaseIdee::faisabilite,
+            StatutIdee::TDR_FAISABILITE => \App\Enums\SousPhaseIdee::faisabilite,
             StatutIdee::PRET => \App\Enums\SousPhaseIdee::selection,
             default => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
         };
