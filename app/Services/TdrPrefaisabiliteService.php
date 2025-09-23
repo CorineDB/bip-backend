@@ -1327,6 +1327,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 StatutIdee::VALIDATION_F->value,
                 StatutIdee::R_TDR_FAISABILITE->value,
                 StatutIdee::TDR_FAISABILITE->value,
+                StatutIdee::PRET->value,
+                StatutIdee::MATURITE->value,
+                StatutIdee::RAPPORT->value,
 
                 StatutIdee::ABANDON->value
             ])) {
@@ -1395,6 +1398,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ] : null, ? */ [
                         'id' => $evaluationValidation->id,
                         'evaluation' => $evaluationValidation->evaluation,
+                        'decision' => $evaluationValidation->resultats_evaluation,
                         'statut' => $evaluationValidation->statut, // 0=en cours, 1=terminée
                         'evaluateur' => new UserResource($evaluationValidation->evaluateur),
                         'date_debut' => Carbon::parse($evaluationValidation->date_debut_evaluation)->format("Y-m-d h:i:s"),
