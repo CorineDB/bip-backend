@@ -1072,8 +1072,14 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ]);
                 }
 
-                throw new Exception("Form data : " . isset($projet->info_etude_prefaisabilite['est_finance']) . $projet->info_etude_prefaisabilite['est_finance'] === true  );
+                throw new Exception("Form data : " . $projet->info_etude_prefaisabilite['est_finance'] === true  );
 
+                /*
+                 * . " \n " . (
+                    isset($projet->info_etude_prefaisabilite['est_finance']) &&
+                    $projet->info_etude_prefaisabilite['est_finance'] === true
+                )
+                 */
                 if (
                     isset($projet->info_etude_prefaisabilite['est_finance']) &&
                     $projet->info_etude_prefaisabilite['est_finance'] === true
