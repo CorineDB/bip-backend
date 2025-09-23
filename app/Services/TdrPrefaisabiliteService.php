@@ -1089,6 +1089,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     if($est_finance) {
                         // Le projet est financé
 
+                        // décoder les données JSON
+                        $data['etude_prefaisabilite'] = (array) json_decode($data['etude_prefaisabilite'], true);
+
                         throw new Exception("Error Processing Request : " . ($data['etude_prefaisabilite']), 1);
                         $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
 
