@@ -1074,7 +1074,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 throw new Exception("Form data : " . $projet->info_etude_prefaisabilite ? json_encode($projet->info_etude_prefaisabilite) : 'null', 422);
 
-                /**
+                /*
                  * . " \n " . (
                     isset($projet->info_etude_prefaisabilite['est_finance']) &&
                     $projet->info_etude_prefaisabilite['est_finance'] === true
