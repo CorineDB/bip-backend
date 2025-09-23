@@ -1090,9 +1090,22 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         // Le projet est financé
 
                         // décoder les données JSON
+
+                        // Decoder les données JSON
+                        if (!isset($data['etude_prefaisabilite']) || empty($data['etude_prefaisabilite'])) {
+                            throw ValidationException::withMessages([
+                                "etude_prefaisabilite" => "Les informations de financement sont obligatoires lorsque le projet est financé."
+                            ]);
+                        }elseif(!is_string($data['etude_prefaisabilite']) || !is_array(json_decode($data['etude_prefaisabilite'], true))){
+                            throw ValidationException::withMessages([
+                                "etude_prefaisabilite" => "Les informations de financement sont invalides."
+                            ]);
+                        }
+
+
+                        // Convertir la chaîne JSON en tableau associatif
                         $data['etude_prefaisabilite'] = (array) json_decode($data['etude_prefaisabilite'], true);
 
-                        throw new Exception("Error Processing Request : " . ($data['etude_prefaisabilite']['montant']), 1);
                         $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
 
                          foreach ($requiredFields as $field) {
@@ -1107,7 +1120,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             // Il faut savoir que les donnees sont soumis dans un formdata donc tout est string
                             // donc il faut convertir les types si nécessaire
                             // En faisant quoi ?
-                            throw new Exception("Error Processing Request : " . $data['etude_prefaisabilite'][$field], 1);
                             if($field  === 'montant'){
                                 //convertir en float
                                 $data['etude_prefaisabilite'][$field] = floatval(str_replace(',', '.', $data['etude_prefaisabilite'][$field]));
