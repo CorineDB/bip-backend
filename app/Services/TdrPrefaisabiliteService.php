@@ -1144,13 +1144,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             }
                         }
 
-                        /*throw new Exception("Error Processing Request : "); */
+                        throw new Exception("Error Processing Request " . json_encode($projet->info_etude_prefaisabilite ?? []), 1);
 
 
                         // Toutes les validations sont passées, on peut enregistrer les informations
                         // enregistrer les informations de financement dans le projet info etude de préfaisabilité
                         // merge avec les données existantes pour ne pas écraser d'autres infos
-                        /* $projet->info_etude_prefaisabilite = array_merge($projet->info_etude_prefaisabilite ?? [], [
+                        $projet->info_etude_prefaisabilite = array_merge($projet->info_etude_prefaisabilite ?? [], [
                             //'est_finance' => $est_finance, // pourquoi cette ligne ?
                             // recuperer les autres champs depuis $data
 
@@ -1161,7 +1161,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         ]);
 
 
-                        $projet->save(); */
+                        $projet->save();
 
                         throw new Exception("Error Processing Request", 1);
                     }
