@@ -1134,9 +1134,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             // recuperer les autres champs depuis $data
 
                             'date_demande' => $data['etude_prefaisabilite']['date_demande'],
-                            'date_obtention' => $data['etude_prefaisabilite']['date_obtention'],
+                            'date_obtention' => $data['etude_prefaisabilite']['date_obtention'],/*
                             'montant' => $data['etude_prefaisabilite']['montant'],
-                            'reference' => $data['etude_prefaisabilite']['reference'],
+                            'reference' => $data['etude_prefaisabilite']['reference'], */
                         ]);
 
 
