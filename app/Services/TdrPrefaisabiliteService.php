@@ -1093,8 +1093,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                         foreach ($requiredFields as $field) {
                             // validation de présence de $data['etude_prefaisabilite'][$field]
-                            throw new Exception("Est_finance : $field " . (!isset($data['etude_prefaisabilite'][$field]) || empty($data['etude_prefaisabilite'][$field])), 1);
-                            if (!isset($data['etude_prefaisabilite'][$field]) || empty($data['etude_prefaisabilite'][$field])) {
+                            throw new Exception("Est_finance : $field " . (!isset($data['etude_prefaisabilite'][$field]) && empty($data['etude_prefaisabilite'][$field])), 1);
+                            if (!isset($data['etude_prefaisabilite'][$field]) && empty($data['etude_prefaisabilite'][$field])) {
                                 throw ValidationException::withMessages([
                                     "etude_prefaisabilite.$field" => "Le champ $field est obligatoire lorsque le projet est financé. " . $data['etude_prefaisabilite'][$field]
                                 ]);
