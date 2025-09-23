@@ -1324,11 +1324,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ]);
             }
 
-            throw new Exception("Error Processing Request" . $data["fichier_rapport_validation"], 1);
+            throw new Exception("Error Processing Request" . $data["rapport_validation_etude"], 1);
 
             // Attacher le fichier rapport de validation si fourni
-            if (isset($data['fichier_rapport_validation']) && $data['action'] !== 'sauvegarder') {
-                $this->attacherFichierRapportValidation($projet, $data['fichier_rapport_validation'], $evaluationValidation);
+            if (isset($data['rapport_validation_etude']) && $data['action'] !== 'sauvegarder') {
+                $this->attacherFichierRapportValidation($projet, $data['rapport_validation_etude'], $evaluationValidation);
             }
 
             // Enregistrer le workflow et la décision si le statut a changé
