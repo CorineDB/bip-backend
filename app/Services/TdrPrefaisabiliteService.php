@@ -1091,7 +1091,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                         $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
 
-                        foreach ($requiredFields as $field) {
+                        /* foreach ($requiredFields as $field) {
                             // validation de présence de $data['etude_prefaisabilite'][$field]
                             //throw new Exception("Est_finance : $field " . "Form data" . json_encode($data["etude_prefaisabilite"]) . (!isset($data['etude_prefaisabilite'][$field]) && !empty($data['etude_prefaisabilite'][$field])));
                             if (!isset($data['etude_prefaisabilite'][$field]) && !empty($data['etude_prefaisabilite'][$field])) {
@@ -1123,7 +1123,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             }
                         }
 
-                        throw new Exception("Error Processing Request : ");
+                        throw new Exception("Error Processing Request : "); */
 
 
                         // Toutes les validations sont passées, on peut enregistrer les informations
