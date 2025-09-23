@@ -116,6 +116,8 @@ class Projet extends Model
         'est_dur' => 'boolean',
         'cout_estimatif_projet' => 'array',
         'ficheIdee' => 'array',
+        'info_etude_prefaisabilite' => 'array',
+        'info_etude_faisabilite' => 'array',
         'parties_prenantes' => 'array',
         'objectifs_specifiques' => 'array',
         'resultats_attendus' => 'array',
