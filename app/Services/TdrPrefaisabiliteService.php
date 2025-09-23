@@ -1085,7 +1085,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         $est_finance = filter_var($est_finance, FILTER_VALIDATE_BOOLEAN);
                     }
 
-                    if($est_finance) {
+                    /* if($est_finance) {
                         // Le projet est financé
 
                         $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
@@ -1136,7 +1136,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
 
                         $projet->save();
-                    }
+                    } */
                 }
 
             }
