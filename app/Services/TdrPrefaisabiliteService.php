@@ -1100,6 +1100,23 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                                 ]);
                             }
                             // validations supplémentaires pour les champs spécifiques
+                            // Il faut savoir que les donnees sont soumis dans un formdata donc tout est string
+                            // donc il faut convertir les types si nécessaire
+                            // En faisant quoi ?
+                            if($field  === 'montant'){
+                                //convertir en float
+                                $data['etude_prefaisabilite'][$field] = floatval(str_replace(',', '.', $data['etude_prefaisabilite'][$field]));
+
+                                throw new Exception("Montant : " . $data['etude_prefaisabilite'][$field] . " is_numeric: " . (is_numeric($data['etude_prefaisabilite'][$field]) ? 'true' : 'false'));
+
+                                // si ce n'est pas un nombre
+                                if(!is_numeric($data['etude_prefaisabilite'][$field])){
+                                    throw ValidationException::withMessages([
+                                      "etude_prefaisabilite.$field" => "Le montant doit être un nombre."
+                                    ]);
+                                }
+                            }
+
                             if ($field === 'montant' && (!is_numeric($data['etude_prefaisabilite'][$field]) || $data['etude_prefaisabilite'][$field] <= 0)) {
                                 throw ValidationException::withMessages([
                                     "etude_prefaisabilite.$field" => "Le montant doit être un nombre positif."
