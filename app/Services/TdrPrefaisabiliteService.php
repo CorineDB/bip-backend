@@ -1129,18 +1129,18 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         // Toutes les validations sont passées, on peut enregistrer les informations
                         // enregistrer les informations de financement dans le projet info etude de préfaisabilité
                         // merge avec les données existantes pour ne pas écraser d'autres infos
-                        $projet->info_etude_prefaisabilite = array_merge($projet->info_etude_prefaisabilite ?? [], [
+                        /* $projet->info_etude_prefaisabilite = array_merge($projet->info_etude_prefaisabilite ?? [], [
                             //'est_finance' => $est_finance, // pourquoi cette ligne ?
                             // recuperer les autres champs depuis $data
 
                             'date_demande' => $data['etude_prefaisabilite']['date_demande'],
-                            'date_obtention' => $data['etude_prefaisabilite']['date_obtention'],/*
+                            'date_obtention' => $data['etude_prefaisabilite']['date_obtention'],
                             'montant' => $data['etude_prefaisabilite']['montant'],
-                            'reference' => $data['etude_prefaisabilite']['reference'], */
+                            'reference' => $data['etude_prefaisabilite']['reference'],
                         ]);
 
 
-                        $projet->save();
+                        $projet->save(); */
                     }
                 }
 
