@@ -1053,8 +1053,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 throw new Exception("Vous n\'avez pas les droits pour effectuer cette évaluation.", 403);
             }
 
-            throw new Exception("Form data : " . json_encode($data));
-
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
@@ -1074,6 +1072,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ]);
                 }
 
+                throw new Exception("Form data : " . isset($projet->info_etude_prefaisabilite['est_finance']) . " \n " . $projet->info_etude_prefaisabilite['est_finance'] === true  . " \n " . (
+                    isset($projet->info_etude_prefaisabilite['est_finance']) &&
+                    $projet->info_etude_prefaisabilite['est_finance'] === true
+                )  );
                 if (
                     isset($projet->info_etude_prefaisabilite['est_finance']) &&
                     $projet->info_etude_prefaisabilite['est_finance'] === true
