@@ -1123,7 +1123,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             }
                         }
 
-                        throw new Exception("Error Processing Request : " . $projet->info_etude_prefaisabilite['est_finance'], 1);
+                        throw new Exception("Error Processing Request : ");
 
 
                         // Toutes les validations sont passées, on peut enregistrer les informations
