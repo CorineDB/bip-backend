@@ -1231,7 +1231,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 // Mettre à jour l'évaluation avec les données complètes
                 $evaluationValidation->fill([
-                    'evaluation' => json_encode($evaluationComplete),
+                    'evaluation' => $evaluationComplete,
                 ]);
 
                 $evaluationValidation->save();
