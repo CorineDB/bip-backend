@@ -31,6 +31,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use App\Helpers\SlugHelper;
 
 class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteServiceInterface
 {
@@ -259,10 +260,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $dossierTdr->full_path :
             'projets/' . $hashedIdentifiantBip . '/Evaluation ex-ante/Etude de préfaisabilité/Termes de référence/Autres documents';
 
-        // Créer le dossier s'il n'existe pas
-        \Storage::disk('local')->makeDirectory($cheminStockage);
+        // Nettoyer le chemin pour le stockage physique (éliminer espaces et caractères spéciaux)
+        $cheminStockagePhysique = strtolower(SlugHelper::generateFilePath($cheminStockage));
 
-        $chemin = $fichier->storeAs($cheminStockage, $nomStockage, 'local');
+        // Créer le dossier s'il n'existe pas
+        \Storage::disk('local')->makeDirectory($cheminStockagePhysique);
+
+        $chemin = $fichier->storeAs($cheminStockagePhysique, $nomStockage, 'local');
 
         // Créer l'enregistrement Fichier
         return Fichier::create([
@@ -497,9 +501,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $fichierTdr = $this->sauvegarderFichierTdr($tdr, $data['tdr'], $data);
             }
 
-            // Récupérer les commentaires des évaluations antérieures si c'est un retour
-            $commentairesAnterieurs = $this->getCommentairesAnterieurs($projet);
-
             $projet->resume_tdr_prefaisabilite = $data["resume_tdr_prefaisabilite"];
 
             // Changer le statut du projet seulement si est_soumise est true
@@ -539,8 +540,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'tdr_pre_faisabilite' => $data['tdr_pre_faisabilite'] ?? null,
                     'type_tdr' => $data['type_tdr'] ?? null,
                     'soumis_par' => auth()->id(),
-                    'soumis_le' => $estSoumise ? now()->format('d/m/Y H:i:s') : null,
-                    'commentaires_anterieurs' => $commentairesAnterieurs
+                    'soumis_le' => $estSoumise ? now()->format('d/m/Y H:i:s') : null
                 ]
             ]);
         } catch (Exception $e) {
@@ -1977,10 +1977,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $dossierTdr->full_path :
             'projets/' . $hashedIdentifiantBip . '/Evaluation ex-ante/Etude de préfaisabilité/Termes de référence/Documents TDR';
 
-        // Créer le dossier s'il n'existe pas
-        \Storage::disk('local')->makeDirectory($cheminStockage);
+        // Nettoyer le chemin pour le stockage physique (éliminer espaces et caractères spéciaux)
+        $cheminStockagePhysique = strtolower(SlugHelper::generateFilePath($cheminStockage));
 
-        $chemin = $fichier->storeAs($cheminStockage, $nomStockage, 'local');
+        // Créer le dossier s'il n'existe pas
+        \Storage::disk('local')->makeDirectory($cheminStockagePhysique);
+
+        $chemin = $fichier->storeAs($cheminStockagePhysique, $nomStockage, 'local');
 
         // Créer l'enregistrement Fichier
         return Fichier::create([
@@ -1991,7 +1994,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             'mime_type' => $fichier->getMimeType(),
             'taille' => $fichier->getSize(),
             'hash_md5' => md5_file($fichier->getRealPath()),
-            'description' => $data['resume'] ?? 'Termes de référence pour l\'étude de préfaisabilité',
+            'description' => $data['resume'] ?? "Termes de référence pour l'étude de préfaisabilité",
             'commentaire' => $data['resume'] ?? null,
             'metadata' => [
                 'type_document' => 'tdr-prefaisabilite',

@@ -910,7 +910,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             if (!$evaluation) {
                 $evaluation = $noteConceptuelle->evaluationTermine();
 
-                if ($noteConceptuelle->statut && $evaluation->resultats_evaluation['resultat_global'] !== 'passe') {
+                if ($noteConceptuelle->statut == 1 && $evaluation->resultats_evaluation['resultat_global'] !== 'passe') {
                     return response()->json([
                         'success' => true,
                         'data' => null,
@@ -2051,8 +2051,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             'local'
         );
 
-        // Créer ou récupérer la structure de dossiers pour TDR
-        $dossierNoteConceptuelle = $this->getOrCreateNoteConceptuelleFolderStructure($noteConceptuelle->projetId, 'tdr');
+        // Créer ou récupérer la structure de dossiers pour note conceptuelle
+        $dossierNoteConceptuelle = $this->getOrCreateNoteConceptuelleFolderStructure($noteConceptuelle->projetId, 'note-conceptuelle');
 
         // Générer le hash d'accès public
         $hashAcces = $this->generateFileAccessHash($noteConceptuelle->id, $storageName, $category);

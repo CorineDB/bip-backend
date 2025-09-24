@@ -15,28 +15,39 @@ use App\Enums\TypesProjet;
 use App\Http\Resources\TdrResource;
 use App\Http\Resources\projets\ProjetResource;
 use App\Http\Resources\UserResource;
+use App\Repositories\Contracts\CategorieCritereRepositoryInterface;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
+use App\Repositories\Contracts\TdrRepositoryInterface;
 use App\Services\Contracts\TdrFaisabiliteServiceInterface;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Helpers\SlugHelper;
 
 class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteServiceInterface
 {
+    protected TdrRepositoryInterface $tdrRepository;
     protected DocumentRepositoryInterface $documentRepository;
     protected ProjetRepositoryInterface $projetRepository;
     protected EvaluationRepositoryInterface $evaluationRepository;
+    protected CategorieCritereRepositoryInterface $categorieCritereRepository;
 
     public function __construct(
         DocumentRepositoryInterface $documentRepository,
         ProjetRepositoryInterface $projetRepository,
-        EvaluationRepositoryInterface $evaluationRepository
+        EvaluationRepositoryInterface $evaluationRepository,
+        CategorieCritereRepositoryInterface $categorieCritereRepository,
+        TdrRepositoryInterface $tdrRepository
     ) {
+        parent::__construct($tdrRepository);
+
         $this->documentRepository = $documentRepository;
         $this->projetRepository = $projetRepository;
         $this->evaluationRepository = $evaluationRepository;
+        $this->categorieCritereRepository = $categorieCritereRepository;
+        $this->tdrRepository = $tdrRepository;
     }
 
     protected function getResourceClass(): string
@@ -109,7 +120,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             }
 
             // Récupérer le TDR le plus récent pour ce projet
-            $tdr = $this->repository->getModel()
+            $tdr = $this->tdrRepository->getModel()
                 ->where('projet_id', $projetId)
                 ->where('type', 'faisabilite')
                 ->with(['soumisPar', 'redigerPar', 'fichiers.uploadedBy'])
@@ -128,8 +139,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'success' => true,
                 'data' => [
                     'tdr' => new TdrResource($tdr->load("projet")),
-                    'statut_projet' => $projet->statut,
-                    'peut_apprecier' => $projet->statut->value === StatutIdee::TDR_FAISABILITE->value,
+                    'statut_projet' => $projet->statut
                 ]
             ]);
 
@@ -211,20 +221,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 $message = 'TDR de faisabilité créé avec succès.';
             }
 
-            /*
-            // Récupérer le canevas de rédaction TDR faisabilité
-            $canevasTdr = $this->documentRepository->getModel()->where([
-                'type' => 'formulaire'
-            ])->whereHas('categorie', function ($query) {
-                $query->where('slug', 'canevas-redaction-tdr-faisabilite');
-            })->orderBy('created_at', 'desc')->first();
-
-            if ($canevasTdr) {
-                // Sauvegarder les champs dynamiques basés sur le canevas
-                $this->saveDynamicFieldsFromCanevas($tdr, $champsData, $canevasTdr);
-            }
-                */
-
             // Gérer les documents/fichiers
             if (!empty($documentsData)) {
                 $this->handleDocuments($tdr, $documentsData);
@@ -235,9 +231,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             if (isset($data['tdr'])) {
                 $fichierTdr = $this->sauvegarderFichierTdr($tdr, $data['tdr'], $data);
             }
-
-            // Récupérer les commentaires des évaluations antérieures si c'est un retour
-            $commentairesAnterieurs = $this->getCommentairesAnterieurs($projet);
 
             $projet->resume_tdr_faisabilite = $data["resume_tdr_faisabilite"];
 
@@ -278,8 +271,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'tdr_faisabilite' => $data['tdr_faisabilite'] ?? null,
                     'type_tdr' => $data['type_tdr'] ?? null,
                     'soumis_par' => auth()->id(),
-                    'soumis_le' => $estSoumise ? now()->format('d/m/Y H:i:s') : null,
-                    'commentaires_anterieurs' => $commentairesAnterieurs
+                    'soumis_le' => $estSoumise ? now()->format('d/m/Y H:i:s') : null
                 ]
             ]);
         } catch (Exception $e) {
@@ -287,7 +279,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             return $this->errorResponse($e);
         }
     }
-
 
     /**
      * Apprécier et évaluer les TDRs de faisabilité (SFD-015)
@@ -854,7 +845,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             return $this->errorResponse($e);
         }
     }
-
     /**
      * Soumettre le rapport de faisabilité (SFD-016)
      */
@@ -1187,7 +1177,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             return $this->errorResponse($e);
         }
     }
-
     /**
      * Récupérer le rapport soumis pour un projet
      */
@@ -1248,7 +1237,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
         }
     }
-
     /**
      * Traiter toutes les checklists d'étude de faisabilité
      */
@@ -1541,15 +1529,34 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     }
 
     /**
-     * Sauvegarder le fichier TDR téléversé
+     * Sauvegarder le fichier TDR avec version
      */
-    private function sauvegarderFichierTdr(\App\Models\Tdr $tdr, $fichier, array $data): Fichier
+    private function sauvegarderFichierTdr(\App\Models\Tdr $tdr, $fichier, array $data, int $version = 1): Fichier
     {
         // Générer les informations du fichier
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = 'tdr_faisabilite_' . $tdr->id . '_' . time() . '.' . $extension;
-        $chemin = $fichier->storeAs("tdrs/{$tdr->id}/faisabilite", $nomStockage, 'public');
+
+        // Créer ou récupérer la structure de dossiers pour TDR
+        $dossierTdr = $this->getOrCreateTdrFolderStructure($tdr->projet_id, 'tdr');
+
+        // Hasher l'identifiant BIP pour le stockage physique
+        $hashedIdentifiantBip = hash('sha256', $tdr->projet->identifiant_bip);
+
+        // Générer un nom de fichier unique avec timestamp
+        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
+
+        // Créer le chemin basé sur la structure de dossiers en base de données (avec hash pour stockage)
+        $cheminStockage = $dossierTdr ?
+            $dossierTdr->full_path :
+            'projets/' . $hashedIdentifiantBip . '/Evaluation ex-ante/Etude de faisabilité/Termes de référence/Documents TDR';
+
+        // Nettoyer le chemin pour le stockage physique (éliminer espaces et caractères spéciaux)
+        $cheminStockagePhysique = strtolower(SlugHelper::generateFilePath($cheminStockage));
+
+        // Créer le dossier s'il n'existe pas
+        \Storage::disk('local')->makeDirectory($cheminStockagePhysique);
+        $chemin = $fichier->storeAs($cheminStockagePhysique, $nomStockage, 'local');
 
         // Créer l'enregistrement Fichier
         return Fichier::create([
@@ -1560,18 +1567,24 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             'mime_type' => $fichier->getMimeType(),
             'taille' => $fichier->getSize(),
             'hash_md5' => md5_file($fichier->getRealPath()),
-            'description' => $data['resume'] ?? 'Termes de référence pour l\'étude de faisabilité',
+            'description' => $data['resume'] ?? "Termes de référence pour l'étude de faisabilité",
             'commentaire' => $data['resume'] ?? null,
             'metadata' => [
                 'type_document' => 'tdr-faisabilite',
                 'tdr_id' => $tdr->id,
                 'projet_id' => $tdr->projet_id,
+                'version' => $version,
+                'statut' => 'actif',
                 'resume' => $data['resume'] ?? null,
                 'tdr_faisabilite' => $data['tdr_faisabilite'] ?? null,
+                'tdr_pre_faisabilite' => $data['tdr_pre_faisabilite'] ?? null,
                 'type_tdr' => $data['type_tdr'] ?? 'faisabilite',
                 'soumis_par' => auth()->id(),
-                'soumis_le' => now()
+                'soumis_le' => now()->toISOString(),
+                'uploaded_context' => 'tdr-faisabilite',
+                'dossier_public' => $dossierTdr ? $dossierTdr->full_path : 'Projets/' . $tdr->projet->identifiant_bip . '/Evaluation ex-ante/Etude de faisabilité/Termes de référence'
             ],
+            'dossier_id' => $dossierTdr?->id,
             'fichier_attachable_id' => $tdr->id,
             'fichier_attachable_type' => \App\Models\Tdr::class,
             'categorie' => 'tdr-faisabilite',
@@ -2165,5 +2178,263 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         $fichier->save();
 
         return $fichier;
+    }
+
+    /**
+     * Gérer le fichier rapport de faisabilité
+     */
+    private function gererFichierRapport(Rapport $rapport, $fichier, array $data): ?Fichier
+    {
+        // Calculer le hash du nouveau fichier
+        $nouveauHash = md5_file($fichier->getRealPath());
+
+        // Vérifier s'il y a déjà un fichier rapport avec le même hash lié à ce rapport
+        $fichierIdentique = $rapport->fichiersRapport()
+            ->where('hash_md5', $nouveauHash)
+            ->where('is_active', true)
+            ->first();
+
+        if ($fichierIdentique) {
+            return $fichierIdentique;
+        }
+
+        // Désactiver les anciens fichiers rapport de ce rapport
+        $rapport->fichiersRapport()
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
+
+        // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_faisabilite/rapport/{hash_id}
+        $hashedProjectId = hash('sha256', $rapport->projet_id);
+        $hashedRapportId = hash('sha256', $rapport->id);
+
+        // Stocker le fichier sur le disque
+        $nomOriginal = $fichier->getClientOriginalName();
+        $extension = $fichier->getClientOriginalExtension();
+        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
+        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_faisabilite/rapport_faisabilite/{$hashedRapportId}", $nomStockage, 'local');
+
+        // Créer le nouveau fichier et l'associer au rapport
+        $fichierCree = Fichier::create([
+            'nom_original' => $nomOriginal,
+            'nom_stockage' => $nomStockage,
+            'chemin' => $chemin,
+            'extension' => $extension,
+            'mime_type' => $fichier->getMimeType(),
+            'taille' => $fichier->getSize(),
+            'hash_md5' => $nouveauHash,
+            'description' => 'Rapport de faisabilité',
+            'commentaire' => $data['commentaire_rapport'] ?? null,
+            'categorie' => 'rapport',
+            'is_active' => true,
+            'uploaded_by' => auth()->id(),
+            'metadata' => [
+                'type_document' => 'rapport-faisabilite',
+                'rapport_id' => $rapport->id,
+                'projet_id' => $rapport->projet_id,
+                'statut' => 'actif',
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now()
+            ]
+        ]);
+
+        // Associer le fichier au rapport
+        $rapport->fichiersRapport()->attach($fichierCree->id);
+
+        return $fichierCree;
+    }
+
+    /**
+     * Gérer le fichier procès-verbal de faisabilité
+     */
+    private function gererFichierProcesVerbal(Rapport $rapport, $fichier, array $data): ?Fichier
+    {
+        // Calculer le hash du nouveau fichier
+        $nouveauHash = md5_file($fichier->getRealPath());
+
+        // Vérifier s'il y a déjà un procès verbal avec le même hash lié à ce rapport
+        $procesVerbalIdentique = $rapport->procesVerbaux()
+            ->where('hash_md5', $nouveauHash)
+            ->where('is_active', true)
+            ->first();
+
+        if ($procesVerbalIdentique) {
+            return $procesVerbalIdentique;
+        }
+
+        // Désactiver les anciens procès verbaux de ce rapport
+        $rapport->procesVerbaux()
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
+
+        // Hasher les IDs pour le chemin
+        $hashedProjectId = hash('sha256', $rapport->projet_id);
+        $hashedRapportId = hash('sha256', $rapport->id);
+
+        // Stocker le fichier sur le disque
+        $nomOriginal = $fichier->getClientOriginalName();
+        $extension = $fichier->getClientOriginalExtension();
+        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
+        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_faisabilite/proces_verbal/{$hashedRapportId}", $nomStockage, 'local');
+
+        // Créer le nouveau fichier et l'associer au rapport
+        $fichierCree = Fichier::create([
+            'nom_original' => $nomOriginal,
+            'nom_stockage' => $nomStockage,
+            'chemin' => $chemin,
+            'extension' => $extension,
+            'mime_type' => $fichier->getMimeType(),
+            'taille' => $fichier->getSize(),
+            'hash_md5' => $nouveauHash,
+            'description' => 'Procès-verbal de faisabilité',
+            'commentaire' => $data['commentaire_proces_verbal'] ?? null,
+            'categorie' => 'proces-verbal',
+            'is_active' => true,
+            'uploaded_by' => auth()->id(),
+            'metadata' => [
+                'type_document' => 'proces-verbal-faisabilite',
+                'rapport_id' => $rapport->id,
+                'projet_id' => $rapport->projet_id,
+                'statut' => 'actif',
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now()
+            ]
+        ]);
+
+        // Associer le fichier au rapport
+        $rapport->procesVerbaux()->attach($fichierCree->id);
+
+        return $fichierCree;
+    }
+
+    /**
+     * Créer ou récupérer la structure de dossiers pour les TDR de faisabilité
+     */
+    private function getOrCreateTdrFolderStructure(int $projetId, string $type = 'tdr'): ?Dossier
+    {
+        try {
+            // Récupérer le projet pour avoir l'identifiant BIP
+            $projet = \App\Models\Projet::find($projetId);
+            if (!$projet) {
+                return null;
+            }
+
+            // 1. Dossier racine : "Projets"
+            $dossierRacine = Dossier::firstOrCreate([
+                'nom' => 'Projets',
+                'parent_id' => null
+            ], [
+                'nom' => 'Projets',
+                'description' => 'Dossier principal contenant tous les projets BIP',
+                'parent_id' => null,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#2563EB',
+                'icone' => 'collection'
+            ]);
+
+            // 2. Sous-dossier : Identifiant BIP du projet
+            $dossierProjet = Dossier::firstOrCreate([
+                'nom' => $projet->identifiant_bip,
+                'parent_id' => $dossierRacine->id
+            ], [
+                'nom' => $projet->identifiant_bip,
+                'description' => 'Documents du projet ' . $projet->identifiant_bip,
+                'parent_id' => $dossierRacine->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#059669',
+                'icone' => 'folder'
+            ]);
+
+            // 3. Sous-dossier : "Evaluation ex-ante"
+            $dossierEvaluation = Dossier::firstOrCreate([
+                'nom' => 'Evaluation ex-ante',
+                'parent_id' => $dossierProjet->id
+            ], [
+                'nom' => 'Evaluation ex-ante',
+                'description' => 'Documents d\'évaluation ex-ante du projet',
+                'parent_id' => $dossierProjet->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#7C3AED',
+                'icone' => 'chart-pie'
+            ]);
+
+            // 4. Sous-dossier : "Etude de faisabilité"
+            $dossierEtude = Dossier::firstOrCreate([
+                'nom' => 'Etude de faisabilité',
+                'parent_id' => $dossierEvaluation->id
+            ], [
+                'nom' => 'Etude de faisabilité',
+                'description' => 'Documents de l\'étude de faisabilité',
+                'parent_id' => $dossierEvaluation->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#DC2626',
+                'icone' => 'document-text'
+            ]);
+
+            // 5. Sous-dossier : "Termes de référence"
+            $dossierTdr = Dossier::firstOrCreate([
+                'nom' => 'Termes de référence',
+                'parent_id' => $dossierEtude->id
+            ], [
+                'nom' => 'Termes de référence',
+                'description' => 'Termes de référence pour l\'étude de faisabilité',
+                'parent_id' => $dossierEtude->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => '#F59E0B',
+                'icone' => 'clipboard-list'
+            ]);
+
+            // 6. Sous-dossier selon le type
+            $nomSousDossier = match ($type) {
+                'autres-documents' => 'Autres documents',
+                'tdr' => 'Documents TDR',
+                'rapports' => 'Rapports',
+                default => 'Documents TDR'
+            };
+
+            $descriptionSousDossier = match ($type) {
+                'autres-documents' => 'Autres documents annexes aux TDR',
+                'tdr' => 'Documents des termes de référence',
+                'rapports' => 'Rapports d\'étude de faisabilité',
+                default => 'Documents des termes de référence'
+            };
+
+            $couleurSousDossier = match ($type) {
+                'autres-documents' => '#6B7280',
+                'tdr' => '#10B981',
+                'rapports' => '#EF4444',
+                default => '#10B981'
+            };
+
+            $iconeSousDossier = match ($type) {
+                'autres-documents' => 'paper-clip',
+                'tdr' => 'document',
+                'rapports' => 'chart-bar',
+                default => 'document'
+            };
+
+            $sousDossier = Dossier::firstOrCreate([
+                'nom' => $nomSousDossier,
+                'parent_id' => $dossierTdr->id
+            ], [
+                'nom' => $nomSousDossier,
+                'description' => $descriptionSousDossier,
+                'parent_id' => $dossierTdr->id,
+                'is_public' => true,
+                'created_by' => auth()->id(),
+                'couleur' => $couleurSousDossier,
+                'icone' => $iconeSousDossier
+            ]);
+
+            return $sousDossier;
+
+        } catch (Exception $e) {
+            // En cas d'erreur, retourner null
+            return null;
+        }
     }
 }
