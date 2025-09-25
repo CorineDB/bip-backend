@@ -2,13 +2,13 @@
 
 namespace App\Http\Requests\documents\etudes_faisabilite;
 
-use App\Enums\EnumTypeChamp;
 use App\Models\Document;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteMarcheRequest extends FormRequest
 {
+
     private $canevas_appreciation_tdr = null;
 
     public function authorize(): bool
@@ -21,9 +21,9 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteMarcheRequest extends FormR
         $this->canevas_appreciation_tdr = Document::whereHas('categorie', function ($query) {
             $query->where('slug', 'canevas-check-liste-etude-faisabilite-marche');
         })
-            ->where('type', 'checklist')
-            ->orderBy('created_at', 'desc')
-            ->first();
+        ->where('type', 'checklist')
+        ->orderBy('created_at', 'desc')
+        ->first();
     }
 
     /**
@@ -131,14 +131,13 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteMarcheRequest extends FormR
         return [
             // Document fields
             'nom' => [
-                'required',
-                'bail',
+                'required', 'bail',
                 function ($attribute, $value, $fail) {
                     $exists = Document::where('nom', $value)
                         ->whereHas('categorie', function ($query) {
                             $query->where('slug', 'canevas-check-liste-etude-faisabilite-marche');
-                        })->when($this->canevas_appreciation_tdr, function ($query) {
-                            $query->where("id", "<>", $this->canevas_appreciation_tdr->id);
+                        })->when($this->canevas_appreciation_tdr, function($query){
+                            $query->where("id","<>", $this->canevas_appreciation_tdr->id);
                         })->exists();
 
                     if ($exists) {
@@ -146,14 +145,15 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteMarcheRequest extends FormR
                     }
                 }
             ],
-            'description' => 'nullable|string|max:65535',/*
-            'type' => ['required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
-            'categorieId' => 'required|exists:categories_document,id', */
-            'guide_de_suivi'                  => 'required|array|min:2',
-            'guide_de_suivi.*.libelle'        => 'required|string|max:255',
-            'guide_de_suivi.*.option'   => 'required|string|max:255',
-            'guide_de_suivi.*.description'    => 'nullable|string|max:1000',
+            'description' => 'nullable|string|max:65535',
+            /*'type' => ['required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
+            'categorieId' => 'required|exists:categories_document,id',*/
             // Forms array - structure flexible avec validation récursive
+
+            'guide_suivi'                  => 'required|array|min:2',
+            'guide_suivi.*.libelle'        => 'required|string|max:255',
+            'guide_suivi.*.option'         => 'required|string|max:255',
+            'guide_suivi.*.description'    => 'nullable|string|max:1000',
             'forms' => 'required|array|min:1',
             'forms.*' => 'required|array',
         ];
@@ -179,6 +179,18 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteMarcheRequest extends FormR
             // Validation de l'ordre d'affichage unique par niveau
             $this->validateOrderPerLevel($validator);
         });
+    }
+
+    private function validateAppreciationsInMetaOptions($validator)
+    {
+        $expectedValues = collect($this->input('guide_suivi', []))
+            ->pluck('option')
+            ->filter()
+            ->toArray();
+
+        foreach ($this->input('forms', []) as $index => $element) {
+            $this->checkAppreciationsRecursive($element, "forms.{$index}", $expectedValues, $validator);
+        }
     }
 
     /**
@@ -249,28 +261,22 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteMarcheRequest extends FormR
     {
         // Label obligatoire
         if (!isset($element['label']) || !is_string($element['label']) || strlen($element['label']) > 255) {
-            $validator->errors()->add(
-                "{$path}.label",
-                'Le libellé du champ est obligatoire et ne doit pas dépasser 255 caractères.'
-            );
+            $validator->errors()->add("{$path}.label",
+                'Le libellé du champ est obligatoire et ne doit pas dépasser 255 caractères.');
         }
 
         // L'attribut est déjà validé dans validateFormsStructure
 
         // Type de champ obligatoire
         if (!isset($element['type_champ']) || !is_string($element['type_champ'])) {
-            $validator->errors()->add(
-                "{$path}.type_champ",
-                'Le type de champ est obligatoire.'
-            );
+            $validator->errors()->add("{$path}.type_champ",
+                'Le type de champ est obligatoire.');
         }
 
         // Meta options obligatoires
         if (!isset($element['meta_options']) || !is_array($element['meta_options'])) {
-            $validator->errors()->add(
-                "{$path}.meta_options",
-                'Les options métadonnées sont obligatoires pour les champs.'
-            );
+            $validator->errors()->add("{$path}.meta_options",
+                'Les options métadonnées sont obligatoires pour les champs.');
         } else {
             $this->validateMetaOptions($element['meta_options'], $path, $validator);
         }
@@ -283,10 +289,8 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteMarcheRequest extends FormR
     {
         // Intitulé obligatoire
         if (!isset($element['intitule']) || !is_string($element['intitule']) || strlen($element['intitule']) > 255) {
-            $validator->errors()->add(
-                "{$path}.intitule",
-                'L\'intitulé de la section est obligatoire et ne doit pas dépasser 255 caractères.'
-            );
+            $validator->errors()->add("{$path}.intitule",
+                'L\'intitulé de la section est obligatoire et ne doit pas dépasser 255 caractères.');
         }
     }
 
@@ -297,58 +301,36 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteMarcheRequest extends FormR
     {
         // Configs obligatoire
         if (!isset($metaOptions['configs']) || !is_array($metaOptions['configs'])) {
-            $validator->errors()->add(
-                "{$path}.meta_options.configs",
-                'La section configs est obligatoire dans les options métadonnées.'
-            );
+            $validator->errors()->add("{$path}.meta_options.configs",
+                'La section configs est obligatoire dans les options métadonnées.');
         }
 
         // Conditions obligatoire
         if (!isset($metaOptions['conditions']) || !is_array($metaOptions['conditions'])) {
-            $validator->errors()->add(
-                "{$path}.meta_options.conditions",
-                'La section conditions est obligatoire dans les options métadonnées.'
-            );
+            $validator->errors()->add("{$path}.meta_options.conditions",
+                'La section conditions est obligatoire dans les options métadonnées.');
         } else {
             $conditions = $metaOptions['conditions'];
 
             if (!isset($conditions['disable']) || !is_bool($conditions['disable'])) {
-                $validator->errors()->add(
-                    "{$path}.meta_options.conditions.disable",
-                    'Le champ disable est obligatoire et doit être un booléen.'
-                );
+                $validator->errors()->add("{$path}.meta_options.conditions.disable",
+                    'Le champ disable est obligatoire et doit être un booléen.');
             }
 
             if (!isset($conditions['visible']) || !is_bool($conditions['visible'])) {
-                $validator->errors()->add(
-                    "{$path}.meta_options.conditions.visible",
-                    'Le champ visible est obligatoire et doit être un booléen.'
-                );
+                $validator->errors()->add("{$path}.meta_options.conditions.visible",
+                    'Le champ visible est obligatoire et doit être un booléen.');
             }
         }
 
         // Validation rules obligatoire
         if (!isset($metaOptions['validations_rules']) || !is_array($metaOptions['validations_rules'])) {
-            $validator->errors()->add(
-                "{$path}.meta_options.validations_rules",
-                'La section validations_rules est obligatoire dans les options métadonnées.'
-            );
+            $validator->errors()->add("{$path}.meta_options.validations_rules",
+                'La section validations_rules est obligatoire dans les options métadonnées.');
         }
 
         // 🔥 Validation des appreciations dans meta_options
         $this->validateAppreciationsInMetaOptions($validator);
-    }
-
-    private function validateAppreciationsInMetaOptions($validator)
-    {
-        $expectedValues = collect($this->input('guide_de_suivi', []))
-            ->pluck('option')
-            ->filter()
-            ->toArray();
-
-        foreach ($this->input('forms', []) as $index => $element) {
-            $this->checkAppreciationsRecursive($element, "forms.{$index}", $expectedValues, $validator);
-        }
     }
 
     private function checkAppreciationsRecursive($element, $path, $expectedValues, $validator)
@@ -371,7 +353,6 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteMarcheRequest extends FormR
                             "L'appréciation '{$val}' doit être définie dans les options (value).");
                     }
                 }
-
             }
 
             // 2️⃣ Vérifier que validations_rules.in contient ces appreciations
