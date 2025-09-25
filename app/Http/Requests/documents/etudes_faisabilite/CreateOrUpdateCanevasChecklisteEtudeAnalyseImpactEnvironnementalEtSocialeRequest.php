@@ -146,10 +146,10 @@ class CreateOrUpdateCanevasChecklisteSuiviEtudeAnalyseImpactEnvironnementaleEtSo
             'description' => 'nullable|string|max:65535',
             /*'type' => ['required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
             'categorieId' => 'required|exists:categories_document,id',*/
-            'guide_de_suivi'                  => 'required|array|min:2',
-            'guide_de_suivi.*.libelle'        => 'required|string|max:255',
-            'guide_de_suivi.*.option'         => 'required|string|max:255',
-            'guide_de_suivi.*.description'    => 'nullable|string|max:1000',
+            'guide_suivi'                  => 'required|array|min:2',
+            'guide_suivi.*.libelle'        => 'required|string|max:255',
+            'guide_suivi.*.option'         => 'required|string|max:255',
+            'guide_suivi.*.description'    => 'nullable|string|max:1000',
             // Forms array - structure flexible avec validation récursive
             'forms' => 'required|array|min:1',
             'forms.*' => 'required|array',

@@ -371,14 +371,6 @@ class CreateOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilit
                             "L'appréciation '{$val}' doit être définie dans les options (value).");
                     }
                 }
-                /* foreach ($expectedValues as $val) {
-                    if (!in_array($val, $metaOptions['configs']['options'])) {
-                        $validator->errors()->add(
-                            "{$path}.meta_options.configs.options",
-                            "L'appréciation '{$val}' doit être définie comme option."
-                        );
-                    }
-                } */
             }
 
             // 2️⃣ Vérifier que validations_rules.in contient ces appreciations
