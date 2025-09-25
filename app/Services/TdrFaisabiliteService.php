@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Helpers\SlugHelper;
 use App\Http\Resources\RapportResource;
+use App\Models\Dgpd;
 use App\Models\Tdr;
 use Illuminate\Validation\ValidationException;
 
