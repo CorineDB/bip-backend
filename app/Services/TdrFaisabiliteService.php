@@ -679,7 +679,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
 
-            if ($resultatsEvaluation['resultat_global'] !== 'non_accepte') {
+            if ($resultatsEvaluation['resultat_global'] !== 'non-accepte') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cette méthode n\'est utilisable que pour les cas "non accepté". Le résultat actuel est: ' . $resultatsEvaluation['resultat_global']
@@ -1498,7 +1498,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             StatutIdee::EVALUATION_TDR_F => [
                 'evaluer' => 'Procéder à l\'évaluation des TDRs',
                 // Actions de décision finale seulement pour cas "non accepté"
-                ...(($resultatEvaluation === 'non_accepte') ? [
+                ...(($resultatEvaluation === 'non-accepte') ? [
                     'reviser' => 'Reviser tdr malgré l\'évaluation négative',
                     'abandonner' => 'Abandonner le projet'
                 ] : [])
@@ -1525,7 +1525,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'action_automatique' => 'R_TDR_FAISABILITE',
                 'actions_manuelles' => []
             ],
-            'non_accepte' => [
+            'non-accepte' => [
                 'type' => 'decision_requise',
                 'message' => 'Évaluation négative. Une décision manuelle est requise.',
                 'action_automatique' => null,
@@ -1757,7 +1757,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         }
 
         // Règle 2: Si une réponse a été évaluée comme "Non accepté"
-        if ($compteurs['non_accepte'] > 0) {
+        if ($compteurs['non-accepte'] > 0) {
             return [
                 'resultat_global' => 'non-accepte',
                 'message_resultat' => 'Non accepté - Une ou plusieurs réponses évaluées comme "Non accepté"',
@@ -1925,7 +1925,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         return match ($resultat) {
             'passe' => 'TDRs approuvés avec succès. Projet peut passer à la soumission du rapport.',
             'retour' => 'TDRs nécessitent des améliorations.',
-            'non_accepte' => 'TDRs non acceptés.',
+            'non-accepte' => 'TDRs non acceptés.',
             default => 'Évaluation effectuée avec succès.'
         };
     }
