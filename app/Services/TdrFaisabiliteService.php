@@ -322,12 +322,12 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             }
 
             // Vérifier que le TDR est soumis et peut être évalué
-            if (!$tdr->peutEtreEvalue()) {
+            /* if (!$tdr->peutEtreEvalue()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le TDR doit être soumis avant de pouvoir être évalué.'
                 ], 422);
-            }
+            } */
 
             $tdr->statut = 'en_evaluation';
             $tdr->save();
