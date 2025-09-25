@@ -7,7 +7,7 @@ use App\Models\Document;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteTechniqueRequest extends FormRequest
+class CreateOrUpdateCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciereRequest extends FormRequest
 {
     private $canevas_appreciation_tdr = null;
 
@@ -19,9 +19,9 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteTechniqueRequest extends Fo
     public function prepareForValidation()
     {
         $this->canevas_appreciation_tdr = Document::whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-check-liste-etude-faisabilite-technique');
+            $query->where('slug', 'canevas-check-liste-etude-faisabilite-financiere');
         })
-        ->where('type', 'checklist')
+        ->where('type', 'formulaire')
         ->orderBy('created_at', 'desc')
         ->first();
     }
@@ -133,7 +133,7 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteTechniqueRequest extends Fo
                 function ($attribute, $value, $fail) {
                     $exists = Document::where('nom', $value)
                         ->whereHas('categorie', function ($query) {
-                            $query->where('slug', 'canevas-check-liste-etude-faisabilite-technique');
+                            $query->where('slug', 'canevas-check-liste-etude-faisabilite-financiere');
                         })->when($this->canevas_appreciation_tdr, function($query){
                             $query->where("id","<>", $this->canevas_appreciation_tdr->id);
                         })->exists();
@@ -144,9 +144,13 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteTechniqueRequest extends Fo
                 }
             ],
             'description' => 'nullable|string|max:65535',
-            'type' => ['required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
-            'categorieId' => 'required|exists:categories_document,id',
+            /*'type' => ['required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
+            'categorieId' => 'required|exists:categories_document,id',*/
             // Forms array - structure flexible avec validation récursive
+            'guide_suivi'                  => 'required|array|min:2',
+            'guide_suivi.*.libelle'        => 'required|string|max:255',
+            'guide_suivi.*.option'         => 'required|string|max:255',
+            'guide_suivi.*.description'    => 'nullable|string|max:1000',
             'forms' => 'required|array|min:1',
             'forms.*' => 'required|array',
         ];
