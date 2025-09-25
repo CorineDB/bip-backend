@@ -1401,8 +1401,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             $data["type"] = "checklist";
             $data["slug"] = 'check-liste-de-suivi-analyse-de-faisabilite-financiere';
 
-
-
             if ($canevas) {
 
                 // Mode mise à jour intelligente
