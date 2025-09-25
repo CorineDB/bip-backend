@@ -606,6 +606,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         'grille_evaluation' => $grilleEvaluation,
                         'evaluation' => json_decode($evaluation->evaluation), // 0=en cours, 1=terminée
                     ] : null,
+                    'canevasAppreciation' => $canevasAppreciation,
                     'resultats_evaluation' => $resultatsEvaluation,
                     'actions_suivantes' => $actionsSuivantes,
                     'historique_evaluations' => $historiqueEvaluations,
