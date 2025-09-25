@@ -344,7 +344,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             // Préparer l'évaluation complète pour enregistrement
             $evaluationComplete = [
-                'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationTdr()->all_champs)->map(function ($champ) use ($evaluation) {
+                'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationTdrFaisabilite()->all_champs)->map(function ($champ) use ($evaluation) {
                     $champEvalue = collect($evaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                     return [
                         'champ_id' => $champ['id'],
