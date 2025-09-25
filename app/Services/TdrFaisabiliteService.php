@@ -301,12 +301,12 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if (!in_array($projet->statut->value, [StatutIdee::EVALUATION_TDR_F->value, StatutIdee::R_TDR_FAISABILITE->value])) {
+            /* if (!in_array($projet->statut->value, [StatutIdee::EVALUATION_TDR_F->value, StatutIdee::R_TDR_FAISABILITE->value])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape d\'évaluation des TDRs.'
                 ], 422);
-            }
+            } */
 
             // Récupérer le TDR de faisabilité à évaluer
             $tdr = \App\Models\Tdr::where('projet_id', $projetId)
