@@ -9,6 +9,7 @@ use Illuminate\Validation\Rule;
 
 class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridiqueRequest extends FormRequest
 {
+
     private $canevas_appreciation_tdr = null;
 
     public function authorize(): bool
@@ -96,8 +97,10 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridiqu
         foreach ($elements as $index => $element) {
             $order = $element['ordre_affichage'] ?? null;
             if ($order && in_array($order, $orders)) {
-                $validator->errors()->add("{$path}.{$index}.ordre_affichage",
-                    "L'ordre d'affichage {$order} est déjà utilisé à ce niveau.");
+                $validator->errors()->add(
+                    "{$path}.{$index}.ordre_affichage",
+                    "L'ordre d'affichage {$order} est déjà utilisé à ce niveau."
+                );
             } else if ($order) {
                 $orders[] = $order;
             }
@@ -146,11 +149,12 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridiqu
             'description' => 'nullable|string|max:65535',
             /*'type' => ['required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
             'categorieId' => 'required|exists:categories_document,id',*/
-            'guide_de_suivi'                  => 'required|array|min:2',
-            'guide_de_suivi.*.libelle'        => 'required|string|max:255',
-            'guide_de_suivi.*.option'         => 'required|string|max:255',
-            'guide_de_suivi.*.description'    => 'nullable|string|max:1000',
             // Forms array - structure flexible avec validation récursive
+
+            'guide_suivi'                  => 'required|array|min:2',
+            'guide_suivi.*.libelle'        => 'required|string|max:255',
+            'guide_suivi.*.option'         => 'required|string|max:255',
+            'guide_suivi.*.description'    => 'nullable|string|max:1000',
             'forms' => 'required|array|min:1',
             'forms.*' => 'required|array',
         ];
@@ -178,6 +182,18 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridiqu
         });
     }
 
+    private function validateAppreciationsInMetaOptions($validator)
+    {
+        $expectedValues = collect($this->input('guide_suivi', []))
+            ->pluck('option')
+            ->filter()
+            ->toArray();
+
+        foreach ($this->input('forms', []) as $index => $element) {
+            $this->checkAppreciationsRecursive($element, "forms.{$index}", $expectedValues, $validator);
+        }
+    }
+
     /**
      * Valide la structure des formulaires de manière récursive
      */
@@ -188,29 +204,37 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridiqu
 
             // Validation du type d'élément
             if (!isset($element['element_type']) || !in_array($element['element_type'], ['field', 'section'])) {
-                $validator->errors()->add("{$currentPath}.element_type",
-                    'Le type d\'élément doit être "field" ou "section".');
+                $validator->errors()->add(
+                    "{$currentPath}.element_type",
+                    'Le type d\'élément doit être "field" ou "section".'
+                );
                 continue;
             }
 
             // Validation de l'ordre d'affichage
             if (!isset($element['ordre_affichage']) || !is_integer($element['ordre_affichage']) || $element['ordre_affichage'] < 1) {
-                $validator->errors()->add("{$currentPath}.ordre_affichage",
-                    'L\'ordre d\'affichage est obligatoire et doit être un entier positif.');
+                $validator->errors()->add(
+                    "{$currentPath}.ordre_affichage",
+                    'L\'ordre d\'affichage est obligatoire et doit être un entier positif.'
+                );
             }
 
             // Validation de la clé selon le type d'élément
             if ($element['element_type'] === 'field') {
                 // Pour les fields, on utilise 'attribut'
                 if (!isset($element['attribut']) || !is_string($element['attribut']) || strlen($element['attribut']) > 255) {
-                    $validator->errors()->add("{$currentPath}.attribut",
-                        'L\'attribut est obligatoire pour les champs et ne doit pas dépasser 255 caractères.');
+                    $validator->errors()->add(
+                        "{$currentPath}.attribut",
+                        'L\'attribut est obligatoire pour les champs et ne doit pas dépasser 255 caractères.'
+                    );
                 }
             } elseif ($element['element_type'] === 'section') {
                 // Pour les sections, on utilise 'key'
                 if (!isset($element['key']) || !is_string($element['key']) || strlen($element['key']) > 255) {
-                    $validator->errors()->add("{$currentPath}.key",
-                        'La clé est obligatoire pour les sections et ne doit pas dépasser 255 caractères.');
+                    $validator->errors()->add(
+                        "{$currentPath}.key",
+                        'La clé est obligatoire pour les sections et ne doit pas dépasser 255 caractères.'
+                    );
                 }
             }
 
@@ -304,6 +328,58 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridiqu
         if (!isset($metaOptions['validations_rules']) || !is_array($metaOptions['validations_rules'])) {
             $validator->errors()->add("{$path}.meta_options.validations_rules",
                 'La section validations_rules est obligatoire dans les options métadonnées.');
+        }
+
+        // 🔥 Validation des appreciations dans meta_options
+        $this->validateAppreciationsInMetaOptions($validator);
+    }
+
+    private function checkAppreciationsRecursive($element, $path, $expectedValues, $validator)
+    {
+        if (($element['element_type'] ?? null) === 'field' && isset($element['meta_options'])) {
+
+            $metaOptions = $element['meta_options'];
+
+            // 1️⃣ Vérifier que les appreciations existent dans meta_options (par ex. dans configs.options)
+            if (!isset($metaOptions['configs']['options']) || !is_array($metaOptions['configs']['options'])) {
+                $validator->errors()->add(
+                    "{$path}.meta_options.configs.options",
+                    "Les options doivent contenir les appréciations attendues : " . implode(', ', $expectedValues)
+                );
+            } else {
+                $optionValues = array_column($metaOptions['configs']['options'], 'value');
+                foreach ($expectedValues as $val) {
+                    if (!in_array($val, $optionValues)) {
+                        $validator->errors()->add("{$path}.meta_options.configs.options",
+                            "L'appréciation '{$val}' doit être définie dans les options (value).");
+                    }
+                }
+            }
+
+            // 2️⃣ Vérifier que validations_rules.in contient ces appreciations
+            if (!isset($metaOptions['validations_rules']['in']) || !is_array($metaOptions['validations_rules']['in'])) {
+                $validator->errors()->add(
+                    "{$path}.meta_options.validations_rules.in",
+                    "La règle 'in' est obligatoire et doit inclure les appréciations."
+                );
+            } else {
+                $allowed = $metaOptions['validations_rules']['in'];
+                foreach ($expectedValues as $val) {
+                    if (!in_array($val, $allowed)) {
+                        $validator->errors()->add(
+                            "{$path}.meta_options.validations_rules.in",
+                            "L'appréciation '{$val}' doit être incluse dans la règle 'in:'."
+                        );
+                    }
+                }
+            }
+        }
+
+        // Recurse si section
+        if (($element['element_type'] ?? null) === 'section' && isset($element['elements'])) {
+            foreach ($element['elements'] as $subIndex => $subElement) {
+                $this->checkAppreciationsRecursive($subElement, "{$path}.elements.{$subIndex}", $expectedValues, $validator);
+            }
         }
     }
 
