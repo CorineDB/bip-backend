@@ -274,7 +274,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 if ($existingChampInSection) {
                     // Il existe déjà un champ avec le même attribut dans cette section
                     // Supprimer le champ existant dans la section cible et déplacer l'autre
-                    $existingChampInSection->delete();
+                    $existingChampInSection->forceDelete();
                 }
 
                 // Vérifier si le champ est déjà dans la section cible
@@ -293,7 +293,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     if ($existingChampInSection) {
                         // Il existe déjà un champ avec le même attribut dans cette section
                         // Supprimer le champ existant dans la section cible pour éviter le conflit
-                        $existingChampInSection->delete();
+                        $existingChampInSection->forceDelete();
                     }
 
                     // Déplacer le champ vers la nouvelle section
@@ -407,6 +407,9 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 }
 
                 $ficheIdee->refresh();
+
+                // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
+                $this->cleanupRemovedElements($ficheIdee, $payloadIds);
 
                 // Recharger avec toutes les relations et générer la structure
                 //$ficheIdee->load(['sections.champs', 'champs', 'categorie']);
@@ -1187,10 +1190,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Récupérer la configuration existante ou créer une nouvelle
                 $evaluationConfigs = $canevas->evaluation_configs ?? [];
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_suivi'])) {
 
                     // Mettre à jour les options de notation
-                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+                    $evaluationConfigs['guide_suivi'] = $data['guide_suivi'];
 
                     // Sauvegarder la configuration
                     $canevas->update(['evaluation_configs' => $evaluationConfigs]);
@@ -1221,9 +1224,9 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_suivi'])) {
 
-                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                    $documentData['evaluation_configs']['guide_suivi'] = $data['guide_suivi'];
                 }
 
                 $document = $this->repository->create($documentData);
