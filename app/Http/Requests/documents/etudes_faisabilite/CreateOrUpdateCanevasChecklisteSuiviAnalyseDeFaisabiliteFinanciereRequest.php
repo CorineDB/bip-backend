@@ -20,7 +20,7 @@ class CreateOrUpdateCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciereRequest 
     public function prepareForValidation()
     {
         $this->canevas_appreciation_tdr = Document::whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-check-liste-etude-faisabilite-financiere');
+            $query->where('slug', 'canevas-check-liste-de-suivi-analyse-de-faisabilite-financiere');
         })
         ->where('type', 'checklist')
         ->orderBy('created_at', 'desc')
@@ -136,7 +136,7 @@ class CreateOrUpdateCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciereRequest 
                 function ($attribute, $value, $fail) {
                     $exists = Document::where('nom', $value)
                         ->whereHas('categorie', function ($query) {
-                            $query->where('slug', 'canevas-check-liste-etude-faisabilite-financiere');
+                            $query->where('slug', 'canevas-check-liste-de-suivi-analyse-de-faisabilite-financiere');
                         })->when($this->canevas_appreciation_tdr, function($query){
                             $query->where("id","<>", $this->canevas_appreciation_tdr->id);
                         })->exists();
