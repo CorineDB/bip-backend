@@ -37,6 +37,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NoteConceptuelleController;
 use App\Http\Controllers\TdrPrefaisabiliteController;
 use App\Http\Controllers\TdrFaisabiliteController;
+use App\Http\Controllers\PassportClientController;
 use App\Models\Village;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -468,6 +469,20 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
                 ->name('idees-projet.analyse-multi-critere.show');
         });
 
+        // Routes pour l'évaluation de pertinence des idées de projet
+        /*Route::prefix('idees-projet/{ideeProjetId}/evaluation-pertinence')->group(function () {
+            Route::post('/', [EvaluationController::class, 'soumettreEvaluationPertinence'])
+                ->name('idees-projet.evaluation-pertinence.create');
+            Route::get('/dashboard', [EvaluationController::class, 'getDashboardEvaluationPertinence'])
+                ->name('idees-projet.evaluation-pertinence.dashboard');
+            Route::post('/refaire', [EvaluationController::class, 'refaireAutoEvaluationPertinence'])
+                ->name('idees-projet.evaluation-pertinence.refaire');
+        });
+
+        // Route pour obtenir le score de pertinence
+        Route::get('evaluations/{evaluationId}/pertinence/score', [EvaluationController::class, 'getScorePertinence'])
+            ->name('evaluations.pertinence.score');*/
+
         // Evaluation Criteria Management
         Route::apiResource('categories-critere', \App\Http\Controllers\CategorieCritereController::class)
             ->parameters(['categories-critere' => 'categorie_critere']);
@@ -488,6 +503,17 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
                 ->name('grille-analyse-multi-critere.update');
         });
 
+        // Grille d'évaluation de pertinence
+        /*Route::prefix('grille-evaluation-pertinence')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CategorieCritereController::class, 'getGrilleEvaluationPertinence'])
+                ->name('grille-evaluation-pertinence.get');
+            Route::post('/', [\App\Http\Controllers\CategorieCritereController::class, 'updateGrilleEvaluationPertinence'])
+                ->name('grille-evaluation-pertinence.update');
+            Route::get('/{idee_projet_id}', [\App\Http\Controllers\CategorieCritereController::class, 'getGrilleEvaluationPertinenceAvecEvaluations'])
+                ->name('grille-evaluation-pertinence.get-avec-evaluations')
+                ->where('idee_projet_id', '[0-9]+');
+        });*/
+
         // Checklist des mesures d'adaptation pour projets à haut risque
         Route::get('checklist-mesures-adaptation/{id}/secteur', [\App\Http\Controllers\CategorieCritereController::class, 'getChecklistMesuresAdaptationSecteur'])
             ->name('checklist-mesures-adaptation.get');
@@ -498,6 +524,64 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         // SDG Integration
         Route::apiResource('odds', OddController::class);
+
+        // =============================================================================
+        // GESTION DES CLIENTS OAUTH PASSPORT
+        // =============================================================================
+        Route::prefix('oauth/clients')->middleware(['oauth.audit'])->group(function () {
+            Route::get('/', [PassportClientController::class, 'index'])->name('oauth.clients.index');
+            Route::post('/', [PassportClientController::class, 'store'])->name('oauth.clients.store');
+
+            // Routes spécifiques par type de client - CREATE
+            Route::post('/client-credentials', [PassportClientController::class, 'storeClientCredentials'])->name('oauth.clients.client-credentials.store');
+            Route::post('/personal-access', [PassportClientController::class, 'storePersonalAccessClient'])->name('oauth.clients.personal-access.store');
+            Route::post('/password-grant', [PassportClientController::class, 'storePasswordClient'])->name('oauth.clients.password-grant.store');
+            Route::post('/authorization-code', [PassportClientController::class, 'storeAuthorizationCodeClient'])->name('oauth.clients.authorization-code.store');
+
+            // Routes spécifiques par type de client - GET
+            Route::get('/client-credentials', [PassportClientController::class, 'indexClientCredentials'])->name('oauth.clients.client-credentials.index');
+            Route::get('/personal-access', [PassportClientController::class, 'indexPersonalAccessClients'])->name('oauth.clients.personal-access.index');
+            Route::get('/password-grant', [PassportClientController::class, 'indexPasswordClients'])->name('oauth.clients.password-grant.index');
+            Route::get('/authorization-code', [PassportClientController::class, 'indexAuthorizationCodeClients'])->name('oauth.clients.authorization-code.index');
+
+            // Routes spécifiques par type de client - Get
+            Route::get('/client-credentials/{id}', [PassportClientController::class, 'findClientCredentials'])->name('oauth.clients.client-credentials.find');
+            Route::get('/personal-access/{id}', [PassportClientController::class, 'findPersonalAccessClient'])->name('oauth.clients.personal-access.find');
+            Route::get('/password-grant/{id}', [PassportClientController::class, 'findPasswordClient'])->name('oauth.clients.password-grant.find');
+            Route::get('/authorization-code/{id}', [PassportClientController::class, 'findAuthorizationCodeClient'])->name('oauth.clients.authorization-code.find');
+
+            // Routes spécifiques par type de client - UPDATE
+            Route::put('/client-credentials/{id}', [PassportClientController::class, 'updateClientCredentials'])->name('oauth.clients.client-credentials.update');
+            Route::put('/personal-access/{id}', [PassportClientController::class, 'updatePersonalAccessClient'])->name('oauth.clients.personal-access.update');
+            Route::put('/password-grant/{id}', [PassportClientController::class, 'updatePasswordClient'])->name('oauth.clients.password-grant.update');
+            Route::put('/authorization-code/{id}', [PassportClientController::class, 'updateAuthorizationCodeClient'])->name('oauth.clients.authorization-code.update');
+
+            Route::get('/stats', [PassportClientController::class, 'stats'])->name('oauth.clients.stats');
+            Route::get('/search', [PassportClientController::class, 'search'])->name('oauth.clients.search');
+            Route::get('/scopes', [PassportClientController::class, 'availableScopes'])->name('oauth.clients.scopes');
+
+            // Routes de sécurité et maintenance
+            Route::post('/security/rotate-expired-secrets', [PassportClientController::class, 'rotateExpiredSecrets'])->name('oauth.clients.security.rotate-expired');
+            Route::post('/security/cleanup-tokens', [PassportClientController::class, 'cleanupTokens'])->name('oauth.clients.security.cleanup');
+            Route::get('/security/audit', [PassportClientController::class, 'auditAccess'])->name('oauth.clients.security.audit');
+
+            // Routes d'expiration et rafraîchissement des tokens
+            Route::post('/tokens/check-expired', [PassportClientController::class, 'checkExpiredTokens'])->name('oauth.clients.tokens.check-expired');
+            Route::post('/tokens/refresh', [PassportClientController::class, 'refreshToken'])->name('oauth.clients.tokens.refresh');
+            Route::get('/tokens/{tokenId}/expiration', [PassportClientController::class, 'getTokenExpiration'])->name('oauth.clients.tokens.expiration');
+            Route::post('/tokens/configure-expiration', [PassportClientController::class, 'configureExpiration'])->name('oauth.clients.tokens.configure-expiration');
+            Route::get('/tokens/expiration-stats', [PassportClientController::class, 'expirationStats'])->name('oauth.clients.tokens.expiration-stats');
+
+            Route::get('/{id}', [PassportClientController::class, 'show'])->name('oauth.clients.show');
+            Route::put('/{id}', [PassportClientController::class, 'update'])->name('oauth.clients.update');
+            Route::delete('/{id}', [PassportClientController::class, 'destroy'])->name('oauth.clients.destroy');
+            Route::post('/{id}/regenerate-secret', [PassportClientController::class, 'regenerateSecret'])->name('oauth.clients.regenerate-secret');
+            Route::post('/{id}/force-rotate-secret', [PassportClientController::class, 'forceRotateSecret'])->name('oauth.clients.force-rotate-secret');
+            Route::post('/{id}/restore', [PassportClientController::class, 'restore'])->name('oauth.clients.restore');
+            Route::delete('/{id}/force-delete', [PassportClientController::class, 'forceDelete'])->name('oauth.clients.force-delete');
+            Route::get('/{id}/tokens', [PassportClientController::class, 'activeTokens'])->name('oauth.clients.tokens');
+            Route::post('/{id}/revoke-tokens', [PassportClientController::class, 'revokeTokens'])->name('oauth.clients.revoke-tokens');
+        });
     });
 
     require __DIR__.'/integration_bip.php';

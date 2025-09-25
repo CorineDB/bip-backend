@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,
             'auth.client' => \Laravel\Passport\Http\Middleware\CheckToken::class,
             'scope' => \Laravel\Passport\Http\Middleware\CheckTokenForAnyScope::class,
+            'oauth.audit' => \App\Http\Middleware\OAuthAuditMiddleware::class,
         ]);
         $middleware->use([
             \App\Http\Middleware\CorsMiddleware::class

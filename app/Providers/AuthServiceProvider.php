@@ -44,13 +44,6 @@ class AuthServiceProvider extends ServiceProvider
         Passport::refreshTokensExpireIn(now()->addDays(30));
         Passport::personalAccessTokensExpireIn(now()->addMonths(6));
 
-        Passport::tokensCan([
-            'read-projects' => 'Read project data',
-            'manage-projects' => 'Create, update, delete projects',
-            'sync-sigfp' => 'Allow SIGFP to sync data with BIP',
-            'integration-bip' => 'Allow Integration with BIP'
-        ]);
-
         // Gates supplémentaires si nécessaire
         Gate::define('super-admin', function ($user) {
             return $user->role?->slug === 'super-admin';

@@ -370,6 +370,16 @@ class IdeeProjet extends Model
         return $this->morphMany(Evaluation::class, 'projetable');
     }
 
+    public function evaluationsClimatique()
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')->where("type", "climatique");
+    }
+
+    public function evaluationsAMC()
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')->where("type", "amc");
+    }
+
     public function fichiers()
     {
         return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id')

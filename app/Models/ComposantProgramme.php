@@ -30,7 +30,7 @@ class ComposantProgramme extends Model
      * @var array
      */
     protected $fillable = [
-        'indice', 'intitule', 'slug', 'typeId'
+        'indice', 'intitule', 'slug', 'parentId', 'typeId'
     ];
 
     /**
@@ -51,8 +51,16 @@ class ComposantProgramme extends Model
      * @var array
      */
     protected $hidden = [
-        'typeId', 'updated_at', 'deleted_at'
+        'typeId', 'parentId', 'updated_at', 'deleted_at'
     ];
+
+    /**
+     * Get the composant parent de ce composant programme that owns the composant programme.
+     */
+    public function composantProgramme()
+    {
+        return $this->belongsTo(ComposantProgramme::class, 'parentId');
+    }
 
     /**
      * Get the type programme that owns the composant programme.

@@ -626,6 +626,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
                     ];
                 })->toArray(),
+
                 'statistiques' => $resultatsEvaluation,
                 'date_evaluation' => now(),
                 'confirme_par' => new UserResource(auth()->user())
@@ -741,7 +742,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
                     ];
                 }
-            } else {
+            }
+            else {
 
                 // Récupérer le canevas d'appréciation des TDRs
                 $canevasAppreciation = $this->documentRepository->getModel()
@@ -875,7 +877,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ] : null,
                     'resultats_evaluation' => $resultatsEvaluation,
                     'actions_suivantes' => $actionsSuivantes,
-                    'historique_evaluations' => $historiqueEvaluations,
+                    'historique_evaluations' => $historiqueEvaluations
                 ]
             ]);
         } catch (Exception $e) {
@@ -1154,11 +1156,48 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         $projet->save();
                     }
                 }
+            }
 
+
+            /**
+             * Valider l'étude de préfaisabilité selon l'action demandée
+             * Actions possibles:
+             * - maturite : Projet à maturité → passe au statut MATURITE
+             * - faisabilite : Faire une étude de faisabilité → passe au statut TDR_FAISABILITE
+             * - reprendre : Reprendre l'étude de préfaisabilité → retourne au statut ETUDE_PREFAISABILITE
+             * - abandonner : Abandonner le projet → passe au statut ABANDON
+             * - sauvegarder : Sauvegarder les données sans changer le statut
+             *
+             * Chaque action doit être justifiée par un commentaire.
+             * Si l'action est "maturite" ou "faisabilite", le type de projet doit être mis à jour en conséquence.
+             * Si l'action est "reprendre" ou "abandonner", le type de projet reste inchangé.
+             * Si l'action est "sauvegarder", aucune modification de statut ou type de projet n'est effectuée.
+             *
+             */
+
+            // Si le projet est "mou" (est_dur == false), exclure la possibilité de passer à l'étape de faisabilité
+            if (
+                isset($projet->est_dur) &&
+                $projet->est_dur == false &&
+                isset($data['action']) &&
+                $data['action'] === 'faisabilite'
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Impossible de passer à l\'étape de faisabilité pour un projet mou.'
+                ], 422);
             }
 
             // Valider l'action demandée
-            $actionsPermises = ['maturite', 'faisabilite', 'reprendre', 'abandonner', 'sauvegarder'];
+            // Définir les actions permises selon la nature du projet (est_dur)
+            if (isset($projet->est_dur) && $projet->est_dur === false) {
+                // Si le projet est "mou", on exclut "faisabilite"
+                $actionsPermises = ['maturite', 'reprendre', 'abandonner', 'sauvegarder'];
+            } else {
+                // Projet "dur" ou non défini, toutes les actions sont permises
+                $actionsPermises = ['maturite', 'faisabilite', 'reprendre', 'abandonner', 'sauvegarder'];
+            }
+
             if (!isset($data['action']) || !in_array($data['action'], $actionsPermises)) {
                 return response()->json([
                     'success' => false,
@@ -1171,7 +1210,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $typeProjet = null;
 
             // Créer une évaluation pour tracer la validation
-            $evaluationValidation = $projet->evaluations()->create([
+            $evaluationValidation = $projet->evaluations()->updateOrCreate([
                 'type_evaluation' => 'validation-etude-prefaisabilite',
                 'projetable_type' => get_class($projet),
                 'projetable_id' => $projet->id,
@@ -1183,12 +1222,35 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'commentaire' => $data['commentaire'] ?? $messageAction,
                 'evaluation' => $data,
                 'resultats_evaluation' => $data['action'],
-                'statut' => 1
+                'statut' => $data['action'] != 'sauvegarder' ? 1 : 0
             ]);
+
+            if($evaluationValidation->statut){
+
+
+                /**
+                 *
+                 * enregistrer "synthèse et recommandations"* en tant que commentaire de l'etude de préfaisabilité
+                 * valider la presence de la cle "synthese_recommandations" dans $data
+                 * si elle est absente, lancer une exception
+                 * si elle est presente, l'enregistrer dans le projet em tant que commentaire de l'etude de préfaisabilité en utilisant la relation polymorphiqye commentaires dans le projet
+                 */
+                if (!isset($data['synthese_recommandations']) || empty(trim($data['synthese_recommandations']))) {
+                    throw ValidationException::withMessages([
+                        "synthese_recommandations" => "La synthèse et recommandations est obligatoire pour la validation de l'étude de préfaisabilité."
+                    ]);
+                } else {
+                    // Enregistrer la synthèse et recommandations en tant que commentaire
+                    $projet->commentaires()->create([
+                        'contenu' => $data['synthese_recommandations'],
+                        'type_commentaire' => 'synthese_recommandations_prefaisabilite',
+                        'auteur_id' => auth()->id(),
+                    ]);
+                }
+            }
 
             // Vérifier la cohérence du suivi rapport si des données de validation sont fournies
             if (isset($data['checklist_suivi_validation'])) {
-
 
                 // Enregistrer les appréciations pour chaque champ
 
@@ -1202,7 +1264,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ];
                 }
 
-                $evaluationValidation->champs_evalue()->syncWithoutDetaching($syncData);
+                $evaluationValidation->champs_evalue()->sync($syncData);
 
                 // Préparer l'évaluation complète pour enregistrement
                 $evaluationComplete = [
@@ -2059,15 +2121,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'evaluation' => [],
                 'resultats_evaluation' => [],
                 'date_debut_evaluation' => now(),
-                'date_fin_evaluation' => isset($data['finaliser']) && $data['finaliser'] ? now() : null,
-                'statut' => isset($data['finaliser']) && $data['finaliser'] ? 1 : 0, // En cours ou finalisé
+                'date_fin_evaluation' => isset($data['evaluer']) && $data['evaluer'] ? now() : null,
+                'statut' => isset($data['evaluer']) && $data['evaluer'] ? 1 : 0, // En cours ou finalisé
                 'id_evaluation' => $evaluationParent ? $evaluationParent->id : null
             ];
 
             $evaluationEnCours = $tdr->evaluations()->create($evaluationData);
         } else {
-            // Finaliser l'évaluation si demandé
-            if (isset($data['finaliser']) && $data['finaliser']) {
+            // evaluer l'évaluation si demandé
+            if (isset($data['evaluer']) && $data['evaluer']) {
                 $evaluationEnCours->fill([
                     'date_fin_evaluation' => now(),
                     'statut' => 1

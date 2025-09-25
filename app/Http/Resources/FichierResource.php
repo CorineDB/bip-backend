@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 class FichierResource extends BaseApiResource
 {
@@ -38,7 +39,7 @@ class FichierResource extends BaseApiResource
             // URLs sécurisées via hash MD5
             'urls' => [
                 'view' => route('api.fichiers.view', ['hash' => $this->hash_md5]),
-                'download' => route('api.fichiers.download', ['hash' => $this->hash_md5]),
+                'download' => URL::signedRoute('api.fichiers.download', ['hash' => $this->hash_md5], now()->addMinutes(5)),
                 'details' => route('api.fichiers.show', $this->id), // Garder pour les détails par ID
             ],
 

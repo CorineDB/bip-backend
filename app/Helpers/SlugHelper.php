@@ -46,6 +46,29 @@ class SlugHelper
     }
 
     /**
+     * Generate a clean file path for storage, removing accents and special characters
+     */
+    public static function generateFilePath(string $path): string
+    {
+        // Remove accents and special characters but preserve path separators
+        $cleanPath = self::removeAccents($path);
+
+        // Replace spaces and special characters with underscores, but preserve slashes
+        $cleanPath = preg_replace('/[^a-zA-Z0-9\/_\-]/', '_', $cleanPath);
+
+        // Remove multiple consecutive underscores
+        $cleanPath = preg_replace('/_+/', '_', $cleanPath);
+
+        // Clean up any trailing underscores in path segments
+        $segments = explode('/', $cleanPath);
+        $segments = array_map(function($segment) {
+            return trim($segment, '_');
+        }, $segments);
+
+        return implode('/', array_filter($segments));
+    }
+
+    /**
      * Remove accents from text
      */
     private static function removeAccents(string $text): string

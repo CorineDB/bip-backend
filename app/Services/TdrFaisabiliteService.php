@@ -25,6 +25,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Helpers\SlugHelper;
+use App\Http\Resources\RapportResource;
+use App\Models\Tdr;
+use Illuminate\Validation\ValidationException;
 
 class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteServiceInterface
 {
@@ -114,9 +117,9 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            // Vérifications des droits d'accès (similaire à préfaisabilité)
-            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && !in_array(auth()->user()->type, ['dgpd', 'admin'])) {
-                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+            // Vérifications des droits d'accès (identique à préfaisabilité)
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
             // Récupérer le TDR le plus récent pour ce projet
@@ -289,18 +292,15 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             DB::beginTransaction();
 
             // Vérifier les autorisations (DGPD uniquement)
-            if (!in_array(auth()->user()->type, ['dgpd'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette évaluation.'
-                ], 403);
+            if (!auth()->user()->hasPermissionTo('apprecier-un-tdr-de-faisabilite') && auth()->user()->type !== 'dgpd' && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n\'avez pas les droits pour effectuer cette évaluation.", 403);
             }
 
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if ($projet->statut->value !== StatutIdee::EVALUATION_TDR_F->value) {
+            if (!in_array($projet->statut->value, [StatutIdee::EVALUATION_TDR_F->value, StatutIdee::R_TDR_FAISABILITE->value])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape d\'évaluation des TDRs.'
@@ -415,8 +415,13 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             // Récupérer le TDR soumis
-            $tdr = \App\Models\Tdr::where('projet_id', $projetId)
+            $tdr = $this->tdrRepository->getModel()
+                ->where('projet_id', $projetId)
                 ->where('type', 'faisabilite')
                 ->orderBy('created_at', 'desc')
                 ->first();
@@ -438,6 +443,14 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ->orderBy('created_at', 'desc')
                 ->first();
 
+            if (!$evaluation) {
+                return response()->json([
+                    'success' => true,
+                    'data' => null,
+                    'message' => 'Aucune évaluation trouvée pour cette tdr.'
+                ], 206);
+            }
+
             // Construire la grille d'évaluation avec les données existantes
             $grilleEvaluation = [];
             if ($evaluation && $evaluation->statut == 1) {
@@ -450,20 +463,21 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     $grilleEvaluation[] = [
                         'champ_id' => isset($champ["champ_id"]) ? $champ["champ_id"] : null,
                         'label' => isset($champ["label"]) ? $champ["label"] : null,
-                        'attribut' => isset($champ["label"]) ? $champ["attribut"] : null,
+                        'attribut' => isset($champ["attribut"]) ? $champ["attribut"] : null,
                         'type_champ' => isset($champ["type_champ"]) ? $champ["type_champ"] : "textearea",
                         'ordre_affichage' => isset($champ["ordre_affichage"]) ? $champ["ordre_affichage"] : 0,
                         'appreciation' =>  isset($champ["appreciation"]) ? $champ["appreciation"] : null,
                         'commentaire_evaluateur' =>  isset($champ["commentaire_evaluateur"]) ? $champ["commentaire_evaluateur"] : null,
-                        'date_appreciation' =>  isset($champ["date_evaluation"]) ? $champ["date_evaluation"] : null,
+                        'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
                     ];
                 }
-            } else {
+            }
+            else {
 
                 // Récupérer le canevas d'appréciation des TDRs
                 $canevasAppreciation = $this->documentRepository->getModel()
-                    ->where('type', 'formulaire')
-                    ->where('slug', 'canevas-appreciation-tdr')
+                    ->where('type', 'checklist')
+                    ->where('slug', 'canevas-appreciation-tdrs-faisabilite')
                     ->with(['champs' => function ($query) {
                         $query->orderBy('ordre_affichage');
                     }])
@@ -490,7 +504,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         'ordre_affichage' => $champ->ordre_affichage,
                         'appreciation' => $evaluationExistante ? $evaluationExistante->pivot->note : null,
                         'commentaire_evaluateur' => $evaluationExistante ? $evaluationExistante->pivot->commentaires : null,
-                        'date_evaluation' => $evaluationExistante ? $evaluationExistante->pivot->date_note : null
+                        'date_appreciation' => $evaluationExistante ? $evaluationExistante->pivot->date_note : null
                     ];
                 }
             }
@@ -508,39 +522,35 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     $evaluationsChamps[] = [
                         'champ_id' => isset($champ["champ_id"]) ? $champ["champ_id"] : null,
                         'label' => isset($champ["label"]) ? $champ["label"] : null,
-                        'attribut' => isset($champ["label"]) ? $champ["attribut"] : null,
+                        'attribut' => isset($champ["attribut"]) ? $champ["attribut"] : null,
                         'type_champ' => isset($champ["type_champ"]) ? $champ["type_champ"] : "textearea",
                         'ordre_affichage' => isset($champ["ordre_affichage"]) ? $champ["ordre_affichage"] : 0,
                         'appreciation' =>  isset($champ["appreciation"]) ? $champ["appreciation"] : null,
                         'commentaire_evaluateur' =>  isset($champ["commentaire_evaluateur"]) ? $champ["commentaire_evaluateur"] : null,
-                        'date_appreciation' =>  isset($champ["date_evaluation"]) ? $champ["date_evaluation"] : null,
+                        'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
                     ];
                 }
                 $resultatsEvaluation = $evaluation->resultats_evaluation;
             } else {
-                if ($evaluation) {
-                    foreach ($evaluation->champs_evalue as $champ) {
-                        $evaluationsChamps[] = [
-                            'champ_id' => $champ->id,
-                            'appreciation' => $champ->pivot->note,
-                            'commentaire_evaluateur' => $champ->pivot->commentaires,
-                            'date_appreciation' => $champ->pivot->date_note
-                        ];
-                    }
-
-                    $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
+                foreach ($evaluation->champs_evalue as $champ) {
+                    $evaluationsChamps[] = [
+                        'champ_id' => $champ->id,
+                        'appreciation' => $champ->pivot->note,
+                        'commentaire_evaluateur' => $champ->pivot->commentaires,
+                        'date_appreciation' => $champ->pivot->date_note
+                    ];
                 }
+
+                $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
             }
 
             // Déterminer les actions suivantes selon le résultat
-            if ($resultatsEvaluation) {
-                $actionsSuivantes = $this->getActionsSuivantesSelonResultat($resultatsEvaluation['resultat_global']);
-            }
+            $actionsSuivantes = $this->getActionsSuivantesSelonResultat($resultatsEvaluation['resultat_global']);
 
             // Récupérer toutes les évaluations du projet pour ce type
             $evaluations = $projet->evaluations()
                 ->where('statut', 1)
-                ->where('id', "<>", $evaluation ? $evaluation->id : 0)
+                ->where('id', "<>", $evaluation->id)
                 ->where('type_evaluation', 'tdr-faisabilite')
                 ->with(['champs_evalue' => function ($query) {
                     $query->orderBy('ordre_affichage');
@@ -550,11 +560,14 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             // Construire l'historique des évaluations
             $historiqueEvaluations = $evaluations->map(function ($evaluation) {
+                // Recalculer le résultat pour chaque évaluation
+
+                //$resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
                 $resultatsEvaluation = $evaluation->resultats_evaluation;
                 $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation;
                 return [
                     'id' => $evaluation->id,
-                    'statut' => $evaluation->statut,
+                    'statut' => $evaluation->statut, // 0=en cours, 1=terminée
                     'evaluateur' => $evaluation->evaluateur ? new UserResource($evaluation->evaluateur) : 'N/A',
                     'date_debut' => Carbon::parse($evaluation->date_debut_evaluation)->format("Y-m-d h:i:s"),
                     'date_fin' => Carbon::parse($evaluation->date_fin_evaluation)->format("Y-m-d h:i:s"),
@@ -562,17 +575,16 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'resultat_global' => $resultatsEvaluation['resultat_global'] ?? null,
                     'message_resultat' => $resultatsEvaluation['message_resultat'] ?? null,
                     'champs_evalues' => collect($champs_evalues)->map(function ($champ) {
-                        $champInter = (array)$champ;
-                        $champ =  (array)$champ;
+                        $champ = (array)$champ;
                         return [
                             'champ_id' => isset($champ["champ_id"]) ? $champ["champ_id"] : null,
                             'label' => isset($champ["label"]) ? $champ["label"] : null,
-                            'attribut' => isset($champ["label"]) ? $champ["attribut"] : null,
+                            'attribut' => isset($champ["attribut"]) ? $champ["attribut"] : null,
                             'type_champ' =>  isset($champ["type_champ"]) ? $champ["type_champ"] : "textearea",
                             'ordre_affichage' => isset($champ["ordre_affichage"]) ? $champ["ordre_affichage"] : 0,
                             'appreciation' =>  isset($champ["appreciation"]) ? $champ["appreciation"] : null,
                             'commentaire_evaluateur' =>  isset($champ["commentaire_evaluateur"]) ? $champ["commentaire_evaluateur"] : null,
-                            'date_appreciation' =>  isset($champ["date_evaluation"]) ? $champ["date_evaluation"] : null,
+                            'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
                         ];
                     })
                 ];
@@ -580,24 +592,12 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             return response()->json([
                 'success' => true,
-                'message' => 'Détails de l\'évaluation TDR de faisabilité récupérés avec succès.',
+                'message' => 'Détails de l\'évaluation TDR récupérés avec succès.',
                 'data' => [
-                    'projet' => new ProjetResource($projet),
-                    'tdr' => $tdrsFichiers->map(function ($fichier) {
-                        return [
-                            'id' => $fichier->id,
-                            'nom_original' => $fichier->nom_original,
-                            'url' => $fichier->url,
-                            'taille' => $fichier->taille,
-                            'date_upload' => $fichier->created_at,
-                            'resume' => $fichier->metadata['resume'] ?? $fichier->description,
-                            'type_tdr' => $fichier->metadata['type_tdr'] ?? 'faisabilite'
-                        ];
-                    }),
-                    'resume_tdr' => $projet->resume_tdr_faisabilite,
+                    'tdr' => new TdrResource($tdr->load(['fichiers', 'projet'])),
                     'evaluation_existante' => $evaluation ? [
                         'id' => $evaluation->id,
-                        'statut' => $evaluation->statut,
+                        'statut' => $evaluation->statut, // 0=en cours, 1=terminée
                         'evaluateur' => new UserResource($evaluation->evaluateur),
                         'date_debut' => Carbon::parse($evaluation->date_debut_evaluation)->format("Y-m-d h:i:s"),
                         'date_fin' => Carbon::parse($evaluation->date_fin_evaluation)->format("Y-m-d h:i:s"),
@@ -623,40 +623,39 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             DB::beginTransaction();
 
             // Vérifier les autorisations (DGPD uniquement)
-            if (!in_array(auth()->user()->type, ['dgpd'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour effectuer cette validation.'
-                ], 403);
+            if (!auth()->user()->hasPermissionTo('apprecier-un-tdr-de-faisabilite') && auth()->user()->type !== 'dgpd' && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n\'avez pas les droits pour effectuer cette évaluation.", 403);
             }
 
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if ($projet->statut->value !== StatutIdee::EVALUATION_TDR_F->value) {
+            if (!in_array($projet->statut->value, [StatutIdee::EVALUATION_TDR_F->value, StatutIdee::R_TDR_FAISABILITE->value])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape d\'évaluation des TDRs.'
                 ], 422);
             }
 
-            // Vérifier que le TDR est soumis et peut être validé
-            $tdr = \App\Models\Tdr::where('projet_id', $projet->id)
-                ->where('type', 'faisabilite')
-                ->orderBy('created_at', 'desc')
-                ->first();
+            $tdr = $projet->tdrFaisabilite->first();
 
-            if (!$tdr || !$tdr->peutEtreValide()) {
+            if (auth()->user()->id !== $tdr->soumisPar?->id) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
+            // Vérifier que le TDR est soumis et peut être évalué
+            if (!$tdr?->peutEtreValide()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le TDR doit être évalué avant de pouvoir être validé.'
                 ], 422);
             }
 
-            // Récupérer l'évaluation
-            $evaluation = $tdr->evaluations()
+            // Vérifier qu'il y a une évaluation terminée avec résultat "non accepté"
+            $evaluation = $tdr?->evaluations()
                 ->where('type_evaluation', 'tdr-faisabilite')
+                ->where('statut', 1) // Évaluation terminée
                 ->orderBy('created_at', 'desc')
                 ->first();
 
@@ -856,9 +855,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            // Vérifications des permissions avancées
-            if (!auth()->user()->hasPermissionTo('soumettre-un-rapport-de-faisabilite') && auth()->user()->type !== 'dpaf' && auth()->user()->profilable_type !== 'App\\Models\\Dpaf') {
-                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+            if (!auth()->user()->hasPermissionTo('soumettre-un-rapport-de-faisabilite') && auth()->user()->type !== 'dpaf' && auth()->user()->profilable_type !== Dpaf::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
             // Vérifier que le projet est au bon statut
@@ -886,7 +884,12 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'statut' => $estBrouillon ? 'brouillon' : 'soumis',
                 'intitule' => 'Rapport de faisabilité - ' . $projet->titre_projet,
                 'checklist_suivi' => $checklistData,
-                'info_cabinet_etude' => $data['cabinet_etude'] ?? null,
+                'info_cabinet_etude' => [
+                    'nom_cabinet' => $data['cabinet_etude']['nom_cabinet'] ?? null,
+                    'contact_cabinet' => $data['cabinet_etude']['contact_cabinet'] ?? null,
+                    'email_cabinet' => $data['cabinet_etude']['email_cabinet'] ?? null,
+                    'adresse_cabinet' => $data['cabinet_etude']['adresse_cabinet'] ?? null,
+                ],
                 'recommandation' => $data['recommandation'] ?? null,
                 'date_soumission' => $estBrouillon ? null : now(),
                 'soumis_par_id' => $estBrouillon ? null : auth()->id()
@@ -921,7 +924,69 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             // Ne changer le statut du projet que si ce n'est pas un brouillon
             if (!$estBrouillon) {
+
+                $info_etude_faisabilite = $projet->info_etude_faisabilite ?? [];
+
+                //validation des informations de si l'étude de faisabilité est financée
+                if (!isset($data['etude_faisabilite']['est_finance'])) {
+                    throw ValidationException::withMessages([
+                        "etude_faisabilite.est_finance" => "Le champ 'est_finance' est obligatoire."
+                    ]);
+                }
+
+                // on doit valider si c'est une valeur booléenne
+                // par exemple une chaîne de caractères, un entier, un tableau, etc.
+                // mais si la valeur est 0 ou 1, on peut la considérer comme booléenne
+
+                if (is_string($data['etude_faisabilite']['est_finance'])) {
+                    $valeur = strtolower($data['etude_faisabilite']['est_finance']);
+                    if ($valeur === 'true' || $valeur === '1') {
+                        $data['etude_faisabilite']['est_finance'] = true;
+                    } elseif ($valeur === 'false' || $valeur === '0') {
+                        $data['etude_faisabilite']['est_finance'] = false;
+                    } else {
+                        throw ValidationException::withMessages([
+                            "etude_faisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                        ]);
+                    }
+                } elseif (is_int($data['etude_faisabilite']['est_finance'])) {
+                    if ($data['etude_faisabilite']['est_finance'] === 1) {
+                        $data['etude_faisabilite']['est_finance'] = true;
+                    } elseif ($data['etude_faisabilite']['est_finance'] === 0) {
+                        $data['etude_faisabilite']['est_finance'] = false;
+                    } else {
+                        throw ValidationException::withMessages([
+                            "etude_faisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                        ]);
+                    }
+                } elseif (is_array($data['etude_faisabilite']['est_finance']) || is_null($data['etude_faisabilite']['est_finance'])) {
+                    throw ValidationException::withMessages([
+                        "etude_faisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                    ]);
+                }
+                else{
+                    // Si c'est déjà une valeur booléenne, ne rien faire
+                }
+
+                if (!is_bool($data['etude_faisabilite']['est_finance'])) {
+                    throw ValidationException::withMessages([
+                        "etude_faisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                    ]);
+                }
+
+                $est_finance = $data['etude_faisabilite']['est_finance'] ?? ($info_etude_faisabilite['est_finance'] ?? false);
+
+                // Mettre à jour les informations de l'étude de faisabilité dans le projet
                 $projet->update([
+                    // Fusionner avec les nouvelles valeurs provenant de $data
+                    'info_etude_faisabilite' => array_merge($info_etude_faisabilite, [
+                        'date_demande'   => $data['etude_faisabilite']['date_demande'] ?? ($info_etude_faisabilite['date_demande'] ?? null),
+                        'date_obtention' => $data['etude_faisabilite']['date_obtention'] ?? ($info_etude_faisabilite['date_obtention'] ?? null),
+                        'montant'        => $data['etude_faisabilite']['montant'] ?? ($info_etude_faisabilite['montant'] ?? null),
+                        'reference'      => $data['etude_faisabilite']['reference'] ?? ($info_etude_faisabilite['reference'] ?? null),
+                        'est_finance'    => $est_finance,
+                    ]),
+
                     'statut' => StatutIdee::VALIDATION_F,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_F),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_F)
@@ -932,18 +997,18 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 $this->enregistrerDecision(
                     $projet,
                     "Soumission du rapport de faisabilité",
-                    "Rapport soumis par cabinet: " . ($data['cabinet_etude']['nom_cabinet'] ?? 'N/A'),
+                    "Rapport ID: {$rapport->id} soumis par cabinet: " . ($rapport->info_cabinet_etude['nom_cabinet'] ?? 'N/A'),
                     auth()->user()->personne->id
                 );
 
                 // Envoyer une notification
-                $this->envoyerNotificationSoumissionRapport($projet, $fichierRapport, $data);
+                $this->envoyerNotificationSoumissionRapport($projet, $rapport, $fichierRapport);
             }
 
             DB::commit();
 
-            // Envoyer une notification
-            $this->envoyerNotificationSoumissionRapport($projet, $fichierRapport, $data);
+            // Charger les relations nécessaires pour le resource
+            $rapport->load(['fichiers', 'soumisPar', 'projet']);
 
             return response()->json([
                 'success' => true,
@@ -951,9 +1016,10 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'data' => [
                     'rapport_id' => $rapport->id,
                     'projet_id' => $projet->id,
-                    'ancien_statut' => StatutIdee::SOUMISSION_RAPPORT_F->value,
-                    'nouveau_statut' => $estBrouillon ? null : StatutIdee::VALIDATION_F->value,
-                    'rapport' => new \App\Http\Resources\RapportResource($rapport)
+                    'statut_rapport' => $rapport->statut,
+                    'statut_projet' => $projet->statut->value,
+                    'action' => $estBrouillon ? 'draft' : 'submit',
+                    'rapport' => new RapportResource($rapport)
                 ]
             ]);
         } catch (Exception $e) {
@@ -972,14 +1038,16 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier les permissions d'accès
-            if (auth()->user()->profilable?->ministere?->id !== $projet->ministere->id && !in_array(auth()->user()->type, ['dgpd', 'admin'])) {
+            /* if (auth()->user()->profilable?->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== \App\Models\Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
-            }
+            } */
 
             // Récupérer le rapport soumis le plus récent
-            $rapport = $projet->rapportFaisabilite()
+            $rapport = \App\Models\Rapport::where('projet_id', $projetId)
+                ->where('type', 'faisabilite')
                 ->where('statut', 'soumis')
                 ->with(['fichiersRapport', 'procesVerbaux', 'soumisPar', 'projet', 'champs', 'documentsAnnexes'])
+                ->latest('created_at')
                 ->first();
 
             if (!$rapport) {
@@ -990,60 +1058,16 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ], 404);
             }
 
-            // Récupérer les workflows pour l'historique
-            $historique = $projet->workflows()
-                ->orderBy('date', 'desc')
-                ->take(5)
-                ->get()
-                ->map(function ($workflow) {
-                    return [
-                        'statut' => $workflow->statut,
-                        'phase' => $workflow->phase,
-                        'sous_phase' => $workflow->sous_phase,
-                        'date' => Carbon::parse($workflow->date)->format('d/m/Y H:i:s')
-                    ];
-                });
-
-            // Récupérer les évaluations liées au TDR de faisabilité
-            $tdr = $projet->tdrs()
-                ->where('type', 'faisabilite')
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            $evaluationTdr = null;
-            if ($tdr) {
-                $evaluationTdr = $tdr->evaluations()
-                    ->where('type_evaluation', 'tdr-faisabilite')
-                    ->where('statut', 1)
-                    ->orderBy('created_at', 'desc')
-                    ->first();
-            }
-
-            // Récupérer les décisions prises
-            $decisions = $projet->decisions()
-                ->orderBy('date', 'desc')
-                ->take(3)
-                ->get()
-                ->map(function ($decision) {
-                    return [
-                        'valeur' => $decision->valeur,
-                        'observations' => $decision->observations,
-                        'date' => Carbon::parse($decision->date)->format('d/m/Y H:i:s'),
-                        'observateur' => $decision->observateur ? new UserResource($decision->observateur) : null
-                    ];
-                });
-
             return response()->json([
                 'success' => true,
                 'data' => new \App\Http\Resources\RapportResource($rapport),
                 'message' => 'Détails de soumission du rapport de faisabilité récupérés avec succès.'
             ]);
-
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => "Erreur lors de la récupération des détails de soumission. " . $e->getMessage(),
-                'error' => $e->getMessage()
+                'message' => 'Erreur lors de la récupération du rapport soumis: ' . $e->getMessage(),
+                'data' => null
             ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
         }
     }
@@ -1615,32 +1639,37 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     /**
      * Créer une évaluation TDR
      */
-    private function creerEvaluationTdr($tdr, array $data)
+    private function creerEvaluationTdr(Tdr $tdr, array $data)
     {
-        // Récupérer une évaluation en cours existante ou en créer une nouvelle
-        $evaluation = $tdr->evaluations()
-            ->where('type_evaluation', 'tdr-faisabilite')
-            ->where('statut', 0)
-            ->orderBy('created_at', 'desc')
-            ->first();
+        // Récupérer une évaluation en cours existante ou en créer une nouvelle pour ce TDR
+        $evaluationEnCours = $tdr->evaluationEnCours();
 
-        if (!$evaluation) {
+        if (!$evaluationEnCours) {
             // Récupérer l'évaluation parent si c'est une ré-évaluation
-            $evaluationParent = $tdr->evaluations()
-                ->where('type_evaluation', 'tdr-faisabilite')
-                ->where('statut', 1)
-                ->orderBy('created_at', 'desc')
-                ->first();
+            $evaluationParent = $tdr->evaluationParent();
 
-            $evaluation = $tdr->evaluations()->create([
+            // Créer la nouvelle évaluation
+            $evaluationData = [
                 'type_evaluation' => 'tdr-faisabilite',
                 'evaluateur_id' => auth()->id(),
                 'evaluation' => [],
                 'resultats_evaluation' => [],
                 'date_debut_evaluation' => now(),
-                'statut' => 0, // En cours
+                'date_fin_evaluation' => isset($data['evaluer']) && $data['evaluer'] ? now() : null,
+                'statut' => isset($data['evaluer']) && $data['evaluer'] ? 1 : 0, // En cours ou finalisé
                 'id_evaluation' => $evaluationParent ? $evaluationParent->id : null
-            ]);
+            ];
+
+            $evaluationEnCours = $tdr->evaluations()->create($evaluationData);
+        } else {
+            // evaluer l'évaluation si demandé
+            if (isset($data['evaluer']) && $data['evaluer']) {
+                $evaluationEnCours->fill([
+                    'date_fin_evaluation' => now(),
+                    'statut' => 1
+                ]);
+                $evaluationEnCours->save();
+            }
         }
 
         // Enregistrer les appréciations pour chaque champ
@@ -1655,17 +1684,10 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ];
             }
 
-            $evaluation->champs_evalue()->syncWithoutDetaching($syncData);
+            $evaluationEnCours->champs_evalue()->syncWithoutDetaching($syncData);
         }
 
-        // Finaliser l'évaluation
-        $evaluation->update([
-            'date_fin_evaluation' => now(),
-            'statut' => 1,
-            'commentaire' => $data['commentaire'] ?? null
-        ]);
-
-        return $evaluation;
+        return $evaluationEnCours;
     }
 
     /**
@@ -1692,7 +1714,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 case 'retour':
                     $nombreRetour++;
                     break;
-                case 'non_accepte':
+                case 'non-accepte':
                     $nombreNonAccepte++;
                     break;
                 default:
@@ -1705,7 +1727,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         $resultat = $this->determinerResultatSelonRegles([
             'passe' => $nombrePasse,
             'retour' => $nombreRetour,
-            'non_accepte' => $nombreNonAccepte,
+            'non-accepte' => $nombreNonAccepte,
             'non_evalues' => $nombreNonEvalues,
             'total' => $totalChamps
         ]);
@@ -1771,7 +1793,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     /**
      * Traiter la décision d'évaluation automatiquement selon les règles SFD-015
      */
-    private function traiterDecisionEvaluationTdrAutomatique(Projet $projet, array $resultats, $tdr = null): StatutIdee
+    private function traiterDecisionEvaluationTdrAutomatique(Projet $projet, array $resultats, null|Tdr $tdr): StatutIdee
     {
         switch ($resultats['resultat_global']) {
             case 'passe':
@@ -1782,12 +1804,9 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::SOUMISSION_RAPPORT_F)
                 ]);
 
-                // Mettre à jour le statut du TDR vers 'valide'
-                if ($tdr) {
-                    $tdr->update([
-                        'statut' => 'valide'
-                    ]);
-                }
+                $tdr->update([
+                    'statut' => 'valide'
+                ]);
 
                 return StatutIdee::SOUMISSION_RAPPORT_F;
 
@@ -1799,16 +1818,13 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_TDR_FAISABILITE)
                 ]);
 
-                // Mettre à jour le statut du TDR vers 'retour_travail_supplementaire'
-                if ($tdr) {
-                    $tdr->update([
-                        'statut' => 'retour_travail_supplementaire'
-                    ]);
-                }
+                $tdr->update([
+                    'statut' => 'retour_travail_supplementaire'
+                ]);
 
                 return StatutIdee::R_TDR_FAISABILITE;
 
-            case 'non_accepte':
+            case 'non-accepte':
             default:
                 // Non accepté → ATTENTE DE DÉCISION (reste à EVALUATION_TDR_F)
                 $projet->update([

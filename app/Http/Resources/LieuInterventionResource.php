@@ -20,9 +20,7 @@ class LieuInterventionResource extends BaseApiResource
             "village"=> $this->village ? new VillageResource($this->village) : null,
             "arrondissement"=> $this->arrondissement ? new ArrondissementResource($this->arrondissement) : null,
             "commune"=> $this->commune ? new CommuneResource($this->commune) : null,
-            "departement"=> $this->departement ? new DepartementResource($this->departement) : null,
-            "projetable_id"=> $this->projetable_id,
-            "projetable_type"=> $this->projetable_type
+            "departement"=> $this->departement ? new DepartementResource($this->departement) : null
         ];
     }
 

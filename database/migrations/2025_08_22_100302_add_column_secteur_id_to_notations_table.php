@@ -16,28 +16,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('notations', function (Blueprint $table) {
-            // Supprimer la clé étrangère et la colonne
-            $table->dropForeign(['secteur_id']);
-            $table->dropColumn('secteur_id');
+
+            if(Schema::hasColumn('notations', "secteur_id")){
+                // Supprimer la clé étrangère et la colonne
+                $table->dropForeign(['secteur_id']);
+                $table->dropColumn('secteur_id');
+            }
 
             $table->unsignedBigInteger('secteur_id')->nullable(true)->index();
             $table->foreign('secteur_id')->references('id')->on('secteurs')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
-
-
-            // Supprimer l’ancienne contrainte unique
-            DB::statement('ALTER TABLE notations DROP CONSTRAINT IF EXISTS unique_annotation_per_categorie_critere');
-
-            // Supprimer l’ancienne contrainte unique
-            DB::statement('ALTER TABLE notations DROP CONSTRAINT IF EXISTS unique_annotation_per_secteur_categorie_critere');
-
-            // Ajouter la nouvelle contrainte avec secteur_id
-            DB::statement('
-                ALTER TABLE notations
-                ADD CONSTRAINT unique_annotation_per_categorie_critere
-                UNIQUE (libelle, valeur, critere_id, categorie_critere_id, secteur_id)
-            ');
 
             // Suppression de l'ancienne contrainte unique si elle existe (à adapter selon ton cas)
             //$this->dropUniqueIfExists(table: 'notations', constraint: 'unique_annotation_per_categorie_critere');
@@ -45,6 +34,20 @@ return new class extends Migration
             // Contrainte unique composée
             //$table->unique(['libelle', 'valeur', 'secteur_id', 'critere_id', 'categorie_critere_id'], 'unique_annotation_per_secteur_categorie_critere');
         });
+
+
+        // Supprimer l’ancienne contrainte unique
+        DB::statement('ALTER TABLE notations DROP CONSTRAINT IF EXISTS unique_annotation_per_categorie_critere');
+
+        // Supprimer l’ancienne contrainte unique
+        DB::statement('ALTER TABLE notations DROP CONSTRAINT IF EXISTS unique_annotation_per_secteur_categorie_critere');
+
+        // Ajouter la nouvelle contrainte avec secteur_id
+        DB::statement('
+            ALTER TABLE notations
+            ADD CONSTRAINT unique_annotation_per_categorie_critere
+            UNIQUE (libelle, valeur, critere_id, categorie_critere_id, secteur_id)
+        ');
     }
 
     /**
@@ -53,9 +56,12 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('notations', function (Blueprint $table) {
-            // Supprimer la clé étrangère et la colonne
-            $table->dropForeign(['secteur_id']);
-            $table->dropColumn('secteur_id');
+
+            if(Schema::hasColumn('notations', "secteur_id")){
+                // Supprimer la clé étrangère et la colonne
+                $table->dropForeign(['secteur_id']);
+                $table->dropColumn('secteur_id');
+            }
         });
 
         // Supprimer la contrainte incluant secteur_id

@@ -32,7 +32,11 @@ class AppServiceProvider extends ServiceProvider
 
         Passport::tokensCan([
             'sync-sigfp' => 'Allow SIGFP to sync data with BIP',
-            'integration-bip' => 'Allow Integration with BIP'
+            'integration-bip' => 'Allow Integration with BIP',
+            'read-projects' => 'Read project data',
+            'manage-projects' => 'Create, update, delete projects',
+            'manage-clients' => 'Manage OAuth clients',
+            'admin' => 'Full administrative access',
         ]);
 
     }

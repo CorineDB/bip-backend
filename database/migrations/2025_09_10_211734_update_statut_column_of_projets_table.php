@@ -24,6 +24,7 @@ return new class extends Migration
 
         // Ajouter la nouvelle contrainte qui couvre les valeurs existantes + les nouvelles
         DB::statement("ALTER TABLE projets ADD CONSTRAINT projets_statut_check CHECK (statut::text = ANY (ARRAY['" . implode("','", $allowedStatuts) . "']::text[]))");
+
     }
 
     /**
