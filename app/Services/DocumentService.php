@@ -1505,15 +1505,15 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             $categorieDocument = CategorieDocument::firstOrCreate([
                 'slug' => 'canevas-check-liste-de-suivi-etude-de-faisabilite-organisationnelle-juridique'
             ], [
-                'format' => 'document',
                 'nom' => "Canevas de la check liste de suivi d'étude de faisabilité organisationnelle et juridique",
-                'slug' => 'canevas-check-liste-de-suivi-etude-de-faisabilite-organisationnelle-juridique',
-                "description" => "Canevas standardisés de la check liste de suivi d'étude de faisabilité organisationnelle et juridique",
+                "description" => "Canevas standardisés du check liste de suivi d'étude de faisabilité organisationnelle et juridique",
+                'format' => 'document'
             ]);
             $data['categorieId'] = $categorieDocument->id;
+            $data["type"] = "checklist";
+            $data["slug"] = 'check-liste-de-suivi-etude-de-faisabilite-organisationnelle-juridique';
 
             if ($canevas) {
-                unset($data["slug"]);
                 // Mode mise à jour intelligente
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
                 $canevas->fill($documentData);
@@ -1527,15 +1527,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
                     // Mettre à jour les options de notation
                     $evaluationConfigs['guide_suivi'] = $data['guide_suivi'];
-
-                    // Sauvegarder la configuration
-                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
-                }
-
-                if (isset($data['accept_text'])) {
-
-                    // Mettre à jour les options de notation
-                    $evaluationConfigs['accept_text'] = $data['accept_text'];
 
                     // Sauvegarder la configuration
                     $canevas->update(['evaluation_configs' => $evaluationConfigs]);
@@ -1562,7 +1553,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     ->response()
                     ->setStatusCode(200);
             } else {
-                $data["slug"] = "canevas-appreciation-tdr";
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
