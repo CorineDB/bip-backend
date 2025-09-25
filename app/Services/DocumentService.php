@@ -1626,12 +1626,13 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             $categorieDocument = CategorieDocument::firstOrCreate([
                 'slug' => 'canevas-check-liste-de-suivi-etude-analyse-impact-environnementale-sociale'
             ], [
-                'format' => 'document',
-                'nom' => "Canevas de la check liste de suivi d'étude de faisabilité d'impact environnementale et sociale",
-                'slug' => 'canevas-check-liste-de-suivi-etude-analyse-impact-environnementale-sociale',
-                "description" => "Canevas standardisés de la check liste de suivi d'étude de faisabilité d'impact environnementale et sociale",
+                'nom' => "Canevas du check liste de suivi de l'etude de l'analyse de faisabilité d'impact environnementale et sociale",
+                "description" => "Canevas standardisés du check liste de suivi de l'etude de l'analyse de faisabilité d'impact environnementale et sociale",
+                'format' => 'document'
             ]);
             $data['categorieId'] = $categorieDocument->id;
+            $data["type"] = "checklist";
+            $data["slug"] = 'check-liste-de-suivi-etude-analyse-impact-environnementale-sociale';
 
             if ($canevas) {
                 unset($data["slug"]);
