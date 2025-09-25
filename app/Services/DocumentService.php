@@ -1393,16 +1393,18 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             $categorieDocument = CategorieDocument::firstOrCreate([
                 'slug' => 'canevas-check-liste-de-suivi-analyse-de-faisabilite-financiere'
             ], [
-                'format' => 'document',
-                'nom' => "Canevas de la check liste de suivi d'analyse de faisabilité financière",
-                'slug' => 'canevas-check-liste-de-suivi-analyse-de-faisabilite-financiere',
+                'nom' => "Canevas de la check liste de suivi de l'analyse de faisabilité financière",
                 "description" => "Canevas standardisés de la check liste de suivi d'analyse de faisabilité financière",
+                'format' => 'document'
             ]);
-
             $data['categorieId'] = $categorieDocument->id;
+            $data["type"] = "checklist";
+            $data["slug"] = 'check-liste-de-suivi-analyse-de-faisabilite-financiere';
+
+
 
             if ($canevas) {
-                unset($data["slug"]);
+
                 // Mode mise à jour intelligente
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
                 $canevas->fill($documentData);
@@ -1442,7 +1444,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     ->response()
                     ->setStatusCode(200);
             } else {
-                $data["slug"] = "canevas-appreciation-tdr";
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
