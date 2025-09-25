@@ -1750,7 +1750,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         // Règle 1: Si des questions n'ont pas été complétées
         if ($compteurs['non_evalues'] > 0) {
             return [
-                'resultat_global' => 'non_accepte',
+                'resultat_global' => 'non-accepte',
                 'message_resultat' => 'Non accepté - Des questions n\'ont pas été complétées',
                 'raison' => 'Questions non complétées'
             ];
@@ -1759,16 +1759,16 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         // Règle 2: Si une réponse a été évaluée comme "Non accepté"
         if ($compteurs['non_accepte'] > 0) {
             return [
-                'resultat_global' => 'non_accepte',
+                'resultat_global' => 'non-accepte',
                 'message_resultat' => 'Non accepté - Une ou plusieurs réponses évaluées comme "Non accepté"',
                 'raison' => 'Réponses non acceptées'
             ];
         }
 
         // Règle 3: Si 10 ou plus des réponses ont été évaluées comme "Retour"
-        if ($compteurs['retour'] >= 10) {
+        if ($compteurs['retour'] >= 6) {
             return [
-                'resultat_global' => 'non_accepte',
+                'resultat_global' => 'non-accepte',
                 'message_resultat' => 'Non accepté - Trop de retours (10 ou plus)',
                 'raison' => 'Seuil de retours dépassé'
             ];
