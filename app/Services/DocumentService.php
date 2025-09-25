@@ -1192,7 +1192,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             $data["slug"] = 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite';
 
             if ($canevas) {
-                unset($data["slug"]);
                 // Mode mise à jour intelligente
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
                 $canevas->fill($documentData);
@@ -1232,7 +1231,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     ->response()
                     ->setStatusCode(200);
             } else {
-                $data["slug"] = "canevas-check-liste-etude-faisabilite-economique";
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
