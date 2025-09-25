@@ -484,6 +484,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     }])
                     ->first();
 
+                $canevasAppreciation = ($this->documentRepository->getCanevasAppreciationTdrFaisabilite());
+
                 if (!$canevasAppreciation) {
                     return response()->json([
                         'success' => false,
