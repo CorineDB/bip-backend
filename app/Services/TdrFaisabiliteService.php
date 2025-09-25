@@ -604,7 +604,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         'date_fin' => Carbon::parse($evaluation->date_fin_evaluation)->format("Y-m-d h:i:s"),
                         'commentaire_global' => $evaluation->commentaire,
                         'grille_evaluation' => $grilleEvaluation,
-                        'evaluation' => $evaluation->evaluation, // 0=en cours, 1=terminée
+                        'evaluation' => json_decode($evaluation->evaluation), // 0=en cours, 1=terminée
                     ] : null,
                     'resultats_evaluation' => $resultatsEvaluation,
                     'actions_suivantes' => $actionsSuivantes,
