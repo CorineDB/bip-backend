@@ -1167,17 +1167,6 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         try {
             DB::beginTransaction();
 
-            /* $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteEconomique();
-            $categorieDocument = CategorieDocument::firstOrCreate([
-                'slug' => 'canevas-check-liste-etude-faisabilite-economique'
-            ], [
-                'format' => 'document',
-                'nom' => "Canevas de la check liste d'étude de faisabilité économique",
-                'slug' => 'canevas-check-liste-e-etude-faisabilite-economique',
-                "description" => "Canevas standardisés de la check liste d'étude de faisabilité économique",
-            ]); */
-
-
             $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteEconomique();
             $categorieDocument = CategorieDocument::firstOrCreate([
                 'slug' => 'canevas-check-liste-etude-faisabilite-economique'
@@ -1188,7 +1177,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             ]);
             $data['categorieId'] = $categorieDocument->id;
             $data["type"] = "checklist";
-            $data["slug"] = 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite';
+            $data["slug"] = 'check-liste-suivi-etude-faisabilite-economique';
 
             if ($canevas) {
                 // Mode mise à jour intelligente
@@ -1293,15 +1282,15 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             $categorieDocument = CategorieDocument::firstOrCreate([
                 'slug' => 'canevas-check-liste-etude-faisabilite-technique'
             ], [
-                'format' => 'document',
-                'nom' => "Canevas de la check liste d'étude de faisabilité technique",
-                'slug' => 'canevas-check-liste-etude-faisabilite-technique',
+                'nom' => "Canevas de la check liste d'étude de faisabilité technique.",
                 "description" => "Canevas standardisés de la check liste d'étude de faisabilité technique",
+                'format' => 'document'
             ]);
             $data['categorieId'] = $categorieDocument->id;
+            $data["type"] = "checklist";
+            $data["slug"] = 'check-liste-suivi-etude-faisabilite-technique';
 
             if ($canevas) {
-                unset($data["slug"]);
                 // Mode mise à jour intelligente
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
                 $canevas->fill($documentData);
@@ -1311,10 +1300,10 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Récupérer la configuration existante ou créer une nouvelle
                 $evaluationConfigs = $canevas->evaluation_configs ?? [];
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_suivi'])) {
 
                     // Mettre à jour les options de notation
-                    $evaluationConfigs['options_notation'] = $data['options_notation'];
+                    $evaluationConfigs['guide_suivi'] = $data['guide_suivi'];
 
                     // Sauvegarder la configuration
                     $canevas->update(['evaluation_configs' => $evaluationConfigs]);
@@ -1341,13 +1330,12 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                     ->response()
                     ->setStatusCode(200);
             } else {
-                $data["slug"] = "canevas-appreciation-tdr";
                 // Mode création
                 $documentData = collect($data)->except(['forms', 'id'])->toArray();
 
-                if (isset($data['options_notation'])) {
+                if (isset($data['guide_suivi'])) {
 
-                    $documentData['evaluation_configs']['options_notation'] = $data['options_notation'];
+                    $documentData['evaluation_configs']['guide_suivi'] = $data['guide_suivi'];
                 }
 
                 $document = $this->repository->create($documentData);
