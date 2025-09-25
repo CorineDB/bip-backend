@@ -569,6 +569,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 return [
                     'id' => $evaluation->id,
                     'statut' => $evaluation->statut, // 0=en cours, 1=terminée
+                    'evaluation' => $evaluation->evaluation, // 0=en cours, 1=terminée
                     'evaluateur' => $evaluation->evaluateur ? new UserResource($evaluation->evaluateur) : 'N/A',
                     'date_debut' => Carbon::parse($evaluation->date_debut_evaluation)->format("Y-m-d h:i:s"),
                     'date_fin' => Carbon::parse($evaluation->date_fin_evaluation)->format("Y-m-d h:i:s"),
