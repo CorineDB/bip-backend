@@ -1182,8 +1182,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             $categorieDocument = CategorieDocument::firstOrCreate([
                 'slug' => 'canevas-check-liste-etude-faisabilite-economique'
             ], [
-                'nom' => "Canevas de la check liste d'étude de faisabilité économique",
-                'slug' => 'canevas-check-liste-e-etude-faisabilite-economique',
+                'nom' => "Canevas de la check liste d'étude de faisabilité économique.",
                 "description" => "Canevas standardisés de la check liste d'étude de faisabilité économique",
                 'format' => 'document'
             ]);
