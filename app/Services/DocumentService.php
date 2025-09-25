@@ -1167,7 +1167,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         try {
             DB::beginTransaction();
 
-            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteEconomique();
+            /* $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteEconomique();
             $categorieDocument = CategorieDocument::firstOrCreate([
                 'slug' => 'canevas-check-liste-etude-faisabilite-economique'
             ], [
@@ -1175,11 +1175,21 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 'nom' => "Canevas de la check liste d'étude de faisabilité économique",
                 'slug' => 'canevas-check-liste-e-etude-faisabilite-economique',
                 "description" => "Canevas standardisés de la check liste d'étude de faisabilité économique",
+            ]); */
+
+
+            $canevas = $this->repository->getCanevasChecklisteEtudeFaisabiliteEconomique();
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-check-liste-etude-faisabilite-economique'
+            ], [
+                'nom' => "Canevas de la check liste d'étude de faisabilité économique",
+                'slug' => 'canevas-check-liste-e-etude-faisabilite-economique',
+                "description" => "Canevas standardisés de la check liste d'étude de faisabilité économique",
+                'format' => 'document'
             ]);
-
             $data['categorieId'] = $categorieDocument->id;
-
-            dd($canevas);
+            $data["type"] = "checklist";
+            $data["slug"] = 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite';
 
             if ($canevas) {
                 unset($data["slug"]);
