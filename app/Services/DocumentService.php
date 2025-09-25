@@ -1179,6 +1179,8 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
             $data['categorieId'] = $categorieDocument->id;
 
+            dd($canevas);
+
             if ($canevas) {
                 unset($data["slug"]);
                 // Mode mise à jour intelligente
