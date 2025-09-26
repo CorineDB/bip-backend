@@ -119,7 +119,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            // Vérifications des droits d'accès (identique à préfaisabilité)
+            // Vérifications des droits d'accès (identique à faisabilité)
             if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
@@ -165,7 +165,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         try {
             DB::beginTransaction();
 
-            // Vérifications des permissions avancées (similaire à préfaisabilité)
+            // Vérifications des permissions avancées (similaire à faisabilité)
             if (!auth()->user()->hasPermissionTo('soumettre-un-tdr-de-faisabilite') && auth()->user()->type !== 'dpaf' && auth()->user()->profilable_type !== 'App\\Models\\Dpaf') {
                 throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
             }
@@ -965,7 +965,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 $this->traiterToutesLesChecklistsEtudeFaisabilite($projet, $data, $estBrouillon);
             }
 
-            // Traiter les checklists de faisabilité selon le pattern de préfaisabilité
+            // Traiter les checklists de faisabilité selon le pattern de faisabilité
             if (!$estBrouillon) {
                 // Préparer les fichiers et données pour la soumission finale
                 $fichiersData = [
@@ -1001,10 +1001,10 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     $fichierRapport = $this->gererFichierRapportFaisabilite($rapport, $data['rapport'], $data);
                 }
 
-                // Traitement et sauvegarde du rapport coûts/avantages
+                // Traitement et sauvegarde du rapport proces verbal
                 $fichierCoutsAvantages = null;
                 if (isset($data['proces_verbal'])) {
-                    $fichierCoutsAvantages = $this->gererFichierRapportCoutsAvantages($rapport, $data['proces_verbal'], $data);
+                    $this->gererFichierProcesVerbal($rapport, $data['proces_verbal'], $data);
                 }
 
                 $info_etude_faisabilite = $projet->info_etude_faisabilite ?? [];
@@ -1552,7 +1552,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         return true;
     }
 
-    // === MÉTHODES UTILITAIRES (identiques à TdrPrefaisabiliteService) ===
+    // === MÉTHODES UTILITAIRES (identiques à TdrfaisabiliteService) ===
 
     /**
      * Obtenir les actions possibles pour la validation
@@ -2011,7 +2011,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         };
     }
 
-    // Méthodes utilitaires du workflow (identiques à TdrPrefaisabiliteService)
+    // Méthodes utilitaires du workflow (identiques à TdrfaisabiliteService)
     private function enregistrerWorkflow($projet, $nouveauStatut)
     {
         Workflow::create([
@@ -2215,196 +2215,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     }
 
     /**
-     * Collecter toutes les données de checklists pour le rapport
-     */
-    private function collecterDonneesChecklists(array $data, array &$checklistData): void
-    {
-        $checklistsEtudeFaisabilite = [
-            'checklist_etude_faisabilite_marche',
-            'checklist_etude_faisabilite_economique',
-            'checklist_etude_faisabilite_technique',
-            'checklist_etude_faisabilite_organisationnelle_et_juridique',
-            'checklist_suivi_analyse_faisabilite_financiere',
-            'checklist_suivi_etude_analyse_impact_environnementale_et_sociale',
-            'checklist_suivi_assurance_qualite_rapport_etude_faisabilite'
-        ];
-
-        foreach ($checklistsEtudeFaisabilite as $checklistKey) {
-            if (isset($data[$checklistKey])) {
-                $checklistData[$checklistKey] = $data[$checklistKey];
-            }
-        }
-    }
-
-    /**
-     * Associer les fichiers au rapport
-     */
-    private function associerFichiersAuRapport(\App\Models\Rapport $rapport, array $data): ?\App\Models\Fichier
-    {
-        $fichierRapport = null;
-
-        // Associer le fichier rapport de faisabilité
-        if (isset($data['rapport'])) {
-            $fichierRapport = $this->sauvegarderFichierPourRapport($rapport, $data['rapport'], 'rapport-faisabilite');
-        }
-
-        // Associer le fichier rapport coûts-avantages
-        if (isset($data['proces_verbal'])) {
-            $fichierRapport = $this->sauvegarderFichierPourRapport($rapport, $data['proces_verbal'], 'rapport-couts-avantages');
-        }
-
-        return $fichierRapport;
-    }
-
-    /**
-     * Sauvegarder un fichier pour un rapport
-     */
-    private function sauvegarderFichierPourRapport(\App\Models\Rapport $rapport, $fichierData, string $categorie): \App\Models\Fichier
-    {
-        $fichier = new \App\Models\Fichier();
-        $fichier->fill([
-            'nom' => $fichierData->getClientOriginalName(),
-            'chemin' => $fichierData->store('rapports/faisabilite', 'public'),
-            'taille' => $fichierData->getSize(),
-            'type_mime' => $fichierData->getMimeType(),
-            'uploaded_by_id' => auth()->id(),
-            'categorie' => $categorie,
-            'is_active' => true,
-            'fichier_attachable_type' => Rapport::class,
-            'fichier_attachable_id' => $rapport->id
-        ]);
-        $fichier->save();
-
-        return $fichier;
-    }
-
-    /**
-     * Gérer le fichier rapport de faisabilité
-     */
-    private function gererFichierRapport(Rapport $rapport, $fichier, array $data): ?Fichier
-    {
-        // Calculer le hash du nouveau fichier
-        $nouveauHash = md5_file($fichier->getRealPath());
-
-        // Vérifier s'il y a déjà un fichier rapport avec le même hash lié à ce rapport
-        $fichierIdentique = $rapport->fichiersRapport()
-            ->where('hash_md5', $nouveauHash)
-            ->where('is_active', true)
-            ->first();
-
-        if ($fichierIdentique) {
-            return $fichierIdentique;
-        }
-
-        // Désactiver les anciens fichiers rapport de ce rapport
-        $rapport->fichiersRapport()
-            ->where('is_active', true)
-            ->update(['is_active' => false]);
-
-        // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_faisabilite/rapport/{hash_id}
-        $hashedProjectId = hash('sha256', $rapport->projet_id);
-        $hashedRapportId = hash('sha256', $rapport->id);
-
-        // Stocker le fichier sur le disque
-        $nomOriginal = $fichier->getClientOriginalName();
-        $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
-        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_faisabilite/rapport/{$hashedRapportId}", $nomStockage, 'local');
-
-        // Créer le nouveau fichier et l'associer au rapport
-        $fichierCree = Fichier::create([
-            'nom_original' => $nomOriginal,
-            'nom_stockage' => $nomStockage,
-            'chemin' => $chemin,
-            'extension' => $extension,
-            'mime_type' => $fichier->getMimeType(),
-            'taille' => $fichier->getSize(),
-            'hash_md5' => $nouveauHash,
-            'description' => 'Rapport de faisabilité',
-            'commentaire' => $data['commentaire_rapport'] ?? null,
-            'categorie' => 'rapport',
-            'is_active' => true,
-            'uploaded_by' => auth()->id(),
-            'metadata' => [
-                'type_document' => 'rapport-faisabilite',
-                'rapport_id' => $rapport->id,
-                'projet_id' => $rapport->projet_id,
-                'statut' => 'actif',
-                'soumis_par' => auth()->id(),
-                'soumis_le' => now()
-            ]
-        ]);
-
-        // Associer le fichier au rapport
-        $rapport->fichiersRapport()->attach($fichierCree->id);
-
-        return $fichierCree;
-    }
-
-    /**
-     * Gérer le fichier procès-verbal de faisabilité
-     */
-    private function gererFichierProcesVerbal(Rapport $rapport, $fichier, array $data): ?Fichier
-    {
-        // Calculer le hash du nouveau fichier
-        $nouveauHash = md5_file($fichier->getRealPath());
-
-        // Vérifier s'il y a déjà un procès verbal avec le même hash lié à ce rapport
-        $procesVerbalIdentique = $rapport->procesVerbaux()
-            ->where('hash_md5', $nouveauHash)
-            ->where('is_active', true)
-            ->first();
-
-        if ($procesVerbalIdentique) {
-            return $procesVerbalIdentique;
-        }
-
-        // Désactiver les anciens procès verbaux de ce rapport
-        $rapport->procesVerbaux()
-            ->where('is_active', true)
-            ->update(['is_active' => false]);
-
-        // Hasher les IDs pour le chemin
-        $hashedProjectId = hash('sha256', $rapport->projet_id);
-        $hashedRapportId = hash('sha256', $rapport->id);
-
-        // Stocker le fichier sur le disque
-        $nomOriginal = $fichier->getClientOriginalName();
-        $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
-        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_faisabilite/proces_verbal/{$hashedRapportId}", $nomStockage, 'local');
-
-        // Créer le nouveau fichier et l'associer au rapport
-        $fichierCree = Fichier::create([
-            'nom_original' => $nomOriginal,
-            'nom_stockage' => $nomStockage,
-            'chemin' => $chemin,
-            'extension' => $extension,
-            'mime_type' => $fichier->getMimeType(),
-            'taille' => $fichier->getSize(),
-            'hash_md5' => $nouveauHash,
-            'description' => 'Procès-verbal de faisabilité',
-            'commentaire' => $data['commentaire_proces_verbal'] ?? null,
-            'categorie' => 'proces-verbal',
-            'is_active' => true,
-            'uploaded_by' => auth()->id(),
-            'metadata' => [
-                'type_document' => 'proces-verbal-faisabilite',
-                'rapport_id' => $rapport->id,
-                'projet_id' => $rapport->projet_id,
-                'statut' => 'actif',
-                'soumis_par' => auth()->id(),
-                'soumis_le' => now()
-            ]
-        ]);
-
-        // Associer le fichier au rapport
-        $rapport->procesVerbaux()->attach($fichierCree->id);
-
-        return $fichierCree;
-    }
-
-    /**
      * Créer ou récupérer la structure de dossiers pour les TDR de faisabilité
      */
     private function getOrCreateTdrFolderStructure(int $projetId, string $type = 'tdr'): ?Dossier
@@ -2536,126 +2346,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         }
     }
 
-    /**
-     * Gérer le fichier rapport de faisabilité
-     */
-    private function gererFichierRapportFaisabilite(Rapport $rapport, $fichier, array $data): ?Fichier
-    {
-        // Calculer le hash du nouveau fichier
-        $nouveauHash = md5_file($fichier->getRealPath());
-
-        // Vérifier s'il y a déjà un rapport avec le même hash lié à ce rapport
-        $rapportIdentique = $rapport->fichiersRapport()
-            ->where('hash_md5', $nouveauHash)
-            ->where('is_active', true)
-            ->first();
-
-        if ($rapportIdentique) {
-            return $rapportIdentique;
-        }
-
-        // Désactiver les anciens rapports de ce rapport
-        $rapport->fichiersRapport()
-            ->where('is_active', true)
-            ->update(['is_active' => false]);
-
-        // Hasher les IDs pour le chemin
-        $hashedProjectId = hash('sha256', $rapport->projet_id);
-        $hashedRapportId = hash('sha256', $rapport->id);
-
-        // Stocker le fichier sur le disque
-        $nomOriginal = $fichier->getClientOriginalName();
-        $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
-        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_faisabilite/rapport/{$hashedRapportId}", $nomStockage, 'local');
-
-        // Créer l'enregistrement du fichier
-        $fichierCree = Fichier::create([
-            'nom_original' => $nomOriginal,
-            'nom_stockage' => $nomStockage,
-            'chemin' => $chemin,
-            'taille' => $fichier->getSize(),
-            'mime_type' => $fichier->getMimeType(),
-            'extension' => $extension,
-            'hash_md5' => $nouveauHash,
-            'is_active' => true,
-            'uploaded_by' => auth()->id(),
-            'metadata' => [
-                'type_document' => 'rapport-faisabilite',
-                'rapport_id' => $rapport->id,
-                'projet_id' => $rapport->projet_id,
-                'statut' => 'actif',
-                'soumis_par' => auth()->id(),
-                'soumis_le' => now()
-            ]
-        ]);
-
-        // Associer le fichier au rapport
-        $rapport->fichiersRapport()->attach($fichierCree->id);
-
-        return $fichierCree;
-    }
-
-    /**
-     * Gérer le fichier rapport coûts/avantages
-     */
-    private function gererFichierRapportCoutsAvantages(Rapport $rapport, $fichier, array $data): ?Fichier
-    {
-        // Calculer le hash du nouveau fichier
-        $nouveauHash = md5_file($fichier->getRealPath());
-
-        // Vérifier s'il y a déjà un rapport coûts/avantages avec le même hash lié à ce rapport
-        $rapportIdentique = $rapport->documentsAnnexes()
-            ->where('hash_md5', $nouveauHash)
-            ->where('is_active', true)
-            ->first();
-
-        if ($rapportIdentique) {
-            return $rapportIdentique;
-        }
-
-        // Désactiver les anciens rapports coûts/avantages de ce rapport
-        $rapport->documentsAnnexes()
-            ->where('is_active', true)
-            ->where('metadata->type_document', 'rapport-couts-avantages')
-            ->update(['is_active' => false]);
-
-        // Hasher les IDs pour le chemin
-        $hashedProjectId = hash('sha256', $rapport->projet_id);
-        $hashedRapportId = hash('sha256', $rapport->id);
-
-        // Stocker le fichier sur le disque
-        $nomOriginal = $fichier->getClientOriginalName();
-        $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
-        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_faisabilite/proces_verbal/{$hashedRapportId}", $nomStockage, 'local');
-
-        // Créer l'enregistrement du fichier
-        $fichierCree = Fichier::create([
-            'nom_original' => $nomOriginal,
-            'nom_stockage' => $nomStockage,
-            'chemin' => $chemin,
-            'taille' => $fichier->getSize(),
-            'mime_type' => $fichier->getMimeType(),
-            'extension' => $extension,
-            'hash_md5' => $nouveauHash,
-            'is_active' => true,
-            'uploaded_by' => auth()->id(),
-            'metadata' => [
-                'type_document' => 'rapport-couts-avantages',
-                'rapport_id' => $rapport->id,
-                'projet_id' => $rapport->projet_id,
-                'statut' => 'actif',
-                'soumis_par' => auth()->id(),
-                'soumis_le' => now()
-            ]
-        ]);
-
-        // Associer le fichier au rapport comme document annexe
-        $rapport->documentsAnnexes()->attach($fichierCree->id);
-
-        return $fichierCree;
-    }
 
     /**
      * Traiter les checklists de suivi du rapport de faisabilité
@@ -2664,19 +2354,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     {
         try {
             DB::beginTransaction();
-
-            // Associer les fichiers au rapport si ils existent
-            if (!empty($fichiers)) {
-                // Fichier rapport de faisabilité
-                if (isset($fichiers['rapport'])) {
-                    $this->attacherFichierAuRapportFaisabilite($rapport, $fichiers['rapport'], 'rapport-faisabilite');
-                }
-
-                // Rapport coûts/avantages
-                if (isset($fichiers['proces_verbal'])) {
-                    $this->attacherFichierAuRapportFaisabilite($rapport, $fichiers['proces_verbal'], 'rapport-couts-avantages');
-                }
-            }
 
             // Traiter les données des 7 checklists via la relation champs() si nécessaire
             $this->traiterChampsChecklistsSuiviFaisabilite($rapport, $checklistsData);
@@ -2738,43 +2415,150 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         ]
                     ]);
                 }
+
+                // Mettre à jour checklist_suivi avec les données des champs
+                $rapport->checklist_suivi[$checklistKey] = $rapport->champs->map(function ($champ) {
+                    return [
+                        'id' => $champ->id,
+                        'label' => $champ->label,
+                        'attribut' => $champ->attribut,
+                        'valeur' => $champ->pivot->valeur,
+                        'commentaire' => $champ->pivot->commentaire,
+                        'created_at' => $champ->pivot->created_at,
+                        'updated_at' => $champ->pivot->updated_at
+                    ];
+                });
             }
         }
-
-        // Mettre à jour checklist_suivi avec les données des champs
-        $rapport->checklist_suivi = $rapport->champs->map(function ($champ) {
-            return [
-                'id' => $champ->id,
-                'label' => $champ->label,
-                'attribut' => $champ->attribut,
-                'valeur' => $champ->pivot->valeur,
-                'commentaire' => $champ->pivot->commentaire,
-                'created_at' => $champ->pivot->created_at,
-                'updated_at' => $champ->pivot->updated_at
-            ];
-        });
 
         $rapport->save();
     }
 
+
+
     /**
-     * Attacher un fichier à un rapport de faisabilité
+     * Gérer le fichier rapport avec versioning intelligent
      */
-    private function attacherFichierAuRapportFaisabilite($rapport, $fichier, $categorie)
+    private function gererFichierRapportFaisabilite(Rapport $rapport, $fichier, array $data): ?Fichier
     {
-        if ($fichier instanceof \Illuminate\Http\UploadedFile) {
-            // Utiliser les méthodes existantes selon le type de fichier
-            $fichierCree = null;
+        // Calculer le hash du nouveau fichier
+        $nouveauHash = md5_file($fichier->getRealPath());
 
-            if ($categorie === 'rapport-faisabilite') {
-                $fichierCree = $this->gererFichierRapportFaisabilite($rapport, $fichier, []);
-            } elseif ($categorie === 'rapport-couts-avantages') {
-                $fichierCree = $this->gererFichierRapportCoutsAvantages($rapport, $fichier, []);
-            }
+        // Vérifier s'il y a déjà un fichier rapport avec le même hash lié à ce rapport
+        $fichierIdentique = $rapport->fichiersRapport()
+            ->where('hash_md5', $nouveauHash)
+            ->where('is_active', true)
+            ->first();
 
-            return $fichierCree;
+        if ($fichierIdentique) {
+            return $fichierIdentique;
         }
 
-        return null;
+        // Désactiver les anciens fichiers rapport de ce rapport
+        $rapport->fichiersRapport()
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
+
+        // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_faisabilite/rapport/{hash_id}
+        $hashedProjectId = hash('sha256', $rapport->projet_id);
+        $hashedRapportId = hash('sha256', $rapport->id);
+
+        // Stocker le fichier sur le disque
+        $nomOriginal = $fichier->getClientOriginalName();
+        $extension = $fichier->getClientOriginalExtension();
+        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
+        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_faisabilite/rapport_faisabilite/{$hashedRapportId}", $nomStockage, 'local');
+
+        // Créer le nouveau fichier et l'associer au rapport
+        $fichierCree = Fichier::create([
+            'nom_original' => $nomOriginal,
+            'nom_stockage' => $nomStockage,
+            'chemin' => $chemin,
+            'extension' => $extension,
+            'mime_type' => $fichier->getMimeType(),
+            'taille' => $fichier->getSize(),
+            'hash_md5' => $nouveauHash,
+            'description' => 'Rapport de faisabilité',
+            'commentaire' => $data['commentaire_rapport'] ?? null,
+            'categorie' => 'rapport',
+            'is_active' => true,
+            'uploaded_by' => auth()->id(),
+            'metadata' => [
+                'type_document' => 'rapport-faisabilite',
+                'rapport_id' => $rapport->id,
+                'projet_id' => $rapport->projet_id,
+                'statut' => 'actif',
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now(),
+                'folder_structure' => "projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_faisabilite/rapport_faisabilite/{$hashedRapportId}"
+            ],
+            'fichier_attachable_type' => Rapport::class,
+            'fichier_attachable_id' => $rapport->id
+        ]);
+
+        return $fichierCree;
+    }
+
+    /**
+     * Gérer le fichier procès verbal avec versioning intelligent
+     */
+    private function gererFichierProcesVerbal(Rapport $rapport, $fichier, array $data): ?Fichier
+    {
+        // Calculer le hash du nouveau fichier
+        $nouveauHash = md5_file($fichier->getRealPath());
+
+        // Vérifier s'il y a déjà un procès verbal avec le même hash lié à ce rapport
+        $procesVerbalIdentique = $rapport->procesVerbaux()
+            ->where('hash_md5', $nouveauHash)
+            ->where('is_active', true)
+            ->first();
+
+        if ($procesVerbalIdentique) {
+            return $procesVerbalIdentique;
+        }
+
+        // Désactiver les anciens procès verbaux de ce rapport
+        $rapport->procesVerbaux()
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
+
+        // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_faisabilite/rapport/{hash_id}
+        $hashedProjectId = hash('sha256', $rapport->projet_id);
+        $hashedRapportId = hash('sha256', $rapport->id);
+
+        // Stocker le fichier sur le disque
+        $nomOriginal = $fichier->getClientOriginalName();
+        $extension = $fichier->getClientOriginalExtension();
+        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
+        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_faisabilite/rapport_faisabilite/{$hashedRapportId}", $nomStockage, 'local');
+
+        // Créer le nouveau fichier et l'associer au rapport
+        $fichierCree = Fichier::create([
+            'nom_original' => $nomOriginal,
+            'nom_stockage' => $nomStockage,
+            'chemin' => $chemin,
+            'extension' => $extension,
+            'mime_type' => $fichier->getMimeType(),
+            'taille' => $fichier->getSize(),
+            'hash_md5' => $nouveauHash,
+            'description' => 'Procès-verbal de faisabilité',
+            'commentaire' => $data['commentaire_proces_verbal'] ?? null,
+            'categorie' => 'proces-verbal',
+            'is_active' => true,
+            'uploaded_by' => auth()->id(),
+            'metadata' => [
+                'type_document' => 'proces-verbal-faisabilite',
+                'rapport_id' => $rapport->id,
+                'projet_id' => $rapport->projet_id,
+                'statut' => 'actif',
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now(),
+                'folder_structure' => "projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_faisabilite/rapport_faisabilite/{$hashedRapportId}"
+            ],
+            'fichier_attachable_type' => Rapport::class,
+            'fichier_attachable_id' => $rapport->id
+        ]);
+
+        return $fichierCree;
     }
 }
