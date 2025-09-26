@@ -147,7 +147,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'statut_projet' => $projet->statut
                 ]
             ]);
-
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -473,8 +472,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
                     ];
                 }
-            }
-            else {
+            } else {
 
                 // Récupérer le canevas d'appréciation des TDRs
                 $canevasAppreciation = $this->documentRepository->getModel()
@@ -1045,8 +1043,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     throw ValidationException::withMessages([
                         "etude_faisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
                     ]);
-                }
-                else{
+                } else {
                     // Si c'est déjà une valeur booléenne, ne rien faire
                 }
 
@@ -1334,7 +1331,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'recommandation_adaptation' => $fichierRapport->metadata['recommandation_adaptation'] ?? null
                 ]
             ]);
-
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -1509,7 +1505,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             ]);
 
             return ['success' => true];
-
         } catch (\Exception $e) {
             \Log::error('Erreur lors du traitement de la checklist suivi assurance qualité', [
                 'projet_id' => $projet->id,
@@ -2339,7 +2334,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             ]);
 
             return $sousDossier;
-
         } catch (Exception $e) {
             // En cas d'erreur, retourner null
             return null;
@@ -2384,16 +2378,26 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     private function traiterChampsChecklistsSuiviFaisabilite($rapport, array $checklistsData)
     {
         // Liste des 7 checklists de faisabilité
-        $checklists = [
-            'checklist_suivi_assurance_qualite',
-            'checklist_etude_faisabilite_technique',
-            'checklist_etude_faisabilite_economique',
-            'checklist_etude_faisabilite_marche',
-            'checklist_etude_faisabilite_organisationnelle_juridique',
-            'checklist_suivi_analyse_faisabilite_financiere',
-            'checklist_suivi_etude_analyse_impact_environnemental_social'
+        // Mapping checklist ↔ canevasMethod
+        $checklistsMap = [
+            'checklist_suivi_assurance_qualite'                        => 'getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite',
+            'checklist_etude_faisabilite_technique'                    => 'getCanevasChecklisteEtudeFaisabiliteTechnique',
+            'checklist_etude_faisabilite_economique'                   => 'getCanevasChecklisteEtudeFaisabiliteEconomique',
+            'checklist_etude_faisabilite_marche'                       => 'getCanevasChecklisteEtudeFaisabiliteMarche',
+            'checklist_etude_faisabilite_organisationnelle_juridique'  => 'getCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique',
+            'checklist_suivi_analyse_faisabilite_financiere'           => 'getCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere',
+            'checklist_suivi_etude_analyse_impact_environnemental_social' => 'getCanevasChecklisteSuiviEtudeImpactEnvironnementaleEtSociale',
         ];
 
+        foreach ($checklistsMap as $checklistKey => $canevasMethod) {
+            if (isset($checklistsData[$checklistKey]) && is_array($checklistsData[$checklistKey])) {
+                // Construire et stocker la checklist
+                $this->buildChecklist($rapport, $checklistKey, $canevasMethod, $checklistsData[$checklistKey]);
+            }
+        }
+
+        $rapport->save();
+        /*
         // Traiter chaque checklist
         foreach ($checklists as $checklistKey) {
             if (isset($checklistsData[$checklistKey]) && is_array($checklistsData[$checklistKey])) {
@@ -2432,6 +2436,54 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         }
 
         $rapport->save();
+        */
+    }
+
+
+    /**
+     * Construire et mettre à jour une checklist spécifique
+     */
+    private function buildChecklist($rapport, string $checklistKey, string $canevasMethod, array $evaluations)
+    {
+        // 1. Enregistrer ou mettre à jour les checkpoints dans champs()
+        foreach ($evaluations as $evaluation) {
+            $checkpointId   = $evaluation['checkpoint_id'];
+            $remarque       = $evaluation['remarque'] ?? null;
+            $explication    = $evaluation['explication'] ?? null;
+
+            $rapport->champs()->syncWithoutDetaching([
+                $checkpointId => [
+                    'valeur'      => $remarque,
+                    'commentaire' => $explication,
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]
+            ]);
+        }
+
+        // 2. Récupérer le canevas associé à la checklist
+        $canevas = $this->documentRepository->{$canevasMethod}();
+
+        // Si le canevas n’existe pas → on ignore la construction
+        if ($canevas === null || empty($canevas->all_champs)) {
+            $rapport->checklist_suivi[$checklistKey] = collect(); // ou [] si tu préfères un tableau
+            return;
+        }
+
+        // 3. Construire les données checklist_suivi pour ce canevas uniquement
+        $rapport->checklist_suivi[$checklistKey] = collect(optional($canevas)->all_champs ?? [])->map(function ($champ) use ($rapport) {
+            $champRapport = $rapport->champs->firstWhere('id', $champ->id);
+
+            return [
+                'id'          => $champ->id,
+                'label'       => $champ->label,
+                'attribut'    => $champ->attribut,
+                'valeur'      => optional($champRapport?->pivot)->valeur,
+                'commentaire' => optional($champRapport?->pivot)->commentaire,
+                'created_at'  => optional($champRapport?->pivot)->created_at,
+                'updated_at'  => optional($champRapport?->pivot)->updated_at,
+            ];
+        });
     }
 
 
