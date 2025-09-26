@@ -2808,30 +2808,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     {
         try {
             DB::beginTransaction();
-            /*
-            // Récupérer le dernier rapport de préfaisabilité s'il existe
-            $rapportExistant = $projet->rapportPrefaisabilite()->first();
-
-            // Déterminer le parent_id pour la hiérarchie (uniquement si soumission finale et rapport existe)
-            $parentId = null;
-            if ($rapportExistant && !$estBrouillon) {
-                $parentId = $rapportExistant->id;
-            }
-
-            // Créer le nouveau rapport
-            $rapport = \App\Models\Rapport::create([
-                'projet_id' => $rapport->projet->id,
-                'parent_id' => $parentId,
-                'type' => 'prefaisabilite',
-                'statut' => $estBrouillon ? 'brouillon' : 'soumis',
-                'intitule' => 'Rapport de préfaisabilité - ' . $rapport->projet->titre_projet,
-                'checklist_suivi' => $checklistData, // Stocker directement les données
-                'info_cabinet_etude' => $fichiers['cabinet_etude'] ?? null,
-                'recommandation' => $fichiers['recommandation'] ?? null,
-                'date_soumission' => $estBrouillon ? null : now(),
-                'soumis_par_id' => $estBrouillon ? null : auth()->id()
-            ]);
-            */
 
             // Associer les fichiers au rapport si ils existent
             if (!empty($fichiers)) {
