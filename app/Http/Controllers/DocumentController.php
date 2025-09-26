@@ -29,6 +29,18 @@ class DocumentController extends Controller
     public function __construct(DocumentServiceInterface $service)
     {
         $this->service = $service;
+
+        // Permissions pour la gestion des documents et canevas
+        /*$this->middleware('permission:voir-la-liste-des-canevas')->only(['index', 'show', 'canevasAppreciationTdr', 'canevasChecklistSuiviRapportPrefaisabilite', 'canevasChecklisteEtudeFaisabiliteMarche', 'canevasChecklisteEtudeFaisabiliteEconomique', 'canevasChecklisteEtudeFaisabiliteTechnique', 'canevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere', 'canevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique', 'canevasChecklisteSuiviEtudeAnalyseImpactEnvironnementaleEtSociale', 'canevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite', 'canevasAppreciationTdrPrefaisabilite', 'canevasAppreciationTdrFaisabilite', 'canevasAppreciationNoteConceptuelle']);
+        $this->middleware('permission:gerer-les-canevas')->only(['store', 'update', 'destroy']);
+        $this->middleware('permission:creer-un-canevas')->only(['createOrUpdateFicheIdee', 'createOrUpdateCanevasRedactionNoteConceptuelle', 'createOrUpdateCanevasAppreciationTdr', 'createOrUpdateCanevasChecklistSuiviRapportPrefaisabilite', 'createOrUpdateCanevasChecklisteEtudeFaisabiliteMarche', 'createOrUpdateCanevasChecklisteEtudeFaisabiliteEconomique', 'createOrUpdateCanevasChecklisteEtudeFaisabiliteTechnique', 'createOrUpdateCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere', 'createOrUpdateCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique', 'createOrUpdateCanevasChecklisteSuiviEtudeAnalyseImpactEnvironnementaleEtSociale', 'createOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite', 'createOrUpdateCanevasAppreciationTdrPrefaisabilite', 'createOrUpdateCanevasAppreciationTdrFaisabilite', 'createOrUpdateCanevasAppreciationNoteConceptuelle']);
+        $this->middleware('permission:modifier-un-canevas')->only(['createOrUpdateFicheIdee', 'createOrUpdateCanevasRedactionNoteConceptuelle']);
+
+        // Permissions spécifiques pour les canevas liés aux actions IdeeProjet
+        $this->middleware('permission:creer-une-idee-de-projet|modifier-une-idee-de-projet|voir-la-liste-des-idees-de-projet|voir-la-liste-des-canevas|consulter-le-canevas-de-la-fiche-idee-de-projet')->only(['ficheIdee']);
+
+        // Permissions spécifiques pour les canevas liés aux actions NoteConceptuelle
+        $this->middleware('permission:creer-une-note-conceptuelle|rediger-une-note-conceptuelle|modifier-une-note-conceptuelle|voir-la-liste-des-notes-conceptuelle|voir-la-liste-des-canevas')->only(['canevasRedactionNoteConceptuelle']);*/
     }
 
     public function index(): JsonResponse
@@ -581,6 +593,11 @@ class DocumentController extends Controller
     public function createOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite(CreateOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabiliteRequest $request): JsonResponse
     {
         return $this->service->createOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite($request->all());
+    }
+
+    public function canevasChecklistesSuiviRapportEtudeFaisabilite(): JsonResponse
+    {
+        return $this->service->canevasChecklistesSuiviRapportEtudeFaisabilite();
     }
 
     /**

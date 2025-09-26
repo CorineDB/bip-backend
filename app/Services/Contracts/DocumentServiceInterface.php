@@ -99,4 +99,6 @@ interface DocumentServiceInterface extends AbstractServiceInterface
     public function canevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite(): JsonResponse;
 
     public function createOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite(array $data): JsonResponse;
+
+    public function canevasChecklistesSuiviRapportEtudeFaisabilite(): JsonResponse;
 }

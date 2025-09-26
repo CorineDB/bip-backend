@@ -374,6 +374,9 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite']);
         });
 
+        Route::get('canevas-check-listes-suivi-rapport-etude-faisabilite', [DocumentController::class, 'canevasChecklistesSuiviRapportEtudeFaisabilite']);
+
+
         /* Route::prefix('canevas-tdr-prefaisabilite')->group(function () {
             Route::get('', [DocumentController::class, 'canevasRedactionTdrPrefaisabilite']);
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasRedactionTdrPrefaisabilite']);

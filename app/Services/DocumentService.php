@@ -1819,6 +1819,101 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
+    public function canevasChecklistesSuiviRapportEtudeFaisabilite(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas de note conceptuelle unique
+            $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+
+            if (!$canevas) {
+                // Lancer le seeder si rien n’existe
+                Artisan::call('db:seed', [
+                    '--class' => 'Database\\Seeders\\ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder',
+                ]);
+
+                // Recharger après le seed
+                $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+            }
+
+            $canevasImpactEnvSociale = $this->repository->getCanevasChecklisteSuiviEtudeImpactEnvironnementaleEtSociale();
+
+            $canevasOrganisationnelleJuridique = $this->repository->getCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique();
+
+            $canevasSuiviAnalyseDeFaisabiliteFinanciere = $this->repository->getCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere();
+
+            $canevasSuiviAnalyseDeFaisabiliteMarche = $this->repository->getCanevasChecklisteEtudeFaisabiliteMarche();
+
+            // Recharger avec relations
+            $canevasSuiviAnalyseDeFaisabiliteTechnique = $this->repository->getCanevasChecklisteEtudeFaisabiliteTechnique();
+
+            // Recharger avec relations
+            $canevasSuiviAnalyseDeFaisabiliteEconomique = $this->repository->getCanevasChecklisteEtudeFaisabiliteEconomique();
+
+            /**
+             * Pour chacun des canevas, on ajoute une clé "type_canevas" pour identifier le type de canevas dans la réponse
+             * Formater avec la ressource si pas null
+             * ajouter la clé "type_canevas" dans chaque ressource
+             * Retourner un tableau de ressources
+             */
+            $canevasList = [];
+            if ($canevas) {
+                $canevasResource = new CanevasAppreciationTdrResource($canevas);
+                $canevasArray = $canevasResource->toArray(request());
+                $canevasArray['type_canevas'] = 'assurance_qualite';
+                $canevasList[] = $canevasArray;
+            }
+            if ($canevasImpactEnvSociale) {
+                $canevasResource = new CanevasAppreciationTdrResource($canevasImpactEnvSociale);
+                $canevasArray = $canevasResource->toArray(request());
+                $canevasArray['type_canevas'] = 'impact_environnementale_sociale';
+                $canevasList[] = $canevasArray;
+            }
+            if ($canevasOrganisationnelleJuridique) {
+                $canevasResource = new CanevasAppreciationTdrResource($canevasOrganisationnelleJuridique);
+                $canevasArray = $canevasResource->toArray(request());
+                $canevasArray['type_canevas'] = 'organisationnelle_juridique';
+                $canevasList[] = $canevasArray;
+            }
+            if ($canevasSuiviAnalyseDeFaisabiliteFinanciere) {
+                $canevasResource = new CanevasAppreciationTdrResource($canevasSuiviAnalyseDeFaisabiliteFinanciere);
+                $canevasArray = $canevasResource->toArray(request());
+                $canevasArray['type_canevas'] = 'analyse_de_faisabilite_financiere';
+                $canevasList[] = $canevasArray;
+            }
+            if ($canevasSuiviAnalyseDeFaisabiliteMarche) {
+                $canevasResource = new CanevasAppreciationTdrResource($canevasSuiviAnalyseDeFaisabiliteMarche);
+                $canevasArray = $canevasResource->toArray(request());
+                $canevasArray['type_canevas'] = 'analyse_de_faisabilite_marche';
+                $canevasList[] = $canevasArray;
+            }
+            if ($canevasSuiviAnalyseDeFaisabiliteTechnique) {
+                $canevasResource = new CanevasAppreciationTdrResource($canevasSuiviAnalyseDeFaisabiliteTechnique);
+                $canevasArray = $canevasResource->toArray(request());
+                $canevasArray['type_canevas'] = 'analyse_de_faisabilite_technique';
+                $canevasList[] = $canevasArray;
+            }
+            if ($canevasSuiviAnalyseDeFaisabiliteEconomique) {
+                $canevasResource = new CanevasAppreciationTdrResource($canevasSuiviAnalyseDeFaisabiliteEconomique);
+                $canevasArray = $canevasResource->toArray(request());
+                $canevasArray['type_canevas'] = 'analyse_de_faisabilite_economique';
+                $canevasList[] = $canevasArray;
+            }
+            if (empty($canevasList)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Aucun canevas de check liste de suivi pour l'étude de faisabilité trouvé."
+                ], 404);
+            }
+            return response()->json([
+                'success' => true,
+                'message' => "Canevas des check listes de suivi pour l'étude de faisabilité récupérés avec succès.",
+                'data' => $canevasList
+            ], 200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
     /*
     public function canevasRedactionTdrPrefaisabilite(): JsonResponse
     {
