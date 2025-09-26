@@ -2464,14 +2464,33 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         // 2. Récupérer le canevas associé à la checklist
         $canevas = $this->documentRepository->{$canevasMethod}();
 
-        // Si le canevas n’existe pas → on ignore la construction
+        // 3. Récupérer l'existant checklist_suivi
+        $currentChecklist = $rapport->checklist_suivi ?? [];
+
+        // 4. Si canevas absent → on vide la checklist
         if ($canevas === null || empty($canevas->all_champs)) {
-            $rapport->checklist_suivi[$checklistKey] = collect(); // ou [] si tu préfères un tableau
+            $currentChecklist[$checklistKey] = [];
+            $rapport->checklist_suivi = $currentChecklist;
             return;
         }
 
-        // 3. Construire les données checklist_suivi pour ce canevas uniquement
-        $rapport->checklist_suivi[$checklistKey] = collect(optional($canevas)->all_champs ?? [])->map(function ($champ) use ($rapport) {
+        // 5. Construire les données checklist_suivi pour ce canevas uniquement
+        /* $rapport->checklist_suivi[$checklistKey] = collect(optional($canevas)->all_champs ?? [])->map(function ($champ) use ($rapport) {
+            $champRapport = $rapport->champs->firstWhere('id', $champ->id);
+
+            return [
+                'id'          => $champ->id,
+                'label'       => $champ->label,
+                'attribut'    => $champ->attribut,
+                'valeur'      => optional($champRapport?->pivot)->valeur,
+                'commentaire' => optional($champRapport?->pivot)->commentaire,
+                'created_at'  => optional($champRapport?->pivot)->created_at,
+                'updated_at'  => optional($champRapport?->pivot)->updated_at,
+            ];
+        }); */
+
+        // 5. Construire les données pour ce canevas
+        $currentChecklist[$checklistKey] = collect($canevas->all_champs)->map(function ($champ) use ($rapport) {
             $champRapport = $rapport->champs->firstWhere('id', $champ->id);
 
             return [
@@ -2484,6 +2503,9 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'updated_at'  => optional($champRapport?->pivot)->updated_at,
             ];
         });
+
+        // 6. Réassigner dans le modèle
+        $rapport->checklist_suivi = $currentChecklist;
     }
 
 
