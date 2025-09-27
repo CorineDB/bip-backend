@@ -20,6 +20,26 @@ class TdrFaisabiliteController extends Controller
     public function __construct(TdrFaisabiliteServiceInterface $service)
     {
         $this->service = $service;
+
+        // Permissions pour la gestion des TDRs de faisabilité - CRUD de base
+        /*$this->middleware('permission:voir-la-liste-des-tdrs-de-faisabilite')->only(['index']);
+        $this->middleware(['permission:voir-la-liste-des-tdrs-de-faisabilite', 'permission:voir-tdr-faisabilite'])->only(['show']);
+        $this->middleware('permission:soumettre-tdr-faisabilite')->only(['store']);
+        $this->middleware('permission:modifier-un-tdr-de-faisabilite')->only(['update']);
+        $this->middleware('permission:supprimer-un-tdr-de-faisabilite')->only(['destroy']);
+
+        // Permissions pour la gestion des TDRs
+        $this->middleware(['permission:voir-tdr-faisabilite', 'permission:telecharger-tdr-faisabilite'])->only(['getTdrDetails']);
+        $this->middleware(['permission:soumettre-tdr-faisabilite', 'permission:modifier-un-tdr-de-faisabilite'])->only(['soumettreTdrs']);
+        $this->middleware('permission:apprecier-un-tdr-de-faisabilite')->only(['evaluerTdrs', 'validerTdrs']);
+        $this->middleware(['permission:voir-la-liste-des-tdrs-de-faisabilite', 'permission:voir-details-appreciation-des-tdrs-de-faisabilite'])->only(['getEvaluationTdr']);
+
+        // Permissions pour les rapports de faisabilité
+        $this->middleware(['permission:soumettre-un-rapport-de-faisabilite', 'permission:gerer-les-rapports-de-faisabilite', 'permission:modifier-un-rapport-de-faisabilite', 'permission:supprimer-un-rapport-de-faisabilite'])->only(['soumettreRapportFaisabilite']);
+        //$this->middleware(['permission:gerer-les-rapports-de-prefaisabilite', 'permission:voir-detail-validation-une-etude-de-faisabilite'])->only(['getDetailsSoumissionRapportFaisabilite']);
+        $this->middleware('permission:valider-une-etude-de-faisabilite')->only(['validerEtudeFaisabilite']);
+        $this->middleware('permission:voir-detail-validation-une-etude-de-faisabilite')->only(['getDetailsValidationEtude']);*/
+
     }
 
     public function index(): JsonResponse
@@ -110,4 +130,13 @@ class TdrFaisabiliteController extends Controller
     {
         return $this->service->validerEtudeFaisabilite($projetId, $request->all());
     }
+
+    /**
+     * Soumettre le rapport de faisabilité (SFD-012)
+     */
+    public function getDetailsSoumissionRapportFaisabilite(int $projetId): JsonResponse
+    {
+        return $this->service->getDetailsSoumissionRapportFaisabilite($projetId);
+    }
+
 }

@@ -45,4 +45,9 @@ interface TdrFaisabiliteServiceInterface extends AbstractServiceInterface
      * Récupérer les détails de validation des TDRs
      */
     public function getDetailsValidationEtude(int $projetId): JsonResponse;
+
+    /**
+     * Récupérer les détails de soumission du rapport de faisabilité
+     */
+    public function getDetailsSoumissionRapportFaisabilite(int $projetId): JsonResponse
 }
