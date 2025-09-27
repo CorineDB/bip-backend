@@ -2743,13 +2743,15 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         }
         else{
 
-                // Supprimer le fichier physique du storage
-                if (Storage::disk('local')->exists($files->chemin)) {
-                    Storage::disk('local')->delete($files->chemin);
-                }
+            if ($files && isset($files->chemin)) {
+                    // Supprimer le fichier physique du storage
+                    if (Storage::disk('local')->exists($files->chemin)) {
+                        Storage::disk('local')->delete($files->chemin);
+                    }
 
-                // Supprimer l'enregistrement de la base de données
-                $this->fichierRepository->delete($files->id);
+                    // Supprimer l'enregistrement de la base de données
+                    $this->fichierRepository->delete($files->id);
+            }
         }
     }
 }
