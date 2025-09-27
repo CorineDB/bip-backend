@@ -49,5 +49,5 @@ interface TdrFaisabiliteServiceInterface extends AbstractServiceInterface
     /**
      * Récupérer les détails de soumission du rapport de faisabilité
      */
-    public function getDetailsSoumissionRapportFaisabilite(int $projetId): JsonResponse
+    public function getDetailsSoumissionRapportFaisabilite(int $projetId): JsonResponse;
 }
