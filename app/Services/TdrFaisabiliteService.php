@@ -29,6 +29,7 @@ use App\Http\Resources\RapportResource;
 use App\Models\Dgpd;
 use App\Models\Dossier;
 use App\Models\Tdr;
+use App\Repositories\Contracts\FichierRepositoryInterface;
 use Illuminate\Validation\ValidationException;
 
 class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteServiceInterface
@@ -38,13 +39,15 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     protected ProjetRepositoryInterface $projetRepository;
     protected EvaluationRepositoryInterface $evaluationRepository;
     protected CategorieCritereRepositoryInterface $categorieCritereRepository;
+    protected FichierRepositoryInterface $fichierRepository;
 
     public function __construct(
         DocumentRepositoryInterface $documentRepository,
         ProjetRepositoryInterface $projetRepository,
         EvaluationRepositoryInterface $evaluationRepository,
         CategorieCritereRepositoryInterface $categorieCritereRepository,
-        TdrRepositoryInterface $tdrRepository
+        TdrRepositoryInterface $tdrRepository,
+        FichierRepositoryInterface $fichierRepository
     ) {
         parent::__construct($tdrRepository);
 
@@ -53,6 +56,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         $this->evaluationRepository = $evaluationRepository;
         $this->categorieCritereRepository = $categorieCritereRepository;
         $this->tdrRepository = $tdrRepository;
+        $this->fichierRepository = $fichierRepository;
     }
 
     protected function getResourceClass(): string
@@ -959,12 +963,13 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $resultChecklistValidation = null;
 
             // Traiter toutes les checklists de faisabilité pour la soumission finale
-            if (!$estBrouillon) {
+            /*if (!$estBrouillon) {
                 $this->traiterToutesLesChecklistsEtudeFaisabilite($projet, $data, $estBrouillon);
-            }
+            }*/
 
+            $this->traiterChampsChecklistsSuiviFaisabilite($rapport, $checklistData);
             // Traiter les checklists de faisabilité selon le pattern de faisabilité
-            if (!$estBrouillon) {
+            /* if (!$estBrouillon) {
                 // Préparer les fichiers et données pour la soumission finale
                 $fichiersData = [
                     'rapport' => $data['rapport'] ?? null,
@@ -973,6 +978,9 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'cabinet_etude' => $data['cabinet_etude'] ?? null,
                     'recommandation' => $data['recommandation'] ?? null
                 ];
+
+
+                $this->traiterChampsChecklistsSuiviFaisabilite($rapport, $checklistData);
 
                 // Traiter les checklists de faisabilité
                 $resultChecklistSuivi = $this->traiterChecklistsSuiviFaisabilite(
@@ -989,6 +997,9 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     ], 422);
                 }
             }
+            */
+
+
 
             // Changer le statut du projet seulement pour les soumissions finales
             if (!$estBrouillon) {
@@ -1003,6 +1014,10 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 $fichierCoutsAvantages = null;
                 if (isset($data['proces_verbal'])) {
                     $this->gererFichierProcesVerbal($rapport, $data['proces_verbal'], $data);
+                }
+
+                if (isset($data['liste_presence'])) {
+                    $this->gererFichierListePresence($rapport, $data['liste_presence'], $data);
                 }
 
                 $info_etude_faisabilite = $projet->info_etude_faisabilite ?? [];
@@ -2534,7 +2549,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             ->update(['is_active' => false]);
 
         // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_faisabilite/rapport/{hash_id}
-        $hashedProjectId = hash('sha256', $rapport->projet_id);
+        $hashedProjectId = hash('sha256', $rapport->projet->identifiant_bip);
         $hashedRapportId = hash('sha256', $rapport->id);
 
         // Stocker le fichier sur le disque
@@ -2570,6 +2585,11 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             'fichier_attachable_id' => $rapport->id
         ]);
 
+
+
+        // Supprimer les anciens fichiers maintenant que les nouveaux sont enregistrés
+        $this->removeSpecificFiles($fichierIdentique);
+
         return $fichierCree;
     }
 
@@ -2597,7 +2617,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             ->update(['is_active' => false]);
 
         // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_faisabilite/rapport/{hash_id}
-        $hashedProjectId = hash('sha256', $rapport->projet_id);
+        $hashedProjectId = hash('sha256', $rapport->projet->identifiant_bip);
         $hashedRapportId = hash('sha256', $rapport->id);
 
         // Stocker le fichier sur le disque
@@ -2633,6 +2653,103 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             'fichier_attachable_id' => $rapport->id
         ]);
 
+        // Supprimer les anciens fichiers maintenant que les nouveaux sont enregistrés
+        $this->removeSpecificFiles($procesVerbalIdentique);
+
         return $fichierCree;
+    }
+
+    /**
+     * Gérer le fichier procès verbal avec versioning intelligent
+     */
+    private function gererFichierListePresence(Rapport $rapport, $fichier, array $data): ?Fichier
+    {
+        // Calculer le hash du nouveau fichier
+        $nouveauHash = md5_file($fichier->getRealPath());
+
+        // Vérifier s'il y a déjà un procès verbal avec le même hash lié à ce rapport
+        $listePresenceIdentique = $rapport->fichiers()->where('categorie', 'liste-presence')
+            ->where('hash_md5', $nouveauHash)
+            ->where('is_active', true)
+            ->first();
+
+        if ($listePresenceIdentique) {
+            return $listePresenceIdentique;
+        }
+
+        // Désactiver les anciens procès verbaux de ce rapport
+        $rapport->fichiers()->where('categorie', 'liste-presence')
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
+
+        // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_faisabilite/rapport/{hash_id}
+        $hashedProjectId = hash('sha256', $rapport->projet->identifiant_bip);
+        $hashedRapportId = hash('sha256', $rapport->id);
+
+        // Stocker le fichier sur le disque
+        $nomOriginal = $fichier->getClientOriginalName();
+        $extension = $fichier->getClientOriginalExtension();
+        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
+        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_faisabilite/rapport_faisabilite/{$hashedRapportId}", $nomStockage, 'local');
+
+        // Créer le nouveau fichier et l'associer au rapport
+        $fichierCree = Fichier::create([
+            'nom_original' => $nomOriginal,
+            'nom_stockage' => $nomStockage,
+            'chemin' => $chemin,
+            'extension' => $extension,
+            'mime_type' => $fichier->getMimeType(),
+            'taille' => $fichier->getSize(),
+            'hash_md5' => $nouveauHash,
+            'description' => 'Procès-verbal de faisabilité',
+            'commentaire' => $data['commentaire_proces_verbal'] ?? null,
+            'categorie' => 'proces-verbal',
+            'is_active' => true,
+            'uploaded_by' => auth()->id(),
+            'metadata' => [
+                'type_document' => 'proces-verbal-faisabilite',
+                'rapport_id' => $rapport->id,
+                'projet_id' => $rapport->projet_id,
+                'statut' => 'actif',
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now(),
+                'folder_structure' => "projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_faisabilite/rapport_faisabilite/{$hashedRapportId}"
+            ],
+            'fichier_attachable_type' => Rapport::class,
+            'fichier_attachable_id' => $rapport->id
+        ]);
+
+        // Supprimer les anciens fichiers maintenant que les nouveaux sont enregistrés
+        $this->removeSpecificFiles($listePresenceIdentique);
+
+        return $fichierCree;
+    }
+
+    /**
+     * Supprimer une liste spécifique de fichiers
+     */
+    private function removeSpecificFiles($files): void
+    {
+        if (is_array($files)) {
+            foreach ($files as $file) {
+                // Supprimer le fichier physique du storage
+                if (Storage::disk('local')->exists($file->chemin)) {
+                    Storage::disk('local')->delete($file->chemin);
+                }
+
+                // Supprimer l'enregistrement de la base de données
+                $this->fichierRepository->delete($file->id);
+            }
+        }
+        else{
+
+                // Supprimer le fichier physique du storage
+                if (Storage::disk('local')->exists($files->chemin)) {
+                    Storage::disk('local')->delete($files->chemin);
+                }
+
+                // Supprimer l'enregistrement de la base de données
+                $this->fichierRepository->delete($files->id);
+        }
     }
 }
