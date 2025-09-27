@@ -228,7 +228,9 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::post('{projetId}/valider-tdrs-faisabilite', [TdrFaisabiliteController::class, 'validerTdrs']);
             Route::get('{projetId}/details-validations-tdrs-faisabilite', [TdrFaisabiliteController::class, 'getDetailsValidationEtude']);
             Route::post('{projetId}/soumettre-rapport-faisabilite', [TdrFaisabiliteController::class, 'soumettreRapportFaisabilite']);
+            Route::get('{projetId}/details-soumission-rapport-prefaisabilite', [TdrPrefaisabiliteController::class, 'getDetailsSoumissionRapportPrefaisabilite']);
             Route::post('{projetId}/valider-etude-faisabilite', [TdrFaisabiliteController::class, 'validerEtudeFaisabilite']);
+            Route::get('{projetId}/details-validations-etude-prefaisabilite', [TdrPrefaisabiliteController::class, 'getDetailsValidationEtude']);
         });
 
         // Routes pour l'évaluation des notes conceptuelles
