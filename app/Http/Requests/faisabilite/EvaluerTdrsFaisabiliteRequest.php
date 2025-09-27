@@ -2,10 +2,16 @@
 
 namespace App\Http\Requests\faisabilite;
 
+use App\Repositories\DocumentRepository;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class EvaluerTdrsFaisabiliteRequest extends FormRequest
 {
+    protected $champs = [];
+
+    protected $appreciations = [];
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -20,12 +26,18 @@ class EvaluerTdrsFaisabiliteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'evaluations_champs' => 'required|array|min:1',
-            'evaluations_champs.*.champ_id' => 'required|integer|exists:champs,id',
-            'evaluations_champs.*.appreciation' => 'required|string|in:passe,retour,non_accepte',
-            'evaluations_champs.*.commentaire' => 'nullable|string|max:1000',
-            'commentaire' => 'nullable|string|max:2000',
-            'action' => 'nullable|string|in:abandonner'
+            'evaluations_champs' => 'required|array|min:'. count($this->champs),
+            'evaluations_champs.*.champ_id' => ["required", "in:".implode(",", $this->champs), Rule::exists("champs", "id",)],
+            'evaluations_champs.*.appreciation' => 'required|in:'.implode(",", $this->appreciations),
+            'evaluations_champs.*.commentaire' => 'required|string|min:10',
+
+            'numero_dossier'            => 'required|string|max:100',
+            'numero_contrat'            => 'required|string|max:100',
+
+            // ✅ accept_term doit être "true" si est_soumise est true
+            'accept_term'               => 'required|accepted',
+            //'finaliser' => 'required|boolean',
+            //'action' => 'nullable|string|in:reviser,abandonner'
         ];
     }
 
@@ -61,5 +73,18 @@ class EvaluerTdrsFaisabiliteRequest extends FormRequest
             'commentaire' => 'commentaire global',
             'action' => 'action à effectuer'
         ];
+    }
+
+    public function prepareForValidation(){
+        $canevas = app()->make(DocumentRepository::class)->getModel()
+                                            ->where('type', 'checklist')
+                                            ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-appreciation-tdrs-faisabilite'))
+                                            ->orderBy('created_at', 'desc')->first();
+
+        $evaluationConfigs = $canevas?->evaluation_configs;
+
+        $this->appreciations = collect($evaluationConfigs['options_notation'] ?? [])->pluck('appreciation')->toArray();
+
+        $this->champs = $canevas->all_champs->pluck("id")->toArray();
     }
 }
