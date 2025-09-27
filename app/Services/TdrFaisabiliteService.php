@@ -2466,7 +2466,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $remarque       = $evaluation['remarque'] ?? null;
             $explication    = $evaluation['explication'] ?? null;
 
-            $rapport->champs()->sync([
+            $rapport->champs()->syncWithoutDetaching([
                 $checkpointId => [
                     'valeur'      => $remarque,
                     'commentaire' => $explication,
@@ -2507,7 +2507,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
         // 3. Recharger la relation
         $rapport->load('champs');
-        
+
         // 5. Construire les données pour ce canevas
         $currentChecklist[$checklistKey] = collect($canevas->all_champs)->map(function ($champ) use ($rapport) {
             $champRapport = $rapport->champs->firstWhere('id', $champ->id);
