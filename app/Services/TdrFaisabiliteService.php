@@ -868,12 +868,12 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             }
 
             // Vérifier que le projet est au bon statut
-            if ($projet->statut->value !== StatutIdee::SOUMISSION_RAPPORT_F->value) {
+            /* if ($projet->statut->value !== StatutIdee::SOUMISSION_RAPPORT_F->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de soumission du rapport de faisabilité.'
                 ], 422);
-            }
+            } */
 
             // Déterminer si c'est une soumission ou un brouillon
             $action = $data['action'] ?? 'submit';
@@ -2466,7 +2466,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $remarque       = $evaluation['remarque'] ?? null;
             $explication    = $evaluation['explication'] ?? null;
 
-            $rapport->champs()->syncWithoutDetaching([
+            $rapport->champs()->sync([
                 $checkpointId => [
                     'valeur'      => $remarque,
                     'commentaire' => $explication,
