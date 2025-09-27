@@ -2510,9 +2510,10 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         $rapport->load('champs');
 
         // 5. Construire les données pour ce canevas
-        $currentChecklist[$checklistKey] = collect($canevas->all_champs)->map(function ($champ) use ($rapport) {
+        $currentChecklist[$checklistKey] = collect($canevas->all_champs)->map(function ($champ) use ($rapport, $checklistKey) {
             $champRapport = $rapport->champs->firstWhere('id', $champ->id);
 
+              \Log::info("{$checklistKey}", ["{$checklistKey}" => $champRapport]);
             return [
                 'id'                 => $champ->id,
                 'label'              => $champ->label,
