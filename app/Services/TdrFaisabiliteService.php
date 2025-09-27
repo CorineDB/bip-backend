@@ -2407,6 +2407,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         foreach ($checklistsMap as $checklistKey => $canevasMethod) {
              \Log::info('Checklist étude faisabilité marché traitée', ['checklistKey' => $checklistKey, 'checklistsData' => $checklistsData[$checklistKey], 'canevasMethod' => $canevasMethod]);
             if (isset($checklistsData[$checklistKey]) && is_array($checklistsData[$checklistKey])) {
+              \Log::info("Checklist étude faisabilité marché traitée {$checklistKey}", ["{$checklistKey}" => $checklistsData[$checklistKey], 'canevasMethod' => $canevasMethod]);
                 // Construire et stocker la checklist
                 $this->buildChecklist($rapport, $checklistKey, $canevasMethod, $checklistsData[$checklistKey]);
             }
