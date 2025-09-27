@@ -30,6 +30,7 @@ class RapportResource extends BaseApiResource
             'date_validation' => $this->date_validation,
             'commentaire_validation' => $this->commentaire_validation,
             'decision' => $this->decision,
+            'champs' => $this->champs,
 
             // Relations
             /*
@@ -70,6 +71,10 @@ class RapportResource extends BaseApiResource
 
             'proces_verbaux' => $this->whenLoaded('procesVerbaux', function() {
                 return FichierResource::collection($this->procesVerbaux);
+            }),
+
+            'liste_presence' => $this->when($this->fichiers()->where('categorie', 'liste-presence')->first(), function() {
+                return new FichierResource($this->fichiers()->where('categorie', 'liste-presence')->first());
             }),
 
             'documents_annexes' => $this->whenLoaded('documentsAnnexes', function() {

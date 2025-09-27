@@ -2504,18 +2504,24 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             ];
         }); */
 
+
+        // 3. Recharger la relation
+        $rapport->load('champs');
+        
         // 5. Construire les données pour ce canevas
         $currentChecklist[$checklistKey] = collect($canevas->all_champs)->map(function ($champ) use ($rapport) {
             $champRapport = $rapport->champs->firstWhere('id', $champ->id);
 
             return [
-                'id'          => $champ->id,
-                'label'       => $champ->label,
-                'attribut'    => $champ->attribut,
-                'valeur'      => optional($champRapport?->pivot)->valeur,
-                'commentaire' => optional($champRapport?->pivot)->commentaire,
-                'created_at'  => optional($champRapport?->pivot)->created_at,
-                'updated_at'  => optional($champRapport?->pivot)->updated_at,
+                'id'                 => $champ->id,
+                'label'              => $champ->label,
+                'attribut'           => $champ->attribut,
+                'ordre_affichage'    => $champ->ordre_affichage,
+                'type_champ'         => $champ->type_champ,
+                'valeur'             => optional($champRapport?->pivot)->valeur,
+                'commentaire'        => optional($champRapport?->pivot)->commentaire,
+                'created_at'         => optional($champRapport?->pivot)->created_at,
+                'updated_at'         => optional($champRapport?->pivot)->updated_at
             ];
         });
 
