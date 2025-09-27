@@ -2506,7 +2506,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
 
         // 3. Recharger la relation
-        $rapport->load('champs');
+        //$rapport->load('champs');
 
         // 5. Construire les données pour ce canevas
         $currentChecklist[$checklistKey] = collect($canevas->all_champs)->map(function ($champ) use ($rapport) {
