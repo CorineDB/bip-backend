@@ -410,7 +410,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Soumettre les TDRs de préfaisabilité (SFD-010)
      */
-    public function soumettreTdrs(int $projetId, array $data): JsonResponse
+    public function soumettreTdrs($projetId, array $data): JsonResponse
     {
         try {
 
@@ -553,7 +553,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Apprécier et évaluer les TDRs de préfaisabilité (SFD-011)
      */
-    public function evaluerTdrs(int $projetId, array $data): JsonResponse
+    public function evaluerTdrs($projetId, array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -888,7 +888,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Valider les TDRs de préfaisabilité (décision finale pour cas "non accepté" uniquement)
      */
-    public function validerTdrs(int $projetId, array $data): JsonResponse
+    public function validerTdrs($projetId, array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -1045,7 +1045,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Valider l'étude de préfaisabilité (SFD-013)
      */
-    public function validerEtudePrefaisabilite(int $projetId, array $data): JsonResponse
+    public function validerEtudePrefaisabilite($projetId, array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -1661,7 +1661,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Soumettre le rapport de préfaisabilité (SFD-012)
      */
-    public function soumettreRapportPrefaisabilite(int $projetId, array $data): JsonResponse
+    public function soumettreRapportPrefaisabilite($projetId, array $data): JsonResponse
     {
 
         try {
@@ -3104,7 +3104,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Soumettre le rapport d'évaluation ex-ante (SFD-018)
      */
-    public function soumettreRapportEvaluationExAnte(int $projetId, array $data): JsonResponse
+    public function soumettreRapportEvaluationExAnte($projetId, array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -3238,7 +3238,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Valider le rapport final (SFD-019)
      */
-    public function validerRapportFinal(int $projetId, array $data): JsonResponse
+    public function validerRapportFinal($projetId, array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -3252,12 +3252,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if ($projet->statut->value !== StatutIdee::RAPPORT->value) {
+            /* if ($projet->statut->value !== StatutIdee::RAPPORT->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de validation du rapport.'
                 ], 422);
-            }
+            } */
 
             // Valider l'action demandée
             $actionsPermises = ['valider', 'corriger'];
@@ -3270,6 +3270,22 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             $nouveauStatut = null;
             $messageAction = '';
+
+            // Créer une évaluation pour tracer la validation
+            $evaluationValidation = $projet->evaluations()->create([
+                'type_evaluation' => 'validation-final-evaluation-ex-ante',
+                'projetable_type' => get_class($projet),
+                'projetable_id' => $projet->id,
+                'date_debut_evaluation' => now(),
+                'date_fin_evaluation' => now(),
+                'valider_le' => now(),
+                'evaluateur_id' => auth()->id(),
+                'valider_par' => auth()->id(),
+                'commentaire' => $data['commentaire'] ?? $messageAction,
+                'evaluation' => $data,
+                'resultats_evaluation' => $data['action'],
+                'statut' => 1
+            ]);
 
             switch ($data['action']) {
                 case 'valider':
@@ -3327,6 +3343,68 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             ]);
         } catch (Exception $e) {
             DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Récupérer les détails de validation des TDRs
+     */
+    public function getDetailsValidationFinal(int $projetId): JsonResponse
+    {
+        try {
+
+            // Récupérer le projet
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Vérifier que le projet est à l'étape d'évaluation ou post-évaluation
+            if (!in_array($projet->statut->value, [
+                StatutIdee::EVALUATION_TDR_PF->value,
+                StatutIdee::SOUMISSION_RAPPORT_PF->value,
+                StatutIdee::VALIDATION_PF->value,
+                StatutIdee::R_TDR_PREFAISABILITE->value,
+                StatutIdee::TDR_PREFAISABILITE->value,
+
+                StatutIdee::EVALUATION_TDR_F->value,
+                StatutIdee::SOUMISSION_RAPPORT_F->value,
+                StatutIdee::VALIDATION_F->value,
+                StatutIdee::R_TDR_FAISABILITE->value,
+                StatutIdee::TDR_FAISABILITE->value,
+                StatutIdee::PRET->value,
+                StatutIdee::MATURITE->value,
+                StatutIdee::RAPPORT->value,
+                StatutIdee::ABANDON->value
+            ])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le projet n\'est pas à une étape permettant la consultation des détails de validation.'
+                ], 422);
+            }
+
+            // Pour le statut VALIDATION_PF, récupérer l'évaluation de validation
+            $evaluationValidation = $projet->evaluations()
+                ->where('type_evaluation', 'validation-final-evaluation-ex-ante')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Détails de validation récupérés avec succès.',
+                'data' => [
+                    'projet' => new ProjetResource($projet),
+                    'evaluation_validation' => $evaluationValidation ?[
+                        'id' => $evaluationValidation->id,
+                        'evaluation' => $evaluationValidation->evaluation,
+                        'decision' => $evaluationValidation->resultats_evaluation,
+                        'statut' => $evaluationValidation->statut, // 0=en cours, 1=terminée
+                        'evaluateur' => new UserResource($evaluationValidation->evaluateur),
+                        'date_debut' => Carbon::parse($evaluationValidation->date_debut_evaluation)->format("Y-m-d h:i:s"),
+                        'date_fin' => Carbon::parse($evaluationValidation->date_fin_evaluation)->format("Y-m-d h:i:s"),
+                        'commentaire_global' => $evaluationValidation->commentaire
+                    ] : null
+                ]
+            ]);
+        } catch (Exception $e) {
             return $this->errorResponse($e);
         }
     }
@@ -3925,7 +4003,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Créer ou récupérer la structure de dossiers pour les TDRs de préfaisabilité
      */
-    private function getOrCreateTdrFolderStructure(int $projetId, string $type = 'tdr'): ?Dossier
+    private function getOrCreateTdrFolderStructure($projetId, string $type = 'tdr'): ?Dossier
     {
         try {
             // Récupérer le projet pour avoir l'identifiant BIP

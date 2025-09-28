@@ -65,4 +65,9 @@ interface TdrPrefaisabiliteServiceInterface extends AbstractServiceInterface
      * Valider le rapport final (SFD-019)
      */
     public function validerRapportFinal(int $projetId, array $data): JsonResponse;
+
+    /**
+     * Récupérer les détails de la validation final de l'evaluation ex-ante
+     */
+    public function getDetailsValidationFinal(int $projetId): JsonResponse;
 }
