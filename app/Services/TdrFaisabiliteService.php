@@ -1142,12 +1142,12 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            /* if ($projet->statut->value !== StatutIdee::VALIDATION_F->value) {
+            if ($projet->statut->value !== StatutIdee::VALIDATION_F->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de validation de faisabilité.'
                 ], 422);
-            } */
+            }
 
             if ($data['action'] != 'sauvegarder') {
 
