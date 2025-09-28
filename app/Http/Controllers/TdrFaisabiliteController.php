@@ -78,7 +78,7 @@ class TdrFaisabiliteController extends Controller
     /**
      * Soumettre les TDRs de faisabilité (SFD-014)
      */
-    public function soumettreTdrs(SoumettreTdrsFaisabiliteRequest $request, int $projetId): JsonResponse
+    public function soumettreTdrs(SoumettreTdrsFaisabiliteRequest $request, $projetId): JsonResponse
     {
         return $this->service->soumettreTdrs($projetId, $request->all());
     }
@@ -86,7 +86,7 @@ class TdrFaisabiliteController extends Controller
     /**
      * Apprécier et évaluer les TDRs de faisabilité (SFD-015)
      */
-    public function evaluerTdrs(EvaluerTdrsFaisabiliteRequest $request, int $projetId): JsonResponse
+    public function evaluerTdrs(EvaluerTdrsFaisabiliteRequest $request, $projetId): JsonResponse
     {
         return $this->service->evaluerTdrs($projetId, $request->all());
     }
@@ -102,7 +102,7 @@ class TdrFaisabiliteController extends Controller
     /**
      * Valider les TDRs de faisabilité
      */
-    public function validerTdrs(ValiderTdrsRequest $request, int $projetId): JsonResponse
+    public function validerTdrs(ValiderTdrsRequest $request, $projetId): JsonResponse
     {
         return $this->service->validerTdrs($projetId, $request->all());
     }
@@ -118,7 +118,7 @@ class TdrFaisabiliteController extends Controller
     /**
      * Soumettre le rapport de faisabilité (SFD-016)
      */
-    public function soumettreRapportFaisabilite(SoumettreRapportFaisabiliteRequest $request, int $projetId): JsonResponse
+    public function soumettreRapportFaisabilite(SoumettreRapportFaisabiliteRequest $request, $projetId): JsonResponse
     {
         return $this->service->soumettreRapportFaisabilite($projetId, $request->all());
     }
@@ -126,7 +126,7 @@ class TdrFaisabiliteController extends Controller
     /**
      * Valider l'étude de faisabilité (SFD-017)
      */
-    public function validerEtudeFaisabilite(\Illuminate\Http\Request $request, int $projetId): JsonResponse
+    public function validerEtudeFaisabilite(\Illuminate\Http\Request $request, $projetId): JsonResponse
     {
         return $this->service->validerEtudeFaisabilite($projetId, $request->all());
     }

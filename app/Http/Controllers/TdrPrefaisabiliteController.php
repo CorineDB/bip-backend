@@ -22,6 +22,29 @@ class TdrPrefaisabiliteController extends Controller
     public function __construct(TdrPrefaisabiliteServiceInterface $service)
     {
         $this->service = $service;
+
+        // Permissions pour la gestion des TDRs de préfaisabilité - CRUD de base
+        /*$this->middleware('permission:voir-la-liste-des-tdrs-de-prefaisabilite')->only(['index']);
+        $this->middleware(['permission:voir-la-liste-des-tdrs-de-prefaisabilite', 'permission:voir-tdr-prefaisabilite'])->only(['show']);
+        $this->middleware('permission:soumettre-tdr-prefaisabilite')->only(['store']);
+        $this->middleware('permission:modifier-un-tdr-de-prefaisabilite')->only(['update']);
+        $this->middleware('permission:supprimer-un-tdr-de-prefaisabilite')->only(['destroy']);
+
+        // Permissions pour la gestion des TDRs
+        $this->middleware(['permission:voir-tdr-prefaisabilite', 'permission:telecharger-tdr-prefaisabilite'])->only(['getTdrDetails']);
+        $this->middleware(['permission:soumettre-tdr-prefaisabilite', 'permission:modifier-un-tdr-de-prefaisabilite'])->only(['soumettreTdrs']);
+        $this->middleware('permission:apprecier-un-tdr-de-prefaisabilite')->only(['evaluerTdrs', 'validerTdrs']);
+        $this->middleware(['permission:voir-la-liste-des-tdrs-de-prefaisabilite', 'permission:voir-details-appreciation-des-tdrs-de-prefaisabilite'])->only(['getEvaluationTdr']);
+
+        // Permissions pour les rapports de préfaisabilité
+        $this->middleware(['permission:soumettre-un-rapport-de-prefaisabilite', 'permission:gerer-les-rapports-de-prefaisabilite', 'permission:modifier-un-rapport-de-prefaisabilite', 'permission:supprimer-un-rapport-de-prefaisabilite'])->only(['soumettreRapportPrefaisabilite']);
+        $this->middleware(['permission:gerer-les-rapports-de-prefaisabilite', 'permission:voir-detail-validation-une-etude-de-prefaisabilite'])->only(['getDetailsSoumissionRapportPrefaisabilite']);
+        $this->middleware('permission:voir-detail-validation-une-etude-de-prefaisabilite')->only(['getDetailsValidationEtude']);
+        $this->middleware('permission:valider-une-etude-de-prefaisabilite')->only(['validerEtudePrefaisabilite']);
+
+        // Permissions pour les évaluations ex-ante
+        $this->middleware('permission:soumettre-un-rapport-d-evaluation-ex-ante')->only(['soumettreRapportEvaluationExAnte']);
+        $this->middleware('permission:valider-un-rapport-evaluation-ex-ante')->only(['validerRapportFinal']);*/
     }
 
     public function index(): JsonResponse
@@ -60,7 +83,7 @@ class TdrPrefaisabiliteController extends Controller
     /**
      * Soumettre les TDRs de préfaisabilité (SFD-010)
      */
-    public function soumettreTdrs(SoumettreTdrsRequest $request, int $projetId): JsonResponse
+    public function soumettreTdrs(SoumettreTdrsRequest $request, $projetId): JsonResponse
     {
         return $this->service->soumettreTdrs($projetId, $request->all());
     }
@@ -68,7 +91,7 @@ class TdrPrefaisabiliteController extends Controller
     /**
      * Apprécier et évaluer les TDRs de préfaisabilité (SFD-011)
      */
-    public function evaluerTdrs(EvaluerTdrsRequest $request, int $projetId): JsonResponse
+    public function evaluerTdrs(EvaluerTdrsRequest $request, $projetId): JsonResponse
     {
         return $this->service->evaluerTdrs($projetId, $request->all());
     }
@@ -84,7 +107,7 @@ class TdrPrefaisabiliteController extends Controller
     /**
      * Valider les TDRs de préfaisabilité
      */
-    public function validerTdrs(ValiderTdrsRequest $request, int $projetId): JsonResponse
+    public function validerTdrs(ValiderTdrsRequest $request, $projetId): JsonResponse
     {
         return $this->service->validerTdrs($projetId, $request->all());
     }
@@ -100,7 +123,7 @@ class TdrPrefaisabiliteController extends Controller
     /**
      * Soumettre le rapport de préfaisabilité (SFD-012)
      */
-    public function soumettreRapportPrefaisabilite(SoumettreRapportPrefaisabiliteRequest $request, int $projetId): JsonResponse
+    public function soumettreRapportPrefaisabilite(SoumettreRapportPrefaisabiliteRequest $request, $projetId): JsonResponse
     {
         return $this->service->soumettreRapportPrefaisabilite($projetId, $request->all());
     }
@@ -116,7 +139,7 @@ class TdrPrefaisabiliteController extends Controller
     /**
      * Valider l'étude de préfaisabilité (SFD-013)
      */
-    public function validerEtudePrefaisabilite(Request $request, int $projetId): JsonResponse
+    public function validerEtudePrefaisabilite(Request $request, $projetId): JsonResponse
     {
         return $this->service->validerEtudePrefaisabilite($projetId, $request->all());
     }
@@ -124,15 +147,23 @@ class TdrPrefaisabiliteController extends Controller
     /**
      * Soumettre le rapport d'évaluation ex-ante (SFD-018)
      */
-    public function soumettreRapportEvaluationExAnte(SoumettreRapportFinalRequest $request, int $projetId): JsonResponse
+    public function soumettreRapportEvaluationExAnte(SoumettreRapportFinalRequest $request, $projetId): JsonResponse
     {
         return $this->service->soumettreRapportEvaluationExAnte($projetId, $request->all());
     }
 
     /**
+     * Soumettre le rapport de préfaisabilité (SFD-012)
+     */
+    public function getDetailsSoumissionRapportFinale(int $projetId): JsonResponse
+    {
+        return $this->service->getDetailsSoumissionRapportFinale($projetId);
+    }
+
+    /**
      * Valider le rapport final (SFD-019)
      */
-    public function validerRapportFinal(ValiderRapportFinalRequest $request, int $projetId): JsonResponse
+    public function validerRapportFinal(ValiderRapportFinalRequest $request, $projetId): JsonResponse
     {
         return $this->service->validerRapportFinal($projetId, $request->all());
     }

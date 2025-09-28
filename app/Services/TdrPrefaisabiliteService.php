@@ -3192,6 +3192,50 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
+     * Récupérer le rapport final d'analyse du projet
+     */
+    public function getDetailsSoumissionRapportFinale(int $projetId): JsonResponse
+    {
+        try {
+            // Récupérer le projet
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Vérifier les permissions d'accès
+            /* if (auth()->user()->profilable?->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== \App\Models\Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+            } */
+
+            // Récupérer le rapport soumis le plus récent
+            $rapport = \App\Models\Rapport::where('projet_id', $projetId)
+                ->where('type', 'evaluation_ex_ante')
+                ->where('statut', 'soumis')
+                ->with(['fichiersRapport', 'soumisPar', 'projet', 'champs', 'documentsAnnexes'])
+                ->latest('created_at')
+                ->first();
+
+            if (!$rapport) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun rapport soumis trouvé pour ce projet.',
+                    'data' => null
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => new \App\Http\Resources\RapportResource($rapport),
+                'message' => 'Détails de soumission du rapport de préfaisabilité récupérés avec succès.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération du rapport soumis: ' . $e->getMessage(),
+                'data' => null
+            ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
+        }
+    }
+
+    /**
      * Valider le rapport final (SFD-019)
      */
     public function validerRapportFinal(int $projetId, array $data): JsonResponse

@@ -57,6 +57,11 @@ interface TdrPrefaisabiliteServiceInterface extends AbstractServiceInterface
     public function soumettreRapportEvaluationExAnte(int $projetId, array $data): JsonResponse;
 
     /**
+     * Récupérer le rapport final d'analyse du projet
+     */
+    public function getDetailsSoumissionRapportFinale(int $projetId): JsonResponse;
+
+    /**
      * Valider le rapport final (SFD-019)
      */
     public function validerRapportFinal(int $projetId, array $data): JsonResponse;
