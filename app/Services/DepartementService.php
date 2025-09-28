@@ -45,10 +45,7 @@ class DepartementService extends BaseService implements DepartementServiceInterf
                 return $this->repository->all();
             }); */
 
-             $departements = Cache::store("redis")->tags(['geo','departements'])->remember('departements:all', 86400, function () {
-                return $this->repository->all();
-            });
-
+             $departements = $this->repository->all();
 
             return $this->resourceClass::collection($departements)->response();
         } catch (Exception $e) {
