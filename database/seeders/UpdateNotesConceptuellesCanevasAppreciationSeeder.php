@@ -148,7 +148,7 @@ class UpdateNotesConceptuellesCanevasAppreciationSeeder extends Seeder
                             'canevas_amc' => $canevasAmcResource->toArray(request())
                         ]);
                         $nbIdeesAmc++;
-                        $this->command->line("   🎯 Idée ID {$idee->id} (statut: {$idee->statut}) - '{$idee->intitule}' mise à jour avec canevas AMC.");
+                        $this->command->line("   🎯 Idée ID {$idee->id} (statut: {$idee->statut->value}) - '{$idee->intitule}' mise à jour avec canevas AMC.");
 
                         // Vérifier si l'idée est liée à un projet
                         if ($idee->projet) {
