@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Redis;
 
 class DepartementService extends BaseService implements DepartementServiceInterface
 {
-    use CachableService;
+    //use CachableService;
 
     protected BaseRepositoryInterface $repository;
 
@@ -59,9 +59,9 @@ class DepartementService extends BaseService implements DepartementServiceInterf
     public function find(int|string $id): JsonResponse
     {
         try {
-            $departement = $this->cacheGet('find', ['id' => $id], function () use ($id) {
-                return $this->repository->findOrFail($id);
-            });
+            $departement = /* $this->cacheGet('find', ['id' => $id], function () use ($id) {
+                return */ $this->repository->findOrFail($id);
+            //});
 
             return (new $this->resourceClass($departement))->response();
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -77,9 +77,9 @@ class DepartementService extends BaseService implements DepartementServiceInterf
     public function communes($idDepartement): JsonResponse
     {
         try {
-            $communes = $this->cacheGet('communes', ['departement_id' => $idDepartement], function () use ($idDepartement) {
-                return $this->repository->findOrFail($idDepartement)->communes;
-            }, 43200); // 12h pour les communes
+            $communes = /* $this->cacheGet('communes', ['departement_id' => $idDepartement], function () use ($idDepartement) {
+                return  */$this->repository->findOrFail($idDepartement)->communes;
+            //}, 43200); // 12h pour les communes
 
             return CommuneResource::collection($communes)->response();
         } catch (Exception $e) {
@@ -145,7 +145,7 @@ class DepartementService extends BaseService implements DepartementServiceInterf
         ];
 
         // Utilise la méthode générique du trait
-        $this->refreshAllCache($refreshMethods);
+        //$this->refreshAllCache($refreshMethods);
 
         // Optionnel: pré-charger les caches les plus utilisés
         $this->preloadPopularCaches();
@@ -160,13 +160,13 @@ class DepartementService extends BaseService implements DepartementServiceInterf
             // Récupérer les 3 premiers départements et pré-charger leurs communes
             $topDepartements = $this->repository->all();
 
-            foreach ($topDepartements as $departement) {
+            /* foreach ($topDepartements as $departement) {
                 $this->refreshCache('communes',
                     ['departement_id' => $departement->id],
                     fn() => $departement->communes,
                     43200
                 );
-            }
+            } */
         } catch (Exception $e) {
             \Log::info('Preload cache skipped: ' . $e->getMessage());
         }
