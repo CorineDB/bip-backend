@@ -864,12 +864,12 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             }
 
             // Vérifier que le projet est au bon statut
-            /* if ($projet->statut->value !== StatutIdee::SOUMISSION_RAPPORT_F->value) {
+            if ($projet->statut->value !== StatutIdee::SOUMISSION_RAPPORT_F->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de soumission du rapport de faisabilité.'
                 ], 422);
-            } */
+            }
 
             // Déterminer si c'est une soumission ou un brouillon
             $action = $data['action'] ?? 'submit';
@@ -955,47 +955,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 $message = $estBrouillon ? 'Rapport sauvegardé en brouillon.' : 'Rapport soumis avec succès.';
             }
 
-            // Traiter les checklists (pour brouillons et soumissions)
-            $resultChecklistValidation = null;
-
-            // Traiter toutes les checklists de faisabilité pour la soumission finale
-            /*if (!$estBrouillon) {
-                $this->traiterToutesLesChecklistsEtudeFaisabilite($projet, $data, $estBrouillon);
-            }*/
-
             $this->traiterChampsChecklistsSuiviFaisabilite($rapport, $checklistData);
-            // Traiter les checklists de faisabilité selon le pattern de faisabilité
-            /* if (!$estBrouillon) {
-                // Préparer les fichiers et données pour la soumission finale
-                $fichiersData = [
-                    'rapport' => $data['rapport'] ?? null,
-                    'proces_verbal' => $data['proces_verbal'] ?? null,
-                    'liste_presence' => $data['liste_presence'] ?? null,
-                    'cabinet_etude' => $data['cabinet_etude'] ?? null,
-                    'recommandation' => $data['recommandation'] ?? null
-                ];
-
-
-                $this->traiterChampsChecklistsSuiviFaisabilite($rapport, $checklistData);
-
-                // Traiter les checklists de faisabilité
-                $resultChecklistSuivi = $this->traiterChecklistsSuiviFaisabilite(
-                    $rapport,
-                    $checklistData,
-                    false,
-                    $fichiersData
-                );
-
-                if (!$resultChecklistSuivi['success']) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $resultChecklistSuivi['message']
-                    ], 422);
-                }
-            }
-            */
-
-
 
             // Changer le statut du projet seulement pour les soumissions finales
             if (!$estBrouillon) {
@@ -1233,11 +1193,11 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                                     "etude_faisabilite" => "Les informations de financement doivent être un tableau valide."
                                 ]);
                             }
+                        } else {
+                            throw ValidationException::withMessages([
+                                "etude_faisabilite" => "Les informations de financement sont requises lorsque le projet est financé."
+                            ]);
                         }
-
-
-                        // Convertir la chaîne JSON en tableau associatif
-                        //$data['etude_faisabilite'] = (array) json_decode($data['etude_faisabilite'], true);
 
                         $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
 
@@ -1277,7 +1237,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         // Toutes les validations sont passées, on peut enregistrer les informations
                         // enregistrer les informations de financement dans le projet info etude de faisabilité
                         // merge avec les données existantes pour ne pas écraser d'autres infos
-                        $projet->info_etude_faisabilite = array_merge($projet->info_etude_faisabilite ?? [], [
+                        /* $projet->info_etude_faisabilite = array_merge($projet->info_etude_faisabilite ?? [], [
                             'est_finance' => $est_finance,
                             // recuperer les autres champs depuis $data
 
@@ -1288,7 +1248,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         ]);
 
 
-                        $projet->save();
+                        $projet->save(); */
                     }
                 }
             }
