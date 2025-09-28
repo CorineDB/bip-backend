@@ -775,24 +775,25 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     public function getDetailsValidationEtude(int $projetId): JsonResponse
     {
         try {
-            // Vérifier les autorisations (DGPD uniquement)
-            if (in_array(auth()->user()->type, ['dgpd', 'admin'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour consulter ces détails.'
-                ], 403);
-            }
 
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             // Vérifier que le projet est à l'étape d'évaluation ou post-évaluation
             if (!in_array($projet->statut->value, [
                 StatutIdee::EVALUATION_TDR_F->value,
-                StatutIdee::VALIDATION_F->value,
                 StatutIdee::SOUMISSION_RAPPORT_F->value,
+                StatutIdee::VALIDATION_F->value,
                 StatutIdee::R_TDR_FAISABILITE->value,
                 StatutIdee::TDR_FAISABILITE->value,
+
+                StatutIdee::PRET->value,
+                StatutIdee::MATURITE->value,
+                StatutIdee::RAPPORT->value,
                 StatutIdee::ABANDON->value
             ])) {
                 return response()->json([
