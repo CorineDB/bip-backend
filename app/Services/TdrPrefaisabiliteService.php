@@ -3252,12 +3252,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            /* if ($projet->statut->value !== StatutIdee::RAPPORT->value) {
+            if ($projet->statut->value !== StatutIdee::RAPPORT->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de validation du rapport.'
                 ], 422);
-            } */
+            }
 
             // Valider l'action demandée
             $actionsPermises = ['valider', 'corriger'];
