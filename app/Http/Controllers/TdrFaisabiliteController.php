@@ -70,7 +70,7 @@ class TdrFaisabiliteController extends Controller
     /**
      * Récupérer les détails des TDRs de faisabilité soumis
      */
-    public function getTdrDetails(int $projetId): JsonResponse
+    public function getTdrDetails($projetId): JsonResponse
     {
         return $this->service->getTdrDetails($projetId);
     }
@@ -94,7 +94,7 @@ class TdrFaisabiliteController extends Controller
     /**
      * Récupérer les détails d'évaluation d'un TDR de faisabilité
      */
-    public function getEvaluationTdr(int $projetId): JsonResponse
+    public function getEvaluationTdr($projetId): JsonResponse
     {
         return $this->service->getEvaluationTdr($projetId);
     }
@@ -110,7 +110,7 @@ class TdrFaisabiliteController extends Controller
     /**
      * Récupérer les détails de validation des TDRs
      */
-    public function getDetailsValidationEtude(int $projetId): JsonResponse
+    public function getDetailsValidationEtude($projetId): JsonResponse
     {
         return $this->service->getDetailsValidationEtude($projetId);
     }
@@ -134,7 +134,7 @@ class TdrFaisabiliteController extends Controller
     /**
      * Soumettre le rapport de faisabilité (SFD-012)
      */
-    public function getDetailsSoumissionRapportFaisabilite(int $projetId): JsonResponse
+    public function getDetailsSoumissionRapportFaisabilite($projetId): JsonResponse
     {
         return $this->service->getDetailsSoumissionRapportFaisabilite($projetId);
     }

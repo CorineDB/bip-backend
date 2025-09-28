@@ -75,7 +75,7 @@ class TdrPrefaisabiliteController extends Controller
     /**
      * Récupérer les détails des TDRs de préfaisabilité soumis
      */
-    public function getTdrDetails(int $projetId): JsonResponse
+    public function getTdrDetails($projetId): JsonResponse
     {
         return $this->service->getTdrDetails($projetId);
     }
@@ -99,7 +99,7 @@ class TdrPrefaisabiliteController extends Controller
     /**
      * Récupérer les détails d'évaluation d'un TDR
      */
-    public function getEvaluationTdr(int $projetId): JsonResponse
+    public function getEvaluationTdr($projetId): JsonResponse
     {
         return $this->service->getEvaluationTdr($projetId);
     }
@@ -115,7 +115,7 @@ class TdrPrefaisabiliteController extends Controller
     /**
      * Récupérer les détails de validation des TDRs
      */
-    public function getDetailsValidationEtude(int $projetId): JsonResponse
+    public function getDetailsValidationEtude($projetId): JsonResponse
     {
         return $this->service->getDetailsValidationEtude($projetId);
     }
@@ -131,7 +131,7 @@ class TdrPrefaisabiliteController extends Controller
     /**
      * Soumettre le rapport de préfaisabilité (SFD-012)
      */
-    public function getDetailsSoumissionRapportPrefaisabilite(int $projetId): JsonResponse
+    public function getDetailsSoumissionRapportPrefaisabilite($projetId): JsonResponse
     {
         return $this->service->getDetailsSoumissionRapportPrefaisabilite($projetId);
     }
@@ -155,7 +155,7 @@ class TdrPrefaisabiliteController extends Controller
     /**
      * Soumettre le rapport de préfaisabilité (SFD-012)
      */
-    public function getDetailsSoumissionRapportFinale(int $projetId): JsonResponse
+    public function getDetailsSoumissionRapportFinale($projetId): JsonResponse
     {
         return $this->service->getDetailsSoumissionRapportFinale($projetId);
     }
@@ -166,5 +166,13 @@ class TdrPrefaisabiliteController extends Controller
     public function validerRapportFinal(ValiderRapportFinalRequest $request, $projetId): JsonResponse
     {
         return $this->service->validerRapportFinal($projetId, $request->all());
+    }
+
+    /**
+     * Récupérer les détails de validation des TDRs
+     */
+    public function getDetailsValidationFinal($projetId): JsonResponse
+    {
+        return $this->service->getDetailsValidationFinal($projetId);
     }
 }
