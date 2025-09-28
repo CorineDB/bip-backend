@@ -1215,7 +1215,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                             throw ValidationException::withMessages([
                                 "etude_faisabilite" => "Les informations de financement sont obligatoires lorsque le projet est financé."
                             ]);
-                        }elseif(!is_string($data['etude_faisabilite']) || !is_array(json_decode($data['etude_faisabilite'], true)) || !is_array($data['etude_faisabilite'])){
+                        }elseif(!is_string($data['etude_faisabilite']) && !is_array(json_decode($data['etude_faisabilite'], true)) && !is_array($data['etude_faisabilite'])){
                             throw ValidationException::withMessages([
                                 "etude_faisabilite" => "Les informations de financement sont invalides."
                             ]);
