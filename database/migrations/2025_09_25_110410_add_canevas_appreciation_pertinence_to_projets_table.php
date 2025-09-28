@@ -11,11 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('projets', function (Blueprint $table) {
-            $table->json('canevas_appreciation_pertinence')->nullable();
-            $table->json('canevas_climatique')->nullable();
-            $table->json('canevas_amc')->nullable();
-        });
+        if (Schema::hasTable('projets')) {
+            Schema::table('projets', function (Blueprint $table) {
+                if (!Schema::hasColumn('projets', 'canevas_appreciation_pertinence')) {
+                    $table->json('canevas_appreciation_pertinence')->nullable();
+                }
+                if (!Schema::hasColumn('projets', 'canevas_climatique')) {
+                    $table->json('canevas_climatique')->nullable();
+                }
+                if (!Schema::hasColumn('projets', 'canevas_amc')) {
+                    $table->json('canevas_amc')->nullable();
+                }
+            });
+        }
     }
 
     /**
@@ -23,8 +31,18 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('projets', function (Blueprint $table) {
-            $table->dropColumn(['canevas_appreciation_pertinence', 'canevas_climatique', 'canevas_amc']);
-        });
+        if (Schema::hasTable('projets')) {
+            Schema::table('projets', function (Blueprint $table) {
+                if (Schema::hasColumn('projets', 'canevas_appreciation_pertinence')) {
+                    $table->dropColumn('canevas_appreciation_pertinence');
+                }
+                if (Schema::hasColumn('projets', 'canevas_climatique')) {
+                    $table->dropColumn('canevas_climatique');
+                }
+                if (Schema::hasColumn('projets', 'canevas_amc')) {
+                    $table->dropColumn('canevas_amc');
+                }
+            });
+        }
     }
 };

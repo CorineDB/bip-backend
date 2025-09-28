@@ -11,9 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('tdrs', function (Blueprint $table) {
-            $table->json('canevas_appreciation_tdr')->nullable();
-        });
+        if (Schema::hasTable('tdrs')) {
+            Schema::table('tdrs', function (Blueprint $table) {
+                if (!Schema::hasColumn('tdrs', 'canevas_appreciation_tdr')) {
+                    $table->json('canevas_appreciation_tdr')->nullable();
+                }
+            });
+        }
     }
 
     /**
@@ -21,8 +25,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('tdrs', function (Blueprint $table) {
-            $table->dropColumn('canevas_appreciation_tdr');
-        });
+        if (Schema::hasTable('tdrs')) {
+            Schema::table('tdrs', function (Blueprint $table) {
+                if (Schema::hasColumn('tdrs', 'canevas_appreciation_tdr')) {
+                    $table->dropColumn('canevas_appreciation_tdr');
+                }
+            });
+        }
     }
 };

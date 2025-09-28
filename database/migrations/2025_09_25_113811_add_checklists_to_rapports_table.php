@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('rapports', function (Blueprint $table) {
+        /* Schema::table('rapports', function (Blueprint $table) {
             // Checklists pour préfaisabilité
             $table->json('checklist_suivi_rapport_prefaisabilite')->nullable();
             $table->json('checklists_mesures_adaptation_haut_risque')->nullable();
@@ -24,7 +24,28 @@ return new class extends Migration
             $table->json('checklist_suivi_analyse_faisabilite_financiere')->nullable();
             $table->json('checklist_suivi_etude_analyse_impact_environnementale_et_sociale')->nullable();
             $table->json('checklist_suivi_assurance_qualite_rapport_etude_faisabilite')->nullable();
-        });
+        }); */
+        if (Schema::hasTable('rapports')) {
+            Schema::table('rapports', function (Blueprint $table) {
+                $columns = [
+                    'checklist_suivi_rapport_prefaisabilite',
+                    'checklists_mesures_adaptation_haut_risque',
+                    'checklist_etude_faisabilite_marche',
+                    'checklist_etude_faisabilite_economique',
+                    'checklist_etude_faisabilite_technique',
+                    'checklist_etude_faisabilite_organisationnelle_et_juridique',
+                    'checklist_suivi_analyse_faisabilite_financiere',
+                    'checklist_suivi_etude_analyse_impact_environnementale_et_sociale',
+                    'checklist_suivi_assurance_qualite_rapport_etude_faisabilite'
+                ];
+
+                foreach ($columns as $column) {
+                    if (!Schema::hasColumn('rapports', $column)) {
+                        $table->json($column)->nullable();
+                    }
+                }
+            });
+        }
     }
 
     /**
@@ -32,7 +53,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('rapports', function (Blueprint $table) {
+        /* Schema::table('rapports', function (Blueprint $table) {
             $table->dropColumn([
                 'checklist_suivi_rapport_prefaisabilite',
                 'checklists_mesures_adaptation_haut_risque',
@@ -44,6 +65,27 @@ return new class extends Migration
                 'checklist_suivi_etude_analyse_impact_environnementale_et_sociale',
                 'checklist_suivi_assurance_qualite_rapport_etude_faisabilite'
             ]);
-        });
+        }); */
+        if (Schema::hasTable('rapports')) {
+            Schema::table('rapports', function (Blueprint $table) {
+                $columns = [
+                    'checklist_suivi_rapport_prefaisabilite',
+                    'checklists_mesures_adaptation_haut_risque',
+                    'checklist_etude_faisabilite_marche',
+                    'checklist_etude_faisabilite_economique',
+                    'checklist_etude_faisabilite_technique',
+                    'checklist_etude_faisabilite_organisationnelle_et_juridique',
+                    'checklist_suivi_analyse_faisabilite_financiere',
+                    'checklist_suivi_etude_analyse_impact_environnementale_et_sociale',
+                    'checklist_suivi_assurance_qualite_rapport_etude_faisabilite'
+                ];
+
+                foreach ($columns as $column) {
+                    if (Schema::hasColumn('rapports', $column)) {
+                        $table->dropColumn($column);
+                    }
+                }
+            });
+        }
     }
 };

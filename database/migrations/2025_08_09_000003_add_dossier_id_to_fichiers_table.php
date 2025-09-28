@@ -8,18 +8,32 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::table('fichiers', function (Blueprint $table) {
-            $table->foreignId('dossier_id')->nullable()->after('commentaire')->constrained('dossiers')->onDelete('set null');
-            $table->index(['dossier_id', 'uploaded_by']); // Index pour optimiser les requêtes
-        });
+        if (Schema::hasTable('fichiers')) {
+            Schema::table('fichiers', function (Blueprint $table) {
+                // Ajouter la colonne seulement si elle n'existe pas
+                if (!Schema::hasColumn('fichiers', 'dossier_id')) {
+                    $table->foreignId('dossier_id')->nullable()->after('commentaire')->constrained('dossiers')->onDelete('set null');
+                }
+
+                // Ajouter l'index seulement si il n'existe pas
+                $indexes = Schema::getConnection()->getDoctrineSchemaManager()->listTableIndexes('fichiers');
+                if (!array_key_exists('fichiers_dossier_id_uploaded_by_index', $indexes)) {
+                    $table->index(['dossier_id', 'uploaded_by'], 'fichiers_dossier_id_uploaded_by_index'); // Index pour optimiser les requêtes
+                }
+            });
+        }
     }
 
     public function down()
     {
-        Schema::table('fichiers', function (Blueprint $table) {
-            $table->dropForeign(['dossier_id']);
-            $table->dropIndex(['dossier_id', 'uploaded_by']);
-            $table->dropColumn('dossier_id');
-        });
+        if (Schema::hasTable('fichiers')) {
+            Schema::table('fichiers', function (Blueprint $table) {
+                if (Schema::hasColumn('fichiers', 'dossier_id')) {
+                    $table->dropForeign(['dossier_id']);
+                    $table->dropIndex(['dossier_id', 'uploaded_by']);
+                    $table->dropColumn('dossier_id');
+                }
+            });
+        }
     }
 };
