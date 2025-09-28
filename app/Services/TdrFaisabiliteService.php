@@ -1287,7 +1287,11 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $evaluationValidation = $projet->evaluations()->updateOrCreate([
                 'type_evaluation' => 'validation-etude-faisabilite',
                 'projetable_type' => get_class($projet),
-                'projetable_id' => $projet->id,
+                'projetable_id' => $projet->id
+            ],[
+                /* 'type_evaluation' => 'validation-etude-faisabilite',
+                'projetable_type' => get_class($projet),
+                'projetable_id' => $projet->id, */
                 'date_debut_evaluation' => now(),
                 'date_fin_evaluation' => now(),
                 'valider_le' => now(),
@@ -1317,7 +1321,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 $evaluationValidation->champs_evalue()->sync($syncData);
 
                 // Préparer l'évaluation complète pour enregistrement
-                /* $evaluationComplete = [
+                $evaluationComplete = [
                     'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite()->all_champs)->map(function ($champ) use ($evaluationValidation) {
                         $champEvalue = collect($evaluationValidation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                         return [
@@ -1339,7 +1343,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'evaluation' => $evaluationComplete,
                 ]);
 
-                $evaluationValidation->save(); */
+                $evaluationValidation->save();
 
                 $resultVerificationCoherence = $this->verifierCoherenceSuiviRapport($projet, $data['checklist_suivi_validation']);
                 if (!$resultVerificationCoherence['success']) {
