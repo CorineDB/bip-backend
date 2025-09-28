@@ -1299,7 +1299,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'statut' => $data['action'] != 'sauvegarder' ? 1 : 0
             ]);
 
-
             // Vérifier la cohérence du suivi rapport si des données de validation sont fournies
             if (isset($data['checklist_suivi_validation'])) {
 
