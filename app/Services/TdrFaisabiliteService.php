@@ -1210,9 +1210,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         $est_finance = filter_var($est_finance, FILTER_VALIDATE_BOOLEAN);
                     }
 
-                    throw new Exception("Error Processing Request" . (json_encode($data['etude_faisabilite'])), 1);
-
-
                     if($est_finance) {
                         if (!isset($data['etude_faisabilite']) || empty($data['etude_faisabilite'])) {
                             throw ValidationException::withMessages([
