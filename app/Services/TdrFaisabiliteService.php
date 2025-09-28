@@ -25,6 +25,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Helpers\SlugHelper;
+use App\Http\Resources\FichierResource;
 use App\Http\Resources\RapportResource;
 use App\Models\Dgpd;
 use App\Models\Dossier;
@@ -802,51 +803,45 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ], 422);
             }
 
-            // Récupérer l'évaluation en cours ou la dernière évaluation
-            $evaluation = $projet->evaluations()
-                ->where('type_evaluation', 'tdr-faisabilite')
+            // Récupérer l'évaluation en cours ou la dernière évaluation selon le statut
+            $evaluationValidation = null;
+
+            // Pour le statut VALIDATION_PF, récupérer l'évaluation de validation
+            $evaluationValidation = $projet->evaluations()
+                ->where('type_evaluation', 'validation-etude-faisabilite')
                 ->with(['champs_evalue' => function ($query) {
                     $query->orderBy('ordre_affichage');
                 }])
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            // Récupérer les décisions liées aux TDRs
-            $decisions = $projet->decisions()
-                ->where('valeur', 'like', '%TDR%')
+            // Récupérer les fichiers de validation attachés au projet
+            $fichiersValidation = $projet->fichiers()
+                ->where('categorie', 'rapport-validation-faisabilite')
+                ->where('is_active', true)
                 ->orderBy('created_at', 'desc')
                 ->get();
 
-            // Récupérer les fichiers TDR
-            $tdrsFichiers = $projet->fichiersParCategorie('tdr-faisabilite')->get();
-
-            // Construire l'historique des décisions
-            $historiqueDecisions = $decisions->map(function ($decision) {
-                return [
-                    'id' => $decision->id,
-                    'valeur' => $decision->valeur,
-                    'observations' => $decision->observations,
-                    'date' => Carbon::parse($decision->date)->format("Y-m-d h:i:s"),
-                    'observateur_id' => $decision->observateur_id,
-                    'observateur_nom' => $decision->observateur->nom ?? 'N/A',
-                    'observateur_prenom' => $decision->observateur->prenom ?? 'N/A'
-                ];
-            });
-
             return response()->json([
                 'success' => true,
-                'message' => 'Détails de validation des TDRs récupérés avec succès.',
+                'message' => 'Détails de validation etude de faisabilité récupérés avec succès.',
                 'data' => [
                     'projet' => new ProjetResource($projet),
-                    'resume_tdr' => $projet->resume_tdr_faisabilite,
-                    'historique_decisions' => $historiqueDecisions,
-                    'statut_actuel' => [
-                        'code' => $projet->statut->value,
-                        'label' => $projet->statut->name,
-                        'phase' => $projet->phase,
-                        'sous_phase' => $projet->sous_phase
-                    ],
-                    'actions_possibles' => $this->getActionsPossibles($projet->statut, $evaluation['resultat_global'] ?? null)
+                    'tdr' => new TdrResource($projet->tdrFaisabilite->first()),
+                    'rapport' => new RapportResource($projet->rapportFaisabilite()->first()),
+
+                    'evaluation_validation' => $evaluationValidation ? [
+                        'id' => $evaluationValidation->id,
+                        'evaluation' => $evaluationValidation->evaluation,
+                        'decision' => $evaluationValidation->resultats_evaluation,
+                        'statut' => $evaluationValidation->statut, // 0=en cours, 1=terminée
+                        'evaluateur' => new UserResource($evaluationValidation->evaluateur),
+                        'date_debut' => Carbon::parse($evaluationValidation->date_debut_evaluation)->format("Y-m-d h:i:s"),
+                        'date_fin' => Carbon::parse($evaluationValidation->date_fin_evaluation)->format("Y-m-d h:i:s"),
+                        'commentaire_global' => $evaluationValidation->commentaire
+                    ] : null,
+                    'fichiers_validation' => FichierResource::collection($fichiersValidation),
+                    'checklist_suivi_validation' => ($evaluationValidation && $evaluationValidation->evaluation && isset($evaluationValidation->evaluation["champs_evalues"])) ? $evaluationValidation->evaluation["champs_evalues"] : null
                 ]
             ]);
         } catch (Exception $e) {
