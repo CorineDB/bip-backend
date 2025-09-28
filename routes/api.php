@@ -220,6 +220,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::post('{projetId}/soumettre-rapport-evaluation-ex-ante', [TdrPrefaisabiliteController::class, 'soumettreRapportEvaluationExAnte']);
             Route::get('{projetId}/details-soumission-rapport-final', [TdrPrefaisabiliteController::class, 'getDetailsSoumissionRapportFinale']);
             Route::post('{projetId}/valider-rapport-final', [TdrPrefaisabiliteController::class, 'validerRapportFinal']);
+            Route::get('{projetId}/details-validation-final', [TdrPrefaisabiliteController::class, 'getDetailsValidationFinal']);
 
             // Routes pour les TDRs de faisabilité
             Route::get('{projetId}/details-tdr-faisabilite', [TdrFaisabiliteController::class, 'getTdrDetails']);
