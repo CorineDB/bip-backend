@@ -15,8 +15,22 @@ return new class extends Migration
                     $table->foreignId('dossier_id')->nullable()->after('commentaire')->constrained('dossiers')->onDelete('set null');
                 }
 
+
+                // Vérifier si l'index existe avant de le créer
+                $indexExists = DB::selectOne("
+                    SELECT 1
+                    FROM pg_indexes
+                    WHERE tablename = 'fichiers'
+                    AND indexname = 'fichiers_dossier_id_uploaded_by_index'
+                ");
+
+                if (!$indexExists) {
+                    Schema::table('fichiers', function (Blueprint $table) {
+                        $table->index(['dossier_id', 'uploaded_by'], 'fichiers_dossier_id_uploaded_by_index');
+                    });
+                }
                 // Ajouter l'index (Laravel ignorera automatiquement s'il existe déjà)
-                $table->index(['dossier_id', 'uploaded_by'], 'fichiers_dossier_id_uploaded_by_index');
+                //$table->index(['dossier_id', 'uploaded_by'], 'fichiers_dossier_id_uploaded_by_index');
 
                 // Ajouter l'index seulement si il n'existe pas
                 /* $indexes = Schema::getConnection()->getDoctrineSchemaManager()->listTableIndexes('fichiers');
