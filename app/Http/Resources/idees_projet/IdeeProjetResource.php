@@ -85,6 +85,10 @@ class IdeeProjetResource extends BaseApiResource
             'decision' => $this->decision ?? [],
             'cout_estimatif_projet' => $this->cout_estimatif_projet ?? [],
             'ficheIdee' =>  $this->ficheIdee ?? [],
+            'canevas_amc' => $this->canevas_amc ?? [],
+            'canevas_climatique' => $this->canevas_climatique ?? [],
+            'canevas_redaction_idee_projet' => $this->ficheIdee ? (isset($this->ficheIdee["form"]) ? (array) $this->ficheIdee["form"] : []) : [],
+
             'parties_prenantes' => $this->parties_prenantes ?? [],
             'objectifs_specifiques' => $this->objectifs_specifiques ?? [],
             'resultats_attendus' => $this->resultats_attendus ?? [],
