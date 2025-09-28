@@ -97,7 +97,10 @@ class Projet extends Model
         'est_dur',
         'mesures_adaptation',
         'info_etude_prefaisabilite',
-        'info_etude_faisabilite'
+        'info_etude_faisabilite',
+        'canevas_appreciation_pertinence',
+        'canevas_climatique',
+        'canevas_amc'
     ];
 
     /**
@@ -125,6 +128,9 @@ class Projet extends Model
         'info_cabinet_etude_faisabilite' => 'array',
         'body_projet' => 'array',
         'mesures_adaptation' => 'array',
+        'canevas_appreciation_pertinence' => 'array',
+        'canevas_climatique' => 'array',
+        'canevas_amc' => 'array',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',

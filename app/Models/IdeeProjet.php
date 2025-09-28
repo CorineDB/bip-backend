@@ -88,7 +88,10 @@ class IdeeProjet extends Model
         "demandeurId",
         "demandeur_type",
         'porteur_projet',
-        "titre_projet"
+        "titre_projet",
+        'canevas_appreciation_pertinence',
+        'canevas_climatique',
+        'canevas_amc'
     ];
 
     /**
@@ -109,6 +112,9 @@ class IdeeProjet extends Model
         'objectifs_specifiques' => 'array',
         'resultats_attendus' => 'array',
         'body_projet' => 'array',
+        'canevas_appreciation_pertinence' => 'array',
+        'canevas_climatique' => 'array',
+        'canevas_amc' => 'array',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -160,7 +166,8 @@ class IdeeProjet extends Model
         $jsonColumns = [
             'decision', 'cout_estimatif_projet', 'ficheIdee',
             'parties_prenantes', 'objectifs_specifiques',
-            'resultats_attendus', 'body_projet'
+            'resultats_attendus', 'body_projet', 'canevas_appreciation_pertinence',
+            'canevas_climatique', 'canevas_amc'
         ];
 
         foreach ($jsonColumns as $column) {

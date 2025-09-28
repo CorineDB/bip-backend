@@ -61,6 +61,7 @@ class Tdr extends Model
         'numero_contrat',
         'numero_dossier',
         'accept_term',
+        'canevas_appreciation_tdr',
     ];
 
     /**
@@ -75,7 +76,8 @@ class Tdr extends Model
         'nombre_passe'              => 'integer',
         'nombre_retour'             => 'integer',
         'nombre_non_accepte'        => 'integer',
-        'accept_term'               => 'boolean'
+        'accept_term'               => 'boolean',
+        'canevas_appreciation_tdr'  => 'array'
     ];
 
     /**

@@ -40,6 +40,8 @@ class NoteConceptuelle extends Model
         'numero_contrat',
         'numero_dossier',
         'accept_term',
+        'canevas_redaction_note_conceptuelle',
+        'canevas_appreciation_note_conceptuelle',
     ];
 
     /**
@@ -50,6 +52,8 @@ class NoteConceptuelle extends Model
     protected $casts = [
         'note_conceptuelle' => 'array',
         'decision' => 'array',
+        'canevas_redaction_note_conceptuelle' => 'array',
+        'canevas_appreciation_note_conceptuelle' => 'array',
         'statut' => 'integer',
         'date_validation' => 'datetime',
         'accept_term'               => 'boolean',

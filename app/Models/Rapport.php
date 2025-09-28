@@ -49,7 +49,18 @@ class Rapport extends Model
         'date_validation',
         'validateur_id',
         'commentaire_validation',
-        'decision'
+        'decision',
+        // Checklists pour préfaisabilité
+        'checklist_suivi_rapport_prefaisabilite',
+        'checklists_mesures_adaptation_haut_risque',
+        // Checklists pour faisabilité
+        'checklist_etude_faisabilite_marche',
+        'checklist_etude_faisabilite_economique',
+        'checklist_etude_faisabilite_technique',
+        'checklist_etude_faisabilite_organisationnelle_et_juridique',
+        'checklist_suivi_analyse_faisabilite_financiere',
+        'checklist_suivi_etude_analyse_impact_environnementale_et_sociale',
+        'checklist_suivi_assurance_qualite_rapport_etude_faisabilite'
     ];
 
     /**
@@ -61,6 +72,17 @@ class Rapport extends Model
         'checklist_suivi' => 'array',
         'info_cabinet_etude' => 'array',
         'decision' => 'array',
+        // Checklists pour préfaisabilité
+        'checklist_suivi_rapport_prefaisabilite' => 'array',
+        'checklists_mesures_adaptation_haut_risque' => 'array',
+        // Checklists pour faisabilité
+        'checklist_etude_faisabilite_marche' => 'array',
+        'checklist_etude_faisabilite_economique' => 'array',
+        'checklist_etude_faisabilite_technique' => 'array',
+        'checklist_etude_faisabilite_organisationnelle_et_juridique' => 'array',
+        'checklist_suivi_analyse_faisabilite_financiere' => 'array',
+        'checklist_suivi_etude_analyse_impact_environnementale_et_sociale' => 'array',
+        'checklist_suivi_assurance_qualite_rapport_etude_faisabilite' => 'array',
         'date_soumission' => 'datetime',
         'date_validation' => 'datetime',
     ];
