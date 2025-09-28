@@ -705,6 +705,174 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
     }
 
     /**
+     * Get the grille evaluation de pertinence
+     */
+    public function getGrilleEvaluationPertinence(): JsonResponse
+    {
+        try {
+            $grille = $this->repository->findByAttribute('slug', 'grille-evaluation-pertinence-idee-projet');
+
+            if (!$grille) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Grille d\'évaluation de pertinence non trouvée.',
+                ], 404);
+            }
+
+            return (new $this->resourceClass($grille->load(['criteres.notations', 'notations', 'fichiers'])))
+                ->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Update the grille evaluation de pertinence
+     */
+    public function updateGrilleEvaluationPertinence(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $grille = $this->repository->findByAttribute('slug', 'grille-evaluation-pertinence-idee-projet');
+
+            $data["slug"] = 'grille-evaluation-pertinence-idee-projet';
+            if (!$grille) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Grille d\'évaluation de pertinence non trouvée.',
+                ], 404);
+            }
+
+            // Traiter les documents référentiels s'il y en a
+            if (isset($data['documents_referentiel']) && !empty($data['documents_referentiel'])) {
+                $nomsFilesSoumis = [];
+
+                // Créer ou récupérer la structure de dossiers
+                $dossierCanevas = $this->getOrCreateCanvasFolderStructure('pertinence');
+
+                foreach ($data['documents_referentiel'] as $file) {
+                    $nomOriginal = $file->getClientOriginalName();
+                    $nomsFilesSoumis[] = $nomOriginal;
+
+                    // Vérifier si un fichier avec ce nom existe déjà
+                    $fichierExistant = $grille->fichiers()
+                        ->where('nom_original', $nomOriginal)
+                        ->where('categorie', 'guide-referentiel-pertinence')
+                        ->first();
+
+                    // Stocker le nouveau fichier dans le dossier structuré sur disque local avec sous-dossiers publics
+                    $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $file->hashName();
+
+                    // Créer le chemin basé sur la structure de dossiers en base de données
+                    $cheminStockage = $dossierCanevas ?
+                        'public/' . $dossierCanevas->full_path :
+                        'public/Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Evaluation de pertinence';
+
+                    $path = $file->storeAs($cheminStockage, $nomStockage, 'local');
+
+                    if ($fichierExistant) {
+                        // Mettre à jour le fichier existant avec détails complets
+                        $fichierExistant->update([
+                            'nom_stockage' => $nomStockage,
+                            'chemin' => $path,
+                            'extension' => $file->getClientOriginalExtension(),
+                            'mime_type' => $file->getMimeType(),
+                            'taille' => $file->getSize(),
+                            'hash_md5' => md5_file($file->getRealPath()),
+                            'uploaded_by' => auth()->id(),
+                            'is_public' => true,
+                            'is_active' => true,
+                            'metadata' => array_merge($fichierExistant->metadata ?? [], [
+                                'last_updated' => now()->toISOString(),
+                                'updated_by' => auth()->id(),
+                                'version_updated' => ($fichierExistant->metadata['version'] ?? 0) + 1
+                            ])
+                        ]);
+                    } else {
+                        // Créer un nouveau fichier avec détails complets
+                        $grille->fichiers()->create([
+                            'nom_original' => $nomOriginal,
+                            'nom_stockage' => $nomStockage,
+                            'chemin' => $path,
+                            'extension' => $file->getClientOriginalExtension(),
+                            'mime_type' => $file->getMimeType(),
+                            'taille' => $file->getSize(),
+                            'hash_md5' => md5_file($file->getRealPath()),
+                            'description' => 'Guide référentiel pour l\'évaluation de pertinence des idées de projet.',
+                            'commentaire' => 'Document de référence pour l\'évaluation de pertinence',
+                            'categorie' => 'guide-referentiel-pertinence',
+                            'dossier_id' => $dossierCanevas?->id,
+                            'uploaded_by' => auth()->id(),
+                            'is_public' => true,
+                            'is_active' => true,
+                            'metadata' => [
+                                'type_document' => 'guide-referentiel-pertinence',
+                                'grille_id' => $grille->id,
+                                'uploaded_context' => 'evaluation-pertinence-idee-projet',
+                                'soumis_par' => auth()->id(),
+                                'soumis_le' => now()->toISOString(),
+                                'dossier_public' => $dossierCanevas ? $dossierCanevas->full_path : 'Canevas, guides et outils/Phase d\'Identification/Analyse d\'idee de projet/Evaluation de pertinence'
+                            ]
+                        ]);
+                    }
+                }
+
+                // Supprimer les fichiers qui ne sont plus soumis
+                $grille->fichiers()
+                    ->where('categorie', 'guide-referentiel-pertinence')
+                    ->whereNotIn('nom_original', $nomsFilesSoumis)
+                    ->forceDelete();
+            }
+
+            // Enlever les fichiers des données avant mise à jour
+            unset($data['documents_referentiel']);
+
+            // Mettre à jour la grille
+            $result = $this->update($grille->id, $data);
+
+            DB::commit();
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Get the grille evaluation de pertinence with evaluations for an idee de projet
+     */
+    public function getGrilleEvaluationPertinenceAvecEvaluations(int $ideeProjetId): JsonResponse
+    {
+        try {
+            $grille = $this->repository->findByAttribute('slug', 'grille-evaluation-pertinence-idee-projet');
+
+            if (!$grille) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Grille d\'évaluation de pertinence non trouvée.',
+                ], 404);
+            }
+
+            // Load the grille with criteres, notations and evaluations for the specific idee projet
+            $grille->load([
+                'criteres.notations',
+                'criteres.evaluations' => function ($query) use ($ideeProjetId) {
+                    $query->where('projetable_type', 'App\\Models\\IdeeProjet')
+                        ->where('projetable_id', $ideeProjetId);
+                },
+                'notations'
+            ]);
+
+            return (new $this->resourceClass($grille))
+                ->additional(['idee_projet_id' => $ideeProjetId])
+                ->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
      * Créer ou mettre à jour la checklist des mesures d'adaptation
      */
     public function createOrUpdateChecklistMesuresAdaptation(array $data): JsonResponse
@@ -967,16 +1135,33 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             ]);
 
             // 4. Sous-sous-dossier selon le type
-            $nomSousDossier = $type === 'appreciation' ?
-                'Analyse preliminaire de l\'impact climatique' :
-                'Analyse multicritere';
+            $nomSousDossier = match($type) {
+                'appreciation' => 'Analyse preliminaire de l\'impact climatique',
+                'amc' => 'Analyse multicritere',
+                'pertinence' => 'Evaluation de pertinence',
+                default => 'Analyse multicritere'
+            };
 
-            $descriptionSousDossier = $type === 'appreciation' ?
-                'Documents pour l\'analyse préliminaire de l\'impact climatique des projets' :
-                'Documents pour l\'analyse multicritère (AMC) des projets';
+            $descriptionSousDossier = match($type) {
+                'appreciation' => 'Documents pour l\'analyse préliminaire de l\'impact climatique des projets',
+                'amc' => 'Documents pour l\'analyse multicritère (AMC) des projets',
+                'pertinence' => 'Documents pour l\'évaluation de pertinence des idées de projet',
+                default => 'Documents pour l\'analyse multicritère (AMC) des projets'
+            };
 
-            $couleurSousDossier = $type === 'appreciation' ? '#DC2626' : '#7C3AED';
-            $iconeSousDossier = $type === 'appreciation' ? 'fire' : 'adjustments';
+            $couleurSousDossier = match($type) {
+                'appreciation' => '#DC2626',
+                'amc' => '#7C3AED',
+                'pertinence' => '#059669',
+                default => '#7C3AED'
+            };
+
+            $iconeSousDossier = match($type) {
+                'appreciation' => 'fire',
+                'amc' => 'adjustments',
+                'pertinence' => 'clipboard-check',
+                default => 'adjustments'
+            };
 
             $sousSousDossier = Dossier::firstOrCreate([
                 'nom' => $nomSousDossier,

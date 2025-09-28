@@ -20,4 +20,25 @@ class CategorieCritereRepository extends BaseRepository implements CategorieCrit
     {
         return $this->model->where('type', $type)->first();
     }
+
+    public function getCanevasEvaluationClimatique(): CategorieCritere|null
+    {
+        $grille = $this->findByAttribute('slug', 'evaluation-preliminaire-multi-projet-impact-climatique');
+
+        return $grille ? ($grille->load(['criteres.notations', 'fichiers'])) : null;
+    }
+
+    public function getCanevasAMC(): CategorieCritere|null
+    {
+        $grille = $this->findByAttribute('slug', 'grille-analyse-multi-critere');
+
+        return $grille ? ($grille->load(['criteres.notations', 'notations', 'fichiers'])) : null;
+    }
+
+    public function getCanevasEvaluationDePertinence(): CategorieCritere|null
+    {
+        $grille = $this->findByAttribute('slug', 'grille-evaluation-de-la-pertinence');
+
+        return $grille ? ($grille->load(['criteres.notations', 'fichiers'])) : null;
+    }
 }

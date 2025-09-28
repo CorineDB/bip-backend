@@ -13,6 +13,9 @@ interface CategorieCritereServiceInterface extends AbstractServiceInterface
     public function getGrilleAnalyseMultiCriteres(): JsonResponse;
     public function getGrilleAnalyseMultiCriteresAvecEvaluations(int $ideeProjetId): JsonResponse;
     public function updateGrilleAnalyseMultiCriteres(array $data): JsonResponse;
+    public function getGrilleEvaluationPertinence(): JsonResponse;
+    public function updateGrilleEvaluationPertinence(array $data): JsonResponse;
+    public function getGrilleEvaluationPertinenceAvecEvaluations(int $ideeProjetId): JsonResponse;
     public function getChecklistMesuresAdaptation(): JsonResponse;
     public function getChecklistMesuresAdaptationSecteur($idSecteur): JsonResponse;
     public function createOrUpdateChecklistMesuresAdaptation(array $data): JsonResponse;

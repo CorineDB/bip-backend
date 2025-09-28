@@ -15,6 +15,7 @@ use App\Repositories\Contracts\FichierRepositoryInterface;
 use App\Enums\StatutEvaluationNoteConceptuelle;
 use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
+use App\Http\Resources\CanevasAppreciationTdrResource;
 use App\Http\Resources\CanevasNoteConceptuelleResource;
 use App\Http\Resources\ChampResource;
 use App\Http\Resources\projets\ProjetsResource;
@@ -178,6 +179,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'updated_at' => $champ->pivot->updated_at
                 ];
             });
+
+            $noteConceptuelle->canevas_redaction_note_conceptuelle = (new CanevasNoteConceptuelleResource($this->documentRepository->getCanevasRedactionNoteConceptuelle()))->toArray(request());
 
             $noteConceptuelle->save();
 
@@ -736,6 +739,9 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             }
 
             $evaluationEnCours->refresh();
+
+            $noteConceptuelle->canevas_appreciation_note_conceptuelle = (new CanevasAppreciationTdrResource($this->documentRepository->getCanevasAppreciationNoteConceptuelle()))->toArray(request());
+            $noteConceptuelle->save();
 
             DB::commit();
 
