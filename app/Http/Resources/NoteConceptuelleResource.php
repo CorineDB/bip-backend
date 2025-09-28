@@ -24,6 +24,10 @@ class NoteConceptuelleResource extends BaseApiResource
                 1 => 'Soumise',
                 default => 'Brouillon'
             },
+
+            'canevas_appreciation_note_conceptuelle' => $this->canevas_appreciation_note_conceptuelle,
+            'canevas_redaction_note_conceptuelle' => $this->canevas_redaction_note_conceptuelle,
+
             'valider_par' => $this->validateur ? new UserResource($this->validateur) : null,
             'rediger_par' => $this->redacteur ? new UserResource($this->redacteur) : null,
             'note_conceptuelle' => $this->note_conceptuelle,
