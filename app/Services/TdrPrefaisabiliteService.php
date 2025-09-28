@@ -3129,6 +3129,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $rapport = null;
             if (isset($data['rapport_evaluation_ex_ante'])) {
                 $rapport = $this->gererRapportEvaluationExAnte($projet, $data['rapport_evaluation_ex_ante'], $data);
+            }else{
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le fichier du rapport d\'évaluation ex-ante est requis pour la soumission.'
+                ], 422);
             }
 
             // Traitement et sauvegarde des annexes
