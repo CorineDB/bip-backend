@@ -25,7 +25,7 @@ class ProjetService extends BaseService implements ProjetServiceInterface
 
     protected function getResourceClass(): string
     {
-        return ProjetResource::class;
+        return ProjetsResource::class;
     }
 
     /**
