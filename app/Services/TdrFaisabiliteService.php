@@ -1193,8 +1193,116 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ], 422);
             }
 
+            if ($data['action'] != 'sauvegarder') {
+
+                if (empty(data_get($data, 'checklist_suivi_validation'))) {
+                    throw ValidationException::withMessages([
+                        "checklist_suivi_validation" => "Veuillez faire le suivi du rapport de faisabilité pour la validation !"
+                    ]);
+                }
+
+                // Valider les informations de financement si le projet est marqué comme financé
+                if (
+                    isset($projet->info_etude_faisabilite['est_finance']) &&
+                    !empty($projet->info_etude_faisabilite['est_finance'])
+                ) {
+                    $est_finance = $projet->info_etude_faisabilite['est_finance'];
+                    // Convertir en booléen si nécessaire
+                    if (is_string($est_finance)) {
+                        $est_finance = strtolower($est_finance) === 'true' || $est_finance === '1';
+                    } else {
+                        $est_finance = filter_var($est_finance, FILTER_VALIDATE_BOOLEAN);
+                    }
+
+
+                    if($est_finance) {
+                        if (!isset($data['etude_faisabilite']) || empty($data['etude_faisabilite'])) {
+                            throw ValidationException::withMessages([
+                                "etude_faisabilite" => "Les informations de financement sont obligatoires lorsque le projet est financé."
+                            ]);
+                        }elseif(!is_string($data['etude_faisabilite']) || !is_array(json_decode($data['etude_faisabilite'], true))){
+                            throw ValidationException::withMessages([
+                                "etude_faisabilite" => "Les informations de financement sont invalides."
+                            ]);
+                        }
+
+
+                        // Convertir la chaîne JSON en tableau associatif
+                        $data['etude_faisabilite'] = (array) json_decode($data['etude_faisabilite'], true);
+
+                        $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
+
+                         foreach ($requiredFields as $field) {
+                            // validation de présence de $data['etude_faisabilite'][$field]
+                            if (!isset($data['etude_faisabilite'][$field]) && !empty($data['etude_faisabilite'][$field])) {
+                                throw ValidationException::withMessages([
+                                    "etude_faisabilite.$field" => "Le champ $field est obligatoire lorsque le projet est financé. " . $data['etude_faisabilite'][$field]
+                                ]);
+                            }
+                            // validations supplémentaires pour les champs spécifiques
+                            // Il faut savoir que les donnees sont soumis dans un formdata donc tout est string
+
+                            if ($field === 'montant' && (!is_numeric($data['etude_faisabilite'][$field]) || $data['etude_faisabilite'][$field] <= 0)) {
+                                throw ValidationException::withMessages([
+                                    "etude_faisabilite.$field" => "Le montant doit être un nombre positif."
+                                ]);
+                            }
+
+                            // Ajouter d'autres validations spécifiques si nécessaire
+                            if (in_array($field, ['date_demande', 'date_obtention'])) {
+                                $date = \DateTime::createFromFormat('Y-m-d', $data['etude_faisabilite'][$field]);
+                                if (!$date || $date->format('Y-m-d') !== $data['etude_faisabilite'][$field]) {
+                                    throw ValidationException::withMessages([
+                                        "etude_faisabilite.$field" => "Le champ $field doit être une date valide au format AAAA-MM-JJ."
+                                    ]);
+                                }
+                            }
+
+                            if ($field === 'reference' && strlen($data['etude_faisabilite'][$field]) > 100) {
+                                throw ValidationException::withMessages([
+                                    "etude_faisabilite.$field" => "La référence ne doit pas dépasser 100 caractères."
+                                ]);
+                            }
+                        }
+
+                        // Toutes les validations sont passées, on peut enregistrer les informations
+                        // enregistrer les informations de financement dans le projet info etude de faisabilité
+                        // merge avec les données existantes pour ne pas écraser d'autres infos
+                        $projet->info_etude_faisabilite = array_merge($projet->info_etude_faisabilite ?? [], [
+                            'est_finance' => $est_finance,
+                            // recuperer les autres champs depuis $data
+
+                            'date_demande' => $data['etude_faisabilite']['date_demande'],
+                            'date_obtention' => $data['etude_faisabilite']['date_obtention'],
+                            'montant' => $data['etude_faisabilite']['montant'],
+                            'reference' => $data['etude_faisabilite']['reference'],
+                        ]);
+
+
+                        $projet->save();
+                    }
+                }
+            }
+
+
+            /**
+             * Valider l'étude de faisabilité selon l'action demandée
+             * Actions possibles:
+             * - maturite : Projet à maturité → passe au statut MATURITE
+             * - reprendre : Reprendre l'étude de faisabilité → retourne au statut SOUMISSION_RAPPORT_F
+             * - abandonner : Abandonner le projet → passe au statut ABANDON
+             * - sauvegarder : Sauvegarder les données sans changer le statut
+             *
+             * Chaque action doit être justifiée par un commentaire.
+             * Si l'action est "maturite", le type de projet doit être mis à jour en conséquence.
+             * Si l'action est "reprendre" ou "abandonner", le type de projet reste inchangé.
+             * Si l'action est "sauvegarder", aucune modification de statut ou type de projet n'est effectuée.
+             *
+             */
+
             // Valider l'action demandée
             $actionsPermises = ['maturite', 'reprendre', 'abandonner', 'sauvegarder'];
+
             if (!isset($data['action']) || !in_array($data['action'], $actionsPermises)) {
                 return response()->json([
                     'success' => false,
@@ -1206,9 +1314,83 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $messageAction = '';
             $typeProjet = null;
 
-            // Traiter les informations du projet à haut risque si applicable
-            if (isset($data['est_a_haut_risque']) && $data['est_a_haut_risque']) {
-                $this->traiterProjetHautRisque($projet, $data);
+            // Créer une évaluation pour tracer la validation
+            $evaluationValidation = $projet->evaluations()->updateOrCreate([
+                'type_evaluation' => 'validation-etude-faisabilite',
+                'projetable_type' => get_class($projet),
+                'projetable_id' => $projet->id,
+                'date_debut_evaluation' => now(),
+                'date_fin_evaluation' => now(),
+                'valider_le' => now(),
+                'evaluateur_id' => auth()->id(),
+                'valider_par' => auth()->id(),
+                'commentaire' => $data['commentaire'] ?? $messageAction,
+                'evaluation' => $data,
+                'resultats_evaluation' => $data['action'],
+                'statut' => $data['action'] != 'sauvegarder' ? 1 : 0
+            ]);
+
+
+            // Vérifier la cohérence du suivi rapport si des données de validation sont fournies
+            if (isset($data['checklist_suivi_validation'])) {
+
+                // Enregistrer les appréciations pour chaque champ
+
+                $syncData = [];
+
+                foreach ($data['checklist_suivi_validation'] as $evaluationChamp) {
+                    $syncData[$evaluationChamp['checkpoint_id']] = [
+                        'note' => $evaluationChamp['remarque'],
+                        'date_note' => now(),
+                        'commentaires' => $evaluationChamp['explication'] ?? null,
+                    ];
+                }
+
+                $evaluationValidation->champs_evalue()->sync($syncData);
+
+                // Préparer l'évaluation complète pour enregistrement
+                $evaluationComplete = [
+                    'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite()->all_champs)->map(function ($champ) use ($evaluationValidation) {
+                        $champEvalue = collect($evaluationValidation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                        return [
+                            'champ_id' => $champ['id'],
+                            'label' => $champ['label'],
+                            'attribut' => $champ['attribut'],
+                            'ordre_affichage' => $champ['ordre_affichage'],
+                            'type_champ' => $champ['type_champ'],
+                            'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                            'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+                            'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                        ];
+                    })->toArray(),
+                    'decision' => ['decision' => $data['action'], 'commentaire' => $data['commentaire']],
+                ];
+
+                // Mettre à jour l'évaluation avec les données complètes
+                $evaluationValidation->fill([
+                    'evaluation' => $evaluationComplete,
+                ]);
+
+                $evaluationValidation->save();
+
+                $resultVerificationCoherence = $this->verifierCoherenceSuiviRapport($projet, $data['checklist_suivi_validation']);
+                if (!$resultVerificationCoherence['success']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $resultVerificationCoherence['message'],
+                        'incoherences' => $resultVerificationCoherence['incoherences'] ?? []
+                    ], 422);
+                }
+
+                // Vérifier que tous les checkpoints obligatoires sont présents et complétés
+                $resultVerificationCompletude = $this->verifierCompletude($data['checklist_suivi_validation']);
+                if (!$resultVerificationCompletude['success']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $resultVerificationCompletude['message'],
+                        'checkpoints_incomplets' => $resultVerificationCompletude['checkpoints_incomplets'] ?? []
+                    ], 422);
+                }
             }
 
             switch ($data['action']) {
@@ -1255,6 +1437,27 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     $messageAction = 'Données de validation sauvegardées sans changement de statut.';
                     // Pas de changement de statut
                     break;
+                default:
+                    // Récupérer l'ancien contenu JSON ou un tableau vide
+                    $info = $projet->info_etude_faisabilite ?? [];
+
+                    // Fusionner avec les nouvelles valeurs provenant de $data
+                    $info = array_merge($info, [
+                        'date_demande'   => $data['etude_faisabilite']['date_demande'] ?? null,
+                        'date_obtention' => $data['etude_faisabilite']['date_obtention'] ?? null,
+                        'montant'        => $data['etude_faisabilite']['montant'] ?? null,
+                        'reference'      => $data['etude_faisabilite']['reference'] ?? null,
+                    ]);
+
+                    // Mettre à jour le modèle
+                    $projet->update([
+                        'info_etude_faisabilite' => $info,
+                    ]);
+            }
+
+            // Attacher le fichier rapport de validation si fourni
+            if (isset($data['rapport_validation_etude']) && $data['action'] !== 'sauvegarder') {
+                $this->attacherFichierRapportValidation($projet, $data['rapport_validation_etude'], $evaluationValidation);
             }
 
             // Enregistrer le workflow et la décision si le statut a changé
@@ -2406,7 +2609,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
         foreach ($checklistsMap as $checklistKey => $canevasMethod) {
             if (isset($checklistsData[$checklistKey]) && is_array($checklistsData[$checklistKey])) {
-              \Log::info("Checklist étude faisabilité marché traitée {$checklistKey}", ["{$checklistKey}" => $checklistsData[$checklistKey], 'canevasMethod' => $canevasMethod]);
                 // Construire et stocker la checklist
                 $this->buildChecklist($rapport, $checklistKey, $canevasMethod, $checklistsData[$checklistKey]);
             }
@@ -2490,22 +2692,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             return;
         }
 
-        // 5. Construire les données checklist_suivi pour ce canevas uniquement
-        /* $rapport->checklist_suivi[$checklistKey] = collect(optional($canevas)->all_champs ?? [])->map(function ($champ) use ($rapport) {
-            $champRapport = $rapport->champs->firstWhere('id', $champ->id);
-
-            return [
-                'id'          => $champ->id,
-                'label'       => $champ->label,
-                'attribut'    => $champ->attribut,
-                'valeur'      => optional($champRapport?->pivot)->valeur,
-                'commentaire' => optional($champRapport?->pivot)->commentaire,
-                'created_at'  => optional($champRapport?->pivot)->created_at,
-                'updated_at'  => optional($champRapport?->pivot)->updated_at,
-            ];
-        }); */
-
-
         // 3. Recharger la relation
         $rapport->load('champs');
 
@@ -2513,7 +2699,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         $currentChecklist[$checklistKey] = collect($canevas->all_champs)->map(function ($champ) use ($rapport, $checklistKey) {
             $champRapport = $rapport->champs->firstWhere('id', $champ->id);
 
-              \Log::info("{$checklistKey}", ["{$checklistKey}" => $champRapport]);
             return [
                 'id'                 => $champ->id,
                 'label'              => $champ->label,
@@ -2761,5 +2946,244 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     $this->fichierRepository->delete($files->id);
             }
         }
+    }
+
+    /**
+     * Vérifier la cohérence du suivi rapport entre soumission et validation
+     */
+    private function verifierCoherenceSuiviRapport($projet, array $checklistSuiviValidation): array
+    {
+        try {
+            // Récupérer le dernier rapport de faisabilité soumis
+            $rapportFaisabilite = $projet->rapportFaisabilite()
+                ->where('statut', 'soumis')
+                ->latest('created_at')
+                ->first();
+
+            if (!$rapportFaisabilite) {
+                return [
+                    'success' => false,
+                    'message' => 'Aucun rapport de faisabilité soumis trouvé pour effectuer la vérification de cohérence.'
+                ];
+            }
+
+            // Récupérer les checklists de suivi du rapport de faisabilité
+            $checklistsSuiviSoumission = $rapportFaisabilite->checklist_suivi;
+
+            if (!$checklistsSuiviSoumission || !is_array($checklistsSuiviSoumission)) {
+                return [
+                    'success' => false,
+                    'message' => 'Aucune checklist de suivi trouvée dans le rapport de faisabilité soumis.'
+                ];
+            }
+
+            // Extraire la checklist d'assurance qualité spécifiquement
+            $checklistSuiviSoumission = $checklistsSuiviSoumission['checklist_suivi_assurance_qualite'] ?? null;
+
+            if (!$checklistSuiviSoumission || !is_array($checklistSuiviSoumission)) {
+                return [
+                    'success' => false,
+                    'message' => 'Aucune checklist d\'assurance qualité trouvée dans le rapport de faisabilité soumis.'
+                ];
+            }
+
+            // Comparer les checkpoints entre soumission et validation
+            $incoherences = [];
+            $checkpointsSoumission = collect($checklistSuiviSoumission);
+            $checkpointsValidation = collect($checklistSuiviValidation);
+
+            // Log pour debug
+            \Log::info('Vérification cohérence suivi rapport faisabilité', [
+                'projet_id' => $projet->id,
+                'checkpoints_soumission' => $checkpointsSoumission->count(),
+                'checkpoints_validation' => $checkpointsValidation->count()
+            ]);
+
+            // Vérifier que tous les checkpoints de la soumission sont présents dans la validation
+            foreach ($checkpointsSoumission as $index => $checkpointSoumis) {
+                $checkpointId = $checkpointSoumis['id'] ?? null;
+
+                if (!$checkpointId) {
+                    continue;
+                }
+
+                $checkpointValidation = $checkpointsValidation->firstWhere('checkpoint_id', $checkpointId);
+
+                if (!$checkpointValidation) {
+                    $incoherences[] = [
+                        'type' => 'checkpoint_manquant',
+                        'checkpoint_id' => $checkpointId,
+                        'message' => "Le checkpoint {$checkpointId} présent lors de la soumission n'est pas trouvé dans la validation."
+                    ];
+                }
+            }
+
+            // Vérifier s'il y a des checkpoints supplémentaires dans la validation
+            foreach ($checkpointsValidation as $checkpointValidation) {
+                $checkpointId = $checkpointValidation['checkpoint_id'] ?? null;
+
+                if (!$checkpointId) {
+                    continue;
+                }
+
+                $checkpointSoumis = $checkpointsSoumission->firstWhere('id', $checkpointId);
+
+                if (!$checkpointSoumis) {
+                    $incoherences[] = [
+                        'type' => 'checkpoint_supplementaire',
+                        'checkpoint_id' => $checkpointId,
+                        'message' => "Le checkpoint {$checkpointId} est présent dans la validation mais n'était pas dans la soumission."
+                    ];
+                }
+            }
+
+            // S'il y a des incohérences, retourner une erreur
+            if (!empty($incoherences)) {
+                \Log::warning('Incohérences détectées lors de la validation faisabilité', [
+                    'projet_id' => $projet->id,
+                    'nb_incoherences' => count($incoherences),
+                    'incoherences' => $incoherences
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => 'Incohérences détectées entre le rapport soumis et les données de validation.',
+                    'incoherences' => $incoherences
+                ];
+            }
+
+            \Log::info('Vérification cohérence réussie faisabilité', [
+                'projet_id' => $projet->id,
+                'checkpoints_verifies' => $checkpointsSoumission->count()
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Vérification de cohérence réussie.',
+                'checkpoints_verifies' => $checkpointsSoumission->count()
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de la vérification de cohérence faisabilité', [
+                'projet_id' => $projet->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Erreur lors de la vérification de cohérence: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Vérifier la complétude des checkpoints de validation
+     */
+    private function verifierCompletude(array $checklistSuiviValidation): array
+    {
+        try {
+            $checkpointsIncomplets = [];
+
+            foreach ($checklistSuiviValidation as $checkpoint) {
+                $checkpointId = $checkpoint['checkpoint_id'] ?? null;
+                $remarque = $checkpoint['remarque'] ?? null;
+                $explication = $checkpoint['explication'] ?? null;
+
+                if (!$checkpointId) {
+                    continue;
+                }
+
+                // Vérifier que le checkpoint a au moins une remarque OU une explication
+                if (empty($remarque) && empty($explication)) {
+                    $checkpointsIncomplets[] = [
+                        'checkpoint_id' => $checkpointId,
+                        'message' => "Le checkpoint {$checkpointId} doit avoir au moins une remarque ou une explication."
+                    ];
+                }
+            }
+
+            // S'il y a des checkpoints incomplets, empêcher la validation
+            if (!empty($checkpointsIncomplets)) {
+                \Log::warning('Tentative de validation faisabilité avec checkpoints incomplets', [
+                    'nb_checkpoints_incomplets' => count($checkpointsIncomplets),
+                    'checkpoints_incomplets' => array_column($checkpointsIncomplets, 'checkpoint_id')
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => 'Impossible de valider le projet : ' . count($checkpointsIncomplets) . ' checkpoint(s) sont incomplets. Tous les checkpoints doivent avoir au moins une remarque ou une explication.',
+                    'checkpoints_incomplets' => $checkpointsIncomplets
+                ];
+            }
+
+            \Log::info('Tous les checkpoints faisabilité sont complétés', [
+                'nb_checkpoints_verifies' => count($checklistSuiviValidation)
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Tous les checkpoints sont complétés.',
+                'nb_checkpoints_complets' => count($checklistSuiviValidation)
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de la vérification de complétude des checkpoints faisabilité', [
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Erreur lors de la vérification de complétude: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Attacher le fichier rapport de validation de l'étude de faisabilité
+     */
+    private function attacherFichierRapportValidation($projet, $fichier, $evaluation)
+    {
+        if (!$fichier instanceof \Illuminate\Http\UploadedFile) {
+            return null;
+        }
+
+        // Hasher l'identifiant BIP selon le pattern projets/{hash_identifiant_bip}/Evaluation-ex-ante/etude_faisabilite/rapport_validation
+        $hashedIdentifiantBip = hash('sha256', $projet->identifiant_bip);
+
+        // Générer un nom de fichier unique
+        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $fichier->hashName();
+
+        // Stocker le fichier selon le pattern de hash avec structure Evaluation-ex-ante
+        $path = $fichier->storeAs(
+            "projets/{$hashedIdentifiantBip}/evaluation_ex_ante/etude_faisabilite/rapport-validation",
+            $nomStockage,
+            'local'
+        );
+
+        // Créer l'enregistrement du fichier via la relation polymorphe
+        $fichierCree = $projet->fichiers()->create([
+            'nom_original' => $fichier->getClientOriginalName(),
+            'nom_stockage' => $nomStockage,
+            'chemin' => $path,
+            'extension' => $fichier->getClientOriginalExtension(),
+            'mime_type' => $fichier->getMimeType(),
+            'taille' => $fichier->getSize(),
+            'hash_md5' => md5_file($fichier->getRealPath()),
+            'description' => 'Rapport de validation de l\'étude de faisabilité',
+            'commentaire' => 'Document de validation soumis par le Comité de validation',
+            'categorie' => 'rapport-validation-faisabilite',
+            'uploaded_by' => auth()->id(),
+            'is_public' => false,
+            'is_active' => true,
+            'metadata' => [
+                'evaluation_id' => $evaluation->id,
+                'type_validation' => 'etude-faisabilite',
+                'action_validation' => $evaluation->resultats_evaluation,
+                'uploaded_context' => 'validation-etude-faisabilite',
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now()->toISOString(),
+                'folder_structure' => "projets/{$hashedIdentifiantBip}/evaluation_ex_ante/etude_faisabilite/rapport_validation"
+            ]
+        ]);
+
+        return $fichierCree;
     }
 }
