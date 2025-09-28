@@ -1317,7 +1317,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 $evaluationValidation->champs_evalue()->sync($syncData);
 
                 // Préparer l'évaluation complète pour enregistrement
-                $evaluationComplete = [
+                /* $evaluationComplete = [
                     'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite()->all_champs)->map(function ($champ) use ($evaluationValidation) {
                         $champEvalue = collect($evaluationValidation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                         return [
@@ -1339,7 +1339,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'evaluation' => $evaluationComplete,
                 ]);
 
-                $evaluationValidation->save();
+                $evaluationValidation->save(); */
 
                 $resultVerificationCoherence = $this->verifierCoherenceSuiviRapport($projet, $data['checklist_suivi_validation']);
                 if (!$resultVerificationCoherence['success']) {
@@ -1454,7 +1454,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'ancien_statut' => StatutIdee::VALIDATION_F->value,
                     'nouveau_statut' => $nouveauStatut ? $nouveauStatut->value : StatutIdee::VALIDATION_F->value,
                     'type_projet' => $typeProjet ? $typeProjet->value : null,
-                    'est_a_haut_risque' => $data['est_a_haut_risque'] ?? false,
                     'commentaire' => $data['commentaire'] ?? null,
                     'valide_par' => auth()->id(),
                     'valide_le' => now()->format('d/m/Y H:i:s'),
