@@ -11,6 +11,7 @@ use App\Http\Resources\DepartementResource;
 use App\Http\Resources\CommuneResource;
 use App\Repositories\Contracts\DepartementRepositoryInterface;
 use App\Services\Contracts\DepartementServiceInterface;
+use Illuminate\Support\Facades\Cache;
 
 class DepartementService extends BaseService implements DepartementServiceInterface
 {
@@ -39,9 +40,14 @@ class DepartementService extends BaseService implements DepartementServiceInterf
     public function all(): JsonResponse
     {
         try {
-            $departements = $this->cacheGet('all', [], function () {
+            /* $departements = $this->cacheGet('all', [], function () {
+                return $this->repository->all();
+            }); */
+
+             $departements = Cache::tags(['geo','departements'])->remember('departements:all', 86400, function () {
                 return $this->repository->all();
             });
+
 
             return $this->resourceClass::collection($departements)->response();
         } catch (Exception $e) {
