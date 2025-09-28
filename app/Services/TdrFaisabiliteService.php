@@ -1289,9 +1289,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'projetable_type' => get_class($projet),
                 'projetable_id' => $projet->id
             ],[
-                /* 'type_evaluation' => 'validation-etude-faisabilite',
-                'projetable_type' => get_class($projet),
-                'projetable_id' => $projet->id, */
                 'date_debut_evaluation' => now(),
                 'date_fin_evaluation' => now(),
                 'valider_le' => now(),
