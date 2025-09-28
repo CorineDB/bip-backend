@@ -12,6 +12,7 @@ use App\Http\Resources\CommuneResource;
 use App\Repositories\Contracts\DepartementRepositoryInterface;
 use App\Services\Contracts\DepartementServiceInterface;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
 
 class DepartementService extends BaseService implements DepartementServiceInterface
 {
