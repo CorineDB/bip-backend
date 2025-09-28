@@ -1059,12 +1059,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            /* if ($projet->statut->value !== StatutIdee::VALIDATION_PF->value) {
+            if ($projet->statut->value !== StatutIdee::VALIDATION_PF->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de validation de préfaisabilité.'
                 ], 422);
-            } */
+            }
 
             if ($data['action'] != 'sauvegarder') {
 
@@ -1089,7 +1089,35 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
 
                     if($est_finance) {
-                        if (!isset($data['etude_prefaisabilite']) || empty($data['etude_prefaisabilite'])) {
+
+                        if (isset($data['etude_prefaisabilite'])) {
+                            // si c'est une string JSON → on la décode
+                            if (is_string($data['etude_prefaisabilite'])) {
+                                throw new Exception("Error Processing Request", 1);
+
+                                $decoded = json_decode($data['etude_prefaisabilite'], true);
+
+                                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                                    $data['etude_prefaisabilite'] = $decoded;
+                                } else {
+                                    throw ValidationException::withMessages([
+                                        "etude_prefaisabilite" => "Format JSON invalide pour les informations de financement."
+                                    ]);
+                                }
+                            }
+                            // si c'est déjà un tableau → on ne fait rien
+                            elseif (!is_array($data['etude_prefaisabilite'])) {
+                                throw ValidationException::withMessages([
+                                    "etude_prefaisabilite" => "Les informations de financement doivent être un tableau valide."
+                                ]);
+                            }
+                        } else {
+                            throw ValidationException::withMessages([
+                                "etude_prefaisabilite" => "Les informations de financement sont requises lorsque le projet est financé."
+                            ]);
+                        }
+
+                        /* if (!isset($data['etude_prefaisabilite']) || empty($data['etude_prefaisabilite'])) {
                             throw ValidationException::withMessages([
                                 "etude_prefaisabilite" => "Les informations de financement sont obligatoires lorsque le projet est financé."
                             ]);
@@ -1101,7 +1129,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
 
                         // Convertir la chaîne JSON en tableau associatif
-                        $data['etude_prefaisabilite'] = (array) json_decode($data['etude_prefaisabilite'], true);
+                        $data['etude_prefaisabilite'] = (array) json_decode($data['etude_prefaisabilite'], true); */
 
                         $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
 
@@ -1213,7 +1241,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $evaluationValidation = $projet->evaluations()->updateOrCreate([
                 'type_evaluation' => 'validation-etude-prefaisabilite',
                 'projetable_type' => get_class($projet),
-                'projetable_id' => $projet->id,
+                'projetable_id' => $projet->id
+            ],[
                 'date_debut_evaluation' => now(),
                 'date_fin_evaluation' => now(),
                 'valider_le' => now(),
@@ -1479,11 +1508,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 }])
                 ->orderBy('created_at', 'desc')
                 ->first();
-
-            // Récupérer les données spécifiques au statut VALIDATION_PF
-            $rapportPrefaisabilite = null;
-            $fichiersValidation = null;
-            $checklistSuiviValidation = null;
 
             // Récupérer les fichiers de validation attachés au projet
             $fichiersValidation = $projet->fichiers()
