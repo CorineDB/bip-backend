@@ -1224,6 +1224,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         if (isset($data['etude_faisabilite'])) {
                             // si c'est une string JSON → on la décode
                             if (is_string($data['etude_faisabilite'])) {
+                                throw new Exception("Error Processing Request", 1);
+
                                 $decoded = json_decode($data['etude_faisabilite'], true);
 
                                 if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
