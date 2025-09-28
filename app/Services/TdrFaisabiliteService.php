@@ -1237,7 +1237,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         // Toutes les validations sont passées, on peut enregistrer les informations
                         // enregistrer les informations de financement dans le projet info etude de faisabilité
                         // merge avec les données existantes pour ne pas écraser d'autres infos
-                        /* $projet->info_etude_faisabilite = array_merge($projet->info_etude_faisabilite ?? [], [
+                        $projet->info_etude_faisabilite = array_merge($projet->info_etude_faisabilite ?? [], [
                             'est_finance' => $est_finance,
                             // recuperer les autres champs depuis $data
 
@@ -1248,7 +1248,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         ]);
 
 
-                        $projet->save(); */
+                        $projet->save();
                     }
                 }
             }
