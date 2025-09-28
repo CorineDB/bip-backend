@@ -1221,9 +1221,30 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                             ]);
                         }
 
+                        if (isset($data['etude_faisabilite'])) {
+                            // si c'est une string JSON → on la décode
+                            if (is_string($data['etude_faisabilite'])) {
+                                $decoded = json_decode($data['etude_faisabilite'], true);
+
+                                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                                    $data['etude_faisabilite'] = $decoded;
+                                } else {
+                                    throw ValidationException::withMessages([
+                                        "etude_faisabilite" => "Format JSON invalide pour les informations de financement."
+                                    ]);
+                                }
+                            }
+                            // si c'est déjà un tableau → on ne fait rien
+                            elseif (!is_array($data['etude_faisabilite'])) {
+                                throw ValidationException::withMessages([
+                                    "etude_faisabilite" => "Les informations de financement doivent être un tableau valide."
+                                ]);
+                            }
+                        }
+
 
                         // Convertir la chaîne JSON en tableau associatif
-                        $data['etude_faisabilite'] = (array) json_decode($data['etude_faisabilite'], true);
+                        //$data['etude_faisabilite'] = (array) json_decode($data['etude_faisabilite'], true);
 
                         $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
 
