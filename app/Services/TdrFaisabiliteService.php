@@ -1210,7 +1210,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         $est_finance = filter_var($est_finance, FILTER_VALIDATE_BOOLEAN);
                     }
 
-                    if($est_finance) {
+                    if($est_finance) {/*
                         if (!isset($data['etude_faisabilite']) || empty($data['etude_faisabilite'])) {
                             throw ValidationException::withMessages([
                                 "etude_faisabilite" => "Les informations de financement sont obligatoires lorsque le projet est financé."
@@ -1219,7 +1219,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                             throw ValidationException::withMessages([
                                 "etude_faisabilite" => "Les informations de financement sont invalides."
                             ]);
-                        }
+                        } */
 
                         if (isset($data['etude_faisabilite'])) {
                             // si c'est une string JSON → on la décode
