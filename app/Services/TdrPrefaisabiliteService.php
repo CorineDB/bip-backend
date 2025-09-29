@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use App\Helpers\SlugHelper;
+use App\Http\Resources\projets\integration\ProjetsResource;
 
 class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteServiceInterface
 {
@@ -3391,7 +3392,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'success' => true,
                 'message' => 'Détails de validation récupérés avec succès.',
                 'data' => [
-                    'projet' => new ProjetResource($projet),
+                    'projet' => new ProjetsResource($projet),
                     'evaluation_validation' => $evaluationValidation ?[
                         'id' => $evaluationValidation->id,
                         'evaluation' => $evaluationValidation->evaluation,
