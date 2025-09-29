@@ -52,19 +52,7 @@ class ProjetsResource extends BaseApiResource
             // Données JSON structurées
             'cout_estimatif_projet' => $this->cout_estimatif_projet ?? [],
 
-            'ideeProjet' =>  $this->whenLoaded('ideeProjet',new IdeeProjetResource($this->ideeProjet)),
-
-            'secteur' => new SecteurResourcePublic($this->secteur),
-
-            'noteConceptuelle' => new NoteConceptuelleResource($this->noteConceptuelle),
-
-            // TDRs
-            'tdr_prefaisabilite' => $this->whenLoaded('tdrPrefaisabilite', function() {
-                return $this->tdrPrefaisabilite->first() ? new TdrResource($this->tdrPrefaisabilite->first()) : null;
-            }),
-            'tdr_faisabilite' => $this->whenLoaded('tdrFaisabilite', function() {
-                return $this->tdrFaisabilite->first() ? new TdrResource($this->tdrFaisabilite->first()) : null;
-            })
+            'secteur' => new SecteurResourcePublic($this->secteur)
         ];
     }
 
