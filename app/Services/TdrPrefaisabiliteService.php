@@ -1521,7 +1521,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'success' => true,
                 'message' => 'Détails de validation récupérés avec succès.',
                 'data' => [
-                    'projet' => new ProjetResource($projet),
+                    'projet' => new ProjetsResource($projet),
                     'tdr' => new TdrResource($projet->tdrPrefaisabilite->first()),
                     'rapport' => new RapportResource($projet->rapportPrefaisabilite()->first()),
                     // Données pour statut VALIDATION_PF
