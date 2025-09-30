@@ -535,6 +535,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         // =============================================================================
         // GESTION DES CLIENTS OAUTH PASSPORT
         // =============================================================================
+
         Route::prefix('oauth/clients')->middleware(['oauth.audit'])->group(function () {
             Route::get('/', [PassportClientController::class, 'index'])->name('oauth.clients.index');
             Route::post('/', [PassportClientController::class, 'store'])->name('oauth.clients.store');
@@ -663,6 +664,15 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             ];
         });
     });
+
+    Route::get("callback", function() {
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Callback route is working!'
+        ]);
+    })->name('callback.test');
+
+    //Route::get("callback", [PassportClientController::class, 'handleProviderCallback'])->name('ad.oauth.callback');
 
 });
 // =============================================================================

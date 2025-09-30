@@ -23,21 +23,26 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Laravel\Passport\Client;
+use Laravel\Passport\ClientRepository;
+use App\Http\Resources\PassportClientResource;
 
 class PassportOAuthService extends BaseService implements PassportOAuthServiceInterface
 {
     use TooManyFailedAttemptsTrait, ConfigueTrait, IdTrait;
 
     protected UserRepositoryInterface $userRepository;
+    protected ClientRepository $clientRepository;
 
     /**
      * AuthService constructor.
      *
      * @param UserRepositoryInterface $userRepository
      */
-    public function __construct(UserRepositoryInterface $userRepository)
+    public function __construct(UserRepositoryInterface $userRepository, ClientRepository $clientRepository)
     {
         parent::__construct($userRepository);
+        $this->clientRepository = $clientRepository;
     }
 
     protected function getResourceClass(): string
@@ -579,5 +584,1547 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
 
             throw new \Exception($message, 500);
         }
+    }
+
+    // =============================================================================
+    // GESTION DES CLIENTS OAUTH
+    // =============================================================================
+
+    /**
+     * Liste tous les clients avec pagination et filtres
+     */
+    public function getClients(array $filters = [], int $perPage = 15): JsonResponse
+    {
+        try {
+            $query = Client::query();
+
+            // Appliquer les filtres
+            if (isset($filters['personal_access_client'])) {
+                $query->where('personal_access_client', $filters['personal_access_client']);
+            }
+
+            if (isset($filters['password_client'])) {
+                $query->where('password_client', $filters['password_client']);
+            }
+
+            if (isset($filters['revoked'])) {
+                $query->where('revoked', $filters['revoked']);
+            }
+
+            if (isset($filters['name'])) {
+                $query->where('name', 'like', '%' . $filters['name'] . '%');
+            }
+
+            $clients = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+            $clients->getCollection()->transform(function ($client) {
+                return new PassportClientResource($client);
+            });
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Liste des clients OAuth récupérée avec succès',
+                'data' => $clients,
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Récupère un client par son ID
+     */
+    public function getClient(string $clientId): JsonResponse
+    {
+        try {
+            $client = Client::find($clientId);
+
+            if (!$client) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Client OAuth non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Client OAuth récupéré avec succès',
+                'data' => new PassportClientResource($client),
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Crée un nouveau client OAuth
+     */
+    public function createClient(array $data): JsonResponse
+    {
+        try {
+            $personalAccessClient = $data['personal_access_client'] ?? false;
+            $passwordClient = $data['password_client'] ?? false;
+            $confidential = $data['confidential'] ?? true;
+
+            $client = new Client();
+            $client->name = $data['name'];
+            $client->redirect_uris = $data['redirect_uris'] ?? [];
+            $client->revoked = false;
+
+            if ($personalAccessClient) {
+                $client->secret = null;
+                $client->grant_types = ['personal_access'];
+            } elseif ($passwordClient) {
+                $client->secret = Str::random(40);
+                $client->grant_types = ['password'];
+            } else {
+                $client->secret = $confidential ? Str::random(40) : null;
+                $client->grant_types = ['authorization_code'];
+                if ($confidential) {
+                    $client->grant_types = ['authorization_code', 'client_credentials'];
+                }
+            }
+
+            $client->save();
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Client OAuth créé avec succès',
+                'data' => new PassportClientResource($client),
+                'statutCode' => 201
+            ], 201);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Crée un client credentials (client_credentials grant)
+     */
+    public function createClientCredentials(array $data): JsonResponse
+    {
+        try {
+            $client = new Client();
+            $client->name = $data['name'];
+            $client->secret = Str::random(40);
+            $client->redirect_uris = $data['redirect_uris'] ?? [];
+            $client->grant_types = ['client_credentials'];
+            $client->revoked = false;
+            $client->save();
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Client credentials créé avec succès',
+                'data' => new PassportClientResource($client),
+                'statutCode' => 201
+            ], 201);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Crée un client d'accès personnel (personal access token)
+     */
+    public function createPersonalAccessClient(array $data): JsonResponse
+    {
+        try {
+            $client = new Client();
+            $client->name = $data['name'];
+            $client->secret = null; // Pas de secret pour personal access
+            $client->redirect_uris = [];
+            $client->grant_types = ['personal_access'];
+            $client->revoked = false;
+            $client->save();
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Client d\'accès personnel créé avec succès',
+                'data' => new PassportClientResource($client),
+                'statutCode' => 201
+            ], 201);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Crée un client password grant
+     */
+    public function createPasswordClient(array $data): JsonResponse
+    {
+        try {
+            $client = new Client();
+            $client->name = $data['name'];
+            $client->secret = Str::random(40);
+            $client->redirect_uris = [];
+            $client->grant_types = ['password'];
+            $client->revoked = false;
+            $client->save();
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Client password grant créé avec succès',
+                'data' => new PassportClientResource($client),
+                'statutCode' => 201
+            ], 201);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Crée un client authorization code (avec redirect)
+     */
+    public function createAuthorizationCodeClient(array $data): JsonResponse
+    {
+        try {
+            $client = new Client();
+            $client->name = $data['name'];
+            $client->secret = ($data['confidential'] ?? true) ? Str::random(40) : null;
+            $client->redirect_uris = $data['redirect_uris'] ?? [];
+            $client->grant_types = ['authorization_code'];
+            $client->revoked = false;
+            $client->save();
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Client authorization code créé avec succès',
+                'data' => new PassportClientResource($client),
+                'statutCode' => 201
+            ], 201);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Récupère tous les clients credentials
+     */
+    public function getClientCredentials(array $filters = [], int $perPage = 15): JsonResponse
+    {
+        try {
+            $query = Client::whereJsonContains('grant_types', 'client_credentials');
+
+            // Appliquer les filtres
+            if (isset($filters['revoked'])) {
+                $query->where('revoked', $filters['revoked']);
+            }
+
+            if (isset($filters['name'])) {
+                $query->where('name', 'like', '%' . $filters['name'] . '%');
+            }
+
+            $clients = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+            $clients->getCollection()->transform(function ($client) {
+                return new PassportClientResource($client);
+            });
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Liste des clients credentials récupérée avec succès',
+                'data' => $clients,
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Récupère tous les clients d'accès personnel
+     */
+    public function getPersonalAccessClients(array $filters = [], int $perPage = 15): JsonResponse
+    {
+        try {
+            $query = Client::where(function($q) {
+                $q->whereJsonContains('grant_types', 'personal_access')
+                  ->orWhereJsonContains('grant_types', 'personal_access_token');
+            });
+
+            // Appliquer les filtres
+            if (isset($filters['revoked'])) {
+                $query->where('revoked', $filters['revoked']);
+            }
+
+            if (isset($filters['name'])) {
+                $query->where('name', 'like', '%' . $filters['name'] . '%');
+            }
+
+            $clients = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+            $clients->getCollection()->transform(function ($client) {
+                return new PassportClientResource($client);
+            });
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Liste des clients d\'accès personnel récupérée avec succès',
+                'data' => $clients,
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Récupère tous les clients password grant
+     */
+    public function getPasswordClients(array $filters = [], int $perPage = 15): JsonResponse
+    {
+        try {
+            $query = Client::whereJsonContains('grant_types', 'password');
+
+            // Appliquer les filtres
+            if (isset($filters['revoked'])) {
+                $query->where('revoked', $filters['revoked']);
+            }
+
+            if (isset($filters['name'])) {
+                $query->where('name', 'like', '%' . $filters['name'] . '%');
+            }
+
+            $clients = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+            $clients->getCollection()->transform(function ($client) {
+                return new PassportClientResource($client);
+            });
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Liste des clients password grant récupérée avec succès',
+                'data' => $clients,
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Récupère tous les clients authorization code
+     */
+    public function getAuthorizationCodeClients(array $filters = [], int $perPage = 15): JsonResponse
+    {
+        try {
+            $query = Client::whereJsonContains('grant_types', 'authorization_code');
+
+            // Appliquer les filtres
+            if (isset($filters['revoked'])) {
+                $query->where('revoked', $filters['revoked']);
+            }
+
+            if (isset($filters['name'])) {
+                $query->where('name', 'like', '%' . $filters['name'] . '%');
+            }
+
+            $clients = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+            $clients->getCollection()->transform(function ($client) {
+                return new PassportClientResource($client);
+            });
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Liste des clients authorization code récupérée avec succès',
+                'data' => $clients,
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Met à jour un client credentials
+     */
+    public function updateClientCredentials(string $clientId, array $data): JsonResponse
+    {
+        try {
+            $client = Client::where('id', $clientId)
+                          ->whereJsonContains('grant_types', 'client_credentials')
+                          ->first();
+
+            if (!$client) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Client credentials non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            $client->update($data);
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Client credentials mis à jour avec succès',
+                'data' => new PassportClientResource($client),
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Met à jour un client d'accès personnel
+     */
+    public function updatePersonalAccessClient(string $clientId, array $data): JsonResponse
+    {
+        try {
+            $client = Client::where('id', $clientId)
+                          ->where(function($q) {
+                              $q->whereJsonContains('grant_types', 'personal_access')
+                                ->orWhereJsonContains('grant_types', 'personal_access_token');
+                          })
+                          ->first();
+
+            if (!$client) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Client d\'accès personnel non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            $client->update($data);
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Client d\'accès personnel mis à jour avec succès',
+                'data' => new PassportClientResource($client),
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Met à jour un client password grant
+     */
+    public function updatePasswordClient(string $clientId, array $data): JsonResponse
+    {
+        try {
+            $client = Client::where('id', $clientId)
+                          ->whereJsonContains('grant_types', 'password')
+                          ->first();
+
+            if (!$client) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Client password grant non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            $client->update($data);
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Client password grant mis à jour avec succès',
+                'data' => new PassportClientResource($client),
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Met à jour un client authorization code
+     */
+    public function updateAuthorizationCodeClient(string $clientId, array $data): JsonResponse
+    {
+        try {
+            $client = Client::where('id', $clientId)
+                          ->whereJsonContains('grant_types', 'authorization_code')
+                          ->first();
+
+            if (!$client) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Client authorization code non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            $client->update($data);
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Client authorization code mis à jour avec succès',
+                'data' => new PassportClientResource($client),
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Met à jour un client existant
+     */
+    public function updateClient(string $clientId, array $data): JsonResponse
+    {
+        try {
+            $client = Client::find($clientId);
+
+            if (!$client) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Client OAuth non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            $client->update($data);
+            $clientResource = new PassportClientResource($client->fresh());
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Client OAuth mis à jour avec succès',
+                'data' => $clientResource,
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Révoque un client (soft delete)
+     */
+    public function revokeClient(string $clientId): JsonResponse
+    {
+        try {
+            $client = Client::find($clientId);
+
+            if (!$client) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Client OAuth non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            $client->update(['revoked' => true]);
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Client OAuth révoqué avec succès',
+                'data' => null,
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Restaure un client révoqué
+     */
+    public function restoreClient(string $clientId): JsonResponse
+    {
+        try {
+            $client = Client::find($clientId);
+
+            if (!$client) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Client OAuth non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            $client->update(['revoked' => false]);
+            $clientResource = new PassportClientResource($client->fresh());
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Client OAuth restauré avec succès',
+                'data' => $clientResource,
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Supprime définitivement un client
+     */
+    public function deleteClient(string $clientId): JsonResponse
+    {
+        try {
+            $client = Client::find($clientId);
+
+            if (!$client) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Client OAuth non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            // Révoquer tous les tokens associés
+            $client->tokens()->delete();
+            $client->delete();
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Client OAuth supprimé définitivement',
+                'data' => null,
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Régénère le secret d'un client
+     */
+    public function regenerateClientSecret(string $clientId): JsonResponse
+    {
+        try {
+            $client = Client::find($clientId);
+
+            if (!$client) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Client OAuth non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            // Un client est confidentiel s'il a un secret
+            if (empty($client->secret)) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Impossible de régénérer le secret pour ce client non confidentiel',
+                    'errors' => [],
+                    'statutCode' => 400
+                ], 400);
+            }
+
+            $newSecret = Str::random(40);
+            $client->update(['secret' => $newSecret]);
+            $clientResource = new PassportClientResource($client->fresh());
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Secret du client régénéré avec succès',
+                'data' => [
+                    'client' => $clientResource,
+                    'new_secret' => $newSecret
+                ],
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Récupère les scopes disponibles
+     */
+    public function getAvailableScopes(): JsonResponse
+    {
+        try {
+            $scopes = config('passport.scopes', [
+                'sync-sigfp' => 'Allow SIGFP to sync data with BIP',
+                'integration-bip' => 'Allow Integration with BIP',
+                'read-projects' => 'Read project data',
+                'manage-projects' => 'Create, update, delete projects',
+                'manage-clients' => 'Manage OAuth clients',
+                'admin' => 'Full administrative access',
+            ]);
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Scopes disponibles récupérés avec succès',
+                'data' => $scopes,
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Vérifie si un client existe et est actif
+     */
+    public function isClientActive(string $clientId): JsonResponse
+    {
+        try {
+            $client = Client::find($clientId);
+
+            $isActive = $client && !$client->revoked;
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Statut du client vérifié avec succès',
+                'data' => [
+                    'client_id' => $clientId,
+                    'is_active' => $isActive,
+                    'exists' => $client !== null
+                ],
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Récupère les statistiques des clients
+     */
+    public function getClientStats(): JsonResponse
+    {
+        try {
+            $stats = [
+                'total' => Client::count(),
+                'active' => Client::where('revoked', false)->count(),
+                'revoked' => Client::where('revoked', true)->count(),
+                'personal_access' => Client::where('personal_access_client', true)->count(),
+                'password_grant' => Client::where('password_client', true)->count(),
+                'authorization_code' => Client::where('personal_access_client', false)
+                                             ->where('password_client', false)
+                                             ->count(),
+            ];
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Statistiques des clients récupérées avec succès',
+                'data' => $stats,
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Recherche des clients par nom
+     */
+    public function searchClients(string $search, int $perPage = 15): JsonResponse
+    {
+        try {
+            $clients = Client::where('name', 'like', '%' . $search . '%')
+                           ->orderBy('created_at', 'desc')
+                           ->paginate($perPage);
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Résultats de recherche récupérés avec succès',
+                'data' => PassportClientResource::collection($clients)->response()->getData(),
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Récupère les tokens actifs d'un client
+     */
+    public function getClientActiveTokens(string $clientId): JsonResponse
+    {
+        try {
+            $client = Client::find($clientId);
+
+            if (!$client) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Client OAuth non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            $tokens = $client->tokens()
+                           ->where('revoked', false)
+                           ->where('expires_at', '>', now())
+                           ->get();
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Tokens actifs du client récupérés avec succès',
+                'data' => $tokens,
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Révoque tous les tokens d'un client
+     */
+    public function revokeClientTokens(string $clientId): JsonResponse
+    {
+        try {
+            $client = Client::find($clientId);
+
+            if (!$client) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Client OAuth non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            $count = $client->tokens()->update(['revoked' => true]);
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => "Tous les tokens du client ont été révoqués ({$count} tokens)",
+                'data' => ['revoked_tokens_count' => $count],
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    // =============================================================================
+    // GESTION DE LA SÉCURITÉ
+    // =============================================================================
+
+    /**
+     * Rotation automatique des secrets clients anciens
+     */
+    public function rotateExpiredSecrets(int $daysOld = 90): JsonResponse
+    {
+        try {
+            $expiredClients = Client::where('secret', '!=', null)
+                                  ->where('revoked', false)
+                                  ->where('updated_at', '<', now()->subDays($daysOld))
+                                  ->get();
+
+            $rotatedCount = 0;
+            $rotatedClients = [];
+
+            foreach ($expiredClients as $client) {
+                $oldSecret = $client->secret;
+                $newSecret = Str::random(40);
+
+                $client->update(['secret' => $newSecret]);
+
+                // Log de la rotation
+                \Log::info('Client secret rotated', [
+                    'client_id' => $client->id,
+                    'client_name' => $client->name,
+                    'old_secret_hash' => hash('sha256', $oldSecret),
+                    'new_secret_hash' => hash('sha256', $newSecret),
+                    'rotation_date' => now(),
+                    'days_since_update' => now()->diffInDays($client->updated_at)
+                ]);
+
+                $rotatedClients[] = [
+                    'id' => $client->id,
+                    'name' => $client->name,
+                    'new_secret' => $newSecret,
+                    'old_age_days' => now()->diffInDays($client->updated_at)
+                ];
+
+                $rotatedCount++;
+            }
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => "Rotation de {$rotatedCount} secrets clients effectuée",
+                'data' => [
+                    'rotated_count' => $rotatedCount,
+                    'rotated_clients' => $rotatedClients
+                ],
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Force la rotation du secret d'un client spécifique
+     */
+    public function forceRotateClientSecret(string $clientId, string $reason = 'Manual rotation'): JsonResponse
+    {
+        try {
+            $client = Client::find($clientId);
+
+            if (!$client) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Client non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            if (!$client->secret) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Ce client n\'a pas de secret à faire tourner',
+                    'errors' => [],
+                    'statutCode' => 400
+                ], 400);
+            }
+
+            $oldSecret = $client->secret;
+            $newSecret = Str::random(40);
+
+            $client->update(['secret' => $newSecret]);
+
+            // Révoquer tous les tokens existants pour forcer la réauthentification
+            $client->tokens()->update(['revoked' => true]);
+
+            // Log de la rotation forcée
+            \Log::warning('Client secret force rotated', [
+                'client_id' => $client->id,
+                'client_name' => $client->name,
+                'reason' => $reason,
+                'old_secret_hash' => hash('sha256', $oldSecret),
+                'new_secret_hash' => hash('sha256', $newSecret),
+                'rotation_date' => now(),
+                'tokens_revoked' => $client->tokens()->count()
+            ]);
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Secret client tourné avec succès',
+                'data' => [
+                    'client' => new PassportClientResource($client),
+                    'new_secret' => $newSecret,
+                    'reason' => $reason,
+                    'tokens_revoked' => $client->tokens()->count()
+                ],
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Nettoie les tokens expirés et révoqués
+     */
+    public function cleanupExpiredTokens(): JsonResponse
+    {
+        try {
+            // Supprimer les tokens expirés depuis plus de 30 jours
+            $expiredTokensCount = DB::table('oauth_access_tokens')
+                ->where('expires_at', '<', now()->subDays(30))
+                ->delete();
+
+            // Supprimer les tokens révoqués depuis plus de 7 jours
+            $revokedTokensCount = DB::table('oauth_access_tokens')
+                ->where('revoked', true)
+                ->where('updated_at', '<', now()->subDays(7))
+                ->delete();
+
+            // Supprimer les refresh tokens expirés
+            $expiredRefreshTokensCount = DB::table('oauth_refresh_tokens')
+                ->where('expires_at', '<', now())
+                ->delete();
+
+            \Log::info('OAuth tokens cleanup completed', [
+                'expired_tokens_deleted' => $expiredTokensCount,
+                'revoked_tokens_deleted' => $revokedTokensCount,
+                'expired_refresh_tokens_deleted' => $expiredRefreshTokensCount,
+                'cleanup_date' => now()
+            ]);
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Nettoyage des tokens terminé',
+                'data' => [
+                    'expired_tokens_deleted' => $expiredTokensCount,
+                    'revoked_tokens_deleted' => $revokedTokensCount,
+                    'expired_refresh_tokens_deleted' => $expiredRefreshTokensCount,
+                    'total_deleted' => $expiredTokensCount + $revokedTokensCount + $expiredRefreshTokensCount
+                ],
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Audit des accès OAuth
+     */
+    public function auditOAuthAccess(array $filters = []): JsonResponse
+    {
+        try {
+            $query = DB::table('oauth_access_tokens as oat')
+                ->join('oauth_clients as oc', 'oat.client_id', '=', 'oc.id')
+                ->leftJoin('users as u', 'oat.user_id', '=', 'u.id')
+                ->select([
+                    'oat.id as token_id',
+                    'oc.name as client_name',
+                    'oc.id as client_id',
+                    'u.email as user_email',
+                    'oat.scopes',
+                    'oat.revoked',
+                    'oat.created_at as token_created',
+                    'oat.expires_at as token_expires',
+                    'oat.updated_at as last_used'
+                ]);
+
+            // Filtres
+            if (isset($filters['client_id'])) {
+                $query->where('oc.id', $filters['client_id']);
+            }
+
+            if (isset($filters['user_id'])) {
+                $query->where('oat.user_id', $filters['user_id']);
+            }
+
+            if (isset($filters['revoked'])) {
+                $query->where('oat.revoked', $filters['revoked']);
+            }
+
+            if (isset($filters['date_from'])) {
+                $query->where('oat.created_at', '>=', $filters['date_from']);
+            }
+
+            if (isset($filters['date_to'])) {
+                $query->where('oat.created_at', '<=', $filters['date_to']);
+            }
+
+            $results = $query->orderBy('oat.created_at', 'desc')
+                           ->paginate($filters['per_page'] ?? 50);
+
+            // Statistiques d'audit
+            $stats = [
+                'total_tokens' => DB::table('oauth_access_tokens')->count(),
+                'active_tokens' => DB::table('oauth_access_tokens')->where('revoked', false)->where('expires_at', '>', now())->count(),
+                'expired_tokens' => DB::table('oauth_access_tokens')->where('expires_at', '<', now())->count(),
+                'revoked_tokens' => DB::table('oauth_access_tokens')->where('revoked', true)->count(),
+                'clients_count' => DB::table('oauth_clients')->where('revoked', false)->count()
+            ];
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Audit des accès OAuth récupéré',
+                'data' => [
+                    'audit_results' => $results,
+                    'statistics' => $stats
+                ],
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    // =============================================================================
+    // GESTION DE L'EXPIRATION ET DU RAFRAÎCHISSEMENT DES TOKENS
+    // =============================================================================
+
+    /**
+     * Vérifie les tokens expirés et les marque comme révoqués
+     */
+    public function checkExpiredTokens(): JsonResponse
+    {
+        try {
+            $expiredTokens = DB::table('oauth_access_tokens')
+                ->where('expires_at', '<', now())
+                ->where('revoked', false)
+                ->update(['revoked' => true]);
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Vérification des tokens expirés effectuée',
+                'data' => [
+                    'expired_tokens_revoked' => $expiredTokens,
+                    'check_date' => now()
+                ],
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Rafraîchit un token d'accès avec un refresh token
+     */
+    public function refreshAccessToken(string $refreshToken): JsonResponse
+    {
+        try {
+            // Vérifier que le refresh token existe et est valide
+            $refreshTokenRecord = DB::table('oauth_refresh_tokens')
+                ->where('id', $refreshToken)
+                ->where('revoked', false)
+                ->where('expires_at', '>', now())
+                ->first();
+
+            if (!$refreshTokenRecord) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Refresh token invalide ou expiré',
+                    'errors' => [],
+                    'statutCode' => 401
+                ], 401);
+            }
+
+            // Récupérer le token d'accès associé
+            $accessToken = DB::table('oauth_access_tokens')
+                ->where('id', $refreshTokenRecord->access_token_id)
+                ->first();
+
+            if (!$accessToken) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Token d\'accès associé non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            // Révoquer l'ancien token d'accès
+            DB::table('oauth_access_tokens')
+                ->where('id', $accessToken->id)
+                ->update(['revoked' => true]);
+
+            // Créer un nouveau token d'accès
+            $newTokenId = Str::random(80);
+            $expiresAt = now()->addHours(8); // Utilise la configuration d'expiration
+
+            DB::table('oauth_access_tokens')->insert([
+                'id' => $newTokenId,
+                'user_id' => $accessToken->user_id,
+                'client_id' => $accessToken->client_id,
+                'name' => $accessToken->name,
+                'scopes' => $accessToken->scopes,
+                'revoked' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'expires_at' => $expiresAt,
+            ]);
+
+            // Créer un nouveau refresh token
+            $newRefreshTokenId = Str::random(80);
+            $refreshExpiresAt = now()->addHours(3); // Utilise la configuration d'expiration
+
+            // Révoquer l'ancien refresh token
+            DB::table('oauth_refresh_tokens')
+                ->where('id', $refreshToken)
+                ->update(['revoked' => true]);
+
+            // Créer le nouveau refresh token
+            DB::table('oauth_refresh_tokens')->insert([
+                'id' => $newRefreshTokenId,
+                'access_token_id' => $newTokenId,
+                'revoked' => false,
+                'expires_at' => $refreshExpiresAt,
+            ]);
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Token rafraîchi avec succès',
+                'data' => [
+                    'access_token' => $newTokenId,
+                    'refresh_token' => $newRefreshTokenId,
+                    'expires_at' => $expiresAt->toISOString(),
+                    'refresh_expires_at' => $refreshExpiresAt->toISOString(),
+                    'token_type' => 'Bearer'
+                ],
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Récupère les informations d'expiration d'un token
+     */
+    public function getTokenExpirationInfo(string $tokenId): JsonResponse
+    {
+        try {
+            $token = DB::table('oauth_access_tokens')
+                ->where('id', $tokenId)
+                ->first();
+
+            if (!$token) {
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Token non trouvé',
+                    'errors' => [],
+                    'statutCode' => 404
+                ], 404);
+            }
+
+            $expiresAt = \Carbon\Carbon::parse($token->expires_at);
+            $isExpired = $expiresAt->isPast();
+            $timeUntilExpiry = $isExpired ? null : now()->diffForHumans($expiresAt, true);
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Informations d\'expiration récupérées',
+                'data' => [
+                    'token_id' => $tokenId,
+                    'expires_at' => $expiresAt->toISOString(),
+                    'is_expired' => $isExpired,
+                    'is_revoked' => (bool) $token->revoked,
+                    'time_until_expiry' => $timeUntilExpiry,
+                    'client_id' => $token->client_id,
+                    'user_id' => $token->user_id,
+                    'scopes' => json_decode($token->scopes ?? '[]', true)
+                ],
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Configure les durées d'expiration des tokens
+     */
+    public function configureTokenExpiration(array $config): JsonResponse
+    {
+        try {
+            $validatedConfig = [];
+
+            // Valider les durées d'expiration
+            if (isset($config['access_token_lifetime_hours'])) {
+                $hours = (int) $config['access_token_lifetime_hours'];
+                if ($hours < 1 || $hours > 168) { // Entre 1 heure et 7 jours
+                    return response()->json([
+                        'statut' => 'error',
+                        'message' => 'La durée de vie des tokens d\'accès doit être entre 1 et 168 heures',
+                        'errors' => [],
+                        'statutCode' => 400
+                    ], 400);
+                }
+                $validatedConfig['access_token_lifetime_hours'] = $hours;
+            }
+
+            if (isset($config['refresh_token_lifetime_hours'])) {
+                $hours = (int) $config['refresh_token_lifetime_hours'];
+                if ($hours < 1 || $hours > 720) { // Entre 1 heure et 30 jours
+                    return response()->json([
+                        'statut' => 'error',
+                        'message' => 'La durée de vie des refresh tokens doit être entre 1 et 720 heures',
+                        'errors' => [],
+                        'statutCode' => 400
+                    ], 400);
+                }
+                $validatedConfig['refresh_token_lifetime_hours'] = $hours;
+            }
+
+            if (isset($config['personal_access_token_lifetime_days'])) {
+                $days = (int) $config['personal_access_token_lifetime_days'];
+                if ($days < 1 || $days > 365) { // Entre 1 jour et 1 an
+                    return response()->json([
+                        'statut' => 'error',
+                        'message' => 'La durée de vie des tokens d\'accès personnel doit être entre 1 et 365 jours',
+                        'errors' => [],
+                        'statutCode' => 400
+                    ], 400);
+                }
+                $validatedConfig['personal_access_token_lifetime_days'] = $days;
+            }
+
+            // Sauvegarder dans la configuration (ou base de données selon l'architecture)
+            foreach ($validatedConfig as $key => $value) {
+                \Config::set("passport.{$key}", $value);
+            }
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Configuration des durées d\'expiration mise à jour',
+                'data' => [
+                    'updated_config' => $validatedConfig,
+                    'current_config' => [
+                        'access_token_lifetime_hours' => config('passport.access_token_lifetime_hours', 8),
+                        'refresh_token_lifetime_hours' => config('passport.refresh_token_lifetime_hours', 3),
+                        'personal_access_token_lifetime_days' => config('passport.personal_access_token_lifetime_days', 15)
+                    ]
+                ],
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtient les statistiques d'expiration des tokens
+     */
+    public function getTokenExpirationStats(): JsonResponse
+    {
+        try {
+            $stats = [
+                'total_tokens' => DB::table('oauth_access_tokens')->count(),
+                'active_tokens' => DB::table('oauth_access_tokens')
+                    ->where('revoked', false)
+                    ->where('expires_at', '>', now())
+                    ->count(),
+                'expired_tokens' => DB::table('oauth_access_tokens')
+                    ->where('expires_at', '<', now())
+                    ->count(),
+                'revoked_tokens' => DB::table('oauth_access_tokens')
+                    ->where('revoked', true)
+                    ->count(),
+                'expiring_soon' => DB::table('oauth_access_tokens')
+                    ->where('revoked', false)
+                    ->where('expires_at', '>', now())
+                    ->where('expires_at', '<', now()->addHour())
+                    ->count(),
+                'refresh_tokens_active' => DB::table('oauth_refresh_tokens')
+                    ->where('revoked', false)
+                    ->where('expires_at', '>', now())
+                    ->count(),
+                'refresh_tokens_expired' => DB::table('oauth_refresh_tokens')
+                    ->where('expires_at', '<', now())
+                    ->count()
+            ];
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => 'Statistiques d\'expiration des tokens récupérées',
+                'data' => $stats,
+                'statutCode' => 200
+            ], 200);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => [],
+                'statutCode' => 500
+            ], 500);
+        }
+    }
+
+    public function handleProviderCallback(string $code, string $state): JsonResponse{
+
+        return response()->json(['message' => 'Callback AD not implemented'], 501);
     }
 }

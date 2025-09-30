@@ -71,4 +71,12 @@ interface PassportOAuthServiceInterface extends AbstractServiceInterface
      * @return Illuminate\Http\JsonResponse
      */
     public function verificationEmailReinitialisationMotDePasse($email): JsonResponse;
+
+    /**
+     * Handle the SSO provider callback
+     * @param string $code
+     * @param string $state
+     * @return Illuminate\Http\JsonResponse
+     */
+    public function handleProviderCallback(string $code, string $state): JsonResponse;
 }
