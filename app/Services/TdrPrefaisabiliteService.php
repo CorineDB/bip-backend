@@ -1266,9 +1266,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                  * si elle est presente, l'enregistrer dans le projet em tant que commentaire de l'etude de préfaisabilité en utilisant la relation polymorphiqye commentaires dans le projet
                  */
                 if (!isset($data['synthese_recommandations']) || empty(trim($data['synthese_recommandations']))) {
-                    throw ValidationException::withMessages([
+                    /* throw ValidationException::withMessages([
                         "synthese_recommandations" => "La synthèse et recommandations est obligatoire pour la validation de l'étude de préfaisabilité."
-                    ]);
+                    ]); */
                 } else {
                     // Enregistrer la synthèse et recommandations en tant que commentaire
                     $projet->commentaires()->create([
