@@ -146,7 +146,7 @@ class ProjetService extends BaseService implements ProjetServiceInterface
                 ])
                 ->findOrFail($id);
 
-            return (new $this->resourceClass($projet))
+            return (new ProjetResource($projet))
                 ->response();
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
