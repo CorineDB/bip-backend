@@ -78,5 +78,5 @@ interface PassportOAuthServiceInterface extends AbstractServiceInterface
      * @param string $state
      * @return Illuminate\Http\JsonResponse
      */
-    public function handleProviderCallback(string $code, string $state): JsonResponse;
+    //public function handleProviderCallback(string $code, string $state): JsonResponse;
 }
