@@ -22,7 +22,7 @@ class SoumettreTdrsFaisabiliteRequest extends FormRequest
         $estSoumise = $this->input('est_soumise', true);
 
         return [
-            'est_soumise' => 'sometimes|boolean',
+            'est_soumise' => 'required|boolean',
             'tdr' => 'nullable|file|mimes:pdf,doc,xls,xlsx,docx|max:10240', // Max 10MB
             'autres_document' => 'nullable|array',
             'autres_document.*' => 'file|mimes:pdf,doc,xls,xlsx,docx,jpg,jpeg,png|max:10240', // Max 10MB par fichier

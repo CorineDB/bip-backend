@@ -24,17 +24,23 @@ class EvaluerTdrsRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'evaluations_champs' => 'required|array|min:'. count($this->champs),
-            'evaluations_champs.*.champ_id' => ["required", "in:".implode(",", $this->champs), Rule::exists("champs", "id",)],
-            'evaluations_champs.*.appreciation' => 'required|in:'.implode(",", $this->appreciations),
-            'evaluations_champs.*.commentaire' => 'required|string|min:10',
+        $evaluer = $this->input('evaluer', true);
 
-            'numero_dossier'            => 'required|string|max:100',
-            'numero_contrat'            => 'required|string|max:100',
+        return [
+            'evaluer' => 'required|boolean',
+            //'evaluations_champs' => 'required_unless:evaluer,1|array|min:'. count($this->champs),
+
+            'evaluations_champs' => 'required_unless:evaluer,1|array|min:' . $evaluer  ? count($this->champs) : 0 . ($evaluer  ?  "|max:" . count($this->champs) : ""),
+
+            'evaluations_champs.*.champ_id' => ["required_with:evaluations_champs", "in:".implode(",", $this->champs), Rule::exists("champs", "id",)],
+            'evaluations_champs.*.appreciation' => 'required_with:evaluations_champs|in:'.implode(",", $this->appreciations),
+            'evaluations_champs.*.commentaire' => 'required_with:evaluations_champs|string|min:10',
+
+            'numero_dossier'            => 'required_unless:evaluer,1|string|max:100',
+            'numero_contrat'            => 'required_unless:evaluer,1|string|max:100',
 
             // ✅ accept_term doit être "true" si est_soumise est true
-            'accept_term'               => 'required|accepted',
+            'accept_term'               => 'required_unless:evaluer,1|accepted',
         ];
     }
 

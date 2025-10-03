@@ -119,7 +119,7 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
             // Fichiers requis uniquement pour la soumission finale
             'rapport' => 'required_unless:action,draft|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
             'proces_verbal' => 'required_unless:action,draft|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
-            'liste_presence' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,png,jpeg,jpg|max:20480',
+            'liste_presence' => 'required_unless:action,draft|file|mimes:pdf,doc,docx,xls,xlsx,png,jpeg,jpg|max:20480',
 
             // Informations cabinet requises uniquement pour la soumission finale
             "cabinet_etude" => "required_unless:action,draft|array|min:4",

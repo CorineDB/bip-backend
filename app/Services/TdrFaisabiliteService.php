@@ -1290,8 +1290,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'projetable_id' => $projet->id
             ],[
                 'date_debut_evaluation' => now(),
-                'date_fin_evaluation' => now(),
-                'valider_le' => now(),
+                'date_fin_evaluation' => $data['action'] != 'sauvegarder' ? now() : null,
+                'valider_le' => $data['action'] != 'sauvegarder' ? now() : null,
                 'evaluateur_id' => auth()->id(),
                 'valider_par' => auth()->id(),
                 'commentaire' => $data['commentaire'] ?? $messageAction,

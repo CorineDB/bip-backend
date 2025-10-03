@@ -142,7 +142,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
                 $ideeProjet->update([
                     'est_soumise' => false,
-                    'score_climatique' => 0,
+                    //'score_climatique' => 0,
                     'statut' => StatutIdee::BROUILLON,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::BROUILLON),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::BROUILLON),
@@ -690,8 +690,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet->update([
                 'est_soumise' => false,
-                'score_climatique' => 0,
-                'identifiant_bip' => null, //$this->generateIdentifiantBip(),
+                //'score_climatique' => 0,
+                //'identifiant_bip' => null, //$this->generateIdentifiantBip(),
                 'statut' => StatutIdee::BROUILLON,  // Marquer comme terminée
                 'phase' => $this->getPhaseFromStatut(StatutIdee::BROUILLON),
                 'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::BROUILLON),
@@ -1001,7 +1001,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     throw new Exception("Outil AMC introuvable", 404);
                 }
 
-                $critereImpactClimatique = $outilAMC->criteres()->whereRaw('LOWER(intitule) LIKE ?', ['%impact climatique%'])/* ->where("intitule", "Impact climatique") */->first();
+                $critereImpactClimatique = $outilAMC->criteres()->whereRaw('LOWER(intitule) LIKE ?', [/* '%impact climatique%', '%climatique%',  */'%climat%'])/* ->where("intitule", "Impact climatique") */->first();
 
                 if (!$critereImpactClimatique) {
                     throw new Exception("Critere 'Impact Climatique' de l'AMC introuvrable", 403);

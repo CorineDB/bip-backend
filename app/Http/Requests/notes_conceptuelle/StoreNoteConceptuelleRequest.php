@@ -20,6 +20,7 @@ class StoreNoteConceptuelleRequest extends FormRequest
     public function rules(): array
     {
         $canevas = $this->getCanevas();
+        $estSoumise = $this->input('est_soumise', true);
 
         if (empty($canevas)) {
             return [
@@ -27,9 +28,9 @@ class StoreNoteConceptuelleRequest extends FormRequest
                 'champs' => 'required|array',
                 'documents' => 'required|array',
                 'documents.autres.*' => 'required|' . self::DOCUMENT_RULE,
-                'documents.analyse_pre_risque_facteurs_reussite' => 'required|' . self::DOCUMENT_RULE,
-                'documents.etude_pre_faisabilite' => 'required|' . self::DOCUMENT_RULE,
-                'documents.note_conceptuelle' => 'required|' . self::DOCUMENT_RULE
+                'documents.analyse_pre_risque_facteurs_reussite' => 'required_unless:est_soumise,1|' . self::DOCUMENT_RULE,
+                'documents.etude_pre_faisabilite' => 'required_unless:est_soumise,1|' . self::DOCUMENT_RULE,
+                'documents.note_conceptuelle' => 'required_unless:est_soumise,1|' . self::DOCUMENT_RULE
             ];
         }
 
