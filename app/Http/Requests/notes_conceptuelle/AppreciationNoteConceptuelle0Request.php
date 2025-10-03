@@ -28,7 +28,7 @@ class AppreciationNoteConceptuelle0Request extends FormRequest
     public function rules(): array
     {
         return [
-            'evaluer' => 'required|boolean:true',
+            'evaluer' => 'required|boolean:1',
             'evaluations_champs' => 'required|array|min:'. /* $this->input("evaluer") ? count($this->champs) :  */1,
             'evaluations_champs.*.champ_id' => ["required", "in:".implode(",", $this->champs), Rule::exists("champs", "id",)],
             'evaluations_champs.*.appreciation' => 'required|in:'.implode(",", $this->appreciations),
