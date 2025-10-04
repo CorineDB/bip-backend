@@ -19,6 +19,9 @@ class NoteConceptuelleResource extends BaseApiResource
         return [
             'id' => $this->id,
             'intitule' => $this->intitule,
+            'numero_contrat' => $this->numero_contrat,
+            'numero_dossier' => $this->numero_dossier,
+            'accept_term' => $this->accept_term,
             'statut' => $this->statut,
             'statut_libelle' => match($this->statut) {
                 1 => 'Soumise',
