@@ -746,6 +746,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'message' => $message,
                 'data' => [
                     'evaluation_id'         => $evaluationEnCours->id,
+                    'evaluation'            => $resultatsExamen,
                     'statut'                => $evaluationEnCours->statut,
                     'appreciations'         => $evaluationEnCours,
                     'appreciations_count'   => count($data['evaluations_champs'] ?? []),
