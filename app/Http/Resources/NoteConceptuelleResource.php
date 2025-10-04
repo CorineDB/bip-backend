@@ -72,7 +72,7 @@ class NoteConceptuelleResource extends BaseApiResource
                     ];
                 })->values();
             }),
-            'parent' => new NoteConceptuelleResource($this->parent->load("parent")),
+            'parent' => new NoteConceptuelleResource($this->parent),
             /* $this->whenLoaded("parent", function(){
                 return new NoteConceptuelleResource($this->parent->load("parent"));
             }), */
