@@ -518,7 +518,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
-            return (new $this->resourceClass($noteConceptuelle->load(["fichiers", "projet"])))
+            return (new $this->resourceClass($noteConceptuelle->load(["fichiers", "projet", "parent"])))
                 ->additional(['message' => 'Note conceptuelle validée avec succès.'])
                 ->response()
                 ->setStatusCode(200);
@@ -1696,7 +1696,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'success' => true,
                 'data' => [
                     //'projet' => new \App\Http\Resources\projets\ProjetsResource($projet),
-                    'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet")),
+                    'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet", "parent")),
                     'evaluation' => $evaluation ? [
                         'id' => $evaluation->id,
                         'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:i:s") : null,
