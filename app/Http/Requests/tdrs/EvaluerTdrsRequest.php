@@ -40,7 +40,7 @@ class EvaluerTdrsRequest extends FormRequest
             'numero_contrat'            => 'required_unless:evaluer,0|string|max:100',
 
             // ✅ accept_term doit être "true" si est_soumise est true
-            'accept_term'               => 'required_unless:evaluer,0|accepted',
+            'accept_term'               => 'required_unless:evaluer,0|boolean' . ($evaluer  ? '|accepted' : ''),
         ];
     }
 
