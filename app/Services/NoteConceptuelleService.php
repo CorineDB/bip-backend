@@ -936,14 +936,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 }
             }
 
-            if (!$evaluation) {
-                return response()->json([
-                    'success' => true,
-                    'data' => null,
-                    'message' => 'Aucune évaluation trouvée pour cette note conceptuelle.'
-                ], 206);
-            }
-
             // Calculer les résultats d'examen
             $resultatsExamen = $evaluation->statut ? $evaluation->resultats_evaluation :  $this->calculerResultatsExamen($noteConceptuelle, $evaluation);
 
