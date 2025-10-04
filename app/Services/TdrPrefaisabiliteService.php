@@ -2186,8 +2186,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
         // Forcer la finalisation de l'évaluation lors de l'enregistrement dans evaluerTdrs
         $evaluationEnCours->update([
-            'date_fin_evaluation' => now(),
-            'statut' => 1
+            'date_fin_evaluation' => isset($data['evaluer']) && $data['evaluer'] ? now() : null,
+            'statut' => isset($data['evaluer']) && $data['evaluer'] ? 1 : 0, // En cours ou finalisé
         ]);
 
         $evaluationEnCours->refresh();
