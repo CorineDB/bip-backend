@@ -625,7 +625,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 }
 
 
-                if ($data["evaluer"]) {
+                //if ($data["evaluer"]) {
 
                     $evaluationEnCours->refresh();
 
@@ -651,14 +651,17 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     ];
 
                     $evaluationEnCours->fill([
-                        'date_fin_evaluation' => now(),
-                        'statut' => 1,
+                        /*'date_fin_evaluation' => now(),
+                        'statut' => 1,*/
+
+                        'date_fin_evaluation' => $data["evaluer"] ? now() : null,
+                        'statut' => $data["evaluer"] ? 1 : 0, // En cours
                         'resultats_evaluation' => $resultatsExamen,
                         'evaluation' => $evaluationComplete,
                     ]);
 
                     $evaluationEnCours->save();
-                }
+                //}
             } else {
 
                 // Enregistrer les appréciations pour chaque champ
@@ -668,7 +671,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
                 $evaluationEnCours->refresh();
 
-                if ($data["evaluer"]) {
+                //if ($data["evaluer"]) {
 
                     // Calculer les résultats d'examen finaux
                     $resultatsExamen = $this->calculerResultatsExamen($noteConceptuelle, $evaluationEnCours);
@@ -693,14 +696,14 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     ];
 
                     $evaluationEnCours->fill([
-                        'date_fin_evaluation' => now(),
-                        'statut' => 1,
+                        'date_fin_evaluation' => $data["evaluer"] ? now() : null,
+                        'statut' => $data["evaluer"] ? 1 : 0, // En cours
                         'resultats_evaluation' => $resultatsExamen,
                         'evaluation' => $evaluationComplete,
                     ]);
 
                     $evaluationEnCours->save();
-                }
+                //}
             }
 
             /*
