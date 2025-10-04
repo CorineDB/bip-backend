@@ -978,7 +978,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                             ];
                         }),
                     ],
-                    'resultats_examen' =>  $evaluation->resultats_evaluation, //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen
+                    'resultats_examen' =>  $resultatsExamen, //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen
                 ]
             ]);
         } catch (Exception $e) {
