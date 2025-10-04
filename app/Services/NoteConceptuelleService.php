@@ -927,13 +927,29 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             if (!$evaluation) {
                 $evaluation = $noteConceptuelle->evaluationTermine();
 
-                if ($noteConceptuelle->statut == 1 && isset($evaluation->resultats_evaluation['resultat_global'])  && $evaluation->resultats_evaluation['resultat_global'] !== 'passe') {
+                /* if ($noteConceptuelle->statut == 1 && isset($evaluation->resultats_evaluation['resultat_global'])  && $evaluation->resultats_evaluation['resultat_global'] !== 'passe') {
+                    return response()->json([
+                        'success' => true,
+                        'data' => null,
+                        'message' => 'Aucune évaluation trouvée pour cette note conceptuelle.'
+                    ], 206);
+                } */
+
+                if (!$evaluation) {
                     return response()->json([
                         'success' => true,
                         'data' => null,
                         'message' => 'Aucune évaluation trouvée pour cette note conceptuelle.'
                     ], 206);
                 }
+            }
+
+            if (!$evaluation) {
+                return response()->json([
+                    'success' => true,
+                    'data' => null,
+                    'message' => 'Aucune évaluation trouvée pour cette note conceptuelle.'
+                ], 206);
             }
 
             // Calculer les résultats d'examen
