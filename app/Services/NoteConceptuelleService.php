@@ -953,6 +953,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet")),
                     //'projet' => new ProjetsResource($noteConceptuelle->projet),
                     'evaluation' => [
+                        'id' => $evaluation->id,
                         'type_evaluation' => $evaluation->type_evaluation,
                         'date_debut_evaluation' => $evaluation->date_debut_evaluation ? Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
                         'date_fin_evaluation' => $evaluation->date_fin_evaluation ? Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
