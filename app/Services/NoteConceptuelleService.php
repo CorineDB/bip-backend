@@ -1375,7 +1375,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $newNote->decision = [];
                     $newNote->accept_term = false;
                     $newNote->parentId = $noteConceptuelle->id;
-                    $newNote->rediger_par =  $noteConceptuelle->rediger_par;
+                    $newNote->rediger_par =  $noteConceptuelle->redacteur->id;
                     $newNote->created_at = now();
                     $newNote->updated_at = null;
 
