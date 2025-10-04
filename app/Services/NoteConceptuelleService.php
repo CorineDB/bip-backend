@@ -601,6 +601,24 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             $evaluationEnCours = $noteConceptuelle->evaluationEnCours();
 
+            if(isset($data["numero_dossier"])){
+                $noteConceptuelle->update([
+                    "numero_dossier" => $data["numero_dossier"]
+                ]);
+            }
+
+            if(isset($data["numero_contrat"])){
+                $noteConceptuelle->update([
+                    "numero_contrat" => $data["numero_contrat"]
+                ]);
+            }
+
+            if(isset($data["accept_term"])){
+                $noteConceptuelle->update([
+                    "accept_term" => $data["accept_term"]
+                ]);
+            }
+
             if (!$evaluationEnCours) {
 
                 $evaluationTermine = $noteConceptuelle->evaluationTermine();
