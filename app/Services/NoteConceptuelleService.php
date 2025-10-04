@@ -659,33 +659,22 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
                     $evaluationEnCours->save();
                 }
-
             } else {
-                if ($data["evaluer"]) {
 
+                // Enregistrer les appréciations pour chaque champ
+                if (isset($data['evaluations_champs'])) {
                     $this->sauvegarderEvaluation($evaluationEnCours, $data['evaluations_champs']);
+                }
 
-                    $evaluationEnCours->refresh();
+                $evaluationEnCours->refresh();
+
+                if ($data["evaluer"]) {
 
                     // Calculer les résultats d'examen finaux
                     $resultatsExamen = $this->calculerResultatsExamen($noteConceptuelle, $evaluationEnCours);
 
                     // Préparer l'évaluation complète pour enregistrement
                     $evaluationComplete = [
-                        /*
-                            'champs_evalues' => collect($noteConceptuelle->note_conceptuelle)->map(function ($champ) use ($evaluation) {
-                                $champEvalue = collect($evaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
-                                return [
-                                    'champ_id' => $champ['id'],
-                                    'label' => $champ['label'],
-                                    'attribut' => $champ['attribut'],
-                                    'valeur' => $champ['valeur'],
-                                    'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
-                                    'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                                    'date_evaluation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
-                                ];
-                            })->toArray(),
-                        */
 
                         'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluationEnCours) {
                             $champEvalue = collect($evaluationEnCours->champs_evalue)->firstWhere('attribut', $champ['attribut']);
@@ -2084,7 +2073,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'categorie_originale' => $category,
                 'soumis_par' => auth()->id(),
                 'soumis_le' => now(),
-                'dossier_public' => $dossierNoteConceptuelle ? $dossierNoteConceptuelle->full_path : 'Projets/' . $hashedIdentifiantBip . '/Evaluation ex-ante/Etude de profil/Note conceptuelle'.($category != 'autres_documents' || $category != 'autres-documents' ? '' :('/Autres documents')),
+                'dossier_public' => $dossierNoteConceptuelle ? $dossierNoteConceptuelle->full_path : 'Projets/' . $hashedIdentifiantBip . '/Evaluation ex-ante/Etude de profil/Note conceptuelle' . ($category != 'autres_documents' || $category != 'autres-documents' ? '' : ('/Autres documents')),
             ],
             'fichier_attachable_id' => $noteConceptuelle->id,
             'fichier_attachable_type' => NoteConceptuelle::class,
@@ -2404,12 +2393,12 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'couleur' => '#F59E0B',
                 'icone' => 'clipboard-list'
             ]);
-            if($type != "autres-documents" || $type != "autres_documents"){
+            if ($type != "autres-documents" || $type != "autres_documents") {
                 return $dossierNoteConceptuelle;
             }
 
             // 6. Sous-dossier selon le type
-            $nomSousDossier = match($type) {
+            $nomSousDossier = match ($type) {
                 'autres-documents' => 'Autres documents',
                 'autres_documents' => 'Autres documents',
                 'note-conceptuelle' => 'Documents de la note conceptuelle',
@@ -2417,7 +2406,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 default => 'Documents de la note conceptuelle'
             };
 
-            $descriptionSousDossier = match($type) {
+            $descriptionSousDossier = match ($type) {
                 'autres-documents' => 'Autres documents annexes a la note conceptuelle',
                 'autres_documents' => 'Autres documents annexes a la note conceptuelle',
                 'note-conceptuelle' => 'Documents des termes de référence',
@@ -2425,7 +2414,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 default => 'Documents des termes de référence'
             };
 
-            $couleurSousDossier = match($type) {
+            $couleurSousDossier = match ($type) {
                 'autres-documents' => '#6B7280',
                 'autres_documents' => '#6B7280',
                 'note-conceptuelle' => '#10B981',
@@ -2433,7 +2422,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 default => '#10B981'
             };
 
-            $iconeSousDossier = match($type) {
+            $iconeSousDossier = match ($type) {
                 'autres-documents' => 'document-duplicate',
                 'autres_documents' => 'document-duplicate',
                 'note-conceptuelle' => 'document-text',
@@ -2455,7 +2444,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             ]);
 
             return $sousDossierFinal;
-
         } catch (\Exception $e) {
             // En cas d'erreur, retourner null et laisser le fichier sans dossier
             \Log::warning('Erreur lors de la création de la structure de dossiers TDR', [
