@@ -1399,6 +1399,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'numero_contrat' => null,
                         'numero_dossier' => null,
                         'accept_term' => false,
+                        'rediger_par' =>  $noteConceptuelle->rediger_par,
+                        'updated_at' => null,
                         'rediger_par' => null,
                         'canevas_redaction_note_conceptuelle' => [],
                         'canevas_appreciation_note_conceptuelle' => [],
