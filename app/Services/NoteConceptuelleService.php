@@ -1316,42 +1316,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Calculer les résultats d'examen finaux
             $resultatsExamen = /* (is_array($evaluation->resultats_evaluation) && !empty($evaluation->resultats_evaluation)) ? $evaluation->resultats_evaluation :  */ $this->calculerResultatsExamen($noteConceptuelle, $evaluation);
 
-            // Préparer l'évaluation complète pour enregistrement
-            /* $evaluationComplete = [
-                *//*
-                    'champs_evalues' => collect($noteConceptuelle->note_conceptuelle)->map(function ($champ) use ($evaluation) {
-                        $champEvalue = collect($evaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
-                        return [
-                            'champ_id' => $champ['id'],
-                            'label' => $champ['label'],
-                            'attribut' => $champ['attribut'],
-                            'valeur' => $champ['valeur'],
-                            'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
-                            'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                            'date_evaluation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
-                        ];
-                    })->toArray(),
-                *//*
-
-                'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluation) {
-                    $champEvalue = collect($evaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
-                    return [
-                        'champ_id' => $champ['id'],
-                        'label' => $champ['label'],
-                        'attribut' => $champ['attribut'],
-                        'ordre_affichage' => $champ['ordre_affichage'],
-                        'type_champ' => $champ['type_champ'],
-                        'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
-                        'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                        'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
-                    ];
-                })->toArray(),
-                'statistiques' => $resultatsExamen,
-                'commentaire_confirmation' => $data['commentaire_confirmation'] ?? null,
-                'date_confirmation' => now(),
-                'confirme_par' => auth()->id()
-            ]; */
-
             // Mettre à jour l'évaluation avec les données complètes
             $evaluation->fill([
                 /* 'resultats_evaluation' => $resultatsExamen,
