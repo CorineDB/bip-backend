@@ -958,8 +958,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet")),
-                    //'projet' => new ProjetsResource($noteConceptuelle->projet),
+                    'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet", "parent")),
                     'evaluation' => [
                         'id' => $evaluation->id,
                         'type_evaluation' => $evaluation->type_evaluation,
