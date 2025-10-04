@@ -1314,7 +1314,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             }
 
             // Calculer les résultats d'examen finaux
-            $resultatsExamen = (is_array($evaluation->resultats_evaluation) && !empty($evaluation->resultats_evaluation)) ? $evaluation->resultats_evaluation :  $this->calculerResultatsExamen($noteConceptuelle, $evaluation);
+            $resultatsExamen = /* (is_array($evaluation->resultats_evaluation) && !empty($evaluation->resultats_evaluation)) ? $evaluation->resultats_evaluation :  */ $this->calculerResultatsExamen($noteConceptuelle, $evaluation);
 
             // Préparer l'évaluation complète pour enregistrement
             /* $evaluationComplete = [
