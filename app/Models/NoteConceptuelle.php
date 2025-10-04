@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class NoteConceptuelle extends Model
 {
@@ -42,6 +43,7 @@ class NoteConceptuelle extends Model
         'accept_term',
         'canevas_redaction_note_conceptuelle',
         'canevas_appreciation_note_conceptuelle',
+        'parentId'
     ];
 
     /**
@@ -91,6 +93,14 @@ class NoteConceptuelle extends Model
     public function projet()
     {
         return $this->belongsTo(Projet::class, 'projetId');
+    }
+
+    /**
+     * Relation avec le TDR parent (version précédente)
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(NoteConceptuelle::class, 'parentId');
     }
 
     /**

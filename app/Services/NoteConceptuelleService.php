@@ -1336,11 +1336,12 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             ];
 
             $noteConceptuelleData = [];
+            $noteConceptuelleUpdate['statut'] = 1; // Acceptée
 
             // Mettre à jour le statut de la note selon le résultat
             switch ($resultatsExamen['resultat_global']) {
                 case 'passe':
-                    $noteConceptuelleUpdate['statut'] = 1; // Acceptée
+                    //$noteConceptuelleUpdate['statut'] = 1; // Acceptée
                     $noteConceptuelleData = [
                         'statut' => StatutIdee::VALIDATION_PROFIL,
                         'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_PROFIL),
@@ -1348,7 +1349,38 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     ];
                     break;
                 case 'retour':
-                    $noteConceptuelleUpdate['statut'] = 0; // En révision
+                    //$noteConceptuelleUpdate['statut'] = 0; // En révision
+
+                    /**
+                     * Ici on crée une nouvelle note conceptuelle en se basant sur la note actuelle
+                     * mais avec le statut remis à zéro (brouillon) et en liant la nouvelle note à l'ancienne
+                     * via le champ parentId. Cela permet de garder une trace de l'historique des notes conceptuelles
+                     * et de leurs révisions. La nouvelle note est créée avec les mêmes données que l'ancienne,
+                     * mais avec un statut de brouillon pour indiquer qu'elle est en cours de révision.
+                     * Le projet est également mis à jour pour refléter le nouveau statut de la note conceptuelle
+                     * (en révision) et la phase/sous-phase appropriée.
+                     * La raison de cette approche est de conserver l'historique complet des notes conceptuelles
+                     * et de leurs évaluations, tout en permettant à l'auteur de la note de retravailler sur une nouvelle version
+                     */
+
+                    /**
+                     * On va utiliser la fonction eloquent replicate() pour cloner la note conceptuelle
+                     * et ensuite on modifie les champs nécessaires avant de sauvegarder la nouvelle note.
+                     */
+                    $noteConceptuelle->refresh();
+                    $newNote = $noteConceptuelle->replicate();
+
+                    $newNote->statut = 0; // Brouillon
+                    $newNote->decision = [];
+                    $newNote->accept_term = false;
+                    $newNote->parentId = $noteConceptuelle->id;
+                    $newNote->created_at = now();
+                    $newNote->updated_at = null;
+
+                    // Copier les canevas de la note originale vers la nouvelle note
+                    $newNote->canevas_redaction_note_conceptuelle = $noteConceptuelle->canevas_redaction_note_conceptuelle;
+                    $newNote->save();
+
                     $noteConceptuelleData = [
                         'statut' => StatutIdee::R_VALIDATION_NOTE_AMELIORER,
                         'phase' => $this->getPhaseFromStatut(StatutIdee::R_VALIDATION_NOTE_AMELIORER),
@@ -1356,7 +1388,24 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     ];
                     break;
                 case 'non_accepte':
-                    $noteConceptuelleUpdate['statut'] = -1; // Rejetée
+                    //$noteConceptuelleUpdate['statut'] = -1; // Rejetée
+
+                    $noteData = [
+                        'intitule' => "",
+                        'statut' => -1,
+                        'note_conceptuelle' => [],
+                        'decision' => [],
+                        'numero_contrat' => null,
+                        'numero_dossier' => null,
+                        'accept_term' => false,
+                        'rediger_par' => null,
+                        'canevas_redaction_note_conceptuelle' => [],
+                        'canevas_appreciation_note_conceptuelle' => [],
+                        'parentId' => $noteConceptuelle->id,
+                        'projetId' => $noteConceptuelle->projetId,
+                    ];
+                    $noteConceptuelle->projet->noteConceptuelle()->create($noteData);
+
                     $noteConceptuelleData = [
                         'statut' => StatutIdee::NOTE_CONCEPTUEL,
                         'phase' => $this->getPhaseFromStatut(StatutIdee::NOTE_CONCEPTUEL),
@@ -1383,7 +1432,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'message' => 'Résultat de l\'évaluation confirmé avec succès.',
                 'data' => [
                     'evaluation_id' => $evaluation->id,
-                    'statutevaluation_id' => $evaluation->statut,
+                    'statut' => $evaluation->statut,
                     'note_conceptuelle_id' => $noteConceptuelle->id,
                     'statut' => $noteConceptuelle->statut,
                     'resultat_final' => $resultatsExamen['resultat_global'],
