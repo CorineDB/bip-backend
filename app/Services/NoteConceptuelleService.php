@@ -627,40 +627,40 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
                 //if ($data["evaluer"]) {
 
-                    $evaluationEnCours->refresh();
+                $evaluationEnCours->refresh();
 
-                    // Calculer les résultats d'examen finaux
-                    $resultatsExamen = $this->calculerResultatsExamen($noteConceptuelle, $evaluationEnCours);
+                // Calculer les résultats d'examen finaux
+                $resultatsExamen = $this->calculerResultatsExamen($noteConceptuelle, $evaluationEnCours);
 
-                    // Préparer l'évaluation complète pour enregistrement
-                    $evaluationComplete = [
-                        'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluationEnCours) {
-                            $champEvalue = collect($evaluationEnCours->champs_evalue)->firstWhere('attribut', $champ['attribut']);
-                            return [
-                                'champ_id' => $champ['id'],
-                                'label' => $champ['label'],
-                                'attribut' => $champ['attribut'],
-                                'ordre_affichage' => $champ['ordre_affichage'],
-                                'type_champ' => $champ['type_champ'],
-                                'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
-                                'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
-                            ];
-                        })->toArray(),
-                        'statistiques' => $resultatsExamen
-                    ];
+                // Préparer l'évaluation complète pour enregistrement
+                $evaluationComplete = [
+                    'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluationEnCours) {
+                        $champEvalue = collect($evaluationEnCours->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                        return [
+                            'champ_id' => $champ['id'],
+                            'label' => $champ['label'],
+                            'attribut' => $champ['attribut'],
+                            'ordre_affichage' => $champ['ordre_affichage'],
+                            'type_champ' => $champ['type_champ'],
+                            'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                            'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+                            'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                        ];
+                    })->toArray(),
+                    'statistiques' => $resultatsExamen
+                ];
 
-                    $evaluationEnCours->fill([
-                        /*'date_fin_evaluation' => now(),
+                $evaluationEnCours->fill([
+                    /*'date_fin_evaluation' => now(),
                         'statut' => 1,*/
 
-                        'date_fin_evaluation' => $data["evaluer"] ? now() : null,
-                        'statut' => $data["evaluer"] ? 1 : 0, // En cours
-                        'resultats_evaluation' => $resultatsExamen,
-                        'evaluation' => $evaluationComplete,
-                    ]);
+                    'date_fin_evaluation' => $data["evaluer"] ? now() : null,
+                    'statut' => $data["evaluer"] ? 1 : 0, // En cours
+                    'resultats_evaluation' => $resultatsExamen,
+                    'evaluation' => $evaluationComplete,
+                ]);
 
-                    $evaluationEnCours->save();
+                $evaluationEnCours->save();
                 //}
             } else {
 
@@ -673,36 +673,36 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
                 //if ($data["evaluer"]) {
 
-                    // Calculer les résultats d'examen finaux
-                    $resultatsExamen = $this->calculerResultatsExamen($noteConceptuelle, $evaluationEnCours);
+                // Calculer les résultats d'examen finaux
+                $resultatsExamen = $this->calculerResultatsExamen($noteConceptuelle, $evaluationEnCours);
 
-                    // Préparer l'évaluation complète pour enregistrement
-                    $evaluationComplete = [
+                // Préparer l'évaluation complète pour enregistrement
+                $evaluationComplete = [
 
-                        'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluationEnCours) {
-                            $champEvalue = collect($evaluationEnCours->champs_evalue)->firstWhere('attribut', $champ['attribut']);
-                            return [
-                                'champ_id' => $champ['id'],
-                                'label' => $champ['label'],
-                                'attribut' => $champ['attribut'],
-                                'ordre_affichage' => $champ['ordre_affichage'],
-                                'type_champ' => $champ['type_champ'],
-                                'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
-                                'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
-                            ];
-                        })->toArray(),
-                        'statistiques' => $resultatsExamen
-                    ];
+                    'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluationEnCours) {
+                        $champEvalue = collect($evaluationEnCours->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                        return [
+                            'champ_id' => $champ['id'],
+                            'label' => $champ['label'],
+                            'attribut' => $champ['attribut'],
+                            'ordre_affichage' => $champ['ordre_affichage'],
+                            'type_champ' => $champ['type_champ'],
+                            'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                            'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+                            'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                        ];
+                    })->toArray(),
+                    'statistiques' => $resultatsExamen
+                ];
 
-                    $evaluationEnCours->fill([
-                        'date_fin_evaluation' => $data["evaluer"] ? now() : null,
-                        'statut' => $data["evaluer"] ? 1 : 0, // En cours
-                        'resultats_evaluation' => $resultatsExamen,
-                        'evaluation' => $evaluationComplete,
-                    ]);
+                $evaluationEnCours->fill([
+                    'date_fin_evaluation' => $data["evaluer"] ? now() : null,
+                    'statut' => $data["evaluer"] ? 1 : 0, // En cours
+                    'resultats_evaluation' => $resultatsExamen,
+                    'evaluation' => $evaluationComplete,
+                ]);
 
-                    $evaluationEnCours->save();
+                $evaluationEnCours->save();
                 //}
             }
 
@@ -1178,7 +1178,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         }
 
         // Règle 3: Si 10 ou plus des réponses ont été évaluées comme "Retour"
-        if ($compteurs['retour'] >= 10) {
+        if ($compteurs['retour'] >= 6) {
             return [
                 'statut' => 'non-accepte',
                 'message' => 'Non accepté',
