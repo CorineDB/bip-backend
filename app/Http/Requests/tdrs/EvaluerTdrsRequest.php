@@ -34,7 +34,7 @@ class EvaluerTdrsRequest extends FormRequest
 
             'evaluations_champs.*.champ_id' => ["required_with:evaluations_champs", "in:".implode(",", $this->champs), Rule::exists("champs", "id",)],
             'evaluations_champs.*.appreciation' => 'required_with:evaluations_champs|in:'.implode(",", $this->appreciations),
-            'evaluations_champs.*.commentaire' => 'required_with:evaluations_champs|string|min:10',
+            'evaluations_champs.*.commentaire' => 'required_unless:evaluer,0|string|min:10',
 
             'numero_dossier'            => 'required_unless:evaluer,0|string|max:100',
             'numero_contrat'            => 'required_unless:evaluer,0|string|max:100',
