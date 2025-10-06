@@ -3,6 +3,7 @@
 namespace App\Http\Requests\tdrs;
 
 use App\Repositories\DocumentRepository;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -89,5 +90,13 @@ class EvaluerTdrsRequest extends FormRequest
         $this->appreciations = collect($evaluationConfigs['options_notation'] ?? [])->pluck('appreciation')->toArray();
 
         $this->champs = $canevas->all_champs->pluck("id")->toArray();
+    }
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator(Validator $validator): void{
+        throw new \Exception("With validator Processing Request", 422);
+
     }
 }
