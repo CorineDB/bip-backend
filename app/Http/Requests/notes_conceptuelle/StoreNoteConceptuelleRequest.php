@@ -7,6 +7,10 @@ use App\Repositories\Contracts\DocumentRepositoryInterface;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rules\RequiredIf;
+use App\Repositories\Contracts\FichierRepositoryInterface;
+use App\Models\NoteConceptuelle;
 
 class StoreNoteConceptuelleRequest extends FormRequest
 {
@@ -21,6 +25,10 @@ class StoreNoteConceptuelleRequest extends FormRequest
     {
         $canevas = $this->getCanevas();
         $estSoumise = $this->input('est_soumise', true);
+        $noteId = $this->input('noteId');
+
+        // Vérifier si noteId existe et est valide dans la table notes_conceptuelle
+        $noteExists = $noteId ? DB::table('notes_conceptuelle')->where('id', $noteId)->whereNull('deleted_at')->exists() : false;
 
         if (empty($canevas)) {
             return [
@@ -42,7 +50,7 @@ class StoreNoteConceptuelleRequest extends FormRequest
         $champsValues = $this->input('champs', []);
 
         $dynamicRules = $this->buildRulesFromCanevas($canevas, $champsValues, $defaultRules, $estSoumise);
-/*
+        /*
         $finalRules = array_merge([
             'est_soumise' => 'required|boolean',
             'champs' => 'required|array',
@@ -51,12 +59,29 @@ class StoreNoteConceptuelleRequest extends FormRequest
             'documents.analyse_pre_risque_facteurs_reussite' => 'required|' . self::DOCUMENT_RULE,
             'documents.etude_pre_faisabilite' => 'required|' . self::DOCUMENT_RULE,
             'documents.note_conceptuelle' => 'required|' . self::DOCUMENT_RULE
-        ], $dynamicRules); */
+        ], $dynamicRules);
+        */
 
+
+
+        // closure pour déterminer si un document spécifique doit être requis
+        $needRequiredDocument = function (string $categorie) use ($estSoumise, $noteExists, $noteId) : bool {
+            if (!$estSoumise) {
+                return false;
+            }
+            // si pas de note existante, on exige le fichier
+            if (!$noteExists) {
+                return true;
+            }
+            // si note existante => vérifier si le document est déjà uploadé
+            return !$this->noteHasUploadedDocument($noteId, $categorie);
+        };
 
         $finalRules = array_merge([
             'est_soumise' => 'required|boolean',
-            'champs' => 'required|array',
+            'noteId' => ['sometimes', Rule::exists('notes_conceptuelle', 'id')->whereNull('deleted_at')],
+
+            'champs' => $estSoumise ? 'required|array' : 'nullable|array|min:0',
             'documents' => $estSoumise ? 'required|array' : 'nullable|array',
             'documents.autres.*' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
             'documents.analyse_pre_risque_facteurs_reussite' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
@@ -64,7 +89,69 @@ class StoreNoteConceptuelleRequest extends FormRequest
             'documents.note_conceptuelle' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
         ], $dynamicRules);
 
+
+
+        $finalRules = array_merge([
+            'est_soumise' => 'required|boolean',
+            'noteId' => ['sometimes', Rule::exists('notes_conceptuelle', 'id')->whereNull('deleted_at')],
+
+            'champs' => $estSoumise ? 'required|array' : 'nullable|array|min:0',
+            'documents' => $estSoumise ? 'required|array' : 'nullable|array',
+            'documents.autres.*' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
+
+            // documents obligatoires conditionnels : obligatoires si est_soumise=true ET fichier absent sur la note existante
+            'documents.analyse_pre_risque_facteurs_reussite' => [
+                new RequiredIf(fn() => $needRequiredDocument('analyse_pre_risque_facteurs_reussite')),
+                self::DOCUMENT_RULE
+            ],
+            'documents.etude_pre_faisabilite' => [
+                new RequiredIf(fn() => $needRequiredDocument('etude_pre_faisabilite')),
+                self::DOCUMENT_RULE
+            ],
+            'documents.note_conceptuelle' => [
+                new RequiredIf(fn() => $needRequiredDocument('note_conceptuelle')),
+                self::DOCUMENT_RULE
+            ],
+        ], $dynamicRules);
+
         return $finalRules;
+    }
+
+
+
+    /**
+     * Vérifie si la note (id) a déjà un fichier uploadé pour la catégorie donnée.
+     * Utilise le repository fichiers. Retourne true si au moins un fichier existe.
+     */
+    private function noteHasUploadedDocument($noteId, string $categorie): bool
+    {
+        try {
+            if (empty($noteId)) {
+                return false;
+            }
+
+            $fichierRepo = app(FichierRepositoryInterface::class);
+
+            // certains repository exposent getInstance() ou getModel() : essayer getInstance() puis getModel()
+            $queryable = null;
+            if (method_exists($fichierRepo, 'getInstance')) {
+                $queryable = $fichierRepo->getInstance();
+            } elseif (method_exists($fichierRepo, 'getModel')) {
+                $queryable = $fichierRepo->getModel();
+            } else {
+                // fallback : utiliser le model direct
+                $queryable = \App\Models\Fichier::query();
+            }
+
+            return $queryable->where('fichier_attachable_id', $noteId)
+                ->where('fichier_attachable_type', NoteConceptuelle::class)
+                ->where('categorie', $categorie)
+                ->exists();
+        } catch (\Exception $e) {
+            \Log::warning("Erreur lors de la vérification des fichiers pour la note {$noteId}: " . $e->getMessage());
+            // En cas d'erreur on considère qu'il n'y a pas de fichier uploadé (donc il sera requis)
+            return false;
+        }
     }
 
     /**

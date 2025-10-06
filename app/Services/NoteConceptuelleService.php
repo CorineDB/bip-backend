@@ -2059,15 +2059,18 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         $this->storeDocumentWithFichierRepository($noteConceptuelle, $file, $category);
                     }
                 }
+
+                // Supprimer les anciens fichiers maintenant que les nouveaux sont enregistrés
+                $this->removeSpecificFiles($existingFiles);
             } else {
                 // Pour un seul document
                 if ($files) {
                     $this->storeDocumentWithFichierRepository($noteConceptuelle, $files, $category);
+
+                    // Supprimer les anciens fichiers maintenant que les nouveaux sont enregistrés
+                    $this->removeSpecificFiles($existingFiles);
                 }
             }
-
-            // Supprimer les anciens fichiers maintenant que les nouveaux sont enregistrés
-            $this->removeSpecificFiles($existingFiles);
         }
     }
 
@@ -2076,6 +2079,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     private function storeDocumentWithFichierRepository(NoteConceptuelle $noteConceptuelle, $file, string $category): void
     {
+        if($file === null || $file === 'null') return;
+
         // Hasher l'identifiant BIP pour le stockage physique
         $hashedIdentifiantBip = hash('sha256', $noteConceptuelle->projet->identifiant_bip);
         $hashedNoteId = hash('sha256', $noteConceptuelle->id);

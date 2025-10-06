@@ -592,7 +592,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         });
     });
 
-    require __DIR__.'/integration_bip.php';
+    require __DIR__ . '/integration_bip.php';
 
 
     // =============================================================================
@@ -665,7 +665,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         });
     });
 
-    Route::get("callback", function() {
+    Route::get("callback", function () {
         return response()->json([
             'status' => 'success',
             'message' => 'Callback route is working!'
@@ -706,6 +706,91 @@ Route::prefix('keycloak-auths')->group(function () {
         */
     });
 });
+
+Route::get('/traitement-villages', function () {
+
+    // 1. Charger le contenu du fichier GeoJSON
+    // NOTE : Remplacez 'data_chef_lieu_village.geojson' par le chemin réel du fichier.
+    $geojson_content = file_get_contents(public_path('geodata/data_chef_lieu_village.geojson'));
+    //$geojson_content = file_get_contents('data_chef_lieu_village.geojson');
+
+    // Vérifier si le fichier a été lu
+    if ($geojson_content === false) {
+        die("Erreur : Impossible de lire le fichier GeoJSON.");
+    }
+
+    // 2. Décoder le GeoJSON en un objet/tableau PHP
+    $data = json_decode($geojson_content, true);
+
+    // Vérifier si le décodage a réussi
+    if ($data === null || !isset($data['features'])) {
+        die("Erreur : Le fichier GeoJSON est invalide ou ne contient pas de 'features'.");
+    }
+
+    // Initialiser la structure finale
+    $structure_administrative = [];
+
+    // 3. Boucler sur toutes les entités (villages/quartiers)
+    foreach ($data['features'] as $feature) {
+        // Récupérer les propriétés (attributs) de l'entité
+        $properties = $feature['properties'];
+
+        // Extraire les noms des niveaux administratifs
+        // Les clés utilisées sont basées sur l'analyse de votre fichier GeoJSON
+        $departement  = $properties['Départeme'] ?? 'INCONNU';
+        $commune      = $properties['Commune'] ?? 'INCONNU';
+        $arrondissement = $properties['Arrondisst'] ?? 'INCONNU';
+        $village      = $properties['Village_Ad'] ?? 'Village sans nom';
+
+        // --- 4. CONSTRUCTION HIÉRARCHIQUE (Imbrication par référence) ---
+
+        // 4.1. Traiter le Département
+        if (!isset($structure_administrative[$departement])) {
+            // Créer l'entrée du département et initialiser sa sous-structure 'Communes'
+            $structure_administrative[$departement] = [
+                "communes" => []
+            ];
+        }
+
+        // Pointer vers la sous-structure 'Communes' du département
+        $communes_ref = &$structure_administrative[$departement]["communes"];
+
+        // 4.2. Traiter la Commune
+        if (!isset($communes_ref[$commune])) {
+            // Créer l'entrée de la commune et initialiser sa sous-structure 'Arrondissements'
+            $communes_ref[$commune] = [
+                "arrondissements" => []
+            ];
+        }
+
+        // Pointer vers la sous-structure 'Arrondissements' de la commune
+        $arrondissements_ref = &$communes_ref[$commune]["arrondissements"];
+
+        // 4.3. Traiter l'Arrondissement
+        if (!isset($arrondissements_ref[$arrondissement])) {
+            // Créer l'entrée de l'arrondissement et initialiser sa liste de 'villages'
+            $arrondissements_ref[$arrondissement] = [
+                "villages" => []
+            ];
+        }
+
+        // 4.4. Ajouter le Village (seulement si non déjà présent pour éviter les doublons)
+        $villages_ref = &$arrondissements_ref[$arrondissement]["villages"];
+
+        if (!in_array($village, $villages_ref)) {
+            $villages_ref[] = $village;
+        }
+
+        dd($villages_ref);
+    }
+
+    return response()->json($structure_administrative);
+
+    // 5. Afficher la structure finale au format JSON (pour une utilisation ultérieure)
+    header('Content-Type: application/json');
+    echo json_encode($structure_administrative, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+});
+
 
 Route::get('/test-json', function () {
     $json = file_get_contents(public_path('decoupage_territorial_benin.json'));
