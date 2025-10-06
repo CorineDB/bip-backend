@@ -505,6 +505,14 @@ class Projet extends Model
         return $this->hasOne(NoteConceptuelle::class, 'projetId')->orderBy("created_at", "desc");
     }
 
+    /**
+     * Relation avec tous les TDRs du projet
+     */
+    public function notes_conceptuelle()
+    {
+        return $this->hasMany(NoteConceptuelle::class, 'projetId')->orderBy("created_at", "desc");
+    }
+
     // Relations avec les TDRs
 
     /**
