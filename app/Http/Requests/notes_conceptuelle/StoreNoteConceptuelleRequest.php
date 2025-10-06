@@ -102,15 +102,16 @@ class StoreNoteConceptuelleRequest extends FormRequest
             // documents obligatoires conditionnels : obligatoires si est_soumise=true ET fichier absent sur la note existante
             'documents.analyse_pre_risque_facteurs_reussite' => [
                 new RequiredIf(fn() => $needRequiredDocument('analyse_pre_risque_facteurs_reussite')),
-                self::DOCUMENT_RULE
+                ...(explode('|', self::DOCUMENT_RULE))
+
             ],
             'documents.etude_pre_faisabilite' => [
                 new RequiredIf(fn() => $needRequiredDocument('etude_pre_faisabilite')),
-                self::DOCUMENT_RULE
+                ...(explode('|', self::DOCUMENT_RULE))
             ],
             'documents.note_conceptuelle' => [
                 new RequiredIf(fn() => $needRequiredDocument('note_conceptuelle')),
-                self::DOCUMENT_RULE
+                ...(explode('|', self::DOCUMENT_RULE))
             ],
         ], $dynamicRules);
 

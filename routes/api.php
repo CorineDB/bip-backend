@@ -742,12 +742,19 @@ Route::get('/traitement-villages', function () {
         $arrondissement = $properties['Arrondisst'] ?? 'INCONNU';
         $village      = $properties['Village_Ad'] ?? 'Village sans nom';
 
+        // Extraction des coordonnées du village (Longitude [0], Latitude [1])
+        $coordinates = $feature['geometry']['coordinates'] ?? [null, null];
+
         // --- 4. CONSTRUCTION HIÉRARCHIQUE (Imbrication par référence) ---
 
         // 4.1. Traiter le Département
         if (!isset($structure_administrative[$departement])) {
+            // Enregistrer les coordonnées du premier village rencontré comme point de référence du département
+            $first_point_dep[$departement] = $coordinates;
+
             // Créer l'entrée du département et initialiser sa sous-structure 'Communes'
             $structure_administrative[$departement] = [
+                "coordinates" => $coordinates, // Long, Lat du point de référence
                 "communes" => []
             ];
         }
@@ -757,6 +764,9 @@ Route::get('/traitement-villages', function () {
 
         // 4.2. Traiter la Commune
         if (!isset($communes_ref[$commune])) {
+            // Enregistrer les coordonnées du premier village rencontré comme point de référence de la commune
+            $first_point_com[$commune] = $coordinates;
+
             // Créer l'entrée de la commune et initialiser sa sous-structure 'Arrondissements'
             $communes_ref[$commune] = [
                 "arrondissements" => []
@@ -780,8 +790,6 @@ Route::get('/traitement-villages', function () {
         if (!in_array($village, $villages_ref)) {
             $villages_ref[] = $village;
         }
-
-        dd($villages_ref);
     }
 
     return response()->json($structure_administrative);
