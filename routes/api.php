@@ -737,10 +737,11 @@ Route::get('/traitement-villages', function () {
 
         // Extraire les noms des niveaux administratifs
         // Les clés utilisées sont basées sur l'analyse de votre fichier GeoJSON
-        $departement  = $properties['Départeme'] ?? 'INCONNU';
-        $commune      = $properties['Commune'] ?? 'INCONNU';
-        $arrondissement = $properties['Arrondisst'] ?? 'INCONNU';
-        $village      = $properties['Village_Ad'] ?? 'Village sans nom';
+        $departement        = $properties['Départeme'] ?? 'INCONNU';
+        $commune            = $properties['Commune'] ?? 'INCONNU';
+        $arrondissement     = $properties['Arrondisst'] ?? 'INCONNU';
+        $villageName        = $properties['Nom_LOC'] ?? 'Village sans nom';
+        $village            = $properties['Village_Ad'] ?? 'Village sans nom';
 
         // Extraction des coordonnées du village (Longitude [0], Latitude [1])
         $coordinates = $feature['geometry']['coordinates'] ?? [null, null];
@@ -769,6 +770,7 @@ Route::get('/traitement-villages', function () {
 
             // Créer l'entrée de la commune et initialiser sa sous-structure 'Arrondissements'
             $communes_ref[$commune] = [
+                "coordinates" => $coordinates, // Long, Lat du point de référence
                 "arrondissements" => []
             ];
         }
@@ -778,18 +780,41 @@ Route::get('/traitement-villages', function () {
 
         // 4.3. Traiter l'Arrondissement
         if (!isset($arrondissements_ref[$arrondissement])) {
+            // Enregistrer les coordonnées du premier village rencontré comme point de référence de l'arrondissement
+            $first_point_arr[$arrondissement] = $coordinates;
             // Créer l'entrée de l'arrondissement et initialiser sa liste de 'villages'
             $arrondissements_ref[$arrondissement] = [
+                "coordinates" => $coordinates, // Long, Lat du point de référence
                 "villages" => []
             ];
         }
 
         // 4.4. Ajouter le Village (seulement si non déjà présent pour éviter les doublons)
         $villages_ref = &$arrondissements_ref[$arrondissement]["villages"];
+        // Le village est stocké comme un objet/tableau, non une simple chaîne
+        $village_data = [
+            "nom" => $villageName,
+            "code" => $village,
+            "Coordinates" => $coordinates // Long, Lat exactes du village
+        ];
 
+
+        // Vérifier si le village (par son nom) est déjà dans la liste avant d'ajouter
+        $exists = false;
+        foreach ($villages_ref as $v) {
+            if ($v["code"] === $village) {
+                $exists = true;
+                break;
+            }
+        }
+
+        if (!$exists) {
+            $villages_ref[] = $village_data;
+        }
+/*
         if (!in_array($village, $villages_ref)) {
             $villages_ref[] = $village;
-        }
+        } */
     }
 
     return response()->json($structure_administrative);

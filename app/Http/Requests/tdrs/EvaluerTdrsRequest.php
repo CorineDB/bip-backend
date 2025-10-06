@@ -80,6 +80,7 @@ class EvaluerTdrsRequest extends FormRequest
     }
 
     public function prepareForValidation(){
+        throw new \Exception("With validator Processing Request", 422);
         $canevas = app()->make(DocumentRepository::class)->getModel()
                                             ->where('type', 'checklist')
                                             ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-appreciation-tdrs-prefaisabilite'))
