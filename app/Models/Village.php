@@ -40,6 +40,8 @@ class Village extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'latitude' => 'float',
+        'longitude' => 'float',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
