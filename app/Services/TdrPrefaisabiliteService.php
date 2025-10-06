@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use App\Helpers\SlugHelper;
+use App\Http\Resources\CanevasAppreciationTdrResource;
 use App\Http\Resources\projets\integration\ProjetsResource;
 
 class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteServiceInterface
@@ -597,6 +598,31 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ], 422);
             }
 
+            if ($data["evaluer"]) {
+                // Enregistrer les appréciations pour chaque champ
+                if (!isset($data['evaluations_champs'])) {
+                    throw ValidationException::withMessages(["evaluations_champs" => "Veuillez apprecier le canevas "]);
+                }
+
+                if (!isset($data["numero_dossier"])) {
+                    throw ValidationException::withMessages([
+                        "numero_dossier" => "Le numéro du dossier est obligatoire pour l'évaluation."
+                    ]);
+                }
+
+                if (!isset($data["numero_contrat"])) {
+                    throw ValidationException::withMessages([
+                        "numero_contrat" => "Le numéro du contrat est obligatoire pour l'évaluation."
+                    ]);
+                }
+
+                if (!isset($data["accept_term"])) {
+                    throw ValidationException::withMessages([
+                        "accept_term" => "Vous devez accepter les termes pour poursuivre l'évaluation."
+                    ]);
+                }
+            }
+
             $tdr->statut = "en_evaluation";
 
             $tdr->save();
@@ -608,9 +634,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Calculer le résultat de l'évaluation selon les règles SFD-011
             $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, $data);
-
-            // Traiter la décision selon le résultat (changement automatique du statut)
-            $nouveauStatut = $this->traiterDecisionEvaluationTdrAutomatique($projet, $resultatsEvaluation, $tdr);
 
             // Préparer l'évaluation complète pour enregistrement
             $evaluationComplete = [
@@ -630,34 +653,39 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 'statistiques' => $resultatsEvaluation,
                 'date_evaluation' => now(),
-                'confirme_par' => new UserResource(auth()->user())
+                'confirme_par' => $data["evaluer"] ? new UserResource(auth()->user()) : null
             ];
 
             // Mettre à jour l'évaluation avec les données complètes
             $evaluation->fill([
                 'resultats_evaluation' => $resultatsEvaluation,
                 'evaluation' => json_encode($evaluationComplete),
-                'valider_par' => auth()->id(),
-                'valider_le' => now(),
-                'commentaire' => $resultatsEvaluation['message_resultat']
+                'valider_par' => $data["evaluer"] ? auth()->id() : null,
+                'valider_le' => $data["evaluer"] ? now() : null,
             ]);
 
             $evaluation->save();
 
-            // Enregistrer le workflow et la décision
-            $this->enregistrerWorkflow($projet, $nouveauStatut);
-            $this->enregistrerDecision(
-                $projet,
-                "Évaluation des TDRs de préfaisabilité - " . ucfirst($resultatsEvaluation['resultat_global']),
-                $data['commentaire'] ?? $resultatsEvaluation['message_resultat'],
-                auth()->user()->personne->id
-            );
+            if ($data["evaluer"]) {
+                // Traiter la décision selon le résultat (changement automatique du statut)
+                $nouveauStatut = $this->traiterDecisionEvaluationTdrAutomatique($projet, $resultatsEvaluation, $tdr);
+
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($projet, $nouveauStatut);
+                $this->enregistrerDecision(
+                    $projet,
+                    "Évaluation des TDRs de préfaisabilité - " . ucfirst($resultatsEvaluation['resultat_global']),
+                    $data['commentaire'] ?? $resultatsEvaluation['message_resultat'],
+                    auth()->user()->personne->id
+                );
+            }
 
             DB::commit();
 
-            // Envoyer une notification
-            $this->envoyerNotificationEvaluation($projet, $resultatsEvaluation);
-
+            if ($data["evaluer"]) {
+                // Envoyer une notification
+                $this->envoyerNotificationEvaluation($projet, $resultatsEvaluation);
+            }
             return response()->json([
                 'success' => true,
                 'message' => $this->getMessageSuccesEvaluation($resultatsEvaluation['resultat_global']),
@@ -743,8 +771,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
                     ];
                 }
-            }
-            else {
+            } else {
 
                 // Récupérer le canevas d'appréciation des TDRs
                 $canevasAppreciation = $this->documentRepository->getModel()
@@ -1089,7 +1116,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     }
 
 
-                    if($est_finance) {
+                    if ($est_finance) {
 
                         if (isset($data['etude_prefaisabilite'])) {
                             // si c'est une string JSON → on la décode
@@ -1134,7 +1161,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                         $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
 
-                         foreach ($requiredFields as $field) {
+                        foreach ($requiredFields as $field) {
                             // validation de présence de $data['etude_prefaisabilite'][$field]
                             //throw new Exception("Est_finance : $field " . "Form data" . json_encode($data["etude_prefaisabilite"]) . (!isset($data['etude_prefaisabilite'][$field]) && !empty($data['etude_prefaisabilite'][$field])));
                             if (!isset($data['etude_prefaisabilite'][$field]) && !empty($data['etude_prefaisabilite'][$field])) {
@@ -1243,7 +1270,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'type_evaluation' => 'validation-etude-prefaisabilite',
                 'projetable_type' => get_class($projet),
                 'projetable_id' => $projet->id
-            ],[
+            ], [
                 'date_debut_evaluation' => now(),
                 'date_fin_evaluation' => $data['action'] != 'sauvegarder' ? now() : null,
                 'valider_le' => $data['action'] != 'sauvegarder' ? now() : null,
@@ -1255,7 +1282,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'statut' => $data['action'] != 'sauvegarder' ? 1 : 0
             ]);
 
-            if($evaluationValidation->statut){
+            if ($evaluationValidation->statut) {
 
                 /**
                  *
@@ -1857,8 +1884,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     throw ValidationException::withMessages([
                         "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
                     ]);
-                }
-                else{
+                } else {
                     // Si c'est déjà une valeur booléenne, ne rien faire
                 }
 
@@ -2147,7 +2173,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'date_debut_evaluation' => now(),
                 'date_fin_evaluation' => isset($data['evaluer']) && $data['evaluer'] ? now() : null,
                 'statut' => isset($data['evaluer']) && $data['evaluer'] ? 1 : 0, // En cours ou finalisé
-                'id_evaluation' => $evaluationParent ? $evaluationParent->id : null
+                'id_evaluation' => $evaluationParent ? $evaluationParent->id : null // Lien vers le parent
             ];
 
             $evaluationEnCours = $tdr->evaluations()->create($evaluationData);
@@ -2191,6 +2217,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         ]);
 
         $evaluationEnCours->refresh();
+
+        if ($data["evaluer"]) {
+            $tdr->canevas_appreciation_tdr = (new CanevasAppreciationTdrResource($this->documentRepository->getCanevasAppreciationTdrPrefaisabilite()))->toArray(request());
+            $tdr->save();
+        }
 
         return $evaluationEnCours;
     }
@@ -2316,6 +2347,23 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 return StatutIdee::SOUMISSION_RAPPORT_PF;
 
             case 'retour':
+                $tdr->refresh();
+                $newTdr = $tdr->replicate();
+
+                $newTdr->statut = 'retour_travail_supplementaire';
+                $newTdr->decision_validation = null;
+                $newTdr->accept_term = false;
+                $newTdr->parent_id = $tdr->id;
+                $newTdr->date_validation = null;
+                $newTdr->projet_id = $tdr->projet->id;
+                $newTdr->rediger_par_id =  $tdr->redacteur->id;
+                $newTdr->created_at = now();
+                $newTdr->updated_at = null;
+
+                // Copier les canevas de la note originale vers la nouvelle note
+                $newTdr->canevas_appreciation_tdr = $tdr->canevas_appreciation_tdr;
+                $newTdr->save();
+
                 // Retour pour travail supplémentaire → R_TDR_Préfaisabilité (automatique)
                 $projet->update([
                     'statut' => StatutIdee::R_TDR_PREFAISABILITE,
@@ -2323,22 +2371,44 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_TDR_PREFAISABILITE)
                 ]);
 
-                $tdr->update([
-                    'statut' => 'retour_travail_supplementaire'
-                ]);
-
                 return StatutIdee::R_TDR_PREFAISABILITE;
 
             case 'non-accepte':
-            default:
-                // Non accepté → ATTENTE DE DÉCISION (reste à EVALUATION_TDR_PF)
-                $projet->update([
-                    'statut' => StatutIdee::EVALUATION_TDR_PF,
-                    'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF),
-                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF)
+
+                $tdrData = ([
+                    'projet_id' => $tdr->projet->id,
+                    'parent_id' => $tdr->id,
+                    'type' => $tdr->type,
+                    'statut' => 'brouillon',
+                    'resume' => null,
+                    'date_soumission' => null,
+                    'soumis_par_id' => null,
+                    'rediger_par_id' => $tdr->rediger_par_id,
+                    'date_evaluation' => null,
+                    'date_validation' => null,
+                    'evaluateur_id' => null,
+                    'validateur_id' => null,
+                    'evaluations_detaillees' => [],
+                    'termes_de_reference' => null,
+                    'commentaire_evaluation' => null,
+                    'commentaire_validation' => null,
+                    'decision_validation' => null,
+                    'resultats_evaluation' => null,
+                    'numero_contrat' => null,
+                    'numero_dossier' => null,
+                    'accept_term' => false,
+                    'canevas_appreciation_tdr' => null,
                 ]);
-                // L'utilisateur devra décider entre "reviser" ou "abandonner"
-                return StatutIdee::EVALUATION_TDR_PF;
+
+                $tdr->projet->tdrs()->create($tdrData);
+
+                // Non accepté → TDR_Préfaisabilité (automatique)
+                $projet->update([
+                    'statut' => StatutIdee::TDR_PREFAISABILITE,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::TDR_PREFAISABILITE),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::TDR_PREFAISABILITE)
+                ]);
+                return StatutIdee::TDR_PREFAISABILITE;
         }
     }
 
@@ -3129,7 +3199,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $rapport = null;
             if (isset($data['rapport_evaluation_ex_ante'])) {
                 $rapport = $this->gererRapportEvaluationExAnte($projet, $data['rapport_evaluation_ex_ante'], $data);
-            }else{
+            } else {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le fichier du rapport d\'évaluation ex-ante est requis pour la soumission.'
@@ -3392,7 +3462,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'message' => 'Détails de validation récupérés avec succès.',
                 'data' => [
                     'projet' => new ProjetsResource($projet),
-                    'evaluation_validation' => $evaluationValidation ?[
+                    'evaluation_validation' => $evaluationValidation ? [
                         'id' => $evaluationValidation->id,
                         'evaluation' => $evaluationValidation->evaluation,
                         'decision' => $evaluationValidation->resultats_evaluation,

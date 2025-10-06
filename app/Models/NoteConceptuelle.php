@@ -96,6 +96,24 @@ class NoteConceptuelle extends Model
     }
 
     /**
+     * Relation avec tous les TDRs du projet
+     */
+    public function historique_des_notes_conceptuelle()
+    {
+        return $this->projet->notes_conceptuelle()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
+    }
+
+    /**
+     * Relation avec tous les TDRs du projet
+     */
+    public function historique_des_evaluations_notes_conceptuelle()
+    {
+        /*return $this->historique_des_notes_conceptuelle()->with(["evaluation" => function($query){
+            $query->;
+        }]);*/
+    }
+
+    /**
      * Relation avec le TDR parent (version précédente)
      */
     public function parent(): BelongsTo
