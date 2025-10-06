@@ -2188,6 +2188,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
         }
 
+        throw new Exception("Error Processing Request on est ici " . json_encode($data), 422);
+
+
         // Enregistrer les appréciations pour chaque champ
         if (isset($data['evaluations_champs'])) {
 
