@@ -85,6 +85,8 @@ class TdrPrefaisabiliteController extends Controller
      */
     public function soumettreTdrs(SoumettreTdrsRequest $request, $projetId): JsonResponse
     {
+        throw new \Exception("Error Processing Request " . "ICI", 500);
+
         return $this->service->soumettreTdrs($projetId, $request->all());
     }
 
