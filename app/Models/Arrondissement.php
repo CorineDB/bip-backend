@@ -30,7 +30,7 @@ class Arrondissement extends Model
      * @var array
      */
     protected $fillable = [
-        'code', 'nom', 'slug', 'communeId'
+        'code', 'nom', 'slug', 'communeId', 'latitude', 'longitude'
     ];
 
     /**

@@ -31,7 +31,7 @@ class Village extends Model
      * @var array
      */
     protected $fillable = [
-        'code', 'nom', 'slug', 'arrondissementId'
+        'code', 'nom', 'slug', 'arrondissementId', 'latitude', 'longitude'
     ];
 
     /**

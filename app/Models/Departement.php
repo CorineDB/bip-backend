@@ -30,7 +30,7 @@ class Departement extends Model
      * @var array
      */
     protected $fillable = [
-        'code', 'nom', 'slug'
+        'code', 'nom', 'slug', 'latitude', 'longitude'
     ];
 
     /**

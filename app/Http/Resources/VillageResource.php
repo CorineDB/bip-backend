@@ -19,6 +19,8 @@ class VillageResource extends BaseApiResource
             'id' => $this->id,
             'slug' => $this->slug,
             'nom' => $this->nom,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
             'arrondissementId' => $this->arrondissementId
         ];
     }

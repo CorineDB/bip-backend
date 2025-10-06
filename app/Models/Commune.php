@@ -30,7 +30,8 @@ class Commune extends Model
      * @var array
      */
     protected $fillable = [
-        'code', 'nom', 'slug', 'departementId'
+        'code', 'nom', 'slug', 'departementId','latitude', 'longitude'
+
     ];
 
     /**

@@ -18,6 +18,8 @@ class DepartementResource extends BaseApiResource
         return [
             'id' => $this->id,
             'slug' => $this->slug,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
             'nom' => $this->nom
         ];
     }
