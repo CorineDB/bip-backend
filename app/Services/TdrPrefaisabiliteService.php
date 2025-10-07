@@ -757,14 +757,14 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Récupérer l'évaluation en cours ou la dernière évaluation via le TDR
             $evaluation = $tdr->evaluations()
-                /*->where('type_evaluation', 'tdr-prefaisabilite')
+                ->where('type_evaluation', 'tdr-prefaisabilite')
                 ->with(['champs_evalue' => function ($query) {
                     $query->orderBy('ordre_affichage');
-                }]) */
+                }])
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            throw new Exception("Error Processing Request : ". json_encode($evaluation), 500);
+            throw new Exception("Error Processing Request : ". json_encode($tdr), 500);
 
             if (!$evaluation) {
                 return response()->json([
