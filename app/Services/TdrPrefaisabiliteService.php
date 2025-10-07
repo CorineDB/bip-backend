@@ -1386,76 +1386,89 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 }
             }
 
-            if ($est_finance) {
 
-                if (isset($data['etude_prefaisabilite'])) {
-                    // si c'est une string JSON → on la décode
-                    if (is_string($data['etude_prefaisabilite'])) {
+            // Valider les informations de financement si le projet est marqué comme financé
+            if (
+                isset($projet->info_etude_prefaisabilite['est_finance']) &&
+                !empty($projet->info_etude_prefaisabilite['est_finance'])
+            ) {
+                $est_finance = $projet->info_etude_prefaisabilite['est_finance'];
+                // Convertir en booléen si nécessaire
+                if (is_string($est_finance)) {
+                    $est_finance = strtolower($est_finance) === 'true' || $est_finance === '1';
+                } else {
+                    $est_finance = filter_var($est_finance, FILTER_VALIDATE_BOOLEAN);
+                }
+                if ($est_finance) {
 
-                        $decoded = json_decode($data['etude_prefaisabilite'], true);
+                    if (isset($data['etude_prefaisabilite'])) {
+                        // si c'est une string JSON → on la décode
+                        if (is_string($data['etude_prefaisabilite'])) {
 
-                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                            $data['etude_prefaisabilite'] = $decoded;
-                        } else {
+                            $decoded = json_decode($data['etude_prefaisabilite'], true);
+
+                            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                                $data['etude_prefaisabilite'] = $decoded;
+                            } else {
+                                throw ValidationException::withMessages([
+                                    "etude_prefaisabilite" => "Format JSON invalide pour les informations de financement."
+                                ]);
+                            }
+                        }
+                        // si c'est déjà un tableau → on ne fait rien
+                        elseif (!is_array($data['etude_prefaisabilite'])) {
                             throw ValidationException::withMessages([
-                                "etude_prefaisabilite" => "Format JSON invalide pour les informations de financement."
+                                "etude_prefaisabilite" => "Les informations de financement doivent être un tableau valide."
                             ]);
                         }
-                    }
-                    // si c'est déjà un tableau → on ne fait rien
-                    elseif (!is_array($data['etude_prefaisabilite'])) {
-                        throw ValidationException::withMessages([
-                            "etude_prefaisabilite" => "Les informations de financement doivent être un tableau valide."
-                        ]);
-                    }
 
-                    $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
-                    $etude = [
-                        'est_finance' => $est_finance
-                    ];
+                        $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
+                        $etude = [
+                            'est_finance' => $est_finance
+                        ];
 
-                    foreach ($requiredFields as $field) {
+                        foreach ($requiredFields as $field) {
 
-                        if (isset($data['etude_prefaisabilite'][$field]) && !empty($data['etude_prefaisabilite'][$field])) {
+                            if (isset($data['etude_prefaisabilite'][$field]) && !empty($data['etude_prefaisabilite'][$field])) {
 
-                            if ($field === 'montant' && (!is_numeric($data['etude_prefaisabilite'][$field]) || $data['etude_prefaisabilite'][$field] <= 0)) {
-                                throw ValidationException::withMessages([
-                                    "etude_prefaisabilite.$field" => "Le montant doit être un nombre positif."
-                                ]);
-                            } elseif ($field === 'montant' && (is_numeric($data['etude_prefaisabilite'][$field]))) {
-                                $etude["montant"] = $data['etude_prefaisabilite']['montant'];
-                            }
-
-                            // Ajouter d'autres validations spécifiques si nécessaire
-                            if (in_array($field, ['date_demande', 'date_obtention'])) {
-                                $date = \DateTime::createFromFormat('Y-m-d', $data['etude_prefaisabilite'][$field]);
-                                if (!$date || $date->format('Y-m-d') !== $data['etude_prefaisabilite'][$field]) {
+                                if ($field === 'montant' && (!is_numeric($data['etude_prefaisabilite'][$field]) || $data['etude_prefaisabilite'][$field] <= 0)) {
                                     throw ValidationException::withMessages([
-                                        "etude_prefaisabilite.$field" => "Le champ $field doit être une date valide au format AAAA-MM-JJ."
+                                        "etude_prefaisabilite.$field" => "Le montant doit être un nombre positif."
+                                    ]);
+                                } elseif ($field === 'montant' && (is_numeric($data['etude_prefaisabilite'][$field]))) {
+                                    $etude["montant"] = $data['etude_prefaisabilite']['montant'];
+                                }
+
+                                // Ajouter d'autres validations spécifiques si nécessaire
+                                if (in_array($field, ['date_demande', 'date_obtention'])) {
+                                    $date = \DateTime::createFromFormat('Y-m-d', $data['etude_prefaisabilite'][$field]);
+                                    if (!$date || $date->format('Y-m-d') !== $data['etude_prefaisabilite'][$field]) {
+                                        throw ValidationException::withMessages([
+                                            "etude_prefaisabilite.$field" => "Le champ $field doit être une date valide au format AAAA-MM-JJ."
+                                        ]);
+                                    } else {
+                                        $etude["$field"] = $data['etude_prefaisabilite'][$field];
+                                    }
+                                }
+
+                                if ($field === 'reference' && strlen($data['etude_prefaisabilite'][$field]) > 100) {
+                                    throw ValidationException::withMessages([
+                                        "etude_prefaisabilite.$field" => "La référence ne doit pas dépasser 100 caractères."
                                     ]);
                                 } else {
-                                    $etude["$field"] = $data['etude_prefaisabilite'][$field];
+                                    $etude["reference"] = $data['etude_prefaisabilite']['reference'];
                                 }
                             }
-
-                            if ($field === 'reference' && strlen($data['etude_prefaisabilite'][$field]) > 100) {
-                                throw ValidationException::withMessages([
-                                    "etude_prefaisabilite.$field" => "La référence ne doit pas dépasser 100 caractères."
-                                ]);
-                            } else {
-                                $etude["reference"] = $data['etude_prefaisabilite']['reference'];
-                            }
                         }
-                    }
 
-                    // Toutes les validations sont passées, on peut enregistrer les informations
-                    // enregistrer les informations de financement dans le projet info etude de préfaisabilité
-                    // merge avec les données existantes pour ne pas écraser d'autres infos
-                    $projet->info_etude_prefaisabilite = array_merge($projet->info_etude_prefaisabilite ?? [], $etude);
-                    $projet->save();
+                        // Toutes les validations sont passées, on peut enregistrer les informations
+                        // enregistrer les informations de financement dans le projet info etude de préfaisabilité
+                        // merge avec les données existantes pour ne pas écraser d'autres infos
+                        $projet->info_etude_prefaisabilite = array_merge($projet->info_etude_prefaisabilite ?? [], $etude);
+                        $projet->save();
+                    }
                 }
             }
-
 
             /**
              * Valider l'étude de préfaisabilité selon l'action demandée
