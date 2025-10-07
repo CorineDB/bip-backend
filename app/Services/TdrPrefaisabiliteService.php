@@ -624,19 +624,19 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
 
 
-            if(isset($data["numero_dossier"])){
+            if (isset($data["numero_dossier"])) {
                 $tdr->update([
                     "numero_dossier" => $data["numero_dossier"]
                 ]);
             }
 
-            if(isset($data["numero_contrat"])){
+            if (isset($data["numero_contrat"])) {
                 $tdr->update([
                     "numero_contrat" => $data["numero_contrat"]
                 ]);
             }
 
-            if(isset($data["accept_term"])){
+            if (isset($data["accept_term"])) {
                 $tdr->update([
                     "accept_term" => $data["accept_term"]
                 ]);
@@ -3213,7 +3213,23 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             ]);
         }
 
-        $rapport->checklist_suivi = $rapport->champs->map(function ($champ) {
+        // Préparer l'évaluation complète pour enregistrement
+        $checklist_suivi =  collect($this->documentRepository->getCanevasChecklistSuiviRapportPrefaisabilite()->all_champs)->map(function ($champ) use ($rapport) {
+            $champEvalue = collect($rapport->champs)->firstWhere('attribut', $champ['attribut']);
+            return [
+                'champ_id'          => $champ['id'],
+                'label'             => $champ['label'],
+                'attribut'          => $champ['attribut'],
+                'ordre_affichage'   => $champ['ordre_affichage'],
+                'type_champ'        => $champ['type_champ'],
+                'valeur'      => $champEvalue ? $champEvalue['pivot']['valeur'] : null,
+                'commentaire'       => $champEvalue ? $champEvalue['pivot']['commentaire'] : null,
+                'updated_at'        => Carbon::parse($champ->pivot->updated_at)->format("Y-m-d H:i:s")
+            ];
+        })->toArray();
+
+        $rapport->checklist_suivi = $checklist_suivi;
+        /*$rapport->champs->map(function ($champ) {
             return [
                 'id' => $champ->id,
                 'label' => $champ->label,
@@ -3224,7 +3240,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'commentaire' => $champ->pivot->commentaire,
                 'updated_at' => Carbon::parse($champ->pivot->updated_at)->format("Y-m-d H:i:s")
             ];
-        });
+        });*/
 
         $rapport->save();
     }
