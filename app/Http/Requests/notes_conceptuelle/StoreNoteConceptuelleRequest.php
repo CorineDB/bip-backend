@@ -50,29 +50,18 @@ class StoreNoteConceptuelleRequest extends FormRequest
         $champsValues = $this->input('champs', []);
 
         $dynamicRules = $this->buildRulesFromCanevas($canevas, $champsValues, $defaultRules, $estSoumise);
-        /*
-        $finalRules = array_merge([
-            'est_soumise' => 'required|boolean',
-            'champs' => 'required|array',
-            'documents' => 'nullable|array',
-            'documents.autres.*' => 'nullable|' . self::DOCUMENT_RULE,
-            'documents.analyse_pre_risque_facteurs_reussite' => 'required|' . self::DOCUMENT_RULE,
-            'documents.etude_pre_faisabilite' => 'required|' . self::DOCUMENT_RULE,
-            'documents.note_conceptuelle' => 'required|' . self::DOCUMENT_RULE
-        ], $dynamicRules);
-        */
-
-
 
         // closure pour déterminer si un document spécifique doit être requis
         $needRequiredDocument = function (string $categorie) use ($estSoumise, $noteExists, $noteId) : bool {
             if (!$estSoumise) {
                 return false;
             }
+
             // si pas de note existante, on exige le fichier
             if (!$noteExists) {
                 return true;
             }
+
             // si note existante => vérifier si le document est déjà uploadé
             return !$this->noteHasUploadedDocument($noteId, $categorie);
         };
@@ -88,8 +77,6 @@ class StoreNoteConceptuelleRequest extends FormRequest
             'documents.etude_pre_faisabilite' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
             'documents.note_conceptuelle' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
         ], $dynamicRules);
-
-
 
         $finalRules = array_merge([
             'est_soumise' => 'required|boolean',
