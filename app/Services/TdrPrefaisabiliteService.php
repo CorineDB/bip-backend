@@ -2148,7 +2148,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'success' => false,
                     'message' => 'Aucun rapport soumis trouvé pour ce projet.',
                     'data' => null
-                ], 404);
+                ], 206);
             }
 
             return response()->json([
