@@ -100,6 +100,9 @@ class NoteConceptuelle extends Model
      */
     public function historique_des_notes_conceptuelle()
     {
+        return $this->hasMany(NoteConceptuelle::class, 'projet_id', 'projet_id')
+                    ->where('id', '!=', $this->id)
+                    ->orderBy('created_at', 'desc');
         return $this->projet->notes_conceptuelle()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
     }
 
