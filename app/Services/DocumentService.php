@@ -409,7 +409,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $ficheIdee->refresh();
 
                 // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
-                $this->cleanupRemovedElements($ficheIdee, $payloadIds);
+                //$this->cleanupRemovedElements($ficheIdee, $payloadIds);
 
                 // Recharger avec toutes les relations et générer la structure
                 //$ficheIdee->load(['sections.champs', 'champs', 'categorie']);
