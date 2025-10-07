@@ -623,6 +623,25 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 }
             }
 
+
+            if(isset($data["numero_dossier"])){
+                $tdr->update([
+                    "numero_dossier" => $data["numero_dossier"]
+                ]);
+            }
+
+            if(isset($data["numero_contrat"])){
+                $tdr->update([
+                    "numero_contrat" => $data["numero_contrat"]
+                ]);
+            }
+
+            if(isset($data["accept_term"])){
+                $tdr->update([
+                    "accept_term" => $data["accept_term"]
+                ]);
+            }
+
             $tdr->save();
 
             $tdr->refresh();
@@ -1100,12 +1119,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                      *
                      */
                     // Reviser malgré l'évaluation négative → retour au statut TDR_PREFAISABILITE
-                    $nouveauStatut = StatutIdee::R_TDR_PREFAISABILITE;
-                    $projet->update([
-                        'statut' => $nouveauStatut,
-                        'phase' => $this->getPhaseFromStatut($nouveauStatut),
-                        'sous_phase' => $this->getSousPhaseFromStatut($nouveauStatut)
-                    ]);
 
                     $tdr = $projet->tdrPrefaisabilite->first();
 
@@ -1117,8 +1130,27 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         ], 404);
                     }
 
-                    $tdr->update([
-                        'statut' => 'retour_travail_supplementaire'
+                    $newTdr = $tdr->replicate();
+
+                    $newTdr->statut = 'retour_travail_supplementaire';
+                    $newTdr->decision_validation = null;
+                    $newTdr->accept_term = false;
+                    $newTdr->parent_id = $tdr->id;
+                    $newTdr->date_validation = null;
+                    $newTdr->projet_id = $tdr->projet->id;
+                    $newTdr->rediger_par_id =  $tdr->redacteur->id;
+                    $newTdr->created_at = now();
+                    $newTdr->updated_at = null;
+
+                    // Copier les canevas de la note originale vers la nouvelle note
+                    $newTdr->canevas_appreciation_tdr = $tdr->canevas_appreciation_tdr;
+                    $newTdr->save();
+
+                    $nouveauStatut = StatutIdee::R_TDR_PREFAISABILITE;
+                    $projet->update([
+                        'statut' => $nouveauStatut,
+                        'phase' => $this->getPhaseFromStatut($nouveauStatut),
+                        'sous_phase' => $this->getSousPhaseFromStatut($nouveauStatut)
                     ]);
 
                     $messageAction = 'Projet continue malgré l\'évaluation négative. Retour à la soumission des TDRs.';
@@ -2448,8 +2480,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 return StatutIdee::SOUMISSION_RAPPORT_PF;
 
-            case 'retour':
-                $tdr->refresh();
+            /*case 'retour':
+                /* $tdr->refresh();
                 $newTdr = $tdr->replicate();
 
                 $newTdr->statut = 'retour_travail_supplementaire';
@@ -2471,13 +2503,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'statut' => StatutIdee::R_TDR_PREFAISABILITE,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::R_TDR_PREFAISABILITE),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_TDR_PREFAISABILITE)
-                ]);
+                ]);*/
 
                 return StatutIdee::R_TDR_PREFAISABILITE;
-
             case 'non-accepte':
 
-                $tdrData = ([
+                /*$tdrData = ([
                     'projet_id' => $tdr->projet->id,
                     'parent_id' => $tdr->id,
                     'type' => $tdr->type,
@@ -2509,7 +2540,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'statut' => StatutIdee::TDR_PREFAISABILITE,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::TDR_PREFAISABILITE),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::TDR_PREFAISABILITE)
-                ]);
+                ]);*/
                 return StatutIdee::TDR_PREFAISABILITE;
         }
     }

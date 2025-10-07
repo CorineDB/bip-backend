@@ -2073,9 +2073,9 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
                 return StatutIdee::SOUMISSION_RAPPORT_F;
 
-            case 'retour':
+            /*case 'retour':
                 // Retour pour travail supplémentaire → R_TDR_FAISABILITE (automatique)
-                $projet->update([
+                /*$projet->update([
                     'statut' => StatutIdee::R_TDR_FAISABILITE,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::R_TDR_FAISABILITE),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_TDR_FAISABILITE)
@@ -2090,13 +2090,14 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             case 'non-accepte':
             default:
                 // Non accepté → ATTENTE DE DÉCISION (reste à EVALUATION_TDR_F)
-                $projet->update([
+                /*$projet->update([
                     'statut' => StatutIdee::EVALUATION_TDR_F,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_F),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_F)
                 ]);
                 // L'utilisateur devra décider entre "reviser" ou "abandonner"
                 return StatutIdee::EVALUATION_TDR_F;
+            */
         }
     }
 
