@@ -943,7 +943,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ], 404);
             }
 
-            $evaluation = $projet->evaluationPrefaisabiliteEnCours();
+            $evaluation = $tdr->evaluationPrefaisabiliteEnCours();
 
             if (!$evaluation) {
                 $evaluation = $tdr->evaluationPrefaisabiliteTermine();
