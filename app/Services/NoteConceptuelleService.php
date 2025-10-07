@@ -150,7 +150,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $statusCode = 201;
             }
 
-            dd($data);
+            dd(request()->all());
 
             // Récupérer le canevas de rédaction de note conceptuelle
             $canevasNoteConceptuelle = $this->documentRepository->getModel()->where([
