@@ -744,7 +744,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
 
-            if ($resultatsEvaluation['resultat_global'] !== 'non-accepte') {
+            if ($resultatsEvaluation['resultat_global'] !== 'non_accepte') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cette méthode n\'est utilisable que pour les cas "non accepté". Le résultat actuel est: ' . $resultatsEvaluation['resultat_global']
@@ -1869,7 +1869,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             StatutIdee::EVALUATION_TDR_F => [
                 'evaluer' => 'Procéder à l\'évaluation des TDRs',
                 // Actions de décision finale seulement pour cas "non accepté"
-                ...(($resultatEvaluation === 'non-accepte') ? [
+                ...(($resultatEvaluation === 'non_accepte') ? [
                     'reviser' => 'Reviser tdr malgré l\'évaluation négative',
                     'abandonner' => 'Abandonner le projet'
                 ] : [])
@@ -1896,7 +1896,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'action_automatique' => 'R_TDR_FAISABILITE',
                 'actions_manuelles' => []
             ],
-            'non-accepte' => [
+            'non_accepte' => [
                 'type' => 'decision_requise',
                 'message' => 'Évaluation négative. Une décision manuelle est requise.',
                 'action_automatique' => null,
@@ -2086,7 +2086,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 case 'retour':
                     $nombreRetour++;
                     break;
-                case 'non-accepte':
+                case 'non_accepte':
                     $nombreNonAccepte++;
                     break;
                 default:
@@ -2099,7 +2099,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         $resultat = $this->determinerResultatSelonRegles([
             'passe' => $nombrePasse,
             'retour' => $nombreRetour,
-            'non-accepte' => $nombreNonAccepte,
+            'non_accepte' => $nombreNonAccepte,
             'non_evalues' => $nombreNonEvalues,
             'total' => $totalChamps
         ]);
@@ -2121,16 +2121,16 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         // Règle 1: Si des questions n'ont pas été complétées
         if ($compteurs['non_evalues'] > 0) {
             return [
-                'resultat_global' => 'non-accepte',
+                'resultat_global' => 'non_accepte',
                 'message_resultat' => 'Non accepté - Des questions n\'ont pas été complétées',
                 'raison' => 'Questions non complétées'
             ];
         }
 
         // Règle 2: Si une réponse a été évaluée comme "Non accepté"
-        if ($compteurs['non-accepte'] > 0) {
+        if ($compteurs['non_accepte'] > 0) {
             return [
-                'resultat_global' => 'non-accepte',
+                'resultat_global' => 'non_accepte',
                 'message_resultat' => 'Non accepté - Une ou plusieurs réponses évaluées comme "Non accepté"',
                 'raison' => 'Réponses non acceptées'
             ];
@@ -2139,7 +2139,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         // Règle 3: Si 6 ou plus des réponses ont été évaluées comme "Retour"
         if ($compteurs['retour'] >= 10) {
             return [
-                'resultat_global' => 'non-accepte',
+                'resultat_global' => 'non_accepte',
                 'message_resultat' => 'Non accepté - Trop de retours (10 ou plus)',
                 'raison' => 'Seuil de retours dépassé'
             ];
@@ -2215,7 +2215,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
                 return StatutIdee::R_TDR_FAISABILITE;
 
-            case 'non-accepte':
+            case 'non_accepte':
             default:
                 // Non accepté → ATTENTE DE DÉCISION (reste à EVALUATION_TDR_F)
                 /*$projet->update([
@@ -2315,7 +2315,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         return match ($resultat) {
             'passe' => 'TDRs approuvés avec succès. Projet peut passer à la soumission du rapport.',
             'retour' => 'TDRs nécessitent des améliorations.',
-            'non-accepte' => 'TDRs non acceptés.',
+            'non_accepte' => 'TDRs non acceptés.',
             default => 'Évaluation effectuée avec succès.'
         };
     }
