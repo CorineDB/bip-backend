@@ -334,7 +334,9 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ], 422);
             }
 
-            if ($data["evaluer"]) {
+            $evaluer = isset($data["evaluer"]) ? $data["evaluer"] : false;
+
+            if ($evaluer) {
                 // Enregistrer les appréciations pour chaque champ
                 if (!isset($data['evaluations_champs'])) {
                     throw ValidationException::withMessages(["evaluations_champs" => "Veuillez apprecier le canevas "]);
@@ -404,21 +406,21 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 })->toArray(),
                 'statistiques' => $resultatsEvaluation,
                 'date_evaluation' => now(),
-                'confirme_par' => $data["evaluer"] ? new UserResource(auth()->user()) : null
+                'confirme_par' => $evaluer ? new UserResource(auth()->user()) : null
             ];
 
             // Mettre à jour l'évaluation avec les données complètes
             $evaluation->fill([
                 'resultats_evaluation' => $resultatsEvaluation,
                 'evaluation' => json_encode($evaluationComplete),
-                'valider_par' => $data["evaluer"] ? auth()->id() : null,
-                'valider_le' => $data["evaluer"] ? now() : null,
+                'valider_par' => $evaluer ? auth()->id() : null,
+                'valider_le' => $evaluer ? now() : null,
                 'commentaire' => $resultatsEvaluation['message_resultat']
             ]);
 
             $evaluation->save();
 
-            if ($data["evaluer"]) {
+            if ($evaluer) {
 
                 $tdr->statut = "en_evaluation";
                 $tdr->save();
@@ -440,7 +442,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             DB::commit();
 
 
-            if ($data["evaluer"]) {
+            if ($evaluer) {
                 // Envoyer une notification
                 $this->envoyerNotificationEvaluation($projet, $resultatsEvaluation);
             }
