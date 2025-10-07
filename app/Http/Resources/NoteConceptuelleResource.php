@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Http\Resources\projets\ProjetsResource;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class NoteConceptuelleResource extends BaseApiResource
@@ -38,6 +39,37 @@ class NoteConceptuelleResource extends BaseApiResource
             'decision' => $this->decision,
             'historique_des_notes_conceptuelle' => $this->whenLoaded("historique_des_notes_conceptuelle", function(){
                 return ListNoteConceptuelleResource::collection($this->historique_des_notes_conceptuelle->load("fichiers"));
+            }),
+            "historique_des_evaluations_notes_conceptuelle" => $this->whenLoaded("historique_des_evaluations_notes_conceptuelle", function(){
+                $this->historique_des_evaluations_notes_conceptuelle->map(function($evaluation){
+                    return [
+                        'id' => $evaluation->id,
+                        'type_evaluation' => $evaluation->type_evaluation,
+                        'date_debut_evaluation' => $evaluation->date_debut_evaluation ? Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
+                        'date_fin_evaluation' => $evaluation->date_fin_evaluation ? Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
+                        'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
+                        'valider_par' => $evaluation->valider_par,
+                        'commentaire' => $evaluation->commentaire,
+                        'evaluation' => $evaluation->evaluation,
+                        'resultats_evaluation' => $evaluation->resultats_evaluation,
+                        'statut' => $evaluation->statut,
+                        //'champs' => collect($noteConceptuelle->note_conceptuelle)->map(function ($champ) use ($evaluation) {
+                        'champs' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluation) {
+                            $champ_evalue = collect($evaluation->champs_evalue)
+                                ->firstWhere('attribut', $champ["attribut"]);
+                            return [
+                                'id' => $champ["id"],
+                                'label' => $champ["label"],
+                                'attribut' => $champ["attribut"],
+                                'valeur' => $champ["valeur"],
+                                'appreciation' => $champ_evalue ? $champ_evalue["pivot"]["note"] : null,
+                                'commentaire' => $champ_evalue ? $champ_evalue["pivot"]["commentaires"] : null,
+                                'date_note' => $champ_evalue ? $champ_evalue["pivot"]["date_note"] : null,
+                                'updated_at' => $champ_evalue ? $champ_evalue["pivot"]["updated_at"] : null,
+                            ];
+                        }),
+                    ];
+                });
             }),
             'champs' => $this->whenLoaded('champs', function() {
                 return $this->champs->map(function ($champ) {

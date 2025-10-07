@@ -810,7 +810,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ], 404);
                 }
 
-                foreach ($canevasAppreciation->champs as $champ) {
+                foreach ($canevasAppreciation->all_champs as $champ) {
                     $evaluationExistante = null;
                     if ($evaluation) {
                         $evaluationExistante = $evaluation->champs_evalue->firstWhere('id', $champ->id);
