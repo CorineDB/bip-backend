@@ -965,7 +965,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $evaluation = $tdr->evaluationPrefaisabiliteEnCours();
 
             if (!$evaluation) {
-                $evaluation = $tdr->evaluationPrefaisabiliteTermine();
+                $evaluation = $tdr->evaluationPrefaisabiliteTerminer();
 
                 if (!$evaluation) {
                     return response()->json([
