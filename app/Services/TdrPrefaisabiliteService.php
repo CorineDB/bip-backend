@@ -779,8 +779,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 // Recalculer le résultat pour l'évaluation terminée
                 $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation["champs_evalues"];
 
-                throw new Exception("Error Processing Request : " . json_encode($champs_evalues), 1);
-
                 foreach ($champs_evalues as $champ) {
                     $champ =  (array)$champ;
                     $grilleEvaluation[] = [
@@ -838,7 +836,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             if ($evaluation && $evaluation->statut == 1) {
                 // Recalculer le résultat pour l'évaluation terminée
-                $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation;
+                $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation["champs_evalues"];
                 foreach ($champs_evalues as $champ) {
                     $champ =  (array)$champ;
                     $evaluationsChamps[] = [
