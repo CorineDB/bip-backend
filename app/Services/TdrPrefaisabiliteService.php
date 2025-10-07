@@ -2480,7 +2480,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 return StatutIdee::SOUMISSION_RAPPORT_PF;
 
-            /*case 'retour':
+            case 'retour':
                 /* $tdr->refresh();
                 $newTdr = $tdr->replicate();
 
@@ -2507,6 +2507,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 return StatutIdee::R_TDR_PREFAISABILITE;
             case 'non_accepte':
+
+            default:
 
                 /*$tdrData = ([
                     'projet_id' => $tdr->projet->id,
