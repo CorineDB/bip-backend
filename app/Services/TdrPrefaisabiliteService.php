@@ -2507,7 +2507,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 return StatutIdee::R_TDR_PREFAISABILITE;
             case 'non_accepte':
-
             default:
 
                 /*$tdrData = ([
