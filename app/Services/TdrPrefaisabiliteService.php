@@ -1135,8 +1135,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     $newTdr->parent_id = $tdr->id;
                     $newTdr->date_validation = null;
                     $newTdr->projet_id = $tdr->projet->id;
-                    throw new \Exception("Error Processing Request" . json_encode($newTdr), 1);
-                    $newTdr->rediger_par_id =  $tdr->redacteur->id;
                     $newTdr->created_at = now();
                     $newTdr->updated_at = null;
 
