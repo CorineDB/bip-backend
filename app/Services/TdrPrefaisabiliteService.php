@@ -1116,8 +1116,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                      */
                     // Reviser malgré l'évaluation négative → retour au statut TDR_PREFAISABILITE
 
-                    $tdr = $projet->tdrPrefaisabilite->first();
-
                     if (!$tdr) {
                         return response()->json([
                             'success' => false,
