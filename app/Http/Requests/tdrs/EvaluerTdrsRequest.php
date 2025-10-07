@@ -31,7 +31,8 @@ class EvaluerTdrsRequest extends FormRequest
             'evaluer' => 'required|boolean',
             //'evaluations_champs' => 'required_unless:evaluer,0|array|min:'. count($this->champs),
 
-            'evaluations_champs' => 'required_unless:evaluer,0|array|min:' . $evaluer  ? count($this->champs) : 0 . ($evaluer  ?  "|max:" . count($this->champs) : ""),
+            //'evaluations_champs' => 'required_unless:evaluer,0|array|min:' . $evaluer  ? count($this->champs) : 0 . ($evaluer  ?  "|max:" . count($this->champs) : ""),
+            'evaluations_champs' => 'required_unless:evaluer,0|array' . ($evaluer ? '|min:' . count($this->champs) . '|max:' . count($this->champs) : ''),
 
             'evaluations_champs.*.champ_id' => ["required_with:evaluations_champs", "in:".implode(",", $this->champs), Rule::exists("champs", "id",)],
             'evaluations_champs.*.appreciation' => 'required_with:evaluations_champs|in:'.implode(",", $this->appreciations),
