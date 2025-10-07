@@ -2019,7 +2019,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     $fichierProcesVerbal = $this->gererFichierProcesVerbal($rapport, $data['proces_verbal'], $data);
                 }
 
-                $info_etude_prefaisabilite = $projet->info_etude_prefaisabilite ?? [];
 
                 //validation des informations de si l'étude de préfaisabilité est financée
                 if (!isset($data['etude_prefaisabilite']['est_finance'])) {
@@ -2027,6 +2026,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' est obligatoire."
                     ]);
                 }
+                /*
+
+                $info_etude_prefaisabilite = $projet->info_etude_prefaisabilite ?? [];
 
                 // on doit valider si c'est une valeur booléenne
                 // par exemple une chaîne de caractères, un entier, un tableau, etc.
@@ -2067,19 +2069,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ]);
                 }
 
-                $est_finance = $data['etude_prefaisabilite']['est_finance'] ?? ($info_etude_prefaisabilite['est_finance'] ?? false);
+                $est_finance = $data['etude_prefaisabilite']['est_finance'] ?? ($info_etude_prefaisabilite['est_finance'] ?? false);*/
 
                 // Mettre à jour les informations de l'étude de préfaisabilité dans le projet
                 $projet->update([
-                    // Fusionner avec les nouvelles valeurs provenant de $data
-                    'info_etude_prefaisabilite' => array_merge($info_etude_prefaisabilite, [
-                        'date_demande'   => $data['etude_prefaisabilite']['date_demande'] ?? ($info_etude_prefaisabilite['date_demande'] ?? null),
-                        'date_obtention' => $data['etude_prefaisabilite']['date_obtention'] ?? ($info_etude_prefaisabilite['date_obtention'] ?? null),
-                        'montant'        => $data['etude_prefaisabilite']['montant'] ?? ($info_etude_prefaisabilite['montant'] ?? null),
-                        'reference'      => $data['etude_prefaisabilite']['reference'] ?? ($info_etude_prefaisabilite['reference'] ?? null),
-                        'est_finance'    => $est_finance,
-                    ]),
-
                     'statut' => StatutIdee::VALIDATION_PF,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_PF),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_PF)
@@ -2096,6 +2089,62 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 // Envoyer une notification
                 $this->envoyerNotificationSoumissionRapport($projet, $rapport, $fichierRapport);
+            }
+
+            if (isset($data['etude_prefaisabilite']['est_finance'])) {
+
+                $info_etude_prefaisabilite = $projet->info_etude_prefaisabilite ?? [];
+
+                // on doit valider si c'est une valeur booléenne
+                // par exemple une chaîne de caractères, un entier, un tableau, etc.
+                // mais si la valeur est 0 ou 1, on peut la considérer comme booléenne
+
+                if (is_string($data['etude_prefaisabilite']['est_finance'])) {
+                    $valeur = strtolower($data['etude_prefaisabilite']['est_finance']);
+                    if ($valeur === 'true' || $valeur === '1') {
+                        $data['etude_prefaisabilite']['est_finance'] = true;
+                    } elseif ($valeur === 'false' || $valeur === '0') {
+                        $data['etude_prefaisabilite']['est_finance'] = false;
+                    } else {
+                        throw ValidationException::withMessages([
+                            "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                        ]);
+                    }
+                } elseif (is_int($data['etude_prefaisabilite']['est_finance'])) {
+                    if ($data['etude_prefaisabilite']['est_finance'] === 1) {
+                        $data['etude_prefaisabilite']['est_finance'] = true;
+                    } elseif ($data['etude_prefaisabilite']['est_finance'] === 0) {
+                        $data['etude_prefaisabilite']['est_finance'] = false;
+                    } else {
+                        throw ValidationException::withMessages([
+                            "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                        ]);
+                    }
+                } elseif (is_array($data['etude_prefaisabilite']['est_finance']) || is_null($data['etude_prefaisabilite']['est_finance'])) {
+                    throw ValidationException::withMessages([
+                        "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                    ]);
+                }
+
+                if (!is_bool($data['etude_prefaisabilite']['est_finance'])) {
+                    throw ValidationException::withMessages([
+                        "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                    ]);
+                }
+
+                $est_finance = $data['etude_prefaisabilite']['est_finance'] ?? ($info_etude_prefaisabilite['est_finance'] ?? false);
+
+                // Mettre à jour les informations de l'étude de préfaisabilité dans le projet
+                $projet->update([
+                    // Fusionner avec les nouvelles valeurs provenant de $data
+                    'info_etude_prefaisabilite' => array_merge($info_etude_prefaisabilite, [
+                        'date_demande'   => $data['etude_prefaisabilite']['date_demande'] ?? ($info_etude_prefaisabilite['date_demande'] ?? null),
+                        'date_obtention' => $data['etude_prefaisabilite']['date_obtention'] ?? ($info_etude_prefaisabilite['date_obtention'] ?? null),
+                        'montant'        => $data['etude_prefaisabilite']['montant'] ?? ($info_etude_prefaisabilite['montant'] ?? null),
+                        'reference'      => $data['etude_prefaisabilite']['reference'] ?? ($info_etude_prefaisabilite['reference'] ?? null),
+                        'est_finance'    => $est_finance,
+                    ])
+                ]);
             }
 
             DB::commit();
