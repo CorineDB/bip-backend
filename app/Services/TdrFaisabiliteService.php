@@ -455,7 +455,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'evaluation' => $evaluation,
                     'projet_id' => $projet->id,
                     'resultat_global' => $resultatsEvaluation['resultat_global'],
-                    'nouveau_statut' => $nouveauStatut->value,
                     'evaluateur_id' => auth()->id(),
                     'date_evaluation' => now()->format('d/m/Y H:i:s'),
                     'statistiques' => $resultatsEvaluation
