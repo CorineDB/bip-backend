@@ -2531,7 +2531,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $newTdr->rediger_par_id =  $tdr->redigerPar->id;
                 $newTdr->created_at = now();
                 $newTdr->updated_at = null;
-                throw new Exception("Error Processing Request : " . json_encode($newTdr), 1);
 
                 // Copier les canevas de la note originale vers la nouvelle note
                 $newTdr->canevas_appreciation_tdr = $tdr->canevas_appreciation_tdr;
