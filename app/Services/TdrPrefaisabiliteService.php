@@ -1056,10 +1056,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             $tdr = $projet->tdrPrefaisabilite->first();
 
-            if (auth()->user()->id !== $tdr->soumisPar?->id) {
-                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
-            }
-
             // Vérifier que le TDR est soumis et peut être évalué
             if (!$tdr?->peutEtreValide()) {
                 return response()->json([
