@@ -4,6 +4,7 @@ namespace App\Http\Resources\projets;
 
 use App\Http\Resources\BaseApiResource;
 use App\Http\Resources\idees_projet\IdeeProjetResource;
+use App\Http\Resources\LieuInterventionResource;
 use App\Http\Resources\NoteConceptuelleResource;
 use App\Http\Resources\SecteurResourcePublic;
 use App\Http\Resources\TdrResource;
@@ -39,6 +40,7 @@ class ProjetsResource extends BaseApiResource
             'phase' => $this->phase?->value ?? $this->phase,
             'sous_phase' => $this->sous_phase?->value ?? $this->sous_phase,
             'type_projet' => $this->type_projet?->value ?? $this->type_projet,
+            'lieux_intervention' => LieuInterventionResource::collection($this->lieuxIntervention),
 
             // Scores d'évaluation
             'score_climatique' => $this->score_climatique,
