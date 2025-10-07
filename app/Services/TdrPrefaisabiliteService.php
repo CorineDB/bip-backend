@@ -2522,7 +2522,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             case 'retour':
                 $newTdr = $tdr->replicate();
 
-                throw new Exception("Error Processing Request : " . $tdr->projet->id . " ID : " . $tdr->redacteur->id, 1);
+                throw new Exception("Error Processing Request : " . $tdr->projet->id, 1);
                 $newTdr->statut = 'retour_travail_supplementaire';
                 $newTdr->decision_validation = null;
                 $newTdr->accept_term = false;
