@@ -81,6 +81,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $estSoumise = $data['est_soumise'] ?? false;
             $projetId = $data['projetId'] ?? null;
 
+            dd($documentsData);
+
             if (!$projetId) {
                 return response()->json([
                     'success' => false,
@@ -149,8 +151,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $message = 'Note conceptuelle créée avec succès.';
                 $statusCode = 201;
             }
-
-            dd(request()->all());
 
             // Récupérer le canevas de rédaction de note conceptuelle
             $canevasNoteConceptuelle = $this->documentRepository->getModel()->where([
