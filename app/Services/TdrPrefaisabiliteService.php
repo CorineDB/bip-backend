@@ -693,6 +693,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'message' => $this->getMessageSuccesEvaluation($resultatsEvaluation['resultat_global']),
                 'data' => [
                     'evaluation_id' => $evaluation->id,
+                    'evaluation' => $evaluation,
                     'projet_id' => $projet->id,
                     'resultat_global' => $resultatsEvaluation['resultat_global'],
                     'evaluateur_id' => auth()->id(),
@@ -998,6 +999,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             switch ($data['action']) {
                 case 'reviser':
+
+                    /**
+                     *
+                     */
                     // Reviser malgré l'évaluation négative → retour au statut TDR_PREFAISABILITE
                     $nouveauStatut = StatutIdee::R_TDR_PREFAISABILITE;
                     $projet->update([
