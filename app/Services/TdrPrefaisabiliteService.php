@@ -774,6 +774,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Construire la grille d'évaluation avec les données existantes
             $grilleEvaluation = [];
+
+            // Calculer le résultat de l'évaluation si elle existe et est terminée
+            $resultatsEvaluation = null;
+            $actionsSuivantes = null;
+            $evaluationsChamps = [];
+
             if ($evaluation && $evaluation->statut == 1) {
 
                 // Recalculer le résultat pour l'évaluation terminée
@@ -792,6 +798,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
                     ];
                 }
+                $resultatsEvaluation = $evaluation->resultats_evaluation;
             } else {
 
                 // Récupérer le canevas d'appréciation des TDRs
@@ -827,14 +834,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'date_evaluation' => $evaluationExistante ? $evaluationExistante->pivot->date_note : null
                     ];
                 }
+
+                $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $grilleEvaluation]);
             }
 
-            // Calculer le résultat de l'évaluation si elle existe et est terminée
-            $resultatsEvaluation = null;
-            $actionsSuivantes = null;
-            $evaluationsChamps = [];
-
-            if ($evaluation && $evaluation->statut == 1) {
+            /* if ($evaluation && $evaluation->statut == 1) {
                 // Recalculer le résultat pour l'évaluation terminée
                 $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation["champs_evalues"];
                 foreach ($champs_evalues as $champ) {
@@ -862,7 +866,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 }
 
                 $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
-            }
+            } */
 
             // Déterminer les actions suivantes selon le résultat
             $actionsSuivantes = $this->getActionsSuivantesSelonResultat($resultatsEvaluation['resultat_global']);
