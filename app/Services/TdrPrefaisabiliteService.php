@@ -657,7 +657,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Mettre à jour l'évaluation avec les données complètes
             $evaluation->fill([
                 'resultats_evaluation' => $resultatsEvaluation,
-                'evaluation' => json_encode($evaluationComplete),
+                'evaluation' => $evaluationComplete,
                 'valider_par' => $data["evaluer"] ? auth()->id() : null,
                 'valider_le' => $data["evaluer"] ? now() : null,
             ]);
@@ -908,6 +908,102 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'resultats_evaluation' => $resultatsEvaluation,
                     'actions_suivantes' => $actionsSuivantes,
                     'historique_evaluations' => $historiqueEvaluations
+                ]
+            ]);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function getEvaluation(int $projetId): JsonResponse
+    {
+        try {
+            //$noteConceptuelle = $this->repository->findOrFail($noteConceptuelleId);
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            /* $evaluation = $this->evaluationRepository->getModel()
+                ->where('projetable_type', NoteConceptuelle::class)
+                ->where('projetable_id', $noteConceptuelle->id)
+                ->where('type_evaluation', 'note_conceptuelle')
+                ->with(['evaluateur', 'validator'])
+                //->orderBy('created_at', 'desc')
+                ->first(); */
+
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
+            $tdr = $projet->tdrPrefaisabilite->first();
+
+            if (!$tdr) {
+                return response()->json([
+                    'success' => false,
+                    'data' => null,
+                    'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
+                ], 404);
+            }
+
+            $evaluation = $projet->evaluationPrefaisabiliteEnCours();
+
+            if (!$evaluation) {
+                $evaluation = $tdr->evaluationPrefaisabiliteTermine();
+
+                if (!$evaluation) {
+                    return response()->json([
+                        'success' => true,
+                        'data' => null,
+                        'message' => 'Aucune évaluation trouvée pour cette note conceptuelle.'
+                    ], 206);
+                }
+            }
+
+            if (!$evaluation) {
+                return response()->json([
+                    'success' => true,
+                    'data' => null,
+                    'message' => 'Aucune évaluation trouvée pour cette note conceptuelle.'
+                ], 206);
+            }
+
+            // Calculer les résultats d'examen
+            $resultatsExamen = $evaluation->statut ? $evaluation->resultats_evaluation :  $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluation->evaluation]);
+
+            // Déterminer les actions suivantes selon le résultat
+            $actionsSuivantes = $this->getActionsSuivantesSelonResultat($resultatsExamen['resultat_global']);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'tdr' => new TdrResource($tdr->load(['fichiers', 'projet'])),
+                    'evaluation' => [
+                        'id' => $evaluation->id,
+                        'type_evaluation' => $evaluation->type_evaluation,
+                        'date_debut_evaluation' => $evaluation->date_debut_evaluation ? Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
+                        'date_fin_evaluation' => $evaluation->date_fin_evaluation ? Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
+                        'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
+                        'valider_par' => $evaluation->valider_par,
+                        'commentaire' => $evaluation->commentaire,
+                        'evaluation' => $evaluation->evaluation,
+                        'resultats_evaluation' => $resultatsExamen, //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen,
+                        'statut' => $evaluation->statut,
+                        //'champs' => collect($noteConceptuelle->note_conceptuelle)->map(function ($champ) use ($evaluation) {
+                        'champs' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluation) {
+                            $champ_evalue = collect($evaluation->champs_evalue)
+                                ->firstWhere('attribut', $champ["attribut"]);
+                            return [
+                                'id' => $champ["id"],
+                                'label' => $champ["label"],
+                                'attribut' => $champ["attribut"],
+                                'valeur' => $champ["valeur"],
+                                'appreciation' => $champ_evalue ? $champ_evalue["pivot"]["note"] : null,
+                                'commentaire' => $champ_evalue ? $champ_evalue["pivot"]["commentaires"] : null,
+                                'date_note' => $champ_evalue ? $champ_evalue["pivot"]["date_note"] : null,
+                                'updated_at' => $champ_evalue ? $champ_evalue["pivot"]["updated_at"] : null,
+                            ];
+                        }),
+                    ],
+                    'actions_suivantes' => $actionsSuivantes,
+                    'resultats_examen' =>  $resultatsExamen, //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen
                 ]
             ]);
         } catch (Exception $e) {
