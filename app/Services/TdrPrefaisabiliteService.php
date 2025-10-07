@@ -747,9 +747,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            throw new Exception("Error Processing Request : ". json_encode($tdr), 500);
-
-
             if (!$tdr) {
                 return response()->json([
                     'success' => false,
@@ -757,6 +754,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
                 ], 404);
             }
+
+            throw new Exception("Error Processing Request : ". json_encode($tdr), 500);
 
             // Récupérer l'évaluation en cours ou la dernière évaluation via le TDR
             $evaluation = $tdr->evaluations()
