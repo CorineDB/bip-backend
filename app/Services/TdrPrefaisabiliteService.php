@@ -1126,9 +1126,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         ], 404);
                     }
                     //throw new \Exception("Error Processing Request" . $tdr->id, 1);
-                    throw new \Exception("Error Processing Request" . json_encode($tdr), 1);
 
                     $newTdr = $tdr->replicate();
+                    throw new \Exception("Error Processing Request" . json_encode($newTdr), 1);
 
                     $newTdr->statut = 'retour_travail_supplementaire';
                     $newTdr->decision_validation = null;
