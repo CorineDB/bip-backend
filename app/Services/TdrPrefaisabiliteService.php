@@ -966,7 +966,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
 
             // Calculer les résultats d'examen
-            $resultatsExamen = $evaluation->statut ? $evaluation->resultats_evaluation :  $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluation->evaluation]);
+            $resultatsExamen = $evaluation->statut ? $evaluation->resultats_evaluation :  $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluation->evaluation['champs_evalues']]);
 
             // Déterminer les actions suivantes selon le résultat
             $actionsSuivantes = $this->getActionsSuivantesSelonResultat($resultatsExamen['resultat_global']);
