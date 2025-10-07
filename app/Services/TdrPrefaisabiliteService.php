@@ -1108,9 +1108,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $nouveauStatut = null;
             $messageAction = '';
 
-            throw new Exception("Error Processing Request", 1);
-
-
             switch ($data['action']) {
                 case 'reviser':
 
@@ -1119,6 +1116,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                      */
                     // Reviser malgré l'évaluation négative → retour au statut TDR_PREFAISABILITE
 
+                    $tdr = $projet->tdrPrefaisabilite->first();
+
                     if (!$tdr) {
                         return response()->json([
                             'success' => false,
@@ -1126,6 +1125,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
                         ], 404);
                     }
+                    throw new Exception("Error Processing Request" json_encode($tdr), 1);
+
 
                     $newTdr = $tdr->replicate();
 
