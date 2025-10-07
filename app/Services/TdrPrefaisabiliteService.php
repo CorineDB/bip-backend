@@ -740,15 +740,14 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
-            throw new Exception("Error Processing Request : " . $projet->id, 500);
-
-
             // Récupérer le TDR soumis
             $tdr = $this->tdrRepository->getModel()
                 ->where('projet_id', $projetId)
                 ->where('type', 'prefaisabilite')
                 ->orderBy('created_at', 'desc')
                 ->first();
+
+            throw new Exception("Error Processing Request : " . $tdr->id, 500);
 
             if (!$tdr) {
                 return response()->json([
