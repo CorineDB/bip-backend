@@ -710,7 +710,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Récupérer les détails d'évaluation d'un TDR
      */
-    public function getEvaluationTdr(int $projetId): JsonResponse
+    /*public function getEvaluationTdr(int $projetId): JsonResponse
     {
         try {
 
@@ -913,9 +913,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
-    }
+    }*/
 
-    public function getEvaluation(int $projetId): JsonResponse
+    public function getEvaluationTdr(int $projetId): JsonResponse
     {
         try {
             //$noteConceptuelle = $this->repository->findOrFail($noteConceptuelleId);
