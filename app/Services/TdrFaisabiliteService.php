@@ -244,7 +244,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $projet->resume_tdr_faisabilite = $data["resume_tdr_faisabilite"];
 
             // Changer le statut du projet seulement si est_soumise est true
-            if ($estSoumise) {
+            if ($estSoumise && $projet->statut !== StatutIdee::R_TDR_FAISABILITE) {
                 $projet->update([
                     'statut' => StatutIdee::EVALUATION_TDR_F,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_F),
@@ -334,7 +334,50 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ], 422);
             }
 
-            $tdr->statut = 'en_evaluation';
+            if ($data["evaluer"]) {
+                // Enregistrer les appréciations pour chaque champ
+                if (!isset($data['evaluations_champs'])) {
+                    throw ValidationException::withMessages(["evaluations_champs" => "Veuillez apprecier le canevas "]);
+                }
+
+                if (!isset($data["numero_dossier"])) {
+                    throw ValidationException::withMessages([
+                        "numero_dossier" => "Le numéro du dossier est obligatoire pour l'évaluation."
+                    ]);
+                }
+
+                if (!isset($data["numero_contrat"])) {
+                    throw ValidationException::withMessages([
+                        "numero_contrat" => "Le numéro du contrat est obligatoire pour l'évaluation."
+                    ]);
+                }
+
+                if (!isset($data["accept_term"])) {
+                    throw ValidationException::withMessages([
+                        "accept_term" => "Vous devez accepter les termes pour poursuivre l'évaluation."
+                    ]);
+                }
+            }
+
+
+            if (isset($data["numero_dossier"])) {
+                $tdr->update([
+                    "numero_dossier" => $data["numero_dossier"]
+                ]);
+            }
+
+            if (isset($data["numero_contrat"])) {
+                $tdr->update([
+                    "numero_contrat" => $data["numero_contrat"]
+                ]);
+            }
+
+            if (isset($data["accept_term"])) {
+                $tdr->update([
+                    "accept_term" => $data["accept_term"]
+                ]);
+            }
+
             $tdr->save();
             $tdr->refresh();
 
@@ -343,9 +386,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             // Calculer le résultat de l'évaluation selon les règles SFD-015
             $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, $data);
-
-            // Traiter la décision selon le résultat (changement automatique du statut)
-            $nouveauStatut = $this->traiterDecisionEvaluationTdrAutomatique($projet, $resultatsEvaluation, $tdr);
 
             // Préparer l'évaluation complète pour enregistrement
             $evaluationComplete = [
@@ -364,39 +404,53 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 })->toArray(),
                 'statistiques' => $resultatsEvaluation,
                 'date_evaluation' => now(),
-                'confirme_par' => new UserResource(auth()->user())
+                'confirme_par' => $data["evaluer"] ? new UserResource(auth()->user()) : null
             ];
 
             // Mettre à jour l'évaluation avec les données complètes
             $evaluation->fill([
                 'resultats_evaluation' => $resultatsEvaluation,
                 'evaluation' => json_encode($evaluationComplete),
-                'valider_par' => auth()->id(),
-                'valider_le' => now(),
+                'valider_par' => $data["evaluer"] ? auth()->id() : null,
+                'valider_le' => $data["evaluer"] ? now() : null,
                 'commentaire' => $resultatsEvaluation['message_resultat']
             ]);
 
             $evaluation->save();
 
-            // Enregistrer le workflow et la décision
-            $this->enregistrerWorkflow($projet, $nouveauStatut);
-            $this->enregistrerDecision(
-                $projet,
-                "Évaluation des TDRs de faisabilité - " . ucfirst($resultatsEvaluation['resultat_global']),
-                $data['commentaire'] ?? $resultatsEvaluation['message_resultat'],
-                auth()->user()->personne->id
-            );
+            if ($data["evaluer"]) {
+
+                $tdr->statut = "en_evaluation";
+                $tdr->save();
+
+                // Traiter la décision selon le résultat (changement automatique du statut)
+                $nouveauStatut = $this->traiterDecisionEvaluationTdrAutomatique($projet, $resultatsEvaluation, $tdr);
+
+
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($projet, $nouveauStatut);
+                $this->enregistrerDecision(
+                    $projet,
+                    "Évaluation des TDRs de faisabilité - " . ucfirst($resultatsEvaluation['resultat_global']),
+                    $data['commentaire'] ?? $resultatsEvaluation['message_resultat'],
+                    auth()->user()->personne->id
+                );
+            }
 
             DB::commit();
 
-            // Envoyer une notification
-            $this->envoyerNotificationEvaluation($projet, $resultatsEvaluation);
+
+            if ($data["evaluer"]) {
+                // Envoyer une notification
+                $this->envoyerNotificationEvaluation($projet, $resultatsEvaluation);
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => $this->getMessageSuccesEvaluation($resultatsEvaluation['resultat_global']),
                 'data' => [
                     'evaluation_id' => $evaluation->id,
+                    'evaluation' => $evaluation,
                     'projet_id' => $projet->id,
                     'resultat_global' => $resultatsEvaluation['resultat_global'],
                     'nouveau_statut' => $nouveauStatut->value,
@@ -459,6 +513,12 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             // Construire la grille d'évaluation avec les données existantes
             $grilleEvaluation = [];
+
+            // Calculer le résultat de l'évaluation si elle existe et est terminée
+            $resultatsEvaluation = null;
+            $actionsSuivantes = null;
+            $evaluationsChamps = [];
+
             if ($evaluation && $evaluation->statut == 1) {
 
                 // Recalculer le résultat pour l'évaluation terminée
@@ -477,6 +537,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
                     ];
                 }
+                $resultatsEvaluation = $evaluation->resultats_evaluation;
             } else {
 
                 // Récupérer le canevas d'appréciation des TDRs
@@ -514,10 +575,11 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         'date_appreciation' => $evaluationExistante ? $evaluationExistante->pivot->date_note : null
                     ];
                 }
+                $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $grilleEvaluation]);
             }
 
             // Calculer le résultat de l'évaluation si elle existe et est terminée
-            $resultatsEvaluation = null;
+            /*$resultatsEvaluation = null;
             $actionsSuivantes = null;
             $evaluationsChamps = [];
 
@@ -549,13 +611,13 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 }
 
                 $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
-            }
+            }*/
 
             // Déterminer les actions suivantes selon le résultat
             $actionsSuivantes = $this->getActionsSuivantesSelonResultat($resultatsEvaluation['resultat_global']);
 
             // Récupérer toutes les évaluations du projet pour ce type
-            $evaluations = $projet->evaluations()
+            /*$evaluations = $projet->evaluations()
                 ->where('statut', 1)
                 ->where('id', "<>", $evaluation->id)
                 ->where('type_evaluation', 'tdr-faisabilite')
@@ -595,7 +657,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         ];
                     })
                 ];
-            });
+            });*/
 
             return response()->json([
                 'success' => true,
@@ -614,8 +676,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     ] : null,
                     'canevasAppreciation' => $canevasAppreciation,
                     'resultats_evaluation' => $resultatsEvaluation,
-                    'actions_suivantes' => $actionsSuivantes,
-                    'historique_evaluations' => $historiqueEvaluations,
+                    'actions_suivantes' => $actionsSuivantes
                 ]
             ]);
         } catch (Exception $e) {
@@ -648,10 +709,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             }
 
             $tdr = $projet->tdrFaisabilite->first();
-
-            if (auth()->user()->id !== $tdr->soumisPar?->id) {
-                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
-            }
 
             // Vérifier que le TDR est soumis et peut être évalué
             if (!$tdr?->peutEtreValide()) {
@@ -708,6 +765,55 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             switch ($data['action']) {
                 case 'reviser':
                     // Reviser malgré l'évaluation négative → retour au statut TDR_FAISABILITE
+                    /*$nouveauStatut = StatutIdee::TDR_FAISABILITE;
+                    $projet->update([
+                        'statut' => $nouveauStatut,
+                        'phase' => $this->getPhaseFromStatut($nouveauStatut),
+                        'sous_phase' => $this->getSousPhaseFromStatut($nouveauStatut)
+                    ]);*/
+
+                    $tdr = $projet->tdrFaisabilite->first();
+
+                    if (!$tdr) {
+                        return response()->json([
+                            'success' => false,
+                            'data' => null,
+                            'message' => 'Aucun TDR de faisabilité trouvé pour ce projet.'
+                        ], 404);
+                    }
+
+                    $tdr->update([
+                        'decision_validation' => 'reviser',
+                        'commentaire_validation' => $resultatsEvaluation["message_resultat"],
+                    ]);
+
+                    $tdrData = ([
+                        'projet_id' => $tdr->projet->id,
+                        'parent_id' => $tdr->id,
+                        'type' => $tdr->type,
+                        'statut' => 'brouillon',
+                        'resume' => null,
+                        'date_soumission' => null,
+                        'soumis_par_id' => null,
+                        'rediger_par_id' => $tdr->rediger_par_id,
+                        'date_evaluation' => null,
+                        'date_validation' => null,
+                        'evaluateur_id' => null,
+                        'validateur_id' => null,
+                        'evaluations_detaillees' => [],
+                        'termes_de_reference' => null,
+                        'commentaire_evaluation' => null,
+                        'commentaire_validation' => null,
+                        'decision_validation' => null,
+                        'resultats_evaluation' => null,
+                        'numero_contrat' => null,
+                        'numero_dossier' => null,
+                        'accept_term' => false,
+                        'canevas_appreciation_tdr' => null,
+                    ]);
+
+                    $tdr->projet->tdrs()->create($tdrData);
+
                     $nouveauStatut = StatutIdee::TDR_FAISABILITE;
                     $projet->update([
                         'statut' => $nouveauStatut,
@@ -715,14 +821,17 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         'sous_phase' => $this->getSousPhaseFromStatut($nouveauStatut)
                     ]);
 
-                    $tdr->update([
-                        'statut' => 'retour_travail_supplementaire'
-                    ]);
 
                     $messageAction = 'Projet continue malgré l\'évaluation négative. Retour à la soumission des TDRs.';
                     break;
 
                 case 'abandonner':
+
+                    $tdr->update([
+                        'decision_validation' => 'abandonner',
+                        'commentaire_validation' => $resultatsEvaluation["message_resultat"],
+                    ]);
+
                     // Abandonner le projet suite à l'évaluation négative
                     $nouveauStatut = StatutIdee::ABANDON;
                     $projet->update([
@@ -1170,7 +1279,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         $est_finance = filter_var($est_finance, FILTER_VALIDATE_BOOLEAN);
                     }
 
-                    if($est_finance) {
+                    if ($est_finance) {
 
                         if (isset($data['etude_faisabilite'])) {
                             // si c'est une string JSON → on la décode
@@ -1201,7 +1310,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
                         $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
 
-                         foreach ($requiredFields as $field) {
+                        foreach ($requiredFields as $field) {
                             // validation de présence de $data['etude_faisabilite'][$field]
                             if (!isset($data['etude_faisabilite'][$field]) && !empty($data['etude_faisabilite'][$field])) {
                                 throw ValidationException::withMessages([
@@ -1288,7 +1397,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'type_evaluation' => 'validation-etude-faisabilite',
                 'projetable_type' => get_class($projet),
                 'projetable_id' => $projet->id
-            ],[
+            ], [
                 'date_debut_evaluation' => now(),
                 'date_fin_evaluation' => $data['action'] != 'sauvegarder' ? now() : null,
                 'valider_le' => $data['action'] != 'sauvegarder' ? now() : null,
@@ -2027,8 +2136,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             ];
         }
 
-        // Règle 3: Si 10 ou plus des réponses ont été évaluées comme "Retour"
-        if ($compteurs['retour'] >= 6) {
+        // Règle 3: Si 6 ou plus des réponses ont été évaluées comme "Retour"
+        if ($compteurs['retour'] >= 10) {
             return [
                 'resultat_global' => 'non-accepte',
                 'message_resultat' => 'Non accepté - Trop de retours (10 ou plus)',
@@ -2068,6 +2177,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ]);
 
                 $tdr->update([
+                    'decision_validation' => 'valider',
+                    'commentaire_validation' => $resultats["message_resultat"],
                     'statut' => 'valide'
                 ]);
 
@@ -2075,15 +2186,32 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             case 'retour':
                 // Retour pour travail supplémentaire → R_TDR_FAISABILITE (automatique)
-                /*$projet->update([
+                $newTdr = $tdr->replicate();
+
+                $newTdr->statut = 'retour_travail_supplementaire';
+                $newTdr->decision_validation = null;
+                $newTdr->accept_term = false;
+                $newTdr->parent_id = $tdr->id;
+                $newTdr->date_validation = null;
+                $newTdr->projet_id = $tdr->projet->id;
+                $newTdr->rediger_par_id =  $tdr->redigerPar->id;
+                $newTdr->created_at = now();
+                $newTdr->updated_at = null;
+
+                // Copier les canevas de la note originale vers la nouvelle note
+                $newTdr->canevas_appreciation_tdr = $tdr->canevas_appreciation_tdr;
+                $newTdr->save();
+
+                $projet->update([
                     'statut' => StatutIdee::R_TDR_FAISABILITE,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::R_TDR_FAISABILITE),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_TDR_FAISABILITE)
                 ]);
 
                 $tdr->update([
-                    'statut' => 'retour_travail_supplementaire'
-                ]);*/
+                    'decision_validation' => 'reviser',
+                    'commentaire_validation' => $resultats["message_resultat"],
+                ]);
 
                 return StatutIdee::R_TDR_FAISABILITE;
 
@@ -2097,7 +2225,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ]);*/
                 // L'utilisateur devra décider entre "reviser" ou "abandonner"
                 return StatutIdee::EVALUATION_TDR_F;
-
         }
     }
 
@@ -2247,29 +2374,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             default => \App\Enums\SousPhaseIdee::faisabilite
         };
     }
-
-    /**
-     * Traiter les informations pour un projet à haut risque
-     */
-    private function traiterProjetHautRisque(Projet $projet, array $data): void
-    {
-        if (isset($data['checklist_haut_risque'])) {
-            // Récupérer les métadonnées existantes ou créer un nouveau tableau
-            $metadata = $projet->metadata ?? [];
-
-            // Ajouter les informations de haut risque
-            $metadata['haut_risque'] = [
-                'est_a_haut_risque' => true,
-                'checklist_validee' => $data['checklist_haut_risque'],
-                'date_validation_checklist' => now(),
-                'valide_par' => auth()->id()
-            ];
-
-            // Mettre à jour le projet
-            $projet->update(['metadata' => $metadata]);
-        }
-    }
-
     /**
      * Sauvegarder les données de validation sans changer le statut
      */
@@ -2289,37 +2393,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
         // Mettre à jour le projet
         $projet->update(['metadata' => $metadata]);
-    }
-
-    /**
-     * Sauvegarder les champs dynamiques basés sur le canevas
-     */
-    private function saveDynamicFieldsFromCanevas($tdr, array $champsData, $canevasTdr): void
-    {
-        // Récupérer tous les champs du canevas TDR
-        $champsDefinitions = $canevasTdr->all_champs;
-
-        // Indexer par attribut pour accès rapide
-        $champsMap = $champsDefinitions->keyBy('attribut');
-
-        $syncData = [];
-
-        foreach ($champsData as $attribut => $valeur) {
-            if (isset($champsMap[$attribut])) {
-                $champ = $champsMap[$attribut];
-
-                // Le cast JSON du modèle ChampProjet gère automatiquement tout type
-                $syncData[$champ->id] = [
-                    'valeur' => $valeur, // Peut être string, array, object, number, boolean, etc.
-                    'commentaire' => null
-                ];
-            }
-        }
-
-        // Synchroniser tous les champs reçus
-        if (!empty($syncData)) {
-            $tdr->champs()->sync($syncData);
-        }
     }
 
     /**
@@ -2527,38 +2600,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         }
     }
 
-
-    /**
-     * Traiter les checklists de suivi du rapport de faisabilité
-     */
-    private function traiterChecklistsSuiviFaisabilite($rapport, array $checklistsData, bool $estBrouillon = false, array $fichiers = []): array
-    {
-        try {
-            DB::beginTransaction();
-
-            // Traiter les données des 7 checklists via la relation champs() si nécessaire
-            $this->traiterChampsChecklistsSuiviFaisabilite($rapport, $checklistsData);
-
-            DB::commit();
-
-            return [
-                'success' => true,
-                'message' => $estBrouillon ?
-                    'Checklists de suivi sauvegardées en brouillon.' :
-                    'Checklists de suivi du rapport de faisabilité validées avec succès.',
-                'rapport_id' => $rapport->id,
-                'projet_id' => $rapport->projet->id,
-                'est_brouillon' => $estBrouillon
-            ];
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return [
-                'success' => false,
-                'message' => 'Erreur lors du traitement des checklists de suivi: ' . $e->getMessage()
-            ];
-        }
-    }
-
     /**
      * Traiter les champs des checklists de faisabilité et les stocker dans rapport->champs()
      */
@@ -2684,8 +2725,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         // 6. Réassigner dans le modèle
         $rapport->checklist_suivi = $currentChecklist;
     }
-
-
 
     /**
      * Gérer le fichier rapport avec versioning intelligent
@@ -2902,17 +2941,16 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 // Supprimer l'enregistrement de la base de données
                 $this->fichierRepository->delete($file->id);
             }
-        }
-        else{
+        } else {
 
             if ($files && isset($files->chemin)) {
-                    // Supprimer le fichier physique du storage
-                    if (Storage::disk('local')->exists($files->chemin)) {
-                        Storage::disk('local')->delete($files->chemin);
-                    }
+                // Supprimer le fichier physique du storage
+                if (Storage::disk('local')->exists($files->chemin)) {
+                    Storage::disk('local')->delete($files->chemin);
+                }
 
-                    // Supprimer l'enregistrement de la base de données
-                    $this->fichierRepository->delete($files->id);
+                // Supprimer l'enregistrement de la base de données
+                $this->fichierRepository->delete($files->id);
             }
         }
     }

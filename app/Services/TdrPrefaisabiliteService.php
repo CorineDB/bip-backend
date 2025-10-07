@@ -2549,7 +2549,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'commentaire_validation' => $resultats["message_resultat"],
                 ]);
 
-                return StatutIdee::R_TDR_PREFAISABILITE;
+                return StatutIdee::R_TDR_FAISABILITE;
             case 'non_accepte':
             default:
 
