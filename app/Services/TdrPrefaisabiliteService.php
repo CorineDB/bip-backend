@@ -3222,9 +3222,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'attribut'          => $champ['attribut'],
                 'ordre_affichage'   => $champ['ordre_affichage'],
                 'type_champ'        => $champ['type_champ'],
-                'valeur'            => /*$champEvalue ? $champEvalue['pivot']['valeur'] :*/ null,
-                'commentaire'       => /*$champEvalue ? $champEvalue['pivot']['commentaire'] :*/ null,
-                'updated_at'        => /*$champ['pivot']['updated_at']*/ null//Carbon::parse($champ['pivot']['updated_at'])->format("Y-m-d H:i:s")
+                'valeur'            => $champEvalue && isset($champEvalue['pivot']['valeur']) ? $champEvalue['pivot']['valeur'] : null,
+                'commentaire'       => $champEvalue && isset($champEvalue['pivot']['commentaire']) ? $champEvalue['pivot']['commentaire'] : null,
+                'updated_at'        => $champEvalue && isset($champEvalue['pivot']['updated_at']) ? Carbon::parse($champEvalue['pivot']['updated_at'])->format("Y-m-d H:i:s") : null
             ];
         })->toArray();
 
