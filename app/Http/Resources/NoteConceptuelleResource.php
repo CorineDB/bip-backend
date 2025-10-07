@@ -41,7 +41,7 @@ class NoteConceptuelleResource extends BaseApiResource
                 return ListNoteConceptuelleResource::collection($this->historique_des_notes_conceptuelle->load("fichiers"));
             }),
             "historique_des_evaluations_notes_conceptuelle" => $this->whenLoaded("historique_des_evaluations_notes_conceptuelle", function(){
-                $this->historique_des_evaluations_notes_conceptuelle->map(function($evaluation){
+                $this->historique_des_evaluations_notes_conceptuelle->pluck("evaluations")->collapse()->map(function($evaluation){
                     return [
                         'id' => $evaluation->id,
                         'type_evaluation' => $evaluation->type_evaluation,
