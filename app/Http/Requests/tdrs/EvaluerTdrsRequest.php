@@ -25,7 +25,7 @@ class EvaluerTdrsRequest extends FormRequest
      */
     public function rules(): array
     {
-        $evaluer = $this->input('evaluer', true);
+        $evaluer = $this->input('evaluer', true) ?? 0;
 
         return [
             'evaluer' => 'required|boolean',
