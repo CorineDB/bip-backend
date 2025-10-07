@@ -29,7 +29,8 @@ class EvaluerTdrsFaisabiliteRequest extends FormRequest
 
         return [
 
-            'evaluer' => 'required|boolean',
+            //'evaluer' => 'required|boolean',
+            'evaluer' => 'sometimes|boolean',
             'evaluations_champs' => 'required_unless:evaluer,0|array' . ($evaluer ? '|min:' . count($this->champs) . '|max:' . count($this->champs) : ''),
             'evaluations_champs.*.champ_id' => ["required_with:evaluations_champs", "in:".implode(",", $this->champs), Rule::exists("champs", "id",)],
             'evaluations_champs.*.appreciation' => 'required_with:evaluations_champs|in:'.implode(",", $this->appreciations),

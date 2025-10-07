@@ -28,7 +28,7 @@ class EvaluerTdrsRequest extends FormRequest
         $evaluer = $this->input('evaluer', true) ?? 0;
 
         return [
-            'evaluer' => 'sometimes|boolean',
+            'evaluer' => 'required|boolean',
             //'evaluations_champs' => 'required_unless:evaluer,0|array|min:'. count($this->champs),
 
             //'evaluations_champs' => 'required_unless:evaluer,0|array|min:' . $evaluer  ? count($this->champs) : 0 . ($evaluer  ?  "|max:" . count($this->champs) : ""),
