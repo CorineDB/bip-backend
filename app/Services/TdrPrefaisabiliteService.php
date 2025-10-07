@@ -623,8 +623,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 }
             }
 
-            $tdr->statut = "en_evaluation";
-
             $tdr->save();
 
             $tdr->refresh();
@@ -667,6 +665,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $evaluation->save();
 
             if ($data["evaluer"]) {
+
+                $tdr->statut = "en_evaluation";
+                $tdr->save();
+
                 // Traiter la décision selon le résultat (changement automatique du statut)
                 $nouveauStatut = $this->traiterDecisionEvaluationTdrAutomatique($projet, $resultatsEvaluation, $tdr);
 
