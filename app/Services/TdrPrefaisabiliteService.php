@@ -2520,15 +2520,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 return StatutIdee::SOUMISSION_RAPPORT_PF;
 
             case 'retour':
-                $tdr->refresh();
                 $newTdr = $tdr->replicate();
-
-                throw new Exception("Error Processing Request : " . json_encode($newTdr), 1);
-
 
                 $newTdr->statut = 'retour_travail_supplementaire';
                 $newTdr->decision_validation = null;
                 $newTdr->accept_term = false;
+                throw new Exception("Error Processing Request : " . json_encode($tdr), 1);
                 $newTdr->parent_id = $tdr->id;
                 $newTdr->date_validation = null;
                 $newTdr->projet_id = $tdr->projet->id;
