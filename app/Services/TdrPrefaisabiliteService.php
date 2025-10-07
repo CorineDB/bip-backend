@@ -868,7 +868,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $actionsSuivantes = $this->getActionsSuivantesSelonResultat($resultatsEvaluation['resultat_global']);
 
             // Récupérer toutes les évaluations du projet pour ce type
-            $evaluations = $projet->evaluations()
+            /*$evaluations = $projet->evaluations()
                 ->where('statut', 1)
                 ->where('id', "<>", $evaluation->id)
                 ->where('type_evaluation', 'tdr-prefaisabilite')
@@ -908,7 +908,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         ];
                     })
                 ];
-            });
+            });*/
 
             return response()->json([
                 'success' => true,
@@ -926,7 +926,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ] : null,
                     'resultats_evaluation' => $resultatsEvaluation,
                     'actions_suivantes' => $actionsSuivantes,
-                    'historique_evaluations' => $historiqueEvaluations
+                    //'historique_evaluations' => $historiqueEvaluations
                 ]
             ]);
         } catch (Exception $e) {
