@@ -1117,6 +1117,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     // Reviser malgré l'évaluation négative → retour au statut TDR_PREFAISABILITE
 
                     $tdr = $projet->tdrPrefaisabilite->first();
+                    throw new \Exception("Error Processing Request" . json_encode($tdr), 1);
 
                     if (!$tdr) {
                         return response()->json([
