@@ -1288,7 +1288,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         $est_finance = filter_var($est_finance, FILTER_VALIDATE_BOOLEAN);
                     }
 
-
                     if ($est_finance) {
 
                         if (isset($data['etude_prefaisabilite'])) {
@@ -1387,6 +1386,76 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 }
             }
 
+            if ($est_finance) {
+
+                if (isset($data['etude_prefaisabilite'])) {
+                    // si c'est une string JSON → on la décode
+                    if (is_string($data['etude_prefaisabilite'])) {
+
+                        $decoded = json_decode($data['etude_prefaisabilite'], true);
+
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                            $data['etude_prefaisabilite'] = $decoded;
+                        } else {
+                            throw ValidationException::withMessages([
+                                "etude_prefaisabilite" => "Format JSON invalide pour les informations de financement."
+                            ]);
+                        }
+                    }
+                    // si c'est déjà un tableau → on ne fait rien
+                    elseif (!is_array($data['etude_prefaisabilite'])) {
+                        throw ValidationException::withMessages([
+                            "etude_prefaisabilite" => "Les informations de financement doivent être un tableau valide."
+                        ]);
+                    }
+
+                    $requiredFields = ['date_demande', 'date_obtention', 'montant', 'reference'];
+                    $etude = [
+                        'est_finance' => $est_finance
+                    ];
+
+                    foreach ($requiredFields as $field) {
+
+                        if (isset($data['etude_prefaisabilite'][$field]) && !empty($data['etude_prefaisabilite'][$field])) {
+
+                            if ($field === 'montant' && (!is_numeric($data['etude_prefaisabilite'][$field]) || $data['etude_prefaisabilite'][$field] <= 0)) {
+                                throw ValidationException::withMessages([
+                                    "etude_prefaisabilite.$field" => "Le montant doit être un nombre positif."
+                                ]);
+                            } elseif ($field === 'montant' && (is_numeric($data['etude_prefaisabilite'][$field]))) {
+                                $etude["montant"] = $data['etude_prefaisabilite']['montant'];
+                            }
+
+                            // Ajouter d'autres validations spécifiques si nécessaire
+                            if (in_array($field, ['date_demande', 'date_obtention'])) {
+                                $date = \DateTime::createFromFormat('Y-m-d', $data['etude_prefaisabilite'][$field]);
+                                if (!$date || $date->format('Y-m-d') !== $data['etude_prefaisabilite'][$field]) {
+                                    throw ValidationException::withMessages([
+                                        "etude_prefaisabilite.$field" => "Le champ $field doit être une date valide au format AAAA-MM-JJ."
+                                    ]);
+                                } else {
+                                    $etude["$field"] = $data['etude_prefaisabilite'][$field];
+                                }
+                            }
+
+                            if ($field === 'reference' && strlen($data['etude_prefaisabilite'][$field]) > 100) {
+                                throw ValidationException::withMessages([
+                                    "etude_prefaisabilite.$field" => "La référence ne doit pas dépasser 100 caractères."
+                                ]);
+                            } else {
+                                $etude["reference"] = $data['etude_prefaisabilite']['reference'];
+                            }
+                        }
+                    }
+
+                    // Toutes les validations sont passées, on peut enregistrer les informations
+                    // enregistrer les informations de financement dans le projet info etude de préfaisabilité
+                    // merge avec les données existantes pour ne pas écraser d'autres infos
+                    $projet->info_etude_prefaisabilite = array_merge($projet->info_etude_prefaisabilite ?? [], $etude);
+                    $projet->save();
+                }
+            }
+
 
             /**
              * Valider l'étude de préfaisabilité selon l'action demandée
@@ -1465,9 +1534,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                  * si elle est presente, l'enregistrer dans le projet em tant que commentaire de l'etude de préfaisabilité en utilisant la relation polymorphiqye commentaires dans le projet
                  */
                 if (!isset($data['synthese_recommandations']) || empty(trim($data['synthese_recommandations']))) {
-                    /* throw ValidationException::withMessages([
+                    throw ValidationException::withMessages([
                         "synthese_recommandations" => "La synthèse et recommandations est obligatoire pour la validation de l'étude de préfaisabilité."
-                    ]); */
+                    ]);
                 } else {
                     // Enregistrer la synthèse et recommandations en tant que commentaire
                     $projet->commentaires()->create([
@@ -1493,7 +1562,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ];
                 }
 
-                $evaluationValidation->champs_evalue()->sync($syncData);
+                $evaluationValidation->champs_evalue()->syncWithoutDetaching($syncData);
 
                 // Préparer l'évaluation complète pour enregistrement
                 $evaluationComplete = [
@@ -1520,23 +1589,26 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 $evaluationValidation->save();
 
-                $resultVerificationCoherence = $this->verifierCoherenceSuiviRapport($projet, $data['checklist_suivi_validation']);
-                if (!$resultVerificationCoherence['success']) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $resultVerificationCoherence['message'],
-                        'incoherences' => $resultVerificationCoherence['incoherences'] ?? []
-                    ], 422);
-                }
+                if (in_array($data['action'], ['maturite', 'faisabilite'])) {
 
-                // Vérifier que tous les checkpoints obligatoires sont présents et complétés
-                $resultVerificationCompletude = $this->verifierCompletude($data['checklist_suivi_validation']);
-                if (!$resultVerificationCompletude['success']) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $resultVerificationCompletude['message'],
-                        'checkpoints_incomplets' => $resultVerificationCompletude['checkpoints_incomplets'] ?? []
-                    ], 422);
+                    $resultVerificationCoherence = $this->verifierCoherenceSuiviRapport($projet, $data['checklist_suivi_validation']);
+                    if (!$resultVerificationCoherence['success']) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $resultVerificationCoherence['message'],
+                            'incoherences' => $resultVerificationCoherence['incoherences'] ?? []
+                        ], 422);
+                    }
+
+                    // Vérifier que tous les checkpoints obligatoires sont présents et complétés
+                    $resultVerificationCompletude = $this->verifierCompletude($data['checklist_suivi_validation']);
+                    if (!$resultVerificationCompletude['success']) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $resultVerificationCompletude['message'],
+                            'checkpoints_incomplets' => $resultVerificationCompletude['checkpoints_incomplets'] ?? []
+                        ], 422);
+                    }
                 }
             }
 
@@ -1618,19 +1690,20 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Attacher le fichier rapport de validation si fourni
             if (isset($data['rapport_validation_etude']) && $data['action'] !== 'sauvegarder') {
                 $this->attacherFichierRapportValidation($projet, $data['rapport_validation_etude'], $evaluationValidation);
+
+                // Enregistrer le workflow et la décision si le statut a changé
+                if ($nouveauStatut) {
+                    $this->enregistrerWorkflow($projet, $nouveauStatut);
+                }
+
+                $this->enregistrerDecision(
+                    $projet,
+                    "Validation préfaisabilité - " . ucfirst($data['action']),
+                    $data['commentaire'] ?? $messageAction,
+                    auth()->user()->personne->id
+                );
             }
 
-            // Enregistrer le workflow et la décision si le statut a changé
-            if ($nouveauStatut) {
-                $this->enregistrerWorkflow($projet, $nouveauStatut);
-            }
-
-            $this->enregistrerDecision(
-                $projet,
-                "Validation préfaisabilité - " . ucfirst($data['action']),
-                $data['commentaire'] ?? $messageAction,
-                auth()->user()->personne->id
-            );
 
             DB::commit();
 
