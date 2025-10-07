@@ -750,7 +750,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             if (!$tdr) {
                 return response()->json([
                     'success' => false,
-                    'data' => null,
+                    'data' => [
+                        'tdr' => new TdrResource($tdr->load(['fichiers', 'projet'])),
+                    ],
                     'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
                 ], 404);
             }
