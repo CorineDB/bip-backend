@@ -747,8 +747,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            throw new Exception("Error Processing Request : " . $tdr->id, 500);
-
             if (!$tdr) {
                 return response()->json([
                     'success' => false,
