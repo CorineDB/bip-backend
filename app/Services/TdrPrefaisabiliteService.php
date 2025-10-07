@@ -693,7 +693,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'evaluation_id' => $evaluation->id,
                     'projet_id' => $projet->id,
                     'resultat_global' => $resultatsEvaluation['resultat_global'],
-                    'nouveau_statut' => $nouveauStatut->value,
                     'evaluateur_id' => auth()->id(),
                     'date_evaluation' => now()->format('d/m/Y H:i:s'),
                     'statistiques' => $resultatsEvaluation
