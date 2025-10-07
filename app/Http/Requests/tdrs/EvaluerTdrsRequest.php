@@ -80,8 +80,7 @@ class EvaluerTdrsRequest extends FormRequest
         ];
     }
 
-    /* public function prepareForValidation(){
-        throw new \Exception("With validator Processing Request", 422);
+    public function prepareForValidation(){
         $canevas = app()->make(DocumentRepository::class)->getModel()
                                             ->where('type', 'checklist')
                                             ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-appreciation-tdrs-prefaisabilite'))
@@ -92,13 +91,6 @@ class EvaluerTdrsRequest extends FormRequest
         $this->appreciations = collect($evaluationConfigs['options_notation'] ?? [])->pluck('appreciation')->toArray();
 
         $this->champs = $canevas->all_champs->pluck("id")->toArray();
-    } */
-
-    /**
-     * Configure the validator instance.
-     */
-    public function withValidator(Validator $validator): void{
-       // throw new \Exception("With validator Processing Request", 422);
-
     }
+
 }
