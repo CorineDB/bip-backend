@@ -69,10 +69,10 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
 
             // Informations cabinet requises uniquement pour la soumission finale
             "cabinet_etude" => "required_unless:action,draft|array|min:4",
-            'cabinet_etude.nom_cabinet' => 'required_with:cabinet_etude|string|max:255',
-            'cabinet_etude.contact_cabinet' => 'required_with:cabinet_etude|string|max:255',
-            'cabinet_etude.email_cabinet' => 'required_with:cabinet_etude|email|max:255',
-            'cabinet_etude.adresse_cabinet' => 'required_with:cabinet_etude|string|max:500',
+            'cabinet_etude.nom_cabinet' => 'required_unless:action,draft|string|max:255',
+            'cabinet_etude.contact_cabinet' => 'required_unless:action,draft|string|max:255',
+            'cabinet_etude.email_cabinet' => 'required_unless:action,draft|email|max:255',
+            'cabinet_etude.adresse_cabinet' => 'required_unless:action,draft|string|max:500',
 
             // Recommandation requise uniquement pour la soumission finale
             'recommandation' => 'required_unless:action,draft|string|max:500',
@@ -108,7 +108,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
                 'array',
                 $this->input('action', 'submit') === 'draft' ? 'min:0' : 'min:' . count($this->champs)
             ],
-            'checklist_suivi_rapport_prefaisabilite.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champs)],
+            'checklist_suivi_rapport_prefaisabilite.*.checkpoint_id' => ['required_unless:action,draft', "in:" . implode(",", $this->champs)],
             // Les règles dynamiques seront ajoutées dans withValidator
             //'checklist_suivi_rapport_prefaisabilite.*.reponse' => 'required_unless:action,draft|string',
             //'checklist_suivi_rapport_prefaisabilite.*.commentaire' => 'required_unless:action,draft|string|min:10|max:1000',
