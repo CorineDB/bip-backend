@@ -1114,7 +1114,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             switch ($data['action']) {
                 case 'reviser':
-
                     /**
                      *
                      */
@@ -1129,9 +1128,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
                         ], 404);
                     }
-                    //throw new \Exception("Error Processing Request" . $tdr->id, 1);
 
-                    $newTdr = $tdr->replicate();
+                    /*$newTdr = $tdr->replicate();
 
                     $newTdr->statut = 'retour_travail_supplementaire';
                     $newTdr->decision_validation = null;
@@ -1144,9 +1142,42 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                     // Copier les canevas de la note originale vers la nouvelle note
                     $newTdr->canevas_appreciation_tdr = $tdr->canevas_appreciation_tdr;
-                    $newTdr->save();
+                    $newTdr->save();*/
 
-                    $nouveauStatut = StatutIdee::R_TDR_PREFAISABILITE;
+
+                    $tdr->update([
+                        'decision_validation' => 'reviser',
+                        'commentaire_validation' => $resultatsEvaluation["message_resultat"],
+                    ]);
+
+                    $tdrData = ([
+                        'projet_id' => $tdr->projet->id,
+                        'parent_id' => $tdr->id,
+                        'type' => $tdr->type,
+                        'statut' => 'brouillon',
+                        'resume' => null,
+                        'date_soumission' => null,
+                        'soumis_par_id' => null,
+                        'rediger_par_id' => $tdr->rediger_par_id,
+                        'date_evaluation' => null,
+                        'date_validation' => null,
+                        'evaluateur_id' => null,
+                        'validateur_id' => null,
+                        'evaluations_detaillees' => [],
+                        'termes_de_reference' => null,
+                        'commentaire_evaluation' => null,
+                        'commentaire_validation' => null,
+                        'decision_validation' => null,
+                        'resultats_evaluation' => null,
+                        'numero_contrat' => null,
+                        'numero_dossier' => null,
+                        'accept_term' => false,
+                        'canevas_appreciation_tdr' => null,
+                    ]);
+
+                    $tdr->projet->tdrs()->create($tdrData);
+
+                    $nouveauStatut = StatutIdee::TDR_PREFAISABILITE;
                     $projet->update([
                         'statut' => $nouveauStatut,
                         'phase' => $this->getPhaseFromStatut($nouveauStatut),
@@ -1157,6 +1188,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     break;
 
                 case 'abandonner':
+
+                    $tdr->update([
+                        'decision_validation' => 'abandonner',
+                        'commentaire_validation' => $resultatsEvaluation["message_resultat"],
+                    ]);
+
                     // Abandonner le projet suite à l'évaluation négative
                     $nouveauStatut = StatutIdee::ABANDON;
                     $projet->update([
@@ -2475,13 +2512,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ]);
 
                 $tdr->update([
+                    'decision_validation' => 'valider',
+                    'commentaire_validation' => $resultats["message_resultat"],
                     'statut' => 'valide'
                 ]);
 
                 return StatutIdee::SOUMISSION_RAPPORT_PF;
 
             case 'retour':
-                /* $tdr->refresh();
+                $tdr->refresh();
                 $newTdr = $tdr->replicate();
 
                 $newTdr->statut = 'retour_travail_supplementaire';
@@ -2503,7 +2542,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'statut' => StatutIdee::R_TDR_PREFAISABILITE,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::R_TDR_PREFAISABILITE),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_TDR_PREFAISABILITE)
-                ]);*/
+                ]);
+
+                $tdr->update([
+                    'decision_validation' => 'reviser',
+                    'commentaire_validation' => $resultats["message_resultat"],
+                ]);
 
                 return StatutIdee::R_TDR_PREFAISABILITE;
             case 'non_accepte':
@@ -2542,7 +2586,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'phase' => $this->getPhaseFromStatut(StatutIdee::TDR_PREFAISABILITE),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::TDR_PREFAISABILITE)
                 ]);*/
-                return StatutIdee::TDR_PREFAISABILITE;
+                return StatutIdee::EVALUATION_TDR_PF;
         }
     }
 
