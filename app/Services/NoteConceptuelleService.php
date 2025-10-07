@@ -1696,7 +1696,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'success' => true,
                 'data' => [
                     //'projet' => new \App\Http\Resources\projets\ProjetsResource($projet),
-                    'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet", "parent")),
+                    'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet", "historique_des_evaluations_notes_conceptuelle")),
                     'evaluation' => $evaluation ? [
                         'id' => $evaluation->id,
                         'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:i:s") : null,
