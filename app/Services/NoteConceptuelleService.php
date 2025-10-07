@@ -518,6 +518,9 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
+            throw new Exception("Error Processing Request " . json_encode($noteConceptuelle), 1);
+
+
             return (new $this->resourceClass($noteConceptuelle->load(["fichiers", "projet", "historique_des_notes_conceptuelle"])))
                 ->additional(['message' => 'Note conceptuelle validée avec succès.'])
                 ->response()

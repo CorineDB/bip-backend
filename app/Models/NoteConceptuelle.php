@@ -116,7 +116,7 @@ class NoteConceptuelle extends Model
     public function historique_des_evaluations_notes_conceptuelle()
     {
         return $this->historique_des_notes_conceptuelle()->with(["evaluations" => function($query){
-            $query->evaluationTermine("note-conceptuelle")->first();
+            $query/* ->evaluationTermine("note-conceptuelle")->first() */;
         }]);
     }
 
