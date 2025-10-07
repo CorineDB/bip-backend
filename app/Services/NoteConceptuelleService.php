@@ -150,6 +150,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $statusCode = 201;
             }
 
+            dd($data);
+
             // Récupérer le canevas de rédaction de note conceptuelle
             $canevasNoteConceptuelle = $this->documentRepository->getModel()->where([
                 'type' => 'formulaire'
@@ -199,7 +201,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             DB::commit();
 
-            return (new $this->resourceClass($noteConceptuelle))
+            return (new $this->resourceClass($noteConceptuelle->load("fichiers")))
                 ->additional(['message' => $message])
                 ->response()
                 ->setStatusCode($statusCode);
@@ -517,8 +519,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             if (auth()->user()->profilable->ministere?->id !== $noteConceptuelle->projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
-
-            dd($noteConceptuelle->historique_des_notes_conceptuelle);
 
             return (new $this->resourceClass($noteConceptuelle->load("fichiers", "projet", "historique_des_notes_conceptuelle")))
                 ->additional(['message' => 'Note conceptuelle validée avec succès.'])
