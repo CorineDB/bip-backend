@@ -1125,7 +1125,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
                         ], 404);
                     }
-                    throw new \Exception("Error Processing Request" . json_encode($tdr), 1);
 
                     $newTdr = $tdr->replicate();
 
