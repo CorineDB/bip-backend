@@ -93,7 +93,6 @@ class TdrPrefaisabiliteController extends Controller
      */
     public function evaluerTdrs(EvaluerTdrsRequest $request, $projetId): JsonResponse
     {
-        throw new \Exception("Error Processing Request - evaluer " . "ICI", 500);
         return $this->service->evaluerTdrs($projetId, $request->all());
     }
 
