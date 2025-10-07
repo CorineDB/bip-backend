@@ -106,7 +106,8 @@ class NoteConceptuelle extends Model
         if ($this->projet) {
             return $this->projet->notes_conceptuelle()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
         }
-        return collect(); // Return an empty collection if no projet is associated
+        // Return a query builder that will result in an empty set if no projet is associated
+        return $this->hasMany(NoteConceptuelle::class, 'projetId', 'projetId')->whereRaw('0 = 1');
     }
 
     /**
