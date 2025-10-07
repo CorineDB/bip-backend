@@ -81,8 +81,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $estSoumise = $data['est_soumise'] ?? false;
             $projetId = $data['projetId'] ?? null;
 
-            dd($documentsData);
-
             if (!$projetId) {
                 return response()->json([
                     'success' => false,
