@@ -1139,26 +1139,34 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_F)
                 ];
 
-                // Gérer l'analyse financière et calculer la VAN
+                // Gérer l'analyse financière et calculer la VAN et le TRI
                 if (isset($data['analyse_financiere'])) {
                     $analyseFinanciere = $data['analyse_financiere'];
 
-                    // Mettre à jour les propriétés du projet pour le calcul
-                    $projet->duree_vie = $analyseFinanciere['duree_vie'] ?? $projet->duree_vie;
-                    $projet->investissement_initial = $analyseFinanciere['investissement_initial'] ?? $projet->investissement_initial;
-                    $projet->flux_tresorerie = $analyseFinanciere['flux_tresorerie'] ?? $projet->flux_tresorerie;
-                    $projet->taux_actualisation = $analyseFinanciere['taux_actualisation'] ?? $projet->taux_actualisation;
+                    // Préparer les données pour le fill() et la mise à jour
+                    $financialData = [
+                        'duree_vie' => $analyseFinanciere['duree_vie'] ?? $projet->duree_vie,
+                        'investissement_initial' => $analyseFinanciere['investissement_initial'] ?? $projet->investissement_initial,
+                        'flux_tresorerie' => $analyseFinanciere['flux_tresorerie'] ?? $projet->flux_tresorerie,
+                        'taux_actualisation' => $analyseFinanciere['taux_actualisation'] ?? $projet->taux_actualisation,
+                    ];
 
+                    // Mettre à jour le modèle en mémoire avec les nouvelles données financières
+                    $projet->fill($financialData);
 
-                    // Ajouter les données au tableau de mise à jour
-                    $updateData['duree_vie'] = $projet->duree_vie;
-                    $updateData['investissement_initial'] = $projet->investissement_initial;
-                    $updateData['flux_tresorerie'] = $projet->flux_tresorerie;
+                    // Calculer la VAN et le TRI à partir des données mises à jour
+                    $van = $projet->calculerVAN();
+                    $projet->van = $van;
+                    $tri = $projet->calculerTRI();
 
-                    // Calculer et enregistrer la VAN
-                    $van = $projet->calculerVAN(); // Utilise le taux par défaut de 10%
+                    // Ajouter toutes les données financières et les résultats au tableau de mise à jour
+                    $updateData = array_merge($updateData, $financialData);
+
                     if ($van !== null) {
                         $updateData['van'] = $van;
+                    }
+                    if ($tri !== null) {
+                        $updateData['tri'] = $tri;
                     }
                 }
 
@@ -2788,6 +2796,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'attribut'           => $champ->attribut,
                 'ordre_affichage'    => $champ->ordre_affichage,
                 'type_champ'         => $champ->type_champ,
+                'meta_options'       => $champ->meta_options,
                 'valeur'             => optional($champRapport?->pivot)->valeur,
                 'commentaire'        => optional($champRapport?->pivot)->commentaire,
                 'created_at'         => optional($champRapport?->pivot)->created_at,

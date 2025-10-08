@@ -23,15 +23,14 @@ class RapportResource extends BaseApiResource
             'statut' => $this->statut,
             'statutCode' => $this->statut === 'validé' ? 2 : ($this->statut === 'soumis' ? 1 : 0),
             'intitule' => $this->intitule,
-            'checklist_suivi' => $this->checklist_suivi,
+            'checklist_suivi' =>  $this->checklist_suivi,
             'info_cabinet_etude' => $this->info_cabinet_etude,
             'recommandation' => $this->recommandation,
             'date_soumission' => $this->date_soumission,
             'date_validation' => $this->date_validation,
             'commentaire_validation' => $this->commentaire_validation,
             'decision' => $this->decision,
-            'champs' => $this->champs,
-
+            //'champs' => $this->champs,
             // Relations
             /*
             'projet' => $this->whenLoaded('projet', function() {
@@ -58,11 +57,11 @@ class RapportResource extends BaseApiResource
             'enfants' => $this->whenLoaded('enfants', self::collection($this->enfants)), */
 
             // Checklists de mesures d'adaptation (si projet à haut risque)
-            'checklist_mesures_adaptation' => $this->whenLoaded('projet', function() {
+            'checklist_mesures_adaptation' => $this->type == "prefaisabilite" ? $this->whenLoaded('projet', function() {
                 return $this->projet->est_a_haut_risque ?
                     ($this->projet->mesures_adaptation ?? null) :
                     null;
-            }),
+            }) : [],
 
             // Fichiers par type
             'fichiers_rapport' => $this->whenLoaded('fichiersRapport', function() {
