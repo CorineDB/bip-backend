@@ -1273,7 +1273,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             // Récupérer le rapport soumis le plus récent
             $rapport = \App\Models\Rapport::where('projet_id', $projetId)
                 ->where('type', 'faisabilite')
-                ->where('statut', 'soumis')
                 ->with(['fichiersRapport', 'procesVerbaux', 'soumisPar', 'projet', 'champs', 'documentsAnnexes'])
                 ->latest('created_at')
                 ->first();
