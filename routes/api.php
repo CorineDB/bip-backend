@@ -39,6 +39,7 @@ use App\Http\Controllers\NoteConceptuelleController;
 use App\Http\Controllers\TdrPrefaisabiliteController;
 use App\Http\Controllers\TdrFaisabiliteController;
 use App\Http\Controllers\PassportClientController;
+use App\Models\Arrondissement;
 use App\Models\Village;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -710,7 +711,82 @@ Route::prefix('keycloak-auths')->group(function () {
 
 Route::get('/update-villages', function () {
 
-    //return Village::all()->each->update(["longitude"=>2.899612094352824, "latitude" => 11.011495856466121]);
+        // 1. CHARGEMENT et PRÉPARATION des données GeoJSON
+        $filePath = public_path('geodata/data_chef_lieu_village.geojson');
+
+        if (!file_exists($filePath)) {
+            $this->command->error('Le fichier GeoJSON est introuvable à : ' . $filePath);
+            return;
+        }
+
+        $json = file_get_contents($filePath);
+        $data = json_decode($json, true);
+
+        $features = $data['features'] ?? [];
+
+        // 2. Charger TOUS les arrondissements existants dans une Map (Optimisation)
+        // La clé doit être le SLUG du nom de l'Arrondissement pour une recherche rapide.
+        $arrondissementsMap = DB::table('arrondissements')
+            ->get(['id', 'code', 'nom'])
+            ->keyBy(fn ($item) => Str::slug($item->nom));
+
+        $villagesToUpsert = [];
+
+        // 3. PARSING DU GEOJSON et PRÉPARATION du tableau d'upsert
+        foreach ($features as $feature) {
+            $properties = $feature['properties'];
+
+            // Récupération des données du GeoJSON
+            $arrondName = $properties['Arrondisst'] ?? null;
+            $villageName = $properties['Village_Ad'] ?? $properties['Nom_LOC'] ?? null;
+            $codeGeo = $properties['Code_GEO'] ?? null;
+            $latitude = $properties['Latitude'] ?? null;
+            $longitude = $properties['Longitude'] ?? null;
+
+            if (!$arrondName || !$villageName || !$codeGeo || !$latitude || !$longitude) {
+                continue; // Ignore les enregistrements GeoJSON incomplets
+            }
+
+            $arrondSlug = Str::slug($arrondName);
+            $arrondRecord = $arrondissementsMap->get($arrondSlug);
+
+            if ($arrondRecord) {
+                $slug = Str::slug($villageName);
+
+                $villagesToUpsert[] = [
+                    // CLÉ D'IDENTIFICATION UNIQUE (C'est la colonne que Laravel va utiliser pour chercher/mettre à jour)
+                    'code_geo' => $codeGeo,
+
+                    // DONNÉES À METTRE À JOUR/INSÉRER
+                    // NOTE: Le champ 'code' interne n'est plus généré avec l'index,
+                    // car il n'est pas fiable. On utilise Code_GEO.
+                    'code' => $codeGeo, // On peut mettre Code_GEO dans 'code' si on le souhaite, ou le laisser tel quel.
+                    'nom' => Str::title($villageName),
+                    'slug' => $slug,
+                    'latitude' => $latitude,
+                    'longitude' => $longitude,
+                    'arrondissementId' => $arrondRecord->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        }
+
+        // 4. EXÉCUTION de l'Upsert (Ajout et Mise à Jour)
+        if (!empty($villagesToUpsert)) {
+            DB::table('villages')->upsert(
+                $villagesToUpsert,
+                // Colonne(s) utilisée(s) pour identifier les doublons (Code_GEO est la clé stable)
+                ['code_geo'],
+                // Colonnes à mettre à jour si un doublon est trouvé
+                ['nom', 'slug', 'latitude', 'longitude', 'arrondissementId', 'updated_at']
+            );
+        }
+
+        // 5. OMISSION DE LA SUPPRESSION
+        // Les villages déjà présents en base mais absents du GeoJSON sont conservés.
+
+        $this->command->info('Mise à jour (Upsert) des villages par GeoJSON terminée. Aucun village existant n\'a été supprimé.');
 });
 
 Route::get('/traitement-arrondissements', function () {
@@ -750,6 +826,95 @@ Route::get('/traitement-arrondissements', function () {
     // La variable $arrondissement_lookup est maintenant prête à être consultée.
 });
 
+Route::get('/traitement-village', function () {
+
+    // 1. CHARGEMENT et PRÉPARATION des données GeoJSON
+    $filePath = public_path('data_chef_lieu_village.geojson');
+
+    // Vérifiez l'existence du fichier
+    if (!file_exists($filePath)) {
+        $this->command->error('Le fichier GeoJSON est introuvable à : ' . $filePath);
+        return;
+    }
+
+    $json = file_get_contents($filePath);
+    $data = json_decode($json, true);
+
+    // Récupérer la liste des features
+    $features = $data['features'] ?? [];
+
+    // 2. Charger TOUS les arrondissements existants dans une Map (Optimisation)
+    // La clé doit être le SLUG du nom de l'Arrondissement pour une recherche rapide.
+    $arrondissementsMap = DB::table('arrondissements')
+        ->get(['id', 'code', 'nom'])
+        ->keyBy(fn($item) => Str::slug($item->nom));
+
+    $villagesToUpsert = [];
+    $codesToKeep = [];
+
+    // 3. PARSING DU GEOJSON et PRÉPARATION du tableau d'upsert
+    foreach ($features as $feature) {
+        $properties = $feature['properties'];
+
+        $arrondName = $properties['Arrondisst'] ?? null;
+        $villageName = $properties['Village_Ad'] ?? $properties['Nom_LOC'] ?? null;
+        $codeGeo = $properties['Code_GEO'] ?? null;
+        $latitude = $properties['Latitude'] ?? null;
+        $longitude = $properties['Longitude'] ?? null;
+
+        // Assurez-vous d'avoir les données critiques
+        if (!$arrondName || !$villageName || !$codeGeo || !$latitude || !$longitude) {
+            // Ignorez les enregistrements incomplets ou loggez-les
+            continue;
+        }
+
+        $arrondSlug = Str::slug($arrondName);
+        $arrondRecord = $arrondissementsMap->get($arrondSlug);
+
+        if ($arrondRecord) {
+            $slug = Str::slug($villageName);
+
+            $villagesToUpsert[] = [
+                // CLÉ D'IDENTIFICATION UNIQUE (Code_GEO du fichier)
+                'code_geo' => $codeGeo,
+
+                // Autres champs mis à jour/insérés
+                'code' => $arrondRecord->code . '-' . Str::random(5), // Optionnel: Générez un code interne si Code_GEO n'est pas utilisé pour les relations
+                'nom' => Str::title($villageName),
+                'slug' => $slug,
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'arrondissementId' => $arrondRecord->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            $codesToKeep[] = $codeGeo;
+        }
+    }
+
+    // 4. EXÉCUTION de l'Upsert (Ajout et Mise à Jour)
+    if (!empty($villagesToUpsert)) {
+        DB::table('villages')->upsert(
+            $villagesToUpsert,
+            // Colonne(s) utilisée(s) pour identifier les doublons
+            ['code_geo'],
+            // Colonnes à mettre à jour si un doublon est trouvé
+            ['nom', 'slug', 'latitude', 'longitude', 'arrondissementId', 'updated_at']
+        );
+    }
+
+    // 5. SYNCHRONISATION (Suppression des anciens enregistrements)
+    if (!empty($codesToKeep)) {
+        // Supprimer tous les villages dont le code_geo N'EST PAS dans notre liste d'upsert
+        DB::table('villages')
+            ->whereNotIn('code_geo', $codesToKeep)
+            ->delete();
+    }
+
+    //$this->command->info('Synchronisation des villages/quartiers par GeoJSON terminée !');
+});
+
 Route::get('/traitement-villages', function () {
 
     // 1. Charger le contenu du fichier GeoJSON
@@ -786,19 +951,16 @@ Route::get('/traitement-villages', function () {
         $villageName        = $properties['Nom_LOC'] ?? 'Village sans nom';
 
         $village_name           = Str::title(SlugHelper::rmAccents($villageName)) ?? null;
-        $arrondissementName     = Str::title(SlugHelper::rmAccents($arrondissement)) ?? null;
+        $arrondissementName     = Str::slug(SlugHelper::rmAccents($arrondissement)) ?? null;
 
         $village            = $properties['Village_Ad'] ?? 'Village sans nom';
 
         // Extraction des coordonnées du village (Long/Lat sont aussi dans properties)
         $longitude = $properties['Longitude'] ?? null;
         $latitude  = $properties['Latitude'] ?? null;
-        $code_geo  = $properties['Code_GEO'] ?? null;
 
         // Récupération des coordonnées depuis la GÉOMÉTRIE (format standard GeoJSON : [Longitude, Latitude])
         $coordinates = $geometry['coordinates'] ?? [null, null];
-        $longitude   = $coordinates[0];
-        $latitude    = $coordinates[1];
 
         // Pour la géométrie complète (format GeoJSON: [Long, Lat])
         $coordinates_geom = $feature['geometry']['coordinates'] ?? [null, null];
@@ -842,33 +1004,71 @@ Route::get('/traitement-villages', function () {
         // Pointer vers la sous-structure 'Arrondissements' de la commune
         $arrondissements_ref = &$communes_ref[$commune]["arrondissements"];
 
+        $arrondissementRecord = DB::table('arrondissements')->where('slug', Str::slug($arrondissementName))->first();
+
         // 4.3. Traiter l'Arrondissement
-        if (!isset($arrondissements_ref[$arrondissement])) {
+        if (!isset($arrondissements_ref[$arrondissementName])) {
             // Enregistrer les coordonnées du premier village rencontré comme point de référence de l'arrondissement
-            $first_point_arr[$arrondissement] = $coordinates;
+            $first_point_arr[$arrondissementName] = $coordinates;
             // Créer l'entrée de l'arrondissement et initialiser sa liste de 'villages'
-            $arrondissements_ref[$arrondissement] = [
-                "code_geo"  => $code_geo,
+            $arrondissements_ref[$arrondissementName] = [
                 "longitude" => $longitude,
                 "latitude"  => $latitude,
                 "coordinates" => $coordinates, // Long, Lat du point de référence
+                "arrondissement" => $arrondissementRecord,
                 "villages" => []
             ];
         }
 
         // 4.4. Ajouter le Village (seulement si non déjà présent pour éviter les doublons)
-        $villages_ref = &$arrondissements_ref[$arrondissement]["villages"];
+        $villages_ref = &$arrondissements_ref[$arrondissementName]["villages"];
         // Le village est stocké comme un objet/tableau, non une simple chaîne
 
-        $village_data = [
-            "code_geo"      => $code_geo,
-            "longitude"     => $longitude,
-            "latitude"      => $latitude,
-            "nom"           => $villageName,
-            "code"          => SlugHelper::generateUnique($village_name, 'village'),
-            "coordinates"   => $coordinates // Long, Lat exactes du village
-        ];
+        $age = Village::firstOrNew([
+            //'code' => $code,
+            'slug' => Str::slug($village_name),
+            //'arrondissementId' => $arrondissementRecord->id
+        ], [
+            'nom' => Str::title($villageName),
+            'slug' => Str::title($villageName),
+            //'arrondissementId' => $arrondissementRecord->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
+
+        $arrExist = SlugHelper::exist($arrondissementName, Arrondissement::class);
+        //$exist = SlugHelper::exist($village_name, Village::class);
+        $village_data = [
+            "longitude"         => $longitude,
+            "latitude"          => $latitude,
+            "nom"               => $villageName,
+            "arrondissement"    => $age,
+            "code"              => $village_name, //SlugHelper::generateUnique($village_name, Village::class),
+            "coordinates"       => $coordinates // Long, Lat exactes du village
+        ];
+        /*if ($exist) {
+            $village_data = [
+                "code_geo"      => $code_geo,
+                "longitude"     => $longitude,
+                "latitude"      => $latitude,
+                "nom"           => $villageName,
+                "code"          => SlugHelper::generateUnique($village_name, Village::class),
+                "coordinates"   => $coordinates // Long, Lat exactes du village
+                Village::createOrUpdate
+
+            ];
+        } else {
+            $village_data = [
+                "code_geo"      => $arrExist,
+                "longitude"     => $longitude,
+                "latitude"      => $latitude,
+                "nom"           => $villageName,
+                "code"          => SlugHelper::generateUnique($village_name, Village::class),
+                "coordinates"   => $coordinates // Long, Lat exactes du village
+            ];
+        }
+        */
 
         // Vérifier si le village (par son nom) est déjà dans la liste avant d'ajouter
         $exists = false;
@@ -970,6 +1170,43 @@ Route::get('/fusion-arrondissements', function () {
     // 5. AFFICHAGE FINAL
     return response()->json($structure_administrative);
 });
+
+Route::get('/update-villages', function () {
+    $geojson = file_get_contents(public_path('geodata/data_chef_lieu_village.geojson'));
+    $data = json_decode($geojson, true);
+
+    foreach ($data['features'] as $feature) {
+        $properties = $feature['properties'];
+        $coordinates = $feature['geometry']['coordinates'];
+
+        // Normaliser le nom du village
+        $nom = Str::title(SlugHelper::rmAccents($properties['Nom_LOC']));
+        $slug = Str::slug($nom);
+
+        Village::chunk(1000, function ($villages) {});
+
+        // Chercher le village par slug (ou par code si dispo)
+        $village = Village::where('slug', $slug);
+        $arrondissementRecord = DB::table('arrondissements')->where('slug', Str::slug($slug))->first();
+
+        if ($village) {
+            $village->update([
+                'nom'        => $nom,
+                'longitude'  => $coordinates[0],
+                'latitude'   => $coordinates[1],
+                //'chef_lieu'  => $properties['chef_lieu'] ?? false,
+                'updated_at' => now(),
+            ]);
+        } else {
+            // Facultatif : loguer les villages non trouvés
+            \Log::warning("Village non trouvé : " . $nom);
+        }
+    }
+
+    return response()->json(['message' => 'Mise à jour des villages effectuée']);
+});
+
+
 Route::get('/test-json', function () {
     $json = file_get_contents(public_path('decoupage_territorial_benin.json'));
     $data = json_decode($json, true);
@@ -980,7 +1217,7 @@ Route::get('/test-json', function () {
         ->pluck('arrondissements')
         ->flatten(1);
 
-    //DB::table("villages")->truncate();
+    DB::table("villages")->truncate();
 
     // Générer tous les arrondissements basés sur les données du CommuneSeeder
     foreach ($arrondissements as $arrondissement) {
@@ -991,7 +1228,8 @@ Route::get('/test-json', function () {
             foreach ($arrondissement['quartiers'] as $index => $quartier) {
 
                 $code = $arrondissementRecord->code . '-' . str_pad($index + 1, 2, '0', STR_PAD_LEFT);
-                $slug = Str::slug($quartier["lib_quart"]);
+                //$slug = Str::slug($quartier["lib_quart"]);
+                $slug = Str::slug(SlugHelper::generateUnique($quartier["lib_quart"], Village::class));
 
                 /*$count = DB::table('villages')->where('slug', $slug)->count();
 
@@ -1025,9 +1263,7 @@ Route::get('/test-json', function () {
         }
     }
 
-
-
-    return response()->json(Village::all());
+    return response()->json(Village::count());
 });
 
 // Route de test pour Reverb

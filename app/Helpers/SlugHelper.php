@@ -46,6 +46,27 @@ class SlugHelper
     }
 
     /**
+     * Generate a unique slug for a given model and field
+     */
+    public static function exist(string $text, string $modelClass, string $field = 'slug', ?int $excludeId = null): string
+    {
+        $baseSlug = self::generate($text);
+        $slug = $baseSlug;
+        $counter = 1;
+
+        $query = $modelClass::where($field, $slug);
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        if ($query->exists()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Generate a clean file path for storage, removing accents and special characters
      */
     public static function generateFilePath(string $path): string
