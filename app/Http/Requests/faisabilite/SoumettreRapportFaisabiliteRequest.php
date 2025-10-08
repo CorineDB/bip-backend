@@ -187,6 +187,15 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
             ],
             'checklist_suivi_etude_analyse_impact_environnemental_social.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsImpactEnvironnemental)],
 
+
+
+            "analyse_financiere"                            => "sometimes|required_unless:action,draft|array|min:3",
+            'analyse_financiere.duree_vie'                  => 'sometimes|required_unless:action,draft|numeric',
+            'analyse_financiere.investissement_initial'     => 'sometimes|required_unless:action,draft|numeric',
+            'analyse_financiere.flux_tresorerie'            => 'sometimes|required_unless:action,draft|array|min:' . $this->input("analyse_financiere.duree_vie") ?? 1,
+            'analyse_financiere.flux_tresorerie.*.t'        => 'sometimes|required_unless:action,draft|numeric|min:' . 1 . '|max:' . $this->input("analyse_financiere.duree_vie") ?? 1,
+            'analyse_financiere.flux_tresorerie.*.CFt'      => 'sometimes|required_unless:action,draft|numeric|min:0',
+
             "etude_faisabilite" => "required_unless:action,draft|array|min:1",
             'etude_faisabilite.est_finance' => 'required_with:etude_faisabilite|boolean',
         ];

@@ -2105,7 +2105,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     $fichierProcesVerbal = $this->gererFichierProcesVerbal($rapport, $data['proces_verbal'], $data);
                 }
 
-
                 //validation des informations de si l'étude de préfaisabilité est financée
                 if (!isset($data['etude_prefaisabilite']['est_finance'])) {
                     throw ValidationException::withMessages([

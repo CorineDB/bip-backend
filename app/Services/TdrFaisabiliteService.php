@@ -1097,6 +1097,78 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 // par exemple une chaîne de caractères, un entier, un tableau, etc.
                 // mais si la valeur est 0 ou 1, on peut la considérer comme booléenne
 
+                /*if (is_string($data['etude_faisabilite']['est_finance'])) {
+                    $valeur = strtolower($data['etude_faisabilite']['est_finance']);
+                    if ($valeur === 'true' || $valeur === '1') {
+                        $data['etude_faisabilite']['est_finance'] = true;
+                    } elseif ($valeur === 'false' || $valeur === '0') {
+                        $data['etude_faisabilite']['est_finance'] = false;
+                    } else {
+                        throw ValidationException::withMessages([
+                            "etude_faisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                        ]);
+                    }
+                } elseif (is_int($data['etude_faisabilite']['est_finance'])) {
+                    if ($data['etude_faisabilite']['est_finance'] === 1) {
+                        $data['etude_faisabilite']['est_finance'] = true;
+                    } elseif ($data['etude_faisabilite']['est_finance'] === 0) {
+                        $data['etude_faisabilite']['est_finance'] = false;
+                    } else {
+                        throw ValidationException::withMessages([
+                            "etude_faisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                        ]);
+                    }
+                } elseif (is_array($data['etude_faisabilite']['est_finance']) || is_null($data['etude_faisabilite']['est_finance'])) {
+                    throw ValidationException::withMessages([
+                        "etude_faisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                    ]);
+                }
+
+                if (!is_bool($data['etude_faisabilite']['est_finance'])) {
+                    throw ValidationException::withMessages([
+                        "etude_faisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
+                    ]);
+                }
+
+                $est_finance = $data['etude_faisabilite']['est_finance'] ?? ($info_etude_faisabilite['est_finance'] ?? false);*/
+
+                // Mettre à jour les informations de l'étude de faisabilité dans le projet
+                $projet->update([
+                    // Fusionner avec les nouvelles valeurs provenant de $data
+                    /*'info_etude_faisabilite' => array_merge($info_etude_faisabilite, [
+                        'date_demande'   => $data['etude_faisabilite']['date_demande'] ?? ($info_etude_faisabilite['date_demande'] ?? null),
+                        'date_obtention' => $data['etude_faisabilite']['date_obtention'] ?? ($info_etude_faisabilite['date_obtention'] ?? null),
+                        'montant'        => $data['etude_faisabilite']['montant'] ?? ($info_etude_faisabilite['montant'] ?? null),
+                        'reference'      => $data['etude_faisabilite']['reference'] ?? ($info_etude_faisabilite['reference'] ?? null),
+                        'est_finance'    => $est_finance,
+                    ]),*/
+
+                    'statut' => StatutIdee::VALIDATION_F,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_F),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_F)
+                ]);
+
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($projet, StatutIdee::VALIDATION_F);
+                $this->enregistrerDecision(
+                    $projet,
+                    "Soumission du rapport de faisabilité",
+                    "Rapport ID: {$rapport->id} soumis par cabinet: " . ($rapport->info_cabinet_etude['nom_cabinet'] ?? 'N/A'),
+                    auth()->user()->personne->id
+                );
+
+                // Envoyer une notification
+                //$this->envoyerNotificationSoumissionRapport($projet, $rapport, $fichierRapport);
+            }
+
+            if (isset($data['etude_faisabilite']['est_finance'])) {
+
+                $info_etude_faisabilite = $projet->info_etude_faisabilite ?? [];
+
+                // on doit valider si c'est une valeur booléenne
+                // par exemple une chaîne de caractères, un entier, un tableau, etc.
+                // mais si la valeur est 0 ou 1, on peut la considérer comme booléenne
+
                 if (is_string($data['etude_faisabilite']['est_finance'])) {
                     $valeur = strtolower($data['etude_faisabilite']['est_finance']);
                     if ($valeur === 'true' || $valeur === '1') {
@@ -1122,8 +1194,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     throw ValidationException::withMessages([
                         "etude_faisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
                     ]);
-                } else {
-                    // Si c'est déjà une valeur booléenne, ne rien faire
                 }
 
                 if (!is_bool($data['etude_faisabilite']['est_finance'])) {
@@ -1134,7 +1204,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
                 $est_finance = $data['etude_faisabilite']['est_finance'] ?? ($info_etude_faisabilite['est_finance'] ?? false);
 
-                // Mettre à jour les informations de l'étude de faisabilité dans le projet
+                // Mettre à jour les informations de l'étude de préfaisabilité dans le projet
                 $projet->update([
                     // Fusionner avec les nouvelles valeurs provenant de $data
                     'info_etude_faisabilite' => array_merge($info_etude_faisabilite, [
@@ -1143,24 +1213,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         'montant'        => $data['etude_faisabilite']['montant'] ?? ($info_etude_faisabilite['montant'] ?? null),
                         'reference'      => $data['etude_faisabilite']['reference'] ?? ($info_etude_faisabilite['reference'] ?? null),
                         'est_finance'    => $est_finance,
-                    ]),
-
-                    'statut' => StatutIdee::VALIDATION_F,
-                    'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_F),
-                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_F)
+                    ])
                 ]);
-
-                // Enregistrer le workflow et la décision
-                $this->enregistrerWorkflow($projet, StatutIdee::VALIDATION_F);
-                $this->enregistrerDecision(
-                    $projet,
-                    "Soumission du rapport de faisabilité",
-                    "Rapport ID: {$rapport->id} soumis par cabinet: " . ($rapport->info_cabinet_etude['nom_cabinet'] ?? 'N/A'),
-                    auth()->user()->personne->id
-                );
-
-                // Envoyer une notification
-                //$this->envoyerNotificationSoumissionRapport($projet, $rapport, $fichierRapport);
             }
 
             DB::commit();
