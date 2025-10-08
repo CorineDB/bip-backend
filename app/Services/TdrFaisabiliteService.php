@@ -507,7 +507,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             if (!$evaluation) {
                 return response()->json([
                     'success' => true,
-                    'data' => null,
+                    'data' => ['tdr' => new TdrResource($tdr->load(['fichiers', 'projet']))],
                     'message' => 'Aucune évaluation trouvée pour cette tdr.'
                 ], 206);
             }
@@ -820,7 +820,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         'phase' => $this->getPhaseFromStatut($nouveauStatut),
                         'sous_phase' => $this->getSousPhaseFromStatut($nouveauStatut)
                     ]);
-
 
                     $messageAction = 'Projet continue malgré l\'évaluation négative. Retour à la soumission des TDRs.';
                     break;
@@ -1973,7 +1972,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'statut' => 'actif',
                 'resume' => $data['resume'] ?? null,
                 'tdr_faisabilite' => $data['tdr_faisabilite'] ?? null,
-                'tdr_pre_faisabilite' => $data['tdr_pre_faisabilite'] ?? null,
+                'tdr_pre_faisabilite' => $data['tdcreerEvaluationTdrr_pre_faisabilite'] ?? null,
                 'type_tdr' => $data['type_tdr'] ?? 'faisabilite',
                 'soumis_par' => auth()->id(),
                 'soumis_le' => now()->toISOString(),

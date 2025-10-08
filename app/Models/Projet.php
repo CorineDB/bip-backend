@@ -100,7 +100,12 @@ class Projet extends Model
         'info_etude_faisabilite',
         'canevas_appreciation_pertinence',
         'canevas_climatique',
-        'canevas_amc'
+        'canevas_amc',
+        'investissement_initial',
+        'van',
+        'tri',
+        'flux_tresorerie',
+        'duree_vie'
     ];
 
     /**

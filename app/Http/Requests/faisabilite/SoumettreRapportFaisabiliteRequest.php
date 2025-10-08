@@ -123,10 +123,10 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
 
             // Informations cabinet requises uniquement pour la soumission finale
             "cabinet_etude" => "required_unless:action,draft|array|min:4",
-            'cabinet_etude.nom_cabinet' => 'required_with:cabinet_etude|string|max:255',
-            'cabinet_etude.contact_cabinet' => 'required_with:cabinet_etude|string|max:255',
-            'cabinet_etude.email_cabinet' => 'required_with:cabinet_etude|email|max:255',
-            'cabinet_etude.adresse_cabinet' => 'required_with:cabinet_etude|string|max:500',
+            'cabinet_etude.nom_cabinet' => 'required_unless:action,draft:cabinet_etude|string|max:255',
+            'cabinet_etude.contact_cabinet' => 'required_unless:action,draft:cabinet_etude|string|max:255',
+            'cabinet_etude.email_cabinet' => 'required_unless:action,draft:cabinet_etude|email|max:255',
+            'cabinet_etude.adresse_cabinet' => 'required_unless:action,draft:cabinet_etude|string|max:500',
 
             // Recommandation requise uniquement pour la soumission finale
             'recommandation' => 'required_unless:action,draft|string|max:500',
