@@ -1279,7 +1279,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ->first();
 
             if (!$rapport) {
-                $projet->rapports()->create([
+                $rapport = $projet->rapports()->create([
                     'type' => 'faisabilite',
                     'statut' => 'brouillon',
                     'intitule' => " ",
