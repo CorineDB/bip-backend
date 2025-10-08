@@ -2112,7 +2112,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ]);
                 }
                 /*
-
                 $info_etude_prefaisabilite = $projet->info_etude_prefaisabilite ?? [];
 
                 // on doit valider si c'est une valeur booléenne

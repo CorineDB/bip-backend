@@ -1133,20 +1133,36 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 $est_finance = $data['etude_faisabilite']['est_finance'] ?? ($info_etude_faisabilite['est_finance'] ?? false);*/
 
                 // Mettre à jour les informations de l'étude de faisabilité dans le projet
-                $projet->update([
-                    // Fusionner avec les nouvelles valeurs provenant de $data
-                    /*'info_etude_faisabilite' => array_merge($info_etude_faisabilite, [
-                        'date_demande'   => $data['etude_faisabilite']['date_demande'] ?? ($info_etude_faisabilite['date_demande'] ?? null),
-                        'date_obtention' => $data['etude_faisabilite']['date_obtention'] ?? ($info_etude_faisabilite['date_obtention'] ?? null),
-                        'montant'        => $data['etude_faisabilite']['montant'] ?? ($info_etude_faisabilite['montant'] ?? null),
-                        'reference'      => $data['etude_faisabilite']['reference'] ?? ($info_etude_faisabilite['reference'] ?? null),
-                        'est_finance'    => $est_finance,
-                    ]),*/
-
+                $updateData = [
                     'statut' => StatutIdee::VALIDATION_F,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_F),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_F)
-                ]);
+                ];
+
+                // Gérer l'analyse financière et calculer la VAN
+                if (isset($data['analyse_financiere'])) {
+                    $analyseFinanciere = $data['analyse_financiere'];
+
+                    // Mettre à jour les propriétés du projet pour le calcul
+                    $projet->duree_vie = $analyseFinanciere['duree_vie'] ?? $projet->duree_vie;
+                    $projet->investissement_initial = $analyseFinanciere['investissement_initial'] ?? $projet->investissement_initial;
+                    $projet->flux_tresorerie = $analyseFinanciere['flux_tresorerie'] ?? $projet->flux_tresorerie;
+                    $projet->taux_actualisation = $analyseFinanciere['taux_actualisation'] ?? $projet->taux_actualisation;
+
+
+                    // Ajouter les données au tableau de mise à jour
+                    $updateData['duree_vie'] = $projet->duree_vie;
+                    $updateData['investissement_initial'] = $projet->investissement_initial;
+                    $updateData['flux_tresorerie'] = $projet->flux_tresorerie;
+
+                    // Calculer et enregistrer la VAN
+                    $van = $projet->calculerVAN(); // Utilise le taux par défaut de 10%
+                    if ($van !== null) {
+                        $updateData['van'] = $van;
+                    }
+                }
+
+                $projet->update($updateData);
 
                 // Enregistrer le workflow et la décision
                 $this->enregistrerWorkflow($projet, StatutIdee::VALIDATION_F);
@@ -1263,11 +1279,16 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ->first();
 
             if (!$rapport) {
+                $projet->rapports()->create([
+                    'type' => 'faisabilite',
+                    'statut' => 'brouillon',
+                    'intitule' => " ",
+                ]);
                 return response()->json([
-                    'success' => false,
+                    'success' =>  new \App\Http\Resources\RapportResource($rapport->load("projet")),
                     'message' => 'Aucun rapport soumis trouvé pour ce projet.',
                     'data' => null
-                ], 404);
+                ], 206);
             }
 
             return response()->json([

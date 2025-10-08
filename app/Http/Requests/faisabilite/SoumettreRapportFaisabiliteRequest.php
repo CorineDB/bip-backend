@@ -123,10 +123,10 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
 
             // Informations cabinet requises uniquement pour la soumission finale
             "cabinet_etude" => "required_unless:action,draft|array|min:4",
-            'cabinet_etude.nom_cabinet' => 'required_unless:action,draft:cabinet_etude|string|max:255',
-            'cabinet_etude.contact_cabinet' => 'required_unless:action,draft:cabinet_etude|string|max:255',
-            'cabinet_etude.email_cabinet' => 'required_unless:action,draft:cabinet_etude|email|max:255',
-            'cabinet_etude.adresse_cabinet' => 'required_unless:action,draft:cabinet_etude|string|max:500',
+            'cabinet_etude.nom_cabinet' => 'required_unless:action,draft|string|max:255',
+            'cabinet_etude.contact_cabinet' => 'required_unless:action,draft|string|max:255',
+            'cabinet_etude.email_cabinet' => 'required_unless:action,draft|email|max:255',
+            'cabinet_etude.adresse_cabinet' => 'required_unless:action,draft|string|max:500',
 
             // Recommandation requise uniquement pour la soumission finale
             'recommandation' => 'required_unless:action,draft|string|max:500',
@@ -191,6 +191,7 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
 
             "analyse_financiere"                            => "sometimes|required_unless:action,draft|array|min:3",
             'analyse_financiere.duree_vie'                  => 'sometimes|required_unless:action,draft|numeric',
+            'analyse_financiere.taux_actualisation'         => 'sometimes|required_unless:action,draft|numeric',
             'analyse_financiere.investissement_initial'     => 'sometimes|required_unless:action,draft|numeric',
             'analyse_financiere.flux_tresorerie'            => 'sometimes|required_unless:action,draft|array|min:' . $this->input("analyse_financiere.duree_vie") ?? 1,
             'analyse_financiere.flux_tresorerie.*.t'        => 'sometimes|required_unless:action,draft|numeric|min:' . 1 . '|max:' . $this->input("analyse_financiere.duree_vie") ?? 1,
@@ -511,7 +512,7 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
         } else {
             // Pour draft, l'explication devient obligatoire SEULEMENT si show_explanation = true ET remarque = "pas-encore-disponibles"
             if ($showExplanation && $remarqueEstPasEncoreDisponible) {
-                if (empty($explication)) {
+                /*if (empty($explication)) {
                     $validator->errors()->add(
                         "{$checklistName}.{$index}.explication",
                         "L'explication est obligatoire lorsque la remarque est 'pas-encore-disponibles' et que le champ d'explication est activé."
@@ -526,15 +527,15 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
                         "{$checklistName}.{$index}.explication",
                         "L'explication ne peut pas dépasser {$maxLength} caractères."
                     );
-                }
+                }*/
             } else {
                 // Pour draft dans tous les autres cas, l'explication est optionnel mais doit respecter les limites si présent
-                if ($explication !== null && strlen($explication) > $maxLength) {
+                /* if ($explication !== null && strlen($explication) > $maxLength) {
                     $validator->errors()->add(
                         "{$checklistName}.{$index}.explication",
                         "L'explication ne peut pas dépasser {$maxLength} caractères."
                     );
-                }
+                } */
             }
         }
     }

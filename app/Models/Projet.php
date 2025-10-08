@@ -105,7 +105,8 @@ class Projet extends Model
         'van',
         'tri',
         'flux_tresorerie',
-        'duree_vie'
+        'duree_vie',
+        'taux_actualisation'
     ];
 
     /**
@@ -136,6 +137,7 @@ class Projet extends Model
         'canevas_appreciation_pertinence' => 'array',
         'canevas_climatique' => 'array',
         'canevas_amc' => 'array',
+        'flux_tresorerie' => 'array',
         'created_at' => 'datetime:Y-m-d',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -752,5 +754,38 @@ class Projet extends Model
             'peut_soumettre_faisabilite' => $this->hasTdrPrefaisabiliteValide(),
             'workflow_complet' => $this->hasTdrPrefaisabiliteValide() && $this->hasTdrFaisabiliteValide()
         ];
+    }
+
+    /**
+     * Calcule la Valeur Actuelle Nette (VAN) du projet.
+     *
+     * @param float $tauxActualisation Le taux d'actualisation (par exemple, 0.10 pour 10%).
+     * @return float|null La VAN du projet, ou null si les données sont insuffisantes.
+     */
+    public function calculerVAN(): ?float
+    {
+        // I0: L'investissement initial
+        $investissementInitial = (float) $this->investissement_initial;
+        // I0: L'investissement initial
+        $tauxActualisation = (float) $this->taux_actualisation;
+
+        // CFt: Les flux de trésorerie nets (automatiquement casté en array par Eloquent)
+        $fluxTresorerie = $this->flux_tresorerie;
+
+        if (!is_array($fluxTresorerie) || empty($fluxTresorerie)) {
+            return null; // Pas de flux de trésorerie pour calculer la VAN
+        }
+
+        $van = 0;
+        foreach ($fluxTresorerie as $flux) {
+            // Vérifier que les clés 't' et 'CFt' existent
+            if (isset($flux['t']) && isset($flux['CFt'])) {
+                $t = (int) $flux['t'];
+                $cft = (float) $flux['CFt'];
+                $van += $cft / pow(1 + $tauxActualisation, $t);
+            }
+        }
+
+        return $van - $investissementInitial;
     }
 }

@@ -116,6 +116,12 @@ class ProjetResource extends BaseApiResource
             'porteur_projet' => $this->porteur_projet,
             'ideeProjet' => new IdeeProjetResource($this->ideeProjet),
             'noteConceptuelle' => new NoteConceptuelleResource($this->noteConceptuelle),
+            'duree_vie' => $this->duree_vie,
+            'investissement_initial' => $this->investissement_initial,
+            'tri' => $this->tri,
+            'van' => $this->van,
+            'flux_tresorerie' => $this->flux_tresorerie,
+            'taux_actualisation' => $this->taux_actualisation,
 
             // TDRs
             'tdr_prefaisabilite' => $this->whenLoaded('tdrPrefaisabilite', function() {

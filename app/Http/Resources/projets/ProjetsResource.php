@@ -51,6 +51,13 @@ class ProjetsResource extends BaseApiResource
 
             // Détails techniques et organisationnels
             'duree' => $this->duree,
+            'duree_vie' => $this->duree_vie,
+            'investissement_initial' => $this->investissement_initial,
+            'tri' => $this->tri,
+            'van' => $this->van,
+            'flux_tresorerie' => $this->flux_tresorerie,
+            'taux_actualisation' => $this->taux_actualisation,
+
             // Données JSON structurées
             'cout_estimatif_projet' => $this->cout_estimatif_projet ?? [],
 
