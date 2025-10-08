@@ -122,7 +122,7 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
             'liste_presence' => 'required_unless:action,draft|file|mimes:pdf,doc,docx,xls,xlsx,png,jpeg,jpg|max:20480',
 
             // Informations cabinet requises uniquement pour la soumission finale
-            "cabinet_etude" => "required_unless:action,draft|nullable|array|min:4",
+            "cabinet_etude" => "required_unless:action,draft|array",
             'cabinet_etude.nom_cabinet' => 'required_unless:action,draft|string|max:255',
             'cabinet_etude.contact_cabinet' => 'required_unless:action,draft|string|max:255',
             'cabinet_etude.email_cabinet' => 'required_unless:action,draft|email|max:255',
