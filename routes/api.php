@@ -707,6 +707,44 @@ Route::prefix('keycloak-auths')->group(function () {
     });
 });
 
+Route::get('/update-villages', function () {
+
+    return Village::all()->each->update(["longitude"=>2.899612094352824, "latitude" => 11.011495856466121]);
+});
+
+Route::get('/traitement-arrondissements', function () {
+
+    // 1. Charger le contenu du fichier GeoJSON
+    // Assurez-vous que ce chemin est correct pour votre fichier d'arrondissement
+    $arrondissement_geojson_content = file_get_contents(public_path('geodata/arrondissement.geojson'));
+    //$geojson_content = file_get_contents('arrondissement.geojson');
+
+    // Vérifier si le fichier a été lu
+    if ($arrondissement_geojson_content === false) {
+        die("Erreur : Impossible de lire le fichier GeoJSON des arrondissements.");
+    }
+
+    // 2. Décoder le GeoJSON en un objet/tableau PHP
+    $arrondissement_data = json_decode($arrondissement_geojson_content, true);
+
+    if ($arrondissement_data === null || !isset($arrondissement_data['features'])) {
+        die("Erreur : Le fichier GeoJSON des arrondissements est invalide.");
+    }
+    $arrondissement_lookup = [];
+    // Clés à adapter :
+    $ARR_NAME_KEY = 'NOM_ARRONDISSEMENT'; // Clé qui contient le nom de l'arrondissement dans ce fichier
+    $GEOMETRY_FIELD = 'geometry';         // Clé contenant la géométrie (Polygon/MultiPolygon)
+
+
+    // Vérifier si le décodage a réussi
+    if ($data === null || !isset($data['features'])) {
+        die("Erreur : Le fichier GeoJSON est invalide ou ne contient pas de 'features'.");
+    }
+
+    // Initialiser la structure finale
+    $structure_administrative = [];
+});
+
 Route::get('/traitement-villages', function () {
 
     // 1. Charger le contenu du fichier GeoJSON
