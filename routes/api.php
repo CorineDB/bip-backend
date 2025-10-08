@@ -709,7 +709,7 @@ Route::prefix('keycloak-auths')->group(function () {
 
 Route::get('/update-villages', function () {
 
-    return Village::all()->each->update(["longitude"=>2.899612094352824, "latitude" => 11.011495856466121]);
+    //return Village::all()->each->update(["longitude"=>2.899612094352824, "latitude" => 11.011495856466121]);
 });
 
 Route::get('/traitement-arrondissements', function () {
