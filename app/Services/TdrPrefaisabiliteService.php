@@ -1553,9 +1553,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 } else {
                     // Enregistrer la synthèse et recommandations en tant que commentaire
                     $projet->commentaires()->create([
-                        'contenu' => $data['synthese_recommandations'],
-                        'type_commentaire' => 'synthese_recommandations_prefaisabilite',
-                        'auteur_id' => auth()->id(),
+                        'commentaire' => $data['synthese_recommandations'],
+                        //'type_commentaire' => 'synthese_recommandations_prefaisabilite',
+                        //'auteur_id' => auth()->id(),
                     ]);
                 }
             }
