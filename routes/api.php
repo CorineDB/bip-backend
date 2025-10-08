@@ -1,5 +1,6 @@
 <?php
 
+use App\Helpers\SlugHelper;
 use Illuminate\Support\Facades\Route;
 
 // Import all controllers
@@ -752,79 +753,138 @@ Route::get('/traitement-arrondissements', function () {
 Route::get('/traitement-villages', function () {
 
     // 1. Charger le contenu du fichier GeoJSON
+    // NOTE : Remplacez 'data_chef_lieu_village.geojson' par le chemin réel du fichier.
     $geojson_content = file_get_contents(public_path('geodata/data_chef_lieu_village.geojson'));
+    //$geojson_content = file_get_contents('data_chef_lieu_village.geojson');
 
+    // Vérifier si le fichier a été lu
     if ($geojson_content === false) {
-        return response()->json(['error' => "Impossible de lire le fichier GeoJSON."], 500);
+        die("Erreur : Impossible de lire le fichier GeoJSON.");
     }
 
-    // 2. Décoder le GeoJSON
+    // 2. Décoder le GeoJSON en un objet/tableau PHP
     $data = json_decode($geojson_content, true);
 
+    // Vérifier si le décodage a réussi
     if ($data === null || !isset($data['features'])) {
-        return response()->json(['error' => "Le fichier GeoJSON est invalide."], 500);
+        die("Erreur : Le fichier GeoJSON est invalide ou ne contient pas de 'features'.");
     }
 
-    $updated_villages = [];
-    $created_villages = [];
-    $errors = [];
+    // Initialiser la structure finale
+    $structure_administrative = [];
 
-    // 3. Boucler sur les entités
+    // 3. Boucler sur toutes les entités (villages/quartiers)
     foreach ($data['features'] as $feature) {
+        // Récupérer les propriétés (attributs) de l'entité
         $properties = $feature['properties'];
 
-        $arrondissement_name = $properties['Arrondisst'] ?? null;
-        $village_name = $properties['Nom_LOC'] ?? null;
-        $village_code = $properties['Village_Ad'] ?? null;
-        $longitude = $feature['geometry']['coordinates'][0] ?? $properties['Longitude'] ?? null;
-        $latitude = $feature['geometry']['coordinates'][1] ?? $properties['Latitude'] ?? null;
+        // Extraire les noms des niveaux administratifs
+        // Les clés utilisées sont basées sur l'analyse de votre fichier GeoJSON
+        $departement        = $properties['Départeme'] ?? 'INCONNU';
+        $commune            = $properties['Commune'] ?? 'INCONNU';
+        $arrondissement     = $properties['Arrondisst'] ?? 'INCONNU';
+        $villageName        = $properties['Nom_LOC'] ?? 'Village sans nom';
 
-        if (!$arrondissement_name || !$village_name || !$village_code || is_null($longitude) || is_null($latitude)) {
-            $errors[] = "Données incomplètes pour une entité : " . json_encode($properties);
-            continue;
+        $village_name           = Str::title(SlugHelper::rmAccents($villageName)) ?? null;
+        $arrondissementName     = Str::title(SlugHelper::rmAccents($arrondissement)) ?? null;
+
+        $village            = $properties['Village_Ad'] ?? 'Village sans nom';
+
+        // Extraction des coordonnées du village (Long/Lat sont aussi dans properties)
+        $longitude = $properties['Longitude'] ?? null;
+        $latitude  = $properties['Latitude'] ?? null;
+        $code_geo  = $properties['Code_GEO'] ?? null;
+
+        // Récupération des coordonnées depuis la GÉOMÉTRIE (format standard GeoJSON : [Longitude, Latitude])
+        $coordinates = $geometry['coordinates'] ?? [null, null];
+        $longitude   = $coordinates[0];
+        $latitude    = $coordinates[1];
+
+        // Pour la géométrie complète (format GeoJSON: [Long, Lat])
+        $coordinates_geom = $feature['geometry']['coordinates'] ?? [null, null];
+
+        // Extraction des coordonnées du village (Longitude [0], Latitude [1])
+        $coordinates = $feature['geometry']['coordinates'] ?? [null, null];
+
+        // --- 4. CONSTRUCTION HIÉRARCHIQUE (Imbrication par référence) ---
+
+        // 4.1. Traiter le Département
+        if (!isset($structure_administrative[$departement])) {
+            // Enregistrer les coordonnées du premier village rencontré comme point de référence du département
+            $first_point_dep[$departement] = $coordinates;
+
+            // Créer l'entrée du département et initialiser sa sous-structure 'Communes'
+            $structure_administrative[$departement] = [
+                "longitude" => $longitude,
+                "latitude"  => $latitude,
+                "coordinates" => $coordinates, // Long, Lat du point de référence
+                "communes" => []
+            ];
         }
 
-        // 4. Trouver l'arrondissement
-        $arrondissementRecord = DB::table('arrondissements')->where('slug', Str::slug($arrondissement_name))->first();
+        // Pointer vers la sous-structure 'Communes' du département
+        $communes_ref = &$structure_administrative[$departement]["communes"];
 
-        if (!$arrondissementRecord) {
-            $errors[] = "Arrondissement non trouvé pour : " . $arrondissement_name;
-            continue;
+        // 4.2. Traiter la Commune
+        if (!isset($communes_ref[$commune])) {
+            // Enregistrer les coordonnées du premier village rencontré comme point de référence de la commune
+            $first_point_com[$commune] = $coordinates;
+
+            // Créer l'entrée de la commune et initialiser sa sous-structure 'Arrondissements'
+            $communes_ref[$commune] = [
+                "longitude" => $longitude,
+                "latitude"  => $latitude,
+                "coordinates" => $coordinates, // Long, Lat du point de référence
+                "arrondissements" => []
+            ];
         }
 
-        // 5. Mettre à jour ou créer le village
-        try {
-            $village = Village::updateOrCreate(
-                [
-                    'code' => $village_code,
-                    'arrondissementId' => $arrondissementRecord->id
-                ],
-                [
-                    'nom' => Str::title($village_name),
-                    'slug' => Str::slug($village_name),
-                    'latitude' => $latitude,
-                    'longitude' => $longitude,
-                ]
-            );
+        // Pointer vers la sous-structure 'Arrondissements' de la commune
+        $arrondissements_ref = &$communes_ref[$commune]["arrondissements"];
 
-            if ($village->wasRecentlyCreated) {
-                $created_villages[] = $village;
-            } else {
-                $updated_villages[] = $village;
+        // 4.3. Traiter l'Arrondissement
+        if (!isset($arrondissements_ref[$arrondissement])) {
+            // Enregistrer les coordonnées du premier village rencontré comme point de référence de l'arrondissement
+            $first_point_arr[$arrondissement] = $coordinates;
+            // Créer l'entrée de l'arrondissement et initialiser sa liste de 'villages'
+            $arrondissements_ref[$arrondissement] = [
+                "code_geo"  => $code_geo,
+                "longitude" => $longitude,
+                "latitude"  => $latitude,
+                "coordinates" => $coordinates, // Long, Lat du point de référence
+                "villages" => []
+            ];
+        }
+
+        // 4.4. Ajouter le Village (seulement si non déjà présent pour éviter les doublons)
+        $villages_ref = &$arrondissements_ref[$arrondissement]["villages"];
+        // Le village est stocké comme un objet/tableau, non une simple chaîne
+
+        $village_data = [
+            "code_geo"      => $code_geo,
+            "longitude"     => $longitude,
+            "latitude"      => $latitude,
+            "nom"           => $villageName,
+            "code"          => SlugHelper::generateUnique($village_name, 'village'),
+            "coordinates"   => $coordinates // Long, Lat exactes du village
+        ];
+
+
+        // Vérifier si le village (par son nom) est déjà dans la liste avant d'ajouter
+        $exists = false;
+        foreach ($villages_ref as $v) {
+            if ($v["code"] === $village) {
+                $exists = true;
+                break;
             }
-        } catch (\Exception $e) {
-            $errors[] = "Erreur lors du traitement du village " . $village_name . " : " . $e->getMessage();
+        }
+
+        if (!$exists) {
+            $villages_ref[] = $village_data;
         }
     }
 
-    return response()->json([
-        'message' => 'Traitement des villages terminé.',
-        'villages_crees' => count($created_villages),
-        'villages_mis_a_jour' => count($updated_villages),
-        'erreurs' => $errors,
-        //'created' => $created_villages,
-        //'updated' => $updated_villages,
-    ]);
+    return response()->json($structure_administrative);
 });
 
 Route::get('/fusion-arrondissements', function () {
