@@ -62,5 +62,24 @@
    - Type d'évaluation: `pertinence`
    - Controller mis à jour pour utiliser ce Form Request
 
+10. **Correction de la fonction finaliserAutoEvaluationPertinence**
+   - Ligne 2566: Ajout du `return` manquant devant `response()->json()`
+   - Ligne 2616: Suppression du code mort (deuxième `return` inutile)
+   - Message corrigé: "finalisée" au lieu de "réinitialisée"
+   - Nettoyage du code commenté
+
+11. **Finalisation complète de l'évaluation de pertinence**
+   - Ajout de la récupération de l'idée de projet (ligne 2574)
+   - Mise à jour de l'idée de projet avec:
+     - `score_pertinence` (score final pondéré)
+     - `canevas_pertinence` (grille d'évaluation utilisée)
+   - Enregistrement de la décision dans le workflow
+   - Mise à jour de l'évaluation avec:
+     - `resultats_evaluation` (résultats complets)
+     - `score_pertinence` (score final)
+     - `valider_le` (date de validation)
+     - `statut` à 1 (évaluation terminée)
+   - Cohérent avec `finalizeEvaluation` pour l'évaluation climatique
+
 ---
 *Ce fichier sera mis à jour au fur et à mesure de nos échanges*

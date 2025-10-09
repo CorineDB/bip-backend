@@ -130,10 +130,6 @@ class EvaluationController extends Controller
     public function finaliserAutoEvaluationPertinence($evaluationId): JsonResponse
     {
         return $this->service->finaliserAutoEvaluationPertinence($evaluationId);
-        return response()->json([
-            'success' => true,
-            'data' => $result
-        ]);
     }
 
     public function finalizeEvaluation($ideeProjetId) : JsonResponse {

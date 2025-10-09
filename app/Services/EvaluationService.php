@@ -2563,12 +2563,15 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->firstOrFail();
 
             if ($evaluation->statut == 1) {
-                response()->json([
+                return response()->json([
                     'success' => false,
                     'data' => null,
                     'message' => 'Score Auto Évaluation pertinence déjà enregistré',
-                ]);
+                ], 400);
             }
+
+            // Récupérer l'idée de projet
+            $ideeProjet = $evaluation->projetable;
 
             // Calculer les scores de pertinence
             $scoreData = $this->calculateScorePertinence($evaluationId);
@@ -2596,30 +2599,36 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $finalResults['criteres_eligibles'] = $criteresEligibles;
             $finalResults['nombre_evaluateurs'] = $evaluateurs->count();
 
-            // Ajouter score pertinence si c'est une évaluation de pertinence
-            if ($evaluation->type_evaluation === 'pertinence') {
-                $finalResults['score_pertinence'] = $scorePertinence;
-            }
+            // Ajouter score pertinence
+            $finalResults['score_pertinence'] = $scorePertinence;
 
-            // Mettre à jour l'évaluation avec les résultats
+            // Récupérer la grille d'évaluation de pertinence
+            $grillePertinence = CategorieCritere::where('slug', 'grille-evaluation-pertinence-idee-projet')->first();
+
+            // Mettre à jour l'idée de projet avec le score de pertinence
+            $ideeProjet->update([
+                'score_pertinence' => $finalResults['score_final_pondere'],
+                'canevas_pertinence' => $grillePertinence ? (new CategorieCritereResource($grillePertinence))->toArray(request()) : null,
+            ]);
+
+            // Enregistrer la décision
+            $this->enregistrerDecision($ideeProjet, 'Finalisation score pertinence', 'Score pertinence finalisé: ' . ($finalResults['score_final_pondere'] ?? 0));
+
+            // Mettre à jour l'évaluation avec les résultats et marquer comme terminée
             $evaluation->update([
-                'statut' => 0,
                 'resultats_evaluation' => $finalResults,
                 'score_pertinence' => $finalResults['score_final_pondere'],
+                'valider_le' => now(),
+                'statut' => 1  // Marquer comme terminée
             ]);
 
             return response()->json([
                 'success' => true,
                 'data' => $finalResults,
-                'message' => 'Auto-évaluation de pertinence réinitialisée avec succès'
+                'message' => 'Auto-évaluation de pertinence finalisée avec succès'
             ]);
-            return $finalResults;
         } catch (Exception $e) {
             return $this->errorResponse($e);
-            /* return [
-                'success' => false,
-                'message' => 'Erreur lors du calcul du score de pertinence: ' . $e->getMessage()
-            ]; */
         }
     }
 
