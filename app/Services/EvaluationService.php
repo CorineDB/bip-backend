@@ -2738,14 +2738,14 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ], 400);
             }
 
-            if ($evaluation->statut != 1) {
+            /* if ($evaluation->statut != 1) {
                 // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation de pertinence
                 $evaluateurs = User::whereHas('permissions', function ($query) {
                     $query->where('name', 'effectuer-evaluation-pertinence-idee-projet');
                 })->get();
             } else {
                 $evaluateurs = collect();
-            }
+            } */
 
             // Récupérer la grille d'évaluation de pertinence
             $grillePertinence = CategorieCritere::where('slug', 'grille-evaluation-pertinence-idee-projet')
