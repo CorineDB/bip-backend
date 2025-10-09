@@ -2441,15 +2441,14 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             )->where(
                 'projetable_type',
                 get_class($ideeProjet)
-            )
-                ->where('type_evaluation', 'pertinence')
-                ->first();
+            )->where('type_evaluation', 'pertinence')
+             ->first();
 
             if ($ideeProjet->statut != StatutIdee::BROUILLON && ($evaluation?->statut == 1 && $evaluation?->date_fin_evaluation != null)) {
                 throw new Exception("Évaluation de pertinence déjà terminée", 403);
             }
 
-            $is_auto_evaluation = auth()->user()->type == "analyste-dgpd" ? false : true;
+            $is_auto_evaluation = true;
 
             $evaluation = Evaluation::updateOrCreate([
                 'projetable_id' => $ideeProjet->id,

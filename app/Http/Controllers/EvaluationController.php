@@ -121,7 +121,6 @@ class EvaluationController extends Controller
      */
     public function soumettreEvaluationPertinence(SoumettreEvaluationPertinenceRequest $request, $ideeProjetId): JsonResponse
     {
-        dd("Soumettre eval");
         return $this->service->soumettreEvaluationPertinence($request->all(), $ideeProjetId);
     }
 
