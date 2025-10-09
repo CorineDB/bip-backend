@@ -2773,7 +2773,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'evaluation' => $evaluation,
                     'grille_pertinence' => $grillePertinence,
                     'reponses_existantes' => $reponsesExistantes,
-                    'evaluateurs' => $evaluateurs,
                     'peut_evaluer' => auth()->user()->can('effectuer-evaluation-pertinence-idee-projet'),
                     'est_termine' => $evaluation->statut == 1
                 ]
