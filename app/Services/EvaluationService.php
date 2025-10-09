@@ -2510,7 +2510,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'message' => "Évaluation de pertinence " . ($is_auto_evaluation ? "finalisée" : "soumise") . " avec succès",
                 'data' => [
                     'evaluation_id' => $evaluation->id,
-                    'results' => $is_auto_evaluation ? $finalResults : null
                 ]
             ]);
         } catch (Exception $e) {
