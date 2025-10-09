@@ -2802,8 +2802,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             // Récupérer les réponses existantes
             $reponsesExistantes = EvaluationCritere::where('evaluation_id', $evaluation->id)
                 ->with(['critere', 'notation'])
-                ->get()
-                ->keyBy('critere_id');
+                ->get();
 
             return response()->json([
                 'success' => true,
