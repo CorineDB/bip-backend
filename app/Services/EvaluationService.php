@@ -807,7 +807,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         $score_final_pondere = $total_ponderation > 0 ?
             (($total_score_pondere / $total_ponderation) * 100) : 0;
 
-        $critereCount = CategorieCritere::where("slug", $outil == "climatique" ? "evaluation-preliminaire-multi-projet-impact-climatique" : 'grille-analyse-multi-critere')->first()->criteres->count(); //count($results);
+        $critereCount = CategorieCritere::where("slug", $outil == "climatique" ? "evaluation-preliminaire-multi-projet-impact-climatique" : ("pertinence" ? "grille-evaluation-pertinence-idee-projet" : 'grille-analyse-multi-critere'))->first()->criteres->count(); //count($results);
 
         return [
             'scores_ponderes_par_critere' => $results,
@@ -2462,11 +2462,11 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $isAssigned = false;
 
+            $evaluationClimatiqueReponses = [];
             // Traitement des réponses
             foreach ($reponses as $critereId => $reponseData) {
                 $critere = Critere::with('categorie_critere')->findOrFail($reponseData['critere_id']);
                 $notation = Notation::where("id", $reponseData['notation_id'])->where("categorie_critere_id", $critere->categorie_critere_id)->first();
-
 
                 // Créer ou mettre à jour l'évaluation critère
                 $evaluationCritere = EvaluationCritere::updateOrCreate([
@@ -2479,12 +2479,45 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'commentaire' => $reponseData['commentaire'] ?? null,
                     'note' => $notation->valeur,
                     'is_auto_evaluation' => $is_auto_evaluation
-                ]);
+                ])->with(['critere', 'notation', 'categorieCritere']);
 
-                if (!$isAssigned) {
-                    $isAssigned = true;
-                }
+                $evaluationClimatiqueReponses[$critereId] = $evaluationCritere;
             }
+
+            // Récupérer les réponses de l'évaluateur connecté
+            /* $evaluationClimatiqueReponses = EvaluationCritere::forEvaluation($evaluation->id)
+                    ->autoEvaluation()
+                    ->active()
+                    ->byEvaluateur($evaluateurId)
+                    ->with(['critere', 'notation', 'categorieCritere'])
+                    ->get(); */
+
+            if ($evaluation->statut == 0) {
+                $evaluation->update([
+                    "evaluation" => EvaluationCritereResource::collection($evaluationClimatiqueReponses),
+                    //"resultats_evaluation" => []
+                ]);
+            }
+
+            // Calculer les scores de pertinence
+            $scoreData = $this->calculateScorePertinence($evaluation->id);
+            $scorePertinence = $scoreData['score_final_pondere'];
+
+            // Calculer les résultats finaux pour la pertinence
+            $aggregatedScores = (object)[
+                'score_final_pondere' => $scorePertinence,
+                'score_brut' => $scoreData['score_brut'],
+                'total_ponderation' => $scoreData['total_ponderation']
+            ];
+
+            $finalResults = $this->calculateFinalResults($aggregatedScores, "pertinence");
+
+            $evaluation->update([
+                'statut' => 0,
+                'score_pertinence' => $finalResults['score_final_pondere'],
+                "evaluation" => EvaluationCritereResource::collection($evaluationClimatiqueReponses),
+                "resultats_evaluation" => $finalResults
+            ]);
 
             if ($is_auto_evaluation) {
                 /*
