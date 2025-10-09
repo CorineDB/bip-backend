@@ -2475,6 +2475,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'categorie_critere_id' => $critere->categorie_critere_id,
                 ], [
                     'notation_id' => $notation->id,
+                    'evaluateur_id' => auth()->id(),
                     'commentaire' => $reponseData['commentaire'] ?? null,
                     'note' => $notation->valeur,
                     'is_auto_evaluation' => $is_auto_evaluation
