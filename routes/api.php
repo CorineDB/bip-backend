@@ -479,7 +479,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         });
 
         // Routes pour l'évaluation de pertinence des idées de projet
-        Route::prefix('idees-projet/{ideeProjetId}/evaluation-pertinence')->group(function () {
+        Route::prefix('idees-projet/{ideeProjetId}/evaluation-de-la-pertinence')->group(function () {
             Route::post('/', [EvaluationController::class, 'soumettreEvaluationPertinence'])
                 ->name('idees-projet.evaluation-pertinence.create');
             Route::get('/dashboard', [EvaluationController::class, 'getDashboardEvaluationPertinence'])
