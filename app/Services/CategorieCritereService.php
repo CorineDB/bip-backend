@@ -14,12 +14,14 @@ use App\Http\Resources\CategorieCritereResource;
 use App\Http\Resources\ChecklistMesuresAdaptationResource;
 use App\Http\Resources\ChecklistMesuresAdaptationSecteurResource;
 use App\Http\Resources\SecteurResource;
+use App\Models\CategorieCritere;
 use App\Models\Secteur;
 use App\Models\Critere;
 use App\Models\Notation;
 use App\Models\Dossier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CategorieCritereService extends BaseService implements CategorieCritereServiceInterface
 {
@@ -734,14 +736,27 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
         try {
             DB::beginTransaction();
 
-            $grille = $this->repository->findByAttribute('slug', 'grille-evaluation-pertinence-idee-projet');
+            $outil = $this->repository->getCanevasEvaluationDePertinence();
 
             $data["slug"] = 'grille-evaluation-pertinence-idee-projet';
-            if (!$grille) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Grille d\'évaluation de pertinence non trouvée.',
-                ], 404);
+
+            if (!$outil) {
+                // Lancer le seeder si rien n’existe
+                CategorieCritere::firstOrCreate([
+                    'slug' => 'grille-evaluation-pertinence-idee-projet',
+                ], [
+                    'type' => "Outil d'Évaluation de la pertinence d'une idee de projet",
+                    'slug' => 'grille-evaluation-pertinence-idee-projet',
+                    'is_mandatory' => true
+                ]);
+
+                $outil = $this->repository->getCanevasEvaluationDePertinence();
+                if (!$outil) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Impossible de trouver ou créer le canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité."
+                    ], 404);
+                }
             }
 
             // Traiter les documents référentiels s'il y en a
@@ -756,7 +771,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                     $nomsFilesSoumis[] = $nomOriginal;
 
                     // Vérifier si un fichier avec ce nom existe déjà
-                    $fichierExistant = $grille->fichiers()
+                    $fichierExistant = $outil->fichiers()
                         ->where('nom_original', $nomOriginal)
                         ->where('categorie', 'guide-referentiel-pertinence')
                         ->first();
@@ -791,7 +806,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                         ]);
                     } else {
                         // Créer un nouveau fichier avec détails complets
-                        $grille->fichiers()->create([
+                        $outil->fichiers()->create([
                             'nom_original' => $nomOriginal,
                             'nom_stockage' => $nomStockage,
                             'chemin' => $path,
@@ -808,7 +823,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                             'is_active' => true,
                             'metadata' => [
                                 'type_document' => 'guide-referentiel-pertinence',
-                                'grille_id' => $grille->id,
+                                'grille_id' => $outil->id,
                                 'uploaded_context' => 'evaluation-pertinence-idee-projet',
                                 'soumis_par' => auth()->id(),
                                 'soumis_le' => now()->toISOString(),
@@ -819,17 +834,20 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 }
 
                 // Supprimer les fichiers qui ne sont plus soumis
-                $grille->fichiers()
+                $outil->fichiers()
                     ->where('categorie', 'guide-referentiel-pertinence')
                     ->whereNotIn('nom_original', $nomsFilesSoumis)
                     ->forceDelete();
+            }
+            else{
+                throw ValidationException::withMessages(['documents_referentiel' => "Veuillez preciser le documents referentiel d'evaluation de l'idee de projet"], 422);
             }
 
             // Enlever les fichiers des données avant mise à jour
             unset($data['documents_referentiel']);
 
             // Mettre à jour la grille
-            $result = $this->update($grille->id, $data);
+            $result = $this->update($outil->id, $data);
 
             DB::commit();
             return $result;

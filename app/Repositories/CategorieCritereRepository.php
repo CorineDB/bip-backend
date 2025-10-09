@@ -37,7 +37,7 @@ class CategorieCritereRepository extends BaseRepository implements CategorieCrit
 
     public function getCanevasEvaluationDePertinence(): CategorieCritere|null
     {
-        $grille = $this->findByAttribute('slug', 'grille-evaluation-de-la-pertinence');
+        $grille = $this->findByAttribute('slug', 'grille-evaluation-pertinence-idee-projet');
 
         return $grille ? ($grille->load(['criteres.notations', 'fichiers'])) : null;
     }
