@@ -2608,7 +2608,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             })->count();
 
             $finalResults['criteres_eligibles'] = $criteresEligibles;
-            $finalResults['nombre_evaluateurs'] = $evaluateurs->count();
+            $finalResults['nombre_evaluateurs'] = $evaluateurs->count() ?? 1;
 
             // Ajouter score pertinence
             $finalResults['score_pertinence'] = $scorePertinence;
