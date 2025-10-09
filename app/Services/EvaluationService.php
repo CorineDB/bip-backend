@@ -2470,7 +2470,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 // Créer ou mettre à jour l'évaluation critère
                 $evaluationCritere = EvaluationCritere::updateOrCreate([
                     'evaluation_id' => $evaluation->id,
-                    'critere_id' => $critere->id,
+                    'critere_id' => $critereId,//$critere->id,
                     'evaluateur_id' => $evaluateurId
                 ], [
                     'notation_id' => $notation->id,
