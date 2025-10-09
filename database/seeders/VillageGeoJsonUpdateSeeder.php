@@ -128,12 +128,21 @@ class VillageGeoJsonUpdateSeeder extends Seeder
                         'latitude' => $latitude,
                         'longitude' => $longitude
                     ]); */
-                    Village::update(['id' => $villageRecord->id], [
+                    $village = Village::find($villageRecord->id);
+
+                    $this->command->info("Before Mise à jour (Upsert) des villages par GeoJSON terminée. Village : $index {$village->id} {$village->nom} {$village->slug} {$village->latitude} {$village->longitude}");
+
+
+                    $this->command->info("Log Lat $index {$latitude} {$longitude}");
+
+                    $village->update([
                         'latitude' => $latitude,
                         'longitude' => $longitude
                     ]);
-                }
-                /*
+
+                    $this->command->info("AFter Mise à jour (Upsert) des villages par GeoJSON terminée. Village : $index {$village->id} {$village->nom} {$village->slug} {$village->latitude} {$village->longitude}");
+
+                }/*
                 else{
 
                     $code = $arrondRecord->code . '-' . str_pad($index + 1, 2, '0', STR_PAD_LEFT);
