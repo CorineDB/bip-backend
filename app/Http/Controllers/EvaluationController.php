@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\evaluations\AMCRequest;
-use Illuminate\Http\Request;
 use App\Http\Requests\evaluations\StoreEvaluationRequest;
 use App\Http\Requests\evaluations\UpdateEvaluationRequest;;
 use App\Http\Requests\evaluations\SoumettreEvaluationClimatiqueIdeeRequest;
+use App\Http\Requests\evaluations\SoumettreEvaluationPertinenceRequest;
 use App\Http\Requests\evaluations\ValidationIdeeProjetAProjetRequest;
 use App\Http\Requests\evaluations\ValidationIdeeProjetRequest;
 use App\Services\Contracts\EvaluationServiceInterface;
@@ -119,7 +119,7 @@ class EvaluationController extends Controller
     /**
      * Soumettre l'évaluation de pertinence.
      */
-    public function soumettreEvaluationPertinence(Request $request, $ideeProjetId): JsonResponse
+    public function soumettreEvaluationPertinence(SoumettreEvaluationPertinenceRequest $request, $ideeProjetId): JsonResponse
     {
         return $this->service->soumettreEvaluationPertinence($request->all(), $ideeProjetId);
     }

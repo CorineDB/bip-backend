@@ -54,5 +54,13 @@
      - `updateGrilleEvaluationPertinence()` (ligne 357)
      - `getGrilleEvaluationPertinenceAvecEvaluations()` (ligne 365)
 
+9. **Création du Form Request pour l'évaluation de pertinence**
+   - Fichier créé: `app/Http/Requests/evaluations/SoumettreEvaluationPertinenceRequest.php`
+   - Basé sur `SoumettreEvaluationClimatiqueIdeeRequest`
+   - Validations spécifiques pour la grille d'évaluation de pertinence
+   - Utilisation du slug: `grille-evaluation-pertinence-idee-projet`
+   - Type d'évaluation: `pertinence`
+   - Controller mis à jour pour utiliser ce Form Request
+
 ---
 *Ce fichier sera mis à jour au fur et à mesure de nos échanges*
