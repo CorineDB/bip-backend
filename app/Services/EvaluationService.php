@@ -2464,8 +2464,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             // Traitement des réponses
             foreach ($reponses as $critereId => $reponseData) {
-                $critere = Critere::find($critereId);
-                dd($critere);
+                /*$critere = Critere::find($critereId);*/
                 $notation = Notation::findOrFail($reponseData['notation_id']);
 
                 // Créer ou mettre à jour l'évaluation critère
