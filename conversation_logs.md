@@ -95,5 +95,12 @@
    - Retourne une erreur 404 avec un message explicite si la notation n'est pas trouvée
    - Rollback de la transaction avant de retourner l'erreur
 
+14. **Ajout de l'endpoint pour finaliser l'évaluation de pertinence**
+   - Route ajoutée dans `routes/api.php` (ligne 496)
+   - Endpoint: `POST /evaluations/{evaluationId}/pertinence/valider-score`
+   - Nom de la route: `evaluations.pertinence.finalize`
+   - Appelle la méthode `finaliserAutoEvaluationPertinence` du controller
+   - Cohérent avec la structure des routes d'évaluation de pertinence existantes
+
 ---
 *Ce fichier sera mis à jour au fur et à mesure de nos échanges*
