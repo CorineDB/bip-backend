@@ -2468,6 +2468,14 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $critere = Critere::with('categorie_critere')->findOrFail($reponseData['critere_id']);
                 $notation = Notation::where("id", $reponseData['notation_id'])->where("categorie_critere_id", $critere->categorie_critere_id)->first();
 
+                if (!$notation) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Notation non trouvée avec l\'ID: ' . $reponseData['notation_id'],
+                    ], 404);
+                }
+
                 // Créer ou mettre à jour l'évaluation critère
                 $evaluationCritere = EvaluationCritere::updateOrCreate([
                     'evaluation_id' => $evaluation->id,
@@ -2479,7 +2487,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'commentaire' => $reponseData['commentaire'] ?? null,
                     'note' => $notation->valeur,
                     'is_auto_evaluation' => $is_auto_evaluation
-                ])->with(['critere', 'notation', 'categorieCritere']);
+                ]);
+
+                // Charger les relations
+                $evaluationCritere->load(['critere', 'notation', 'categorieCritere']);
 
                 $evaluationClimatiqueReponses[$critereId] = $evaluationCritere;
             }

@@ -81,5 +81,19 @@
      - `statut` à 1 (évaluation terminée)
    - Cohérent avec `finalizeEvaluation` pour l'évaluation climatique
 
+12. **Correction de soumettreEvaluationPertinence**
+   - Ligne 2482: Erreur de syntaxe - `with()` ne peut pas être appelé sur `updateOrCreate()`
+   - Séparation en deux étapes:
+     - `updateOrCreate()` pour créer/mettre à jour
+     - `load()` pour charger les relations
+   - Les relations chargées: `critere`, `notation`, `categorieCritere`
+
+13. **Ajout de validation pour la notation (soumettreEvaluationPertinence)**
+   - Erreur: "Property [id] does not exist on the Eloquent builder instance"
+   - Cause: `$notation` pouvait être `null` si la notation n'était pas trouvée
+   - Solution: Ajout d'une vérification `if (!$notation)` (ligne 2471)
+   - Retourne une erreur 404 avec un message explicite si la notation n'est pas trouvée
+   - Rollback de la transaction avant de retourner l'erreur
+
 ---
 *Ce fichier sera mis à jour au fur et à mesure de nos échanges*
