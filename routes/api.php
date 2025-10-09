@@ -482,7 +482,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::prefix('idees-projet/{ideeProjetId}/evaluation-de-la-pertinence')->group(function () {
             Route::post('/', [EvaluationController::class, 'soumettreEvaluationPertinence'])
                 ->name('idees-projet.evaluation-pertinence.create');
-            Route::get('/dashboard', [EvaluationController::class, 'getDashboardEvaluationPertinence'])
+            Route::get('/', [EvaluationController::class, 'getDashboardEvaluationPertinence'])
                 ->name('idees-projet.evaluation-pertinence.dashboard');
             Route::post('/refaire', [EvaluationController::class, 'refaireAutoEvaluationPertinence'])
                 ->name('idees-projet.evaluation-pertinence.refaire');
