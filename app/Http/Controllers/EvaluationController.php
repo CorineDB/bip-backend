@@ -90,12 +90,12 @@ class EvaluationController extends Controller
         return $this->service->validationIdeeDeProjetAProjet($ideeProjetId, $request->all());
     }
 
-    public function getDecisionsValiderIdeeDeProjet($ideeProjetId): JsonResponse 
+    public function getDecisionsValiderIdeeDeProjet($ideeProjetId): JsonResponse
     {
         return $this->service->getDecisionsValiderIdeeDeProjet($ideeProjetId);
     }
 
-    public function getDecisionsValidationIdeeDeProjetAProjet($ideeProjetId): JsonResponse 
+    public function getDecisionsValidationIdeeDeProjetAProjet($ideeProjetId): JsonResponse
     {
         return $this->service->getDecisionsValidationIdeeDeProjetAProjet($ideeProjetId);
     }
@@ -121,6 +121,7 @@ class EvaluationController extends Controller
      */
     public function soumettreEvaluationPertinence(SoumettreEvaluationPertinenceRequest $request, $ideeProjetId): JsonResponse
     {
+        dd("Soumettre eval");
         return $this->service->soumettreEvaluationPertinence($request->all(), $ideeProjetId);
     }
 
