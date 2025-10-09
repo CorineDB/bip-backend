@@ -8,6 +8,7 @@ use App\Http\Resources\LieuInterventionResource;
 use App\Http\Resources\NoteConceptuelleResource;
 use App\Http\Resources\SecteurResourcePublic;
 use App\Http\Resources\TdrResource;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ProjetsResource extends BaseApiResource
@@ -61,7 +62,9 @@ class ProjetsResource extends BaseApiResource
             // Données JSON structurées
             'cout_estimatif_projet' => $this->cout_estimatif_projet ?? [],
 
-            'secteur' => new SecteurResourcePublic($this->secteur)
+            'secteur' => new SecteurResourcePublic($this->secteur),
+            'created_at' => Carbon::parse($this->created_at)->format("Y-m-d H:i:s"),
+            'updated_at' => Carbon::parse($this->updated_at)->format("Y-m-d H:i:s"),
         ];
     }
 

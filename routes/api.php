@@ -479,7 +479,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         });
 
         // Routes pour l'évaluation de pertinence des idées de projet
-        /*Route::prefix('idees-projet/{ideeProjetId}/evaluation-pertinence')->group(function () {
+        Route::prefix('idees-projet/{ideeProjetId}/evaluation-pertinence')->group(function () {
             Route::post('/', [EvaluationController::class, 'soumettreEvaluationPertinence'])
                 ->name('idees-projet.evaluation-pertinence.create');
             Route::get('/dashboard', [EvaluationController::class, 'getDashboardEvaluationPertinence'])
@@ -490,7 +490,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         // Route pour obtenir le score de pertinence
         Route::get('evaluations/{evaluationId}/pertinence/score', [EvaluationController::class, 'getScorePertinence'])
-            ->name('evaluations.pertinence.score');*/
+            ->name('evaluations.pertinence.score');
 
         // Evaluation Criteria Management
         Route::apiResource('categories-critere', \App\Http\Controllers\CategorieCritereController::class)
@@ -513,7 +513,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         });
 
         // Grille d'évaluation de pertinence
-        /*Route::prefix('grille-evaluation-pertinence')->group(function () {
+        Route::prefix('grille-evaluation-pertinence')->group(function () {
             Route::get('/', [\App\Http\Controllers\CategorieCritereController::class, 'getGrilleEvaluationPertinence'])
                 ->name('grille-evaluation-pertinence.get');
             Route::post('/', [\App\Http\Controllers\CategorieCritereController::class, 'updateGrilleEvaluationPertinence'])
@@ -521,7 +521,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::get('/{idee_projet_id}', [\App\Http\Controllers\CategorieCritereController::class, 'getGrilleEvaluationPertinenceAvecEvaluations'])
                 ->name('grille-evaluation-pertinence.get-avec-evaluations')
                 ->where('idee_projet_id', '[0-9]+');
-        });*/
+        });
 
         // Checklist des mesures d'adaptation pour projets à haut risque
         Route::get('checklist-mesures-adaptation/{id}/secteur', [\App\Http\Controllers\CategorieCritereController::class, 'getChecklistMesuresAdaptationSecteur'])

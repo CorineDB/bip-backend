@@ -97,6 +97,10 @@ class VillageGeoJsonUpdateSeeder extends Seeder
         $villagesMap = DB::table('villages')
             ->get(['id', 'code', 'slug', 'nom', 'arrondissementId'])
             ->keyBy(fn($item) => $normalize($item->nom));
+        $villagesMap = DB::table('villages')
+            ->get(['id', 'code', 'slug', 'nom', 'arrondissementId'])
+            ->keyBy(fn($item) => $item->arrondissementId . '-' . $normalize($item->nom));
+
         // La clé ici est le nom normalisé (sans accents/caractères spéciaux)
 
         $codesToKeep = [];
@@ -120,7 +124,7 @@ class VillageGeoJsonUpdateSeeder extends Seeder
             $arrondRecord = $arrondissementsMap->get($arrondNormalizedKey);
 
             if ($arrondRecord) {
-                $villageNormalizedKey = $normalize($villageName);
+                $villageNormalizedKey = $arrondRecord->id . '-' . $normalize($villageName);
                 $villageRecord = $villagesMap->get($villageNormalizedKey);
 
                 if ($villageRecord) {/*
@@ -142,27 +146,23 @@ class VillageGeoJsonUpdateSeeder extends Seeder
 
                     $this->command->info("AFter Mise à jour (Upsert) des villages par GeoJSON terminée. Village : $index {$village->id} {$village->nom} {$village->slug} {$village->latitude} {$village->longitude}");
 
-                }/*
+                }
                 else{
 
                     $code = $arrondRecord->code . '-' . str_pad($index + 1, 2, '0', STR_PAD_LEFT);
-                    //$slug = Str::slug($quartier["lib_quart"]);
                     $slug = Str::slug(SlugHelper::generateUnique($villageName, Village::class));
 
-                    Village::updateOrCreate([
+                    $villagesData[] = [
                         'code' => $code,
                         'slug' => $slug,
-                        'arrondissementId' => $arrondRecord->id
-                    ], [
-
-                        'code' => $code,
                         'nom' => Str::title($villageName),
-                        'slug' => $slug,
                         'arrondissementId' => $arrondRecord->id,
+                        'longitude' => $longitude,
+                        'latitude' => $latitude,
                         'created_at' => now(),
                         'updated_at' => now(),
-                    ]);
-                }*/
+                    ];
+                }
             }
         }
 

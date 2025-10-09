@@ -108,6 +108,34 @@ class EvaluationController extends Controller
         return $this->service->getDashboardEvaluationClimatique($ideeProjetId);
     }
 
+    /**
+     * Dashboard évaluation de pertinence.
+     */
+    public function getDashboardEvaluationPertinence($ideeProjetId): JsonResponse
+    {
+        return $this->service->getDashboardEvaluationPertinence($ideeProjetId);
+    }
+
+    /**
+     * Soumettre l'évaluation de pertinence.
+     */
+    public function soumettreEvaluationPertinence(Request $request, $ideeProjetId): JsonResponse
+    {
+        return $this->service->soumettreEvaluationPertinence($request->all(), $ideeProjetId);
+    }
+
+    /**
+     * Finaliser l'auto-évaluation de pertinence.
+     */
+    public function finaliserAutoEvaluationPertinence($evaluationId): JsonResponse
+    {
+        $result = $this->service->finaliserAutoEvaluationPertinence($evaluationId);
+        return response()->json([
+            'success' => true,
+            'data' => $result
+        ]);
+    }
+
     public function finalizeEvaluation($ideeProjetId) : JsonResponse {
         return $this->service->finalizeEvaluation($ideeProjetId);
     }

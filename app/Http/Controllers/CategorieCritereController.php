@@ -344,6 +344,30 @@ class CategorieCritereController extends Controller
     }
 
     /**
+     * Récupérer la grille d'évaluation de pertinence
+     */
+    public function getGrilleEvaluationPertinence(): JsonResponse
+    {
+        return $this->service->getGrilleEvaluationPertinence();
+    }
+
+    /**
+     * Mettre à jour la grille d'évaluation de pertinence
+     */
+    public function updateGrilleEvaluationPertinence(UpdateCategorieCritereRequest $request): JsonResponse
+    {
+        return $this->service->updateGrilleEvaluationPertinence($request->all());
+    }
+
+    /**
+     * Récupérer la grille d'évaluation de pertinence avec les évaluations pour une idée de projet
+     */
+    public function getGrilleEvaluationPertinenceAvecEvaluations($ideeProjetId): JsonResponse
+    {
+        return $this->service->getGrilleEvaluationPertinenceAvecEvaluations($ideeProjetId);
+    }
+
+    /**
      * Récupérer la checklist des mesures d'adaptation pour projets à haut risque
      */
     public function getChecklistMesuresAdaptationSecteur($idSecteur): JsonResponse

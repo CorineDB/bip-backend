@@ -7,6 +7,7 @@ use App\Http\Resources\CibleResource;
 use App\Http\Resources\FinancementResource;
 use App\Http\Resources\LieuInterventionResource;
 use App\Http\Resources\OddResource;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class IdeeProjetResource extends BaseApiResource
@@ -135,8 +136,8 @@ class IdeeProjetResource extends BaseApiResource
             }),
 
             // Timestamps
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at
+            'created_at' => Carbon::parse($this->created_at)->format("Y-m-d H:i:s"),
+            'updated_at' => Carbon::parse($this->updated_at)->format("Y-m-d H:i:s"),
         ];
     }
 

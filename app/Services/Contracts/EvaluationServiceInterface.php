@@ -18,4 +18,9 @@ interface EvaluationServiceInterface extends AbstractServiceInterface
     public function validationIdeeDeProjetAProjet($ideeProjetId, array $attributs): JsonResponse;
     public function getDecisionsValiderIdeeDeProjet($ideeProjetId): JsonResponse;
     public function getDecisionsValidationIdeeDeProjetAProjet($ideeProjetId): JsonResponse;
+
+    public function soumettreEvaluationPertinence(array $data, $ideeProjetId): JsonResponse;
+    public function finaliserAutoEvaluationPertinence($evaluationId): array;
+    public function refaireAutoEvaluationPertinence($ideeProjetId): JsonResponse;
+    public function getDashboardEvaluationPertinence($ideeProjetId): JsonResponse;
 }

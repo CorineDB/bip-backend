@@ -7,6 +7,7 @@ use App\Http\Resources\CibleResource;
 use App\Http\Resources\FinancementResource;
 use App\Http\Resources\LieuInterventionResource;
 use App\Http\Resources\OddResource;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class IdeesProjetResource extends BaseApiResource
@@ -53,7 +54,9 @@ class IdeesProjetResource extends BaseApiResource
             // Détails techniques et organisationnels
             'duree' => $this->duree,
             // Données JSON structurées
-            'cout_estimatif_projet' => $this->cout_estimatif_projet ?? []
+            'cout_estimatif_projet' => $this->cout_estimatif_projet ?? [],
+            'created_at' => Carbon::parse($this->created_at)->format("Y-m-d H:i:s"),
+            'updated_at' => Carbon::parse($this->updated_at)->format("Y-m-d H:i:s"),
         ];
     }
 
