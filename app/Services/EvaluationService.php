@@ -586,10 +586,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'phase' => $this->getPhaseFromStatut(StatutIdee::IDEE_DE_PROJET),
                 'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::IDEE_DE_PROJET),
 
-                    // Enregistrer le canevas climatique dans l'idée projet
-                    /**
-                     * Enregistrement du canevas utiliser pour l'evaluation climatique dans l'idée projet
-                     */
+                // Enregistrer le canevas climatique dans l'idée projet
+                /**
+                 * Enregistrement du canevas utiliser pour l'evaluation climatique dans l'idée projet
+                 */
                 'canevas_climatique' => $grilleEvaluation ? (new CategorieCritereResource($grilleEvaluation))->toArray(request()) : null,
             ]);
 
@@ -2442,7 +2442,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'projetable_type',
                 get_class($ideeProjet)
             )->where('type_evaluation', 'pertinence')
-             ->first();
+                ->first();
 
             if ($ideeProjet->statut != StatutIdee::BROUILLON && ($evaluation?->statut == 1 && $evaluation?->date_fin_evaluation != null)) {
                 throw new Exception("Évaluation de pertinence déjà terminée", 403);
@@ -2487,6 +2487,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             }
 
             if ($is_auto_evaluation) {
+                /*
                 // Calculer et enregistrer le score automatiquement
                 $finalResults = $this->finaliserAutoEvaluationPertinence($evaluation->id);
 
@@ -2499,6 +2500,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
                 // Enregistrer la décision
                 $this->enregistrerDecision($ideeProjet, 'Finalisation score pertinence', 'Score pertinence finalisé: ' . ($finalResults['score_final_pondere'] ?? 0));
+                */
             }
 
             DB::commit();
@@ -2511,7 +2513,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'results' => $is_auto_evaluation ? $finalResults : null
                 ]
             ]);
-
         } catch (Exception $e) {
             DB::rollBack();
             return $this->errorResponse($e);
@@ -2521,7 +2522,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     /**
      * Finaliser une auto-évaluation de pertinence
      */
-    public function finaliserAutoEvaluationPertinence($evaluationId): array
+    public function finaliserAutoEvaluationPertinence($evaluationId): JsonResponse
     {
         try {
             // Vérifier que l'évaluation de pertinence existe
@@ -2530,11 +2531,11 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->firstOrFail();
 
             if ($evaluation->statut == 1) {
-                return [
+                response()->json([
                     'success' => false,
+                    'data' => null,
                     'message' => 'Score Auto Évaluation pertinence déjà enregistré',
-                    'score_pertinence' => 0,
-                ];
+                ]);
             }
 
             // Calculer les scores de pertinence
@@ -2568,17 +2569,25 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $finalResults['score_pertinence'] = $scorePertinence;
             }
 
+            // Mettre à jour l'évaluation avec les résultats
             $evaluation->update([
+                'statut' => 0,
+                'resultats_evaluation' => $finalResults,
                 'score_pertinence' => $finalResults['score_final_pondere'],
             ]);
 
+            return response()->json([
+                'success' => true,
+                'data' => $finalResults,
+                'message' => 'Auto-évaluation de pertinence réinitialisée avec succès'
+            ]);
             return $finalResults;
-
         } catch (Exception $e) {
-            return [
+            return $this->errorResponse($e);
+            /* return [
                 'success' => false,
                 'message' => 'Erreur lors du calcul du score de pertinence: ' . $e->getMessage()
-            ];
+            ]; */
         }
     }
 
@@ -2618,7 +2627,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'success' => true,
                 'message' => 'Auto-évaluation de pertinence réinitialisée avec succès'
             ]);
-
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -2697,7 +2705,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'date_fin' => $evaluation->date_fin_evaluation
                 ]
             ]);
-
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -2778,7 +2785,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'est_termine' => $evaluation->statut == 1
                 ]
             ]);
-
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -2823,7 +2829,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ]);
 
             return true;
-
         } catch (Exception $e) {
             \Log::error('Erreur lors de la mise à jour du score de pertinence: ' . $e->getMessage());
             return false;
