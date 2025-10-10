@@ -58,10 +58,12 @@ class TdrResource extends BaseApiResource
             'evaluateur' => $this->whenLoaded('evaluateur', function(){
                 return new UserResource($this->evaluateur);
             }),
-            'historique_des_tdrs_prefaisabilite' =>  $this->whenLoaded("historique_des_tdrs_prefaisabilite", function(){
+            'historique_des_tdrs_faisabilite' =>  $this->historique_des_tdrs_faisabilite,
+            'historique_des_tdrs_faisabilite' =>  $this->historique_des_tdrs_faisabilite,
+            'historique_des_tdrs_prefaisabilite' =>  $this->historique_des_tdrs_prefaisabilite/* $this->whenLoaded("historique_des_tdrs_prefaisabilite", function(){
                 return $this->historique_des_tdrs_prefaisabilite;
-            }),
-            "historique_des_evaluations_tdrs_prefaisabilite" => $this->whenLoaded("historique_des_evaluations_tdrs_prefaisabilite", function(){
+            }) */,
+            "historique_des_evaluations_tdrs_prefaisabilite" => $this->historique_des_evaluations_tdrs_prefaisabilite /* $this->whenLoaded("historique_des_evaluations_tdrs_prefaisabilite", function(){
                 $this->historique_des_evaluations_tdrs_prefaisabilite->pluck("evaluations")->collapse()->map(function($evaluation){
                     return [
                         'id' => $evaluation->id,
@@ -76,7 +78,7 @@ class TdrResource extends BaseApiResource
                         'statut' => $evaluation->statut
                     ];
                 });
-            }),
+            }) */,
 
             // Fichiers par type
             'fichier_tdr' => $this->whenLoaded('fichiers', function() {
