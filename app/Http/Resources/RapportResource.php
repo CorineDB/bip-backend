@@ -52,7 +52,16 @@ class RapportResource extends BaseApiResource
             }),
             'validateur' => $this->whenLoaded('validateur', function(){
                 return new UserResource($this->validateur);
-            }),/*
+            }),
+
+            'historique_des_rapports' =>  $this->when(($this->type == 'faisabilite' || $this->type == 'prefaisabilite'), function(){
+                return $this->type == 'faisabilite' ? $this->historique_des_rapports_faisabilite : $this->historique_des_rapports_prefaisabilite;
+            }),
+            'historique_des_evaluations_rapports' =>  $this->when(($this->type == 'faisabilite' || $this->type == 'prefaisabilite'), function(){
+                return $this->type == 'faisabilite' ? $this->historique_des_evaluations_rapports_faisabilite : $this->historique_des_evaluations_rapports_prefaisabilite;
+            }),
+
+            /*
             'parent' => $this->whenLoaded('parent', new self($this->parent)),
             'enfants' => $this->whenLoaded('enfants', self::collection($this->enfants)), */
 

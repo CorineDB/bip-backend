@@ -37,7 +37,9 @@ class NoteConceptuelleResource extends BaseApiResource
             'note_conceptuelle' => $this->note_conceptuelle,
             'projet' => $this->whenLoaded('projet', fn() => new ProjetsResource($this->projet)),
             'decision' => $this->decision,
-            'historique_des_notes_conceptuelle' =>  $this->whenLoaded("historique_des_notes_conceptuelle", function(){
+            'historique_des_notes_conceptuelle' => $this->historique_des_notes_conceptuelle,
+            'historique_des_evaluations_notes_conceptuelle' => $this->historique_des_evaluations_notes_conceptuelle,
+            /*'historique_des_notes_conceptuelle' =>  $this->whenLoaded("historique_des_notes_conceptuelle", function(){
                 return $this->historique_des_notes_conceptuelle;
             }),
             "historique_des_evaluations_notes_conceptuelle" => $this->whenLoaded("historique_des_evaluations_notes_conceptuelle", function(){
@@ -55,7 +57,7 @@ class NoteConceptuelleResource extends BaseApiResource
                         'statut' => $evaluation->statut
                     ];
                 });
-            }),
+            }),*/
             'champs' => $this->whenLoaded('champs', function() {
                 return $this->champs->map(function ($champ) {
                     return [
