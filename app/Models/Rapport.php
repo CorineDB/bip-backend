@@ -275,28 +275,52 @@ class Rapport extends Model
         ];
     }
 
+
+
     /**
      * Relation avec tous les TDRs du projet
      */
-    public function historique_des_notes_conceptuelle()
+    public function historique_des_rapports_prefaisabilite()
     {
-        /* return $this->hasMany(NoteConceptuelle::class, 'projetId', 'projetId')
-                    ->where('id', '!=', $this->id)
-                    ->orderBy('created_at', 'desc'); */
         if ($this->projet) {
-            return $this->projet->notes_conceptuelle()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
+            return $this->projet->rapports_prefaisabilite()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
         }
         // Return a query builder that will result in an empty set if no projet is associated
-        return $this->hasMany(NoteConceptuelle::class, 'projetId', 'projetId')->whereRaw('0 = 1');
+        return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')->whereRaw('0 = 1');
     }
 
     /**
      * Relation avec tous les TDRs du projet
      */
-    public function historique_des_evaluations_notes_conceptuelle()
+    public function historique_des_evaluations_rapports_prefaisabilite()
     {
-        return $this->historique_des_notes_conceptuelle()->with(["evaluations" => function($query){
+        return $this->historique_des_rapports_prefaisabilite()->with(["evaluations" => function($query){
             $query/* ->evaluationTermine("note-conceptuelle")->first() */;
         }]);
     }
+
+
+
+    /**
+     * Relation avec tous les TDRs du projet
+     */
+    public function historique_des_rapports_faisabilite()
+    {
+        if ($this->projet) {
+            return $this->projet->rapports_faisabilite()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
+        }
+        // Return a query builder that will result in an empty set if no projet is associated
+        return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')->whereRaw('0 = 1');
+    }
+
+    /**
+     * Relation avec tous les TDRs du projet
+     */
+    public function historique_des_evaluations_rapports_faisabilite()
+    {
+        return $this->historique_des_rapports_faisabilite()->with(["evaluations" => function($query){
+            $query/* ->evaluationTermine("note-conceptuelle")->first() */;
+        }]);
+    }
+
 }

@@ -211,7 +211,7 @@ class Tdr extends Model
             return $this->projet->tdrs_prefaisabilite()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
         }
         // Return a query builder that will result in an empty set if no projet is associated
-        return $this->hasMany(Tdr::class, 'projetId', 'projetId')->whereRaw('0 = 1');
+        return $this->hasMany(Tdr::class, 'projet_id', 'projet_id')->whereRaw('0 = 1');
     }
 
     /**
@@ -235,7 +235,7 @@ class Tdr extends Model
             return $this->projet->tdrs_faisabilite()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
         }
         // Return a query builder that will result in an empty set if no projet is associated
-        return $this->hasMany(Tdr::class, 'projetId', 'projetId')->whereRaw('0 = 1');
+        return $this->hasMany(Tdr::class, 'projet_id', 'projet_id')->whereRaw('0 = 1');
     }
 
     /**
