@@ -283,7 +283,7 @@ class Rapport extends Model
     public function historique_des_rapports_prefaisabilite()
     {
         if ($this->projet) {
-            return $this->projet->rapports_prefaisabilite()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
+            return $this->projet->rapportsPrefaisabilite()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
         }
         // Return a query builder that will result in an empty set if no projet is associated
         return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')->whereRaw('0 = 1');
@@ -307,7 +307,7 @@ class Rapport extends Model
     public function historique_des_rapports_faisabilite()
     {
         if ($this->projet) {
-            return $this->projet->rapports_faisabilite()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
+            return $this->projet->rapportsFaisabilite()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
         }
         // Return a query builder that will result in an empty set if no projet is associated
         return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')->whereRaw('0 = 1');
