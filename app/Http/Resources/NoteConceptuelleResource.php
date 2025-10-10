@@ -52,22 +52,7 @@ class NoteConceptuelleResource extends BaseApiResource
                         'commentaire' => $evaluation->commentaire,
                         'evaluation' => $evaluation->evaluation,
                         'resultats_evaluation' => $evaluation->resultats_evaluation,
-                        'statut' => $evaluation->statut,
-                        //'champs' => collect($noteConceptuelle->note_conceptuelle)->map(function ($champ) use ($evaluation) {
-                        'champs' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluation) {
-                            $champ_evalue = collect($evaluation->champs_evalue)
-                                ->firstWhere('attribut', $champ["attribut"]);
-                            return [
-                                'id' => $champ["id"],
-                                'label' => $champ["label"],
-                                'attribut' => $champ["attribut"],
-                                'valeur' => $champ["valeur"],
-                                'appreciation' => $champ_evalue ? $champ_evalue["pivot"]["note"] : null,
-                                'commentaire' => $champ_evalue ? $champ_evalue["pivot"]["commentaires"] : null,
-                                'date_note' => $champ_evalue ? $champ_evalue["pivot"]["date_note"] : null,
-                                'updated_at' => $champ_evalue ? $champ_evalue["pivot"]["updated_at"] : null,
-                            ];
-                        }),
+                        'statut' => $evaluation->statut
                     ];
                 });
             }),

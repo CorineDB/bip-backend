@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Http\Resources\projets\ProjetsResource;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class TdrResource extends BaseApiResource
@@ -56,6 +57,25 @@ class TdrResource extends BaseApiResource
             }),
             'evaluateur' => $this->whenLoaded('evaluateur', function(){
                 return new UserResource($this->evaluateur);
+            }),
+            'historique_des_tdrs_prefaisabilite' =>  $this->whenLoaded("historique_des_tdrs_prefaisabilite", function(){
+                return $this->historique_des_tdrs_prefaisabilite;
+            }),
+            "historique_des_evaluations_tdrs_prefaisabilite" => $this->whenLoaded("historique_des_evaluations_tdrs_prefaisabilite", function(){
+                $this->historique_des_evaluations_tdrs_prefaisabilite->pluck("evaluations")->collapse()->map(function($evaluation){
+                    return [
+                        'id' => $evaluation->id,
+                        'type_evaluation' => $evaluation->type_evaluation,
+                        'date_debut_evaluation' => $evaluation->date_debut_evaluation ? Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
+                        'date_fin_evaluation' => $evaluation->date_fin_evaluation ? Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
+                        'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
+                        'valider_par' => $evaluation->valider_par,
+                        'commentaire' => $evaluation->commentaire,
+                        'evaluation' => $evaluation->evaluation,
+                        'resultats_evaluation' => $evaluation->resultats_evaluation,
+                        'statut' => $evaluation->statut
+                    ];
+                });
             }),
 
             // Fichiers par type

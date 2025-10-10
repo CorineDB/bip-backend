@@ -11,7 +11,7 @@ class UpdateCommentaireRequest extends FormRequest
     public function authorize(): bool
     {
         // Optionnel : vérifier que l'utilisateur est le commentateur
-        return auth()->check() && $this->commentaire->commentateurId === auth()->id();
+        return auth()->check() /*&& $this->commentaire->commentateurId === auth()->id()*/;
     }
 
     public function rules(): array

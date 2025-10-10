@@ -203,6 +203,52 @@ class Tdr extends Model
     }
 
     /**
+     * Relation avec tous les TDRs du projet
+     */
+    public function historique_des_tdrs_prefaisabilite()
+    {
+        if ($this->projet) {
+            return $this->projet->tdrs_prefaisabilite()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
+        }
+        // Return a query builder that will result in an empty set if no projet is associated
+        return $this->hasMany(Tdr::class, 'projetId', 'projetId')->whereRaw('0 = 1');
+    }
+
+    /**
+     * Relation avec tous les TDRs du projet
+     */
+    public function historique_des_evaluations_tdrs_prefaisabilite()
+    {
+        return $this->historique_des_tdrs_prefaisabilite()->with(["evaluations" => function($query){
+            $query/* ->evaluationTermine("note-conceptuelle")->first() */;
+        }]);
+    }
+
+
+
+    /**
+     * Relation avec tous les TDRs du projet
+     */
+    public function historique_des_tdrs_faisabilite()
+    {
+        if ($this->projet) {
+            return $this->projet->tdrs_faisabilite()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
+        }
+        // Return a query builder that will result in an empty set if no projet is associated
+        return $this->hasMany(Tdr::class, 'projetId', 'projetId')->whereRaw('0 = 1');
+    }
+
+    /**
+     * Relation avec tous les TDRs du projet
+     */
+    public function historique_des_evaluations_tdrs_faisabilite()
+    {
+        return $this->historique_des_tdrs_faisabilite()->with(["evaluations" => function($query){
+            $query/* ->evaluationTermine("note-conceptuelle")->first() */;
+        }]);
+    }
+
+    /**
      * Relation avec les évaluations du TDR de prefaisabilite
      */
     public function evaluationsPrefaisabilite(): MorphMany

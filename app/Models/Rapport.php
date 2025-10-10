@@ -274,4 +274,29 @@ class Rapport extends Model
             ]
         ];
     }
+
+    /**
+     * Relation avec tous les TDRs du projet
+     */
+    public function historique_des_notes_conceptuelle()
+    {
+        /* return $this->hasMany(NoteConceptuelle::class, 'projetId', 'projetId')
+                    ->where('id', '!=', $this->id)
+                    ->orderBy('created_at', 'desc'); */
+        if ($this->projet) {
+            return $this->projet->notes_conceptuelle()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
+        }
+        // Return a query builder that will result in an empty set if no projet is associated
+        return $this->hasMany(NoteConceptuelle::class, 'projetId', 'projetId')->whereRaw('0 = 1');
+    }
+
+    /**
+     * Relation avec tous les TDRs du projet
+     */
+    public function historique_des_evaluations_notes_conceptuelle()
+    {
+        return $this->historique_des_notes_conceptuelle()->with(["evaluations" => function($query){
+            $query/* ->evaluationTermine("note-conceptuelle")->first() */;
+        }]);
+    }
 }
