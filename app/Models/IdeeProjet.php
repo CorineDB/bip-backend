@@ -383,6 +383,22 @@ class IdeeProjet extends Model
         return $this->morphMany(Evaluation::class, 'projetable')->where("type", "climatique");
     }
 
+    public function evaluationsPertinence()
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')->where("type", "pertinence");
+    }
+
+    public function evaluationPertinence()
+    {
+        /* return $this->morphOne(Evaluation::class, 'projetable')->where("type", "pertinence")
+                ->orderBy('created_at', 'desc')
+                ->first(); */
+        return $this->morphOne(Evaluation::class, 'projetable')
+            ->where('type', 'pertinence')
+            ->latestOfMany(); // ✅ équivalent à orderBy('created_at', 'desc')->first()
+
+    }
+
     public function evaluationsAMC()
     {
         return $this->morphMany(Evaluation::class, 'projetable')->where("type", "amc");
