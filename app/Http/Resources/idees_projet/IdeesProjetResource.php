@@ -4,6 +4,7 @@ namespace App\Http\Resources\idees_projet;
 
 use App\Http\Resources\BaseApiResource;
 use App\Http\Resources\CibleResource;
+use App\Http\Resources\EvaluationResource;
 use App\Http\Resources\FinancementResource;
 use App\Http\Resources\LieuInterventionResource;
 use App\Http\Resources\OddResource;
@@ -51,7 +52,7 @@ class IdeesProjetResource extends BaseApiResource
 
             // Descriptions et contenus principaux
             'description_projet' => $this->description_projet,
-            'evaluation_climatique' => $this->evaluationPertinence/* ->load("historique_evaluations") */,
+            'evaluation_climatique' => new EvaluationResource($this->evaluationPertinence->load("historique_evaluations")),
 
             // Détails techniques et organisationnels
             'duree' => $this->duree,
