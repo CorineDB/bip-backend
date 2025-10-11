@@ -2450,9 +2450,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->where('type_evaluation', 'pertinence')
                 ->first();
 
-            if ($ideeProjet->statut != StatutIdee::BROUILLON) {
+            /* if ($ideeProjet->statut != StatutIdee::BROUILLON) {
                 throw new Exception("Evaluation de pertinence ne peut-etre effectuer qu'a une idee a l'etape de brouillon", 403);
-            }
+            } */
             if ($ideeProjet->statut != StatutIdee::BROUILLON && ($evaluation?->statut == 1 && $evaluation?->date_fin_evaluation != null)) {
                 throw new Exception("Evaluation de pertinence deja termine", 403);
             }
