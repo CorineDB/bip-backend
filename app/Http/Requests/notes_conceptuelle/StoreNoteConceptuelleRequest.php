@@ -25,6 +25,7 @@ class StoreNoteConceptuelleRequest extends FormRequest
     {
         $canevas = $this->getCanevas();
         $estSoumise = $this->input('est_soumise', true);
+        $estMou = $this->input('est_mou', true);
         $noteId = $this->input('noteId');
 
         // Vérifier si noteId existe et est valide dans la table notes_conceptuelle
@@ -52,7 +53,7 @@ class StoreNoteConceptuelleRequest extends FormRequest
         $dynamicRules = $this->buildRulesFromCanevas($canevas, $champsValues, $defaultRules, $estSoumise);
 
         // closure pour déterminer si un document spécifique doit être requis
-        $needRequiredDocument = function (string $categorie) use ($estSoumise, $noteExists, $noteId) : bool {
+        $needRequiredDocument = function (string $categorie) use ($estSoumise, $noteExists, $noteId): bool {
             if (!$estSoumise) {
                 return false;
             }
@@ -81,6 +82,7 @@ class StoreNoteConceptuelleRequest extends FormRequest
         $finalRules = array_merge([
             'est_soumise' => 'required|boolean',
             'noteId' => ['sometimes', Rule::exists('notes_conceptuelle', 'id')->whereNull('deleted_at')],
+            'est_mou' => $estSoumise ? 'required|boolean' : 'nullable|boolean',
 
             'champs' => $estSoumise ? 'required|array' : 'nullable|array|min:0',
             'documents' => $estSoumise ? 'required|array' : 'nullable|array',
@@ -92,12 +94,28 @@ class StoreNoteConceptuelleRequest extends FormRequest
                 ...(explode('|', self::DOCUMENT_RULE))
 
             ],
-            'documents.etude_pre_faisabilite' => [
-                new RequiredIf(fn() => $needRequiredDocument('etude_pre_faisabilite')),
-                ...(explode('|', self::DOCUMENT_RULE))
-            ],
+            /*
+                'documents.etude_pre_faisabilite' => [
+                    new RequiredIf(fn() => $needRequiredDocument('etude_pre_faisabilite')),
+                    ...(explode('|', self::DOCUMENT_RULE))
+                ],
+            */
             'documents.note_conceptuelle' => [
                 new RequiredIf(fn() => $needRequiredDocument('note_conceptuelle')),
+                ...(explode('|', self::DOCUMENT_RULE))
+            ],
+
+            // Documents requis si est_mou = true
+            'documents.rapport_faisabilite_preliminaire' => [
+                new RequiredIf(fn() => $estMou || !$this->noteHasUploadedDocument($noteId, 'rapport_faisabilite_preliminaire')),
+                ...(explode('|', self::DOCUMENT_RULE))
+            ],
+            'documents.tdr_faisabilite_preliminaire' => [
+                new RequiredIf(fn() => $estMou || !$this->noteHasUploadedDocument($noteId, 'tdr_faisabilite_preliminaire')),
+                ...(explode('|', self::DOCUMENT_RULE))
+            ],
+            'documents.check_suivi_rapport' => [
+                new RequiredIf(fn() => $estMou || !$this->noteHasUploadedDocument($noteId, 'check_suivi_rapport')),
                 ...(explode('|', self::DOCUMENT_RULE))
             ],
         ], $dynamicRules);

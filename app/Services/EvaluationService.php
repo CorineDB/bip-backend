@@ -2414,16 +2414,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ], 403);
             }
 
-            /* $evaluation = Evaluation::where(
-                'projetable_id',
-                $ideeProjet->id
-            )->where(
-                'projetable_type',
-                get_class($ideeProjet)
-            )->whereIn("statut", [-1, 0])
-                ->where('type_evaluation', 'pertinence')
-                ->latestOfMany(); */
-
             $evaluation = Evaluation::where('projetable_id', $ideeProjet->id)
                             ->where('projetable_type', get_class($ideeProjet))
                             ->whereIn("statut", [-1, 0])
@@ -2636,12 +2626,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->where('type_evaluation', 'pertinence')
                 ->firstOrFail();
 
-            /*if ($evaluation->statut == 1) {
+            if ($evaluation->statut == 1) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Score Auto Evaluation pertinence déja enregistré',
                 ], 400);
-            }*/
+            }
 
             if (auth()->id() !== $ideeProjet->responsable->id) {
                 throw new Exception("Vous n'avez pas les droits pour effectuer cette action", 403);
@@ -2782,12 +2772,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->where("statut", 0)
                 ->firstOrFail();
 
-            /* if ($evaluation->statut == 1) {
+            if ($evaluation->statut == 1) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Auto Evaluation pertinence déja validé',
                 ], 206);
-            } */
+            }
 
             $completionPercentage = $this->calculateCompletionPercentage($evaluation, "pertinence");
 
