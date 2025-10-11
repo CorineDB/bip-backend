@@ -761,6 +761,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->count();
         }
 
+        dd($totalEvaluateurs);
+
         $totalCriteres = $evaluation->criteres->count();
 
         $completedCriteres = $evaluation->evaluationCriteres()
