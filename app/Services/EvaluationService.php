@@ -1175,7 +1175,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
         return [
             'score_total' => $score_total,
-            2,
             'ponderation_totale' => $ponderation_totale,
             'score_final' => $score_final,
             'nombre_criteres_evalues' => $criteres_avec_score->count()
