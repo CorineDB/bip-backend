@@ -44,7 +44,8 @@ class Evaluation extends Model
         'evaluation',
         'resultats_evaluation',
         'statut',
-        'id_evaluation'
+        'id_evaluation',
+        'canevas',
     ];
 
     /**
@@ -59,6 +60,7 @@ class Evaluation extends Model
         'date_debut_evaluation' => 'datetime',
         'date_fin_evaluation'   => 'datetime',
         'valider_le'            => 'datetime',
+        'canevas'               => 'array',
         'evaluation'            => 'array',
         'resultats_evaluation'  => 'array',
         'statut'                => 'integer'

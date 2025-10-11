@@ -2787,35 +2787,85 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 throw new Exception("Auto-evauation pertinence toujours en cours, veuillez patienter", 403);
             }
 
-            $criteresEvaluation = $evaluation->evaluationCriteres()
-                ->autoEvaluation()
-                ->active()->get();
-
             // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation pertinence
             $evaluateurs = $evaluation->evaluateursPertinence()->get();
-
 
             if ($evaluateurs->count() == 0) {
                 throw new Exception('Aucun évaluateur trouvé avec la permission "effectuer-evaluation-pertinence-idee-projet"', 404);
             }
 
+            // Calculer les résultats finaux avant de réinitialiser
+            $criteres = Critere::whereHas('categorie_critere', function ($query) {
+                $query->where('slug', 'grille-evaluation-pertinence-idee-projet');
+            })->get();
+
+            $evaluationCriteres = new Collection();
+
+            foreach ($evaluateurs as $evaluateur) {
+                foreach ($criteres as $critere) {
+                    $evaluationCritere = $evaluation->evaluationCriteres()
+                        ->autoEvaluation()
+                        ->active()
+                        ->where('critere_id', $critere->id)
+                        ->where('evaluateur_id', $evaluateur->id)
+                        ->firstOrNew([
+                            'evaluation_id' => $evaluation->id,
+                            'critere_id' => $critere->id,
+                            'evaluateur_id' => $evaluateur->id,
+                        ], [
+                            'categorie_critere_id' => $critere->categorie_critere_id,
+                            'note' => 'En attente',
+                            'notation_id' => null,
+                            'is_auto_evaluation' => true,
+                            'est_archiver' => false
+                        ]);
+
+                    $evaluationCriteres->push($evaluationCritere->load(['critere', 'notation', 'categorieCritere', 'evaluateur']));
+                }
+            }
+
+            $aggregatedScores = $evaluation->aggregateScoresByCritere($evaluationCriteres);
+            $finalResults = $this->calculateFinalResults($aggregatedScores, "pertinence");
+            
+            $grilleEvaluation = CategorieCritere::where('slug', 'grille-evaluation-pertinence-idee-projet')->first();
+
+            // Mettre à jour l'évaluation avec les résultats finaux
+            $evaluation->update([
+                'resultats_evaluation' => $finalResults,
+                'valider_le' => now(),
+                'date_fin_evaluation' => now(),
+                'statut' => 1
+            ]);
+
+            $ideeProjet->update([
+                'score_pertinence' => $finalResults['score_final_pondere'],
+                'canevas_appreciation_pertinence' => $grilleEvaluation ? (new CategorieCritereResource($grilleEvaluation))->toArray(request()) : null,
+            ]);
+
+            // Maintenant réinitialiser pour refaire
             $ideeProjet->update([
                 'est_soumise' => false,
-                'statut' => StatutIdee::BROUILLON,  // Marquer comme terminée
+                'statut' => StatutIdee::BROUILLON,
                 'phase' => $this->getPhaseFromStatut(StatutIdee::BROUILLON),
                 'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::BROUILLON),
             ]);
 
             // Enregistrer le workflow et la décision
             $this->enregistrerWorkflow($ideeProjet, StatutIdee::BROUILLON);
-            $this->enregistrerDecision($ideeProjet, 'Réévaluation pertinence demandée', 'Score pertinence insatisfaisant - Retour en phase de rédaction');
+            $this->enregistrerDecision($ideeProjet, 'Réévaluation pertinence demandée', 'Score pertinence insatisfaisant (' . ($finalResults['score_final_pondere'] ?? 0) . ') - Retour en phase de rédaction');
 
+            // Réinitialiser l'évaluation
             $evaluation->update([
                 'resultats_evaluation' => [],
                 'evaluation' => [],
                 'valider_le' => null,
-                'statut' => 0  // Marquer comme en cours
+                'statut' => 0
             ]);
+
+            // Archiver les critères
+            $criteresEvaluation = $evaluation->evaluationCriteres()
+                ->autoEvaluation()
+                ->active()->get();
 
             $criteresEvaluation->each->update(["est_archiver" => true]);
 
