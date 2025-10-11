@@ -743,7 +743,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         $totalEvaluateurs = $evaluateurs->get()->count(); // ✅ on vérifie bien si la collection n'est pas vide;
         */
 
-
         if ($evaluation->statut != 1) {
 
             $evaluateurs = ($type == "pertinence" ? $evaluation->evaluateursPertinence() : $evaluation->evaluateursClimatique());
@@ -754,14 +753,16 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                             ->get()->count(); // ✅ on vérifie bien si la collection n'est pas vide;
             */
 
+            dd(" If Statut : " , $totalEvaluateurs);
+
         } else {
             $totalEvaluateurs = $evaluation->evaluateursDeEvalPreliminaireClimatique()
                 ->select('users.*')
                 ->distinct('users.id')
                 ->count();
-        }
 
-        dd($totalEvaluateurs);
+            dd("Else Statut : " , $totalEvaluateurs);
+        }
 
         $totalCriteres = $evaluation->criteres->count();
 
