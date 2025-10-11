@@ -14,7 +14,6 @@ class UpdateCategorieDocumentRequest extends FormRequest
 
     public function rules(): array
     {
-        //$categorieId = $this->route('categorie_document') ?? $this->route('id');
         $categorieId = $this->route('categorie_document') ? (is_string($this->route('categorie_document')) ? $this->route('categorie_document') : ($this->route('categorie_document')->id)) : $this->route('id');
 
         return [

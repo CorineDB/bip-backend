@@ -1365,7 +1365,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         if (isset($data['etude_faisabilite'])) {
                             // si c'est une string JSON → on la décode
                             if (is_string($data['etude_faisabilite'])) {
-                                throw new Exception("Error Processing Request", 1);
 
                                 $decoded = json_decode($data['etude_faisabilite'], true);
 
@@ -1440,6 +1439,85 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
                         $projet->save();
                     }
+
+                    // Gérer l'analyse financière et calculer la VAN et le TRI
+                    if (isset($data['analyse_financiere'])) {
+                        $updateData = [];
+                        $analyseFinanciere = $data['analyse_financiere'];
+
+                        $requiredFields = ['duree_vie', 'investissement_initial', 'flux_tresorerie', 'taux_actualisation'];
+
+                        foreach ($requiredFields as $field) {
+                            // validation de présence de $analyseFinanciere[$field]
+                            if (!isset($analyseFinanciere[$field]) && !empty($analyseFinanciere[$field])) {
+                                throw ValidationException::withMessages([
+                                    "analyse_financiere.$field" => "Le champ $field est obligatoire lorsque le projet est financé. " . $analyseFinanciere[$field]
+                                ]);
+                            }
+                            // validations supplémentaires pour les champs spécifiques
+                            // Il faut savoir que les donnees sont soumis dans un formdata donc tout est string
+
+                            if ($field === 'duree_vie') {
+
+                                $value = $analyseFinanciere[$field];
+
+                                // Vérifie que c'est bien un nombre ET un entier positif
+                                if (!ctype_digit((string)$value) || (int)$value <= 0) {
+                                    throw ValidationException::withMessages([
+                                        "analyse_financiere.$field" => "Le champ $field doit être un nombre entier positif (sans virgule)."
+                                    ]);
+                                }
+
+                                // Optionnel : convertir proprement en entier
+                                $analyseFinanciere[$field] = (int)$value;
+                            }
+
+                            // Ajouter d'autres validations spécifiques si nécessaire
+                            if (in_array($field, ['investissement_initial', 'taux_actualisation', 'flux_tresorerie'])) {
+                                if (!is_numeric($analyseFinanciere[$field])) {
+                                    throw ValidationException::withMessages([
+                                        "analyse_financiere.$field" => "Le champ $field doit être une date valide au format AAAA-MM-JJ."
+                                    ]);
+                                }
+
+                                // Optionnel : forcer la conversion en float si tu veux l'utiliser ensuite
+                                $analyseFinanciere[$field] = (float) $analyseFinanciere[$field];
+                            }
+                        }
+
+                        // Préparer les données pour le fill() et la mise à jour
+                        $financialData = [
+                            'duree_vie' => $analyseFinanciere['duree_vie'] ?? $projet->duree_vie,
+                            'investissement_initial' => $analyseFinanciere['investissement_initial'] ?? $projet->investissement_initial,
+                            'flux_tresorerie' => $analyseFinanciere['flux_tresorerie'] ?? $projet->flux_tresorerie,
+                            'taux_actualisation' => $analyseFinanciere['taux_actualisation'] ?? $projet->taux_actualisation,
+                        ];
+
+                        // Mettre à jour le modèle en mémoire avec les nouvelles données financières
+                        $projet->fill($financialData);
+
+                        // Calculer la VAN et le TRI à partir des données mises à jour
+                        $van = $projet->calculerVAN();
+                        $projet->van = $van;
+                        $tri = $projet->calculerTRI();
+
+                        // Ajouter toutes les données financières et les résultats au tableau de mise à jour
+                        $updateData = array_merge($updateData, $financialData);
+
+                        if ($van !== null) {
+                            $updateData['van'] = $van;
+                        }
+                        if ($tri !== null) {
+                            $updateData['tri'] = $tri;
+                        }
+                    } else {
+
+                        throw ValidationException::withMessages([
+                            "analyse_financiere" => "Les informations d'analyse financiere sont requises."
+                        ]);
+                    }
+
+                    $projet->update($updateData);
                 }
             }
 

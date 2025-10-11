@@ -2,20 +2,35 @@
 
 namespace App\Http\Requests\categories_critere;
 
+use App\Repositories\CategorieCritereRepository;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateCategorieCritereRequest extends FormRequest
 {
+    protected $categorie;
+
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Prepare the data for validation.
+     */
+    public function prepareForValidation(): void
+    {
+        $categorieId = $this->route('categorie_critere') ? (is_string($this->route('categorie_critere')) ? $this->route('categorie_critere') : ($this->route('categorie_critere')->id)) : $this->route('id');
+
+        // Récupérer le projet avec ses relations
+        $this->categorie = app(CategorieCritereRepository::class)->getModel()->findByKey($categorieId);
+    }
+
     public function rules(): array
     {
         return [
-            'type' => 'sometimes|string',
+            'type'=> ['sometimes', 'string', Rule::unique('categories_document', 'type')->ignore($this->categorie->id)->whereNull('deleted_at')],
+
             'is_mandatory' => 'boolean',
 
             'notations' => 'sometimes|array|min:1',
@@ -54,7 +69,7 @@ class UpdateCategorieCritereRequest extends FormRequest
             'criteres.*.notations.*.commentaire' => 'nullable|string',
 
             // Documents référentiels
-            'documents_referentiel' => 'required|array',
+            'documents_referentiel' => $this->categorie->documentsReferentiel->count() ? 'nullable|array' : 'required|array|min:0',
             'documents_referentiel.*' => 'distinct|file|mimes:pdf,doc,docx,xls,xlsx,png,jpg,txt|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,image/png,image/jpeg,text/plain|max:10240'
         ];
     }

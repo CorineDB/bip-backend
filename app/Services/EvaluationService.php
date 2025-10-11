@@ -2456,11 +2456,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 "type_evaluation" => "pertinence"
             ], [
                 "type_evaluation" => "pertinence",
+                /*
                 "statut"  => $is_auto_evaluation ? 0 : 1,
-                "date_fin_evaluation" => $is_auto_evaluation ? null : now()
+                "date_fin_evaluation" => $is_auto_evaluation ? null : now()*/
             ]);
-
-            $isAssigned = false;
 
             $evaluationClimatiqueReponses = [];
             // Traitement des réponses
@@ -2479,6 +2478,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 // Créer ou mettre à jour l'évaluation critère
                 $evaluationCritere = EvaluationCritere::updateOrCreate([
                     'evaluation_id' => $evaluation->id,
+                    'evaluateur_id' => auth()->id(),
                     'critere_id' => $critere->id,
                     'categorie_critere_id' => $critere->categorie_critere_id,
                 ], [
@@ -2486,7 +2486,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'evaluateur_id' => auth()->id(),
                     'commentaire' => $reponseData['commentaire'] ?? null,
                     'note' => $notation->valeur,
-                    'is_auto_evaluation' => $is_auto_evaluation
+                    'is_auto_evaluation' => true
                 ]);
 
                 // Charger les relations
@@ -2503,12 +2503,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ->with(['critere', 'notation', 'categorieCritere'])
                     ->get(); */
 
-            if ($evaluation->statut == 0) {
+            /*if ($evaluation->statut == 0) {
                 $evaluation->update([
                     "evaluation" => EvaluationCritereResource::collection($evaluationClimatiqueReponses),
                     //"resultats_evaluation" => []
                 ]);
-            }
+            }*/
 
             // Calculer les scores de pertinence
             $scoreData = $this->calculateScorePertinence($evaluation->id);
@@ -2530,8 +2530,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 "resultats_evaluation" => $finalResults
             ]);
 
+            /*
             if ($is_auto_evaluation) {
-                /*
+
                 // Calculer et enregistrer le score automatiquement
                 $finalResults = $this->finaliserAutoEvaluationPertinence($evaluation->id);
 
@@ -2544,8 +2545,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
                 // Enregistrer la décision
                 $this->enregistrerDecision($ideeProjet, 'Finalisation score pertinence', 'Score pertinence finalisé: ' . ($finalResults['score_final_pondere'] ?? 0));
-                */
             }
+            */
 
             DB::commit();
 
@@ -2618,6 +2619,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             // Mettre à jour l'idée de projet avec le score de pertinence
             $ideeProjet->update([
+                'est_coherent' => true,
                 'score_pertinence' => $finalResults['score_final_pondere'],
                 'canevas_pertinence' => $grillePertinence ? (new CategorieCritereResource($grillePertinence))->toArray(request()) : null,
             ]);
@@ -2649,38 +2651,89 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     public function refaireAutoEvaluationPertinence($ideeProjetId): JsonResponse
     {
         try {
+
             if (auth()->user()->type !== 'responsable-projet') {
-                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
             if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
-                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
-            // Supprimer les évaluations critères existantes pour la pertinence
-            $evaluation = Evaluation::where('projetable_id', $ideeProjet->id)
-                ->where('projetable_type', get_class($ideeProjet))
+            if (auth()->id() !== $ideeProjet->responsable->id) {
+                throw new Exception("Vous n'avez pas les droits pour effectuer cette action", 403);
+            }
+
+            // Vérifier que l'évaluation pertinence existe
+            $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
+                ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'pertinence')
-                ->first();
+                ->firstOrFail();
 
-            if ($evaluation) {
-                EvaluationCritere::where('evaluation_id', $evaluation->id)->delete();
-                $evaluation->update([
-                    'statut' => 0,
-                    'date_fin_evaluation' => null,
-                    'resultats_evaluation' => null,
-                    'score_pertinence' => null
-                ]);
+            if ($evaluation->statut == 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Auto Evaluation pertinence déja validé',
+                ], 400);
             }
+
+            $completionPercentage = $this->calculateCompletionPercentage($evaluation);
+
+            if ($completionPercentage != 100) {
+                throw new Exception("Auto-evauation pertinence toujours en cours, veuillez patienter", 403);
+            }
+
+            $criteresEvaluation = $evaluation->evaluationCriteres()
+                ->autoEvaluation()
+                ->active()->get();
+
+            // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation pertinence
+            $evaluateurs = $evaluation->evaluateursPertinence()->get();
+
+
+            if ($evaluateurs->count() == 0) {
+                throw new Exception('Aucun évaluateur trouvé avec la permission "effectuer-evaluation-pertinence-idee-projet"', 404);
+            }
+
+            $ideeProjet->update([
+                'est_soumise' => false,
+                'statut' => StatutIdee::BROUILLON,  // Marquer comme terminée
+                'phase' => $this->getPhaseFromStatut(StatutIdee::BROUILLON),
+                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::BROUILLON),
+            ]);
+
+            // Enregistrer le workflow et la décision
+            $this->enregistrerWorkflow($ideeProjet, StatutIdee::BROUILLON);
+            $this->enregistrerDecision($ideeProjet, 'Réévaluation pertinence demandée', 'Score pertinence insatisfaisant - Retour en phase de rédaction');
+
+            $evaluation->update([
+                'resultats_evaluation' => [],
+                'evaluation' => [],
+                'valider_le' => null,
+                'statut' => 0  // Marquer comme en cours
+            ]);
+
+            $criteresEvaluation->each->update(["est_archiver" => true]);
+
+            DB::commit();
+
+            // Notifier les évaluateurs de la décision sur le faible score pertinence
+            // Note: Si vous avez une notification spécifique pour la pertinence, ajoutez-la ici
+            // Notification::send($evaluateurs, new DecisionFaibleScorePertinenceNotification($ideeProjet, $scorePertinence, 'reevaluer', 'Score pertinence insatisfaisant - Réévaluation demandée'));
 
             return response()->json([
                 'success' => true,
-                'message' => 'Auto-évaluation de pertinence réinitialisée avec succès'
+                'message' => 'Score pertinence insatisfaisant, Invitation pertinence renvoyée',
+                'data' => null
             ]);
         } catch (Exception $e) {
-            return $this->errorResponse($e);
+            return response()->json([
+                'success' => false,
+                'message' => "Erreur lors de la relance de l'evaluation pertinence. " . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 
@@ -2700,6 +2753,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ->completed()
             ->with(['critere', 'notation'])
             ->get();
+
+        dd($criteres);
 
         $score_brut = 0;
         $score_pondere = 0;

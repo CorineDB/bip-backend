@@ -224,6 +224,12 @@ class Evaluation extends Model
         return $this->where("id", $this->id)->where("type_evaluation", "climatique")->where("projetable_type", IdeeProjet::class);
     }
 
+    public function scopeEvaluateursPertinence($query)
+    {
+        return User::byMinistere($this->projetable->ministere->id)
+                   ->withPermission('effectuer-evaluation-pertinence-idee-projet');
+    }
+
     /**
      * Calculate aggregated scores by critere with ponderation.
      */

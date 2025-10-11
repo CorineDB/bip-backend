@@ -83,20 +83,22 @@ class SoumettreEvaluationPertinenceRequest extends FormRequest
     {
         $evaluateurId = auth()->id();
 
-        if (!$this->evaluation) {
+        /*if (!$this->evaluation) {
             $fail('Aucune évaluation de pertinence trouvée pour cette idée de projet.');
             return;
-        }
+        }*/
 
         // Vérifier que l'évaluateur est assigné à ce critère dans cette évaluation
-        /*$existsInEvaluation = EvaluationCritere::where('evaluation_id', $this->evaluation->id)
-            ->where('critere_id', $critereId)
-            ->where('evaluateur_id', $evaluateurId)
-            ->exists();
+        /*
+            $existsInEvaluation = EvaluationCritere::where('evaluation_id', $this->evaluation->id)
+                ->where('critere_id', $critereId)
+                ->where('evaluateur_id', $evaluateurId)
+                ->exists();
 
-        if (!$existsInEvaluation) {
-            $fail('Ce critère n\'est pas assigné à votre évaluation ou vous n\'êtes pas autorisé à l\'évaluer.');
-        }*/
+            if (!$existsInEvaluation) {
+                $fail('Ce critère n\'est pas assigné à votre évaluation ou vous n\'êtes pas autorisé à l\'évaluer.');
+            }
+        */
 
         // Vérifier que le critère appartient à la bonne catégorie pour l'évaluation de pertinence
         if ($this->categorieCritere) {

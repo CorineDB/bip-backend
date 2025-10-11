@@ -168,6 +168,14 @@ class Fichier extends Model
     }
 
     /**
+     * Scope par catégorie (recherche partielle)
+     */
+    public function scopeByCategory($query, string $categorie)
+    {
+        return $query->where('categorie', 'LIKE', "%{$categorie}%");
+    }
+
+    /**
      * Scope ordonné
      */
     public function scopeOrdered($query)

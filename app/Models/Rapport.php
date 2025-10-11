@@ -60,7 +60,14 @@ class Rapport extends Model
         'checklist_etude_faisabilite_organisationnelle_et_juridique',
         'checklist_suivi_analyse_faisabilite_financiere',
         'checklist_suivi_etude_analyse_impact_environnementale_et_sociale',
-        'checklist_suivi_assurance_qualite_rapport_etude_faisabilite'
+        'checklist_suivi_assurance_qualite_rapport_etude_faisabilite',
+
+        'investissement_initial',
+        'van',
+        'tri',
+        'flux_tresorerie',
+        'duree_vie',
+        'taux_actualisation'
     ];
 
     /**
@@ -321,6 +328,103 @@ class Rapport extends Model
         return $this->historique_des_rapports_faisabilite()->with(["evaluations" => function($query){
             $query/* ->evaluationTermine("note-conceptuelle")->first() */;
         }]);
+    }
+
+    /**
+     * Calcule la Valeur Actuelle Nette (VAN) du projet.
+     *
+     * @return float|null La VAN du projet, ou null si les données sont insuffisantes.
+     */
+    public function calculerVAN(): ?float
+    {
+        // Utiliser le taux d'actualisation du projet, ou 10% par défaut.
+        $tauxActualisation = (float) ($this->taux_actualisation ?? 0.1);
+
+        // I0: L'investissement initial
+        $investissementInitial = (float) $this->investissement_initial;
+
+        // CFt: Les flux de trésorerie nets (automatiquement casté en array par Eloquent)
+        $fluxTresorerie = $this->flux_tresorerie;
+
+        if (!is_array($fluxTresorerie) || empty($fluxTresorerie)) {
+            return null; // Pas de flux de trésorerie pour calculer la VAN
+        }
+
+        $van = 0;
+        foreach ($fluxTresorerie as $flux) {
+            // Vérifier que les clés 't' et 'CFt' existent
+            if (isset($flux['t']) && isset($flux['CFt'])) {
+                $t = (int) $flux['t'];
+                $cft = (float) $flux['CFt'];
+                $van += $cft / pow(1 + $tauxActualisation, $t);
+            }
+        }
+
+        return $van - $investissementInitial;
+    }
+
+    /**
+     * Calcule le Taux de Rentabilité Interne (TRI) du projet.
+     *
+     * Le TRI est le taux d'actualisation qui annule la VAN du projet.
+     * Cette méthode utilise une approche itérative (méthode de Newton-Raphson) pour trouver le TRI.
+     *
+     * @return float|null Le TRI en format décimal (ex: 0.15 pour 15%), ou null si le calcul échoue.
+     */
+    public function calculerTRI(): ?float
+    {
+        // Paramètres de l'algorithme numérique
+        $estimationInitiale = 0.1; // 10%
+        $maxIterations = 100;
+        $precision = 1e-5;
+
+        // Prépare le tableau des flux de trésorerie : [-I0, CF1, CF2, ...]
+        $investissementInitial = (float) $this->investissement_initial;
+        $fluxTresorerie = $this->flux_tresorerie; // Casté en array par Eloquent
+
+        if ($investissementInitial <= 0 || !is_array($fluxTresorerie) || empty($fluxTresorerie)) {
+            return null; // Données insuffisantes pour le calcul
+        }
+
+        // Le premier flux (t=0) est l'investissement initial (négatif)
+        $cashFlows = [-$investissementInitial];
+        foreach ($fluxTresorerie as $flux) {
+            if (isset($flux['CFt'])) {
+                $cashFlows[] = (float) $flux['CFt'];
+            }
+        }
+
+        // Implémentation de la méthode de Newton-Raphson pour trouver la racine.
+        $tri = $estimationInitiale;
+
+        for ($i = 0; $i < $maxIterations; $i++) {
+            $van = 0;
+            $deriveeVan = 0;
+
+            foreach ($cashFlows as $t => $cf) {
+                if ((1 + $tri) == 0 && $t > 0) return null; // Evite la division par zéro
+                if ((1 + $tri) != 0) {
+                    $van += $cf / pow(1 + $tri, $t);
+                    if ($t > 0) {
+                        $deriveeVan -= $t * $cf / pow(1 + $tri, $t + 1);
+                    }
+                }
+            }
+
+            if (abs($van) < $precision) {
+                return $tri; // Solution trouvée avec la précision souhaitée
+            }
+
+            // Éviter la division par zéro pour la dérivée
+            if ($deriveeVan == 0) {
+                return null; // Le calcul ne peut pas continuer
+            }
+
+            // Prochaine itération de Newton-Raphson
+            $tri = $tri - $van / $deriveeVan;
+        }
+
+        return null; // Pas de convergence après le nombre maximum d'itérations
     }
 
 }

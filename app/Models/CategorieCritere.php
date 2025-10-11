@@ -152,10 +152,10 @@ class CategorieCritere extends Model
     }
 
     /**
-     * Get documents referentiel (fichiers de catégorie 'referentiel')
+     * Get documents referentiel (fichiers de catégorie 'guide-referentiel-')
      */
     public function documentsReferentiel()
     {
-        return $this->fichiers()->byCategorie('referentiel');
+        return $this->fichiers()->byCategory('guide-referentiel-');
     }
 }
