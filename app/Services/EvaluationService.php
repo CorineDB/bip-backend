@@ -1188,8 +1188,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     {
         try {
 
-            dd($ideeProjetId);
-
             if (auth()->user()->profilable_type == Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acceder a cette resource", 403);
             }
@@ -1199,6 +1197,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
+            dd($ideeProjetId);
 
             $evaluation = Evaluation::firstOrCreate([
                 'projetable_id' => $ideeProjet->id,
