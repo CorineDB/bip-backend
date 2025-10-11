@@ -2732,7 +2732,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 /**
                  * Enregistrement du canevas utiliser pour l'evaluation de pertinence dans l'idée projet
                  */
-                'canevas_pertinence' => $grilleEvaluation ? (new CategorieCritereResource($grilleEvaluation))->toArray(request()) : null,
+                'canevas_appreciation_pertinence' => $grilleEvaluation ? (new CategorieCritereResource($grilleEvaluation))->toArray(request()) : null,
             ]);
 
             // Enregistrer le workflow et la décision
