@@ -2774,12 +2774,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->where('type_evaluation', 'pertinence')
                 ->firstOrFail();
 
-            if ($evaluation->statut == 1) {
+            /* if ($evaluation->statut == 1) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Auto Evaluation pertinence déja validé',
-                ], 400);
-            }
+                ], 206);
+            } */
 
             $completionPercentage = $this->calculateCompletionPercentage($evaluation, "pertinence");
 
