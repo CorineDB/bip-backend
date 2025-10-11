@@ -752,19 +752,16 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $evaluation->evaluateursClimatique()
                             ->get()->count(); // ✅ on vérifie bien si la collection n'est pas vide;
             */
-
-            dd(" If Statut : " , $totalEvaluateurs);
-
         } else {
             $totalEvaluateurs = $evaluation->evaluateursDeEvalPreliminaireClimatique()
                 ->select('users.*')
                 ->distinct('users.id')
                 ->count();
-
-            dd("Else Statut : " , $totalEvaluateurs);
         }
 
         $totalCriteres = $evaluation->criteres->count();
+
+        dump($totalCriteres);
 
         $completedCriteres = $evaluation->evaluationCriteres()
             ->autoEvaluation()
@@ -772,6 +769,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ->whereNotNull('notation_id')
             ->where('note', '!=', 'En attente')
             ->count();
+        dd($totalCriteres);
         $totalEvaluationsAttendues = $totalEvaluateurs * $totalCriteres;
         return $totalCriteres > 0 ? ($completedCriteres * 100 / $totalEvaluationsAttendues) : 0;
     }
