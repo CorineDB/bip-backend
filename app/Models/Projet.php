@@ -72,6 +72,7 @@ class Projet extends Model
         'caracteristiques',
         'score_climatique',
         'score_amc',
+        'score_pertinence',
         'duree',
         'description_projet',
         'origine',
