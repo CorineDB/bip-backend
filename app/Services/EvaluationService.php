@@ -565,10 +565,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $aggregatedScores = $evaluation->aggregateScoresByCritere($evaluationCriteres);
             $finalResults = $this->calculateFinalResults($aggregatedScores);
 
-            // Calculer et ajouter les scores
-            $scoreGlobal = $this->calculateScoreGlobal($evaluation->id);
-            $finalResults['score_global'] = $scoreGlobal;
-
             // Ajouter score climatique si c'est une évaluation climatique
             if ($evaluation->type_evaluation === 'climatique') {
                 $scoreClimatique = $this->calculateScoreClimatique($evaluation->id);
@@ -1682,23 +1678,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ];
         });
 
-        // Calculer les scores par catégorie
-        $scoresParCategorie = $criteresMoyennes->groupBy('categorie_id')->map(function ($criteres, $categorieId) {
-            $categorieName = $criteres->first()['categorie_nom'];
-            $scoreTotal = $criteres->sum('score_pondere');
-            $ponderationTotale = $criteres->sum('ponderation');
-            $scoreMoyen = $ponderationTotale > 0 ? ($scoreTotal * 100) / $ponderationTotale : 0;
-
-            return [
-                'categorie_id' => $categorieId,
-                'categorie_nom' => $categorieName,
-                'nombre_criteres' => $criteres->count(),
-                'score_moyen_categorie' => $scoreMoyen,
-                'ponderation_totale' => $ponderationTotale,
-                'score_pondere_categorie' => $scoreTotal
-            ];
-        });
-
         // Calculer le score global
         $scoreTotal = $criteresMoyennes->sum('score_pondere');
         $ponderationTotale = $criteresMoyennes->sum('ponderation');
@@ -1707,16 +1686,11 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         $scoreGlobal = $ponderationTotale > 0 ?
             (($scoreTotal * 100) / $ponderationTotale) : 0;
 
-        // Pourcentage
-        $scorePourcentage = (($scoreGlobal / 5) * 100);
-
         return [
             'score_global' => $scoreGlobal,
-            'score_pourcentage' => $scorePourcentage,
             'nombre_criteres_evalues' => $criteresMoyennes->count(),
             'ponderation_totale' => $ponderationTotale,
-            'criteres_details' => $criteresMoyennes->values()->toArray(),
-            'scores_par_categorie' => $scoresParCategorie->values()->toArray()
+            'criteres_details' => $criteresMoyennes->values()->toArray()
         ];
     }
 
@@ -2708,16 +2682,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $aggregatedScores = $evaluation->aggregateScoresByCritere($evaluationCriteres);
             $finalResults = $this->calculateFinalResults($aggregatedScores, "pertinence");
 
-            // Calculer et ajouter les scores
-            $scoreGlobal = $this->calculateScoreGlobal($evaluation->id);
-            $finalResults['score_global'] = $scoreGlobal;
-
-            // Ajouter score pertinence si c'est une évaluation de pertinence
-            if ($evaluation->type_evaluation === 'pertinence') {
-                $scorePertinence = $this->calculateScorePertinence($evaluation->id);
-                $finalResults['score_pertinence'] = $scorePertinence;
-            }
-
             $grilleEvaluation = CategorieCritere::where('slug', 'grille-evaluation-pertinence-idee-projet')->first();
 
             $ideeProjet->update([
@@ -2935,7 +2899,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
         return [
             //'score_climatique' => $scoreClimatique,
-            "score_climatique" => ($criteresMoyennes->avg('score_pondere')),
+            "score_pertinence" => ($criteresMoyennes->avg('score_pondere')),
             'nombre_criteres_evalues' => $criteresMoyennes->count(),
             'ponderation_totale' => $ponderationTotale,
             'criteres_details' => $criteresMoyennes->values()->toArray(),
@@ -2955,7 +2919,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $ponderation = $critere->ponderation ?? 1;
                 $valeur_notation = is_numeric($notation->valeur) ? floatval($notation->valeur) : 0;
 
-                dump($valeur_notation);
                 $score_brut += $valeur_notation;
                 $score_pondere += ($valeur_notation * $ponderation);
                 $total_ponderation += $ponderation;
@@ -2966,9 +2929,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         $score_final_pondere = $total_ponderation > 0
             ? ($score_pondere / $total_ponderation) * 100
             : 0;
-
-
-        dump($valeur_notation);
 
         return [
             'score_brut' => $score_brut,
