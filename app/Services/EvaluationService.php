@@ -2772,6 +2772,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'pertinence')
+                ->where("statut", 1)
                 ->firstOrFail();
 
             /* if ($evaluation->statut == 1) {
