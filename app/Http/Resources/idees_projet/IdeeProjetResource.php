@@ -75,6 +75,7 @@ class IdeeProjetResource extends BaseApiResource
             // Scores d'évaluation
             'score_climatique' => $this->score_climatique,
             'score_amc' => $this->score_amc,
+            'score_pertinence' => $this->score_pertinence,
 
             // Dates importantes
             'date_debut_etude' => $this->date_debut_etude,

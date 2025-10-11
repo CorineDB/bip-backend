@@ -46,6 +46,7 @@ class ProjetsResource extends BaseApiResource
             // Scores d'évaluation
             'score_climatique' => $this->score_climatique,
             'score_amc' => $this->score_amc,
+            'score_pertinence' => $this->score_pertinence,
 
             // Descriptions et contenus principaux
             'description_projet' => $this->description_projet,
