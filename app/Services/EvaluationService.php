@@ -1188,6 +1188,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     {
         try {
 
+            dd($ideeProjetId);
+
             if (auth()->user()->profilable_type == Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acceder a cette resource", 403);
             }
@@ -1217,8 +1219,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'message' => 'Cette évaluation n\'est pas de type climatique'
                 ], 400);
             }
-
-            dd($evaluation);
 
             if ($evaluation->statut != 1) {
                 // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
