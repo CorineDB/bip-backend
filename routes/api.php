@@ -496,6 +496,11 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::post('evaluations/{evaluationId}/valider-evaluation-de-la-pertinence', [EvaluationController::class, 'finaliserAutoEvaluationPertinence'])
             ->name('evaluations.pertinence.finalize');
 
+        // Route pour finaliser l'évaluation de pertinence
+        Route::post('evaluations/{evaluationId}/refaire-evaluation-de-la-pertinence', [EvaluationController::class, 'refaireAutoEvaluationPertinence'])
+            ->name('evaluations.pertinence.finalize');
+
+
         // Evaluation Criteria Management
         Route::apiResource('categories-critere', \App\Http\Controllers\CategorieCritereController::class)
             ->parameters(['categories-critere' => 'categorie_critere']);
