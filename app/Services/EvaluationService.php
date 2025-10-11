@@ -3095,8 +3095,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $completionPercentage = $this->calculateCompletionPercentage($evaluation, "pertinence");
 
-            dd($completionPercentage);
-
             // Progression par évaluateur
             $progressionParEvaluateur = $this->calculateProgressionParEvaluateur($evaluationCriteres);
 
