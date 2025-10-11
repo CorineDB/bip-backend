@@ -394,8 +394,8 @@ class IdeeProjet extends Model
                 ->orderBy('created_at', 'desc')
                 ->first(); */
         return $this->morphOne(Evaluation::class, 'projetable')
-            ->where('type', 'pertinence')
-            ->latestOfMany(); // ✅ équivalent à orderBy('created_at', 'desc')->first()
+            ->where('type', 'pertinence')/*
+            ->latestOfMany() */; // ✅ équivalent à orderBy('created_at', 'desc')->first()
 
     }
 
