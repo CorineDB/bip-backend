@@ -158,6 +158,14 @@ class Evaluation extends Model
         $evaluationCriteres = Critere::query();
 
         switch ($this->type_evaluation) {
+            case "pertinence":
+                $evaluationCriteres = Critere::whereHas("categorie_critere", function ($query) {
+                    $query->where("slug", "grille-evaluation-pertinence-idee-projet");
+                })/*->orWhere(function($query) {
+                    $query->where("is_mandatory", true)
+                        ->where("est_general", true);
+                })*/;
+                break;
             case "climatique":
                 $evaluationCriteres = Critere::whereHas("categorie_critere", function ($query) {
                     $query->where("slug", "evaluation-preliminaire-multi-projet-impact-climatique");
