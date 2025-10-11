@@ -135,7 +135,7 @@ class IdeeProjetResource extends BaseApiResource
                     ];
                 });
             }),
-            'evaluation_climatique' => $this->evaluationPertinence/* ->load("historique_evaluations") */,
+            'evaluation_climatique' => new EvaluationResource($this->evaluationPertinence->load("historique_evaluations")),
 
             // Timestamps
             'created_at' => Carbon::parse($this->created_at)->format("Y-m-d H:i:s"),

@@ -52,7 +52,7 @@ class IdeesProjetResource extends BaseApiResource
 
             // Descriptions et contenus principaux
             'description_projet' => $this->description_projet,
-            'evaluation_climatique' => new EvaluationResource($this->evaluationPertinence/* ->load("historique_evaluations") */),
+            'evaluation_climatique' => new EvaluationResource($this->evaluationPertinence->load("historique_evaluations")),
 
             // Détails techniques et organisationnels
             'duree' => $this->duree,
