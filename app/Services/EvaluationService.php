@@ -2826,7 +2826,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $aggregatedScores = $evaluation->aggregateScoresByCritere($evaluationCriteres);
             $finalResults = $this->calculateFinalResults($aggregatedScores, "pertinence");
-            
+
             $grilleEvaluation = CategorieCritere::where('slug', 'grille-evaluation-pertinence-idee-projet')->first();
 
             // Mettre à jour l'évaluation avec les résultats finaux
@@ -2834,12 +2834,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'resultats_evaluation' => $finalResults,
                 'valider_le' => now(),
                 'date_fin_evaluation' => now(),
-                'statut' => 1
-            ]);
-
-            $ideeProjet->update([
-                'score_pertinence' => $finalResults['score_final_pondere'],
-                'canevas_appreciation_pertinence' => $grilleEvaluation ? (new CategorieCritereResource($grilleEvaluation))->toArray(request()) : null,
+                'statut' => 1,
+                'canevas' => $grilleEvaluation ? (new CategorieCritereResource($grilleEvaluation))->toArray(request()) : null,
             ]);
 
             // Maintenant réinitialiser pour refaire
@@ -2861,13 +2857,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'valider_le' => null,
                 'statut' => 0
             ]);
-
-            // Archiver les critères
-            $criteresEvaluation = $evaluation->evaluationCriteres()
-                ->autoEvaluation()
-                ->active()->get();
-
-            $criteresEvaluation->each->update(["est_archiver" => true]);
 
             DB::commit();
 
@@ -3034,24 +3023,38 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
-            $evaluation = Evaluation::firstOrCreate([
-                'projetable_id' => $ideeProjet->id,
-                'projetable_type' => get_class($ideeProjet),
-                "type_evaluation" => "pertinence"
-            ], [
-                "type_evaluation" => "pertinence",
-                "statut"  => 0,
-                "date_debut_evaluation" => now(),
-                "evaluation" => [],
-                "resultats_evaluation" => []
-            ]);
+            // Récupérer la dernière évaluation de pertinence
+            $derniereEvaluation = Evaluation::where('projetable_id', $ideeProjet->id)
+                ->where('projetable_type', get_class($ideeProjet))
+                ->where('type_evaluation', 'pertinence')
+                ->orderBy('created_at', 'desc')
+                ->first();
 
-            // Vérifier que c'est une évaluation de pertinence
-            if ($evaluation->type_evaluation !== 'pertinence') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cette évaluation n\'est pas de type pertinence'
-                ], 400);
+            // Si la dernière évaluation est terminée, créer une nouvelle avec le lien parent
+            if ($derniereEvaluation && $derniereEvaluation->statut == 1) {
+                $evaluation = Evaluation::create([
+                    'projetable_id' => $ideeProjet->id,
+                    'projetable_type' => get_class($ideeProjet),
+                    'type_evaluation' => 'pertinence',
+                    'id_evaluation' => $derniereEvaluation->id,  // Lien vers l'évaluation parent
+                    'statut' => 0,
+                    'date_debut_evaluation' => now(),
+                    'evaluation' => [],
+                    'resultats_evaluation' => []
+                ]);
+            } else {
+                // Sinon, utiliser firstOrCreate (évaluation en cours ou créer nouvelle)
+                $evaluation = Evaluation::firstOrCreate([
+                    'projetable_id' => $ideeProjet->id,
+                    'projetable_type' => get_class($ideeProjet),
+                    'type_evaluation' => 'pertinence'
+                ], [
+                    'type_evaluation' => 'pertinence',
+                    'statut' => 0,
+                    'date_debut_evaluation' => now(),
+                    'evaluation' => [],
+                    'resultats_evaluation' => []
+                ]);
             }
 
             if ($evaluation->statut != 1) {
@@ -3059,6 +3062,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $evaluateurs = $evaluation->evaluateursPertinence()->get();
             } else {
 
+                // recuperer ceux qui ont effectuer l'evaluation
                 $evaluateurs = $evaluation->evaluateurs()
                     ->wherePivot('is_auto_evaluation', true)
                     ->select('users.*')
