@@ -2414,17 +2414,22 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ], 403);
             }
 
-            $evaluation = Evaluation::where(
+            /* $evaluation = Evaluation::where(
                 'projetable_id',
                 $ideeProjet->id
             )->where(
                 'projetable_type',
                 get_class($ideeProjet)
-            )->where("statut", 0)
+            )->whereIn("statut", [-1, 0])
                 ->where('type_evaluation', 'pertinence')
-                ->latestOfMany();
+                ->latestOfMany(); */
 
-            dd($evaluation);
+            $evaluation = Evaluation::where('projetable_id', $ideeProjet->id)
+                            ->where('projetable_type', get_class($ideeProjet))
+                            ->whereIn("statut", [-1, 0])
+                            ->where('type_evaluation', 'pertinence')
+                            ->orderByDesc('created_at')
+                            ->first();
 
             if ($ideeProjet->statut != StatutIdee::BROUILLON) {
                 throw new Exception("Evaluation de pertinence ne peut-etre effectuer qu'a une idee a l'etape de brouillon", 403);
@@ -3128,7 +3133,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'data' => [
                     "statut_idee" => $ideeProjet->statut,
                     "idee_projet" => new IdeesProjetResource($ideeProjet),
-                    'evaluation' => $evaluation->id ? new EvaluationResource($evaluation) : new EvaluationResource($evaluation?->load("historique_evaluations")),
+                    'evaluation' => $evaluation->id ? new EvaluationResource($evaluation?->load("historique_evaluations")) : new EvaluationResource($evaluation?->load("historique_evaluations")),
                     // Taux de progression global
                     'taux_progression_global' => [
                         'pourcentage' => $completionPercentage,
