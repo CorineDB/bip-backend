@@ -738,24 +738,28 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
      */
     private function calculateCompletionPercentage(Evaluation $evaluation, $type = "climatique"): float
     {
-        $evaluateurs =($type == "pertinence" ? $evaluation->evaluateursPertinence() : $evaluation->evaluateursClimatique());
-        //$totalEvaluateurs = ($type == "pertinence" ? $evaluation->evaluateursPertinence() : $evaluation->evaluateursClimatique())->count();
+        /*$evaluateurs =($type == "pertinence" ? $evaluation->evaluateursPertinence() : $evaluation->evaluateursClimatique());
+        $totalEvaluateurs = ($type == "pertinence" ? $evaluation->evaluateursPertinence() : $evaluation->evaluateursClimatique())->count();
         $totalEvaluateurs = $evaluateurs->get()->count(); // ✅ on vérifie bien si la collection n'est pas vide;
+        */
 
-        /*
-            if ($evaluation->statut != 1) {
 
-                // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
-                $totalEvaluateurs = $evaluateurs->get()->count();
+        if ($evaluation->statut != 1) {
+
+            $evaluateurs = ($type == "pertinence" ? $evaluation->evaluateursPertinence() : $evaluation->evaluateursClimatique());
+            // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
+            $totalEvaluateurs = $evaluateurs->get()->count();
+            /*
                 $evaluation->evaluateursClimatique()
                             ->get()->count(); // ✅ on vérifie bien si la collection n'est pas vide;
-            } else {
-                $totalEvaluateurs = $evaluation->evaluateursDeEvalPreliminaireClimatique()
-                    ->select('users.*')
-                    ->distinct('users.id')
-                    ->count();
-            }
-        */
+            */
+
+        } else {
+            $totalEvaluateurs = $evaluation->evaluateursDeEvalPreliminaireClimatique()
+                ->select('users.*')
+                ->distinct('users.id')
+                ->count();
+        }
 
         $totalCriteres = $evaluation->criteres->count();
 
@@ -2715,7 +2719,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $grilleEvaluation = CategorieCritere::where('slug', 'grille-evaluation-pertinence-idee-projet')->first();
 
-
             $ideeProjet->update([
                 'score_pertinence' => $finalResults['score_final_pondere'],
                 'est_coherent' => true,
@@ -3038,17 +3041,17 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ], 400);
             }
 
-            //if ($evaluation->statut != 1) {
+            if ($evaluation->statut != 1) {
                 // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation de pertinence
                 $evaluateurs = $evaluation->evaluateursPertinence()->get();
-            /*} else {
+            } else {
 
                 $evaluateurs = $evaluation->evaluateurs()
                     ->wherePivot('is_auto_evaluation', true)
                     ->select('users.*')
                     ->distinct('users.id')
                     ->get();
-            }*/
+            }
 
             if ($evaluateurs->count() == 0) {
                 throw new Exception('Aucun évaluateur trouvé avec la permission "effectuer-evaluation-pertinence-idee-projet"', 404);
