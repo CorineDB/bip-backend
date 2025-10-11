@@ -2420,7 +2420,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             )->where(
                 'projetable_type',
                 get_class($ideeProjet)
-            )->whereIn("statut", [-1, 0])
+            )->where("statut", 0)
                 ->where('type_evaluation', 'pertinence')
                 ->latestOfMany();
 
@@ -2432,8 +2432,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             }
 
             $is_auto_evaluation = true;
-
-            dd($is_auto_evaluation);
 
             $evaluation = Evaluation::updateOrCreate([
                 'projetable_id' => $ideeProjet->id,
