@@ -736,24 +736,26 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     /**
      * Calculate completion percentage of evaluation.
      */
-    private function calculateCompletionPercentage(Evaluation $evaluation): float
+    private function calculateCompletionPercentage(Evaluation $evaluation, $type = "climatique"): float
     {
-        $totalEvaluateurs = $evaluation->evaluateursClimatique()->count();
-        $totalEvaluateurs = $evaluation->evaluateursClimatique()
-            ->get()->count(); // ✅ on vérifie bien si la collection n'est pas vide;
+        $evaluateurs =($type == "pertinence" ? $evaluation->evaluateursPertinence() : $evaluation->evaluateursClimatique());
+        //$totalEvaluateurs = ($type == "pertinence" ? $evaluation->evaluateursPertinence() : $evaluation->evaluateursClimatique())->count();
+        $totalEvaluateurs = $evaluateurs->get()->count(); // ✅ on vérifie bien si la collection n'est pas vide;
 
-        if ($evaluation->statut != 1) {
-            // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
-            $totalEvaluateurs = $evaluation->evaluateursClimatique()
-                ->get()->count(); // ✅ on vérifie bien si la collection n'est pas vide;
+        /*
+            if ($evaluation->statut != 1) {
 
-        } else {
-
-            $totalEvaluateurs = $evaluation->evaluateursDeEvalPreliminaireClimatique()
-                ->select('users.*')
-                ->distinct('users.id')
-                ->count();
-        }
+                // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
+                $totalEvaluateurs = $evaluateurs->get()->count();
+                $evaluation->evaluateursClimatique()
+                            ->get()->count(); // ✅ on vérifie bien si la collection n'est pas vide;
+            } else {
+                $totalEvaluateurs = $evaluation->evaluateursDeEvalPreliminaireClimatique()
+                    ->select('users.*')
+                    ->distinct('users.id')
+                    ->count();
+            }
+        */
 
         $totalCriteres = $evaluation->criteres->count();
 
@@ -2778,6 +2780,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
      */
     public function refaireAutoEvaluationPertinence($ideeProjetId): JsonResponse
     {
+        DB::beginTransaction();
+
         try {
 
             if (auth()->user()->type !== 'responsable-projet') {
@@ -2857,6 +2861,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'data' => null
             ]);
         } catch (Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => "Erreur lors de la relance de l'evaluation pertinence. " . $e->getMessage(),

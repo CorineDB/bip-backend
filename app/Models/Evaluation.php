@@ -205,6 +205,16 @@ class Evaluation extends Model
             /* ->distinct() */;
     }
 
+    /**
+     * Get all evaluateurs for this evaluation through evaluation_criteres.
+     */
+    public function evaluateursDeEvaluationPertinence()
+    {
+        return $this->evaluateurs()
+            ->wherePivot('is_auto_evaluation', true)
+            /* ->distinct() */;
+    }
+
 
     /**
      * Get evaluation criteres grouped by evaluateur.
