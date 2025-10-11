@@ -761,15 +761,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
         $totalCriteres = $evaluation->criteres->count();
 
-        dump($totalCriteres);
-
         $completedCriteres = $evaluation->evaluationCriteres()
             ->autoEvaluation()
             ->active()
             ->whereNotNull('notation_id')
             ->where('note', '!=', 'En attente')
             ->count();
-        dd($totalCriteres);
         $totalEvaluationsAttendues = $totalEvaluateurs * $totalCriteres;
         return $totalCriteres > 0 ? ($completedCriteres * 100 / $totalEvaluationsAttendues) : 0;
     }
