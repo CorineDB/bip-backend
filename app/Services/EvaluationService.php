@@ -2452,6 +2452,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->where('type_evaluation', 'pertinence')
                 ->first();
 
+            if ($ideeProjet->statut != StatutIdee::BROUILLON) {
+                throw new Exception("Evaluation de pertinence ne peut-etre effectuer qu'a une idee a l'etape de brouillon", 403);
+            }
             if ($ideeProjet->statut != StatutIdee::BROUILLON && ($evaluation?->statut == 1 && $evaluation?->date_fin_evaluation != null)) {
                 throw new Exception("Evaluation de pertinence deja termine", 403);
             }
@@ -3087,10 +3090,14 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     $evaluationCriteres->push($evaluationCritere->load(['critere', 'notation', 'categorieCritere', 'evaluateur']));
                 }
             }
+
             $aggregatedScores = $evaluation->aggregateScoresByCritere($evaluationCriteres);
 
             $finalResults = $this->calculateFinalResults($aggregatedScores, "pertinence");
+
             $completionPercentage = $this->calculateCompletionPercentage($evaluation, "pertinence");
+
+            dd($completionPercentage);
 
             // Progression par évaluateur
             $progressionParEvaluateur = $this->calculateProgressionParEvaluateur($evaluationCriteres);
