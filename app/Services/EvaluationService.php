@@ -2433,6 +2433,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $is_auto_evaluation = true;
 
+            dd($is_auto_evaluation);
+
             $evaluation = Evaluation::updateOrCreate([
                 'projetable_id' => $ideeProjet->id,
                 'projetable_type' => get_class($ideeProjet),
