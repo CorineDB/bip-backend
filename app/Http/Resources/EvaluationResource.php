@@ -24,6 +24,7 @@ class EvaluationResource extends BaseApiResource
             'valider_le' => Carbon::parse($this->valider_le)->format("d/m/Y H:m:i"),
             'valider_par' => $this->valider_par,
             'commentaire' => $this->commentaire,
+            'id_evaluation' => $this->id_evaluation,
             'evaluation' => $this->evaluation,
             'resultats_evaluation' => $this->resultats_evaluation,
             'statut' => $this->statut,
