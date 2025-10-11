@@ -107,15 +107,15 @@ class StoreNoteConceptuelleRequest extends FormRequest
 
             // Documents requis si est_mou = true
             'documents.rapport_faisabilite_preliminaire' => [
-                new RequiredIf(fn() => $estMou || !$this->noteHasUploadedDocument($noteId, 'rapport_faisabilite_preliminaire')),
+                new RequiredIf(fn() => $estMou && !$this->noteHasUploadedDocument($noteId, 'rapport_faisabilite_preliminaire')),
                 ...(explode('|', self::DOCUMENT_RULE))
             ],
             'documents.tdr_faisabilite_preliminaire' => [
-                new RequiredIf(fn() => $estMou || !$this->noteHasUploadedDocument($noteId, 'tdr_faisabilite_preliminaire')),
+                new RequiredIf(fn() => $estMou && !$this->noteHasUploadedDocument($noteId, 'tdr_faisabilite_preliminaire')),
                 ...(explode('|', self::DOCUMENT_RULE))
             ],
             'documents.check_suivi_rapport' => [
-                new RequiredIf(fn() => $estMou || !$this->noteHasUploadedDocument($noteId, 'check_suivi_rapport')),
+                new RequiredIf(fn() => $estMou && !$this->noteHasUploadedDocument($noteId, 'check_suivi_rapport')),
                 ...(explode('|', self::DOCUMENT_RULE))
             ],
         ], $dynamicRules);

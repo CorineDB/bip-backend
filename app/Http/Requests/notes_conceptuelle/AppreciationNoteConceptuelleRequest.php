@@ -33,8 +33,8 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
             'evaluations_champs.*.appreciation' => 'required_with:evaluations_champs|in:'.implode(",", $this->appreciations),
             'evaluations_champs.*.commentaire' => 'required_unless:evaluer,0|string|min:10',
 
-            'numero_dossier'            => 'required_unless:evaluer,0',//'required_unless:evaluer,0|string|max:100',
-            'numero_contrat'            => 'required_unless:evaluer,0|string|max:100',
+            /*'numero_dossier'            => 'required_unless:evaluer,0',//'required_unless:evaluer,0|string|max:100',
+            'numero_contrat'            => 'required_unless:evaluer,0|string|max:100',*/
 
             // ✅ accept_term doit être "true" si est_soumise est true
             'accept_term'               => 'required_unless:evaluer,0|boolean' . ($evaluer  ? '|accepted' : ''),
