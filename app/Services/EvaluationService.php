@@ -2742,6 +2742,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $evaluation->update([
                 'resultats_evaluation' => $finalResults,
                 'valider_le' => now(),
+
+                'date_fin_evaluation'   => now(),
                 'statut' => 1  // Marquer comme terminée
             ]);
 
