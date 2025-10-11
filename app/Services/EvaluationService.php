@@ -1229,6 +1229,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ->get();
             }
 
+            dd($evaluation);
+
             /*  User::when($ideeProjet->ministere, function ($query) use ($ideeProjet) {
                         $query->where(function ($q) use ($ideeProjet) {
                             $q->where('profilable_type', get_class($ideeProjet->ministere))
