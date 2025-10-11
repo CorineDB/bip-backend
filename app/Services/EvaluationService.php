@@ -3038,17 +3038,17 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ], 400);
             }
 
-            if ($evaluation->statut != 1) {
+            //if ($evaluation->statut != 1) {
                 // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation de pertinence
                 $evaluateurs = $evaluation->evaluateursPertinence()->get();
-            } else {
+            /*} else {
 
                 $evaluateurs = $evaluation->evaluateurs()
                     ->wherePivot('is_auto_evaluation', true)
                     ->select('users.*')
                     ->distinct('users.id')
                     ->get();
-            }
+            }*/
 
             if ($evaluateurs->count() == 0) {
                 throw new Exception('Aucun évaluateur trouvé avec la permission "effectuer-evaluation-pertinence-idee-projet"', 404);
