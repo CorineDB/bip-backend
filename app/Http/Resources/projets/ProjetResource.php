@@ -115,7 +115,7 @@ class ProjetResource extends BaseApiResource
             'responsable' => $this->whenLoaded('responsable'),
             'demandeur' => $this->whenLoaded('demandeur'),
             'porteur_projet' => $this->porteur_projet,
-            'ideeProjet' => new IdeeProjetResource($this->ideeProjet),
+            //'ideeProjet' => new IdeeProjetResource($this->ideeProjet),
             'noteConceptuelle' => new NoteConceptuelleResource($this->noteConceptuelle),
             'duree_vie' => $this->duree_vie,
             'investissement_initial' => $this->investissement_initial,
