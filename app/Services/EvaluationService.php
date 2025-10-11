@@ -3133,7 +3133,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'data' => [
                     "statut_idee" => $ideeProjet->statut,
                     "idee_projet" => new IdeesProjetResource($ideeProjet),
-                    'evaluation' => new EvaluationResource($evaluation->load("historique_evaluations")),
+                    'evaluation' => new EvaluationResource($evaluation),
                     // Taux de progression global
                     'taux_progression_global' => [
                         'pourcentage' => $completionPercentage,
