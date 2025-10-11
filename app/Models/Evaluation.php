@@ -127,12 +127,45 @@ class Evaluation extends Model
         return $this->belongsTo(Evaluation::class, 'id_evaluation');
     }
 
+
     /**
      * Get child evaluations (sub-evaluations).
      */
     public function childEvaluations()
     {
         return $this->hasMany(Evaluation::class, 'id_evaluation');
+    }
+
+    /**
+     * Get all evaluations of the same type for the same project (complete history).
+     * Returns all evaluations sharing the same projetable_type, projetable_id, and type_evaluation.
+     * Ordered by: valider_le DESC, date_fin_evaluation DESC, created_at DESC (most recent first)
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function historique_evaluations()
+    {
+        return Evaluation::where('projetable_type', $this->projetable_type)
+            ->where('projetable_id', $this->projetable_id)
+            ->where('type_evaluation', $this->type_evaluation)
+            ->orderBy('valider_le', 'desc')
+            ->orderBy('date_fin_evaluation', 'desc')
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get the iteration number of this evaluation in the complete history.
+     *
+     * @return int
+     */
+    public function getIterationNumber()
+    {
+        $historique = $this->getAllEvaluationsHistorique();
+        $position = $historique->search(function ($evaluation) {
+            return $evaluation->id === $this->id;
+        });
+
+        return $position !== false ? $position + 1 : 1;
     }
 
     /**
