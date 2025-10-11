@@ -2420,9 +2420,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             )->where(
                 'projetable_type',
                 get_class($ideeProjet)
-            )
+            )->whereIn("statut", [-1, 0])
                 ->where('type_evaluation', 'pertinence')
-                ->first();
+                ->latestOfMany();
 
             if ($ideeProjet->statut != StatutIdee::BROUILLON) {
                 throw new Exception("Evaluation de pertinence ne peut-etre effectuer qu'a une idee a l'etape de brouillon", 403);
