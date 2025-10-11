@@ -233,12 +233,25 @@ class Evaluation extends Model
     /**
      * Calculate aggregated scores by critere with ponderation.
      */
-    public function scopeAggregatedCritereScores($query)
+    public function scopeAggregatedCritereScores($query, $type = "climatique")
     {
         /*dd($this->evaluateursClimatique()->first()->projetable->ministere->personnes
         ->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet')));*/
 
         //dd($this->criteres);
+
+        switch ($type) {
+            case 'pertinence':
+                $totalEvaluateurs = $this->evaluateursPertinence()
+                        ->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-pertinence-idee-projet'))->count();
+                break;
+
+            case 'climatique':
+            default:
+                $totalEvaluateurs = $this->evaluateursClimatique()
+                        ->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->count();
+                break;
+        }
 
         $totalEvaluateurs = $this->evaluateursClimatique()
                 ->get()->filter(fn($user) => $user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet'))->count();

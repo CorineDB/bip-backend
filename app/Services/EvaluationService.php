@@ -2416,6 +2416,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     public function soumettreEvaluationPertinence(array $data, $ideeProjetId): JsonResponse
     {
         try {
+
             DB::beginTransaction();
 
             $evaluateurId = auth()->id();
@@ -2424,7 +2425,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
             if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
-                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
             // Vérifier si l'idée de projet est soumise - si non, refuser l'évaluation
@@ -2441,11 +2442,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             )->where(
                 'projetable_type',
                 get_class($ideeProjet)
-            )->where('type_evaluation', 'pertinence')
+            )
+                ->where('type_evaluation', 'pertinence')
                 ->first();
 
             if ($ideeProjet->statut != StatutIdee::BROUILLON && ($evaluation?->statut == 1 && $evaluation?->date_fin_evaluation != null)) {
-                throw new Exception("Évaluation de pertinence déjà terminée", 403);
+                throw new Exception("Evaluation de pertinence deja termine", 403);
             }
 
             $is_auto_evaluation = true;
@@ -2456,192 +2458,318 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 "type_evaluation" => "pertinence"
             ], [
                 "type_evaluation" => "pertinence",
-                /*
                 "statut"  => $is_auto_evaluation ? 0 : 1,
-                "date_fin_evaluation" => $is_auto_evaluation ? null : now()*/
+                "date_fin_evaluation" => $is_auto_evaluation ? null : now()
             ]);
 
-            $evaluationClimatiqueReponses = [];
-            // Traitement des réponses
-            foreach ($reponses as $critereId => $reponseData) {
-                $critere = Critere::with('categorie_critere')->findOrFail($reponseData['critere_id']);
-                $notation = Notation::where("id", $reponseData['notation_id'])->where("categorie_critere_id", $critere->categorie_critere_id)->first();
+            $isAssigned = false;
+            if ($is_auto_evaluation) {
+                if ((auth()->user()->profilable_type == Organisation::class || auth()->user()->profilable_type == Dpaf::class) && auth()->user()->profilable?->ministere && $ideeProjet->ministere && (auth()->user()->profilable->ministere?->id == $ideeProjet->ministere->id)) {
+                    $isAssigned = $evaluation->evaluateursPertinence()->where("id", auth()->id())->first()?->hasPermissionTo('effectuer-evaluation-pertinence-idee-projet');
+                }
+            }
 
-                if (!$notation) {
-                    DB::rollBack();
+            if (!$isAssigned) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vous n\'êtes pas assigné comme évaluateur pour cette évaluation de pertinence.',
+                ], 403);
+            }
+
+            // Vérifier et mettre à jour les réponses
+            foreach ($reponses as $reponse) {
+                // Vérifier que le critère appartient à la bonne catégorie ou est obligatoire
+                $critere = Critere::with('categorie_critere')->find($reponse['critere_id']);
+
+                if (!$critere) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Notation non trouvée avec l\'ID: ' . $reponseData['notation_id'],
-                    ], 404);
+                        'message' => 'Critère non trouvé avec l\'ID: ' . $reponse['critere_id'],
+                    ], 400);
                 }
 
-                // Créer ou mettre à jour l'évaluation critère
-                $evaluationCritere = EvaluationCritere::updateOrCreate([
+                // Vérifier les conditions d'éligibilité du critère
+                $isEligible = false;
+
+                // Cas 1: Le critère appartient à la catégorie spécifique
+                if (
+                    $critere->categorie_critere &&
+                    $critere->categorie_critere->slug === 'grille-evaluation-pertinence-idee-projet'
+                ) {
+                    $isEligible = true;
+                }
+
+                if (!$isEligible) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Le critère "' . $critere->intitule . '" n\'est pas éligible pour cette évaluation de pertinence.',
+                    ], 400);
+                }
+
+                $notation = Notation::find($reponse['notation_id']);
+
+                if (!$notation) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Notation non trouvé avec l\'ID: ' . $reponse['notation_id'],
+                    ], 400);
+                }
+
+                $evaluationCritere = EvaluationCritere::where([
                     'evaluation_id' => $evaluation->id,
-                    'evaluateur_id' => auth()->id(),
-                    'critere_id' => $critere->id,
-                    'categorie_critere_id' => $critere->categorie_critere_id,
-                ], [
-                    'notation_id' => $notation->id,
-                    'evaluateur_id' => auth()->id(),
-                    'commentaire' => $reponseData['commentaire'] ?? null,
-                    'note' => $notation->valeur,
-                    'is_auto_evaluation' => true
-                ]);
+                    'evaluateur_id' => $evaluateurId,
+                    'categorie_critere_id' => $reponse["categorie_critere_id"],
+                    'critere_id' => $reponse['critere_id'],
+                    'est_archiver' => false, // ← ici la condition
+                    'is_auto_evaluation' => $is_auto_evaluation,
+                ])->first();
 
-                // Charger les relations
-                $evaluationCritere->load(['critere', 'notation', 'categorieCritere']);
 
-                $evaluationClimatiqueReponses[$critereId] = $evaluationCritere;
+                if ($evaluationCritere) {
+                    $evaluationCritere->fill([
+                        'notation_id' => $notation->id,
+                        'note' => $notation->valeur,
+                        'commentaire' => $reponse['commentaire'] ?? null,
+                        'is_auto_evaluation' => $is_auto_evaluation,
+                        'updated_at' => now(),
+                    ]);
+                    $evaluationCritere->save();
+                } else {
+                    $evaluationCritere = EvaluationCritere::create([
+                        'evaluation_id' => $evaluation->id,
+                        'evaluateur_id' => $evaluateurId,
+                        'categorie_critere_id' => $reponse["categorie_critere_id"],
+                        'critere_id' => $reponse['critere_id'],
+                        'notation_id' => $notation->id,
+                        'note' => $notation->valeur,
+                        'commentaire' => $reponse['commentaire'] ?? null,
+                        'is_auto_evaluation' => $is_auto_evaluation,
+                        'est_archiver' => false,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            $evaluation->refresh();
+
+            if ($evaluation->statut == -1) {
+
+                $evaluation->statut = 0;
+
+                $evaluation->save();
             }
 
             // Récupérer les réponses de l'évaluateur connecté
-            /* $evaluationClimatiqueReponses = EvaluationCritere::forEvaluation($evaluation->id)
-                    ->autoEvaluation()
-                    ->active()
-                    ->byEvaluateur($evaluateurId)
-                    ->with(['critere', 'notation', 'categorieCritere'])
-                    ->get(); */
+            $evaluationPertinenceReponses = EvaluationCritere::forEvaluation($evaluation->id)
+                ->autoEvaluation()
+                ->active()
+                ->byEvaluateur($evaluateurId)
+                ->with(['critere', 'notation', 'categorieCritere'])
+                ->get();
 
-            /*if ($evaluation->statut == 0) {
+            if ($evaluation->statut == 0) {
                 $evaluation->update([
-                    "evaluation" => EvaluationCritereResource::collection($evaluationClimatiqueReponses),
+                    "evaluation" => EvaluationCritereResource::collection($evaluationPertinenceReponses),
                     //"resultats_evaluation" => []
                 ]);
-            }*/
-
-            // Calculer les scores de pertinence
-            $scoreData = $this->calculateScorePertinence($evaluation->id);
-            $scorePertinence = $scoreData['score_final_pondere'];
-
-            // Calculer les résultats finaux pour la pertinence
-            $aggregatedScores = (object)[
-                'score_final_pondere' => $scorePertinence,
-                'score_brut' => $scoreData['score_brut'],
-                'total_ponderation' => $scoreData['total_ponderation']
-            ];
-
-            $finalResults = $this->calculateFinalResults($aggregatedScores, "pertinence");
-
-            $evaluation->update([
-                'statut' => 0,
-                'score_pertinence' => $finalResults['score_final_pondere'],
-                "evaluation" => EvaluationCritereResource::collection($evaluationClimatiqueReponses),
-                "resultats_evaluation" => $finalResults
-            ]);
-
-            /*
-            if ($is_auto_evaluation) {
-
-                // Calculer et enregistrer le score automatiquement
-                $finalResults = $this->finaliserAutoEvaluationPertinence($evaluation->id);
-
-                // Mettre à jour l'évaluation avec les résultats
-                $evaluation->update([
-                    'statut' => 0,
-                    'resultats_evaluation' => $finalResults,
-                    'score_pertinence' => $finalResults['score_final_pondere'],
-                ]);
-
-                // Enregistrer la décision
-                $this->enregistrerDecision($ideeProjet, 'Finalisation score pertinence', 'Score pertinence finalisé: ' . ($finalResults['score_final_pondere'] ?? 0));
             }
-            */
 
             DB::commit();
 
+            // Calculer la progression et notifier le Responsable projet
+            $tauxProgression = $this->calculateCompletionPercentage($evaluation);
+            $responsableProjet = $ideeProjet->responsable;
+
+            if ($responsableProjet && $is_auto_evaluation) {
+                // Note: Ajouter les notifications pour pertinence si nécessaire
+                // $scorePertinence = $ideeProjet->score_pertinence;
+                // Notification::send($responsableProjet, new ProgressionEvaluationPertinenceNotification($ideeProjet, $evaluation, $tauxProgression, $scorePertinence));
+
+                // Si c'est le dernier évaluateur qui termine (progression = 100%)
+                // if ($tauxProgression >= 100) {
+                //     $scorePertinenceFinal = $this->calculateScorePertinence($evaluation->id)['score_final_pondere'] ?? 0;
+                //     Notification::send($responsableProjet, new EvaluationPertinenceTermineNotification($ideeProjet, $evaluation, $scorePertinenceFinal));
+                // }
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => "Évaluation de pertinence " . ($is_auto_evaluation ? "finalisée" : "soumise") . " avec succès",
+                'message' => 'Réponses d\'évaluation de pertinence soumises avec succès',
                 'data' => [
                     'evaluation_id' => $evaluation->id,
+                    'reponses_soumises' => count($reponses),
+                    'evaluateur_reponses' => EvaluationCritereResource::collection($evaluationPertinenceReponses),
+                    'evaluateur_stats' => [
+                        'total_criteres' => $evaluationPertinenceReponses->count(),
+                        'criteres_evalues' => $evaluationPertinenceReponses->filter->isCompleted()->count(),
+                        'criteres_en_attente' => $evaluationPertinenceReponses->filter->isPending()->count(),
+                        'taux_completion' => $evaluationPertinenceReponses->count() > 0 ?
+                            (($evaluationPertinenceReponses->filter->isCompleted()->count() / $evaluationPertinenceReponses->count()) * 100) : 0
+                    ]
                 ]
             ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Évaluation de pertinence non trouvée pour cette idée de projet',
+            ], 404);
         } catch (Exception $e) {
             DB::rollBack();
-            return $this->errorResponse($e);
+            return response()->json([
+                'success' => false,
+                'message' => $e ? $e->getMessage() : 'Erreur lors de la soumission des réponses',
+                'error' => $e->getMessage()
+            ], $e ? ($e->getCode() ?? 500) : 500);
         }
     }
 
     /**
      * Finaliser une auto-évaluation de pertinence
      */
-    public function finaliserAutoEvaluationPertinence($evaluationId): JsonResponse
+    public function finaliserAutoEvaluationPertinence($ideeProjetId): JsonResponse
     {
         try {
-            // Vérifier que l'évaluation de pertinence existe
-            $evaluation = Evaluation::where('id', $evaluationId)
+
+            if (auth()->user()->type !== 'responsable-projet') {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
+            $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
+
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
+            // Vérifier que l'évaluation pertinence existe
+            $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
+                ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'pertinence')
                 ->firstOrFail();
 
             if ($evaluation->statut == 1) {
                 return response()->json([
                     'success' => false,
-                    'data' => null,
-                    'message' => 'Score Auto Évaluation pertinence déjà enregistré',
+                    'message' => 'Score Auto Evaluation pertinence déja enregistré',
                 ], 400);
             }
 
-            // Récupérer l'idée de projet
-            $ideeProjet = $evaluation->projetable;
+            if (auth()->id() !== $ideeProjet->responsable->id) {
+                throw new Exception("Vous n'avez pas les droits pour effectuer cette action", 403);
+            }
 
-            // Calculer les scores de pertinence
-            $scoreData = $this->calculateScorePertinence($evaluationId);
-            $scorePertinence = $scoreData['score_final_pondere'];
+            $completionPercentage = $this->calculateCompletionPercentage($evaluation);
 
-            // Calculer les résultats finaux pour la pertinence
-            $aggregatedScores = (object)[
-                'score_final_pondere' => $scorePertinence,
-                'score_brut' => $scoreData['score_brut'],
-                'total_ponderation' => $scoreData['total_ponderation']
-            ];
+            if ($completionPercentage != 100) {
+                throw new Exception("Auto-evaluation pertinence toujours en cours, veuillez patienter", 403);
+            }
 
-            $finalResults = $this->calculateFinalResults($aggregatedScores, "pertinence");
+            // Calculer les résultats finaux
+            //$aggregatedScores = $evaluation->getAggregatedScores();
 
             // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation de pertinence
-            $evaluateurs = User::whereHas('permissions', function ($query) {
-                $query->where('name', 'effectuer-evaluation-pertinence-idee-projet');
-            })->get();
-
-            // Récupérer les critères éligibles pour l'évaluation de pertinence
-            $criteresEligibles = Critere::whereHas('categorieCritere', function ($query) {
+            $evaluateurs = $evaluation->evaluateursPertinence()->get();
+            $criteres = Critere::whereHas('categorie_critere', function ($query) {
                 $query->where('slug', 'grille-evaluation-pertinence-idee-projet');
-            })->count();
+            })->get();
+            $evaluationCriteres = new Collection();
 
-            $finalResults['criteres_eligibles'] = $criteresEligibles;
-            $finalResults['nombre_evaluateurs'] = $evaluateurs->count() ?? 1;
+            foreach ($evaluateurs as $evaluateur) {
+                foreach ($criteres as $critere) {
+                    $evaluationCritere = $evaluation->evaluationCriteres()
+                        ->autoEvaluation()
+                        ->active()
+                        ->where('critere_id', $critere->id)
+                        ->where('evaluateur_id', $evaluateur->id)
+                        ->firstOrNew([
+                            'evaluation_id' => $evaluation->id,
+                            'critere_id' => $critere->id,
+                            'evaluateur_id' => $evaluateur->id,
+                        ], [
+                            'categorie_critere_id' => $critere->categorie_critere_id,
+                            'note' => 'En attente',
+                            'notation_id' => null,
+                            'is_auto_evaluation' => true,
+                            'est_archiver' => false
+                        ]);
 
-            // Ajouter score pertinence
-            $finalResults['score_pertinence'] = $scorePertinence;
+                    $evaluationCriteres->push($evaluationCritere->load(['critere', 'notation', 'categorieCritere', 'evaluateur']));
+                }
+            }
 
-            // Récupérer la grille d'évaluation de pertinence
-            $grillePertinence = CategorieCritere::where('slug', 'grille-evaluation-pertinence-idee-projet')->first();
+            $aggregatedScores = $evaluation->aggregateScoresByCritere($evaluationCriteres);
+            $finalResults = $this->calculateFinalResults($aggregatedScores, "pertinence");
 
-            // Mettre à jour l'idée de projet avec le score de pertinence
+            // Calculer et ajouter les scores
+            $scoreGlobal = $this->calculateScoreGlobal($evaluation->id);
+            $finalResults['score_global'] = $scoreGlobal;
+
+            // Ajouter score pertinence si c'est une évaluation de pertinence
+            if ($evaluation->type_evaluation === 'pertinence') {
+                $scorePertinence = $this->calculateScorePertinence($evaluation->id);
+                $finalResults['score_pertinence'] = $scorePertinence;
+            }
+
+            $grilleEvaluation = CategorieCritere::where('slug', 'grille-evaluation-pertinence-idee-projet')->first();
+
+
             $ideeProjet->update([
-                'est_coherent' => true,
                 'score_pertinence' => $finalResults['score_final_pondere'],
-                'canevas_pertinence' => $grillePertinence ? (new CategorieCritereResource($grillePertinence))->toArray(request()) : null,
+                'est_coherent' => true,
+                //'statut' => StatutIdee::IDEE_DE_PROJET,  // Marquer comme terminée
+
+                //'phase' => $this->getPhaseFromStatut(StatutIdee::IDEE_DE_PROJET),
+                //'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::IDEE_DE_PROJET),
+
+                // Enregistrer le canevas pertinence dans l'idée projet
+                /**
+                 * Enregistrement du canevas utiliser pour l'evaluation de pertinence dans l'idée projet
+                 */
+                'canevas_pertinence' => $grilleEvaluation ? (new CategorieCritereResource($grilleEvaluation))->toArray(request()) : null,
             ]);
 
-            // Enregistrer la décision
+            // Enregistrer le workflow et la décision
+            //$this->enregistrerWorkflow($ideeProjet, StatutIdee::IDEE_DE_PROJET);
             $this->enregistrerDecision($ideeProjet, 'Finalisation score pertinence', 'Score pertinence finalisé: ' . ($finalResults['score_final_pondere'] ?? 0));
 
-            // Mettre à jour l'évaluation avec les résultats et marquer comme terminée
             $evaluation->update([
                 'resultats_evaluation' => $finalResults,
-                'score_pertinence' => $finalResults['score_final_pondere'],
                 'valider_le' => now(),
                 'statut' => 1  // Marquer comme terminée
             ]);
 
+            // Notifier le Responsable que l'évaluation de pertinence est terminée
+            // Note: Ajouter les notifications pour pertinence si nécessaire
+            // $responsable = $ideeProjet->responsable;
+            // if ($responsable) {
+            //     Notification::send($responsable, new EvaluationPertinenceFinaliseeNotification($ideeProjet, $evaluation));
+            // }
+
+            // Notifier le Responsable hiérarchique qu'une nouvelle idée de projet a été créée
+            // $responsablesHierarchiques = User::where('type', 'responsable-hierachique')
+            //     ->where('profilable_type', get_class($ideeProjet->ministere))
+            //     ->where('profilable_id', $ideeProjet->ministere->id)
+            //     ->get();
+            //
+            // if ($responsablesHierarchiques->count() > 0) {
+            //     $scorePertinence = $finalResults['score_final_pondere'] ?? 0;
+            //     Notification::send($responsablesHierarchiques, new NouvellePertinenceNotification($ideeProjet, $scorePertinence));
+            // }
+
+            $evaluation->refresh();
+
             return response()->json([
                 'success' => true,
-                'data' => $finalResults,
-                'message' => 'Auto-évaluation de pertinence finalisée avec succès'
+                'message' => "Score de l'auto-Évaluation de pertinence finalisée avec succès",
+                'data' => $evaluation
             ]);
         } catch (Exception $e) {
-            return $this->errorResponse($e);
+            return response()->json([
+                'success' => false,
+                'message' => "'Erreur lors de l'enregistrement du score. " . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 
@@ -2754,7 +2882,54 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ->with(['critere', 'notation'])
             ->get();
 
-        dd($criteres);
+        if ($criteres->isEmpty()) {
+            return [
+                'score_climatique' => 0,
+                'score_pourcentage' => 0,
+                'nombre_criteres_evalues' => 0,
+                'ponderation_totale' => 0,
+                'criteres_details' => [],
+                'statut_evaluation' => 'Aucun critère évalué'
+            ];
+        }
+
+        // Grouper par critère et calculer la moyenne pour chaque critère
+        $criteresMoyennes = $criteres->groupBy('critere_id')->map(function ($critereEvaluations) {
+            $critere = $critereEvaluations->first()->critere;
+            $notes = $critereEvaluations->pluck('notation.valeur')->filter()->map(function ($note) {
+                return is_numeric($note) ? (float) $note : 0;
+            });
+
+            $moyenne = $notes->average();
+            $ponderation = $critere->ponderation ?? 0;
+
+            return [
+                'critere_id' => $critere->id,
+                'critere_nom' => $critere->intitule,
+                'moyenne_critere' => $moyenne,
+                'ponderation' => $ponderation,
+                'score_pondere' => $moyenne * ($ponderation / 100),
+                'nombre_evaluateurs' => $critereEvaluations->count(),
+                'notes_individuelles' => $notes->toArray()
+            ];
+        });
+
+        // Calculer le score climatique global
+        $scoreTotal = $criteresMoyennes->sum('score_pondere');
+        $ponderationTotale = $criteresMoyennes->sum('ponderation');
+
+        // Score climatique sur l'échelle utilisée (généralement sur 5)
+        $scoreClimatique = $ponderationTotale > 0 ?
+            (($scoreTotal * 100) / $ponderationTotale) : 0;
+
+        return [
+            //'score_climatique' => $scoreClimatique,
+            "score_climatique" => ($criteresMoyennes->avg('score_pondere')),
+            'nombre_criteres_evalues' => $criteresMoyennes->count(),
+            'ponderation_totale' => $ponderationTotale,
+            'criteres_details' => $criteresMoyennes->values()->toArray(),
+            'statut_evaluation' => $this->getStatutScoreClimatique($scoreClimatique)
+        ];
 
         $score_brut = 0;
         $score_pondere = 0;
@@ -2769,6 +2944,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $ponderation = $critere->ponderation ?? 1;
                 $valeur_notation = is_numeric($notation->valeur) ? floatval($notation->valeur) : 0;
 
+                dump($valeur_notation);
                 $score_brut += $valeur_notation;
                 $score_pondere += ($valeur_notation * $ponderation);
                 $total_ponderation += $ponderation;
@@ -2779,6 +2955,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         $score_final_pondere = $total_ponderation > 0
             ? ($score_pondere / $total_ponderation) * 100
             : 0;
+
+
+        dump($valeur_notation);
 
         return [
             'score_brut' => $score_brut,
@@ -2823,14 +3002,15 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     public function getDashboardEvaluationPertinence($ideeProjetId): JsonResponse
     {
         try {
+
             if (auth()->user()->profilable_type == Dgpd::class) {
-                throw new Exception("Vous n'avez pas les droits d'accéder à cette ressource", 403);
+                throw new Exception("Vous n'avez pas les droits d'acceder a cette resource", 403);
             }
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
             if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
-                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
             $evaluation = Evaluation::firstOrCreate([
@@ -2853,46 +3033,95 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ], 400);
             }
 
-            /* if ($evaluation->statut != 1) {
+            if ($evaluation->statut != 1) {
                 // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation de pertinence
-                $evaluateurs = User::whereHas('permissions', function ($query) {
-                    $query->where('name', 'effectuer-evaluation-pertinence-idee-projet');
-                })->get();
+                $evaluateurs = $evaluation->evaluateursPertinence()->get();
             } else {
-                $evaluateurs = collect();
-            } */
 
-            // Récupérer la grille d'évaluation de pertinence
-            $grillePertinence = CategorieCritere::where('slug', 'grille-evaluation-pertinence-idee-projet')
-                ->with(['criteres.notations', 'notations'])
-                ->first();
-
-            if (!$grillePertinence) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Grille d\'évaluation de pertinence non trouvée'
-                ], 404);
+                $evaluateurs = $evaluation->evaluateurs()
+                    ->wherePivot('is_auto_evaluation', true)
+                    ->select('users.*')
+                    ->distinct('users.id')
+                    ->get();
             }
 
-            // Récupérer les réponses existantes
-            $reponsesExistantes = EvaluationCritere::where('evaluation_id', $evaluation->id)
-                ->with(['critere', 'notation'])
-                ->get();
+            if ($evaluateurs->count() == 0) {
+                throw new Exception('Aucun évaluateur trouvé avec la permission "effectuer-evaluation-pertinence-idee-projet"', 404);
+            }
+
+            // Récupérer les critères éligibles pour l'évaluation de pertinence
+            $criteres = Critere::whereHas('categorie_critere', function ($query) {
+                $query->where('slug', 'grille-evaluation-pertinence-idee-projet');
+            })->get();
+
+            $evaluationCriteres = new Collection();
+
+            // Assigner chaque évaluateur à tous les critères
+            foreach ($evaluateurs as $evaluateur) {
+                foreach ($criteres as $critere) {
+                    $evaluationCritere = $evaluation->evaluationCriteres()
+                        ->autoEvaluation()
+                        ->active()
+                        ->where('critere_id', $critere->id)
+                        ->where('evaluateur_id', $evaluateur->id)
+                        ->firstOrNew([
+                            'evaluation_id' => $evaluation->id,
+                            'critere_id' => $critere->id,
+                            'evaluateur_id' => $evaluateur->id,
+                        ], [
+                            'categorie_critere_id' => $critere->categorie_critere_id,
+                            'note' => 'En attente',
+                            'notation_id' => null,
+                            'is_auto_evaluation' => true,
+                            'est_archiver' => false
+                        ]);
+
+                    $evaluationCriteres->push($evaluationCritere->load(['critere', 'notation', 'categorieCritere', 'evaluateur']));
+                }
+            }
+            $aggregatedScores = $evaluation->aggregateScoresByCritere($evaluationCriteres);
+
+            $finalResults = $this->calculateFinalResults($aggregatedScores, "pertinence");
+            $completionPercentage = $this->calculateCompletionPercentage($evaluation);
+
+            // Progression par évaluateur
+            $progressionParEvaluateur = $this->calculateProgressionParEvaluateur($evaluationCriteres);
+
+            // Statistiques générales
+            $totalEvaluateurs = $evaluationCriteres->pluck('evaluateur_id')->unique()->count();
+            $totalCriteres = $criteres->count();
+            $totalEvaluationsCompletes = $evaluationCriteres->filter->isCompleted()->count();
+            $totalEvaluationsAttendues = $totalEvaluateurs * $totalCriteres;
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dashboard évaluation pertinence récupéré avec succès',
                 'data' => [
-                    'idee_projet' => $ideeProjet,
-                    'evaluation' => $evaluation,
-                    'grille_pertinence' => $grillePertinence,
-                    'reponses_existantes' => $reponsesExistantes,
-                    'peut_evaluer' => auth()->user()->can('effectuer-evaluation-pertinence-idee-projet'),
-                    'est_termine' => $evaluation->statut == 1
+                    "statut_idee" => $ideeProjet->statut,
+                    "idee_projet" => new IdeesProjetResource($ideeProjet),
+                    'evaluation' => new EvaluationResource($evaluation),
+
+                    // Taux de progression global
+                    'taux_progression_global' => [
+                        'pourcentage' => $completionPercentage,
+                        'evaluations_completes' => $totalEvaluationsCompletes,
+                        'evaluations_attendues' => $totalEvaluationsAttendues,
+                        'evaluateurs_total' => $totalEvaluateurs,
+                        'criteres_total' => $totalCriteres
+                    ],
+
+                    // Progression par évaluateur
+                    'progression_par_evaluateur' => $progressionParEvaluateur,
+
+                    // Résultats agrégés et finaux
+                    'final_results' => $finalResults
                 ]
             ]);
         } catch (Exception $e) {
-            return $this->errorResponse($e);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage() ?? 'Erreur lors de la récupération du dashboard',
+                'error' => $e->getMessage()
+            ], $e ? ($e->getCode() ?? 500) : 500);
         }
     }
 
