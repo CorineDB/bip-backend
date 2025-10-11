@@ -139,4 +139,8 @@ class EvaluationController extends Controller
     public function refaireAutoEvaluationClimatique($ideeProjetId): JsonResponse {
         return $this->service->refaireAutoEvaluationClimatique($ideeProjetId);
     }
+
+    public function refaireAutoEvaluationPertinence($ideeProjetId): JsonResponse {
+        return $this->service->refaireAutoEvaluationPertinence($ideeProjetId);
+    }
 }
