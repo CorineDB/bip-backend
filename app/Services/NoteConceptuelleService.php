@@ -601,7 +601,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             $evaluationEnCours = $noteConceptuelle->evaluationEnCours();
 
-            if(isset($data["numero_dossier"])){
+            /* if(isset($data["numero_dossier"])){
                 $noteConceptuelle->update([
                     "numero_dossier" => $data["numero_dossier"]
                 ]);
@@ -611,7 +611,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $noteConceptuelle->update([
                     "numero_contrat" => $data["numero_contrat"]
                 ]);
-            }
+            } */
 
             if(isset($data["accept_term"])){
                 $noteConceptuelle->update([
@@ -1326,8 +1326,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             // Mettre à jour l'évaluation avec les données complètes
             $evaluation->fill([
-                /* 'resultats_evaluation' => $resultatsExamen,
-                'evaluation' => $evaluationComplete, */
                 'valider_par' => auth()->id(),
                 'valider_le' => now(),
                 'commentaire' => ($evaluation->commentaire ?? '') . "\n\nCommentaire de confirmation: " . ($data['commentaire_confirmation'] ?? '')
@@ -1357,7 +1355,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     ];
                     break;
                 case 'retour':
-                    //$noteConceptuelleUpdate['statut'] = 0; // En révision
 
                     /**
                      * Ici on crée une nouvelle note conceptuelle en se basant sur la note actuelle
@@ -1388,7 +1385,25 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
                     // Copier les canevas de la note originale vers la nouvelle note
                     $newNote->canevas_redaction_note_conceptuelle = $noteConceptuelle->canevas_redaction_note_conceptuelle;
+                    $newNote->canevas_appreciation_note_conceptuelle = $noteConceptuelle->canevas_appreciation_note_conceptuelle;
                     $newNote->save();
+
+                    // Créer une nouvelle évaluation liée à la nouvelle note avec les données de l'ancienne
+                    $newEvaluation = $evaluation->replicate();
+                    $newEvaluation->projetable_id = $newNote->id;
+                    $newEvaluation->projetable_type = get_class($newNote);
+                    $newEvaluation->id_evaluation = $evaluation->id; // Lien vers l'évaluation parent
+                    $newEvaluation->canevas = $evaluation->canevas; // Copier le canevas
+                    $newEvaluation->statut = 0; // En cours
+                    $newEvaluation->date_debut_evaluation = now();
+                    $newEvaluation->date_fin_evaluation = null;
+                    $newEvaluation->valider_le = null;
+                    $newEvaluation->valider_par = null;
+                    $newEvaluation->evaluation = [];
+                    $newEvaluation->resultats_evaluation = [];
+                    $newEvaluation->created_at = now();
+                    $newEvaluation->updated_at = null;
+                    $newEvaluation->save();
 
                     $noteConceptuelleData = [
                         'statut' => StatutIdee::R_VALIDATION_NOTE_AMELIORER,
@@ -1399,22 +1414,55 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 case 'non_accepte':
                     //$noteConceptuelleUpdate['statut'] = -1; // Rejetée
 
-                    $noteData = [
-                        'intitule' => "",
-                        'statut' => -1,
-                        'note_conceptuelle' => [],
-                        'decision' => [],
-                        'numero_contrat' => null,
-                        'numero_dossier' => null,
-                        'accept_term' => false,
-                        'rediger_par' =>  $noteConceptuelle->rediger_par,
-                        'updated_at' => null,
-                        'canevas_redaction_note_conceptuelle' => [],
-                        'canevas_appreciation_note_conceptuelle' => [],
-                        'parentId' => $noteConceptuelle->id,
-                        'projetId' => $noteConceptuelle->projetId,
-                    ];
-                    $noteConceptuelle->projet->noteConceptuelle()->create($noteData);
+                    $newNote = $noteConceptuelle->replicate();
+
+                    $newNote->statut = 0; // Brouillon
+                    $newNote->decision = [];
+                    $newNote->accept_term = false;
+                    $newNote->parentId = $noteConceptuelle->id;
+                    $newNote->rediger_par =  $noteConceptuelle->redacteur->id;
+                    $newNote->created_at = now();
+                    $newNote->updated_at = null;
+
+                    /*
+                        $noteData = [
+                            'intitule' => "",
+                            'statut' => 0,
+                            'decision' => [],
+                            'numero_contrat' => null,
+                            'numero_dossier' => null,
+                            'accept_term' => false,
+                            'rediger_par' =>  $noteConceptuelle->rediger_par,
+                            'updated_at' => null,
+                            'canevas_redaction_note_conceptuelle' => [],
+                            'canevas_appreciation_note_conceptuelle' => [],
+                            'parentId' => $noteConceptuelle->id,
+                            'projetId' => $noteConceptuelle->projetId,
+                        ];
+                        $noteConceptuelle->projet->noteConceptuelle()->create($noteData);
+                    */
+
+                    // Copier les canevas de la note originale vers la nouvelle note
+                    $newNote->canevas_redaction_note_conceptuelle = $noteConceptuelle->canevas_redaction_note_conceptuelle;
+                    $newNote->canevas_appreciation_note_conceptuelle = $noteConceptuelle->canevas_appreciation_note_conceptuelle;
+                    $newNote->save();
+
+                    // Créer une nouvelle évaluation liée à la nouvelle note avec les données de l'ancienne
+                    $newEvaluation = $evaluation->replicate();
+                    $newEvaluation->projetable_id = $newNote->id;
+                    $newEvaluation->projetable_type = get_class($newNote);
+                    $newEvaluation->id_evaluation = $evaluation->id; // Lien vers l'évaluation parent
+                    $newEvaluation->canevas = $evaluation->canevas; // Copier le canevas
+                    $newEvaluation->statut = 0; // En cours
+                    $newEvaluation->date_debut_evaluation = now();
+                    $newEvaluation->date_fin_evaluation = null;
+                    $newEvaluation->valider_le = null;
+                    $newEvaluation->valider_par = null;
+                    $newEvaluation->evaluation = [];
+                    $newEvaluation->resultats_evaluation = [];
+                    $newEvaluation->created_at = now();
+                    $newEvaluation->updated_at = null;
+                    $newEvaluation->save();
 
                     $noteConceptuelleData = [
                         'statut' => StatutIdee::NOTE_CONCEPTUEL,

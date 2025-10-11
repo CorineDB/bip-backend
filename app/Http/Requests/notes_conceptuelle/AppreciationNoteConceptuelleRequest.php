@@ -29,8 +29,8 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
             'evaluer' => 'required|boolean',
 
             'evaluations_champs' => 'required_unless:evaluer,0|array|min:' . ($evaluer  ? count($this->champs) : 0) . ($evaluer  ?  "|max:" . count($this->champs) : ""),
-            'evaluations_champs.*.champ_id' => ["required_with:evaluations_champs", "in:".implode(",", $this->champs), Rule::exists("champs", "id",)],
-            'evaluations_champs.*.appreciation' => 'required_with:evaluations_champs|in:'.implode(",", $this->appreciations),
+            'evaluations_champs.*.champ_id' => ["required_with:evaluations_champs", "in:" . implode(",", $this->champs), Rule::exists("champs", "id",)],
+            'evaluations_champs.*.appreciation' => 'required_with:evaluations_champs|in:' . implode(",", $this->appreciations),
             'evaluations_champs.*.commentaire' => 'required_unless:evaluer,0|string|min:10',
 
             /*'numero_dossier'            => 'required_unless:evaluer,0',//'required_unless:evaluer,0|string|max:100',
@@ -75,11 +75,12 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
         ];
     }
 
-    public function prepareForValidation(){
+    public function prepareForValidation()
+    {
         $canevas = app()->make(DocumentRepository::class)->getModel()
-                                            ->where('type', 'checklist')
-                                            ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-appreciation-note-conceptuelle'))
-                                            ->orderBy('created_at', 'desc')->first();
+            ->where('type', 'checklist')
+            ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-appreciation-note-conceptuelle'))
+            ->orderBy('created_at', 'desc')->first();
 
         $evaluationConfigs = $canevas?->evaluation_configs;
 
