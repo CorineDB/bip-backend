@@ -29,9 +29,6 @@ class NoteConceptuelleResource extends BaseApiResource
                 default => 'Brouillon'
             },
 
-            'canevas_appreciation_note_conceptuelle' => $this->canevas_appreciation_note_conceptuelle,
-            'canevas_redaction_note_conceptuelle' => $this->canevas_redaction_note_conceptuelle,
-
             'valider_par' => $this->validateur ? new UserResource($this->validateur) : null,
             'rediger_par' => $this->redacteur ? new UserResource($this->redacteur) : null,
             'note_conceptuelle' => $this->note_conceptuelle,
@@ -93,9 +90,6 @@ class NoteConceptuelleResource extends BaseApiResource
                         'created_at' => $fichier->created_at?->toISOString(),
                     ];
                 })->values();
-            }),
-            'parent' => $this->whenLoaded("parent", function(){
-                return new NoteConceptuelleResource($this->parent->load("parent"));
             }),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

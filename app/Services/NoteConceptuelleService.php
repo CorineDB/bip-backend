@@ -2048,28 +2048,34 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     private function handleDocumentsWithFichierRepository(NoteConceptuelle $noteConceptuelle, array $documentsData): void
     {
         foreach ($documentsData as $category => $files) {
-            // Récupérer les fichiers existants pour cette catégorie avant de faire quoi que ce soit
+            // Récupérer les fichiers existants pour cette catégorie
             $existingFiles = $this->getExistingFilesForCategory($noteConceptuelle, $category);
 
-            // Enregistrer les nouveaux fichiers
+            // Si aucun nouveau fichier fourni → on ne fait rien
+            if (empty($files)) {
+                continue;
+            }
+
+            $newFilesAdded = false;
+
+            // Cas 1 : catégorie avec plusieurs fichiers (ex: "autres")
             if (is_array($files)) {
-                // Pour les documents multiples (ex: autres)
                 foreach ($files as $file) {
-                    if ($file) {
+                    if ($file instanceof \Illuminate\Http\UploadedFile) {
                         $this->storeDocumentWithFichierRepository($noteConceptuelle, $file, $category);
+                        $newFilesAdded = true;
                     }
                 }
+            }
+            // Cas 2 : catégorie avec un seul fichier
+            elseif ($files instanceof \Illuminate\Http\UploadedFile) {
+                $this->storeDocumentWithFichierRepository($noteConceptuelle, $files, $category);
+                $newFilesAdded = true;
+            }
 
-                // Supprimer les anciens fichiers maintenant que les nouveaux sont enregistrés
+            // Supprimer uniquement si on a ajouté de nouveaux fichiers
+            if ($newFilesAdded && !empty($existingFiles)) {
                 $this->removeSpecificFiles($existingFiles);
-            } else {
-                // Pour un seul document
-                if ($files) {
-                    $this->storeDocumentWithFichierRepository($noteConceptuelle, $files, $category);
-
-                    // Supprimer les anciens fichiers maintenant que les nouveaux sont enregistrés
-                    $this->removeSpecificFiles($existingFiles);
-                }
             }
         }
     }
