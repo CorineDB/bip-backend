@@ -234,6 +234,16 @@ class Evaluation extends Model
             ->get()
             ->groupBy('evaluateur_id');
     }
+    /**
+     * Get evaluation criteres grouped by evaluateur.
+     */
+    public function getActiveEvaluationsByUser()
+    {
+        return $this->evaluationCriteres()->active()
+            ->with(['evaluateur', 'critere', 'notation', 'categorieCritere'])
+            ->get()
+            ->groupBy('evaluateur_id');
+    }
 
     public function scopeEvaluateursClimatique($query)
     {
