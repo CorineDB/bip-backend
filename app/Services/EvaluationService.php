@@ -1276,6 +1276,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     $evaluationCriteres->push($evaluationCritere->load(['critere', 'notation', 'categorieCritere', 'evaluateur']));
                 }
             }
+
             $aggregatedScores = $evaluation->aggregateScoresByCritere($evaluationCriteres);
 
             // Récupérer tous les critères avec leurs évaluations
@@ -2583,7 +2584,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             DB::commit();
 
             // Calculer la progression et notifier le Responsable projet
-            $tauxProgression = $this->calculateCompletionPercentage($evaluation);
+            $tauxProgression = $this->calculateCompletionPercentage($evaluation, "pertinence");
             $responsableProjet = $ideeProjet->responsable;
 
             if ($responsableProjet && $is_auto_evaluation) {
@@ -2664,7 +2665,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 throw new Exception("Vous n'avez pas les droits pour effectuer cette action", 403);
             }
 
-            $completionPercentage = $this->calculateCompletionPercentage($evaluation);
+            $completionPercentage = $this->calculateCompletionPercentage($evaluation, "pertinence");
 
             if ($completionPercentage != 100) {
                 throw new Exception("Auto-evaluation pertinence toujours en cours, veuillez patienter", 403);
@@ -2813,7 +2814,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ], 400);
             }
 
-            $completionPercentage = $this->calculateCompletionPercentage($evaluation);
+            $completionPercentage = $this->calculateCompletionPercentage($evaluation, "pertinence");
 
             if ($completionPercentage != 100) {
                 throw new Exception("Auto-evauation pertinence toujours en cours, veuillez patienter", 403);
@@ -3089,7 +3090,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $aggregatedScores = $evaluation->aggregateScoresByCritere($evaluationCriteres);
 
             $finalResults = $this->calculateFinalResults($aggregatedScores, "pertinence");
-            $completionPercentage = $this->calculateCompletionPercentage($evaluation);
+            $completionPercentage = $this->calculateCompletionPercentage($evaluation, "pertinence");
 
             // Progression par évaluateur
             $progressionParEvaluateur = $this->calculateProgressionParEvaluateur($evaluationCriteres);
