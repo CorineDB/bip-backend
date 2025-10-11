@@ -1861,7 +1861,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                         'message' => 'Critère non trouvé avec l\'ID: ' . $reponse['critere_id'],
                     ], 400);
                 }
-                if (str_contains(strtolower($critere->intitule ?? ''), 'impact climatique')) {
+                if (str_contains(strtolower($critere->intitule ?? ''), 'climat')) {
                     $isEvalClimatique = true;
                 }
 
