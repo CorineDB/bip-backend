@@ -2422,7 +2422,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 get_class($ideeProjet)
             )->where("statut", 0)
                 ->where('type_evaluation', 'pertinence')
-                ->orderBy("created_at", "desc");
+                ->latestOfMany();
 
             dd($evaluation);
 
