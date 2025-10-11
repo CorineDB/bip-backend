@@ -145,6 +145,12 @@ class Evaluation extends Model
      */
     public function historique_evaluations()
     {
+        return $this->hasMany(Evaluation::class, 'projetable_id', 'projetable_id')
+            ->where('projetable_type', $this->projetable_type)
+            ->where('type_evaluation', $this->type_evaluation)
+            ->orderByDesc('valider_le')
+            ->orderByDesc('date_fin_evaluation')
+            ->orderByDesc('created_at');
         return Evaluation::where('projetable_type', $this->projetable_type)
             ->where('projetable_id', $this->projetable_id)
             ->where('type_evaluation', $this->type_evaluation)
