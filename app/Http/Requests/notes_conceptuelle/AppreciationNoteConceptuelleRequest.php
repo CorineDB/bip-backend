@@ -64,12 +64,23 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
             $evaluer = $this->input('evaluer', false);
             $evaluationsChamps = $this->input('evaluations_champs', []);
 
-            // Si evaluer = false, on n'impose pas le commentaire
+            // Si evaluer = false, on n'impose pas les validations strictes
             if (!$evaluer) {
                 return;
             }
 
-            // Valider que le commentaire est obligatoire SAUF si l'appréciation est "passe"
+            // 1. Vérifier que TOUS les champs du canevas ont été évalués
+            $champsEvaluesIds = collect($evaluationsChamps)->pluck('champ_id')->toArray();
+            $champsManquants = array_diff($this->champs, $champsEvaluesIds);
+
+            if (!empty($champsManquants)) {
+                $validator->errors()->add(
+                    'evaluations_champs',
+                    'Tous les champs du canevas doivent être évalués avant de finaliser. Il manque ' . count($champsManquants) . ' champ(s).'
+                );
+            }
+
+            // 2. Valider que le commentaire est obligatoire SAUF si l'appréciation est "passe"
             foreach ($evaluationsChamps as $index => $evaluation) {
                 $appreciation = $evaluation['appreciation'] ?? null;
                 $commentaire = $evaluation['commentaire'] ?? null;
