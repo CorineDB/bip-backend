@@ -117,14 +117,14 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
                     // Récupérer les champs déjà marqués comme "passé" depuis le JSON evaluation
                     $champsEvalues = $evaluationEnCours->evaluation['champs_evalues'] ?? [];
 
-                    dd($champsEvalues);
-
                     $this->champsDejaPassés = collect($champsEvalues)
                         ->filter(function ($champ) {
                             return isset($champ['appreciation']) && $champ['appreciation'] === 'passe';
                         })
                         ->pluck('champ_id')
                         ->toArray();
+
+                    dd($this->champsDejaPassés);
                 }
             }
         }
