@@ -115,7 +115,7 @@ class NoteConceptuelle extends Model
      */
     public function historique_des_evaluations_notes_conceptuelle()
     {
-        return $this->evaluations()->where("type_evaluation", "note-conceptuelle")->orderBy("validated_at", "desc")->orderBy("created_at", "desc");
+        return $this->evaluations()->where("type_evaluation", "note-conceptuelle")->orderBy("valider_le", "desc")->orderBy("created_at", "desc");
     }
 
     /**
