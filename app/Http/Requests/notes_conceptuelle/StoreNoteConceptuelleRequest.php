@@ -85,7 +85,7 @@ class StoreNoteConceptuelleRequest extends FormRequest
             'est_mou' => $estSoumise ? 'required|boolean' : 'nullable|boolean',
 
             'champs' => $estSoumise ? 'required|array' : 'nullable|array|min:0',
-            'documents' => $estSoumise ? 'required|array' : 'nullable|array',
+            'documents' => $estSoumise ? 'array' : 'nullable|array',
             'documents.autres.*' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
 
             // documents obligatoires conditionnels : obligatoires si est_soumise=true ET fichier absent sur la note existante
