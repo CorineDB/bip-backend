@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\validation;
+namespace App\Http\Requests\notes_conceptuelle;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -20,7 +20,7 @@ class ValiderEtudeProfilRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'decision'          => 'required|string|in:faire_etude_prefaisabilite,reviser_note_conceptuelle,abandonner_projet,sauvegarder',
+            'decision'          => 'required|string|in:faire_etude_faisabilite_preliminaire,faire_etude_prefaisabilite,reviser_note_conceptuelle,abandonner_projet,sauvegarder',
             'commentaire'       => 'required|string|min:10|max:2000',
             'est_a_haut_risque'   => 'required|boolean:false',
             'est_dur'           => 'required|boolean:false',

@@ -24,6 +24,8 @@ class SoumettreTdrsFaisabiliteRequest extends FormRequest
         return [
             'est_soumise' => 'required|boolean',
             'tdr' => 'nullable|file|mimes:pdf,doc,xls,xlsx,docx|max:10240', // Max 10MB
+            'numero_dossier'                        => 'required_unless:est_soumise,0|sometimes|string|max:50',
+            'numero_contrat'                        => 'required_unless:est_soumise,0|sometimes|string|max:50',
             'autres_document' => 'nullable|array',
             'autres_document.*' => 'file|mimes:pdf,doc,xls,xlsx,docx,jpg,jpeg,png|max:10240', // Max 10MB par fichier
             'resume_tdr_faisabilite' => $estSoumise ? 'required|string|min:50|max:2000' : 'nullable|string|max:2000'

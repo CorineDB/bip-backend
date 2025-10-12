@@ -1914,6 +1914,129 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
+
+
+    public function canevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas de note conceptuelle unique
+            $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+
+            if (!$canevas) {
+                // Lancer le seeder si rien n’existe
+                Artisan::call('db:seed', [
+                    '--class' => 'Database\\Seeders\\ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder',
+                ]);
+
+                // Recharger après le seed
+                $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+
+                if (!$canevas) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Impossible de trouver ou créer le canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité."
+                    ], 404);
+                }
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => "Canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité"])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function createOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite'
+            ], [
+                'nom' => "Canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité",
+                'slug' => 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite',
+                'format' => 'document'
+            ]);
+            $data['categorieId'] = $categorieDocument->id;
+            $data["type"] = "checklist";
+            $data["slug"] = 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite';
+
+            if ($canevas) {
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                if (isset($data['guide_suivi'])) {
+
+                    // Mettre à jour les options de notation
+                    $evaluationConfigs['guide_suivi'] = $data['guide_suivi'];
+
+                    // Sauvegarder la configuration
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // DÉSACTIVÉ temporairement pour éviter de supprimer les nouveaux champs
+                $this->cleanupRemovedElements($canevas, $payloadIds);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                if (isset($data['guide_suivi'])) {
+
+                    $documentData['evaluation_configs']['guide_suivi'] = $data['guide_suivi'];
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => "Canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité."])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
     /*
     public function canevasRedactionTdrPrefaisabilite(): JsonResponse
     {
