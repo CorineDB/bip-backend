@@ -3,6 +3,7 @@
 namespace App\Http\Requests\notes_conceptuelle;
 
 use App\Repositories\DocumentRepository;
+use App\Repositories\Contracts\NoteConceptuelleRepositoryInterface;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -10,7 +11,11 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
 {
     protected $champs = [];
 
+    protected $champsAEvaluer = [];
+
     protected $appreciations = [];
+
+    protected $champsDejaPassés = [];
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -25,11 +30,17 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
     public function rules(): array
     {
         $evaluer = $this->input('evaluer', true);
+
+        // Déterminer le nombre minimum et maximum de champs à évaluer
+        // Si c'est une réévaluation (retour ou rejet), on n'évalue que les champs non passés
+        $minChamps = $evaluer ? count($this->champsAEvaluer) : 0;
+        $maxChamps = $evaluer ? count($this->champsAEvaluer) : count($this->champs);
+
         return [
             'evaluer' => 'required|boolean',
 
-            'evaluations_champs' => 'required_unless:evaluer,0|array|min:' . ($evaluer  ? count($this->champs) : 0) . ($evaluer  ?  "|max:" . count($this->champs) : ""),
-            'evaluations_champs.*.champ_id' => ["required_with:evaluations_champs", "in:" . implode(",", $this->champs), Rule::exists("champs", "id",)],
+            'evaluations_champs' => 'required_unless:evaluer,0|array|min:' . $minChamps . ($evaluer  ?  "|max:" . $maxChamps : ""),
+            'evaluations_champs.*.champ_id' => ["required_with:evaluations_champs", "in:" . implode(",", $this->champsAEvaluer), Rule::exists("champs", "id",)],
             'evaluations_champs.*.appreciation' => 'required_with:evaluations_champs|in:' . implode(",", $this->appreciations),
             'evaluations_champs.*.commentaire' => 'required_unless:evaluer,0|string|min:10',
 
@@ -87,5 +98,33 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
         $this->appreciations = collect($evaluationConfigs['guide_notation'] ?? [])->pluck('appreciation')->toArray();
 
         $this->champs = $canevas->all_champs->pluck("id")->toArray();
+
+        // Récupérer l'évaluation en cours pour identifier les champs déjà passés
+        $noteId = $this->route('noteId');
+
+        if ($noteId) {
+            $noteRepository = app()->make(NoteConceptuelleRepositoryInterface::class);
+            $noteConceptuelle = $noteRepository->find($noteId);
+
+            if ($noteConceptuelle) {
+                // Récupérer l'évaluation en cours
+                $evaluationEnCours = $noteConceptuelle->evaluationEnCours();
+
+                if ($evaluationEnCours && !empty($evaluationEnCours->evaluation)) {
+                    // Récupérer les champs déjà marqués comme "passé" depuis le JSON evaluation
+                    $champsEvalues = $evaluationEnCours->evaluation['champs_evalues'] ?? [];
+
+                    $this->champsDejaPassés = collect($champsEvalues)
+                        ->filter(function ($champ) {
+                            return isset($champ['appreciation']) && $champ['appreciation'] === 'passe';
+                        })
+                        ->pluck('champ_id')
+                        ->toArray();
+                }
+            }
+        }
+
+        // Les champs à évaluer sont tous les champs SAUF ceux déjà passés
+        $this->champsAEvaluer = array_diff($this->champs, $this->champsDejaPassés);
     }
 }

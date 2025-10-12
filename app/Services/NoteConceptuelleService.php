@@ -1397,9 +1397,31 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $newEvaluation->valider_le = null;
                     $newEvaluation->valider_par = null;
                     $newEvaluation->resultats_evaluation = [];
+
+                    // Copier TOUS les champs évalués de l'ancienne évaluation
+                    $ancienneEvaluation = $evaluation->evaluation ?? [];
+                    $champsEvaluesAnciens = $ancienneEvaluation['champs_evalues'] ?? [];
+
+                    $newEvaluation->evaluation = [
+                        'champs_evalues' => $champsEvaluesAnciens,
+                        'statistiques' => $ancienneEvaluation['statistiques'] ?? []
+                    ];
+
                     $newEvaluation->created_at = now();
                     $newEvaluation->updated_at = null;
                     $newEvaluation->save();
+
+                    // Copier également TOUTES les relations champs_evalue
+                    $champsEvalues = $evaluation->champs_evalue;
+                    foreach ($champsEvalues as $champ) {
+                        $newEvaluation->champs_evalue()->attach($champ->id, [
+                            'note' => $champ->pivot->note,
+                            'date_note' => $champ->pivot->date_note,
+                            'commentaires' => $champ->pivot->commentaires,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+                    }
 
                     $noteConceptuelleData = [
                         'statut' => StatutIdee::R_VALIDATION_NOTE_AMELIORER,
@@ -1455,9 +1477,31 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $newEvaluation->valider_le = null;
                     $newEvaluation->valider_par = null;
                     $newEvaluation->resultats_evaluation = [];
+
+                    // Copier TOUS les champs évalués de l'ancienne évaluation
+                    $ancienneEvaluation = $evaluation->evaluation ?? [];
+                    $champsEvaluesAnciens = $ancienneEvaluation['champs_evalues'] ?? [];
+
+                    $newEvaluation->evaluation = [
+                        'champs_evalues' => $champsEvaluesAnciens,
+                        'statistiques' => $ancienneEvaluation['statistiques'] ?? []
+                    ];
+
                     $newEvaluation->created_at = now();
                     $newEvaluation->updated_at = null;
                     $newEvaluation->save();
+
+                    // Copier également TOUTES les relations champs_evalue
+                    $champsEvalues = $evaluation->champs_evalue;
+                    foreach ($champsEvalues as $champ) {
+                        $newEvaluation->champs_evalue()->attach($champ->id, [
+                            'note' => $champ->pivot->note,
+                            'date_note' => $champ->pivot->date_note,
+                            'commentaires' => $champ->pivot->commentaires,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+                    }
 
                     $noteConceptuelleData = [
                         'statut' => StatutIdee::NOTE_CONCEPTUEL,
