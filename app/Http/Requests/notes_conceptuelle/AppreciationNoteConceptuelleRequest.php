@@ -123,8 +123,6 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
                         })
                         ->pluck('champ_id')
                         ->toArray();
-
-                    dd($this->champsDejaPassés);
                 }
             }
         }
@@ -133,6 +131,6 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
         // Si pas de parent, on évalue tous les champs (première évaluation)
         $this->champsAEvaluer = array_diff($this->champs, $this->champsDejaPassés);
 
-        dd($this->champsAEvaluer);
+        //dd($this->champsAEvaluer);
     }
 }
