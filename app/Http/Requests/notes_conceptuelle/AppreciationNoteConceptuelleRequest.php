@@ -16,6 +16,8 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
     protected $appreciations = [];
 
     protected $champsDejaPassés = [];
+
+    protected $champsNonPassés = [];
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -32,10 +34,10 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
         $evaluer = $this->input('evaluer', true);
 
         // Déterminer le nombre minimum et maximum de champs à évaluer
-        // Si evaluer = true : on doit évaluer TOUS les champs à évaluer
+        // Si evaluer = true : on doit évaluer AU MINIMUM tous les champs non-passés
         // Si evaluer = false : on peut évaluer partiellement (brouillon)
-        $minChamps = $evaluer ? count($this->champsAEvaluer) : 0;
-        $maxChamps = count($this->champsAEvaluer);
+        $minChamps = $evaluer ? count($this->champsNonPassés) : 0;
+        $maxChamps = count($this->champs); // Maximum = tous les champs du canevas
 
         return [
             'evaluer' => 'required|boolean',
@@ -58,10 +60,14 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
      */
     public function messages(): array
     {
+        $minRequis = count($this->champsNonPassés);
+
         return [
             'evaluations_champs.required' => 'Les évaluations des champs sont obligatoires.',
             'evaluations_champs.array' => 'Les évaluations doivent être un tableau.',
-            'evaluations_champs.min' => 'Au moins une évaluation de champ est requise.',
+            'evaluations_champs.min' => $minRequis > 0
+                ? "Vous devez évaluer au minimum {$minRequis} champ(s) (les champs non passés)."
+                : 'Au moins une évaluation de champ est requise.',
             'evaluations_champs.*.appreciation.required' => 'Une appréciation est obligatoire pour chaque champ.',
             'evaluations_champs.*.appreciation.in' => 'L\'appréciation doit être : Passe, Retour, ou Non accepté.',
             'evaluations_champs.*.commentaire.required' => 'Un commentaire est obligatoire pour chaque évaluation.',
@@ -127,10 +133,10 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
             }
         }
 
-        // Les champs à évaluer sont tous les champs SAUF ceux déjà passés
-        // Si pas de parent, on évalue tous les champs (première évaluation)
-        $this->champsAEvaluer = array_diff($this->champs, $this->champsDejaPassés);
+        // Calculer les champs non passés (pour le minimum requis)
+        $this->champsNonPassés = array_diff($this->champs, $this->champsDejaPassés);
 
-        //dd($this->champsAEvaluer);
+        // Tous les champs peuvent être soumis (même ceux déjà passés peuvent être réévalués)
+        $this->champsAEvaluer = $this->champs;
     }
 }

@@ -1398,29 +1398,56 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $newEvaluation->valider_par = null;
                     $newEvaluation->resultats_evaluation = [];
 
-                    // Copier TOUS les champs évalués de l'ancienne évaluation
+                    // Copier UNIQUEMENT les champs marqués comme "passé" de l'ancienne évaluation
                     $ancienneEvaluation = $evaluation->evaluation ?? [];
                     $champsEvaluesAnciens = $ancienneEvaluation['champs_evalues'] ?? [];
 
-                    $newEvaluation->evaluation = [
-                        'champs_evalues' => $champsEvaluesAnciens,
-                        'statistiques' => $ancienneEvaluation['statistiques'] ?? []
+                    // Filtrer pour ne garder que les champs "passé"
+                    $champsPassesUniquement = collect($champsEvaluesAnciens)->filter(function ($champ) {
+                        return isset($champ['appreciation']) && $champ['appreciation'] === 'passe';
+                    })->values()->toArray();
+
+                    // Recalculer les statistiques basées uniquement sur les champs passés
+                    $nombrePasse = count($champsPassesUniquement);
+                    $totalChamps = collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->count();
+
+                    $statistiquesRecalculees = [
+                        'nombre_passe' => $nombrePasse,
+                        'nombre_retour' => 0,
+                        'nombre_non_accepte' => 0,
+                        'nombre_non_evalues' => $totalChamps - $nombrePasse,
+                        'total_champs' => $totalChamps,
+                        'champs_obligatoires_non_evalues' => 0,
+                        'resultat_global' => null,
+                        'message_resultat' => null,
+                        'raisons' => null,
+                        'recommandations' => null,
+                        'resume' => null
                     ];
+
+                    $newEvaluation->evaluation = [
+                        'champs_evalues' => $champsPassesUniquement,
+                        'statistiques' => $statistiquesRecalculees
+                    ];
+
+                    $newEvaluation->resultats_evaluation = $statistiquesRecalculees;
 
                     $newEvaluation->created_at = now();
                     $newEvaluation->updated_at = null;
                     $newEvaluation->save();
 
-                    // Copier également TOUTES les relations champs_evalue
+                    // Copier également les relations champs_evalue UNIQUEMENT pour les champs "passé"
                     $champsEvalues = $evaluation->champs_evalue;
                     foreach ($champsEvalues as $champ) {
-                        $newEvaluation->champs_evalue()->attach($champ->id, [
-                            'note' => $champ->pivot->note,
-                            'date_note' => $champ->pivot->date_note,
-                            'commentaires' => $champ->pivot->commentaires,
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ]);
+                        if (isset($champ->pivot->note) && $champ->pivot->note === 'passe') {
+                            $newEvaluation->champs_evalue()->attach($champ->id, [
+                                'note' => $champ->pivot->note,
+                                'date_note' => $champ->pivot->date_note,
+                                'commentaires' => $champ->pivot->commentaires,
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+                        }
                     }
 
                     $noteConceptuelleData = [
@@ -1478,29 +1505,56 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $newEvaluation->valider_par = null;
                     $newEvaluation->resultats_evaluation = [];
 
-                    // Copier TOUS les champs évalués de l'ancienne évaluation
+                    // Copier UNIQUEMENT les champs marqués comme "passé" de l'ancienne évaluation
                     $ancienneEvaluation = $evaluation->evaluation ?? [];
                     $champsEvaluesAnciens = $ancienneEvaluation['champs_evalues'] ?? [];
 
-                    $newEvaluation->evaluation = [
-                        'champs_evalues' => $champsEvaluesAnciens,
-                        'statistiques' => $ancienneEvaluation['statistiques'] ?? []
+                    // Filtrer pour ne garder que les champs "passé"
+                    $champsPassesUniquement = collect($champsEvaluesAnciens)->filter(function ($champ) {
+                        return isset($champ['appreciation']) && $champ['appreciation'] === 'passe';
+                    })->values()->toArray();
+
+                    // Recalculer les statistiques basées uniquement sur les champs passés
+                    $nombrePasse = count($champsPassesUniquement);
+                    $totalChamps = collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->count();
+
+                    $statistiquesRecalculees = [
+                        'nombre_passe' => $nombrePasse,
+                        'nombre_retour' => 0,
+                        'nombre_non_accepte' => 0,
+                        'nombre_non_evalues' => $totalChamps - $nombrePasse,
+                        'total_champs' => $totalChamps,
+                        'champs_obligatoires_non_evalues' => 0,
+                        'resultat_global' => null,
+                        'message_resultat' => null,
+                        'raisons' => null,
+                        'recommandations' => null,
+                        'resume' => null
                     ];
+
+                    $newEvaluation->evaluation = [
+                        'champs_evalues' => $champsPassesUniquement,
+                        'statistiques' => $statistiquesRecalculees
+                    ];
+
+                    $newEvaluation->resultats_evaluation = $statistiquesRecalculees;
 
                     $newEvaluation->created_at = now();
                     $newEvaluation->updated_at = null;
                     $newEvaluation->save();
 
-                    // Copier également TOUTES les relations champs_evalue
+                    // Copier également les relations champs_evalue UNIQUEMENT pour les champs "passé"
                     $champsEvalues = $evaluation->champs_evalue;
                     foreach ($champsEvalues as $champ) {
-                        $newEvaluation->champs_evalue()->attach($champ->id, [
-                            'note' => $champ->pivot->note,
-                            'date_note' => $champ->pivot->date_note,
-                            'commentaires' => $champ->pivot->commentaires,
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ]);
+                        if (isset($champ->pivot->note) && $champ->pivot->note === 'passe') {
+                            $newEvaluation->champs_evalue()->attach($champ->id, [
+                                'note' => $champ->pivot->note,
+                                'date_note' => $champ->pivot->date_note,
+                                'commentaires' => $champ->pivot->commentaires,
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+                        }
                     }
 
                     $noteConceptuelleData = [
