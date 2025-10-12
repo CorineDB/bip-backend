@@ -45,7 +45,7 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
             'evaluations_champs' => 'required_unless:evaluer,0|array|min:' . $minChamps . '|max:' . $maxChamps,
             'evaluations_champs.*.champ_id' => ["required_with:evaluations_champs", "in:" . implode(",", $this->champsAEvaluer), Rule::exists("champs", "id",)],
             'evaluations_champs.*.appreciation' => 'required_with:evaluations_champs|in:' . implode(",", $this->appreciations),
-            'evaluations_champs.*.commentaire' => 'required_unless:evaluer,0|string|min:10',
+            'evaluations_champs.*.commentaire' => 'nullable|string|min:10',
 
             /*'numero_dossier'            => 'required_unless:evaluer,0',//'required_unless:evaluer,0|string|max:100',
             'numero_contrat'            => 'required_unless:evaluer,0|string|max:100',*/
@@ -53,6 +53,36 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
             // ✅ accept_term doit être "true" si est_soumise est true
             'accept_term'               => 'required_unless:evaluer,0|boolean' . ($evaluer  ? '|accepted' : ''),
         ];
+    }
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $evaluer = $this->input('evaluer', false);
+            $evaluationsChamps = $this->input('evaluations_champs', []);
+
+            // Si evaluer = false, on n'impose pas le commentaire
+            if (!$evaluer) {
+                return;
+            }
+
+            // Valider que le commentaire est obligatoire SAUF si l'appréciation est "passe"
+            foreach ($evaluationsChamps as $index => $evaluation) {
+                $appreciation = $evaluation['appreciation'] ?? null;
+                $commentaire = $evaluation['commentaire'] ?? null;
+
+                // Si l'appréciation n'est pas "passe", le commentaire est obligatoire
+                if ($appreciation && $appreciation !== 'passe' && empty($commentaire)) {
+                    $validator->errors()->add(
+                        "evaluations_champs.{$index}.commentaire",
+                        "Un commentaire est obligatoire pour les appréciations autres que 'Passé'."
+                    );
+                }
+            }
+        });
     }
 
     /**
