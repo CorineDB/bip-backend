@@ -669,9 +669,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ];
 
                 $evaluationEnCours->fill([
-                    /*'date_fin_evaluation' => now(),
-                        'statut' => 1,*/
-
                     'date_fin_evaluation' => $data["evaluer"] ? now() : null,
                     'statut' => $data["evaluer"] ? 1 : 0, // En cours
                     'resultats_evaluation' => $resultatsExamen,
@@ -1399,7 +1396,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $newEvaluation->date_fin_evaluation = null;
                     $newEvaluation->valider_le = null;
                     $newEvaluation->valider_par = null;
-                    $newEvaluation->evaluation = [];
                     $newEvaluation->resultats_evaluation = [];
                     $newEvaluation->created_at = now();
                     $newEvaluation->updated_at = null;
@@ -1458,7 +1454,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $newEvaluation->date_fin_evaluation = null;
                     $newEvaluation->valider_le = null;
                     $newEvaluation->valider_par = null;
-                    $newEvaluation->evaluation = [];
                     $newEvaluation->resultats_evaluation = [];
                     $newEvaluation->created_at = now();
                     $newEvaluation->updated_at = null;
