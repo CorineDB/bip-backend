@@ -113,6 +113,8 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
                 // Récupérer l'évaluation en cours
                 $evaluationEnCours = $noteConceptuelle->evaluationEnCours();
 
+                dd($evaluationEnCours->evaluation);
+
                 if ($evaluationEnCours && !empty($evaluationEnCours->evaluation)) {
                     // Récupérer les champs déjà marqués comme "passé" depuis le JSON evaluation
                     $champsEvalues = $evaluationEnCours->evaluation['champs_evalues'] ?? [];
