@@ -88,4 +88,9 @@ interface DocumentRepositoryInterface extends BaseRepositoryInterface
      * Get the unique canevas de checklist suivi assurance qualite etude faisabilite
      */
     public function getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+
+    /**
+     * Get the unique canevas de checklist suivi controle qualite etude faisabilite preliminaire
+     */
+    public function getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire();
 }

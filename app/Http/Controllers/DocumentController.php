@@ -595,6 +595,22 @@ class DocumentController extends Controller
         return $this->service->createOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite($request->all());
     }
 
+    /**
+     * Récupérer le canevas de checklist mesures adaptation
+     */
+    public function canevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire(): JsonResponse
+    {
+        return $this->service->canevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire();
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas de checklist mesures adaptation
+     */
+    public function createOrUpdateCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire(CreateOrUpdateCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaireRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire($request->all());
+    }
+
     public function canevasChecklistesSuiviRapportEtudeFaisabilite(): JsonResponse
     {
         return $this->service->canevasChecklistesSuiviRapportEtudeFaisabilite();

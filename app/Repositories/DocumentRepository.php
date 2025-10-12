@@ -402,4 +402,26 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
             ->orderBy('created_at', 'desc')
             ->first();
     }
+
+    public function getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire()
+    {
+        return $this->model->whereHas('categorie', function ($query) {
+            $query->where('slug', 'canevas-check-liste-suivi-controle-qualite-rapport-etude-faisabilite-preliminaire');
+        })
+            ->where('type', 'checklist')
+            ->with([
+                'sections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'sections.childSections.champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'champs' => function($query) {
+                    $query->orderBy('ordre_affichage');
+                },
+                'categorie'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
 }

@@ -380,6 +380,11 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite']);
         });
 
+        Route::prefix('canevas-check-liste-suivi-controle-qualite-rapport-etude-faisabilite')->group(function () {
+            Route::get('', [DocumentController::class, 'canevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire']);
+            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire']);
+        });
+
         Route::get('canevas-check-listes-suivi-rapport-etude-faisabilite', [DocumentController::class, 'canevasChecklistesSuiviRapportEtudeFaisabilite']);
 
 

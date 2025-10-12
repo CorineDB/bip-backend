@@ -1914,22 +1914,21 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-
-
-    public function canevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite(): JsonResponse
+    // FAISABILITE PRELIMINAIRE
+    public function canevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire(): JsonResponse
     {
         try {
             // Récupérer le canevas de note conceptuelle unique
-            $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+            $canevas = $this->repository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire();
 
             if (!$canevas) {
                 // Lancer le seeder si rien n’existe
-                Artisan::call('db:seed', [
+                /* Artisan::call('db:seed', [
                     '--class' => 'Database\\Seeders\\ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder',
-                ]);
+                ]); */
 
                 // Recharger après le seed
-                $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+                //$canevas = $this->repository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire();
 
                 if (!$canevas) {
                     return response()->json([
@@ -1948,22 +1947,22 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         }
     }
 
-    public function createOrUpdateCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite(array $data): JsonResponse
+    public function createOrUpdateCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
 
-            $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+            $canevas = $this->repository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire();
             $categorieDocument = CategorieDocument::firstOrCreate([
-                'slug' => 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite'
+                'slug' => 'canevas-check-liste-suivi-controle-qualite-rapport-etude-faisabilite-preliminaire'
             ], [
                 'nom' => "Canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité",
-                'slug' => 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite',
+                'slug' => 'canevas-check-liste-suivi-controle-qualite-rapport-etude-faisabilite-preliminaire',
                 'format' => 'document'
             ]);
             $data['categorieId'] = $categorieDocument->id;
             $data["type"] = "checklist";
-            $data["slug"] = 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite';
+            $data["slug"] = 'canevas-check-liste-suivi-controle-qualite-rapport-etude-faisabilite-preliminaire';
 
             if ($canevas) {
                 // Mode mise à jour intelligente
@@ -1998,7 +1997,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 $canevas->refresh();
 
                 // Recharger avec relations
-                $canevas = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+                $canevas = $this->repository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire();
 
                 return (new CanevasAppreciationTdrResource($canevas))
                     ->additional(['message' => 'Canevas de note conceptuelle mis à jour avec succès.'])
@@ -2024,7 +2023,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 DB::commit();
 
                 // Recharger avec relations
-                $document = $this->repository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite();
+                $document = $this->repository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire();
 
                 return (new CanevasAppreciationTdrResource($document))
                     ->additional(['message' => "Canevas de la check liste de suivi pour l'assurance qualité du rapport d'étude de faisabilité."])

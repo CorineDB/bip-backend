@@ -723,24 +723,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 //}
             }
 
-            /*
-                // Enregistrer les appréciations pour chaque champ
-                if (isset($data['evaluations_champs'])) {
-
-                    $syncData = [];
-
-                    foreach ($data['evaluations_champs'] as $evaluationChamp) {
-                        $syncData[$evaluationChamp['champ_id']] = [
-                            'note' => $evaluationChamp['appreciation'],
-                            'date_note' => now(),
-                            'commentaires' => $evaluationChamp['commentaire'] ?? null,
-                        ];
-                    }
-
-                    $evaluationEnCours->champs_evalue()->syncWithoutDetaching($syncData);
-                }
-            */
-
             // Enregistrer la raison globale si fournie
             if (isset($data['raison'])) {
                 $evaluationEnCours->fill(['commentaire' => $data['raison']]);
@@ -925,14 +907,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             if (!$evaluation) {
                 $evaluation = $noteConceptuelle->evaluationTermine();
-
-                /* if ($noteConceptuelle->statut == 1 && isset($evaluation->resultats_evaluation['resultat_global'])  && $evaluation->resultats_evaluation['resultat_global'] !== 'passe') {
-                    return response()->json([
-                        'success' => true,
-                        'data' => null,
-                        'message' => 'Aucune évaluation trouvée pour cette note conceptuelle.'
-                    ], 206);
-                } */
 
                 if (!$evaluation) {
                     return response()->json([
