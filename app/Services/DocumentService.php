@@ -1923,12 +1923,12 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
             if (!$canevas) {
                 // Lancer le seeder si rien n’existe
-                /* Artisan::call('db:seed', [
-                    '--class' => 'Database\\Seeders\\ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder',
-                ]); */
+                Artisan::call('db:seed', [
+                    '--class' => 'Database\\Seeders\\ChecklistSuiviAssuranceQualiteRapportFaisabilitePreliminaireSeeder',
+                ]);
 
                 // Recharger après le seed
-                //$canevas = $this->repository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire();
+                $canevas = $this->repository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire();
 
                 if (!$canevas) {
                     return response()->json([
