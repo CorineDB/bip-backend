@@ -44,7 +44,7 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
 
             'evaluations_champs' => 'required_unless:evaluer,0|array|min:' . $minChamps . '|max:' . $maxChamps,
             'evaluations_champs.*.champ_id' => ["required_with:evaluations_champs", "in:" . implode(",", $this->champsAEvaluer), Rule::exists("champs", "id",)],
-            'evaluations_champs.*.appreciation' => 'required_with:evaluations_champs|in:' . implode(",", $this->appreciations),
+            'evaluations_champs.*.appreciation' => ($evaluer ? 'required' : 'nullable') . '|in:' . implode(",", $this->appreciations),
             'evaluations_champs.*.commentaire' => 'nullable|string|min:10',
 
             /*'numero_dossier'            => 'required_unless:evaluer,0',//'required_unless:evaluer,0|string|max:100',
@@ -80,10 +80,20 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
                 );
             }
 
-            // 2. Valider que le commentaire est obligatoire SAUF si l'appréciation est "passe"
+            // 2. Vérifier que les champs soumis ont une appréciation valide
+            // (Important si un champ "passé" a été modifié à null en brouillon)
             foreach ($evaluationsChamps as $index => $evaluation) {
+                $champId = $evaluation['champ_id'] ?? null;
                 $appreciation = $evaluation['appreciation'] ?? null;
                 $commentaire = $evaluation['commentaire'] ?? null;
+
+                // Si l'appréciation est vide, c'est une erreur en mode finalisation
+                if (empty($appreciation)) {
+                    $validator->errors()->add(
+                        "evaluations_champs.{$index}.appreciation",
+                        "L'appréciation est obligatoire pour tous les champs lors de la finalisation."
+                    );
+                }
 
                 // Si l'appréciation n'est pas "passe", le commentaire est obligatoire
                 if ($appreciation && $appreciation !== 'passe' && empty($commentaire)) {
