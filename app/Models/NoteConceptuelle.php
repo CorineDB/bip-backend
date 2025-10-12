@@ -96,18 +96,13 @@ class NoteConceptuelle extends Model
     }
 
     /**
-     * Relation avec tous les TDRs du projet
+     * Relation avec toutes les notes conceptuelles du projet
      */
     public function historique_des_notes_conceptuelle()
     {
-        /* return $this->hasMany(NoteConceptuelle::class, 'projetId', 'projetId')
+        return $this->hasMany(NoteConceptuelle::class, 'projetId', 'projetId')
                     ->where('id', '!=', $this->id)
-                    ->orderBy('created_at', 'desc'); */
-        if ($this->projet) {
-            return $this->projet->notes_conceptuelle()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
-        }
-        // Return a query builder that will result in an empty set if no projet is associated
-        return $this->hasMany(NoteConceptuelle::class, 'projetId', 'projetId')->whereRaw('0 = 1');
+                    ->orderBy('created_at', 'desc');
     }
 
     /**
