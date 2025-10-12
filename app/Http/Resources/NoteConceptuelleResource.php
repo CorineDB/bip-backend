@@ -20,6 +20,7 @@ class NoteConceptuelleResource extends BaseApiResource
         return [
             'id' => $this->id,
             'intitule' => $this->intitule,
+            'parentId' => $this->parentId,
             'numero_contrat' => $this->numero_contrat,
             'numero_dossier' => $this->numero_dossier,
             'accept_term' => $this->accept_term,

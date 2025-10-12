@@ -19,6 +19,7 @@ class EvaluationResource extends BaseApiResource
     {
         return [
             'type_evaluation' => $this->type_evaluation,
+            'id_evaluation' => $this->id_evaluation,
             'date_debut_evaluation' => Carbon::parse($this->date_debut_evaluation)->format("d/m/Y H:m:i"),
             'date_fin_evaluation' => Carbon::parse($this->date_fin_evaluation)->format("d/m/Y H:m:i"),
             'valider_le' => Carbon::parse($this->valider_le)->format("d/m/Y H:m:i"),

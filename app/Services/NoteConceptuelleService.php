@@ -499,7 +499,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $noteConceptuelle = $this->repository->getModel()
                 ->where('projetId', $projet->id)
                 ->orderBy("created_at", "desc")
-                ->where('statut', 1)
                 ->first();
 
             if (!$noteConceptuelle) {
