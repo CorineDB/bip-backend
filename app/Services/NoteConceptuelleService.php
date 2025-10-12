@@ -1450,30 +1450,78 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         }
                     } */
 
-                    // Copier TOUS les champs évalués de l'ancienne évaluation
-                    $ancienneEvaluation = $evaluation->evaluation ?? [];
-                    $champsEvaluesAnciens = $ancienneEvaluation['champs_evalues'] ?? [];
-
-                    $newEvaluation->evaluation = [
-                        'champs_evalues' => $champsEvaluesAnciens,
-                        'statistiques' => $ancienneEvaluation['statistiques'] ?? []
-                    ];
-
+                    // Sauvegarder d'abord la nouvelle évaluation avec des valeurs temporaires
+                    $newEvaluation->evaluation = [];
+                    $newEvaluation->resultats_evaluation = [];
                     $newEvaluation->created_at = now();
                     $newEvaluation->updated_at = null;
                     $newEvaluation->save();
 
-                    // Copier également TOUTES les relations champs_evalue
+                    // Copier les relations champs_evalue de l'ancienne évaluation
+                    // Pour les champs "passé" : copier tel quel
+                    // Pour les autres (retour/non_accepte) : mettre null pour forcer la réévaluation
                     $champsEvalues = $evaluation->champs_evalue;
                     foreach ($champsEvalues as $champ) {
-                        $newEvaluation->champs_evalue()->attach($champ->id, [
-                            'note' => $champ->pivot->note,
-                            'date_note' => $champ->pivot->date_note,
-                            'commentaires' => $champ->pivot->commentaires,
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ]);
+                        $note = $champ->pivot->note;
+
+                        if ($note === 'passe') {
+                            // Si passé, copier tel quel
+                            $newEvaluation->champs_evalue()->attach($champ->id, [
+                                'note' => $note,
+                                'date_note' => $champ->pivot->date_note,
+                                'commentaires' => $champ->pivot->commentaires,
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+                        } else {
+                            // Si retour ou non_accepte, mettre null (pas de copie dans pivot)
+                            // Les anciennes valeurs seront dans le JSON evaluation avec le suffixe "_passer"
+                        }
                     }
+
+                    // Recharger pour avoir accès aux relations
+                    $newEvaluation->refresh();
+
+                    // Construire le JSON evaluation basé sur les champs copiés
+                    $resultatsExamen = $this->calculerResultatsExamen($newNote, $newEvaluation);
+
+                    // Récupérer l'ancienne évaluation pour référence
+                    $ancienneEvaluation = $evaluation->evaluation ?? [];
+                    $anciensChampsEvalues = collect($ancienneEvaluation['champs_evalues'] ?? []);
+
+                    $evaluationComplete = [
+                        'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
+                            $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                            $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
+
+                            $result = [
+                                'champ_id' => $champ['id'],
+                                'label' => $champ['label'],
+                                'attribut' => $champ['attribut'],
+                                'ordre_affichage' => $champ['ordre_affichage'],
+                                'type_champ' => $champ['type_champ'],
+                                'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                                'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                            ];
+
+                            // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
+                            // C'est un champ qui n'était pas "passé", on ajoute les anciennes valeurs avec "_passer"
+                            if (!$champEvalue && $ancienChampEvalue) {
+                                $result['appreciation_passer'] = $ancienChampEvalue['appreciation'] ?? null;
+                                $result['commentaire_passer_evaluateur'] = $ancienChampEvalue['commentaire_evaluateur'] ?? null;
+                                $result['date_appreciation_passer'] = $ancienChampEvalue['date_appreciation'] ?? null;
+                            }
+
+                            return $result;
+                        })->toArray(),
+                        'statistiques' => $resultatsExamen
+                    ];
+
+                    // Mettre à jour avec les données complètes
+                    $newEvaluation->evaluation = $evaluationComplete;
+                    $newEvaluation->resultats_evaluation = $resultatsExamen;
+                    $newEvaluation->save();
 
                     $noteConceptuelleData = [
                         'statut' => StatutIdee::R_VALIDATION_NOTE_AMELIORER,
@@ -1582,30 +1630,78 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         }
                     } */
 
-                    // Copier TOUS les champs évalués de l'ancienne évaluation
-                    $ancienneEvaluation = $evaluation->evaluation ?? [];
-                    $champsEvaluesAnciens = $ancienneEvaluation['champs_evalues'] ?? [];
-
-                    $newEvaluation->evaluation = [
-                        'champs_evalues' => $champsEvaluesAnciens,
-                        'statistiques' => $ancienneEvaluation['statistiques'] ?? []
-                    ];
-
+                    // Sauvegarder d'abord la nouvelle évaluation avec des valeurs temporaires
+                    $newEvaluation->evaluation = [];
+                    $newEvaluation->resultats_evaluation = [];
                     $newEvaluation->created_at = now();
                     $newEvaluation->updated_at = null;
                     $newEvaluation->save();
 
-                    // Copier également TOUTES les relations champs_evalue
+                    // Copier les relations champs_evalue de l'ancienne évaluation
+                    // Pour les champs "passé" : copier tel quel
+                    // Pour les autres (retour/non_accepte) : mettre null pour forcer la réévaluation
                     $champsEvalues = $evaluation->champs_evalue;
                     foreach ($champsEvalues as $champ) {
-                        $newEvaluation->champs_evalue()->attach($champ->id, [
-                            'note' => $champ->pivot->note,
-                            'date_note' => $champ->pivot->date_note,
-                            'commentaires' => $champ->pivot->commentaires,
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ]);
+                        $note = $champ->pivot->note;
+
+                        if ($note === 'passe') {
+                            // Si passé, copier tel quel
+                            $newEvaluation->champs_evalue()->attach($champ->id, [
+                                'note' => $note,
+                                'date_note' => $champ->pivot->date_note,
+                                'commentaires' => $champ->pivot->commentaires,
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+                        } else {
+                            // Si retour ou non_accepte, mettre null (pas de copie dans pivot)
+                            // Les anciennes valeurs seront dans le JSON evaluation avec le suffixe "_passer"
+                        }
                     }
+
+                    // Recharger pour avoir accès aux relations
+                    $newEvaluation->refresh();
+
+                    // Construire le JSON evaluation basé sur les champs copiés
+                    $resultatsExamen = $this->calculerResultatsExamen($newNote, $newEvaluation);
+
+                    // Récupérer l'ancienne évaluation pour référence
+                    $ancienneEvaluation = $evaluation->evaluation ?? [];
+                    $anciensChampsEvalues = collect($ancienneEvaluation['champs_evalues'] ?? []);
+
+                    $evaluationComplete = [
+                        'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
+                            $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                            $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
+
+                            $result = [
+                                'champ_id' => $champ['id'],
+                                'label' => $champ['label'],
+                                'attribut' => $champ['attribut'],
+                                'ordre_affichage' => $champ['ordre_affichage'],
+                                'type_champ' => $champ['type_champ'],
+                                'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                                'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                            ];
+
+                            // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
+                            // C'est un champ qui n'était pas "passé", on ajoute les anciennes valeurs avec "_passer"
+                            if (!$champEvalue && $ancienChampEvalue) {
+                                $result['appreciation_passer'] = $ancienChampEvalue['appreciation'] ?? null;
+                                $result['commentaire_passer_evaluateur'] = $ancienChampEvalue['commentaire_evaluateur'] ?? null;
+                                $result['date_appreciation_passer'] = $ancienChampEvalue['date_appreciation'] ?? null;
+                            }
+
+                            return $result;
+                        })->toArray(),
+                        'statistiques' => $resultatsExamen
+                    ];
+
+                    // Mettre à jour avec les données complètes
+                    $newEvaluation->evaluation = $evaluationComplete;
+                    $newEvaluation->resultats_evaluation = $resultatsExamen;
+                    $newEvaluation->save();
 
                     $noteConceptuelleData = [
                         'statut' => StatutIdee::NOTE_CONCEPTUEL,
