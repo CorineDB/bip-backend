@@ -2,10 +2,14 @@
 
 namespace App\Http\Requests\notes_conceptuelle;
 
+use App\Repositories\Contracts\DocumentRepositoryInterface;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Validator;
 
 class ValiderEtudeProfilRequest extends FormRequest
 {
+    protected $champs = [];
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -15,15 +19,46 @@ class ValiderEtudeProfilRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    public function prepareForValidation(): void
+    {
+        // Récupérer l'ID du projet depuis la route
+        $projetId = $this->route('projetId');
+        if (!$projetId) {
+            return;
+        }
+
+        // Récupérer le canevas de checklist de suivi
+        $canevas = $this->getChecklistSuiviPrefaisabilite();
+        if (!empty($canevas)) {
+            // Extraire tous les IDs des champs du canevas
+            $champsValides = $this->extractAllFields($canevas);
+            $this->champs = collect($champsValides)->pluck('id')->filter()->toArray();
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      */
     public function rules(): array
     {
         return [
+            // Action: submit (soumettre) ou draft (brouillon)
+            'action' => 'required|string|in:submit,draft',
             'decision'          => 'required|string|in:faire_etude_faisabilite_preliminaire,faire_etude_prefaisabilite,reviser_note_conceptuelle,abandonner_projet,sauvegarder',
             'commentaire'       => 'required|string|min:10|max:2000',
             'est_a_haut_risque'   => 'required|boolean:false',
-            'est_dur'           => 'required|boolean:false',
+
+            // Checklist de suivi de rapport de préfaisabilité
+            'checklist_suivi_rapport_faisabilite_preliminaire' => [
+                'required_unless:action,draft',
+                'array',
+                $this->input('action', 'submit') === 'draft' ? 'min:0' : 'min:' . count($this->champs)
+            ],
+            'checklist_suivi_rapport_faisabilite_preliminaire.*.checkpoint_id' => ['required_unless:action,draft', "in:" . implode(",", $this->champs)],
+
+            //'est_dur'           => 'required|boolean:false',
         ];
     }
 
@@ -98,5 +133,209 @@ class ValiderEtudeProfilRequest extends FormRequest
             'abandonner_projet' => 'Abandonner le projet',
             'sauvegarder' => 'Sauvegarder'
         ];
+    }
+
+
+    /**
+     * Valider la checklist de suivi de rapport de préfaisabilité
+     */
+    private function validateChecklistSuiviPrefaisabilite(Validator $validator): void
+    {
+        $checklistSuivi = $this->input('checklist_suivi_rapport_faisabilite_preliminaire');
+        if (!$checklistSuivi || !is_array($checklistSuivi)) {
+            return;
+        }
+
+        $estSoumise = $this->input('action', 'submit') === 'submit';
+        $canevasFields = $this->getCanevasFieldsWithConfigs();
+
+
+        foreach ($checklistSuivi as $index => $evaluation) {
+            $checkpointId = $evaluation['checkpoint_id'] ?? null;
+            $remarque = $evaluation['remarque'] ?? null;
+            $explication = $evaluation['explication'] ?? null;
+
+            // Vérifier que le checkpoint_id existe dans le canevas
+            if ($checkpointId && !in_array($checkpointId, $this->champs)) {
+                $validator->errors()->add(
+                    "checklist_suivi_rapport_faisabilite_preliminaire.{$index}.checkpoint_id",
+                    "Le champ sélectionné n'appartient pas à la checklist de suivi."
+                );
+                continue;
+            }
+
+            // Récupérer la configuration du champ
+            $fieldConfig = $canevasFields[$checkpointId] ?? null;
+
+            // Validation de la remarque
+            if ($estSoumise) {
+                // Pour submit, la remarque est obligatoire et doit être dans les valeurs autorisées
+                if (empty($remarque)) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_faisabilite_preliminaire.{$index}.remarque",
+                        "La remarque est obligatoire pour la soumission finale."
+                    );
+                } else {
+                    $this->validateRemarqueValue($validator, $index, $remarque, $fieldConfig);
+                }
+            } else {
+                // Pour draft, la remarque peut être null ou dans les valeurs autorisées
+                if ($remarque !== null) {
+                    $this->validateRemarqueValue($validator, $index, $remarque, $fieldConfig);
+                }
+            }
+
+            // Validation de l'explication selon show_explanation
+            $this->validateExplication($validator, $index, $explication, $fieldConfig, $estSoumise);
+        }
+
+        // Vérifier que tous les champs obligatoires sont présents pour la soumission finale
+        if ($estSoumise && !empty($this->champs)) {
+            $champsEvalues = collect($checklistSuivi)->pluck('checkpoint_id')->toArray();
+            $champsManquants = array_diff($this->champs, $champsEvalues);
+
+            if (!empty($champsManquants)) {
+                $validator->errors()->add(
+                    'checklist_suivi_rapport_faisabilite_preliminaire',
+                    'Tous les champs de la checklist doivent être évalués pour la soumission finale. Champs manquants: ' . implode(', ', $champsManquants)
+                );
+            }
+        }
+    }
+
+
+
+    /**
+     * Récupérer le canevas depuis la base de données
+     */
+    protected function getChecklistSuiviPrefaisabilite(): array
+    {
+        $documentRepository = app(DocumentRepositoryInterface::class);
+        $canevas = $documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire();
+        /*$canevas = $documentRepository->getModel()
+            ->where('type', 'checklist')
+            ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-check-liste-suivi-controle-qualite-rapport-etude-faisabilite-preliminaire'))
+            ->orderBy('created_at', 'desc')
+            ->first();*/
+        if (!$canevas || !$canevas->all_champs) {
+            return [];
+        }
+
+        // Convertir la Collection en array
+        return $canevas->all_champs->toArray();
+    }
+
+    /**
+     * Valider la valeur de la remarque selon les options du champ
+     */
+    private function validateRemarqueValue(Validator $validator, int $index, $remarque, ?array $fieldConfig): void
+    {
+        if (!$fieldConfig) return;
+
+        $validationsRules = $fieldConfig['meta_options']['validations_rules'] ?? [];
+        $validValues = $validationsRules['in'] ?? ['disponible', 'pas-encore-disponibles'];
+
+        if (!in_array($remarque, $validValues)) {
+            $validator->errors()->add(
+                "checklist_suivi_rapport_faisabilite_preliminaire.{$index}.remarque",
+                "La remarque doit être une des valeurs autorisées: " . implode(', ', $validValues)
+            );
+        }
+    }
+
+    /**
+     * Valider l'explication selon la configuration show_explanation
+     */
+    private function validateExplication(Validator $validator, int $index, $explication, ?array $fieldConfig, bool $estSoumise): void
+    {
+        if (!$fieldConfig) return;
+
+        $showExplanation = $fieldConfig['meta_options']['configs']['show_explanation'] ?? false;
+        $maxLength = $fieldConfig['meta_options']['configs']['explanation_max_length'] ?? 1000;
+
+        // Si show_explanation est false, l'explication ne doit pas être requis même en submit
+        if (!$showExplanation) {
+            // L'explication est optionnel
+            if ($explication !== null && strlen($explication) > $maxLength) {
+                $validator->errors()->add(
+                    "checklist_suivi_rapport_faisabilite_preliminaire.{$index}.explication",
+                    "L'explication ne peut pas dépasser {$maxLength} caractères."
+                );
+            }
+            return;
+        }
+
+        // Récupérer la remarque pour ce champ
+        $remarque = $this->input("checklist_suivi_rapport_faisabilite_preliminaire.{$index}.remarque");
+        $remarqueEstPasEncoreDisponible = $remarque === 'pas-encore-disponibles';
+
+        // Si show_explanation est true, valider selon les règles
+        if ($estSoumise) {
+            // Pour submit, l'explication est obligatoire si show_explanation = true
+            if ($showExplanation && $remarqueEstPasEncoreDisponible) {
+                if (empty($explication)) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_faisabilite_preliminaire.{$index}.explication",
+                        //"L'explication est obligatoire pour la soumission finale lorsque le champ d'explication est activé."
+                        "L'explication est obligatoire lorsque la remarque est 'pas-encore-disponibles' et que le champ d'explication est activé."
+                    );
+                } elseif (strlen($explication) < 10) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_faisabilite_preliminaire.{$index}.explication",
+                        "L'explication doit contenir au moins 10 caractères."
+                    );
+                } elseif (strlen($explication) > $maxLength) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_faisabilite_preliminaire.{$index}.explication",
+                        "L'explication ne peut pas dépasser {$maxLength} caractères."
+                    );
+                }
+            }
+        } else {
+            // Pour draft, l'explication devient obligatoire SEULEMENT si show_explanation = true ET remarque = "pas-encore-disponibles"
+            if ($showExplanation && $remarqueEstPasEncoreDisponible) {
+                if (empty($explication)) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_faisabilite_preliminaire.{$index}.explication",
+                        "L'explication est obligatoire lorsque la remarque est 'pas-encore-disponibles' et que le champ d'explication est activé."
+                    );
+                } elseif (strlen($explication) < 10) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_faisabilite_preliminaire.{$index}.explication",
+                        "L'explication doit contenir au moins 10 caractères."
+                    );
+                } elseif (strlen($explication) > $maxLength) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_faisabilite_preliminaire.{$index}.explication",
+                        "L'explication ne peut pas dépasser {$maxLength} caractères."
+                    );
+                }
+            } else {
+                // Pour draft dans tous les autres cas, l'explication est optionnel mais doit respecter les limites si présent
+                if ($explication !== null && strlen($explication) > $maxLength) {
+                    $validator->errors()->add(
+                        "checklist_suivi_rapport_faisabilite_preliminaire.{$index}.explication",
+                        "L'explication ne peut pas dépasser {$maxLength} caractères."
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Récupérer les champs du canevas avec leurs configurations
+     */
+    private function getCanevasFieldsWithConfigs(): array
+    {
+        $canevas = $this->getChecklistSuiviPrefaisabilite();
+
+        $fieldsWithConfigs = [];
+        foreach ($canevas as $field) {
+            if (!empty($field['id'])) {
+                $fieldsWithConfigs[$field['id']] = $field;
+            }
+        }
+
+        return $fieldsWithConfigs;
     }
 }
