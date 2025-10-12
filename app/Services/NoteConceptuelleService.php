@@ -1284,6 +1284,14 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ], 403);
             }
 
+            // Vérifier si l'évaluation a déjà été confirmée (éviter les soumissions multiples)
+            if ($evaluation->valider_par && $evaluation->valider_le) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cette appreciation a déjà été confirmée. Les soumissions multiples ne sont pas autorisées.'
+                ], 403);
+            }
+
             // Récupérer la note conceptuelle
             $noteConceptuelle = $this->repository->find($evaluation->projetable_id);
 
@@ -1292,6 +1300,21 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'success' => false,
                     'message' => 'Note conceptuelle non trouvée.'
                 ], 404);
+            }
+
+            if ($noteConceptuelle->statut != 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "La note conceptuelle doit être soumise avant de pouvoir confirmer le résultat d'evaluation."
+                ], 403);
+            }
+
+            // Vérifier si l'évaluation a déjà été confirmée (éviter les soumissions multiples)
+            if ($noteConceptuelle->valider_par && $noteConceptuelle->valider_le) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Cette note conceptuelle a déjà été apprecié. L'appreciation d'une note conceptuelle s'effectue qu'une seule fois."
+                ], 403);
             }
 
             // Calculer les résultats d'examen finaux
