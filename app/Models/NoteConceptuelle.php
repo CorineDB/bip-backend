@@ -111,11 +111,13 @@ class NoteConceptuelle extends Model
     }
 
     /**
-     * Relation avec tous les TDRs du projet
+     * Relation avec toutes les évaluations des notes conceptuelles du projet
      */
     public function historique_des_evaluations_notes_conceptuelle()
     {
-        return $this->evaluations()->where("type_evaluation", "note-conceptuelle")/*->where("statut", 1)->orderBy("valider_le", "desc")*/->orderBy("created_at", "desc");
+        return $this->historique_des_notes_conceptuelle()->with(["evaluations" => function($query){
+            $query->where("type_evaluation", "note-conceptuelle")->orderBy("created_at", "desc");
+        }]);
     }
 
     /**

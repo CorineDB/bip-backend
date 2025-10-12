@@ -35,7 +35,7 @@ class NoteConceptuelleResource extends BaseApiResource
             'note_conceptuelle' => $this->note_conceptuelle,
             'projet' => $this->whenLoaded('projet', fn() => new ProjetsResource($this->projet)),
             'decision' => $this->decision,
-            'historique_des_notes_conceptuelle' => $this->historique_des_notes_conceptuelle,
+            'historique_des_notes_conceptuelle' => $this->whenLoaded('historique_des_notes_conceptuelle', fn() => $this->historique_des_notes_conceptuelle),
             'historique_des_evaluations_notes_conceptuelle' => $this->historique_des_evaluations_notes_conceptuelle->pluck("evaluations")->collapse()->map(function ($evaluation) {
                 return [
                     'id' => $evaluation->id,
