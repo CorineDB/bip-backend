@@ -25,7 +25,7 @@ class NoteConceptuelleResource extends BaseApiResource
             'numero_dossier' => $this->numero_dossier,
             'accept_term' => $this->accept_term,
             'statut' => $this->statut,
-            'statut_libelle' => match($this->statut) {
+            'statut_libelle' => match ($this->statut) {
                 1 => 'Soumise',
                 default => 'Brouillon'
             },
@@ -36,7 +36,20 @@ class NoteConceptuelleResource extends BaseApiResource
             'projet' => $this->whenLoaded('projet', fn() => new ProjetsResource($this->projet)),
             'decision' => $this->decision,
             'historique_des_notes_conceptuelle' => $this->historique_des_notes_conceptuelle,
-            'historique_des_evaluations_notes_conceptuelle' => $this->historique_des_evaluations_notes_conceptuelle,
+            'historique_des_evaluations_notes_conceptuelle' => $this->historique_des_evaluations_notes_conceptuelle->pluck("evaluations")->collapse()->map(function ($evaluation) {
+                return [
+                    'id' => $evaluation->id,
+                    'type_evaluation' => $evaluation->type_evaluation,
+                    'date_debut_evaluation' => $evaluation->date_debut_evaluation ? Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
+                    'date_fin_evaluation' => $evaluation->date_fin_evaluation ? Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
+                    'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
+                    'valider_par' => $evaluation->valider_par,
+                    'commentaire' => $evaluation->commentaire,
+                    'evaluation' => $evaluation->evaluation,
+                    'resultats_evaluation' => $evaluation->resultats_evaluation,
+                    'statut' => $evaluation->statut
+                ];
+            }),
             /*'historique_des_notes_conceptuelle' =>  $this->whenLoaded("historique_des_notes_conceptuelle", function(){
                 return $this->historique_des_notes_conceptuelle;
             }),
@@ -56,7 +69,7 @@ class NoteConceptuelleResource extends BaseApiResource
                     ];
                 });
             }),*/
-            'champs' => $this->whenLoaded('champs', function() {
+            'champs' => $this->whenLoaded('champs', function () {
                 return $this->champs->map(function ($champ) {
                     return [
                         'id' => $champ->id,
@@ -69,7 +82,7 @@ class NoteConceptuelleResource extends BaseApiResource
                     ];
                 });
             }),
-            'fichiers' => $this->whenLoaded('fichiers', function() {
+            'fichiers' => $this->whenLoaded('fichiers', function () {
                 return FichierResource::collection($this->fichiers->sortBy('ordre'));
                 return $this->fichiers->sortBy('ordre')->map(function ($fichier) {
                     return [
