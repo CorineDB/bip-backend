@@ -130,5 +130,7 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
         // Les champs à évaluer sont tous les champs SAUF ceux déjà passés
         // Si pas de parent, on évalue tous les champs (première évaluation)
         $this->champsAEvaluer = array_diff($this->champs, $this->champsDejaPassés);
+
+        dd($this->champsAEvaluer);
     }
 }
