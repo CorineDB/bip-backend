@@ -32,14 +32,15 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
         $evaluer = $this->input('evaluer', true);
 
         // Déterminer le nombre minimum et maximum de champs à évaluer
-        // Si c'est une réévaluation (retour ou rejet), on n'évalue que les champs non passés
+        // Si evaluer = true : on doit évaluer TOUS les champs à évaluer
+        // Si evaluer = false : on peut évaluer partiellement (brouillon)
         $minChamps = $evaluer ? count($this->champsAEvaluer) : 0;
-        $maxChamps = $evaluer ? count($this->champsAEvaluer) : count($this->champs);
+        $maxChamps = count($this->champsAEvaluer);
 
         return [
             'evaluer' => 'required|boolean',
 
-            'evaluations_champs' => 'required_unless:evaluer,0|array|min:' . $minChamps . ($evaluer  ?  "|max:" . $maxChamps : ""),
+            'evaluations_champs' => 'required_unless:evaluer,0|array|min:' . $minChamps . '|max:' . $maxChamps,
             'evaluations_champs.*.champ_id' => ["required_with:evaluations_champs", "in:" . implode(",", $this->champsAEvaluer), Rule::exists("champs", "id",)],
             'evaluations_champs.*.appreciation' => 'required_with:evaluations_champs|in:' . implode(",", $this->appreciations),
             'evaluations_champs.*.commentaire' => 'required_unless:evaluer,0|string|min:10',
@@ -100,13 +101,15 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
         $this->champs = $canevas->all_champs->pluck("id")->toArray();
 
         // Récupérer l'évaluation en cours pour identifier les champs déjà passés
-        $noteId = $this->route('noteId');
+        // SEULEMENT si la note a un parent (réévaluation après retour/rejet)
+        $noteId = $this->route('noteId') ?? null;
 
         if ($noteId) {
             $noteRepository = app()->make(NoteConceptuelleRepositoryInterface::class);
             $noteConceptuelle = $noteRepository->find($noteId);
 
-            if ($noteConceptuelle) {
+            // Vérifier si c'est une réévaluation (la note a un parent)
+            if ($noteConceptuelle && $noteConceptuelle->parentId) {
                 // Récupérer l'évaluation en cours
                 $evaluationEnCours = $noteConceptuelle->evaluationEnCours();
 
@@ -125,6 +128,7 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
         }
 
         // Les champs à évaluer sont tous les champs SAUF ceux déjà passés
+        // Si pas de parent, on évalue tous les champs (première évaluation)
         $this->champsAEvaluer = array_diff($this->champs, $this->champsDejaPassés);
     }
 }
