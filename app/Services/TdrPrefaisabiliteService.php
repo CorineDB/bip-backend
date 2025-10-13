@@ -836,7 +836,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 }
                 $resultatsEvaluation = $evaluation->resultats_evaluation;
             } else {
-                dd("evaluation");
 
                 // Récupérer le canevas d'appréciation des TDRs
                 $canevasAppreciation = $this->documentRepository->getModel()
@@ -854,6 +853,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ], 404);
                 }
 
+                dd("404");
                 foreach ($canevasAppreciation->all_champs as $champ) {
                     $evaluationExistante = null;
                     $data = [];
