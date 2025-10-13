@@ -773,10 +773,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
-            // Récupérer le TDR soumis
+            // Récupérer le TDR soumis (pas en brouillon)
             $tdr = $this->tdrRepository->getModel()
                 ->where('projet_id', $projetId)
                 ->where('type', 'prefaisabilite')
+                ->where('statut', '!=', 'brouillon')
                 ->orderBy('created_at', 'desc')
                 ->first();
 
@@ -784,7 +785,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 return response()->json([
                     'success' => false,
                     'data' => null,
-                    'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
+                    'message' => 'Aucun TDR de préfaisabilité soumis trouvé pour ce projet.'
                 ], 404);
             }
 
@@ -991,14 +992,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
-            // Récupérer uniquement les TDRs déjà soumis (pas en brouillon)
-            $tdr = $projet->tdrPrefaisabilite()->where('statut', '!=', 'brouillon')->first();
+            $tdr = $projet->tdrPrefaisabilite->first();
 
             if (!$tdr) {
                 return response()->json([
                     'success' => false,
                     'data' => null,
-                    'message' => 'Aucun TDR de préfaisabilité soumis trouvé pour ce projet.'
+                    'message' => 'Aucun TDR de préfaisabilité trouvé pour ce projet.'
                 ], 404);
             }
 
