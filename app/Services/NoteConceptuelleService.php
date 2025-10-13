@@ -2365,6 +2365,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'evaluateur_id' => auth()->id(),
                 'commentaire' => $data['commentaire'] ?? '',
                 'statut' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? 1 : 0,
+                'evaluation' => [],
+                'resultats_evaluation' => []
             ]);
 
             if ($data['decision'] === "faire_etude_faisabilite_preliminaire") {

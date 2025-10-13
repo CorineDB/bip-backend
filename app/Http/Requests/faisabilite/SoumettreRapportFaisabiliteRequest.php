@@ -187,8 +187,6 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
             ],
             'checklist_suivi_etude_analyse_impact_environnemental_social.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsImpactEnvironnemental)],
 
-
-
             "analyse_financiere"                            => "sometimes|required_unless:action,draft|array|min:3",
             'analyse_financiere.duree_vie'                  => 'sometimes|required_unless:action,draft|numeric',
             'analyse_financiere.taux_actualisation'         => 'sometimes|required_unless:action,draft|numeric',
