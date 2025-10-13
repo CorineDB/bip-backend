@@ -1298,8 +1298,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'total' => $totalChamps
             ]);
 
-            dd($resultat);
-
             $resultat_global = $resultat['statut'];
             $message_resultat = $resultat['message'];
             $raisons = $resultat['raisons'];
@@ -1565,8 +1563,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         }
 
         // Règle 2 : Si plus de 2 notes « Non accepté »
-        if (($compteurs['non_accepte'] ?? 0) >= 2) {
-
+        if (($compteurs['non_accepte'] ?? 0) > 2) {
             return [
                 'statut' => 'non_accepte',
                 'message' => 'Non accepté',
@@ -1617,7 +1614,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $recommandations[] = "Attendre l’évaluation des {$compteurs['non_evalues']} critère(s) restant(s)";
         }
 
-        dd($compteurs);
         return [
             'statut' => 'retour',
             'message' => 'Retour pour amélioration (contient des notes à corriger ou à compléter)',
@@ -2447,7 +2443,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     // Calculer le résultat de l'évaluation selon les règles SFD-015
                     $resultatsEvaluation = $this->calculerResultatsControleQualite($rapportExistant, $evaluationRapport);
 
-                    dd($resultatsEvaluation);
                     // Stocker pour utilisation ultérieure
                     $resultatsControleQualite = $resultatsEvaluation;
                     $rapportFaisabilitePrelim = $rapportExistant;
