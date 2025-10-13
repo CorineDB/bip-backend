@@ -1554,7 +1554,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     private function determinerResultatCQ(array $compteurs): array
     {
-        dd($compteurs);
         // Règle 1 : Si une ou plusieurs questions non complétées
         if (($compteurs['non_completees'] ?? 0) > 0) {
             return [
@@ -1617,6 +1616,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $recommandations[] = "Attendre l’évaluation des {$compteurs['non_evalues']} critère(s) restant(s)";
         }
 
+        dd($compteurs);
         return [
             'statut' => 'retour',
             'message' => 'Retour pour amélioration (contient des notes à corriger ou à compléter)',
