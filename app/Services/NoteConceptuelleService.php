@@ -1565,9 +1565,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         }
 
         // Règle 2 : Si plus de 2 notes « Non accepté »
-        if (($compteurs['non_accepte'] ?? 0) > 2) {
+        if (($compteurs['non_accepte'] ?? 0) >= 2) {
 
-            dd("HERE");
             return [
                 'statut' => 'non_accepte',
                 'message' => 'Non accepté',
