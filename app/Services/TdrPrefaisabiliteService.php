@@ -2895,8 +2895,21 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         // Recharger pour avoir accès aux relations
         $newEvaluation->refresh();
 
+        // Construire le tableau des évaluations de champs pour le calcul
+        $evaluationsChamps = collect($this->documentRepository->getCanevasAppreciationTdrPrefaisabilite()->all_champs)->map(function ($champ) use ($newEvaluation) {
+            $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+
+            return [
+                'champ_id' => $champ['id'],
+                'label' => $champ['label'],
+                'attribut' => $champ['attribut'],
+                'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+            ];
+        })->toArray();
+
         // Construire le JSON evaluation basé sur les champs copiés
-        $resultatsExamen = $this->calculerResultatEvaluationTdr($newEvaluation, []);
+        $resultatsExamen = $this->calculerResultatEvaluationTdr($newEvaluation, ['evaluations_champs' => $evaluationsChamps]);
 
         // Récupérer l'ancienne évaluation pour référence
         $ancienneEvaluation = $evaluationTerminee->evaluation ?? [];
