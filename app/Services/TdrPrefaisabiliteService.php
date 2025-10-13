@@ -858,7 +858,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     $data = [];
                     if ($evaluation) {
 
-                        dd(isset($evaluation->evaluation['champs_evalue']));
+                        dump(isset($evaluation->evaluation['champs_evalue']));
 
                         // On commence par vérifier si la structure "evaluation['champs_evalue']" existe
                         if (isset($evaluation->evaluation['champs_evalue'])) {
