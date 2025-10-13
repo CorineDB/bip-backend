@@ -2364,7 +2364,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'date_fin_evaluation' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? now() : null,
                 'evaluateur_id' => auth()->id(),
                 'commentaire' => $data['commentaire'] ?? '',
-                'statut' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? 1 : 0
+                'statut' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? 1 : 0,
             ]);
 
             if ($data['decision'] === "faire_etude_faisabilite_preliminaire") {
@@ -2509,6 +2509,21 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
                     $projet->update($updateData);
                 }
+            } else if ($action === 'submit' && $data['decision'] !== 'sauvegarder') {
+                // Mettre à jour l'évaluation avec les données complètes
+                $evaluation->fill([
+                    'evaluation' => [
+                        'decision' => $data['decision'],
+                        'commentaire' => $data['commentaire'] ?? '',
+                        'est_a_haut_risque' => $data['est_a_haut_risque'] ?? false,
+                        'action' => $data['action'] ?? 'submit',
+                    ],
+                    'resultats_evaluation' => $data['decision'],
+                    'valider_le' =>  now(),
+                    'valider_par' => auth()->user()->id,
+                ]);
+
+                $evaluation->save();
             }
 
             if (isset($data["est_a_haut_risque"])) {
