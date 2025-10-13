@@ -853,11 +853,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ], 404);
                 }
 
-                dd("404");
                 foreach ($canevasAppreciation->all_champs as $champ) {
                     $evaluationExistante = null;
                     $data = [];
                     if ($evaluation) {
+
+                        dd(isset($evaluation->evaluation['champs_evalue']));
 
                         // On commence par vérifier si la structure "evaluation['champs_evalue']" existe
                         if (isset($evaluation->evaluation['champs_evalue'])) {
