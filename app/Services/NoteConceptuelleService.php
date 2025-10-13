@@ -277,7 +277,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         }
 
                         // Ajouter d'autres validations spécifiques si nécessaire
-                        if (in_array($field, ['investissement_initial', 'taux_actualisation', 'flux_tresorerie'])) {
+                        if (in_array($field, ['investissement_initial', 'taux_actualisation'])) {
                             if (!is_numeric($analyseFinanciere[$field])) {
                                 throw ValidationException::withMessages([
                                     "analyse_financiere.$field" => "Le champ $field doit être une date valide au format AAAA-MM-JJ."
@@ -2471,7 +2471,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         }
 
                         // Ajouter d'autres validations spécifiques si nécessaire
-                        if (in_array($field, ['investissement_initial', 'taux_actualisation', 'flux_tresorerie'])) {
+                        if (in_array($field, ['investissement_initial', 'taux_actualisation'])) {
                             if (!is_numeric($analyseFinanciere[$field])) {
                                 throw ValidationException::withMessages([
                                     "analyse_financiere.$field" => "Le champ $field doit être une date valide au format AAAA-MM-JJ."
