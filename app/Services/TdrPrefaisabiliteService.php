@@ -775,11 +775,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Récupérer le TDR soumis (pas en brouillon)
             $tdr = $this->tdrRepository->getModel()
-                        ->where('projet_id', $projetId)
-                        ->where('type', 'prefaisabilite')
-                        ->where('statut', '!=', 'brouillon')
-                        ->orderBy('created_at', 'desc')
-                        ->first();
+                ->where('projet_id', $projetId)
+                ->where('type', 'prefaisabilite')
+                ->where('statut', '!=', 'brouillon')
+                ->orderBy('created_at', 'desc')
+                ->first();
 
             if (!$tdr) {
                 return response()->json([
@@ -863,7 +863,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             $evaluationExistante = collect($evaluation->evaluation['champs_evalues'])
                                 ->firstWhere('champ_id', $champ->id);
 
-                                dd($evaluationExistante);
                             /* $data = [
                                 'appreciation' => $evaluationExistante["appreciation"],
                                 'commentaire_evaluateur' => $evaluationExistante["commentaire_evaluateur"],
@@ -906,6 +905,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'attribut' => $champ->attribut,
                         'type_champ' => $champ->type_champ,
                         'ordre_affichage' => $champ->ordre_affichage,
+                        'appreciation' => $evaluationExistante ? $evaluationExistante["appreciation"] : null,
+                        'commentaire_evaluateur' => $evaluationExistante ? $evaluationExistante["commentaire_evaluateur"] : null,
+                        'date_evaluation' => $evaluationExistante ? $evaluationExistante["date_evaluation"] : null,
                         /* 'appreciation' => $evaluationExistante ? $evaluationExistante->pivot->note : null,
                         'commentaire_evaluateur' => $evaluationExistante ? $evaluationExistante->pivot->commentaires : null,
                         'date_evaluation' => $evaluationExistante ? $evaluationExistante->pivot->date_note : null */
