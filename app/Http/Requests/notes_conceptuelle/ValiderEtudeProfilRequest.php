@@ -4,7 +4,7 @@ namespace App\Http\Requests\notes_conceptuelle;
 
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Validator;
 
 class ValiderEtudeProfilRequest extends FormRequest
 {
@@ -29,8 +29,8 @@ class ValiderEtudeProfilRequest extends FormRequest
             return;
         }
 
-        // Récupérer le canevas de checklist de suivi
-        $canevas = $this->getChecklistSuiviPrefaisabilite();
+        // Récupérer le canevas de checklist de suivi de l'étude de profil
+        $canevas = $this->getChecklistSuiviEtudeProfil();
         if (!empty($canevas)) {
             // Extraire tous les IDs des champs du canevas
             $champsValides = $this->extractAllFields($canevas);
@@ -43,22 +43,37 @@ class ValiderEtudeProfilRequest extends FormRequest
      */
     public function rules(): array
     {
+        $decision = $this->input('decision');
+        $action = $this->input('action', 'submit');
+        $requireChecklist = $decision === 'faire_etude_faisabilite_preliminaire';
+        $requireFinancialAnalysis = $requireChecklist && $action === 'submit';
+
         return [
             // Action: submit (soumettre) ou draft (brouillon)
-            'action' => 'required|string|in:submit,draft',
-            'decision'          => 'required|string|in:faire_etude_faisabilite_preliminaire,faire_etude_prefaisabilite,reviser_note_conceptuelle,abandonner_projet,sauvegarder',
-            'commentaire'       => 'required|string|min:10|max:2000',
-            'est_a_haut_risque'   => 'required|boolean:false',
+            'action'                => 'required|string|in:submit,draft',
+            'decision'              => 'required|string|in:faire_etude_faisabilite_preliminaire,faire_etude_prefaisabilite,reviser_note_conceptuelle,abandonner_projet,sauvegarder',
+            'commentaire'           => 'required_unless:action,draft|string|min:10|max:2000',
+            'est_a_haut_risque'     => 'required_unless:action,draft|boolean:false',
 
-            // Checklist de suivi de rapport de préfaisabilité
+            // Checklist de suivi de l'étude de profil (obligatoire si decision = faire_etude_faisabilite_preliminaire)
             'checklist_suivi_rapport_faisabilite_preliminaire' => [
-                'required_unless:action,draft',
+                $requireChecklist ? 'required_unless:action,draft' : 'nullable',
                 'array',
-                $this->input('action', 'submit') === 'draft' ? 'min:0' : 'min:' . count($this->champs)
+                $requireChecklist ? 'min:1' : 'min:0'
             ],
-            'checklist_suivi_rapport_faisabilite_preliminaire.*.checkpoint_id' => ['required_unless:action,draft', "in:" . implode(",", $this->champs)],
+            'checklist_suivi_rapport_faisabilite_preliminaire.*.checkpoint_id' => [
+                $requireChecklist ? 'required' : 'nullable',
+                !empty($this->champs) ? "in:" . implode(",", $this->champs) : 'nullable'
+            ],
 
-            //'est_dur'           => 'required|boolean:false',
+            // Analyse financière (obligatoire si decision = faire_etude_faisabilite_preliminaire et action = submit)
+            'analyse_financiere'                            => $requireFinancialAnalysis ? 'required|array' : 'nullable|array',
+            'analyse_financiere.duree_vie'                  => $requireChecklist ? 'required_unless:action,draft|numeric|min:1' : 'nullable|numeric|min:1',
+            'analyse_financiere.taux_actualisation'         => $requireChecklist ? 'required_unless:action,draft|numeric' : 'nullable|numeric',
+            'analyse_financiere.investissement_initial'     => $requireChecklist ? 'required_unless:action,draft|numeric' : 'nullable|numeric',
+            'analyse_financiere.flux_tresorerie'            => $requireChecklist ? 'required_unless:action,draft|array|min:1' : 'nullable|array',
+            'analyse_financiere.flux_tresorerie.*.t'        => $requireChecklist ? 'required|numeric|min:1' : 'nullable|numeric|min:1',
+            'analyse_financiere.flux_tresorerie.*.CFt'      => $requireChecklist ? 'required|numeric' : 'nullable|numeric'
         ];
     }
 
@@ -75,6 +90,25 @@ class ValiderEtudeProfilRequest extends FormRequest
             'commentaire.string' => 'Le commentaire doit être du texte.',
             'commentaire.min' => 'Le commentaire doit contenir au moins 10 caractères.',
             'commentaire.max' => 'Le commentaire ne peut dépasser 2000 caractères.',
+
+            // Messages pour l'analyse financière
+            'analyse_financiere.required' => 'L\'analyse financière est obligatoire pour cette décision.',
+            'analyse_financiere.array' => 'L\'analyse financière doit être un tableau.',
+            'analyse_financiere.duree_vie.required' => 'La durée de vie du projet est obligatoire.',
+            'analyse_financiere.duree_vie.numeric' => 'La durée de vie doit être un nombre.',
+            'analyse_financiere.duree_vie.min' => 'La durée de vie doit être au moins 1 an.',
+            'analyse_financiere.taux_actualisation.required' => 'Le taux d\'actualisation est obligatoire.',
+            'analyse_financiere.taux_actualisation.numeric' => 'Le taux d\'actualisation doit être un nombre.',
+            'analyse_financiere.investissement_initial.required' => 'L\'investissement initial est obligatoire.',
+            'analyse_financiere.investissement_initial.numeric' => 'L\'investissement initial doit être un nombre.',
+            'analyse_financiere.flux_tresorerie.required' => 'Les flux de trésorerie sont obligatoires.',
+            'analyse_financiere.flux_tresorerie.array' => 'Les flux de trésorerie doivent être un tableau.',
+            'analyse_financiere.flux_tresorerie.min' => 'Au moins un flux de trésorerie est requis.',
+            'analyse_financiere.flux_tresorerie.*.t.required' => 'La période (t) est obligatoire pour chaque flux.',
+            'analyse_financiere.flux_tresorerie.*.t.numeric' => 'La période (t) doit être un nombre.',
+            'analyse_financiere.flux_tresorerie.*.t.min' => 'La période (t) doit être au moins 1.',
+            'analyse_financiere.flux_tresorerie.*.CFt.required' => 'Le montant du flux (CFt) est obligatoire.',
+            'analyse_financiere.flux_tresorerie.*.CFt.numeric' => 'Le montant du flux (CFt) doit être un nombre.',
         ];
     }
 
@@ -118,6 +152,9 @@ class ValiderEtudeProfilRequest extends FormRequest
                     $validator->errors()->add('projet', 'Erreur lors de la vérification du projet.');
                 }
             }
+
+            // Valider la checklist de suivi de l'étude de profil
+            $this->validateChecklistSuiviEtudeProfil($validator);
         });
     }
 
@@ -137,10 +174,16 @@ class ValiderEtudeProfilRequest extends FormRequest
 
 
     /**
-     * Valider la checklist de suivi de rapport de préfaisabilité
+     * Valider la checklist de suivi de l'étude de profil (faisabilité préliminaire)
      */
-    private function validateChecklistSuiviPrefaisabilite(Validator $validator): void
+    private function validateChecklistSuiviEtudeProfil(Validator $validator): void
     {
+        // Valider seulement si la décision est de faire une étude de faisabilité préliminaire
+        $decision = $this->input('decision');
+        if ($decision !== 'faire_etude_faisabilite_preliminaire') {
+            return;
+        }
+
         $checklistSuivi = $this->input('checklist_suivi_rapport_faisabilite_preliminaire');
         if (!$checklistSuivi || !is_array($checklistSuivi)) {
             return;
@@ -206,9 +249,9 @@ class ValiderEtudeProfilRequest extends FormRequest
 
 
     /**
-     * Récupérer le canevas depuis la base de données
+     * Récupérer le canevas de la checklist de suivi de l'étude de profil depuis la base de données
      */
-    protected function getChecklistSuiviPrefaisabilite(): array
+    protected function getChecklistSuiviEtudeProfil(): array
     {
         $documentRepository = app(DocumentRepositoryInterface::class);
         $canevas = $documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire();
@@ -327,7 +370,7 @@ class ValiderEtudeProfilRequest extends FormRequest
      */
     private function getCanevasFieldsWithConfigs(): array
     {
-        $canevas = $this->getChecklistSuiviPrefaisabilite();
+        $canevas = $this->getChecklistSuiviEtudeProfil();
 
         $fieldsWithConfigs = [];
         foreach ($canevas as $field) {
@@ -337,5 +380,28 @@ class ValiderEtudeProfilRequest extends FormRequest
         }
 
         return $fieldsWithConfigs;
+    }
+
+    /**
+     * Extraire tous les champs du canevas (récursif pour gérer les sections)
+     */
+    private function extractAllFields(array $elements): array
+    {
+        $fields = [];
+        foreach ($elements as $el) {
+            // Si l'élément a un ID et des meta_options, c'est probablement un champ
+            if (!empty($el['id']) && !empty($el['meta_options'])) {
+                $fields[] = $el;
+            }
+            // Si c'est marqué explicitement comme un champ
+            elseif (($el['element_type'] ?? null) === 'field') {
+                $fields[] = $el;
+            }
+            // Récursion pour les éléments enfants (sections)
+            if (!empty($el['elements']) && is_array($el['elements'])) {
+                $fields = array_merge($fields, $this->extractAllFields($el['elements']));
+            }
+        }
+        return $fields;
     }
 }

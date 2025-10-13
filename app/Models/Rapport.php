@@ -160,6 +160,14 @@ class Rapport extends Model
     }
 
     /**
+     * Scope pour les rapports de faisabilité
+     */
+    public function scopeFaisabilitePreliminaire($query)
+    {
+        return $query->where('type', 'faisabilite-preliminaire');
+    }
+
+    /**
      * Scope pour les évaluations ex-ante
      */
     public function scopeEvaluationExAnte($query)

@@ -451,6 +451,22 @@ class Projet extends Model
     }
 
     /**
+     * Récupérer le dernier rapport de faisabilité préliminaire
+     */
+    public function rapportFaisabilitePreliminaire()
+    {
+        return $this->rapports()->faisabilitePreliminaire()->latest('created_at');
+    }
+
+    /**
+     * Récupérer tous les rapports de faisabilité
+     */
+    public function rapportsFaisabilitePreliminaire()
+    {
+        return $this->rapports()->faisabilitePreliminaire()->orderBy('created_at');
+    }
+
+    /**
      * Récupérer tous les rapports de préfaisabilité
      */
     public function rapportsPrefaisabilite()

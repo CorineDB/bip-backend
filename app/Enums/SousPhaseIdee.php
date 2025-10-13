@@ -9,6 +9,7 @@ enum SousPhaseIdee: string
     case etude_de_profil = 'etude_de_profil';
     case etude_de_prefaisabilite = 'etude_de_prefaisabilite';
     case faisabilite = 'etude_de_faisabilite';
+    case redaction_rapport_evaluation_ex_ante = 'redaction_rapport_evaluation_ex_ante';
     case selection = 'selection';
     case programmation = 'programmation';
     case financement = 'financement';

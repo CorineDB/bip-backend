@@ -24,6 +24,9 @@ use App\Models\Decision;
 use App\Models\Dgpd;
 use App\Models\Dossier;
 use App\Models\Dpaf;
+use App\Models\Fichier;
+use App\Models\Projet;
+use App\Models\Rapport;
 use App\Models\Workflow;
 use Carbon\Carbon;
 use Exception;
@@ -164,7 +167,17 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             // Gérer les documents/fichiers avec FichierRepository
             if (!empty($documentsData)) {
-                $this->handleDocumentsWithFichierRepository($noteConceptuelle, $documentsData);
+                $noteFiles = [];
+
+                if (isset($documentsData["note_conceptuelle"])) {
+                    $noteFiles["note_conceptuelle"] = $documentsData["note_conceptuelle"];
+                }
+
+                if (isset($documentsData["analyse_pre_risque_facteurs_reussite"])) {
+                    $noteFiles["analyse_pre_risque_facteurs_reussite"] = $documentsData["analyse_pre_risque_facteurs_reussite"];
+                }
+
+                $this->handleDocumentsWithFichierRepository($noteConceptuelle, $noteFiles);
             }
 
             $noteConceptuelle->note_conceptuelle = $noteConceptuelle->champs->map(function ($champ) {
@@ -183,6 +196,52 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $noteConceptuelle->canevas_redaction_note_conceptuelle = (new CanevasNoteConceptuelleResource($this->documentRepository->getCanevasRedactionNoteConceptuelle()))->toArray(request());
 
             $noteConceptuelle->save();
+
+            // Récupérer le dernier rapport de préfaisabilité s'il existe
+            $rapportExistant = $projet->rapportFaisabilitePreliminaire()->first();
+
+            // Préparer les données du rapport
+            $rapportData = [
+                'projet_id' => $projet->id,
+                'type' => 'faisabilite-preliminaire',
+                'statut' => $estSoumise ? 'brouillon' : 'soumis',
+                'intitule' => 'Rapport de faisabilité préliminaire',
+                'checklist_suivi' => [],
+                'info_cabinet_etude' => [],
+                'recommandation' => null,
+                'soumis_par_id' => auth()->id(),
+                'date_soumission' =>  $estSoumise ? now() : false,
+            ];
+
+            // Créer ou mettre à jour le rapport
+            if ($rapportExistant && $rapportExistant->statut === 'brouillon') {
+                // Mettre à jour le rapport existant s'il est en brouillon
+                $rapport = $rapportExistant;
+                $rapport->fill($rapportData);
+                $rapport->save();
+                $message = $estSoumise ? 'Rapport sauvegardé en brouillon.' : 'Rapport soumis avec succès.';
+            } elseif ($rapportExistant && $rapportExistant->statut === 'soumis' && !$estSoumise) {
+                // Si un rapport soumis existe déjà et qu'on soumet à nouveau, créer une nouvelle version
+                $rapportData['parent_id'] = $rapportExistant->id;
+                $rapport = Rapport::create($rapportData);
+                $message = 'Nouvelle version du rapport soumise avec succès.';
+            } else {
+                // Créer un nouveau rapport (première version)
+                $rapport = Rapport::create($rapportData);
+                $message = $estSoumise ? 'Rapport sauvegardé en brouillon.' : 'Rapport soumis avec succès.';
+            }
+
+            if (isset($documentsData["rapport_faisabilite_preliminaire"])) {
+                $this->gererFichierRapportFaisabilite($rapport, $data['rapport_faisabilite_preliminaire']);
+            }
+
+            if (isset($documentsData["tdr_faisabilite_preliminaire"])) {
+                $this->gererFichierRapportFaisabilite($rapport, $data['tdr_faisabilite_preliminaire']);
+            }
+
+            if (isset($documentsData["check_suivi_rapport"])) {
+                $this->gererFichierRapportFaisabilite($rapport, $data['check_suivi_rapport']);
+            }
 
             if ($projet->statut->value == StatutIdee::NOTE_CONCEPTUEL->value && $noteConceptuelle->statut == 1 && $estSoumise) {
 
@@ -615,7 +674,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ]);
             } */
 
-            if(isset($data["accept_term"])){
+            if (isset($data["accept_term"])) {
                 $noteConceptuelle->update([
                     "accept_term" => $data["accept_term"]
                 ]);
@@ -1066,6 +1125,128 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     }
 
     /**
+     * Calculer les résultats d'examen selon vos critères spécifiés
+     */
+    private function calculerResultatsControleQualite(Rapport $rapport, $evaluation): array
+    {
+        // Récupérer toutes les appréciations
+        //$champs = collect($noteConceptuelle->note_conceptuelle);
+
+        $champs = collect($this->documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire()->all_champs)->map(function ($champ) {
+            return [
+                'id' => $champ->id,
+                'label' => $champ->label,
+                'attribut' => $champ->attribut,
+                'ordre_affichage' => $champ->ordre_affichage,
+                'type_champ' => $champ->type_champ
+            ];
+        });
+
+        $champsEvalues = collect($evaluation->champs_evalue);
+
+        // Compter par type d'appréciation
+        $nombrePassable = 0;
+        $nombreRenvoyer = 0;
+        $nombreNonAccepte = 0;
+        $nombreNonApplicable = 0;
+        $nombreNonEvalues = 0;
+        $champsNonCompletes = 0;
+        $champsObligatoiresNonEvalues = 0;
+
+        foreach ($champs as $champ) {
+            $champEvalue = $champsEvalues->firstWhere('attribut', $champ['attribut']);
+            $appreciation = $champEvalue ? $champEvalue['pivot']['note'] : null;
+
+            if ($appreciation) {
+                switch (strtolower($appreciation)) {
+                    case 'passable':
+                        $nombrePassable++;
+                        break;
+                    case 'renvoyer':
+                        $nombreRenvoyer++;
+                        break;
+                    case 'non accepté':
+                    case 'non-accepte':
+                    case 'non_accepte': // compatibilité
+                        $nombreNonAccepte++;
+                        break;
+                    case 'non applicable':
+                    case 'non-applicable':
+                    case 'non_applicable': // compatibilité
+                        $nombreNonApplicable++;
+                        break;
+                }
+            } else {
+                $nombreNonEvalues++;
+                $champsNonCompletes++;
+            }
+        }
+
+        $totalChamps = $champs->count();
+
+        // Calcul du pourcentage global ou d’évolution (si applicable)
+        $pourcentageEvolution = $this->calculerPourcentageEvolutionQC(
+            $totalChamps,
+            $nombrePassable,
+            $nombreRenvoyer,
+            $nombreNonAccepte,
+            $nombreNonApplicable,
+            $nombreNonEvalues
+        );
+
+        // Par défaut, résultat null
+        $resultat_global = null;
+        $message_resultat = null;
+        $raisons = null;
+        $recommandations = null;
+        $resume = null;
+
+        // Si l'évaluation est terminée (statut = 1), calculer le résultat final
+        if ($evaluation->statut == 1) {
+            $resultat = $this->determinerResultatCQ([
+                'passable' => $nombrePassable,
+                'renvoyer' => $nombreRenvoyer,
+                'non_accepte' => $nombreNonAccepte,
+                'non_applicable' => $nombreNonApplicable,
+                'non_completees' => $champsNonCompletes,
+                'non_evalues' => $nombreNonEvalues,
+                'obligatoires_non_evalues' => $champsObligatoiresNonEvalues,
+                'total' => $totalChamps
+            ]);
+
+            $resultat_global = $resultat['statut'];
+            $message_resultat = $resultat['message'];
+            $raisons = $resultat['raisons'];
+            $recommandations = $resultat['recommandations'];
+            $resume = $this->genererResumeExamenQC(
+                $resultat,
+                $nombrePassable,
+                $nombreRenvoyer,
+                $nombreNonAccepte,
+                $nombreNonApplicable,
+                $pourcentageEvolution
+            );
+        }
+
+        return [
+            'nombre_passable' => $nombrePassable,
+            'nombre_renvoyer' => $nombreRenvoyer,
+            'nombre_non_accepte' => $nombreNonAccepte,
+            'nombre_non_applicable' => $nombreNonApplicable,
+            'nombre_non_evalues' => $nombreNonEvalues,
+            'champs_non_completes' => $champsNonCompletes,
+            'total_champs' => $totalChamps,
+            'champs_obligatoires_non_evalues' => $champsObligatoiresNonEvalues,
+            'resultat_global' => $resultat_global,
+            'message_resultat' => $message_resultat,
+            'raisons' => $raisons,
+            'recommandations' => $recommandations,
+            //'pourcentage_evolution' => $pourcentageEvolution,
+            'resume' => $resume
+        ];
+    }
+
+    /**
      * Calculer le pourcentage d'évolution de l'évaluation
      */
     private function calculerPourcentageEvolution(int $totalChamps, int $nombrePasse, int $nombreRetour, int $nombreNonAccepte, int $nombreNonEvalues): array
@@ -1106,6 +1287,63 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             'statut_progression' => $this->determinerStatutProgression($progressionGlobale, $pourcentageEvaluation)
         ];
     }
+
+    /**
+     * Calculer le pourcentage d'évolution de l'évaluation
+     */
+    private function calculerPourcentageEvolutionQC(
+        int $totalChamps,
+        int $nombrePassable,
+        int $nombreRenvoyer,
+        int $nombreNonAccepte,
+        int $nombreNonApplicable,
+        int $nombreNonEvalues
+    ): array {
+        if ($totalChamps === 0) {
+            return [
+                'pourcentage_evaluation' => 0,
+                'pourcentage_reussite' => 0,
+                'pourcentage_amelioration' => 0,
+                'pourcentage_rejet' => 0,
+                'pourcentage_non_applicable' => 0,
+                'progression_globale' => 0
+            ];
+        }
+
+        // Champs évalués (tout sauf non évalués)
+        $champsEvalues = $nombrePassable + $nombreRenvoyer + $nombreNonAccepte + $nombreNonApplicable;
+
+        // Pourcentage d'évaluation (champs évalués / total)
+        $pourcentageEvaluation = round(($champsEvalues / $totalChamps) * 100, 2);
+
+        // Pourcentage de réussite (passe / total évalué)
+        $pourcentageReussite = $champsEvalues > 0 ? round(($nombrePassable / $champsEvalues) * 100, 2) : 0;
+
+        // Pourcentage d'amélioration (retour / total évalué)
+        $pourcentageAmelioration = $champsEvalues > 0 ? round(($nombreRenvoyer / $champsEvalues) * 100, 2) : 0;
+
+        // Pourcentage de rejet (non-accepte / total évalué)
+        $pourcentageRejet = $champsEvalues > 0 ? round(($nombreNonAccepte / $champsEvalues) * 100, 2) : 0;
+
+        // Pourcentage de non applicable
+        $pourcentageNonApplicable = $champsEvalues > 0 ? round(($nombreNonApplicable / $champsEvalues) * 100, 2) : 0;
+
+        // Progression globale pondérée
+        // Pondération : Passe = 1 | Retour = 0.5 | Non applicable = 0.75 | Non accepté = 0
+        $scoreGlobal = ($nombrePassable * 1) + ($nombreRenvoyer * 0.5) + ($nombreNonApplicable * 0.75);
+        $progressionGlobale = round(($scoreGlobal / $totalChamps) * 100, 2);
+
+        return [
+            'pourcentage_evaluation' => $pourcentageEvaluation,           // % de champs évalués
+            'pourcentage_reussite' => $pourcentageReussite,               // % de réussite sur les évalués
+            'pourcentage_amelioration' => $pourcentageAmelioration,       // % nécessitant amélioration
+            'pourcentage_rejet' => $pourcentageRejet,                     // % rejetés
+            'pourcentage_non_applicable' => $pourcentageNonApplicable,    // % non applicables
+            'progression_globale' => $progressionGlobale,                 // Score global pondéré
+            'statut_progression' => $this->determinerStatutProgression($progressionGlobale, $pourcentageEvaluation)
+        ];
+    }
+
 
     /**
      * Déterminer le statut de progression basé sur les pourcentages
@@ -1215,6 +1453,93 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     }
 
     /**
+     * Déterminer le résultat d'examen selon les règles métier (Critères de qualité)
+     *
+     * Notes possibles :
+     * - Passable
+     * - Renvoyer
+     * - Non accepté
+     * - Non applicable
+     *
+     * Critères de rejet :
+     *  - Plus de 4 notes « Renvoyer »
+     *  - Plus de 2 notes « Non accepté »
+     *  - 1 ou plusieurs questions non complétées
+     */
+    private function determinerResultatCQ(array $compteurs): array
+    {
+        // Règle 1 : Si une ou plusieurs questions non complétées
+        if (($compteurs['non_completees'] ?? 0) > 0) {
+            return [
+                'statut' => 'non_accepte',
+                'message' => 'Non accepté',
+                'raisons' => ["{$compteurs['non_completees']} question(s) non complétée(s)"],
+                'recommandations' => ["Compléter toutes les questions avant soumission"]
+            ];
+        }
+
+        // Règle 2 : Si plus de 2 notes « Non accepté »
+        if (($compteurs['non_accepte'] ?? 0) > 2) {
+            return [
+                'statut' => 'non_accepte',
+                'message' => 'Non accepté',
+                'raisons' => ["{$compteurs['non_accepte']} note(s) « Non accepté » (seuil maximum : 2)"],
+                'recommandations' => ["Revoir en priorité les critères jugés « Non accepté »"]
+            ];
+        }
+
+        // Règle 3 : Si plus de 4 notes « Renvoyer »
+        if (($compteurs['renvoyer'] ?? 0) > 4) {
+            return [
+                'statut' => 'non_accepte',
+                'message' => 'Non accepté',
+                'raisons' => ["{$compteurs['renvoyer']} note(s) « Renvoyer » (seuil maximum : 4)"],
+                'recommandations' => ["Réviser les sections marquées comme « Renvoyer » avant nouvelle soumission"]
+            ];
+        }
+
+        // Règle 4 : Si toutes les questions sont « Passable »
+        if (($compteurs['passable'] ?? 0) === ($compteurs['total'] ?? 0)) {
+            return [
+                'statut' => 'passe',
+                'message' => 'L’examen est réussi (toutes les notes sont « Passable »)',
+                'raisons' => [],
+                'recommandations' => []
+            ];
+        }
+
+        // Règle 5 : Si toutes les questions sont « Non applicable »
+        if (($compteurs['non_applicable'] ?? 0) === ($compteurs['total'] ?? 0)) {
+            return [
+                'statut' => 'passe',
+                'message' => 'Aucune évaluation applicable (toutes les questions sont « Non applicable »)',
+                'raisons' => [],
+                'recommandations' => []
+            ];
+        }
+
+        // Sinon : Retour pour amélioration
+        $recommandations = [];
+        if (($compteurs['renvoyer'] ?? 0) > 0) {
+            $recommandations[] = "Améliorer les {$compteurs['renvoyer']} critère(s) marqué(s) comme « Renvoyer »";
+        }
+        if (($compteurs['non_accepte'] ?? 0) > 0) {
+            $recommandations[] = "Corriger les {$compteurs['non_accepte']} critère(s) jugé(s) « Non accepté »";
+        }
+        if (($compteurs['non_evalues'] ?? 0) > 0) {
+            $recommandations[] = "Attendre l’évaluation des {$compteurs['non_evalues']} critère(s) restant(s)";
+        }
+
+        return [
+            'statut' => 'retour',
+            'message' => 'Retour pour amélioration (contient des notes à corriger ou à compléter)',
+            'raisons' => [],
+            'recommandations' => $recommandations
+        ];
+    }
+
+
+    /**
      * Générer le résumé d'examen formaté
      */
     private function genererResumeExamen(array $resultat, int $nombrePasse, int $nombreRetour, int $nombreNonAccepte, array $pourcentageEvolution): string
@@ -1260,6 +1585,78 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 foreach ($resultat['raisons'] as $raison) {
                     $resume .= "- {$raison}\n";
                 }
+                break;
+        }
+
+        return $resume;
+    }
+
+    /**
+     * Générer le résumé d'examen formaté
+     */
+    private function genererResumeExamenQC(
+        array $resultat,
+        int $nombrePasse,
+        int $nombreRetour,
+        int $nombreNonAccepte,
+        int $nombreNonApplicable,
+        array $pourcentageEvolution
+    ): string {
+        $resume = "RÉSUMÉ DE L'ÉVALUATION\n\n";
+
+        $resume .= "Détails des résultats :\n";
+        $resume .= "• Nombre de Passable : {$nombrePasse} ({$pourcentageEvolution['pourcentage_reussite']}%)\n";
+        $resume .= "• Nombre de Retour : {$nombreRetour} ({$pourcentageEvolution['pourcentage_amelioration']}%)\n";
+        $resume .= "• Nombre de Non accepté : {$nombreNonAccepte} ({$pourcentageEvolution['pourcentage_rejet']}%)\n";
+        $resume .= "• Nombre de Non applicable : {$nombreNonApplicable} ({$pourcentageEvolution['pourcentage_non_applicable']}%)\n\n";
+
+        $resume .= "Statistiques d'évolution :\n";
+        $resume .= "• Progression d'évaluation : {$pourcentageEvolution['pourcentage_evaluation']}%\n";
+        $resume .= "• Progression globale : {$pourcentageEvolution['progression_globale']}%\n";
+        $resume .= "• Statut : " . ucfirst(str_replace('_', ' ', $pourcentageEvolution['statut_progression'])) . "\n\n";
+
+        $resume .= "Résultat global de l'examen :\n\n";
+
+        switch ($resultat['statut']) {
+            case 'passe':
+                $resume .= "(✓) Pertinence climatique passable — la présélection a été un succès.\n\n";
+                $resume .= "( ) Retour pour un travail supplémentaire\n";
+                $resume .= "( ) Non accepté\n";
+                $resume .= "( ) Non applicable\n";
+                break;
+
+            case 'retour':
+                $resume .= "( ) Pertinence climatique passable — la présélection a été un succès.\n\n";
+                $resume .= "(✓) Retour pour un travail supplémentaire — certaines sections nécessitent une révision.\n";
+                $resume .= "Recommandations d'amélioration :\n";
+                foreach ($resultat['recommandations'] as $recommandation) {
+                    $resume .= "- {$recommandation}\n";
+                }
+                $resume .= "\n( ) Non accepté\n";
+                $resume .= "( ) Non applicable\n";
+                break;
+
+            case 'non_accepte':
+                $resume .= "( ) Pertinence climatique passable — la présélection a été un succès.\n\n";
+                $resume .= "( ) Retour pour un travail supplémentaire\n";
+                $resume .= "(✓) Non accepté — évaluation rejetée.\n";
+                $resume .= "( ) Non applicable\n\n";
+                $resume .= "Raison(s) du rejet :\n";
+                foreach ($resultat['raisons'] as $raison) {
+                    $resume .= "- {$raison}\n";
+                }
+                $resume .= "\nSeules raisons possibles de rejet :\n";
+                $resume .= "1. Des questions obligatoires non complétées\n";
+                $resume .= "2. Une ou plusieurs réponses évaluées comme « Non accepté »\n";
+                $resume .= "3. Un nombre élevé de réponses évaluées comme « Retour »\n";
+                break;
+
+            case 'non_applicable':
+                $resume .= "( ) Pertinence climatique passable — la présélection a été un succès.\n\n";
+                $resume .= "( ) Retour pour un travail supplémentaire\n";
+                $resume .= "( ) Non accepté\n";
+                $resume .= "(✓) Non applicable — certains critères ne s'appliquent pas au projet.\n";
+                $resume .= "Note : Les champs non applicables n’affectent pas négativement la progression globale.\n";
                 break;
         }
 
@@ -1826,7 +2223,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     public function validerEtudeDeProfil(int $projetId, array $data): JsonResponse
     {
         try {
-
             // Vérifier les autorisations
             if (auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
@@ -1863,62 +2259,235 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ], 404);
             }
 
-            // Récupérer le résultat de l'évaluation pour déterminer les boutons actifs
-            $resultatsEvaluation = $this->getResultatsEvaluationPourValidation($noteConceptuelle);
-
-            // Valider que l'action choisie est autorisée selon le résultat d'évaluation
-            $actionsAutorisees = $this->getActionsAutoriseesSelonEvaluation($resultatsEvaluation);
+            // Valider que l'action choisie est autorisée selon le type de projet (est_dur)
+            $actionsAutorisees = $this->getActionsAutoriseesSelonTypeProjet($projet, $data);
 
             if (!in_array($data['decision'], $actionsAutorisees)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cette action n\'est pas autorisée selon le résultat de l\'évaluation.',
+                    'message' => 'Cette action n\'est pas autorisée pour ce type de projet.',
                     'actions_autorisees' => $actionsAutorisees,
-                    'resultat_evaluation' => $resultatsEvaluation['resultat_global'] ?? 'non_defini'
+                    'est_dur' => $projet->est_dur ? 1 : 0
                 ], 403);
+            }
+
+            // Déterminer si c'est une soumission ou un brouillon
+            $action = $data['action'] ?? 'submit';
+            $estBrouillon = $action === 'draft';
+            $checklist_suivi = [];
+            $resultatsControleQualite = null;
+            $rapportFaisabilitePrelim = null;
+
+            // Créer une évaluation pour tracer la validation
+            $evaluation = $projet->evaluations()->updateOrCreate([
+                'type_evaluation' => 'validation-etude-profil',
+                'projetable_type' => get_class($projet),
+                'projetable_id' => $projet->id,
+            ], [
+                'date_debut_evaluation' => now(),
+                'date_fin_evaluation' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? now() : null,
+                'evaluateur_id' => auth()->id(),
+                'commentaire' => $data['commentaire'] ?? '',
+                'statut' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? 1 : 0
+            ]);
+
+            if ($data['decision'] === "faire_etude_faisabilite_preliminaire") {
+
+                if (!$estBrouillon) {
+                    if (empty(data_get($data, 'checklist_suivi_rapport_faisabilite_preliminaire'))) {
+                        throw ValidationException::withMessages([
+                            "checklist_suivi_rapport_faisabilite_preliminaire" => "Veuillez faire le suivi du controle qualite du rapport de faisabilité préliminaire !"
+                        ]);
+                    }
+
+                    if (!isset($data['analyse_financiere'])) {
+                        throw ValidationException::withMessages([
+                            "analyse_financiere" => "Veuillez preciser les informations du fond de preparation !"
+                        ]);
+                    }
+                }
+                // Récupérer le dernier rapport de préfaisabilité s'il existe
+                $rapportExistant = $projet->rapportFaisabilitePreliminaire()->first();
+
+                if (!$rapportExistant) {
+                    throw new Exception("Le rapport de faisabilite preliminaire n'a pas ete soumis", 403);
+                }
+
+                // Traiter la checklist de suivi pour la soumission finale
+                if (isset($data['checklist_suivi_rapport_faisabilite_preliminaire'])) {
+                    $this->traiterChampsChecklistSuivi(
+                        $rapportExistant,
+                        $data['checklist_suivi_rapport_faisabilite_preliminaire']
+                    );
+
+                    $rapportExistant->fresh();
+                    $checklist_suivi = $rapportExistant->checklist_suivi;
+
+                    // Calculer le résultat de l'évaluation selon les règles SFD-015
+                    $resultatsEvaluation = $this->calculerResultatsControleQualite($rapportExistant, $evaluation);
+
+                    // Stocker pour utilisation ultérieure
+                    $resultatsControleQualite = $resultatsEvaluation;
+                    $rapportFaisabilitePrelim = $rapportExistant;
+
+                    // Préparer l'évaluation complète pour enregistrement
+                    $evaluationComplete = [
+                        'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire()->all_champs)->map(function ($champ) use ($evaluation) {
+                            $champEvalue = collect($evaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                            return [
+                                'champ_id' => $champ['id'],
+                                'label' => $champ['label'],
+                                'attribut' => $champ['attribut'],
+                                'ordre_affichage' => $champ['ordre_affichage'],
+                                'type_champ' => $champ['type_champ'],
+                                'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                                'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                            ];
+                        })->toArray(),
+                        'statistiques' => $resultatsEvaluation,
+                        'date_evaluation' => now(),
+                        'confirme_par' => ($estBrouillon && $data["decision"] === "") ? new UserResource(auth()->user()) : null
+                    ];
+
+                    // Mettre à jour l'évaluation avec les données complètes
+                    $evaluation->fill([
+                        'resultats_evaluation' => $resultatsEvaluation,
+                        'evaluation' => $evaluationComplete, // Le cast 'array' du modèle gère l'encodage JSON
+                        'commentaire' => $resultatsEvaluation['message_resultat']
+                    ]);
+
+                    $evaluation->save();
+                }
+
+                // Gérer l'analyse financière et calculer la VAN et le TRI
+                if (isset($data['analyse_financiere'])) {
+                    $updateData = [];
+                    $analyseFinanciere = $data['analyse_financiere'];
+
+                    $requiredFields = ['duree_vie', 'investissement_initial', 'flux_tresorerie', 'taux_actualisation'];
+
+                    foreach ($requiredFields as $field) {
+                        // validation de présence de $analyseFinanciere[$field]
+                        if (!isset($analyseFinanciere[$field]) && !empty($analyseFinanciere[$field])) {
+                            throw ValidationException::withMessages([
+                                "analyse_financiere.$field" => "Le champ $field est obligatoire lorsque le projet est financé. " . $analyseFinanciere[$field]
+                            ]);
+                        }
+                        // validations supplémentaires pour les champs spécifiques
+                        // Il faut savoir que les donnees sont soumis dans un formdata donc tout est string
+
+                        if ($field === 'duree_vie') {
+
+                            $value = $analyseFinanciere[$field];
+
+                            // Vérifie que c'est bien un nombre ET un entier positif
+                            if (!ctype_digit((string)$value) || (int)$value <= 0) {
+                                throw ValidationException::withMessages([
+                                    "analyse_financiere.$field" => "Le champ $field doit être un nombre entier positif (sans virgule)."
+                                ]);
+                            }
+
+                            // Optionnel : convertir proprement en entier
+                            $analyseFinanciere[$field] = (int)$value;
+                        }
+
+                        // Ajouter d'autres validations spécifiques si nécessaire
+                        if (in_array($field, ['investissement_initial', 'taux_actualisation', 'flux_tresorerie'])) {
+                            if (!is_numeric($analyseFinanciere[$field])) {
+                                throw ValidationException::withMessages([
+                                    "analyse_financiere.$field" => "Le champ $field doit être une date valide au format AAAA-MM-JJ."
+                                ]);
+                            }
+
+                            // Optionnel : forcer la conversion en float si tu veux l'utiliser ensuite
+                            $analyseFinanciere[$field] = (float) $analyseFinanciere[$field];
+                        }
+                    }
+
+                    // Préparer les données pour le fill() et la mise à jour
+                    $financialData = [
+                        'duree_vie' => $analyseFinanciere['duree_vie'] ?? $projet->duree_vie,
+                        'investissement_initial' => $analyseFinanciere['investissement_initial'] ?? $projet->investissement_initial,
+                        'flux_tresorerie' => $analyseFinanciere['flux_tresorerie'] ?? $projet->flux_tresorerie,
+                        'taux_actualisation' => $analyseFinanciere['taux_actualisation'] ?? $projet->taux_actualisation,
+                    ];
+
+                    // Mettre à jour le modèle en mémoire avec les nouvelles données financières
+                    $projet->fill($financialData);
+
+                    // Calculer la VAN et le TRI à partir des données mises à jour
+                    $van = $projet->calculerVAN();
+                    $projet->van = $van;
+                    $tri = $projet->calculerTRI();
+
+                    // Ajouter toutes les données financières et les résultats au tableau de mise à jour
+                    $updateData = array_merge($updateData, $financialData);
+
+                    if ($van !== null) {
+                        $updateData['van'] = $van;
+                    }
+                    if ($tri !== null) {
+                        $updateData['tri'] = $tri;
+                    }
+
+                    $projet->update($updateData);
+                }
             }
 
             if (isset($data["est_a_haut_risque"])) {
                 $projet->est_a_haut_risque = $data["est_a_haut_risque"];
             }
 
-            if (isset($data["est_dur"])) {
+            /* if (isset($data["est_dur"])) {
                 $projet->est_dur = $data["est_dur"];
-            }
+            } */
 
             $projet->save();
+            if ($action === "submit") {
 
-            // Traiter la décision selon le cas d'utilisation
-            $nouveauStatut = $this->traiterDecisionValidation($projet, $data['decision'], $data, $noteConceptuelle);
+                // Traiter la décision selon le cas d'utilisation
+                $nouveauStatut = $this->traiterDecisionValidation($projet, $data['decision'], $data, $noteConceptuelle, $resultatsControleQualite, $rapportFaisabilitePrelim, $evaluation);
 
-            // Créer une évaluation pour tracer la validation
-            $projet->evaluations()->create([
-                'type_evaluation' => 'validation-etude-profil',
-                'projetable_type' => get_class($projet),
-                'projetable_id' => $projet->id,
-                'date_debut_evaluation' => now(),
-                'date_fin_evaluation' => now(),
-                'valider_le' => now(),
-                'evaluateur_id' => auth()->id(),
-                'valider_par' => auth()->id(),
-                'commentaire' => $data['commentaire'] ?? '',
-                'evaluation' => $data,
-                'resultats_evaluation' => $data['decision'],
-                'statut' => 1
-            ]);
+                // Traiter la checklist de suivi si la décision est de faire une étude de faisabilité préliminaire
 
-            // Enregistrer le workflow et la décision
-            $this->enregistrerWorkflow($projet, $nouveauStatut);
-            $this->enregistrerDecision(
-                $projet,
-                "Validation de l'étude de profil - " . ucfirst(str_replace('_', ' ', $data['decision'])),
-                $data['commentaire'] ?? '',
-                auth()->id()
-            );
+                // Créer une évaluation pour tracer la validation
+                /*
+                    $projet->evaluations()->create([
+                        'type_evaluation' => 'validation-etude-profil',
+                        'projetable_type' => get_class($projet),
+                        'projetable_id' => $projet->id,
+                        'date_debut_evaluation' => now(),
+                        'date_fin_evaluation' => now(),
+                        'valider_le' => now(),
+                        'evaluateur_id' => auth()->id(),
+                        'valider_par' => auth()->id(),
+                        'commentaire' => $data['commentaire'] ?? '',
+                        'evaluation' => [
+                            'decision' => $data['decision'],
+                            'commentaire' => $data['commentaire'] ?? '',
+                            'est_a_haut_risque' => $data['est_a_haut_risque'] ?? false,
+                            'checklist_suivi' => $checklistSuivi,
+                            'action' => $data['action'] ?? 'submit'
+                        ],
+                        'resultats_evaluation' => $data['decision'],
+                        'statut' => 1
+                    ]);
+                */
 
-            // Envoyer des notifications si nécessaire
-            if ($data['decision'] !== 'sauvegarder') {
-                $this->envoyerNotificationValidation($projet, $data['decision'], $data['commentaire'] ?? '');
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($projet, $nouveauStatut);
+                $this->enregistrerDecision(
+                    $projet,
+                    "Validation de l'étude de profil - " . ucfirst(str_replace('_', ' ', $data['decision'])),
+                    $data['commentaire'] ?? '',
+                    auth()->id()
+                );
+
+                // Envoyer des notifications si nécessaire
+                if ($data['decision'] !== 'sauvegarder') {
+                    $this->envoyerNotificationValidation($projet, $data['decision'], $data['commentaire'] ?? '');
+                }
             }
 
             DB::commit();
@@ -1935,6 +2504,258 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'valider_par' => auth()->id(),
                     'valider_le' => now()->format('d/m/Y H:i:s'),
                     'actions_effectuees' => $this->getActionsEffectuees($data['decision'])
+                ]
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Confirmer la validation de l'étude de profil pour les cas "non accepté"
+     * Permet de choisir entre "reviser_note_conceptuelle" ou "abandonner_projet"
+     */
+    public function confirmerValidationEtudeProfilNonAcceptee(int $projetId, array $data): JsonResponse
+    {
+        try {
+            // Vérifier les autorisations
+            if (auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+            }
+
+            if (!auth()->user()->hasPermissionTo('valider-l-etude-de-profil') && auth()->user()->type != 'dgpd') {
+                throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
+            }
+
+            DB::beginTransaction();
+
+            // Récupérer le projet
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Vérifier que le projet est au bon statut
+            if ($projet->statut->value != StatutIdee::VALIDATION_PROFIL->value) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le projet n\'est pas à l\'étape de validation d\'étude de profil.'
+                ], 403);
+            }
+
+            // Récupérer l'évaluation de validation
+            $evaluation = $projet->evaluations()
+                ->where('type_evaluation', 'validation-etude-profil')
+                ->where('statut', 1)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if (!$evaluation || !$evaluation->resultats_evaluation) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucune évaluation de validation trouvée pour ce projet.'
+                ], 404);
+            }
+
+            // Vérifier si l'évaluation a déjà été confirmée (éviter les soumissions multiples)
+            if ($evaluation->valider_par && $evaluation->valider_le) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cette validation a déjà été confirmée. Les soumissions multiples ne sont pas autorisées.'
+                ], 403);
+            }
+
+            // Vérifier que le résultat est bien "non_accepte"
+            $resultatsEvaluation = $evaluation->resultats_evaluation;
+            if ($resultatsEvaluation['resultat_global'] !== 'non_accepte') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cette méthode n\'est utilisable que pour les cas "non accepté". Le résultat actuel est: ' . $resultatsEvaluation['resultat_global']
+                ], 422);
+            }
+
+            // Valider l'action demandée pour les cas "non accepté"
+            if (!isset($data['action']) || !in_array($data['action'], ['reviser_note_conceptuelle', 'abandonner_projet'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Action invalide pour cas "non accepté". Actions possibles: reviser_note_conceptuelle, abandonner_projet.'
+                ], 422);
+            }
+
+            // Récupérer la note conceptuelle
+            $noteConceptuelle = $this->repository->getModel()
+                ->where('projetId', $projetId)
+                ->where('statut', 1)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if (!$noteConceptuelle) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucune note conceptuelle trouvée pour ce projet.'
+                ], 404);
+            }
+
+            // Vérifier que la note conceptuelle est soumise
+            if ($noteConceptuelle->statut != 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'La note conceptuelle doit être soumise avant de pouvoir confirmer la validation.'
+                ], 403);
+            }
+
+            // Mettre à jour l'évaluation avec les informations de confirmation
+            $evaluation->fill([
+                'valider_par' => auth()->id(),
+                'valider_le' => now(),
+                'commentaire' => ($evaluation->commentaire ?? '') . "\n\nCommentaire de confirmation: " . ($data['commentaire_confirmation'] ?? 'Action confirmée pour cas non accepté')
+            ]);
+            $evaluation->save();
+
+            $nouveauStatut = null;
+            $messageAction = '';
+
+            switch ($data['action']) {
+                case 'reviser_note_conceptuelle':
+                    // Réviser la note conceptuelle malgré l'évaluation négative
+                    $noteConceptuelle->refresh();
+                    $newNote = $noteConceptuelle->replicate();
+
+                    $newNote->statut = 0; // Brouillon
+                    $newNote->decision = [];
+                    $newNote->accept_term = false;
+                    $newNote->parentId = $noteConceptuelle->id;
+                    $newNote->rediger_par = $noteConceptuelle->redacteur->id;
+                    $newNote->created_at = now();
+                    $newNote->updated_at = null;
+
+                    // Copier les canevas de la note originale vers la nouvelle note
+                    $newNote->canevas_redaction_note_conceptuelle = $noteConceptuelle->canevas_redaction_note_conceptuelle;
+                    $newNote->canevas_appreciation_note_conceptuelle = $noteConceptuelle->canevas_appreciation_note_conceptuelle;
+                    $newNote->save();
+
+                    // Récupérer l'évaluation de la note conceptuelle
+                    $evaluationNote = $noteConceptuelle->evaluationTermine();
+
+                    if ($evaluationNote) {
+                        // Créer une nouvelle évaluation liée à la nouvelle note
+                        $newEvaluation = $evaluationNote->replicate();
+                        $newEvaluation->projetable_id = $newNote->id;
+                        $newEvaluation->projetable_type = get_class($newNote);
+                        $newEvaluation->id_evaluation = $evaluationNote->id;
+                        $newEvaluation->canevas = $evaluationNote->canevas;
+                        $newEvaluation->statut = 0; // En cours
+                        $newEvaluation->date_debut_evaluation = now();
+                        $newEvaluation->date_fin_evaluation = null;
+                        $newEvaluation->valider_le = null;
+                        $newEvaluation->valider_par = null;
+                        $newEvaluation->resultats_evaluation = [];
+                        $newEvaluation->evaluation = [];
+                        $newEvaluation->created_at = now();
+                        $newEvaluation->updated_at = null;
+                        $newEvaluation->save();
+
+                        // Copier les relations champs_evalue de l'ancienne évaluation
+                        // Pour les champs "passé" : copier tel quel
+                        $champsEvalues = $evaluationNote->champs_evalue;
+                        foreach ($champsEvalues as $champ) {
+                            $note = $champ->pivot->note;
+
+                            if ($note === 'passe') {
+                                $newEvaluation->champs_evalue()->attach($champ->id, [
+                                    'note' => $note,
+                                    'date_note' => $champ->pivot->date_note,
+                                    'commentaires' => $champ->pivot->commentaires,
+                                    'created_at' => now(),
+                                    'updated_at' => now()
+                                ]);
+                            }
+                        }
+
+                        $newEvaluation->refresh();
+
+                        // Construire le JSON evaluation basé sur les champs copiés
+                        $resultatsExamen = $this->calculerResultatsExamen($newNote, $newEvaluation);
+
+                        // Récupérer l'ancienne évaluation pour référence
+                        $ancienneEvaluation = $evaluationNote->evaluation ?? [];
+                        $anciensChampsEvalues = collect($ancienneEvaluation['champs_evalues'] ?? []);
+
+                        $evaluationComplete = [
+                            'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
+                                $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                                $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
+
+                                $result = [
+                                    'champ_id' => $champ['id'],
+                                    'label' => $champ['label'],
+                                    'attribut' => $champ['attribut'],
+                                    'ordre_affichage' => $champ['ordre_affichage'],
+                                    'type_champ' => $champ['type_champ'],
+                                    'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                                    'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+                                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                                ];
+
+                                // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
+                                if (!$champEvalue && $ancienChampEvalue) {
+                                    $result['appreciation_passer'] = $ancienChampEvalue['appreciation'] ?? null;
+                                    $result['commentaire_passer_evaluateur'] = $ancienChampEvalue['commentaire_evaluateur'] ?? null;
+                                    $result['date_appreciation_passer'] = $ancienChampEvalue['date_appreciation'] ?? null;
+                                }
+
+                                return $result;
+                            })->toArray(),
+                            'statistiques' => $resultatsExamen
+                        ];
+
+                        $newEvaluation->evaluation = $evaluationComplete;
+                        $newEvaluation->resultats_evaluation = $resultatsExamen;
+                        $newEvaluation->save();
+                    }
+
+                    $projet->update([
+                        'statut' => StatutIdee::NOTE_CONCEPTUEL,
+                        'phase' => $this->getPhaseFromStatut(StatutIdee::NOTE_CONCEPTUEL),
+                        'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::NOTE_CONCEPTUEL)
+                    ]);
+
+                    $nouveauStatut = StatutIdee::NOTE_CONCEPTUEL;
+                    $messageAction = 'Note conceptuelle envoyée pour révision malgré l\'évaluation négative.';
+                    break;
+
+                case 'abandonner_projet':
+                    // Abandonner le projet suite à l'évaluation négative
+                    $projet->update([
+                        'statut' => StatutIdee::ABANDON,
+                        'phase' => $this->getPhaseFromStatut(StatutIdee::ABANDON),
+                        'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::ABANDON)
+                    ]);
+
+                    $nouveauStatut = StatutIdee::ABANDON;
+                    $messageAction = 'Projet abandonné suite à l\'évaluation négative de l\'étude de profil.';
+                    break;
+            }
+
+            // Enregistrer le workflow et la décision
+            $this->enregistrerWorkflow($projet, $nouveauStatut);
+            $this->enregistrerDecision(
+                $projet,
+                "Confirmation validation étude de profil (non accepté) - " . ucfirst(str_replace('_', ' ', $data['action'])),
+                $data['commentaire'] ?? 'Action confirmée suite à évaluation non acceptée',
+                auth()->id()
+            );
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => $messageAction,
+                'data' => [
+                    'projet_id' => $projet->id,
+                    'ancien_statut' => StatutIdee::VALIDATION_PROFIL->value,
+                    'nouveau_statut' => $nouveauStatut->value,
+                    'action' => $data['action'],
+                    'confirme_par' => auth()->id(),
+                    'confirme_le' => now()->format('d/m/Y H:i:s')
                 ]
             ]);
         } catch (Exception $e) {
@@ -2013,6 +2834,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             ->where('type_evaluation', 'note-conceptuelle')
             ->where('statut', 1) // Terminée
             ->whereNotNull('valider_par') // Confirmée
+            ->whereNotNull('valider_le') // Confirmée
             ->orderBy('created_at', 'desc')
             ->first();
 
@@ -2029,33 +2851,431 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         ]);
     }
 
+
+
     /**
-     * Déterminer les actions autorisées selon le résultat d'évaluation
+     * Traiter la checklist de suivi du rapport de préfaisabilité
      */
-    private function getActionsAutoriseesSelonEvaluation(array $resultatsEvaluation): array
+    private function traiterChecklistSuiviRapportFaisabilitePreliminaire($rapport, array $checklistData, bool $estBrouillon = false, array $fichiers = []): array
     {
-        $resultatGlobal = $resultatsEvaluation['resultat_global'] ?? 'non_defini';
+        try {
+            DB::beginTransaction();
+            /*
+            // Récupérer le dernier rapport de préfaisabilité s'il existe
+            $rapportExistant = $projet->rapportPrefaisabilite()->first();
 
-        switch ($resultatGlobal) {
-            case 'passe':
-                // La présélection a été un succès
-                return [/* 'projet_a_maturite',  */'faire_etude_faisabilite_preliminaire','faire_etude_prefaisabilite', 'reviser_note_conceptuelle', 'abandonner_projet', 'sauvegarder'];
+            // Déterminer le parent_id pour la hiérarchie (uniquement si soumission finale et rapport existe)
+            $parentId = null;
+            if ($rapportExistant && !$estBrouillon) {
+                $parentId = $rapportExistant->id;
+            }
 
-            case 'retour':
+            // Créer le nouveau rapport
+            $rapport = \App\Models\Rapport::create([
+                'projet_id' => $rapport->projet->id,
+                'parent_id' => $parentId,
+                'type' => 'prefaisabilite',
+                'statut' => $estBrouillon ? 'brouillon' : 'soumis',
+                'intitule' => 'Rapport de préfaisabilité - ' . $rapport->projet->titre_projet,
+                'checklist_suivi' => $checklistData, // Stocker directement les données
+                'info_cabinet_etude' => $fichiers['cabinet_etude'] ?? null,
+                'recommandation' => $fichiers['recommandation'] ?? null,
+                'date_soumission' => $estBrouillon ? null : now(),
+                'soumis_par_id' => $estBrouillon ? null : auth()->id()
+            ]);
+            */
+
+            // Associer les fichiers au rapport si ils existent
+            if (!empty($fichiers)) {
+                // Fichier rapport principal
+                if (isset($fichiers['rapport'])) {
+                    $this->attacherFichierAuRapport($rapport, $fichiers['rapport'], 'rapport');
+                }
+
+                // Procès verbal
+                if (isset($fichiers['proces_verbal'])) {
+                    $this->attacherFichierAuRapport($rapport, $fichiers['proces_verbal'], 'proces-verbal');
+                }
+            }
+
+            // Traiter les données de checklist via la relation champs() si nécessaire
+            $this->traiterChampsChecklistSuivi($rapport, $checklistData);
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => $estBrouillon ?
+                    'Checklist de suivi sauvegardée en brouillon.' :
+                    'Checklist de suivi du rapport de préfaisabilité validée avec succès.',
+                'rapport_id' => $rapport->id,
+                'projet_id' => $rapport->projet->id,
+                'est_brouillon' => $estBrouillon
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'success' => false,
+                'message' => 'Erreur lors du traitement de la checklist de suivi: ' . $e->getMessage()
+            ];
+        }
+    }
+
+
+    /**
+     * Traiter les champs de checklist via la relation champs()
+     */
+    private function traiterChampsChecklistSuivi($rapport, array $checklistData)
+    {
+        foreach ($checklistData as $evaluation) {
+            $checkpointId   = $evaluation['checkpoint_id'];
+            $remarque       = $evaluation['remarque'] ?? null;
+            $explication    = $evaluation['explication'] ?? null;
+
+            // Préparer la valeur à stocker (remarque + explication)
+            $valeur = $remarque;
+
+            // Créer ou mettre à jour la relation champ-rapport
+            $rapport->champs()->syncWithoutDetaching([
+                $checkpointId => [
+                    'valeur' => $valeur,
+                    'commentaire' => $explication,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]
+            ]);
+        }
+
+        // Préparer l'évaluation complète pour enregistrement
+        $checklist_suivi =  collect($this->documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire()->all_champs)->map(function ($champ) use ($rapport) {
+            $champEvalue = collect($rapport->champs)->firstWhere('attribut', $champ['attribut']);
+            return [
+                'champ_id'          => $champ['id'],
+                'label'             => $champ['label'],
+                'attribut'          => $champ['attribut'],
+                'ordre_affichage'   => $champ['ordre_affichage'],
+                'type_champ'        => $champ['type_champ'],
+                'valeur'            => $champEvalue && isset($champEvalue['pivot']['valeur']) ? $champEvalue['pivot']['valeur'] : null,
+                'commentaire'       => $champEvalue && isset($champEvalue['pivot']['commentaire']) ? $champEvalue['pivot']['commentaire'] : null,
+                'updated_at'        => $champEvalue && isset($champEvalue['pivot']['updated_at']) ? Carbon::parse($champEvalue['pivot']['updated_at'])->format("Y-m-d H:i:s") : null
+            ];
+        })->toArray();
+
+        $rapport->checklist_suivi = $checklist_suivi;
+        $rapport->save();
+    }
+
+    /**
+     * Déterminer les actions autorisées selon le type de projet (est_dur)
+     * et l'état du suivi de la checklist
+     */
+    private function getActionsAutoriseesSelonTypeProjet(Projet $projet, array $data): array
+    {
+        $decision = $data['decision'] ?? '';
+
+        // Vérifier si le suivi de la checklist est en cours pour faire_etude_faisabilite_preliminaire
+        /*
+            if ($decision === 'faire_etude_faisabilite_preliminaire') {
+                // Vérifier si le rapport existe et si le suivi est terminé
+                $rapport = $projet->rapportFaisabilitePreliminaire()->first();
+
+                // Si le rapport n'existe pas OU si la checklist n'est pas fournie/complète
+                if (!$rapport || empty($data['checklist_suivi_rapport_faisabilite_preliminaire'])) {
+                    // Le suivi n'est pas terminé, seule l'action 'sauvegarder' est permise
+                    return ['sauvegarder'];
+                }
+            }
+        */
+
+        // Actions selon le type de projet
+        if ($projet->est_dur) {
+            // Projet dur : faire une étude de pré-faisabilité
+            return ['abandonner_projet', 'reviser_note_conceptuelle', 'faire_etude_prefaisabilite', 'sauvegarder'];
+        } else {
+            // Projet mou : peut faire une étude de faisabilité préliminaire
+            return ['reviser_note_conceptuelle', 'abandonner_projet', 'sauvegarder', 'faire_etude_faisabilite_preliminaire'];
+        }
+    }
+
+    /**
+     * Traiter automatiquement la décision selon le résultat du contrôle qualité du rapport de faisabilité préliminaire
+     */
+    private function traiterDecisionEvaluationRapportFaisabilitePrelimAutomatique(Projet $projet, ?array $resultats, $rapport, $evaluation = null): StatutIdee
+    {
+        if (!$resultats || !isset($resultats['resultat_global'])) {
+            throw new Exception("Résultats du contrôle qualité introuvables");
+        }
+
+        // Récupérer la note conceptuelle du projet
+        $noteConceptuelle = $this->repository->getModel()
+            ->where('projetId', $projet->id)
+            ->where('statut', 1)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        // Mettre à jour l'évaluation avec les informations de confirmation
+        $evaluation->fill([
+            'valider_par' => auth()->id(),
+            'valider_le' => now(),
+            'commentaire' => ($evaluation->commentaire ?? '') . "\n\nCommentaire de confirmation: " . ($data['commentaire_confirmation'] ?? 'Action confirmée pour cas non accepté')
+        ]);
+        $evaluation->save();
+
+        switch ($resultats['resultat_global']) {
+            case 'non_applicable':
+            case 'passable':
+                // Le contrôle qualité a réussi → Passage à MATURITE
+                $projet->update([
+                    'statut' => StatutIdee::MATURITE,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::MATURITE),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::MATURITE),
+                    'type_projet' => TypesProjet::simple
+                ]);
+
+                if ($rapport) {
+                    $rapport->update([
+                        'statut' => 'valide',
+                        'commentaire_validation' => $resultats["message_resultat"]
+                    ]);
+                }
+
+                return StatutIdee::MATURITE;
+
+                /**
+                 *
+                 * 'passable' => $nombrePassable,
+                 * 'renvoyer' => $nombreRenvoyer,
+                 * 'non_accepte' => $nombreNonAccepte,
+                 * 'non_applicable' => $nombreNonApplicable,
+                 * 'non_completees' => $champsNonCompletes,
+                 * 'non_evalues' => $nombreNonEvalues,
+                 */
+            case 'renvoyer':
+                // Retour pour révision de la note conceptuelle
+                if ($noteConceptuelle) {
+                    $noteConceptuelle->refresh();
+                    $newNote = $noteConceptuelle->replicate();
+
+                    $newNote->statut = 0; // Brouillon
+                    $newNote->decision = [];
+                    $newNote->accept_term = false;
+                    $newNote->parentId = $noteConceptuelle->id;
+                    $newNote->rediger_par = $noteConceptuelle->redacteur->id;
+                    $newNote->created_at = now();
+                    $newNote->updated_at = null;
+
+                    // Copier les canevas de la note originale vers la nouvelle note
+                    $newNote->canevas_redaction_note_conceptuelle = $noteConceptuelle->canevas_redaction_note_conceptuelle;
+                    $newNote->canevas_appreciation_note_conceptuelle = $noteConceptuelle->canevas_appreciation_note_conceptuelle;
+                    $newNote->save();
+
+                    // Récupérer l'évaluation de la note conceptuelle si elle existe
+                    $evaluationNote = $noteConceptuelle->evaluationTermine();
+
+                    if ($evaluationNote) {
+                        // Créer une nouvelle évaluation liée à la nouvelle note avec les données de l'ancienne
+                        $newEvaluation = $evaluationNote->replicate();
+                        $newEvaluation->projetable_id = $newNote->id;
+                        $newEvaluation->projetable_type = get_class($newNote);
+                        $newEvaluation->id_evaluation = $evaluationNote->id;
+                        $newEvaluation->canevas = $evaluationNote->canevas;
+                        $newEvaluation->statut = 0; // En cours
+                        $newEvaluation->date_debut_evaluation = now();
+                        $newEvaluation->date_fin_evaluation = null;
+                        $newEvaluation->valider_le = null;
+                        $newEvaluation->valider_par = null;
+                        $newEvaluation->resultats_evaluation = [];
+                        $newEvaluation->evaluation = [];
+                        $newEvaluation->created_at = now();
+                        $newEvaluation->updated_at = null;
+                        $newEvaluation->save();
+
+                        // Copier les relations champs_evalue de l'ancienne évaluation
+                        // Pour les champs "passé" : copier tel quel
+                        $champsEvalues = $evaluationNote->champs_evalue;
+                        foreach ($champsEvalues as $champ) {
+                            $note = $champ->pivot->note;
+
+                            if ($note === 'passe') {
+                                $newEvaluation->champs_evalue()->attach($champ->id, [
+                                    'note' => $note,
+                                    'date_note' => $champ->pivot->date_note,
+                                    'commentaires' => $champ->pivot->commentaires,
+                                    'created_at' => now(),
+                                    'updated_at' => now()
+                                ]);
+                            }
+                        }
+
+                        $newEvaluation->refresh();
+
+                        // Construire le JSON evaluation basé sur les champs copiés
+                        $resultatsExamen = $this->calculerResultatsExamen($newNote, $newEvaluation);
+
+                        // Récupérer l'ancienne évaluation pour référence
+                        $ancienneEvaluation = $evaluationNote->evaluation ?? [];
+                        $anciensChampsEvalues = collect($ancienneEvaluation['champs_evalues'] ?? []);
+
+                        $evaluationComplete = [
+                            'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
+                                $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                                $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
+
+                                $result = [
+                                    'champ_id' => $champ['id'],
+                                    'label' => $champ['label'],
+                                    'attribut' => $champ['attribut'],
+                                    'ordre_affichage' => $champ['ordre_affichage'],
+                                    'type_champ' => $champ['type_champ'],
+                                    'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                                    'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+                                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                                ];
+
+                                // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
+                                if (!$champEvalue && $ancienChampEvalue) {
+                                    $result['appreciation_passer'] = $ancienChampEvalue['appreciation'] ?? null;
+                                    $result['commentaire_passer_evaluateur'] = $ancienChampEvalue['commentaire_evaluateur'] ?? null;
+                                    $result['date_appreciation_passer'] = $ancienChampEvalue['date_appreciation'] ?? null;
+                                }
+
+                                return $result;
+                            })->toArray(),
+                            'statistiques' => $resultatsExamen
+                        ];
+
+                        $newEvaluation->evaluation = $evaluationComplete;
+                        $newEvaluation->resultats_evaluation = $resultatsExamen;
+                        $newEvaluation->save();
+                    }
+                }
+
+                $projet->update([
+                    'statut' => StatutIdee::R_VALIDATION_NOTE_AMELIORER,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::R_VALIDATION_NOTE_AMELIORER),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_VALIDATION_NOTE_AMELIORER)
+                ]);
+
+                return StatutIdee::R_VALIDATION_NOTE_AMELIORER;
+
+            case 'non accepté':
+            case 'non-accepte':
+            case 'non_completees':
             case 'non_accepte':
-                // Retour pour travail supplémentaire ou Non accepté
-                return ['abandonner_projet', 'reviser_note_conceptuelle', 'faire_etude_prefaisabilite', 'sauvegarder'];
-
             default:
-                // Évaluation non définie - toutes les actions sont possibles
-                return [/* 'projet_a_maturite', 'faire_etude_prefaisabilite',*/ 'reviser_note_conceptuelle', 'abandonner_projet', 'sauvegarder'];
+                // Réviser la note conceptuelle malgré l'évaluation négative
+                $noteConceptuelle->refresh();
+                $newNote = $noteConceptuelle->replicate();
+
+                $newNote->statut = 0; // Brouillon
+                $newNote->decision = [];
+                $newNote->accept_term = false;
+                $newNote->parentId = $noteConceptuelle->id;
+                $newNote->rediger_par = $noteConceptuelle->redacteur->id;
+                $newNote->created_at = now();
+                $newNote->updated_at = null;
+
+                // Copier les canevas de la note originale vers la nouvelle note
+                $newNote->canevas_redaction_note_conceptuelle = $noteConceptuelle->canevas_redaction_note_conceptuelle;
+                $newNote->canevas_appreciation_note_conceptuelle = $noteConceptuelle->canevas_appreciation_note_conceptuelle;
+                $newNote->save();
+
+                // Récupérer l'évaluation de la note conceptuelle
+                $evaluationNote = $noteConceptuelle->evaluationTermine();
+
+                if ($evaluationNote) {
+                    // Créer une nouvelle évaluation liée à la nouvelle note
+                    $newEvaluation = $evaluationNote->replicate();
+                    $newEvaluation->projetable_id = $newNote->id;
+                    $newEvaluation->projetable_type = get_class($newNote);
+                    $newEvaluation->id_evaluation = $evaluationNote->id;
+                    $newEvaluation->canevas = $evaluationNote->canevas;
+                    $newEvaluation->statut = 0; // En cours
+                    $newEvaluation->date_debut_evaluation = now();
+                    $newEvaluation->date_fin_evaluation = null;
+                    $newEvaluation->valider_le = null;
+                    $newEvaluation->valider_par = null;
+                    $newEvaluation->resultats_evaluation = [];
+                    $newEvaluation->evaluation = [];
+                    $newEvaluation->created_at = now();
+                    $newEvaluation->updated_at = null;
+                    $newEvaluation->save();
+
+                    // Copier les relations champs_evalue de l'ancienne évaluation
+                    // Pour les champs "passé" : copier tel quel
+                    $champsEvalues = $evaluationNote->champs_evalue;
+                    foreach ($champsEvalues as $champ) {
+                        $note = $champ->pivot->note;
+
+                        if ($note === 'passe') {
+                            $newEvaluation->champs_evalue()->attach($champ->id, [
+                                'note' => $note,
+                                'date_note' => $champ->pivot->date_note,
+                                'commentaires' => $champ->pivot->commentaires,
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+                        }
+                    }
+
+                    $newEvaluation->refresh();
+
+                    // Construire le JSON evaluation basé sur les champs copiés
+                    $resultatsExamen = $this->calculerResultatsExamen($newNote, $newEvaluation);
+
+                    // Récupérer l'ancienne évaluation pour référence
+                    $ancienneEvaluation = $evaluationNote->evaluation ?? [];
+                    $anciensChampsEvalues = collect($ancienneEvaluation['champs_evalues'] ?? []);
+
+                    $evaluationComplete = [
+                        'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
+                            $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                            $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
+
+                            $result = [
+                                'champ_id' => $champ['id'],
+                                'label' => $champ['label'],
+                                'attribut' => $champ['attribut'],
+                                'ordre_affichage' => $champ['ordre_affichage'],
+                                'type_champ' => $champ['type_champ'],
+                                'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                                'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                            ];
+
+                            // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
+                            if (!$champEvalue && $ancienChampEvalue) {
+                                $result['appreciation_passer'] = $ancienChampEvalue['appreciation'] ?? null;
+                                $result['commentaire_passer_evaluateur'] = $ancienChampEvalue['commentaire_evaluateur'] ?? null;
+                                $result['date_appreciation_passer'] = $ancienChampEvalue['date_appreciation'] ?? null;
+                            }
+
+                            return $result;
+                        })->toArray(),
+                        'statistiques' => $resultatsExamen
+                    ];
+
+                    $newEvaluation->evaluation = $evaluationComplete;
+                    $newEvaluation->resultats_evaluation = $resultatsExamen;
+                    $newEvaluation->save();
+                }
+
+                $projet->update([
+                    'statut' => StatutIdee::NOTE_CONCEPTUEL,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::NOTE_CONCEPTUEL),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::NOTE_CONCEPTUEL)
+                ]);
+
+                $nouveauStatut = StatutIdee::NOTE_CONCEPTUEL;
+                $messageAction = 'Note conceptuelle envoyée pour révision malgré l\'évaluation négative.';
+                return $nouveauStatut;
         }
     }
 
     /**
      * Traiter la décision de validation selon le cas d'utilisation
      */
-    private function traiterDecisionValidation($projet, string $decision, array $data, $noteConceptuelle = null): \App\Enums\StatutIdee
+    private function traiterDecisionValidation($projet, string $decision, array $data, $noteConceptuelle = null, $resultatsControleQualite = null, $rapportFaisabilitePrelim = null, $evaluation = null): \App\Enums\StatutIdee
     {
         switch ($decision) {/*
             case 'projet_a_maturite':
@@ -2066,6 +3286,15 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'type_projet' => TypesProjet::simple
                 ]);
                 return StatutIdee::PRET; */
+
+            case 'faire_etude_faisabilite_preliminaire':
+                // Traiter selon le résultat du contrôle qualité
+                return $this->traiterDecisionEvaluationRapportFaisabilitePrelimAutomatique(
+                    $projet,
+                    $resultatsControleQualite,
+                    $rapportFaisabilitePrelim,
+                    $evaluation
+                );
 
             case 'faire_etude_prefaisabilite':
                 $projet->update([
@@ -2215,6 +3444,39 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     /**
      * Envoyer une notification selon la décision
      */
+    /**
+     * Traiter la checklist de suivi de l'étude de profil (faisabilité préliminaire)
+     */
+    private function traiterChecklistSuiviEtudeProfil($projet, array $checklistData): array
+    {
+        try {
+            // Préparer l'évaluation complète pour enregistrement
+            $checklist_suivi = collect($this->documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire()->all_champs)->map(function ($champ) use ($checklistData) {
+                // Trouver l'évaluation correspondante dans les données soumises
+                $evaluation = collect($checklistData)->firstWhere('checkpoint_id', $champ['id']);
+
+                return [
+                    'champ_id'          => $champ['id'],
+                    'label'             => $champ['label'],
+                    'attribut'          => $champ['attribut'],
+                    'ordre_affichage'   => $champ['ordre_affichage'],
+                    'type_champ'        => $champ['type_champ'],
+                    'remarque'          => $evaluation['remarque'] ?? null,
+                    'explication'       => $evaluation['explication'] ?? null,
+                    'updated_at'        => now()->format("Y-m-d H:i:s")
+                ];
+            })->toArray();
+
+            return $checklist_suivi;
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors du traitement de la checklist de suivi de l\'étude de profil', [
+                'error' => $e->getMessage(),
+                'projet_id' => $projet->id
+            ]);
+            return [];
+        }
+    }
+
     private function envoyerNotificationValidation($projet, string $decision, string $commentaire): void
     {
         try {
@@ -2436,6 +3698,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             \App\Enums\StatutIdee::VALIDATION_PROFIL => \App\Enums\SousPhaseIdee::etude_de_profil,
             \App\Enums\StatutIdee::VALIDATION_NOTE_AMELIORER => \App\Enums\SousPhaseIdee::etude_de_profil,
             \App\Enums\StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER => \App\Enums\SousPhaseIdee::etude_de_profil,
+
+            StatutIdee::MATURITE => \App\Enums\SousPhaseIdee::redaction_rapport_evaluation_ex_ante,
             default => \App\Enums\SousPhaseIdee::etude_de_profil,
         };
     }
@@ -2483,7 +3747,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     private function storeDocumentWithFichierRepository(NoteConceptuelle $noteConceptuelle, $file, string $category): void
     {
-        if($file === null || $file === 'null') return;
+        if ($file === null || $file === 'null') return;
 
         // Hasher l'identifiant BIP pour le stockage physique
         $hashedIdentifiantBip = hash('sha256', $noteConceptuelle->projet->identifiant_bip);
@@ -2907,5 +4171,73 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             ]);
             return null;
         }
+    }
+
+
+    /**
+     * Gérer le fichier rapport avec versioning intelligent
+     */
+    private function gererFichierRapportFaisabilite(Rapport $rapport, $fichier): ?Fichier
+    {
+        // Calculer le hash du nouveau fichier
+        $nouveauHash = md5_file($fichier->getRealPath());
+
+        // Vérifier s'il y a déjà un fichier rapport avec le même hash lié à ce rapport
+        $fichierIdentique = $rapport->fichiersRapport()
+            ->where('hash_md5', $nouveauHash)
+            ->where('is_active', true)
+            ->first();
+
+        if ($fichierIdentique) {
+            return $fichierIdentique;
+        }
+
+        // Désactiver les anciens fichiers rapport de ce rapport
+        $rapport->fichiersRapport()
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
+
+        // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_faisabilite/rapport/{hash_id}
+        $hashedProjectId = hash('sha256', $rapport->projet->identifiant_bip);
+        $hashedRapportId = hash('sha256', $rapport->id);
+
+        // Stocker le fichier sur le disque
+        $nomOriginal = $fichier->getClientOriginalName();
+        $extension = $fichier->getClientOriginalExtension();
+        $nomStockage = now()->format('Y_m_d_His') . '_' . uniqid() . '_' . $nomOriginal;
+        $chemin = $fichier->storeAs("projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_faisabilite/rapport_faisabilite/{$hashedRapportId}", $nomStockage, 'local');
+
+        // Créer le nouveau fichier et l'associer au rapport
+        $fichierCree = Fichier::create([
+            'nom_original' => $nomOriginal,
+            'nom_stockage' => $nomStockage,
+            'chemin' => $chemin,
+            'extension' => $extension,
+            'mime_type' => $fichier->getMimeType(),
+            'taille' => $fichier->getSize(),
+            'hash_md5' => $nouveauHash,
+            'description' => 'Rapport de faisabilité',
+            'categorie' => 'rapport',
+            'is_active' => true,
+            'uploaded_by' => auth()->id(),
+            'metadata' => [
+                'type_document' => 'rapport-faisabilite',
+                'rapport_id' => $rapport->id,
+                'projet_id' => $rapport->projet_id,
+                'statut' => 'actif',
+                'soumis_par' => auth()->id(),
+                'soumis_le' => now(),
+                'folder_structure' => "projets/{$hashedProjectId}/evaluation_ex_ante/etude_de_faisabilite/rapport_faisabilite/{$hashedRapportId}"
+            ],
+            'fichier_attachable_type' => Rapport::class,
+            'fichier_attachable_id' => $rapport->id
+        ]);
+
+
+
+        // Supprimer les anciens fichiers maintenant que les nouveaux sont enregistrés
+        $this->removeSpecificFiles($fichierIdentique);
+
+        return $fichierCree;
     }
 }
