@@ -2690,7 +2690,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             StatutIdee::EVALUATION_TDR_F => \App\Enums\PhasesIdee::evaluation_ex_tante,
             StatutIdee::SOUMISSION_RAPPORT_F => \App\Enums\PhasesIdee::evaluation_ex_tante,
             StatutIdee::VALIDATION_F => \App\Enums\PhasesIdee::evaluation_ex_tante,
-            StatutIdee::MATURITE => \App\Enums\PhasesIdee::selection,
+            StatutIdee::MATURITE => \App\Enums\PhasesIdee::evaluation_ex_tante,
             StatutIdee::PRET => \App\Enums\PhasesIdee::selection,
             StatutIdee::ABANDON => \App\Enums\PhasesIdee::evaluation_ex_tante,
             default => \App\Enums\PhasesIdee::evaluation_ex_tante,
@@ -2705,8 +2705,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             StatutIdee::EVALUATION_TDR_F => \App\Enums\SousPhaseIdee::faisabilite,
             StatutIdee::SOUMISSION_RAPPORT_F => \App\Enums\SousPhaseIdee::faisabilite,
             StatutIdee::VALIDATION_F => \App\Enums\SousPhaseIdee::faisabilite,
-            StatutIdee::MATURITE => \App\Enums\SousPhaseIdee::faisabilite,
-            StatutIdee::PRET => \App\Enums\SousPhaseIdee::faisabilite,
+            StatutIdee::MATURITE => \App\Enums\SousPhaseIdee::redaction_rapport_evaluation_ex_ante,
+            StatutIdee::PRET => \App\Enums\SousPhaseIdee::selection,
             StatutIdee::ABANDON => \App\Enums\SousPhaseIdee::faisabilite,
             default => \App\Enums\SousPhaseIdee::faisabilite
         };

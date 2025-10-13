@@ -3753,6 +3753,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             \App\Enums\StatutIdee::VALIDATION_PROFIL => \App\Enums\PhasesIdee::identification,
             \App\Enums\StatutIdee::VALIDATION_NOTE_AMELIORER => \App\Enums\PhasesIdee::identification,
+            \App\Enums\StatutIdee::MATURITE => \App\Enums\PhasesIdee::evaluation_ex_tante,
             default => \App\Enums\PhasesIdee::identification,
         };
     }
