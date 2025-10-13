@@ -775,11 +775,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Récupérer le TDR soumis (pas en brouillon)
             $tdr = $this->tdrRepository->getModel()
-                ->where('projet_id', $projetId)
-                ->where('type', 'prefaisabilite')
-                ->where('statut', '!=', 'brouillon')
-                ->orderBy('created_at', 'desc')
-                ->first();
+                        ->where('projet_id', $projetId)
+                        ->where('type', 'prefaisabilite')
+                        ->where('statut', '!=', 'brouillon')
+                        ->orderBy('created_at', 'desc')
+                        ->first();
 
             if (!$tdr) {
                 return response()->json([
