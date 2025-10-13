@@ -899,8 +899,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         }
                     }
 
-                    dd()
-
                     $grilleEvaluation[] = array_merge([
                         'champ_id' => $champ->id,
                         'label' => $champ->label,
