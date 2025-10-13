@@ -2394,7 +2394,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     }
                 }
                 // Récupérer le dernier rapport de préfaisabilité s'il existe
-                $rapportExistant = $projet->rapportFaisabilitePreliminaire()->first();
+                $rapportExistant = $projet->rapportFaisabilitePreliminaire()->where("statut", "<>", "brouillon")->first();
 
                 if (!$rapportExistant) {
                     throw new Exception("Le rapport de faisabilite preliminaire n'a pas ete soumis", 403);
@@ -2550,13 +2550,32 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
                     $projet->update($updateData);
                 }
+
+                // Mettre à jour l'évaluation de validation du profil si c'est une soumission finale
+                if ($action === 'submit' && $data['decision'] !== 'sauvegarder') {
+                    $evaluation->fill([
+                        'evaluation' => [
+                            'decision' => $data['decision'],
+                            'commentaire' => $data['commentaire'] ?? '',
+                            'est_a_haut_risque' => $data['est_a_haut_risque'] ?? false,
+                            'action' => $data['action'] ?? 'submit',
+                            'analyse_financiere' => $data['analyse_financiere'] ?? null,
+                            'checklist_suivi_rapport' => $checklist_suivi,
+                            'resultats_controle_qualite' => $resultatsControleQualite,
+                        ],
+                        'resultats_evaluation' => $data['decision'],
+                        'valider_le' =>  now(),
+                        'valider_par' => auth()->user()->id,
+                    ]);
+
+                    $evaluation->save();
+                }
             } else if ($action === 'submit' && $data['decision'] !== 'sauvegarder') {
                 // Mettre à jour l'évaluation avec les données complètes
                 $evaluation->fill([
                     'evaluation' => [
                         'decision' => $data['decision'],
                         'commentaire' => $data['commentaire'] ?? '',
-                        'est_a_haut_risque' => $data['est_a_haut_risque'] ?? false,
                         'action' => $data['action'] ?? 'submit',
                     ],
                     'resultats_evaluation' => $data['decision'],
@@ -2567,15 +2586,15 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $evaluation->save();
             }
 
-            if (isset($data["est_a_haut_risque"])) {
+            if ($projet->est_dur === true && isset($data["est_a_haut_risque"])) {
                 $projet->est_a_haut_risque = $data["est_a_haut_risque"];
+                $projet->save();
             }
 
             /* if (isset($data["est_dur"])) {
                 $projet->est_dur = $data["est_dur"];
             } */
 
-            $projet->save();
             if ($action === "submit") {
 
                 // Traiter la décision selon le cas d'utilisation
@@ -3144,13 +3163,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             throw new Exception("Résultats du contrôle qualité introuvables");
         }
 
-        // Récupérer la note conceptuelle du projet
-        $noteConceptuelle = $this->repository->getModel()
-            ->where('projetId', $projet->id)
-            ->where('statut', 1)
-            ->orderBy('created_at', 'desc')
-            ->first();
-
         // Mettre à jour l'évaluation avec les informations de confirmation
         $evaluation->fill([
             'valider_par' => auth()->id(),
@@ -3158,6 +3170,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             'commentaire' => ($evaluation->commentaire ?? '') . "\n\nCommentaire de confirmation: " . ($data['commentaire_confirmation'] ?? 'Action confirmée pour cas non accepté')
         ]);
         $evaluation->save();
+
+        dd($resultats);
 
         switch ($resultats['resultat_global']) {
             case 'non_applicable':
@@ -3173,7 +3187,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 if ($rapport) {
                     $rapport->update([
                         'statut' => 'valide',
-                        'commentaire_validation' => $resultats["message_resultat"]
+                        'decision' => 'valider',
+                        'commentaire_validation' => $resultats["message_resultat"],
+                        'date_validation' => now(),
+                        'validateur_id' => auth()->id()
                     ]);
                 }
 
@@ -3189,224 +3206,76 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                  * 'non_evalues' => $nombreNonEvalues,
                  */
             case 'renvoyer':
-                // Retour pour révision de la note conceptuelle
-                if ($noteConceptuelle) {
-                    $noteConceptuelle->refresh();
-                    $newNote = $noteConceptuelle->replicate();
+                // Créer un nouveau rapport en brouillon pour révision
+                $rapport->refresh();
+                $newRapport = $rapport->replicate();
 
-                    $newNote->statut = 0; // Brouillon
-                    $newNote->decision = [];
-                    $newNote->accept_term = false;
-                    $newNote->parentId = $noteConceptuelle->id;
-                    $newNote->rediger_par = $noteConceptuelle->redacteur->id;
-                    $newNote->created_at = now();
-                    $newNote->updated_at = null;
+                $newRapport->statut = 'brouillon';
+                $newRapport->parent_id = $rapport->id;
+                $newRapport->commentaire_validation = null;
+                $newRapport->date_soumission = null;
+                $newRapport->created_at = now();
+                $newRapport->updated_at = null;
+                $newRapport->save();
 
-                    // Copier les canevas de la note originale vers la nouvelle note
-                    $newNote->canevas_redaction_note_conceptuelle = $noteConceptuelle->canevas_redaction_note_conceptuelle;
-                    $newNote->canevas_appreciation_note_conceptuelle = $noteConceptuelle->canevas_appreciation_note_conceptuelle;
-                    $newNote->save();
+                // NOTE: L'évaluation du rapport sera créée automatiquement lors de la resoumission
+                // La logique de duplication de l'évaluation (champs passés, etc.) sera appliquée à ce moment
 
-                    // Récupérer l'évaluation de la note conceptuelle si elle existe
-                    $evaluationNote = $noteConceptuelle->evaluationTermine();
-
-                    if ($evaluationNote) {
-                        // Créer une nouvelle évaluation liée à la nouvelle note avec les données de l'ancienne
-                        $newEvaluation = $evaluationNote->replicate();
-                        $newEvaluation->projetable_id = $newNote->id;
-                        $newEvaluation->projetable_type = get_class($newNote);
-                        $newEvaluation->id_evaluation = $evaluationNote->id;
-                        $newEvaluation->canevas = $evaluationNote->canevas;
-                        $newEvaluation->statut = 0; // En cours
-                        $newEvaluation->date_debut_evaluation = now();
-                        $newEvaluation->date_fin_evaluation = null;
-                        $newEvaluation->valider_le = null;
-                        $newEvaluation->valider_par = null;
-                        $newEvaluation->resultats_evaluation = [];
-                        $newEvaluation->evaluation = [];
-                        $newEvaluation->created_at = now();
-                        $newEvaluation->updated_at = null;
-                        $newEvaluation->save();
-
-                        // Copier les relations champs_evalue de l'ancienne évaluation
-                        // Pour les champs "passé" : copier tel quel
-                        $champsEvalues = $evaluationNote->champs_evalue;
-                        foreach ($champsEvalues as $champ) {
-                            $note = $champ->pivot->note;
-
-                            if ($note === 'passe') {
-                                $newEvaluation->champs_evalue()->attach($champ->id, [
-                                    'note' => $note,
-                                    'date_note' => $champ->pivot->date_note,
-                                    'commentaires' => $champ->pivot->commentaires,
-                                    'created_at' => now(),
-                                    'updated_at' => now()
-                                ]);
-                            }
-                        }
-
-                        $newEvaluation->refresh();
-
-                        // Construire le JSON evaluation basé sur les champs copiés
-                        $resultatsExamen = $this->calculerResultatsExamen($newNote, $newEvaluation);
-
-                        // Récupérer l'ancienne évaluation pour référence
-                        $ancienneEvaluation = $evaluationNote->evaluation ?? [];
-                        $anciensChampsEvalues = collect($ancienneEvaluation['champs_evalues'] ?? []);
-
-                        $evaluationComplete = [
-                            'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
-                                $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
-                                $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
-
-                                $result = [
-                                    'champ_id' => $champ['id'],
-                                    'label' => $champ['label'],
-                                    'attribut' => $champ['attribut'],
-                                    'ordre_affichage' => $champ['ordre_affichage'],
-                                    'type_champ' => $champ['type_champ'],
-                                    'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
-                                    'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
-                                ];
-
-                                // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
-                                if (!$champEvalue && $ancienChampEvalue) {
-                                    $result['appreciation_passer'] = $ancienChampEvalue['appreciation'] ?? null;
-                                    $result['commentaire_passer_evaluateur'] = $ancienChampEvalue['commentaire_evaluateur'] ?? null;
-                                    $result['date_appreciation_passer'] = $ancienChampEvalue['date_appreciation'] ?? null;
-                                }
-
-                                return $result;
-                            })->toArray(),
-                            'statistiques' => $resultatsExamen
-                        ];
-
-                        $newEvaluation->evaluation = $evaluationComplete;
-                        $newEvaluation->resultats_evaluation = $resultatsExamen;
-                        $newEvaluation->save();
-                    }
-                }
-
+                // Retour pour travail supplémentaire → R_VALIDATION_PROFIL_NOTE_AMELIORER
                 $projet->update([
-                    'statut' => StatutIdee::R_VALIDATION_NOTE_AMELIORER,
-                    'phase' => $this->getPhaseFromStatut(StatutIdee::R_VALIDATION_NOTE_AMELIORER),
-                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_VALIDATION_NOTE_AMELIORER)
+                    'statut' => StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER)
                 ]);
 
-                return StatutIdee::R_VALIDATION_NOTE_AMELIORER;
+                $rapport->update([
+                    'statut' => 'renvoye',
+                    'decision' => 'renvoyer',
+                    'commentaire_validation' => $resultats["message_resultat"],
+                    'date_validation' => now(),
+                    'validateur_id' => auth()->id()
+                ]);
+
+                return StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER;
 
             case 'non accepté':
             case 'non-accepte':
             case 'non_completees':
             case 'non_accepte':
-            default:
-                // Réviser la note conceptuelle malgré l'évaluation négative
-                $noteConceptuelle->refresh();
-                $newNote = $noteConceptuelle->replicate();
+                // Créer un nouveau rapport en brouillon pour refaire complètement
+                $rapport->refresh();
+                $newRapport = $rapport->replicate();
 
-                $newNote->statut = 0; // Brouillon
-                $newNote->decision = [];
-                $newNote->accept_term = false;
-                $newNote->parentId = $noteConceptuelle->id;
-                $newNote->rediger_par = $noteConceptuelle->redacteur->id;
-                $newNote->created_at = now();
-                $newNote->updated_at = null;
+                $newRapport->statut = 'brouillon';
+                $newRapport->parent_id = $rapport->id;
+                $newRapport->commentaire_validation = null;
+                $newRapport->date_soumission = null;
+                $newRapport->created_at = now();
+                $newRapport->updated_at = null;
+                $newRapport->save();
 
-                // Copier les canevas de la note originale vers la nouvelle note
-                $newNote->canevas_redaction_note_conceptuelle = $noteConceptuelle->canevas_redaction_note_conceptuelle;
-                $newNote->canevas_appreciation_note_conceptuelle = $noteConceptuelle->canevas_appreciation_note_conceptuelle;
-                $newNote->save();
+                // NOTE: L'évaluation du rapport sera créée automatiquement lors de la resoumission
+                // La logique de duplication de l'évaluation (champs passés, etc.) sera appliquée à ce moment
 
-                // Récupérer l'évaluation de la note conceptuelle
-                $evaluationNote = $noteConceptuelle->evaluationTermine();
-
-                if ($evaluationNote) {
-                    // Créer une nouvelle évaluation liée à la nouvelle note
-                    $newEvaluation = $evaluationNote->replicate();
-                    $newEvaluation->projetable_id = $newNote->id;
-                    $newEvaluation->projetable_type = get_class($newNote);
-                    $newEvaluation->id_evaluation = $evaluationNote->id;
-                    $newEvaluation->canevas = $evaluationNote->canevas;
-                    $newEvaluation->statut = 0; // En cours
-                    $newEvaluation->date_debut_evaluation = now();
-                    $newEvaluation->date_fin_evaluation = null;
-                    $newEvaluation->valider_le = null;
-                    $newEvaluation->valider_par = null;
-                    $newEvaluation->resultats_evaluation = [];
-                    $newEvaluation->evaluation = [];
-                    $newEvaluation->created_at = now();
-                    $newEvaluation->updated_at = null;
-                    $newEvaluation->save();
-
-                    // Copier les relations champs_evalue de l'ancienne évaluation
-                    // Pour les champs "passé" : copier tel quel
-                    $champsEvalues = $evaluationNote->champs_evalue;
-                    foreach ($champsEvalues as $champ) {
-                        $note = $champ->pivot->note;
-
-                        if ($note === 'passe') {
-                            $newEvaluation->champs_evalue()->attach($champ->id, [
-                                'note' => $note,
-                                'date_note' => $champ->pivot->date_note,
-                                'commentaires' => $champ->pivot->commentaires,
-                                'created_at' => now(),
-                                'updated_at' => now()
-                            ]);
-                        }
-                    }
-
-                    $newEvaluation->refresh();
-
-                    // Construire le JSON evaluation basé sur les champs copiés
-                    $resultatsExamen = $this->calculerResultatsExamen($newNote, $newEvaluation);
-
-                    // Récupérer l'ancienne évaluation pour référence
-                    $ancienneEvaluation = $evaluationNote->evaluation ?? [];
-                    $anciensChampsEvalues = collect($ancienneEvaluation['champs_evalues'] ?? []);
-
-                    $evaluationComplete = [
-                        'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
-                            $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
-                            $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
-
-                            $result = [
-                                'champ_id' => $champ['id'],
-                                'label' => $champ['label'],
-                                'attribut' => $champ['attribut'],
-                                'ordre_affichage' => $champ['ordre_affichage'],
-                                'type_champ' => $champ['type_champ'],
-                                'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
-                                'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
-                            ];
-
-                            // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
-                            if (!$champEvalue && $ancienChampEvalue) {
-                                $result['appreciation_passer'] = $ancienChampEvalue['appreciation'] ?? null;
-                                $result['commentaire_passer_evaluateur'] = $ancienChampEvalue['commentaire_evaluateur'] ?? null;
-                                $result['date_appreciation_passer'] = $ancienChampEvalue['date_appreciation'] ?? null;
-                            }
-
-                            return $result;
-                        })->toArray(),
-                        'statistiques' => $resultatsExamen
-                    ];
-
-                    $newEvaluation->evaluation = $evaluationComplete;
-                    $newEvaluation->resultats_evaluation = $resultatsExamen;
-                    $newEvaluation->save();
-                }
-
+                // Non accepté → R_VALIDATION_PROFIL_NOTE_AMELIORER (révision directe)
                 $projet->update([
-                    'statut' => StatutIdee::NOTE_CONCEPTUEL,
-                    'phase' => $this->getPhaseFromStatut(StatutIdee::NOTE_CONCEPTUEL),
-                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::NOTE_CONCEPTUEL)
+                    'statut' => StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER)
                 ]);
 
-                $nouveauStatut = StatutIdee::NOTE_CONCEPTUEL;
-                $messageAction = 'Note conceptuelle envoyée pour révision malgré l\'évaluation négative.';
-                return $nouveauStatut;
+                $rapport->update([
+                    'statut' => 'non_accepte',
+                    'decision' => 'non_accepte',
+                    'commentaire_validation' => $resultats["message_resultat"],
+                    'date_validation' => now(),
+                    'validateur_id' => auth()->id()
+                ]);
+
+                return StatutIdee::VALIDATION_PROFIL;
+
+            default:
+                return StatutIdee::VALIDATION_PROFIL;
         }
     }
 

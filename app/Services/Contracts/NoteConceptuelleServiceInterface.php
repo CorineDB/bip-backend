@@ -44,4 +44,10 @@ interface NoteConceptuelleServiceInterface extends AbstractServiceInterface
      * Validation du projet à l'étape Etude de profil (SFD-009)
      */
     public function validerEtudeDeProfil(int $projetId, array $data): JsonResponse;
+
+    /**
+     * Soumettre ou resoumettre un rapport de faisabilité préliminaire
+     * Gère la création de l'évaluation lors de la resoumission
+     */
+    public function soumettreRapportFaisabilitePreliminaire(int $projetId, array $data): JsonResponse;
 }
