@@ -871,16 +871,16 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                         if ($evaluationExistante) {
                             // Vérifie et ajoute les champs "_passer" uniquement si les clés existent
-                            if (array_key_exists('appreciation_passer', $evaluationExistante)) {
-                                $data['appreciation_passer'] = $evaluationExistante['appreciation_passer'];
+                            if (property_exists($evaluationExistante, 'appreciation_passer')) {
+                                $data['appreciation_passer'] = $evaluationExistante->appreciation_passer;
                             }
 
-                            if (array_key_exists('commentaire_passer_evaluateur', $evaluationExistante)) {
-                                $data['commentaire_passer_evaluateur'] = $evaluationExistante['commentaire_passer_evaluateur'];
+                            if (property_exists($evaluationExistante, 'commentaire_passer_evaluateur')) {
+                                $data['commentaire_passer_evaluateur'] = $evaluationExistante->commentaire_passer_evaluateur;
                             }
 
-                            if (array_key_exists('date_appreciation_passer', $evaluationExistante)) {
-                                $data['date_appreciation_passer'] = $evaluationExistante['date_appreciation_passer'];
+                            if (property_exists($evaluationExistante, 'date_appreciation_passer')) {
+                                $data['date_appreciation_passer'] = $evaluationExistante->date_appreciation_passer;
                             }
                         }
                     }
