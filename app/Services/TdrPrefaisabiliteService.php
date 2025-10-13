@@ -816,6 +816,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $actionsSuivantes = null;
             $evaluationsChamps = [];
 
+            dd($evaluation);
+
             if ($evaluation && $evaluation->statut == 1) {
 
                 // Recalculer le résultat pour l'évaluation terminée
