@@ -2629,7 +2629,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'data' => [
                     'evaluation' => $evaluation,
                     'projet_id' => $projet,
-                    'rapport' => $projet->rapportFaisabilitePreliminaire()->first(),
+                    'rapport' => $projet->rapportFaisabilitePreliminaire()->first()->load("evaluations"),
                     'ancien_statut' => StatutIdee::VALIDATION_PROFIL->value,
                     'decision' => $data['decision'],
                     'commentaire' => $data['commentaire'] ?? '',
