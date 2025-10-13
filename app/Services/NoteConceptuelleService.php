@@ -3171,11 +3171,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         ]);
         $evaluation->save();
 
-        dd($resultats);
-
         switch ($resultats['resultat_global']) {
             case 'non_applicable':
             case 'passable':
+            case 'passe':
                 // Le contrôle qualité a réussi → Passage à MATURITE
                 $projet->update([
                     'statut' => StatutIdee::MATURITE,
@@ -3206,6 +3205,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                  * 'non_evalues' => $nombreNonEvalues,
                  */
             case 'renvoyer':
+            case 'retour':
                 // Créer un nouveau rapport en brouillon pour révision
                 $rapport->refresh();
                 $newRapport = $rapport->replicate();
