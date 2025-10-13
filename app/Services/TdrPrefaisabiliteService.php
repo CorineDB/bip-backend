@@ -538,6 +538,36 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $this->envoyerNotificationSoumission($projet, $fichierTdr);
             }
 
+            // Cas spécifique : Resoumission d'un TDR retourné (R_TDR_PREFAISABILITE)
+            if ($estSoumise && $projet->statut === StatutIdee::R_TDR_PREFAISABILITE) {
+                // Si le TDR a un parent, créer une nouvelle évaluation basée sur l'ancienne
+                if ($tdr->parent_id) {
+                    $ancienTdr = \App\Models\Tdr::find($tdr->parent_id);
+                    if ($ancienTdr) {
+                        $this->creerEvaluationPourTdrResoumis($tdr, $ancienTdr);
+                    }
+                }
+
+                // Changer le statut du projet vers EVALUATION_TDR_PF
+                $projet->update([
+                    'statut' => StatutIdee::EVALUATION_TDR_PF,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF)
+                ]);
+
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($projet, StatutIdee::EVALUATION_TDR_PF);
+                $this->enregistrerDecision(
+                    $projet,
+                    "Resoumission du TDR de préfaisabilité après révision",
+                    $data['resume_tdr_prefaisabilite'] ?? 'TDR révisé soumis pour réévaluation',
+                    auth()->user()->personne->id
+                );
+
+                // Envoyer une notification
+                $this->envoyerNotificationSoumission($projet, $fichierTdr);
+            }
+
             DB::commit();
 
             return response()->json([
@@ -675,9 +705,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Mettre à jour l'évaluation avec les données complètes
             $evaluation->fill([
                 'resultats_evaluation' => $resultatsEvaluation,
-                'evaluation' => $evaluationComplete,
-                'valider_par' => $data["evaluer"] ? auth()->id() : null,
-                'valider_le' => $data["evaluer"] ? now() : null,
+                'evaluation' => $evaluationComplete
             ]);
 
             $evaluation->save();
@@ -686,6 +714,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 $tdr->statut = "en_evaluation";
                 $tdr->save();
+
+                // Mettre à jour l'évaluation avec les données complètes
+                $evaluation->fill([
+                    'valider_par' => $data["evaluer"] ? auth()->id() : null,
+                    'valider_le' => $data["evaluer"] ? now() : null,
+                ]);
 
                 // Traiter la décision selon le résultat (changement automatique du statut)
                 $nouveauStatut = $this->traiterDecisionEvaluationTdrAutomatique($projet, $resultatsEvaluation, $tdr, $evaluation);
@@ -2725,6 +2759,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 return StatutIdee::SOUMISSION_RAPPORT_PF;
 
             case 'retour':
+                // Créer un nouveau TDR en brouillon pour la révision
                 $tdr->refresh();
                 $newTdr = $tdr->replicate();
 
@@ -2743,96 +2778,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $newTdr->canevas_appreciation_tdr = $tdr->canevas_appreciation_tdr;
                 $newTdr->save();
 
-                // Utiliser l'évaluation fournie en paramètre ou récupérer l'évaluation terminée du TDR
-                $evaluationTerminee = $evaluation ?? $tdr->evaluationPrefaisabiliteTerminer();
-
-                if ($evaluationTerminee) {
-                    // Créer une nouvelle évaluation liée au nouveau TDR
-                    $newEvaluation = $evaluationTerminee->replicate();
-                    $newEvaluation->projetable_id = $newTdr->id;
-                    $newEvaluation->projetable_type = get_class($newTdr);
-                    $newEvaluation->id_evaluation = $evaluationTerminee->id; // Lien vers l'évaluation parent
-                    $newEvaluation->canevas = $evaluationTerminee->canevas; // Copier le canevas
-                    $newEvaluation->statut = 0; // En cours
-                    $newEvaluation->date_debut_evaluation = now();
-                    $newEvaluation->date_fin_evaluation = null;
-                    $newEvaluation->valider_le = null;
-                    $newEvaluation->valider_par = null;
-                    $newEvaluation->resultats_evaluation = [];
-
-                    // Sauvegarder d'abord la nouvelle évaluation avec des valeurs temporaires
-                    $newEvaluation->evaluation = [];
-                    $newEvaluation->resultats_evaluation = [];
-                    $newEvaluation->created_at = now();
-                    $newEvaluation->updated_at = null;
-                    $newEvaluation->save();
-
-                    // Copier les relations champs_evalue de l'ancienne évaluation
-                    // Pour les champs "passé" : copier tel quel
-                    // Pour les autres (retour/non_accepte) : mettre null pour forcer la réévaluation
-                    $champsEvalues = $evaluationTerminee->champs_evalue;
-                    foreach ($champsEvalues as $champ) {
-                        $note = $champ->pivot->note;
-
-                        if ($note === 'passe') {
-                            // Si passé, copier tel quel
-                            $newEvaluation->champs_evalue()->attach($champ->id, [
-                                'note' => $note,
-                                'date_note' => $champ->pivot->date_note,
-                                'commentaires' => $champ->pivot->commentaires,
-                                'created_at' => now(),
-                                'updated_at' => now()
-                            ]);
-                        } else {
-                            // Si retour ou non_accepte, mettre null (pas de copie dans pivot)
-                            // Les anciennes valeurs seront dans le JSON evaluation avec le suffixe "_passer"
-                        }
-                    }
-
-                    // Recharger pour avoir accès aux relations
-                    $newEvaluation->refresh();
-
-                    // Construire le JSON evaluation basé sur les champs copiés
-                    $resultatsExamen = $this->calculerResultatEvaluationTdr($newEvaluation, []);
-
-                    // Récupérer l'ancienne évaluation pour référence
-                    $ancienneEvaluation = $evaluationTerminee->evaluation ?? [];
-                    $anciensChampsEvalues = collect($ancienneEvaluation['champs_evalues'] ?? []);
-
-                    $evaluationComplete = [
-                        'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationTdrPrefaisabilite()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
-                            $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
-                            $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
-
-                            $result = [
-                                'champ_id' => $champ['id'],
-                                'label' => $champ['label'],
-                                'attribut' => $champ['attribut'],
-                                'ordre_affichage' => $champ['ordre_affichage'],
-                                'type_champ' => $champ['type_champ'],
-                                'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
-                                'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
-                            ];
-
-                            // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
-                            // C'est un champ qui n'était pas "passé", on ajoute les anciennes valeurs avec "_passer"
-                            if (!$champEvalue && $ancienChampEvalue) {
-                                $result['appreciation_passer'] = $ancienChampEvalue['appreciation'] ?? null;
-                                $result['commentaire_passer_evaluateur'] = $ancienChampEvalue['commentaire_evaluateur'] ?? null;
-                                $result['date_appreciation_passer'] = $ancienChampEvalue['date_appreciation'] ?? null;
-                            }
-
-                            return $result;
-                        })->toArray(),
-                        'statistiques' => $resultatsExamen
-                    ];
-
-                    // Mettre à jour avec les données complètes
-                    $newEvaluation->evaluation = $evaluationComplete;
-                    $newEvaluation->resultats_evaluation = $resultatsExamen;
-                    $newEvaluation->save();
-                }
+                // NOTE: L'évaluation sera créée automatiquement lors de la resoumission du TDR corrigé
+                // La logique de duplication de l'évaluation (champs passés, etc.) sera appliquée à ce moment
 
                 // Retour pour travail supplémentaire → R_TDR_Préfaisabilité (automatique)
                 $projet->update([
@@ -2848,43 +2795,145 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 return StatutIdee::R_TDR_PREFAISABILITE;
             case 'non_accepte':
-            default:
+                // Créer un nouveau TDR en brouillon pour refaire complètement
+                $tdr->refresh();
+                $newTdr = $tdr->replicate();
 
-                /*$tdrData = ([
-                    'projet_id' => $tdr->projet->id,
-                    'parent_id' => $tdr->id,
-                    'type' => $tdr->type,
-                    'statut' => 'brouillon',
-                    'resume' => null,
-                    'date_soumission' => null,
-                    'soumis_par_id' => null,
-                    'rediger_par_id' => $tdr->rediger_par_id,
-                    'date_evaluation' => null,
-                    'date_validation' => null,
-                    'evaluateur_id' => null,
-                    'validateur_id' => null,
-                    'evaluations_detaillees' => [],
-                    'termes_de_reference' => null,
-                    'commentaire_evaluation' => null,
-                    'commentaire_validation' => null,
-                    'decision_validation' => null,
-                    'resultats_evaluation' => null,
-                    'numero_contrat' => null,
-                    'numero_dossier' => null,
-                    'accept_term' => false,
-                    'canevas_appreciation_tdr' => null,
-                ]);
+                $newTdr->statut = 'brouillon';
+                $newTdr->decision_validation = null;
+                $newTdr->accept_term = false;
+                $newTdr->parent_id = $tdr->id;
+                $newTdr->date_validation = null;
+                $newTdr->date_soumission = null;
+                $newTdr->projet_id = $tdr->projet->id;
+                $newTdr->rediger_par_id = $tdr->redigerPar->id;
+                $newTdr->created_at = now();
+                $newTdr->updated_at = null;
 
-                $tdr->projet->tdrs()->create($tdrData);
+                // Copier les canevas de la note originale vers la nouvelle note
+                $newTdr->canevas_appreciation_tdr = $tdr->canevas_appreciation_tdr;
+                $newTdr->save();
 
-                // Non accepté → TDR_Préfaisabilité (automatique)
+                // NOTE: L'évaluation sera créée automatiquement lors de la resoumission du TDR corrigé
+                // La logique de duplication de l'évaluation (champs passés, etc.) sera appliquée à ce moment
+
+                // Non accepté → TDR_Préfaisabilité (automatique, révision directe)
                 $projet->update([
                     'statut' => StatutIdee::TDR_PREFAISABILITE,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::TDR_PREFAISABILITE),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::TDR_PREFAISABILITE)
-                ]);*/
+                ]);
+
+                $tdr->update([
+                    'decision_validation' => 'non_accepte',
+                    'commentaire_validation' => $resultats["message_resultat"],
+                ]);
+
+                return StatutIdee::TDR_PREFAISABILITE;
+
+            default:
                 return StatutIdee::EVALUATION_TDR_PF;
         }
+    }
+
+    /**
+     * Créer une nouvelle évaluation basée sur une évaluation parent (pour TDR retourné)
+     * Copie les champs "passés" et réinitialise les champs "retour"/"non_accepte"
+     */
+    private function creerEvaluationPourTdrResoumis(Tdr $nouveauTdr, Tdr $ancienTdr): void
+    {
+        // Récupérer l'évaluation terminée du TDR parent
+        $evaluationTerminee = $ancienTdr->evaluationPrefaisabiliteTerminer();
+
+        if (!$evaluationTerminee) {
+            return; // Pas d'évaluation à dupliquer
+        }
+
+        // Créer une nouvelle évaluation liée au nouveau TDR
+        $newEvaluation = $evaluationTerminee->replicate();
+        $newEvaluation->projetable_id = $nouveauTdr->id;
+        $newEvaluation->projetable_type = get_class($nouveauTdr);
+        $newEvaluation->id_evaluation = $evaluationTerminee->id; // Lien vers l'évaluation parent
+        $newEvaluation->canevas = $evaluationTerminee->canevas; // Copier le canevas
+        $newEvaluation->statut = 0; // En cours
+        $newEvaluation->date_debut_evaluation = now();
+        $newEvaluation->date_fin_evaluation = null;
+        $newEvaluation->valider_le = null;
+        $newEvaluation->valider_par = null;
+        $newEvaluation->resultats_evaluation = [];
+
+        // Sauvegarder d'abord la nouvelle évaluation avec des valeurs temporaires
+        $newEvaluation->evaluation = [];
+        $newEvaluation->resultats_evaluation = [];
+        $newEvaluation->created_at = now();
+        $newEvaluation->updated_at = null;
+        $newEvaluation->save();
+
+        // Copier les relations champs_evalue de l'ancienne évaluation
+        // Pour les champs "passé" : copier tel quel
+        // Pour les autres (retour/non_accepte) : mettre null pour forcer la réévaluation
+        $champsEvalues = $evaluationTerminee->champs_evalue;
+        foreach ($champsEvalues as $champ) {
+            $note = $champ->pivot->note;
+
+            if ($note === 'passe') {
+                // Si passé, copier tel quel
+                $newEvaluation->champs_evalue()->attach($champ->id, [
+                    'note' => $note,
+                    'date_note' => $champ->pivot->date_note,
+                    'commentaires' => $champ->pivot->commentaires,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            } else {
+                // Si retour ou non_accepte, mettre null (pas de copie dans pivot)
+                // Les anciennes valeurs seront dans le JSON evaluation avec le suffixe "_passer"
+            }
+        }
+
+        // Recharger pour avoir accès aux relations
+        $newEvaluation->refresh();
+
+        // Construire le JSON evaluation basé sur les champs copiés
+        $resultatsExamen = $this->calculerResultatEvaluationTdr($newEvaluation, []);
+
+        // Récupérer l'ancienne évaluation pour référence
+        $ancienneEvaluation = $evaluationTerminee->evaluation ?? [];
+        $anciensChampsEvalues = collect($ancienneEvaluation['champs_evalues'] ?? []);
+
+        $evaluationComplete = [
+            'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationTdrPrefaisabilite()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
+                $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
+
+                $result = [
+                    'champ_id' => $champ['id'],
+                    'label' => $champ['label'],
+                    'attribut' => $champ['attribut'],
+                    'ordre_affichage' => $champ['ordre_affichage'],
+                    'type_champ' => $champ['type_champ'],
+                    'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                    'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                ];
+
+                // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
+                // C'est un champ qui n'était pas "passé", on ajoute les anciennes valeurs avec "_passer"
+                if (!$champEvalue && $ancienChampEvalue) {
+                    $result['appreciation_passer'] = $ancienChampEvalue['appreciation'] ?? null;
+                    $result['commentaire_passer_evaluateur'] = $ancienChampEvalue['commentaire_evaluateur'] ?? null;
+                    $result['date_appreciation_passer'] = $ancienChampEvalue['date_appreciation'] ?? null;
+                }
+
+                return $result;
+            })->toArray(),
+            'statistiques' => $resultatsExamen
+        ];
+
+        // Mettre à jour avec les données complètes
+        $newEvaluation->evaluation = $evaluationComplete;
+        $newEvaluation->resultats_evaluation = $resultatsExamen;
+        $newEvaluation->save();
     }
 
     /**
