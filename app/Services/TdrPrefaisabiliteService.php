@@ -862,12 +862,22 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         if (isset($evaluation->evaluation['champs_evalues'])) {
                             $evaluationExistante = collect($evaluation->evaluation['champs_evalues'])
                                 ->firstWhere('champ_id', $champ->id);
+                            dd($evaluationExistante);
+                            $data = [
+                                'appreciation' => $evaluationExistante ? $evaluationExistante->pivot->note : null,
+                                'commentaire_evaluateur' => $evaluationExistante ? $evaluationExistante->pivot->commentaires : null,
+                                'date_evaluation' => $evaluationExistante ? $evaluationExistante->pivot->date_note : null
+                            ];
                         }
                         // Sinon, on vérifie la relation directe "champs_evalues"
                         elseif (isset($evaluation->champs_evalues)) {
-                            dd($evaluationExistante);
                             $evaluationExistante = $evaluation->champs_evalues
                                 ->firstWhere('id', $champ->id);
+                            $data = [
+                                'appreciation' => $evaluationExistante ? $evaluationExistante->pivot->note : null,
+                                'commentaire_evaluateur' => $evaluationExistante ? $evaluationExistante->pivot->commentaires : null,
+                                'date_evaluation' => $evaluationExistante ? $evaluationExistante->pivot->date_note : null
+                            ];
                         }
 
                         if ($evaluationExistante) {
@@ -888,6 +898,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             }
                         }
                     }
+
+                    dd()
 
                     $grilleEvaluation[] = array_merge([
                         'champ_id' => $champ->id,
