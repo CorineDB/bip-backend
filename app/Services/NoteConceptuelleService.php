@@ -1554,6 +1554,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     private function determinerResultatCQ(array $compteurs): array
     {
+        dd($compteurs);
         // Règle 1 : Si une ou plusieurs questions non complétées
         if (($compteurs['non_completees'] ?? 0) > 0) {
             return [
