@@ -4109,18 +4109,33 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     }
 
     /**
-     * Supprimer une liste spécifique de fichiers
+     * Supprimer une liste spécifique de fichiers ou un seul fichier
+     *
+     * @param \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection|array|\App\Models\Fichier $files
+     * @return void
      */
     private function removeSpecificFiles($files): void
     {
+        // Normaliser l'entrée en tableau
+        if (!is_array($files) && !($files instanceof \Illuminate\Support\Collection)) {
+            $files = [$files];
+        }
+
         foreach ($files as $file) {
+            // Vérifier que c'est un objet Fichier valide
+            if (!$file || !isset($file->chemin)) {
+                continue;
+            }
+
             // Supprimer le fichier physique du storage
             if (Storage::disk('local')->exists($file->chemin)) {
                 Storage::disk('local')->delete($file->chemin);
             }
 
             // Supprimer l'enregistrement de la base de données
-            $this->fichierRepository->delete($file->id);
+            if (isset($file->id)) {
+                $this->fichierRepository->delete($file->id);
+            }
         }
     }
 
