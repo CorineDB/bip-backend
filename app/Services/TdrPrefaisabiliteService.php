@@ -855,11 +855,39 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                 foreach ($canevasAppreciation->all_champs as $champ) {
                     $evaluationExistante = null;
+                    $data = [];
                     if ($evaluation) {
-                        $evaluationExistante = $evaluation->champs_evalue->firstWhere('id', $champ->id);
+
+                        // On commence par vérifier si la structure "evaluation['champs_evalue']" existe
+                        if (isset($evaluation->evaluation['champs_evalue'])) {
+                            $evaluationExistante = collect($evaluation->evaluation['champs_evalue'])
+                                ->firstWhere('id', $champ->id);
+                        }
+                        // Sinon, on vérifie la relation directe "champs_evalue"
+                        elseif (isset($evaluation->champs_evalue)) {
+                            $evaluationExistante = $evaluation->champs_evalue
+                                ->firstWhere('id', $champ->id);
+                        }
+                        /*
+                            $evaluationExistante = $evaluation->champs_evalue->firstWhere('id', $champ->id);
+                            $evaluationExistante = $evaluation->evaluation["champs_evalue"]->firstWhere('id', $champ->id);
+                        */
                     }
 
-                    $grilleEvaluation[] = [
+                    // Vérifie et ajoute les champs "_passer" uniquement si les clés existent
+                    if (array_key_exists('appreciation_passer', $evaluationExistante)) {
+                        $data['appreciation_passer'] = $evaluationExistante['appreciation_passer'];
+                    }
+
+                    if (array_key_exists('commentaire_passer_evaluateur', $evaluationExistante)) {
+                        $data['commentaire_passer_evaluateur'] = $evaluationExistante['commentaire_passer_evaluateur'];
+                    }
+
+                    if (array_key_exists('date_appreciation_passer', $evaluationExistante)) {
+                        $data['date_appreciation_passer'] = $evaluationExistante['date_appreciation_passer'];
+                    }
+
+                    $grilleEvaluation[] = array_merge([
                         'champ_id' => $champ->id,
                         'label' => $champ->label,
                         'attribut' => $champ->attribut,
@@ -868,7 +896,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'appreciation' => $evaluationExistante ? $evaluationExistante->pivot->note : null,
                         'commentaire_evaluateur' => $evaluationExistante ? $evaluationExistante->pivot->commentaires : null,
                         'date_evaluation' => $evaluationExistante ? $evaluationExistante->pivot->date_note : null
-                    ];
+                    ], $data);
                 }
 
                 $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $grilleEvaluation]);
