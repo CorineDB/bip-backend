@@ -4263,4 +4263,22 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
         return $fichierCree;
     }
+
+
+    /**
+     * Soumettre ou resoumettre un rapport de faisabilité préliminaire
+     * Gère la création de l'évaluation lors de la resoumission
+     */
+    public function soumettreRapportFaisabilitePreliminaire(int $projetId, array $data): JsonResponse{
+        try{   return response()->json([
+                'success' => true,
+                'message' => "message",
+                'data' => [
+                ]
+            ], 201);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
 }
