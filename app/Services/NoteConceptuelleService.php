@@ -1578,8 +1578,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         // Règle 3 : Si plus de 4 notes « Renvoyer »
         if (($compteurs['renvoyer'] ?? 0) > 4) {
             return [
-                'statut' => 'non_accepte',
-                'message' => 'Non accepté',
+                'statut' => 'renvoyer',
+                'message' => 'Renvoyer',
                 'raisons' => ["{$compteurs['renvoyer']} note(s) « Renvoyer » (seuil maximum : 4)"],
                 'recommandations' => ["Réviser les sections marquées comme « Renvoyer » avant nouvelle soumission"]
             ];
