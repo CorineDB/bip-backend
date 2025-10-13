@@ -232,15 +232,15 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             }
 
             if (isset($documentsData["rapport_faisabilite_preliminaire"])) {
-                $this->gererFichierRapportFaisabilite($rapport, $data['rapport_faisabilite_preliminaire']);
+                $this->gererFichierRapportFaisabilite($rapport, $documentsData['rapport_faisabilite_preliminaire']);
             }
 
             if (isset($documentsData["tdr_faisabilite_preliminaire"])) {
-                $this->gererFichierRapportFaisabilite($rapport, $data['tdr_faisabilite_preliminaire']);
+                $this->gererFichierRapportFaisabilite($rapport, $documentsData['tdr_faisabilite_preliminaire']);
             }
 
             if (isset($documentsData["check_suivi_rapport"])) {
-                $this->gererFichierRapportFaisabilite($rapport, $data['check_suivi_rapport']);
+                $this->gererFichierRapportFaisabilite($rapport, $documentsData['check_suivi_rapport']);
             }
 
             if ($estSoumise) {
