@@ -963,6 +963,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'date_fin' => Carbon::parse($evaluation->date_fin_evaluation)->format("Y-m-d h:i:s"),
                         'commentaire_global' => $evaluation->commentaire,
                         'grille_evaluation' => $grilleEvaluation,
+                        'evaluation' => $evaluation->evaluation,
                     ] : null,
                     'resultats_evaluation' => $resultatsEvaluation,
                     'actions_suivantes' => $actionsSuivantes,
