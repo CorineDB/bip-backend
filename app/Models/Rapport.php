@@ -435,4 +435,24 @@ class Rapport extends Model
         return null; // Pas de convergence après le nombre maximum d'itérations
     }
 
+    public function evaluations()
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')->where('type_evaluation', "note-conceptuelle");
+    }
+
+    public function evaluationTermine()
+    {
+        return $this->evaluations()->evaluationTermine("note-conceptuelle")->first();
+    }
+
+    public function evaluationEnCours()
+    {
+        return $this->evaluations()->evaluationsEnCours("note-conceptuelle")->first();
+    }
+
+    public function evaluationParent()
+    {
+        return $this->evaluations()->evaluationParent("note-conceptuelle")->where()->first();
+    }
+
 }
