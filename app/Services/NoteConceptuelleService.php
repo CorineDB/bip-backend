@@ -1298,6 +1298,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'total' => $totalChamps
             ]);
 
+            dd($resultat);
+
             $resultat_global = $resultat['statut'];
             $message_resultat = $resultat['message'];
             $raisons = $resultat['raisons'];
