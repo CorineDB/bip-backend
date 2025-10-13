@@ -862,6 +862,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         if (isset($evaluation->evaluation['champs_evalue'])) {
                             $evaluationExistante = collect($evaluation->evaluation['champs_evalue'])
                                 ->firstWhere('id', $champ->id);
+                            dd($evaluationExistante);
                         }
                         // Sinon, on vérifie la relation directe "champs_evalue"
                         elseif (isset($evaluation->champs_evalue)) {
