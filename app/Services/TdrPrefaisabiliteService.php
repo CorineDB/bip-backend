@@ -964,6 +964,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'commentaire_global' => $evaluation->commentaire,
                         'grille_evaluation' => $grilleEvaluation,
                         'evaluation' => $evaluation->evaluation,
+                        'resultats_evaluation' => $evaluation->resultats_evaluation,
                     ] : null,
                     'resultats_evaluation' => $resultatsEvaluation,
                     'actions_suivantes' => $actionsSuivantes,
