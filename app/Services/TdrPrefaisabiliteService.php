@@ -870,17 +870,20 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         }
 
                         if ($evaluationExistante) {
+                            // Convertir en tableau si c'est un objet pour faciliter l'accès
+                            $evalArray = is_array($evaluationExistante) ? $evaluationExistante : (array)$evaluationExistante;
+
                             // Vérifie et ajoute les champs "_passer" uniquement si les clés existent
-                            if (property_exists($evaluationExistante, 'appreciation_passer')) {
-                                $data['appreciation_passer'] = $evaluationExistante->appreciation_passer;
+                            if (isset($evalArray['appreciation_passer'])) {
+                                $data['appreciation_passer'] = $evalArray['appreciation_passer'];
                             }
 
-                            if (property_exists($evaluationExistante, 'commentaire_passer_evaluateur')) {
-                                $data['commentaire_passer_evaluateur'] = $evaluationExistante->commentaire_passer_evaluateur;
+                            if (isset($evalArray['commentaire_passer_evaluateur'])) {
+                                $data['commentaire_passer_evaluateur'] = $evalArray['commentaire_passer_evaluateur'];
                             }
 
-                            if (property_exists($evaluationExistante, 'date_appreciation_passer')) {
-                                $data['date_appreciation_passer'] = $evaluationExistante->date_appreciation_passer;
+                            if (isset($evalArray['date_appreciation_passer'])) {
+                                $data['date_appreciation_passer'] = $evalArray['date_appreciation_passer'];
                             }
                         }
                     }
@@ -1077,7 +1080,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'champs' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluation) {
                             $champ_evalue = collect($evaluation->champs_evalue)
                                 ->firstWhere('attribut', $champ["attribut"]);
-                            return [
+
+                            // Récupérer aussi les anciennes valeurs depuis evaluation JSON
+                            $champsEvaluesJSON = collect($evaluation->evaluation['champs_evalues'] ?? []);
+                            $champEvalueJSON = $champsEvaluesJSON->firstWhere('attribut', $champ["attribut"]);
+
+                            $result = [
                                 'id' => $champ["id"],
                                 'label' => $champ["label"],
                                 'attribut' => $champ["attribut"],
@@ -1087,6 +1095,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                                 'date_note' => $champ_evalue ? $champ_evalue["pivot"]["date_note"] : null,
                                 'updated_at' => $champ_evalue ? $champ_evalue["pivot"]["updated_at"] : null,
                             ];
+
+                            // Ajouter les anciennes valeurs "_passer" si elles existent
+                            if ($champEvalueJSON && isset($champEvalueJSON['appreciation_passer'])) {
+                                $result['appreciation_passer'] = $champEvalueJSON['appreciation_passer'];
+                                $result['commentaire_passer_evaluateur'] = $champEvalueJSON['commentaire_passer_evaluateur'] ?? null;
+                                $result['date_appreciation_passer'] = $champEvalueJSON['date_appreciation_passer'] ?? null;
+                            }
+
+                            return $result;
                         }),
                     ],
                     'actions_suivantes' => $actionsSuivantes,
