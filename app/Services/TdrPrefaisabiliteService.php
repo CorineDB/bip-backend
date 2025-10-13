@@ -865,7 +865,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             $data = [
                                 'appreciation' => $evaluationExistante["appreciation_passer"],
                                 'commentaire_evaluateur' => $evaluationExistante["commentaire_evaluateur"],
-                                'date_evaluation' => $evaluationExistante["date_evaluation"]
+                                //'date_evaluation' => $evaluationExistante["date_evaluation"]
                             ];
                         }
                         // Sinon, on vérifie la relation directe "champs_evalues"
