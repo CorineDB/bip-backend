@@ -2598,6 +2598,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'message' => $this->getMessageSuccesValidation($data['decision']),
                 'data' => [
                     'projet_id' => $projet->id,
+                    'rapport' => $projet->rapportFaisabilitePreliminaire()->first(),
                     'ancien_statut' => StatutIdee::VALIDATION_PROFIL->value,
                     'decision' => $data['decision'],
                     'commentaire' => $data['commentaire'] ?? '',
