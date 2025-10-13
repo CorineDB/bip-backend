@@ -119,13 +119,14 @@ class StoreNoteConceptuelleRequest extends FormRequest
                 ...(explode('|', self::DOCUMENT_RULE))
             ],
 
-            'analyse_financiere'                            => $estSoumise ? 'required|array' : 'nullable|array|min:0',
-            'analyse_financiere.duree_vie'                  => 'required_unless:est_soumise,0|numeric',
-            'analyse_financiere.taux_actualisation'         => 'required_unless:est_soumise,0|numeric',
-            'analyse_financiere.investissement_initial'     => 'required_unless:est_soumise,0|numeric',
-            'analyse_financiere.flux_tresorerie'            => 'required_unless:est_soumise,0|array|min:' . $this->input("analyse_financiere.duree_vie") ?? 1,
-            'analyse_financiere.flux_tresorerie.*.t'        => 'required_unless:est_soumise,0|numeric|min:' . 1 . '|max:' . $this->input("analyse_financiere.duree_vie") ?? 1,
-            'analyse_financiere.flux_tresorerie.*.CFt'      => 'required_unless:est_soumise,0|numeric|min:0'
+            // Analyse financière requise seulement si le projet est MOU ET soumis
+            'analyse_financiere'                            => ($estMou && $estSoumise) ? 'required|array' : 'nullable|array|min:0',
+            'analyse_financiere.duree_vie'                  => ($estMou && $estSoumise) ? 'required|numeric' : 'nullable|numeric',
+            'analyse_financiere.taux_actualisation'         => ($estMou && $estSoumise) ? 'required|numeric' : 'nullable|numeric',
+            'analyse_financiere.investissement_initial'     => ($estMou && $estSoumise) ? 'required|numeric' : 'nullable|numeric',
+            'analyse_financiere.flux_tresorerie'            => ($estMou && $estSoumise) ? 'required|array|min:' . ($this->input("analyse_financiere.duree_vie") ?? 1) : 'nullable|array',
+            'analyse_financiere.flux_tresorerie.*.t'        => ($estMou && $estSoumise) ? 'required|numeric|min:1|max:' . ($this->input("analyse_financiere.duree_vie") ?? 1) : 'nullable|numeric',
+            'analyse_financiere.flux_tresorerie.*.CFt'      => ($estMou && $estSoumise) ? 'required|numeric|min:0' : 'nullable|numeric'
         ], $dynamicRules);
 
         return $finalRules;
