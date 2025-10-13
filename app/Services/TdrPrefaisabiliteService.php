@@ -868,23 +868,21 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             $evaluationExistante = $evaluation->champs_evalue
                                 ->firstWhere('id', $champ->id);
                         }
-                        /*
-                            $evaluationExistante = $evaluation->champs_evalue->firstWhere('id', $champ->id);
-                            $evaluationExistante = $evaluation->evaluation["champs_evalue"]->firstWhere('id', $champ->id);
-                        */
-                    }
 
-                    // Vérifie et ajoute les champs "_passer" uniquement si les clés existent
-                    if (array_key_exists('appreciation_passer', $evaluationExistante)) {
-                        $data['appreciation_passer'] = $evaluationExistante['appreciation_passer'];
-                    }
+                        if ($evaluationExistante) {
+                            // Vérifie et ajoute les champs "_passer" uniquement si les clés existent
+                            if (array_key_exists('appreciation_passer', $evaluationExistante)) {
+                                $data['appreciation_passer'] = $evaluationExistante['appreciation_passer'];
+                            }
 
-                    if (array_key_exists('commentaire_passer_evaluateur', $evaluationExistante)) {
-                        $data['commentaire_passer_evaluateur'] = $evaluationExistante['commentaire_passer_evaluateur'];
-                    }
+                            if (array_key_exists('commentaire_passer_evaluateur', $evaluationExistante)) {
+                                $data['commentaire_passer_evaluateur'] = $evaluationExistante['commentaire_passer_evaluateur'];
+                            }
 
-                    if (array_key_exists('date_appreciation_passer', $evaluationExistante)) {
-                        $data['date_appreciation_passer'] = $evaluationExistante['date_appreciation_passer'];
+                            if (array_key_exists('date_appreciation_passer', $evaluationExistante)) {
+                                $data['date_appreciation_passer'] = $evaluationExistante['date_appreciation_passer'];
+                            }
+                        }
                     }
 
                     $grilleEvaluation[] = array_merge([
