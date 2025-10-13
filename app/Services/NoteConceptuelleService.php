@@ -2443,6 +2443,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     // Calculer le résultat de l'évaluation selon les règles SFD-015
                     $resultatsEvaluation = $this->calculerResultatsControleQualite($rapportExistant, $evaluationRapport);
 
+                    dd($resultatsEvaluation);
                     // Stocker pour utilisation ultérieure
                     $resultatsControleQualite = $resultatsEvaluation;
                     $rapportFaisabilitePrelim = $rapportExistant;
