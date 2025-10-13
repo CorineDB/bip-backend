@@ -860,12 +860,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                         // On commence par vérifier si la structure "evaluation['champs_evalues']" existe
                         if (isset($evaluation->evaluation['champs_evalues'])) {
-                            dd($evaluation->evaluation['champs_evalues']);
                             $evaluationExistante = collect($evaluation->evaluation['champs_evalues'])
                                 ->firstWhere('champ_id', $champ->id);
                         }
                         // Sinon, on vérifie la relation directe "champs_evalues"
                         elseif (isset($evaluation->champs_evalues)) {
+                            dd($evaluationExistante);
                             $evaluationExistante = $evaluation->champs_evalues
                                 ->firstWhere('id', $champ->id);
                         }
