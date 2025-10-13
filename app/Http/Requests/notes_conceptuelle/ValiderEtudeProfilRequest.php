@@ -50,8 +50,9 @@ class ValiderEtudeProfilRequest extends FormRequest
 
         return [
             // Action: submit (soumettre) ou draft (brouillon)
-            'action'                => 'required|string|in:submit,draft',
             'decision'              => 'required|string|in:faire_etude_faisabilite_preliminaire,faire_etude_prefaisabilite,reviser_note_conceptuelle,abandonner_projet,sauvegarder',
+
+            'action'                => $requireChecklist ? 'required|string|in:submit,draft' : 'nullable',
             'commentaire'           => 'required_unless:action,draft|string|min:10|max:2000',
             'est_a_haut_risque'     => 'required_unless:action,draft|boolean:false',
 
