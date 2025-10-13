@@ -904,9 +904,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'attribut' => $champ->attribut,
                         'type_champ' => $champ->type_champ,
                         'ordre_affichage' => $champ->ordre_affichage,
-                        'appreciation' => $evaluationExistante ? $evaluationExistante->pivot->note : null,
+                        /* 'appreciation' => $evaluationExistante ? $evaluationExistante->pivot->note : null,
                         'commentaire_evaluateur' => $evaluationExistante ? $evaluationExistante->pivot->commentaires : null,
-                        'date_evaluation' => $evaluationExistante ? $evaluationExistante->pivot->date_note : null
+                        'date_evaluation' => $evaluationExistante ? $evaluationExistante->pivot->date_note : null */
                     ], $data);
                 }
 
