@@ -480,10 +480,11 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
-            // Récupérer le TDR soumis
+            // Récupérer le TDR soumis (pas en brouillon)
             $tdr = $this->tdrRepository->getModel()
                 ->where('projet_id', $projetId)
                 ->where('type', 'faisabilite')
+                ->where('statut', '!=', 'brouillon')
                 ->orderBy('created_at', 'desc')
                 ->first();
 
@@ -491,7 +492,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 return response()->json([
                     'success' => false,
                     'data' => null,
-                    'message' => 'Aucun TDR de faisabilité trouvé pour ce projet.'
+                    'message' => 'Aucun TDR de faisabilité soumis trouvé pour ce projet.'
                 ], 404);
             }
 
@@ -2263,6 +2264,12 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         if (!$evaluationEnCours) {
             // Récupérer l'évaluation parent si c'est une ré-évaluation
             $evaluationParent = $tdr->evaluationParent();
+
+            // Vérifier si une évaluation est déjà terminée (sauf pour les resoumissions)
+            $evaluationTerminee = $tdr->evaluationFaisabiliteTerminer();
+            if ($evaluationTerminee && !$tdr->parent_id) {
+                throw new \Exception('Une évaluation a déjà été terminée pour ce TDR. Impossible de créer une nouvelle évaluation.', 403);
+            }
 
             // Créer la nouvelle évaluation
             $evaluationData = [

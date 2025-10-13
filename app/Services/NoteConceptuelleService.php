@@ -2361,6 +2361,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $checklist_suivi = [];
             $resultatsControleQualite = null;
             $rapportFaisabilitePrelim = null;
+            $evaluationRapport = null;
 
             // Créer une évaluation pour tracer la validation
             $evaluation = $projet->evaluations()->updateOrCreate([
@@ -2628,6 +2629,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'message' => $this->getMessageSuccesValidation($data['decision']),
                 'data' => [
                     'evaluation' => $evaluation,
+                    'evaluationRapport' => $evaluationRapport,
                     'projet_id' => $projet,
                     'rapport' => $projet->rapportFaisabilitePreliminaire()->first()->load("evaluations"),
                     'ancien_statut' => StatutIdee::VALIDATION_PROFIL->value,
