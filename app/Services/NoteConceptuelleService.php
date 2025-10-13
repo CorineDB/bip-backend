@@ -210,7 +210,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'info_cabinet_etude' => [],
                 'recommandation' => null,
                 'soumis_par_id' => auth()->id(),
-                'date_soumission' =>  $estSoumise ? now() : false,
+                'date_soumission' =>  $estSoumise ? now() : null,
             ];
 
             // Créer ou mettre à jour le rapport
