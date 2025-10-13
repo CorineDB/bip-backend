@@ -95,12 +95,12 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            if ($projet->statut->value != StatutIdee::NOTE_CONCEPTUEL->value && $projet->statut->value != StatutIdee::R_VALIDATION_NOTE_AMELIORER->value) {
+            /* if ($projet->statut->value != StatutIdee::NOTE_CONCEPTUEL->value && $projet->statut->value != StatutIdee::R_VALIDATION_NOTE_AMELIORER->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de redaction de la note conceptuelle.'
                 ], 403);
-            }
+            } */
 
             // Déterminer le statut selon est_soumise
             $statut = $estSoumise ? 'soumise' : 'brouillon';
