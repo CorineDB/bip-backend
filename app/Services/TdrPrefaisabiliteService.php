@@ -863,21 +863,26 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             $evaluationExistante = collect($evaluation->evaluation['champs_evalues'])
                                 ->firstWhere('champ_id', $champ->id);
 
-                            /* $data = [
-                                'appreciation' => $evaluationExistante["appreciation"],
-                                'commentaire_evaluateur' => $evaluationExistante["commentaire_evaluateur"],
-                                'date_evaluation' => $evaluationExistante["date_evaluation"]
-                            ]; */
+                            if ($evaluationExistante) {
+                                $data = [
+                                    'appreciation' => $evaluationExistante["appreciation"] ?? null,
+                                    'commentaire_evaluateur' => $evaluationExistante["commentaire_evaluateur"] ?? null,
+                                    'date_evaluation' => $evaluationExistante["date_appreciation"] ?? null
+                                ];
+                            }
                         }
                         // Sinon, on vérifie la relation directe "champs_evalues"
                         elseif (isset($evaluation->champs_evalues)) {
                             $evaluationExistante = $evaluation->champs_evalues
                                 ->firstWhere('id', $champ->id);
-                            $data = [
-                                'appreciation' => $evaluationExistante ? $evaluationExistante->pivot->note : null,
-                                'commentaire_evaluateur' => $evaluationExistante ? $evaluationExistante->pivot->commentaires : null,
-                                'date_evaluation' => $evaluationExistante ? $evaluationExistante->pivot->date_note : null
-                            ];
+
+                            if ($evaluationExistante) {
+                                $data = [
+                                    'appreciation' => $evaluationExistante->pivot->note ?? null,
+                                    'commentaire_evaluateur' => $evaluationExistante->pivot->commentaires ?? null,
+                                    'date_evaluation' => $evaluationExistante->pivot->date_note ?? null
+                                ];
+                            }
                         }
 
                         if ($evaluationExistante) {
@@ -905,12 +910,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'attribut' => $champ->attribut,
                         'type_champ' => $champ->type_champ,
                         'ordre_affichage' => $champ->ordre_affichage,
-                        'appreciation' => $evaluationExistante ? $evaluationExistante["appreciation"] : null,
-                        'commentaire_evaluateur' => $evaluationExistante ? $evaluationExistante["commentaire_evaluateur"] : null,
-                        'date_evaluation' => $evaluationExistante ? $evaluationExistante["date_evaluation"] : null,
-                        /* 'appreciation' => $evaluationExistante ? $evaluationExistante->pivot->note : null,
-                        'commentaire_evaluateur' => $evaluationExistante ? $evaluationExistante->pivot->commentaires : null,
-                        'date_evaluation' => $evaluationExistante ? $evaluationExistante->pivot->date_note : null */
+                        'appreciation' => $data['appreciation'] ?? null,
+                        'commentaire_evaluateur' => $data['commentaire_evaluateur'] ?? null,
+                        'date_evaluation' => $data['date_evaluation'] ?? null,
                     ], $data);
                 }
 
