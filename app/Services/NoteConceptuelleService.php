@@ -2409,17 +2409,47 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $rapportExistant->fresh();
                     $checklist_suivi = $rapportExistant->checklist_suivi;
 
+                    // Créer une évaluation spécifique pour le contrôle qualité du rapport
+                    $evaluationRapport = $rapportExistant->evaluations()->updateOrCreate([
+                        'type_evaluation' => 'controle-qualite-rapport-faisabilite-preliminaire',
+                        'projetable_type' => get_class($rapportExistant),
+                        'projetable_id' => $rapportExistant->id,
+                    ], [
+                        'date_debut_evaluation' => now(),
+                        'date_fin_evaluation' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? now() : null,
+                        'evaluateur_id' => auth()->id(),
+                        'commentaire' => $data['commentaire'] ?? '',
+                        'statut' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? 1 : 0,
+                        'evaluation' => [],
+                        'resultats_evaluation' => []
+                    ]);
+
+                    // Sauvegarder les valeurs de checklist_suivi dans les relations champs_evalue
+                    foreach ($checklist_suivi as $item) {
+                        $evaluationRapport->champs_evalue()->syncWithoutDetaching([
+                            $item['champ_id'] => [
+                                'note' => $item['valeur'],
+                                'date_note' => $item['updated_at'] ?? now(),
+                                'commentaires' => $item['commentaire'] ?? null,
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]
+                        ]);
+                    }
+
+                    $evaluationRapport->refresh();
+
                     // Calculer le résultat de l'évaluation selon les règles SFD-015
-                    $resultatsEvaluation = $this->calculerResultatsControleQualite($rapportExistant, $evaluation);
+                    $resultatsEvaluation = $this->calculerResultatsControleQualite($rapportExistant, $evaluationRapport);
 
                     // Stocker pour utilisation ultérieure
                     $resultatsControleQualite = $resultatsEvaluation;
                     $rapportFaisabilitePrelim = $rapportExistant;
 
-                    // Préparer l'évaluation complète pour enregistrement
+                    // Préparer l'évaluation complète pour enregistrement dans l'évaluation du rapport
                     $evaluationComplete = [
-                        'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire()->all_champs)->map(function ($champ) use ($evaluation) {
-                            $champEvalue = collect($evaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                        'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire()->all_champs)->map(function ($champ) use ($evaluationRapport) {
+                            $champEvalue = collect($evaluationRapport->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                             return [
                                 'champ_id' => $champ['id'],
                                 'label' => $champ['label'],
@@ -2436,14 +2466,14 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'confirme_par' => ($estBrouillon && $data["decision"] === "") ? new UserResource(auth()->user()) : null
                     ];
 
-                    // Mettre à jour l'évaluation avec les données complètes
-                    $evaluation->fill([
+                    // Mettre à jour l'évaluation du rapport avec les données complètes
+                    $evaluationRapport->fill([
                         'resultats_evaluation' => $resultatsEvaluation,
-                        'evaluation' => $evaluationComplete, // Le cast 'array' du modèle gère l'encodage JSON
+                        'evaluation' => $evaluationComplete,
                         'commentaire' => $resultatsEvaluation['message_resultat']
                     ]);
 
-                    $evaluation->save();
+                    $evaluationRapport->save();
                 }
 
                 // Gérer l'analyse financière et calculer la VAN et le TRI
