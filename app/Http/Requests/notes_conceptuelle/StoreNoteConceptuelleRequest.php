@@ -120,12 +120,12 @@ class StoreNoteConceptuelleRequest extends FormRequest
             ],
 
             'analyse_financiere'                            => $estSoumise ? 'required|array' : 'nullable|array|min:0',
-            'analyse_financiere.duree_vie'                  => 'required_unless:action,draft|numeric',
-            'analyse_financiere.taux_actualisation'         => 'required_unless:action,draft|numeric',
-            'analyse_financiere.investissement_initial'     => 'required_unless:action,draft|numeric',
-            'analyse_financiere.flux_tresorerie'            => 'required_unless:action,draft|array|min:' . $this->input("analyse_financiere.duree_vie") ?? 1,
-            'analyse_financiere.flux_tresorerie.*.t'        => 'required_unless:action,draft|numeric|min:' . 1 . '|max:' . $this->input("analyse_financiere.duree_vie") ?? 1,
-            'analyse_financiere.flux_tresorerie.*.CFt'      => 'required_unless:action,draft|numeric|min:0'
+            'analyse_financiere.duree_vie'                  => 'required_unless:est_soumise,0|numeric',
+            'analyse_financiere.taux_actualisation'         => 'required_unless:est_soumise,0|numeric',
+            'analyse_financiere.investissement_initial'     => 'required_unless:est_soumise,0|numeric',
+            'analyse_financiere.flux_tresorerie'            => 'required_unless:est_soumise,0|array|min:' . $this->input("analyse_financiere.duree_vie") ?? 1,
+            'analyse_financiere.flux_tresorerie.*.t'        => 'required_unless:est_soumise,0|numeric|min:' . 1 . '|max:' . $this->input("analyse_financiere.duree_vie") ?? 1,
+            'analyse_financiere.flux_tresorerie.*.CFt'      => 'required_unless:est_soumise,0|numeric|min:0'
         ], $dynamicRules);
 
         return $finalRules;
