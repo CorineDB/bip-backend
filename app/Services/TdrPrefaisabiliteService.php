@@ -858,17 +858,17 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     $data = [];
                     if ($evaluation) {
 
-                        dump(isset($evaluation->evaluation['champs_evalue']));
+                        dump(isset($evaluation->evaluation['champs_evalues']));
 
-                        // On commence par vérifier si la structure "evaluation['champs_evalue']" existe
-                        if (isset($evaluation->evaluation['champs_evalue'])) {
-                            $evaluationExistante = collect($evaluation->evaluation['champs_evalue'])
+                        // On commence par vérifier si la structure "evaluation['champs_evalues']" existe
+                        if (isset($evaluation->evaluation['champs_evalues'])) {
+                            $evaluationExistante = collect($evaluation->evaluation['champs_evalues'])
                                 ->firstWhere('id', $champ->id);
                             dd($evaluationExistante);
                         }
-                        // Sinon, on vérifie la relation directe "champs_evalue"
-                        elseif (isset($evaluation->champs_evalue)) {
-                            $evaluationExistante = $evaluation->champs_evalue
+                        // Sinon, on vérifie la relation directe "champs_evalues"
+                        elseif (isset($evaluation->champs_evalues)) {
+                            $evaluationExistante = $evaluation->champs_evalues
                                 ->firstWhere('id', $champ->id);
                         }
 
