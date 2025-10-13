@@ -760,6 +760,14 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
                 $evaluationTermine = $noteConceptuelle->evaluationTermine();
 
+                // Vérifier si une évaluation est déjà terminée (sauf pour les resoumissions)
+                if ($evaluationTermine && !$noteConceptuelle->parentId) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Une évaluation a déjà été terminée pour cette note conceptuelle. Impossible de créer une nouvelle évaluation.'
+                    ], 403);
+                }
+
                 // Créer la nouvelle évaluation
                 $evaluationData = [
                     'type_evaluation' => "note-conceptuelle",
@@ -2591,11 +2599,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'data' => [
                     'projet_id' => $projet->id,
                     'ancien_statut' => StatutIdee::VALIDATION_PROFIL->value,
-                    'nouveau_statut' => $nouveauStatut->value,
                     'decision' => $data['decision'],
                     'commentaire' => $data['commentaire'] ?? '',
-                    'valider_par' => auth()->id(),
-                    'valider_le' => now()->format('d/m/Y H:i:s'),
                     'actions_effectuees' => $this->getActionsEffectuees($data['decision'])
                 ]
             ]);
@@ -2826,6 +2831,12 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $nouveauStatut = StatutIdee::ABANDON;
                     $messageAction = 'Projet abandonné suite à l\'évaluation négative de l\'étude de profil.';
                     break;
+
+                default:
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Action invalide. Actions possibles: reviser_note_conceptuelle, abandonner_projet.'
+                    ], 422);
             }
 
             // Enregistrer le workflow et la décision

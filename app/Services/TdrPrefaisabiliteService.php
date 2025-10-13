@@ -2575,6 +2575,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer l'évaluation parent si c'est une ré-évaluation
             $evaluationParent = $tdr->evaluationParent();
 
+            // Vérifier si une évaluation est déjà terminée (sauf pour les resoumissions)
+            $evaluationTerminee = $tdr->evaluationPrefaisabiliteTerminer();
+            if ($evaluationTerminee && !$tdr->parent_id) {
+                throw new \Exception('Une évaluation a déjà été terminée pour ce TDR. Impossible de créer une nouvelle évaluation.', 403);
+            }
+
             // Créer la nouvelle évaluation
             $evaluationData = [
                 'type_evaluation' => 'tdr-prefaisabilite',
