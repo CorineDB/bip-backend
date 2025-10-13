@@ -125,7 +125,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Chercher ou créer une note conceptuelle unique par projet
             $noteConceptuelle = $this->repository->getModel()
                 ->where('projetId', $projetId)
-                //->where('statut', '<>', 1)
+                ->where('statut', '<>', 1)
                 ->orderBy("created_at", "desc")
                 ->first();
 
