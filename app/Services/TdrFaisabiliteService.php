@@ -148,7 +148,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'tdr' => new TdrResource($tdr->load("projet", "historique_des_tdrs_faisabilite", "historique_des_evaluations_tdrs_faisabilite")),
+                    'tdr' => new TdrResource($tdr->load("projet", "historique_des_tdrs_faisabilite")),
                     'statut_projet' => $projet->statut
                 ]
             ]);
@@ -543,7 +543,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             if (!$evaluation) {
                 return response()->json([
                     'success' => true,
-                    'data' => ['tdr' => new TdrResource($tdr->load(['fichiers', 'projet']))],
+                    'data' => ['tdr' => new TdrResource($tdr->load(['fichiers', 'projet', "historique_des_evaluations_tdrs_faisabilite"]))],
                     'message' => 'Aucune évaluation trouvée pour cette tdr.'
                 ], 206);
             }
@@ -668,7 +668,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'success' => true,
                 'message' => 'Détails de l\'évaluation TDR récupérés avec succès.',
                 'data' => [
-                    'tdr' => new TdrResource($tdr->load(['fichiers', 'projet'])),
+                    'tdr' => new TdrResource($tdr->load(['fichiers', 'projet', "historique_des_evaluations_tdrs_faisabilite"])),
                     'evaluation_existante' => $evaluation ? [
                         'id' => $evaluation->id,
                         'statut' => $evaluation->statut, // 0=en cours, 1=terminée
