@@ -296,17 +296,15 @@ class Rapport extends Model
         ];
     }
 
-
-
     /**
      * Relation avec tous les rapports de préfaisabilité du projet
      */
     public function historique_des_rapports_prefaisabilite()
     {
         return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')
-                    ->where('id', '!=', $this->id)
-                    ->where('type', 'prefaisabilite')
-                    ->orderBy('created_at', 'desc');
+            ->where('id', '!=', $this->id)
+            ->where('type', 'prefaisabilite')
+            ->orderBy('created_at', 'desc');
     }
 
     /**
@@ -314,7 +312,7 @@ class Rapport extends Model
      */
     public function historique_des_evaluations_rapports_prefaisabilite()
     {
-        return $this->historique_des_rapports_prefaisabilite()->with(["evaluations" => function($query){
+        return $this->historique_des_rapports_prefaisabilite()->with(["evaluations" => function ($query) {
             $query->where("type_evaluation", "rapport-prefaisabilite")->orderBy("created_at", "desc");
         }]);
     }
@@ -325,9 +323,9 @@ class Rapport extends Model
     public function historique_des_rapports_faisabilite()
     {
         return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')
-                    ->where('id', '!=', $this->id)
-                    ->where('type', 'faisabilite')
-                    ->orderBy('created_at', 'desc');
+            ->where('id', '!=', $this->id)
+            ->where('type', 'faisabilite')
+            ->orderBy('created_at', 'desc');
     }
 
     /**
@@ -335,9 +333,24 @@ class Rapport extends Model
      */
     public function historique_des_evaluations_rapports_faisabilite()
     {
-        return $this->historique_des_rapports_faisabilite()->with(["evaluations" => function($query){
+        return $this->historique_des_rapports_faisabilite()->with(["evaluations" => function ($query) {
             $query->where("type_evaluation", "rapport-faisabilite")->orderBy("created_at", "desc");
         }]);
+    }
+
+    /**
+     * Get all reports of the same type for the same project including current report (complete history).
+     * Returns all reports sharing the same projet_id and type, including current report.
+     * Ordered by: created_at DESC (most recent first)
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function historique()
+    {
+        return static::where('projet_id', $this->projet_id)
+            ->where('type', $this->type)
+            ->where('id', '!=', $this->id)
+            ->orderBy('created_at', 'desc');
     }
 
     /**
@@ -441,7 +454,7 @@ class Rapport extends Model
     {
         // Déterminer le type d'évaluation selon le type de rapport
         // Types de rapport: 'prefaisabilite', 'faisabilite', 'evaluation_ex_ante'
-        $typeEvaluation = match($this->type) {
+        $typeEvaluation = match ($this->type) {
             'prefaisabilite' => 'validation-etude-prefaisabilite',
             'faisabilite' => 'validation-etude-faisabilite',
             'evaluation_ex_ante' => 'validation-final-evaluation-ex-ante',
@@ -454,7 +467,7 @@ class Rapport extends Model
 
     public function evaluationTermine()
     {
-        $typeEvaluation = match($this->type) {
+        $typeEvaluation = match ($this->type) {
             'prefaisabilite' => 'validation-etude-prefaisabilite',
             'faisabilite' => 'validation-etude-faisabilite',
             'evaluation_ex_ante' => 'validation-final-evaluation-ex-ante',
@@ -467,7 +480,7 @@ class Rapport extends Model
 
     public function evaluationEnCours()
     {
-        $typeEvaluation = match($this->type) {
+        $typeEvaluation = match ($this->type) {
             'prefaisabilite' => 'validation-etude-prefaisabilite',
             'faisabilite' => 'validation-etude-faisabilite',
             'evaluation_ex_ante' => 'validation-final-evaluation-ex-ante',
@@ -480,7 +493,7 @@ class Rapport extends Model
 
     public function evaluationParent()
     {
-        $typeEvaluation = match($this->type) {
+        $typeEvaluation = match ($this->type) {
             'prefaisabilite' => 'validation-etude-prefaisabilite',
             'faisabilite' => 'validation-etude-faisabilite',
             'evaluation_ex_ante' => 'validation-final-evaluation-ex-ante',
@@ -490,5 +503,4 @@ class Rapport extends Model
 
         return $this->evaluations()->evaluationParent($typeEvaluation)->first();
     }
-
 }

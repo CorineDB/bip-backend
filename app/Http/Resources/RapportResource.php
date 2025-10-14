@@ -40,6 +40,27 @@ class RapportResource extends BaseApiResource
                 return new UserResource($this->validateur);
             }),
 
+            'historique_des_rapports' => $this->whenLoaded('historique', fn() => RapportResource::collection($this->historique)),
+
+
+            'historique_des_evaluations_rapports' => $this->whenLoaded('evaluations', function () {
+                return $this->historique_des_evaluations_rapports_faisabilite->pluck("evaluations")->collapse()->map(function ($evaluation) {
+                    return [
+                        'id' => $evaluation->id,
+                        'type_evaluation' => $evaluation->type_evaluation,
+                        'date_debut_evaluation' => $evaluation->date_debut_evaluation ? \Carbon\Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
+                        'date_fin_evaluation' => $evaluation->date_fin_evaluation ? \Carbon\Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
+                        'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
+                        'valider_par' => $evaluation->valider_par,
+                        'commentaire' => $evaluation->commentaire,
+                        'evaluation' => $evaluation->evaluation,
+                        'resultats_evaluation' => $evaluation->resultats_evaluation,
+                        'statut' => $evaluation->statut
+                    ];
+                });
+            }),
+
+            /*
             'historique_des_rapports' => $this->type == 'faisabilite'
                 ? $this->whenLoaded('historique_des_rapports_faisabilite', fn() => RapportResource::collection($this->historique_des_rapports_faisabilite))
                 : ($this->type == 'prefaisabilite' ? $this->whenLoaded('historique_des_rapports_prefaisabilite', fn() => RapportResource::collection($this->historique_des_rapports_prefaisabilite)) : null),
@@ -76,7 +97,7 @@ class RapportResource extends BaseApiResource
                         ];
                     });
                 }) : null),
-
+            */
             // Checklists de mesures d'adaptation (si projet à haut risque)
             'checklist_mesures_adaptation' => $this->type == "prefaisabilite" ? $this->whenLoaded('projet', function () {
                 return $this->projet->est_a_haut_risque ?
