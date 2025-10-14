@@ -3188,7 +3188,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'decision' => 'valider',
                         'commentaire_validation' => $resultats["message_resultat"],
                         'date_validation' => now(),
-                        'validateur_id' => auth()->id()
+                        'validateur_id' => auth()->id(),
+                        'valider_le' => now()
                     ]);
                 }
 
@@ -3232,7 +3233,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'decision' => 'renvoyer',
                     'commentaire_validation' => $resultats["message_resultat"],
                     'date_validation' => now(),
-                    'validateur_id' => auth()->id()
+                    'validateur_id' => auth()->id(),
+                    'valider_le' => now()
                 ]);
 
                 return StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER;
@@ -3268,7 +3270,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'decision' => 'rejete',
                     'commentaire_validation' => $resultats["message_resultat"],
                     'date_validation' => now(),
-                    'validateur_id' => auth()->id()
+                    'validateur_id' => auth()->id(),
+                    'valider_le' => now()
                 ]);
 
                 return StatutIdee::VALIDATION_PROFIL;
