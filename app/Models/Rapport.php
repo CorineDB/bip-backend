@@ -455,9 +455,10 @@ class Rapport extends Model
     public function evaluationTermine()
     {
         $typeEvaluation = match($this->type) {
-            'prefaisabilite' => 'prefaisabilite',
-            'faisabilite' => 'faisabilite',
-            'evaluation_ex_ante' => 'evaluation_ex_ante',
+            'prefaisabilite' => 'validation-etude-prefaisabilite',
+            'faisabilite' => 'validation-etude-faisabilite',
+            'evaluation_ex_ante' => 'validation-final-evaluation-ex-ante',
+            'faisabilite-preliminaire' => 'controle-qualite-rapport-faisabilite-preliminaire',
             default => $this->type
         };
 
@@ -467,9 +468,10 @@ class Rapport extends Model
     public function evaluationEnCours()
     {
         $typeEvaluation = match($this->type) {
-            'prefaisabilite' => 'prefaisabilite',
-            'faisabilite' => 'faisabilite',
-            'evaluation_ex_ante' => 'evaluation_ex_ante',
+            'prefaisabilite' => 'validation-etude-prefaisabilite',
+            'faisabilite' => 'validation-etude-faisabilite',
+            'evaluation_ex_ante' => 'validation-final-evaluation-ex-ante',
+            'faisabilite-preliminaire' => 'controle-qualite-rapport-faisabilite-preliminaire',
             default => $this->type
         };
 
@@ -479,9 +481,10 @@ class Rapport extends Model
     public function evaluationParent()
     {
         $typeEvaluation = match($this->type) {
-            'prefaisabilite' => 'prefaisabilite',
-            'faisabilite' => 'faisabilite',
-            'evaluation_ex_ante' => 'evaluation_ex_ante',
+            'prefaisabilite' => 'validation-etude-prefaisabilite',
+            'faisabilite' => 'validation-etude-faisabilite',
+            'evaluation_ex_ante' => 'validation-final-evaluation-ex-ante',
+            'faisabilite-preliminaire' => 'controle-qualite-rapport-faisabilite-preliminaire',
             default => $this->type
         };
 
