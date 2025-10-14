@@ -2631,8 +2631,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             'statistiques' => $resultatsExamen
         ];
 
-        dd($evaluationComplete);
-
         // Mettre à jour avec les données complètes
         $newEvaluation->evaluation = $evaluationComplete;
         $newEvaluation->resultats_evaluation = $resultatsExamen;
