@@ -137,21 +137,77 @@ class Evaluation extends Model
     }
 
     /**
-     * Get all evaluations of the same type for the same project (complete history).
-     * Returns all evaluations sharing the same projetable_type, projetable_id, and type_evaluation.
+     * Get all previous evaluations in the history chain (using id_evaluation parent relationship).
+     * Returns all evaluations that are ancestors of this evaluation.
      * Ordered by: valider_le DESC, date_fin_evaluation DESC, created_at DESC (most recent first)
      *
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function historique_evaluations()
     {
-        return $this->hasMany(Evaluation::class, 'projetable_id', 'projetable_id')
-            ->where('projetable_type', $this->projetable_type)
-            ->where('type_evaluation', $this->type_evaluation)
-            ->where('id', '!=', $this->id)
-            ->orderByDesc('valider_le')
-            ->orderByDesc('date_fin_evaluation')
-            ->orderByDesc('created_at');
+        $historique = collect();
+        $current = $this;
+
+        // Remonter la chaîne des évaluations parentes via id_evaluation
+        while ($current->id_evaluation) {
+            $parent = Evaluation::find($current->id_evaluation);
+            if ($parent) {
+                $historique->push($parent);
+                $current = $parent;
+            } else {
+                break;
+            }
+        }
+
+        return $historique->sortByDesc(function($eval) {
+            return $eval->valider_le ?? $eval->date_fin_evaluation ?? $eval->created_at;
+        })->values();
+    }
+
+    /**
+     * Get all evaluations in the complete history chain including current evaluation.
+     * Returns all evaluations in the parent-child chain via id_evaluation.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAllEvaluationsHistorique()
+    {
+        // Trouver la racine de la chaîne (l'évaluation sans parent)
+        $root = $this;
+        while ($root->id_evaluation) {
+            $parent = Evaluation::find($root->id_evaluation);
+            if ($parent) {
+                $root = $parent;
+            } else {
+                break;
+            }
+        }
+
+        // Collecter toute la chaîne à partir de la racine
+        $historique = collect([$root]);
+        $this->collectChildEvaluations($root, $historique);
+
+        return $historique->sortByDesc(function($eval) {
+            return $eval->valider_le ?? $eval->date_fin_evaluation ?? $eval->created_at;
+        })->values();
+    }
+
+    /**
+     * Helper method to recursively collect child evaluations.
+     *
+     * @param Evaluation $evaluation
+     * @param \Illuminate\Support\Collection $collection
+     * @return void
+     */
+    private function collectChildEvaluations($evaluation, &$collection)
+    {
+        $children = Evaluation::where('id_evaluation', $evaluation->id)->get();
+        foreach ($children as $child) {
+            if (!$collection->contains('id', $child->id)) {
+                $collection->push($child);
+                $this->collectChildEvaluations($child, $collection);
+            }
+        }
     }
 
     /**

@@ -2945,7 +2945,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             if (auth()->user()->profilable->ministere?->id !== $noteConceptuelle->projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
-            dd($evaluation);
 
             // Récupérer l'évaluation de validation la plus récente
             $evaluation = $projet->evaluations()
@@ -2953,7 +2952,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ->whereNotNull('valider_par')
                 ->whereNotNull('valider_le')
                 ->where('statut', 1)
-                ->with(['validator', 'commentaires', 'evaluations'])
                 ->orderBy('created_at', 'desc')
                 ->first();
 
@@ -2967,7 +2965,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'valider_par' => new UserResource($evaluation->validator),
                         'decision' => $evaluation->evaluation,
                         'statut' => $evaluation->statut,
-                        'commentaire' => $evaluation->commentaire
+                        'commentaire' => $evaluation->commentaire,
+                        'historique_evaluations' => EvaluationResource::collection($evaluation->historique_evaluations)
                     ] : null,
                     //'rapport' => $projet->rapportFaisabilitePreliminaire()->first() ? new RapportResource($projet->rapportFaisabilitePreliminaire()->first()->load(["historique"])) : null,
                 ]
