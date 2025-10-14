@@ -18,7 +18,9 @@ use App\Enums\TypesProjet;
 use App\Http\Resources\CanevasAppreciationTdrResource;
 use App\Http\Resources\CanevasNoteConceptuelleResource;
 use App\Http\Resources\ChampResource;
+use App\Http\Resources\EvaluationResource;
 use App\Http\Resources\projets\ProjetsResource;
+use App\Http\Resources\RapportResource;
 use App\Http\Resources\UserResource;
 use App\Models\Decision;
 use App\Models\Dgpd;
@@ -1101,6 +1103,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                                 'updated_at' => $champ_evalue ? $champ_evalue["pivot"]["updated_at"] : null,
                             ];
                         }),
+                        'historique_evaluations' => EvaluationResource::collection($evaluation->historique_evaluations)
                     ],
                     'resultats_examen' =>  $resultatsExamen, //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen
                 ]
@@ -2949,7 +2952,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ->whereNotNull('valider_par')
                 ->whereNotNull('valider_le')
                 ->where('statut', 1)
-                ->with(['validator', 'commentaires'])
+                ->with(['validator', 'commentaires', 'evaluations'])
                 ->orderBy('created_at', 'desc')
                 ->first();
 
@@ -2965,7 +2968,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'statut' => $evaluation->statut,
                         'commentaire' => $evaluation->commentaire
                     ] : null,
-                    'rapport' => $projet->rapportFaisabilitePreliminaire()->first()->load("evaluations"),
+                    'rapport' => $projet->rapportFaisabilitePreliminaire()->first() ? new RapportResource($projet->rapportFaisabilitePreliminaire()->first()->load("evaluations")) : null,
                 ]
             ]);
         } catch (Exception $e) {
@@ -3338,7 +3341,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         $newEvaluation->refresh();
 
         // Construire le tableau des évaluations de champs pour le calcul
-        $evaluationsChamps = collect($this->documentRepository->getCanevasChecklisteControleQualiteRapportEtudeFaisabilitePrelim()->all_champs)->map(function ($champ) use ($newEvaluation) {
+        $evaluationsChamps = collect($this->documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire()->all_champs)->map(function ($champ) use ($newEvaluation) {
             $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
 
             return [
@@ -3358,7 +3361,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         $anciensChampsEvalues = collect($ancienneEvaluation['champs_evalues'] ?? []);
 
         $evaluationComplete = [
-            'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteControleQualiteRapportEtudeFaisabilitePrelim()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
+            'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
                 $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                 $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 

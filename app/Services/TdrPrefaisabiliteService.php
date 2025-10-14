@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use App\Helpers\SlugHelper;
 use App\Http\Resources\CanevasAppreciationTdrResource;
+use App\Http\Resources\EvaluationResource;
 use App\Http\Resources\projets\integration\ProjetsResource;
 
 class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteServiceInterface
@@ -364,7 +365,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Récupérer les détails des TDRs de préfaisabilité soumis
      */
-    public function getTdrDetails(int $projetId): JsonResponse
+    public function getTdrDetails($projetId): JsonResponse
     {
         try {
             // Récupérer le projet
@@ -393,10 +394,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             return response()->json([
                 'success' => true,
                 'data' => [
-                    //'projet' => new ProjetsResource($projet->load('tdrPrefaisabilite')),
                     'tdr' => new TdrResource($tdr->load("projet", "historique_des_tdrs_prefaisabilite")),
-                    //'fichiers' => $tdr->fichiers,
-                    //'peut_apprecier' => $projet->statut->value === StatutIdee::TDR_PREFAISABILITE->value,
                     'statut_projet' => $projet->statut,
                 ]
             ]);
@@ -489,20 +487,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     "numero_contrat" => $data["numero_contrat"]
                 ]);
             }
-
-            /*
-            // Récupérer le canevas de rédaction TDR préfaisabilité
-            $canevasTdr = $this->documentRepository->getModel()->where([
-                'type' => 'formulaire'
-            ])->whereHas('categorie', function ($query) {
-                $query->where('slug', 'canevas-redaction-tdr-prefaisabilite');
-            })->orderBy('created_at', 'desc')->first();
-
-            if ($canevasTdr) {
-                // Sauvegarder les champs dynamiques basés sur le canevas
-                $this->saveDynamicFieldsFromCanevas($tdr, $champsData, $canevasTdr);
-            }
-            */
 
             // Gérer les documents/fichiers
             if (!empty($documentsData)) {
@@ -646,18 +630,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     throw ValidationException::withMessages(["evaluations_champs" => "Veuillez apprecier le canevas "]);
                 }
 
-                /*if (!isset($data["numero_dossier"])) {
-                    throw ValidationException::withMessages([
-                        "numero_dossier" => "Le numéro du dossier est obligatoire pour l'évaluation."
-                    ]);
-                }
-
-                if (!isset($data["numero_contrat"])) {
-                    throw ValidationException::withMessages([
-                        "numero_contrat" => "Le numéro du contrat est obligatoire pour l'évaluation."
-                    ]);
-                }*/
-
                 if (!isset($data["accept_term"])) {
                     throw ValidationException::withMessages([
                         "accept_term" => "Vous devez accepter les termes pour poursuivre l'évaluation."
@@ -763,7 +735,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Récupérer les détails d'évaluation d'un TDR
      */
-    public function getEvaluationTdr(int $projetId): JsonResponse
+    public function getEvaluationTdr($projetId): JsonResponse
     {
         try {
 
@@ -928,6 +900,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'evaluation_existante' => $evaluation ? [
                         'id' => $evaluation->id,
                         'statut' => $evaluation->statut, // 0=en cours, 1=terminée
+                        'valider_le' => $evaluation->valider_le?->format('d/m/Y H:i:s'),
+                        'valider_par' => $evaluation->valider_par,
                         'evaluateur' => new UserResource($evaluation->evaluateur),
                         'date_debut' => Carbon::parse($evaluation->date_debut_evaluation)->format("Y-m-d h:i:s"),
                         'date_fin' => Carbon::parse($evaluation->date_fin_evaluation)->format("Y-m-d h:i:s"),
@@ -935,6 +909,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'grille_evaluation' => $grilleEvaluation,
                         'evaluation' => $evaluation->evaluation,
                         'resultats_evaluation' => $evaluation->resultats_evaluation,
+                        'historique_evaluations' => EvaluationResource::collection($evaluation->historique_evaluations)
                     ] : null,
                     'resultats_evaluation' => $resultatsEvaluation,
                 ]
@@ -944,7 +919,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         }
     }
 
-    public function getEvaluation(int $projetId): JsonResponse
+    public function getEvaluation($projetId): JsonResponse
     {
         try {
             //$noteConceptuelle = $this->repository->findOrFail($noteConceptuelleId);
@@ -1653,8 +1628,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Vérifier la cohérence du suivi rapport si des données de validation sont fournies
             if (isset($data['checklist_suivi_validation'])) {
 
-                // Enregistrer les appréciations pour chaque champ
-
                 $syncData = [];
 
                 foreach ($data['checklist_suivi_validation'] as $evaluationChamp) {
@@ -1838,7 +1811,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Récupérer les détails de validation des TDRs
      */
-    public function getDetailsValidationEtude(int $projetId): JsonResponse
+    public function getDetailsValidationEtude($projetId): JsonResponse
     {
         try {
 
@@ -1899,40 +1872,18 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'projet' => new ProjetsResource($projet),
                     'tdr' => new TdrResource($projet->tdrPrefaisabilite->first()),
                     'rapport' => new RapportResource($projet->rapportPrefaisabilite()->first()),
-                    // Données pour statut VALIDATION_PF
-                    /* 'rapport_prefaisabilite' => $rapportPrefaisabilite ? [
-                        'id' => $rapportPrefaisabilite->id,
-                        'statut' => $rapportPrefaisabilite->statut,
-                        'date_soumission' => $rapportPrefaisabilite->date_soumission?->format('d/m/Y H:i:s'),
-                        'recommandation' => $rapportPrefaisabilite->recommandation,
-                        'info_cabinet_etude' => $rapportPrefaisabilite->info_cabinet_etude,
-                        'checklist_suivi' => $rapportPrefaisabilite->checklist_suivi,
-                        'soumis_par_id' => $rapportPrefaisabilite->soumis_par_id,
-                        'fichiers' => $rapportPrefaisabilite->fichiers?->map(function ($fichier) {
-                            return [
-                                'id' => $fichier->id,
-                                'nom_original' => $fichier->nom_original,
-                                'type' => $fichier->mime_type ?? $fichier->type,
-                                'taille' => $fichier->taille,
-                                'chemin' => $fichier->chemin
-                            ];
-                        })
-                    ] : null, */
-                    'evaluation_validation' => $evaluationValidation ?/*  [
-                        'id' => $evaluationValidation->id,
-                        'valider_le' => $evaluationValidation->valider_le?->format('d/m/Y H:i:s'),
-                        'valider_par' => $evaluationValidation->valider_par,
-                        'decision' => $evaluationValidation->resultats_evaluation,
-                        'commentaire' => $evaluationValidation->commentaire
-                    ] : null, ? */ [
+                    'evaluation_validation' => $evaluationValidation ? [
                         'id' => $evaluationValidation->id,
                         'evaluation' => $evaluationValidation->evaluation,
                         'decision' => $evaluationValidation->resultats_evaluation,
                         'statut' => $evaluationValidation->statut, // 0=en cours, 1=terminée
+                        'valider_le' => $evaluationValidation->valider_le?->format('d/m/Y H:i:s'),
+                        'valider_par' => $evaluationValidation->valider_par,
                         'evaluateur' => new UserResource($evaluationValidation->evaluateur),
                         'date_debut' => Carbon::parse($evaluationValidation->date_debut_evaluation)->format("Y-m-d h:i:s"),
                         'date_fin' => Carbon::parse($evaluationValidation->date_fin_evaluation)->format("Y-m-d h:i:s"),
-                        'commentaire_global' => $evaluationValidation->commentaire
+                        'commentaire_global' => $evaluationValidation->commentaire,
+                        'historique_evaluations' => EvaluationResource::collection($evaluationValidation->historique_evaluations)
                     ] : null,
                     'fichiers_validation' => FichierResource::collection($fichiersValidation),
                     'checklist_suivi_validation' => ($evaluationValidation && $evaluationValidation->evaluation && isset($evaluationValidation->evaluation["champs_evalues"])) ? $evaluationValidation->evaluation["champs_evalues"] : null
@@ -2120,9 +2071,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $message = $estBrouillon ? 'Rapport sauvegardé en brouillon.' : 'Rapport soumis avec succès.';
             }
 
-            // Traiter les checklists (pour brouillons et soumissions)
-            $resultChecklistValidation = null;
-
             // Traiter la checklist de contrôle d'adaptation si projet à haut risque
             if ($projet->est_a_haut_risque) {
                 if (!$estBrouillon && (!isset($data['checklist_controle_adaptation_haut_risque']) || $data['checklist_controle_adaptation_haut_risque'] == null)) {
@@ -2201,49 +2149,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' est obligatoire."
                     ]);
                 }
-                /*
-                $info_etude_prefaisabilite = $projet->info_etude_prefaisabilite ?? [];
-
-                // on doit valider si c'est une valeur booléenne
-                // par exemple une chaîne de caractères, un entier, un tableau, etc.
-                // mais si la valeur est 0 ou 1, on peut la considérer comme booléenne
-
-                if (is_string($data['etude_prefaisabilite']['est_finance'])) {
-                    $valeur = strtolower($data['etude_prefaisabilite']['est_finance']);
-                    if ($valeur === 'true' || $valeur === '1') {
-                        $data['etude_prefaisabilite']['est_finance'] = true;
-                    } elseif ($valeur === 'false' || $valeur === '0') {
-                        $data['etude_prefaisabilite']['est_finance'] = false;
-                    } else {
-                        throw ValidationException::withMessages([
-                            "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
-                        ]);
-                    }
-                } elseif (is_int($data['etude_prefaisabilite']['est_finance'])) {
-                    if ($data['etude_prefaisabilite']['est_finance'] === 1) {
-                        $data['etude_prefaisabilite']['est_finance'] = true;
-                    } elseif ($data['etude_prefaisabilite']['est_finance'] === 0) {
-                        $data['etude_prefaisabilite']['est_finance'] = false;
-                    } else {
-                        throw ValidationException::withMessages([
-                            "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
-                        ]);
-                    }
-                } elseif (is_array($data['etude_prefaisabilite']['est_finance']) || is_null($data['etude_prefaisabilite']['est_finance'])) {
-                    throw ValidationException::withMessages([
-                        "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
-                    ]);
-                } else {
-                    // Si c'est déjà une valeur booléenne, ne rien faire
-                }
-
-                if (!is_bool($data['etude_prefaisabilite']['est_finance'])) {
-                    throw ValidationException::withMessages([
-                        "etude_prefaisabilite.est_finance" => "Le champ 'est_finance' doit être une valeur booléenne."
-                    ]);
-                }
-
-                $est_finance = $data['etude_prefaisabilite']['est_finance'] ?? ($info_etude_prefaisabilite['est_finance'] ?? false);*/
 
                 // Mettre à jour les informations de l'étude de préfaisabilité dans le projet
                 $projet->update([
@@ -2335,7 +2240,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'statut_rapport' => $rapport->statut,
                     'statut_projet' => $projet->statut->value,
                     'action' => $estBrouillon ? 'draft' : 'submit',
-                    'rapport' => new RapportResource($rapport)
+                    'rapport' => new RapportResource($rapport->load("historique_des_rapports"))
                 ]
             ]);
         } catch (Exception $e) {
@@ -2347,7 +2252,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Récupérer le rapport soumis pour un projet
      */
-    public function getDetailsSoumissionRapportPrefaisabilite(int $projetId): JsonResponse
+    public function getDetailsSoumissionRapportPrefaisabilite($projetId): JsonResponse
     {
         try {
             // Récupérer le projet
@@ -2375,7 +2280,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             return response()->json([
                 'success' => true,
-                'data' => new \App\Http\Resources\RapportResource($rapport),
+                'data' => new \App\Http\Resources\RapportResource($rapport->load("historique_des_rapports_prefaisabilite")),
                 'message' => 'Détails de soumission du rapport de préfaisabilité récupérés avec succès.'
             ]);
         } catch (\Exception $e) {
@@ -2385,81 +2290,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'data' => null
             ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
         }
-    }
-
-    /**
-     * Gérer le fichier TDR avec versioning intelligent
-     */
-    private function gererFichierTdr(Projet $projet, $fichier, array $data): ?Fichier
-    {
-        // Calculer le hash du nouveau fichier
-        $nouveauHash = md5_file($fichier->getRealPath());
-
-        // Vérifier s'il y a déjà un TDR actif avec le même hash
-        $tdrIdentique = $projet->tdrs_prefaisabilite()
-            ->where('hash_md5', $nouveauHash)
-            ->where('is_active', true)
-            ->first();
-
-        if ($tdrIdentique) {
-            return $tdrIdentique;
-        }
-
-        // Pour les TDRs, toujours vérifier le statut R_TDR_PREFAISABILITE
-        $doitCreerNouvelleVersion = ($projet->statut->value === StatutIdee::R_TDR_PREFAISABILITE->value);
-
-        if ($doitCreerNouvelleVersion) {
-            return $this->creerNouvelleVersionTdr($projet, $fichier, $data);
-        } else {
-            return $this->remplacerTdrExistant($projet, $fichier, $data);
-        }
-    }
-
-    /**
-     * Créer une nouvelle version du TDR
-     */
-    private function creerNouvelleVersionTdr(Projet $projet, $fichier, array $data): Fichier
-    {
-        // Récupérer la dernière version
-        $derniereVersion = $projet->tdrs_prefaisabilite()
-            ->orderBy('created_at', 'desc')
-            ->first();
-
-        $nouvelleVersion = 1;
-        if ($derniereVersion) {
-            $versionActuelle = $derniereVersion->metadata['version'] ?? 1;
-            $nouvelleVersion = $versionActuelle + 1;
-
-            // Archiver l'ancienne version
-            $derniereVersion->update([
-                'is_active' => false,
-                'metadata' => array_merge($derniereVersion->metadata ?? [], [
-                    'statut' => 'archive',
-                    'archive_le' => now(),
-                    'remplace_par_version' => $nouvelleVersion
-                ])
-            ]);
-        }
-
-        return $this->sauvegarderFichierTdr($projet, $fichier, $data, $nouvelleVersion);
-    }
-
-    /**
-     * Remplacer le TDR existant (même cycle)
-     */
-    private function remplacerTdrExistant(Projet $projet, $fichier, array $data): Fichier
-    {
-        $tdrExistant = $projet->tdrs_prefaisabilite()->where('is_active', true)->first();
-        $version = 1;
-
-        if ($tdrExistant) {
-            $version = $tdrExistant->metadata['version'] ?? 1;
-            // Supprimer l'ancien fichier physique
-            Storage::disk('public')->delete($tdrExistant->chemin);
-            $tdrExistant->delete();
-        }
-
-        return $this->sauvegarderFichierTdr($projet, $fichier, $data, $version);
     }
 
     /**
@@ -3430,30 +3260,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     {
         try {
             DB::beginTransaction();
-            /*
-            // Récupérer le dernier rapport de préfaisabilité s'il existe
-            $rapportExistant = $projet->rapportPrefaisabilite()->first();
-
-            // Déterminer le parent_id pour la hiérarchie (uniquement si soumission finale et rapport existe)
-            $parentId = null;
-            if ($rapportExistant && !$estBrouillon) {
-                $parentId = $rapportExistant->id;
-            }
-
-            // Créer le nouveau rapport
-            $rapport = \App\Models\Rapport::create([
-                'projet_id' => $rapport->projet->id,
-                'parent_id' => $parentId,
-                'type' => 'prefaisabilite',
-                'statut' => $estBrouillon ? 'brouillon' : 'soumis',
-                'intitule' => 'Rapport de préfaisabilité - ' . $rapport->projet->titre_projet,
-                'checklist_suivi' => $checklistData, // Stocker directement les données
-                'info_cabinet_etude' => $fichiers['cabinet_etude'] ?? null,
-                'recommandation' => $fichiers['recommandation'] ?? null,
-                'date_soumission' => $estBrouillon ? null : now(),
-                'soumis_par_id' => $estBrouillon ? null : auth()->id()
-            ]);
-            */
 
             // Associer les fichiers au rapport si ils existent
             if (!empty($fichiers)) {
@@ -3489,19 +3295,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'message' => 'Erreur lors du traitement de la checklist de suivi: ' . $e->getMessage()
             ];
         }
-    }
-
-    /**
-     * Obtenir l'ID du rapport de préfaisabilité le plus récent pour un projet
-     */
-    private function getRapportIdForProject($projet)
-    {
-        $rapport = \App\Models\Rapport::where('projet_id', $projet->id)
-            ->where('type', 'prefaisabilite')
-            ->latest('created_at')
-            ->first();
-
-        return $rapport ? $rapport->id : null;
     }
 
     /**
@@ -3545,12 +3338,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $explication    = $evaluation['explication'] ?? null;
 
             // Préparer la valeur à stocker (remarque + explication)
-            $valeur = $remarque;/* [
-                'remarque' => $remarque,
-                'explication' => $explication,
-                'checkpoint_id' => $checkpointId,
-                'date_evaluation' => now()
-            ]; */
+            $valeur = $remarque;
 
             // Créer ou mettre à jour la relation champ-rapport
             $rapport->champs()->syncWithoutDetaching([
@@ -3808,7 +3596,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Récupérer le rapport final d'analyse du projet
      */
-    public function getDetailsSoumissionRapportFinale(int $projetId): JsonResponse
+    public function getDetailsSoumissionRapportFinale($projetId): JsonResponse
     {
         try {
             // Récupérer le projet
@@ -3837,7 +3625,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             return response()->json([
                 'success' => true,
-                'data' => new \App\Http\Resources\RapportResource($rapport),
+                'data' => new \App\Http\Resources\RapportResource($rapport->load("historique_des_rapports")),
                 'message' => 'Détails de soumission du rapport de préfaisabilité récupérés avec succès.'
             ]);
         } catch (\Exception $e) {
@@ -3964,7 +3752,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Récupérer les détails de validation des TDRs
      */
-    public function getDetailsValidationFinal(int $projetId): JsonResponse
+    public function getDetailsValidationFinal($projetId): JsonResponse
     {
         try {
 
@@ -4011,10 +3799,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'evaluation' => $evaluationValidation->evaluation,
                         'decision' => $evaluationValidation->resultats_evaluation,
                         'statut' => $evaluationValidation->statut, // 0=en cours, 1=terminée
+                        'valider_le' => $evaluationValidation->valider_le?->format('d/m/Y H:i:s'),
+                        'valider_par' => $evaluationValidation->valider_par,
                         'evaluateur' => new UserResource($evaluationValidation->evaluateur),
                         'date_debut' => Carbon::parse($evaluationValidation->date_debut_evaluation)->format("Y-m-d h:i:s"),
                         'date_fin' => Carbon::parse($evaluationValidation->date_fin_evaluation)->format("Y-m-d h:i:s"),
-                        'commentaire_global' => $evaluationValidation->commentaire
+                        'commentaire_global' => $evaluationValidation->commentaire,
+                        'historique_evaluations' => EvaluationResource::collection($evaluationValidation->historique_evaluations)
                     ] : null
                 ]
             ]);
@@ -4169,7 +3960,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Récupérer le rapport soumis pour un projet
      */
-    public function getRapportSoumis(int $projetId): JsonResponse
+    public function getRapportSoumis($projetId): JsonResponse
     {
         try {
             // Récupérer le projet

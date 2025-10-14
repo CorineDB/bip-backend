@@ -1378,7 +1378,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'intitule' => " ",
                 ]);
                 return response()->json([
-                    'success' =>  new \App\Http\Resources\RapportResource($rapport->load("projet")),
+                    'success' =>  new \App\Http\Resources\RapportResource($rapport->load("projet", "historique_des_rapports_faisabilite")),
                     'message' => 'Aucun rapport soumis trouvé pour ce projet.',
                     'data' => null
                 ], 206);
@@ -1386,7 +1386,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             return response()->json([
                 'success' => true,
-                'data' => new \App\Http\Resources\RapportResource($rapport),
+                'data' => new \App\Http\Resources\RapportResource($rapport->load("historique_des_rapports_faisabilite")),
                 'message' => 'Détails de soumission du rapport de faisabilité récupérés avec succès.'
             ]);
         } catch (\Exception $e) {
@@ -1406,8 +1406,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         try {
             DB::beginTransaction();
 
-            // Vérifier les autorisations (Comité de validation Ministériel uniquement)
-            if (!in_array(auth()->user()->type, ['comite_validation', 'admin']) && !auth()->user()->hasPermissionTo('valider-etude-faisabilite')) {
+            if (!auth()->user()->hasPermissionTo('valider-etude-faisabilite')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette validation.'

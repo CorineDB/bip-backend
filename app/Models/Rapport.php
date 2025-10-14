@@ -299,48 +299,44 @@ class Rapport extends Model
 
 
     /**
-     * Relation avec tous les TDRs du projet
+     * Relation avec tous les rapports de préfaisabilité du projet
      */
     public function historique_des_rapports_prefaisabilite()
     {
-        if ($this->projet) {
-            return $this->projet->rapportsPrefaisabilite()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
-        }
-        // Return a query builder that will result in an empty set if no projet is associated
-        return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')->whereRaw('0 = 1');
+        return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')
+                    ->where('id', '!=', $this->id)
+                    ->where('type', 'prefaisabilite')
+                    ->orderBy('created_at', 'desc');
     }
 
     /**
-     * Relation avec tous les TDRs du projet
+     * Relation avec toutes les évaluations des rapports de préfaisabilité du projet
      */
     public function historique_des_evaluations_rapports_prefaisabilite()
     {
         return $this->historique_des_rapports_prefaisabilite()->with(["evaluations" => function($query){
-            $query/* ->evaluationTermine("note-conceptuelle")->first() */;
+            $query->where("type_evaluation", "rapport-prefaisabilite")->orderBy("created_at", "desc");
         }]);
     }
 
-
-
     /**
-     * Relation avec tous les TDRs du projet
+     * Relation avec tous les rapports de faisabilité du projet
      */
     public function historique_des_rapports_faisabilite()
     {
-        if ($this->projet) {
-            return $this->projet->rapportsFaisabilite()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
-        }
-        // Return a query builder that will result in an empty set if no projet is associated
-        return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')->whereRaw('0 = 1');
+        return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')
+                    ->where('id', '!=', $this->id)
+                    ->where('type', 'faisabilite')
+                    ->orderBy('created_at', 'desc');
     }
 
     /**
-     * Relation avec tous les TDRs du projet
+     * Relation avec toutes les évaluations des rapports de faisabilité du projet
      */
     public function historique_des_evaluations_rapports_faisabilite()
     {
         return $this->historique_des_rapports_faisabilite()->with(["evaluations" => function($query){
-            $query/* ->evaluationTermine("note-conceptuelle")->first() */;
+            $query->where("type_evaluation", "rapport-faisabilite")->orderBy("created_at", "desc");
         }]);
     }
 
@@ -443,22 +439,53 @@ class Rapport extends Model
 
     public function evaluations()
     {
-        return $this->morphMany(Evaluation::class, 'projetable')->where('type_evaluation', "note-conceptuelle");
+        // Déterminer le type d'évaluation selon le type de rapport
+        // Types de rapport: 'prefaisabilite', 'faisabilite', 'evaluation_ex_ante'
+        $typeEvaluation = match($this->type) {
+            'prefaisabilite' => 'validation-etude-prefaisabilite',
+            'faisabilite' => 'validation-etude-faisabilite',
+            'evaluation_ex_ante' => 'validation-final-evaluation-ex-ante',
+            'faisabilite-preliminaire' => 'evaluation_ex_ante',
+            default => $this->type
+        };
+
+        return $this->morphMany(Evaluation::class, 'projetable')->where('type_evaluation', $typeEvaluation);
     }
 
     public function evaluationTermine()
     {
-        return $this->evaluations()->evaluationTermine("note-conceptuelle")->first();
+        $typeEvaluation = match($this->type) {
+            'prefaisabilite' => 'prefaisabilite',
+            'faisabilite' => 'faisabilite',
+            'evaluation_ex_ante' => 'evaluation_ex_ante',
+            default => $this->type
+        };
+
+        return $this->evaluations()->evaluationTermine($typeEvaluation)->first();
     }
 
     public function evaluationEnCours()
     {
-        return $this->evaluations()->evaluationsEnCours("note-conceptuelle")->first();
+        $typeEvaluation = match($this->type) {
+            'prefaisabilite' => 'prefaisabilite',
+            'faisabilite' => 'faisabilite',
+            'evaluation_ex_ante' => 'evaluation_ex_ante',
+            default => $this->type
+        };
+
+        return $this->evaluations()->evaluationsEnCours($typeEvaluation)->first();
     }
 
     public function evaluationParent()
     {
-        return $this->evaluations()->evaluationParent("note-conceptuelle")->where()->first();
+        $typeEvaluation = match($this->type) {
+            'prefaisabilite' => 'prefaisabilite',
+            'faisabilite' => 'faisabilite',
+            'evaluation_ex_ante' => 'evaluation_ex_ante',
+            default => $this->type
+        };
+
+        return $this->evaluations()->evaluationParent($typeEvaluation)->first();
     }
 
 }

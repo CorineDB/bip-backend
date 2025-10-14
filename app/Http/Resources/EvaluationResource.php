@@ -42,7 +42,7 @@ class EvaluationResource extends BaseApiResource
             }),
 
             'historique_evaluations' => $this->whenLoaded("historique_evaluations", function(){
-                return EvaluationResource::collection($this->parentEvaluation->historique_evaluations);
+                return EvaluationResource::collection($this->historique_evaluations);
             })
         ];
         return parent::toArray($request);

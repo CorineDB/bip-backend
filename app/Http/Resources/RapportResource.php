@@ -30,71 +30,83 @@ class RapportResource extends BaseApiResource
             'date_validation' => $this->date_validation,
             'commentaire_validation' => $this->commentaire_validation,
             'decision' => $this->decision,
-            //'champs' => $this->champs,
-            // Relations
-            /*
-            'projet' => $this->whenLoaded('projet', function() {
-                $projetResource = new ProjetsResource($this->projet);
-                // Ajouter les checklists de mesures d'adaptation si projet à haut risque
-                if ($this->projet->est_a_haut_risque) {
-                    $projetResource->additional([
-                        'checklist_mesures_adaptation' => $this->projet->metadata['checklist_controle_adaptation_haut_risque'] ?? null
-                    ]);
-                }
-                return $projetResource;
-            }),
-            */
-            'projet' => $this->whenLoaded('projet', function(){
+            'projet' => $this->whenLoaded('projet', function () {
                 return new ProjetsResource($this->projet);
             }),
-            'soumis_par' => $this->whenLoaded('soumisPar', function(){
+            'soumis_par' => $this->whenLoaded('soumisPar', function () {
                 return new UserResource($this->soumisPar);
             }),
-            'validateur' => $this->whenLoaded('validateur', function(){
+            'validateur' => $this->whenLoaded('validateur', function () {
                 return new UserResource($this->validateur);
             }),
 
-            'historique_des_rapports' =>  $this->when(($this->type == 'faisabilite' || $this->type == 'prefaisabilite'), function(){
-                return $this->type == 'faisabilite' ? $this->historique_des_rapports_faisabilite : $this->historique_des_rapports_prefaisabilite;
-            }),
-            'historique_des_evaluations_rapports' =>  $this->when(($this->type == 'faisabilite' || $this->type == 'prefaisabilite'), function(){
-                return $this->type == 'faisabilite' ? $this->historique_des_evaluations_rapports_faisabilite : $this->historique_des_evaluations_rapports_prefaisabilite;
-            }),
-
-            /*
-            'parent' => $this->whenLoaded('parent', new self($this->parent)),
-            'enfants' => $this->whenLoaded('enfants', self::collection($this->enfants)), */
+            'historique_des_rapports' => $this->type == 'faisabilite'
+                ? $this->whenLoaded('historique_des_rapports_faisabilite', fn() => RapportResource::collection($this->historique_des_rapports_faisabilite))
+                : ($this->type == 'prefaisabilite' ? $this->whenLoaded('historique_des_rapports_prefaisabilite', fn() => RapportResource::collection($this->historique_des_rapports_prefaisabilite)) : null),
+            'historique_des_evaluations_rapports' => $this->type == 'faisabilite'
+                ? $this->whenLoaded('historique_des_evaluations_rapports_faisabilite', function () {
+                    return $this->historique_des_evaluations_rapports_faisabilite->pluck("evaluations")->collapse()->map(function ($evaluation) {
+                        return [
+                            'id' => $evaluation->id,
+                            'type_evaluation' => $evaluation->type_evaluation,
+                            'date_debut_evaluation' => $evaluation->date_debut_evaluation ? \Carbon\Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
+                            'date_fin_evaluation' => $evaluation->date_fin_evaluation ? \Carbon\Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
+                            'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
+                            'valider_par' => $evaluation->valider_par,
+                            'commentaire' => $evaluation->commentaire,
+                            'evaluation' => $evaluation->evaluation,
+                            'resultats_evaluation' => $evaluation->resultats_evaluation,
+                            'statut' => $evaluation->statut
+                        ];
+                    });
+                })
+                : ($this->type == 'prefaisabilite' ? $this->whenLoaded('historique_des_evaluations_rapports_prefaisabilite', function () {
+                    return $this->historique_des_evaluations_rapports_prefaisabilite->pluck("evaluations")->collapse()->map(function ($evaluation) {
+                        return [
+                            'id' => $evaluation->id,
+                            'type_evaluation' => $evaluation->type_evaluation,
+                            'date_debut_evaluation' => $evaluation->date_debut_evaluation ? \Carbon\Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
+                            'date_fin_evaluation' => $evaluation->date_fin_evaluation ? \Carbon\Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
+                            'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
+                            'valider_par' => $evaluation->valider_par,
+                            'commentaire' => $evaluation->commentaire,
+                            'evaluation' => $evaluation->evaluation,
+                            'resultats_evaluation' => $evaluation->resultats_evaluation,
+                            'statut' => $evaluation->statut
+                        ];
+                    });
+                }) : null),
 
             // Checklists de mesures d'adaptation (si projet à haut risque)
-            'checklist_mesures_adaptation' => $this->type == "prefaisabilite" ? $this->whenLoaded('projet', function() {
+            'checklist_mesures_adaptation' => $this->type == "prefaisabilite" ? $this->whenLoaded('projet', function () {
                 return $this->projet->est_a_haut_risque ?
                     ($this->projet->mesures_adaptation ?? null) :
                     null;
             }) : [],
 
             // Fichiers par type
-            'fichiers_rapport' => $this->whenLoaded('fichiersRapport', function() {
+            'fichiers_rapport' => $this->whenLoaded('fichiersRapport', function () {
                 return FichierResource::collection($this->fichiersRapport);
             }),
 
-            'proces_verbaux' => $this->whenLoaded('procesVerbaux', function() {
+            'proces_verbaux' => $this->whenLoaded('procesVerbaux', function () {
                 return FichierResource::collection($this->procesVerbaux);
             }),
 
-            'liste_presence' => $this->when($this->fichiers()->where('categorie', 'liste-presence')->first(), function() {
+            'liste_presence' => $this->when($this->fichiers()->where('categorie', 'liste-presence')->first(), function () {
                 return new FichierResource($this->fichiers()->where('categorie', 'liste-presence')->first());
             }),
 
-            'documents_annexes' => $this->whenLoaded('documentsAnnexes', function() {
+            'documents_annexes' => $this->whenLoaded('documentsAnnexes', function () {
                 return FichierResource::collection($this->documentsAnnexes);
             }),
 
-            'tous_fichiers' => $this->whenLoaded('fichiers', function() {
+            'tous_fichiers' => $this->whenLoaded('fichiers', function () {
                 return FichierResource::collection($this->fichiers);
             }),
 
             // Commentaires
-            'commentaires' => $this->whenLoaded('commentaires', function() {
+            'commentaires' => $this->whenLoaded('commentaires', function () {
                 return CommentaireResource::collection($this->commentaires);
             }),
 
