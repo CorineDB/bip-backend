@@ -2925,7 +2925,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     public function getDetailsEtudeProfil($projetId): JsonResponse
     {
-        dd($projetId);
         try {
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
@@ -2946,6 +2945,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             if (auth()->user()->profilable->ministere?->id !== $noteConceptuelle->projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
+            dd($evaluation);
 
             // Récupérer l'évaluation de validation la plus récente
             $evaluation = $projet->evaluations()
