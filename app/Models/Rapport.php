@@ -339,18 +339,47 @@ class Rapport extends Model
     }
 
     /**
-     * Get all reports of the same type for the same project including current report (complete history).
-     * Returns all reports sharing the same projet_id and type, including current report.
+     * Get all reports of the same type for the same project (excluding current).
+     * Returns a HasMany relationship for all reports with same projet_id and type.
      * Ordered by: created_at DESC (most recent first)
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function historique()
     {
-        return static::where('projet_id', $this->projet_id)
+        return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')
             ->where('type', $this->type)
             ->where('id', '!=', $this->id)
             ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get all reports of the same type for the same project including current report.
+     * Returns a Collection of all reports sharing the same projet_id and type.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAllRapportsHistorique()
+    {
+        return static::where('projet_id', $this->projet_id)
+            ->where('type', $this->type)
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get the iteration number of this report in the complete history.
+     *
+     * @return int
+     */
+    public function getIterationNumber()
+    {
+        $historique = $this->getAllRapportsHistorique();
+        $position = $historique->search(function ($rapport) {
+            return $rapport->id === $this->id;
+        });
+
+        return $position !== false ? $position + 1 : 1;
     }
 
     /**
