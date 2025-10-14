@@ -3264,8 +3264,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ]);
 
                 $rapport->update([
-                    'statut' => 'non_accepte',
-                    'decision' => 'non_accepte',
+                    'statut' => 'reviser',
+                    'decision' => 'reviser',
                     'commentaire_validation' => $resultats["message_resultat"],
                     'date_validation' => now(),
                     'validateur_id' => auth()->id()
