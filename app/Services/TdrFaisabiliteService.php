@@ -554,7 +554,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             if ($evaluation && $evaluation->statut == 1) {
 
                 // Recalculer le résultat pour l'évaluation terminée
-                $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation;
+                $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation["champs_evalues"];
 
                 foreach ($champs_evalues as $champ) {
                     $champ =  (array)$champ;
@@ -662,7 +662,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             if ($evaluation && $evaluation->statut == 1) {
                 // Recalculer le résultat pour l'évaluation terminée
-                $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation;
+                $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation["champs_evalues"];
                 foreach ($champs_evalues as $champ) {
                     $champ =  (array)$champ;
                     $evaluationsChamps[] = [
@@ -710,7 +710,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
                 //$resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
                 $resultatsEvaluation = $evaluation->resultats_evaluation;
-                $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation;
+                $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation["champs_evalues"];
                 return [
                     'id' => $evaluation->id,
                     'statut' => $evaluation->statut, // 0=en cours, 1=terminée
@@ -749,7 +749,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         'date_fin' => Carbon::parse($evaluation->date_fin_evaluation)->format("Y-m-d h:i:s"),
                         'commentaire_global' => $evaluation->commentaire,
                         'grille_evaluation' => $grilleEvaluation,
-                        'evaluation' => json_decode($evaluation->evaluation), // 0=en cours, 1=terminée
+                        'evaluation' => is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation) : $evaluation->evaluation, // 0=en cours, 1=terminée
                     ] : null,
                     'resultats_evaluation' => $resultatsEvaluation,
                     'actions_suivantes' => $actionsSuivantes
