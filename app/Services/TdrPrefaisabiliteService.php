@@ -394,7 +394,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'success' => true,
                 'data' => [
                     //'projet' => new ProjetsResource($projet->load('tdrPrefaisabilite')),
-                    'tdr' => new TdrResource($tdr->load("projet")),
+                    'tdr' => new TdrResource($tdr->load("projet", "historique_des_tdrs_prefaisabilite", "historique_des_evaluations_tdrs_prefaisabilite")),
                     //'fichiers' => $tdr->fichiers,
                     //'peut_apprecier' => $projet->statut->value === StatutIdee::TDR_PREFAISABILITE->value,
                     'statut_projet' => $projet->statut,

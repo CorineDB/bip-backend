@@ -148,7 +148,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'tdr' => new TdrResource($tdr->load("projet")),
+                    'tdr' => new TdrResource($tdr->load("projet", "historique_des_tdrs_faisabilite", "historique_des_evaluations_tdrs_faisabilite")),
                     'statut_projet' => $projet->statut
                 ]
             ]);

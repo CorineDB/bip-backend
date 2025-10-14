@@ -203,48 +203,44 @@ class Tdr extends Model
     }
 
     /**
-     * Relation avec tous les TDRs du projet
+     * Relation avec tous les TDRs de préfaisabilité du projet
      */
     public function historique_des_tdrs_prefaisabilite()
     {
-        if ($this->projet) {
-            return $this->projet->tdrs_prefaisabilite()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
-        }
-        // Return a query builder that will result in an empty set if no projet is associated
-        return $this->hasMany(Tdr::class, 'projet_id', 'projet_id')->whereRaw('0 = 1');
+        return $this->hasMany(Tdr::class, 'projet_id', 'projet_id')
+                    ->where('id', '!=', $this->id)
+                    ->where('type', 'prefaisabilite')
+                    ->orderBy('created_at', 'desc');
     }
 
     /**
-     * Relation avec tous les TDRs du projet
+     * Relation avec toutes les évaluations des TDRs de préfaisabilité du projet
      */
     public function historique_des_evaluations_tdrs_prefaisabilite()
     {
         return $this->historique_des_tdrs_prefaisabilite()->with(["evaluations" => function($query){
-            $query/* ->evaluationTermine("note-conceptuelle")->first() */;
+            $query->where("type_evaluation", "tdr-prefaisabilite")->orderBy("created_at", "desc");
         }]);
     }
 
-
-
     /**
-     * Relation avec tous les TDRs du projet
+     * Relation avec tous les TDRs de faisabilité du projet
      */
     public function historique_des_tdrs_faisabilite()
     {
-        if ($this->projet) {
-            return $this->projet->tdrs_faisabilite()->where("id", "!=", $this->id)->orderBy("created_at", "desc");
-        }
-        // Return a query builder that will result in an empty set if no projet is associated
-        return $this->hasMany(Tdr::class, 'projet_id', 'projet_id')->whereRaw('0 = 1');
+        return $this->hasMany(Tdr::class, 'projet_id', 'projet_id')
+                    ->where('id', '!=', $this->id)
+                    ->where('type', 'faisabilite')
+                    ->orderBy('created_at', 'desc');
     }
 
     /**
-     * Relation avec tous les TDRs du projet
+     * Relation avec toutes les évaluations des TDRs de faisabilité du projet
      */
     public function historique_des_evaluations_tdrs_faisabilite()
     {
         return $this->historique_des_tdrs_faisabilite()->with(["evaluations" => function($query){
-            $query/* ->evaluationTermine("note-conceptuelle")->first() */;
+            $query->where("type_evaluation", "tdr-faisabilite")->orderBy("created_at", "desc");
         }]);
     }
 
