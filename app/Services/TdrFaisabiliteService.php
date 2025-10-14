@@ -2578,7 +2578,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ]);
 
                 $tdr->update([
-                    'decision_validation' => 'non_accepte',
+                    'decision_validation' => 'reviser',
                     'commentaire_validation' => $resultats["message_resultat"],
                 ]);
 
