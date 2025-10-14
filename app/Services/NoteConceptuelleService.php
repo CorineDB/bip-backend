@@ -1576,7 +1576,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         }
 
         // Règle 3 : Si plus de 4 notes « Renvoyer »
-        if (($compteurs['renvoyer'] ?? 0) > 4) {
+        if (($compteurs['renvoyer'] ?? 0) > 2) {
             return [
                 'statut' => 'renvoyer',
                 'message' => 'Renvoyer',
