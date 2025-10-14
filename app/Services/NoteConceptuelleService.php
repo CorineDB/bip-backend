@@ -1576,7 +1576,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         }
 
         // Règle 3 : Si plus de 4 notes « Renvoyer »
-        if (($compteurs['renvoyer'] ?? 0) > 2) {
+        if (($compteurs['renvoyer'] ?? 0) > 4) {
             return [
                 'statut' => 'renvoyer',
                 'message' => 'Renvoyer',
@@ -3229,8 +3229,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ]);
 
                 $rapport->update([
-                    'statut' => 'renvoye',
-                    'decision' => 'renvoyer',
+                    'statut' => 'rejeter',
+                    'decision' => 'rejeter',
                     'commentaire_validation' => $resultats["message_resultat"],
                     'date_validation' => now(),
                     'validateur_id' => auth()->id(),
@@ -3357,7 +3357,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         })->toArray();
 
         // Construire le JSON evaluation basé sur les champs copiés
-        $resultatsExamen = $this->calculerResultatsControleQualite($nouveauRapport, $newEvaluation);
+        $resultatsExamen = $this->calculerResultatsControleQualite($newEvaluation, ['evaluations_champs' => $evaluationsChamps]);
 
         // Récupérer l'ancienne évaluation pour référence
         $ancienneEvaluation = $evaluationTerminee->evaluation ?? [];
