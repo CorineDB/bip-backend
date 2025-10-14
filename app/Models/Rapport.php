@@ -76,6 +76,12 @@ class Rapport extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'flux_tresorerie' => 'array',
+        'investissement_initial' => 'float',
+        'van' => 'float',
+        'tri' => 'float',
+        'duree_vie' => 'integer',
+        'taux_actualisation' => 'float',
         'checklist_suivi' => 'array',
         'info_cabinet_etude' => 'array',
         'decision' => 'array',
