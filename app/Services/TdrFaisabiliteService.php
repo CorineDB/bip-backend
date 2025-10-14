@@ -255,8 +255,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             $projet->resume_tdr_faisabilite = $data["resume_tdr_faisabilite"];
 
-            // Cas spécifique : Resoumission d'un TDR retourné (R_TDR_FAISABILITE)
-            if ($estSoumise && $projet->statut === StatutIdee::R_TDR_FAISABILITE) {
+            // Cas spécifique : Resoumission d'un TDR retourné (R_TDR_FAISABILITE ou TDR_FAISABILITE)
+            if ($estSoumise && in_array($projet->statut, [StatutIdee::R_TDR_FAISABILITE, StatutIdee::TDR_FAISABILITE])) {
                 // Si le TDR a un parent, créer une nouvelle évaluation basée sur l'ancienne
                 if ($tdr->parent_id) {
                     $ancienTdr = \App\Models\Tdr::find($tdr->parent_id);
@@ -286,7 +286,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             }
 
             // Changer le statut du projet seulement si est_soumise est true
-            if ($estSoumise && $projet->statut !== StatutIdee::R_TDR_FAISABILITE) {
+            if ($estSoumise && !in_array($projet->statut, [StatutIdee::R_TDR_FAISABILITE, StatutIdee::TDR_FAISABILITE])) {
                 $projet->update([
                     'statut' => StatutIdee::EVALUATION_TDR_F,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_F),

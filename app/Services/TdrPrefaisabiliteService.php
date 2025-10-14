@@ -517,29 +517,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             $projet->resume_tdr_prefaisabilite = $data["resume_tdr_prefaisabilite"];
 
-            // Changer le statut du projet seulement si est_soumise est true
-            if ($estSoumise && $projet->statut !== StatutIdee::R_TDR_PREFAISABILITE) {
-                $projet->update([
-                    'statut' => StatutIdee::EVALUATION_TDR_PF,
-                    'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF),
-                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF)
-                ]);
-
-                // Enregistrer le workflow et la décision
-                $this->enregistrerWorkflow($projet, StatutIdee::EVALUATION_TDR_PF);
-                $this->enregistrerDecision(
-                    $projet,
-                    "Soumission des TDRs de préfaisabilité",
-                    $data['resume_tdr_prefaisabilite'] ?? 'TDRs soumis pour évaluation',
-                    auth()->user()->personne->id
-                );
-
-                // Envoyer une notification
-                $this->envoyerNotificationSoumission($projet, $fichierTdr);
-            }
-
-            // Cas spécifique : Resoumission d'un TDR retourné (R_TDR_PREFAISABILITE)
-            if ($estSoumise && $projet->statut === StatutIdee::R_TDR_PREFAISABILITE) {
+            // Cas spécifique : Resoumission d'un TDR retourné (R_TDR_PREFAISABILITE ou TDR_PREFAISABILITE)
+            if ($estSoumise && in_array($projet->statut, [StatutIdee::R_TDR_PREFAISABILITE, StatutIdee::TDR_PREFAISABILITE])) {
                 // Si le TDR a un parent, créer une nouvelle évaluation basée sur l'ancienne
                 if ($tdr->parent_id) {
                     $ancienTdr = \App\Models\Tdr::find($tdr->parent_id);
@@ -561,6 +540,27 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     $projet,
                     "Resoumission du TDR de préfaisabilité après révision",
                     $data['resume_tdr_prefaisabilite'] ?? 'TDR révisé soumis pour réévaluation',
+                    auth()->user()->personne->id
+                );
+
+                // Envoyer une notification
+                $this->envoyerNotificationSoumission($projet, $fichierTdr);
+            }
+
+            // Changer le statut du projet seulement si est_soumise est true
+            if ($estSoumise && !in_array($projet->statut, [StatutIdee::R_TDR_PREFAISABILITE, StatutIdee::TDR_PREFAISABILITE])) {
+                $projet->update([
+                    'statut' => StatutIdee::EVALUATION_TDR_PF,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_TDR_PF)
+                ]);
+
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($projet, StatutIdee::EVALUATION_TDR_PF);
+                $this->enregistrerDecision(
+                    $projet,
+                    "Soumission des TDRs de préfaisabilité",
+                    $data['resume_tdr_prefaisabilite'] ?? 'TDRs soumis pour évaluation',
                     auth()->user()->personne->id
                 );
 
