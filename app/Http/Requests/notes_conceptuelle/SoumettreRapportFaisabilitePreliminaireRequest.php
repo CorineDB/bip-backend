@@ -37,7 +37,7 @@ class SoumettreRapportFaisabilitePreliminaireRequest extends FormRequest
             'documents.tdr_faisabilite_preliminaire' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
             'documents.check_suivi_rapport' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
             'documents.autres.*' => 'nullable|' . self::DOCUMENT_RULE,
-
+/*
             // Analyse financière pour calcul VAN et TRI
             'analyse_financiere' => $estSoumise ? 'required|array' : 'nullable|array',
             'analyse_financiere.duree_vie' => $estSoumise ? 'required|integer|min:1' : 'nullable|integer|min:1',
@@ -46,7 +46,7 @@ class SoumettreRapportFaisabilitePreliminaireRequest extends FormRequest
             'analyse_financiere.flux_tresorerie.*' => 'numeric',
             'analyse_financiere.taux_actualisation' => $estSoumise ? 'required|numeric|min:0|max:100' : 'nullable|numeric|min:0|max:100',
 
-
+ */
 
             // Analyse financière requise seulement si le projet est MOU ET soumis
             'analyse_financiere'                            => ($estSoumise) ? 'required|array' : 'nullable|array|min:0',
