@@ -137,13 +137,29 @@ class Evaluation extends Model
     }
 
     /**
+     * Get all evaluations of the same type for the same project (excluding current).
+     * Returns a HasMany relationship for all evaluations with same projetable and type.
+     * Ordered by: created_at DESC (most recent first)
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function historique_evaluations()
+    {
+        return $this->hasMany(Evaluation::class, 'projetable_id', 'projetable_id')
+            ->where('projetable_type', $this->projetable_type)
+            ->where('type_evaluation', $this->type_evaluation)
+            ->where('id', '!=', $this->id)
+            ->orderByDesc('created_at');
+    }
+
+    /**
      * Get all previous evaluations in the history chain (using id_evaluation parent relationship).
      * Returns all evaluations that are ancestors of this evaluation.
      * Ordered by: valider_le DESC, date_fin_evaluation DESC, created_at DESC (most recent first)
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return \Illuminate\Support\Collection
      */
-    public function historique_evaluations()
+    public function getHistoriqueEvaluationsChain()
     {
         $historique = collect();
         $current = $this;
