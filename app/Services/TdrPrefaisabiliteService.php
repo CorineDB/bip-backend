@@ -2879,7 +2879,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             } else {
                 // Si retour ou non_accepte, mettre null (pas de copie dans pivot)
                 // Les anciennes valeurs seront dans le JSON evaluation avec le suffixe "_passer"
-                dump($champ);
             }
         }
 
@@ -2911,7 +2910,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                 $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
-                dd($anciensChampsEvalues->toArray());
                 $result = [
                     'champ_id' => $champ['id'],
                     'label' => $champ['label'],

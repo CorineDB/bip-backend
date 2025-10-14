@@ -447,7 +447,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             // Mettre à jour l'évaluation avec les données complètes
             $evaluation->fill([
                 'resultats_evaluation' => $resultatsEvaluation,
-                'evaluation' => json_encode($evaluationComplete),
+                'evaluation' => $evaluationComplete,
                 'valider_par' => $evaluer ? auth()->id() : null,
                 'valider_le' => $evaluer ? now() : null,
                 'commentaire' => $resultatsEvaluation['message_resultat']
@@ -2571,6 +2571,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             } else {
                 // Si retour ou non_accepte, mettre null (pas de copie dans pivot)
                 // Les anciennes valeurs seront dans le JSON evaluation avec le suffixe "_passer"
+                dump($champ);
             }
         }
 
@@ -2602,6 +2603,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                 $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
+                dump($ancienChampEvalue);
                 $result = [
                     'champ_id' => $champ['id'],
                     'label' => $champ['label'],
@@ -2616,6 +2618,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
                 // C'est un champ qui n'était pas "passé", on ajoute les anciennes valeurs avec "_passer"
                 if (!$champEvalue && $ancienChampEvalue) {
+                    dd($anciensChampsEvalues->toArray());
                     // Convertir en array si c'est un objet
                     $ancienChampArray = is_array($ancienChampEvalue) ? $ancienChampEvalue : (array)$ancienChampEvalue;
                     $result['appreciation_passer'] = $ancienChampArray['appreciation'] ?? null;
