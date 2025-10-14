@@ -9,6 +9,7 @@ use App\Http\Requests\notes_conceptuelle\ConfigurerOptionsEvaluationRequest;
 use App\Http\Requests\notes_conceptuelle\AppreciationNoteConceptuelleRequest;
 use App\Http\Requests\notes_conceptuelle\ConfirmerResultatRequest;
 use App\Http\Requests\notes_conceptuelle\ValiderEtudeProfilRequest;
+use App\Http\Requests\notes_conceptuelle\SoumettreRapportFaisabilitePreliminaireRequest;
 use App\Services\Contracts\NoteConceptuelleServiceInterface;
 use App\Models\NoteConceptuelle;
 use Illuminate\Http\JsonResponse;
@@ -209,5 +210,13 @@ class NoteConceptuelleController extends Controller
     public function validerEtudeProfil(ValiderEtudeProfilRequest $request, $projetId): JsonResponse
     {
         return $this->service->validerEtudeDeProfil($projetId, $request->all());
+    }
+
+    /**
+     * Soumettre ou resoumettre un rapport de faisabilité préliminaire (SFD-009)
+     */
+    public function soumettreRapportFaisabilitePreliminaire(SoumettreRapportFaisabilitePreliminaireRequest $request, $projetId): JsonResponse
+    {
+        return $this->service->soumettreRapportFaisabilitePreliminaire($projetId, $request->all());
     }
 }

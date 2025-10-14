@@ -740,6 +740,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 // Envoyer une notification
                 $this->envoyerNotificationEvaluation($projet, $resultatsEvaluation);
             }
+
             return response()->json([
                 'success' => true,
                 'message' => $this->getMessageSuccesEvaluation($resultatsEvaluation['resultat_global']),
@@ -2893,7 +2894,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ]);
 
                 $tdr->update([
-                    'decision_validation' => 'non_accepte',
+                    'decision_validation' => 'reviser',
                     'commentaire_validation' => $resultats["message_resultat"],
                 ]);
 

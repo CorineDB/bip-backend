@@ -206,6 +206,8 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             // Route pour la validation à l'étape étude de profil
             Route::get('{projetId}/details-etude-profil', [NoteConceptuelleController::class, 'getDetailsEtudeProfil']);
             Route::post('{projetId}/valider-etude-profil', [NoteConceptuelleController::class, 'validerEtudeProfil']);
+            // Route pour la soumission du rapport de faisabilité préliminaire
+            Route::post('{projetId}/soumettre-rapport-faisabilite-preliminaire', [NoteConceptuelleController::class, 'soumettreRapportFaisabilitePreliminaire']);
             // Route pour la validation à l'étape étude de profil
             Route::post('{projetId}/confirmer-resultats-evaluation-note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'confirmerResultat']);
 

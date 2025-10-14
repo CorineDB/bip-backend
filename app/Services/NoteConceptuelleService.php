@@ -3280,6 +3280,228 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     }
 
     /**
+     * Créer une nouvelle évaluation basée sur une évaluation parent (pour rapport retourné)
+     * Copie les champs "conforme" et "non_applicable" et réinitialise les autres champs
+     */
+    private function creerEvaluationPourRapportResoumis(Rapport $nouveauRapport, Rapport $ancienRapport): void
+    {
+        // Récupérer l'évaluation terminée du rapport parent
+        $evaluationTerminee = $ancienRapport->evaluations()
+            ->where('type_evaluation', 'rapport-faisabilite-preliminaire')
+            ->where('statut', 1)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$evaluationTerminee) {
+            return; // Pas d'évaluation à dupliquer
+        }
+
+        // Créer une nouvelle évaluation liée au nouveau rapport
+        $newEvaluation = $evaluationTerminee->replicate();
+        $newEvaluation->projetable_id = $nouveauRapport->id;
+        $newEvaluation->projetable_type = get_class($nouveauRapport);
+        $newEvaluation->id_evaluation = $evaluationTerminee->id; // Lien vers l'évaluation parent
+        $newEvaluation->canevas = $evaluationTerminee->canevas; // Copier le canevas
+        $newEvaluation->statut = 0; // En cours
+        $newEvaluation->date_debut_evaluation = now();
+        $newEvaluation->date_fin_evaluation = null;
+        $newEvaluation->valider_le = null;
+        $newEvaluation->valider_par = null;
+        $newEvaluation->resultats_evaluation = [];
+
+        // Sauvegarder d'abord la nouvelle évaluation avec des valeurs temporaires
+        $newEvaluation->evaluation = [];
+        $newEvaluation->resultats_evaluation = [];
+        $newEvaluation->created_at = now();
+        $newEvaluation->updated_at = null;
+        $newEvaluation->save();
+
+        // Copier les relations champs_evalue de l'ancienne évaluation
+        // Pour les champs "conforme" et "non_applicable" : copier tel quel
+        // Pour les autres : mettre null pour forcer la réévaluation
+        $champsEvalues = $evaluationTerminee->champs_evalue;
+        foreach ($champsEvalues as $champ) {
+            $note = $champ->pivot->note;
+
+            if (in_array($note, ['conforme', 'non_applicable'])) {
+                // Si conforme ou non_applicable, copier tel quel
+                $newEvaluation->champs_evalue()->attach($champ->id, [
+                    'note' => $note,
+                    'date_note' => $champ->pivot->date_note,
+                    'commentaires' => $champ->pivot->commentaires,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            } else {
+                // Si non_conforme, mettre null (pas de copie dans pivot)
+                // Les anciennes valeurs seront dans le JSON evaluation avec le suffixe "_passer"
+            }
+        }
+
+        // Recharger pour avoir accès aux relations
+        $newEvaluation->refresh();
+
+        // Construire le tableau des évaluations de champs pour le calcul
+        $evaluationsChamps = collect($this->documentRepository->getCanevasChecklisteControleQualiteRapportEtudeFaisabilitePrelim()->all_champs)->map(function ($champ) use ($newEvaluation) {
+            $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+
+            return [
+                'champ_id' => $champ['id'],
+                'label' => $champ['label'],
+                'attribut' => $champ['attribut'],
+                'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+            ];
+        })->toArray();
+
+        // Construire le JSON evaluation basé sur les champs copiés
+        $resultatsExamen = $this->calculerResultatsControleQualite($newEvaluation, ['evaluations_champs' => $evaluationsChamps]);
+
+        // Récupérer l'ancienne évaluation pour référence
+        $ancienneEvaluation = $evaluationTerminee->evaluation ?? [];
+        $anciensChampsEvalues = collect($ancienneEvaluation['champs_evalues'] ?? []);
+
+        $evaluationComplete = [
+            'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteControleQualiteRapportEtudeFaisabilitePrelim()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
+                $champEvalue = collect($newEvaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
+
+                $result = [
+                    'champ_id' => $champ['id'],
+                    'label' => $champ['label'],
+                    'attribut' => $champ['attribut'],
+                    'ordre_affichage' => $champ['ordre_affichage'],
+                    'type_champ' => $champ['type_champ'],
+                    'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                    'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                ];
+
+                // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
+                // C'est un champ qui n'était pas "conforme" ou "non_applicable", on ajoute les anciennes valeurs avec "_passer"
+                if (!$champEvalue && $ancienChampEvalue) {
+                    $result['appreciation_passer'] = $ancienChampEvalue['appreciation'] ?? null;
+                    $result['commentaire_passer_evaluateur'] = $ancienChampEvalue['commentaire_evaluateur'] ?? null;
+                    $result['date_appreciation_passer'] = $ancienChampEvalue['date_appreciation'] ?? null;
+                }
+
+                return $result;
+            })->toArray(),
+            'statistiques' => $resultatsExamen
+        ];
+
+        // Mettre à jour avec les données complètes
+        $newEvaluation->evaluation = $evaluationComplete;
+        $newEvaluation->resultats_evaluation = $resultatsExamen;
+        $newEvaluation->save();
+    }
+
+    /**
+     * Soumettre ou resoumettre un rapport de faisabilité préliminaire (SFD-009)
+     */
+    public function soumettreRapportFaisabilitePreliminaire(int $projetId, array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            // Récupérer le projet
+            $projet = $this->projetRepository->findOrFail($projetId);
+
+            // Vérifier que le projet est au bon statut
+            if (!in_array($projet->statut->value, [StatutIdee::VALIDATION_PROFIL->value, StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER->value])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le projet n\'est pas à l\'étape de soumission du rapport de faisabilité préliminaire.'
+                ], 422);
+            }
+
+            // Extraire les données spécifiques au payload
+            $estSoumise = $data['est_soumise'] ?? true;
+
+            // Déterminer le statut selon est_soumise
+            $statut = $estSoumise ? 'soumis' : 'brouillon';
+
+            // Préparer les données du rapport
+            $rapportData = [
+                'projet_id' => $projetId,
+                'type' => 'faisabilite_preliminaire',
+                'statut' => $statut,
+                'intitule' => $data['intitule'] ?? 'Rapport de faisabilité préliminaire',
+                'date_soumission' => $estSoumise ? now() : null,
+                'soumis_par_id' => auth()->id(),
+            ];
+
+            // Chercher un rapport existant pour ce projet et type
+            $rapportExistant = Rapport::where('projet_id', $projetId)
+                ->where('type', 'faisabilite_preliminaire')
+                ->orderBy("created_at", "desc")
+                ->first();
+
+            if ($rapportExistant && $rapportExistant->statut === 'soumis') {
+                // Si un rapport soumis existe déjà, créer une nouvelle version avec parent_id
+                $rapportData['parent_id'] = $rapportExistant->id;
+                $rapport = Rapport::create($rapportData);
+                $message = 'Nouvelle version du rapport de faisabilité préliminaire créée avec succès.';
+            } elseif ($rapportExistant && in_array($rapportExistant->statut, ['brouillon', 'renvoye', 'non_accepte'])) {
+                // Si un rapport en brouillon, renvoyé ou non accepté existe, le mettre à jour
+                $rapport = $rapportExistant;
+                $rapport->fill($rapportData);
+                $rapport->save();
+                $message = 'Rapport de faisabilité préliminaire mis à jour avec succès.';
+            } else {
+                // Créer un nouveau rapport (première version)
+                $rapport = Rapport::create($rapportData);
+                $message = 'Rapport de faisabilité préliminaire créé avec succès.';
+            }
+
+            // Cas spécifique : Resoumission d'un rapport retourné (R_VALIDATION_PROFIL_NOTE_AMELIORER)
+            if ($estSoumise && $projet->statut === StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER) {
+                // Si le rapport a un parent, créer une nouvelle évaluation basée sur l'ancienne
+                if ($rapport->parent_id) {
+                    $ancienRapport = Rapport::find($rapport->parent_id);
+                    if ($ancienRapport) {
+                        $this->creerEvaluationPourRapportResoumis($rapport, $ancienRapport);
+                    }
+                }
+
+                // Changer le statut du projet vers VALIDATION_PROFIL
+                $projet->update([
+                    'statut' => StatutIdee::VALIDATION_PROFIL,
+                    'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_PROFIL),
+                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_PROFIL)
+                ]);
+
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($projet, StatutIdee::VALIDATION_PROFIL);
+                $this->enregistrerDecision(
+                    $projet,
+                    "Resoumission du rapport de faisabilité préliminaire après révision",
+                    $data['intitule'] ?? 'Rapport révisé soumis pour réévaluation',
+                    auth()->user()->personne->id
+                );
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => [
+                    'rapport_id' => $rapport->id,
+                    'projet_id' => $projet->id,
+                    'statut_rapport' => $rapport->statut,
+                    'statut_projet' => $projet->statut->value,
+                    'soumis_par' => auth()->id(),
+                    'soumis_le' => $estSoumise ? now()->format('d/m/Y H:i:s') : null
+                ]
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
      * Traiter la décision de validation selon le cas d'utilisation
      */
     private function traiterDecisionValidation($projet, string $decision, array $data, $noteConceptuelle = null, $resultatsControleQualite = null, $rapportFaisabilitePrelim = null, $evaluation = null): \App\Enums\StatutIdee
