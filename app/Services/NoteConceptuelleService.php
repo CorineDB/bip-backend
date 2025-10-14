@@ -2968,7 +2968,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'statut' => $evaluation->statut,
                         'commentaire' => $evaluation->commentaire
                     ] : null,
-                    'rapport' => $projet->rapportFaisabilitePreliminaire()->first() ? new RapportResource($projet->rapportFaisabilitePreliminaire()->first()->load(["historique", "evaluations"])) : null,
+                    'rapport' => $projet->rapportFaisabilitePreliminaire()->first() ? new RapportResource($projet->rapportFaisabilitePreliminaire()->first()->load(["historique"])) : null,
                 ]
             ]);
         } catch (Exception $e) {
