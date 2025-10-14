@@ -2591,10 +2591,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $projet->save();
             }
 
-            /* if (isset($data["est_dur"])) {
-                $projet->est_dur = $data["est_dur"];
-            } */
-
             if ($action === "submit") {
 
                 // Traiter la décision selon le cas d'utilisation
@@ -2960,8 +2956,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             return response()->json([
                 'success' => true,
                 'data' => [
-                    //'projet' => new \App\Http\Resources\projets\ProjetsResource($projet),
-                    'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet", "historique_des_evaluations_notes_conceptuelle")),
+                    'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet")),
                     'evaluation' => $evaluation ? [
                         'id' => $evaluation->id,
                         'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:i:s") : null,
@@ -2969,7 +2964,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'decision' => $evaluation->evaluation,
                         'statut' => $evaluation->statut,
                         'commentaire' => $evaluation->commentaire
-                    ] : null
+                    ] : null,
+                    'rapport' => $projet->rapportFaisabilitePreliminaire()->first()->load("evaluations"),
                 ]
             ]);
         } catch (Exception $e) {
