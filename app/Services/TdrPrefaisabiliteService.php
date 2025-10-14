@@ -394,7 +394,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'success' => true,
                 'data' => [
                     //'projet' => new ProjetsResource($projet->load('tdrPrefaisabilite')),
-                    'tdr' => new TdrResource($tdr->load("projet", "historique_des_tdrs_prefaisabilite", "historique_des_evaluations_tdrs_prefaisabilite")),
+                    'tdr' => new TdrResource($tdr->load("projet", "historique_des_tdrs_prefaisabilite")),
                     //'fichiers' => $tdr->fichiers,
                     //'peut_apprecier' => $projet->statut->value === StatutIdee::TDR_PREFAISABILITE->value,
                     'statut_projet' => $projet->statut,
@@ -803,7 +803,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 return response()->json([
                     'success' => true,
                     'data' =>  [
-                        'tdr' => new TdrResource($tdr->load(['fichiers', 'projet'])),
+                        'tdr' => new TdrResource($tdr->load(['fichiers', 'projet', "historique_des_evaluations_tdrs_prefaisabilite"])),
                     ],
                     'message' => 'Aucune évaluation trouvée pour cette tdr.'
                 ], 206);
@@ -920,87 +920,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $grilleEvaluation]);
             }
 
-            /* if ($evaluation && $evaluation->statut == 1) {
-                // Recalculer le résultat pour l'évaluation terminée
-                $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation["champs_evalues"];
-                foreach ($champs_evalues as $champ) {
-                    $champ =  (array)$champ;
-                    $evaluationsChamps[] = [
-                        'champ_id' => isset($champ["champ_id"]) ? $champ["champ_id"] : null,
-                        'label' => isset($champ["label"]) ? $champ["label"] : null,
-                        'attribut' => isset($champ["attribut"]) ? $champ["attribut"] : null,
-                        'type_champ' => isset($champ["type_champ"]) ? $champ["type_champ"] : "textearea",
-                        'ordre_affichage' => isset($champ["ordre_affichage"]) ? $champ["ordre_affichage"] : 0,
-                        'appreciation' =>  isset($champ["appreciation"]) ? $champ["appreciation"] : null,
-                        'commentaire_evaluateur' =>  isset($champ["commentaire_evaluateur"]) ? $champ["commentaire_evaluateur"] : null,
-                        'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
-                    ];
-                }
-                $resultatsEvaluation = $evaluation->resultats_evaluation;
-            } else {
-                foreach ($evaluation->champs_evalue as $champ) {
-                    $evaluationsChamps[] = [
-                        'champ_id' => $champ->id,
-                        'appreciation' => $champ->pivot->note,
-                        'commentaire_evaluateur' => $champ->pivot->commentaires,
-                        'date_appreciation' => $champ->pivot->date_note
-                    ];
-                }
-
-                $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
-            } */
-
-            // Déterminer les actions suivantes selon le résultat
-            $actionsSuivantes = $this->getActionsSuivantesSelonResultat($resultatsEvaluation['resultat_global']);
-
-            // Récupérer toutes les évaluations du projet pour ce type
-            /*$evaluations = $projet->evaluations()
-                ->where('statut', 1)
-                ->where('id', "<>", $evaluation->id)
-                ->where('type_evaluation', 'tdr-prefaisabilite')
-                ->with(['champs_evalue' => function ($query) {
-                    $query->orderBy('ordre_affichage');
-                }])
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-            // Construire l'historique des évaluations
-            $historiqueEvaluations = $evaluations->map(function ($evaluation) {
-                // Recalculer le résultat pour chaque évaluation
-
-                //$resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
-                $resultatsEvaluation = $evaluation->resultats_evaluation;
-                $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation;
-                return [
-                    'id' => $evaluation->id,
-                    'statut' => $evaluation->statut, // 0=en cours, 1=terminée
-                    'evaluateur' => $evaluation->evaluateur ? new UserResource($evaluation->evaluateur) : 'N/A',
-                    'date_debut' => Carbon::parse($evaluation->date_debut_evaluation)->format("Y-m-d h:i:s"),
-                    'date_fin' => Carbon::parse($evaluation->date_fin_evaluation)->format("Y-m-d h:i:s"),
-                    'commentaire_global' => $evaluation->commentaire,
-                    'resultat_global' => $resultatsEvaluation['resultat_global'] ?? null,
-                    'message_resultat' => $resultatsEvaluation['message_resultat'] ?? null,
-                    'champs_evalues' => collect($champs_evalues)->map(function ($champ) {
-                        $champ = (array)$champ;
-                        return [
-                            'champ_id' => isset($champ["champ_id"]) ? $champ["champ_id"] : null,
-                            'label' => isset($champ["label"]) ? $champ["label"] : null,
-                            'attribut' => isset($champ["attribut"]) ? $champ["attribut"] : null,
-                            'type_champ' =>  isset($champ["type_champ"]) ? $champ["type_champ"] : "textearea",
-                            'ordre_affichage' => isset($champ["ordre_affichage"]) ? $champ["ordre_affichage"] : 0,
-                            'appreciation' =>  isset($champ["appreciation"]) ? $champ["appreciation"] : null,
-                            'commentaire_evaluateur' =>  isset($champ["commentaire_evaluateur"]) ? $champ["commentaire_evaluateur"] : null,
-                            'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
-                        ];
-                    })
-                ];
-            });*/
-
             return response()->json([
                 'success' => true,
                 'message' => 'Détails de l\'évaluation TDR récupérés avec succès.',
                 'data' => [
-                    'tdr' => new TdrResource($tdr->load(['fichiers', 'projet'])),
+                    'tdr' => new TdrResource($tdr->load(['fichiers', 'projet', "historique_des_evaluations_tdrs_prefaisabilite"])),
                     'evaluation_existante' => $evaluation ? [
                         'id' => $evaluation->id,
                         'statut' => $evaluation->statut, // 0=en cours, 1=terminée
@@ -1013,8 +937,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'resultats_evaluation' => $evaluation->resultats_evaluation,
                     ] : null,
                     'resultats_evaluation' => $resultatsEvaluation,
-                    'actions_suivantes' => $actionsSuivantes,
-                    //'historique_evaluations' => $historiqueEvaluations
                 ]
             ]);
         } catch (Exception $e) {
