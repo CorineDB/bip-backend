@@ -605,8 +605,9 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
                     if ($evaluation) {
                         // Vérifier d'abord dans le JSON de l'évaluation
-                        if (isset($evaluation->evaluation['champs_evalues'])) {
-                            $evaluationExistante = collect($evaluation->evaluation['champs_evalues'])
+                        $evaluationData = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation, true) : $evaluation->evaluation;
+                        if (isset($evaluationData['champs_evalues'])) {
+                            $evaluationExistante = collect($evaluationData['champs_evalues'])
                                 ->firstWhere('champ_id', $champ->id);
 
                             if ($evaluationExistante) {
