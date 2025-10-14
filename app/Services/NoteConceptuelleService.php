@@ -2959,7 +2959,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'success' => true,
                 'data' => [
                     'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet")),
-                    'evaluation' => $evaluation ? [
+                    'validation' => $evaluation ? [
                         'id' => $evaluation->id,
                         'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:i:s") : null,
                         'valider_par' => new UserResource($evaluation->validator),
