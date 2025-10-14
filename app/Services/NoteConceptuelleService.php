@@ -3399,7 +3399,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     /**
      * Soumettre ou resoumettre un rapport de faisabilité préliminaire (SFD-009)
      */
-    public function soumettreRapportFaisabilitePreliminaire(int $projetId, array $data): JsonResponse
+    public function soumettreRapportFaisabilitePreliminaire($projetId, array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
@@ -4484,23 +4484,5 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         $this->removeSpecificFiles($fichierIdentique);
 
         return $fichierCree;
-    }
-
-
-    /**
-     * Soumettre ou resoumettre un rapport de faisabilité préliminaire
-     * Gère la création de l'évaluation lors de la resoumission
-     */
-    public function soumettreRapportFaisabilitePreliminaire(int $projetId, array $data): JsonResponse{
-        try{   return response()->json([
-                'success' => true,
-                'message' => "message",
-                'data' => [
-                ]
-            ], 201);
-        } catch (Exception $e) {
-            DB::rollBack();
-            return $this->errorResponse($e);
-        }
     }
 }
