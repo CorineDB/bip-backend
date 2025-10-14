@@ -254,7 +254,12 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             }
 
             $projet->resume_tdr_faisabilite = $data["resume_tdr_faisabilite"];
-
+            if ($tdr->parent_id) {
+                $ancienTdr = \App\Models\Tdr::find($tdr->parent_id);
+                if ($ancienTdr) {
+                    $this->creerEvaluationPourTdrResoumis($tdr, $ancienTdr);
+                }
+            }
             // Cas spécifique : Resoumission d'un TDR retourné (R_TDR_FAISABILITE ou TDR_FAISABILITE)
             if ($estSoumise && in_array($projet->statut, [StatutIdee::R_TDR_FAISABILITE, StatutIdee::TDR_FAISABILITE])) {
                 // Si le TDR a un parent, créer une nouvelle évaluation basée sur l'ancienne
@@ -2622,6 +2627,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             })->toArray(),
             'statistiques' => $resultatsExamen
         ];
+
+        dd($evaluationComplete);
 
         // Mettre à jour avec les données complètes
         $newEvaluation->evaluation = $evaluationComplete;
