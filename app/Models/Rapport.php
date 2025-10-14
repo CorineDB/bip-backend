@@ -445,7 +445,7 @@ class Rapport extends Model
             'prefaisabilite' => 'validation-etude-prefaisabilite',
             'faisabilite' => 'validation-etude-faisabilite',
             'evaluation_ex_ante' => 'validation-final-evaluation-ex-ante',
-            'faisabilite-preliminaire' => 'evaluation_ex_ante',
+            'faisabilite-preliminaire' => 'controle-qualite-rapport-faisabilite-preliminaire',
             default => $this->type
         };
 
