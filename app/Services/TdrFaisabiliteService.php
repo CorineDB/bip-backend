@@ -960,9 +960,11 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                                 // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
                                 // C'est un champ qui n'était pas "passé", on ajoute les anciennes valeurs avec "_passer"
                                 if (!$champEvalue && $ancienChampEvalue) {
-                                    $result['appreciation_passer'] = $ancienChampEvalue['appreciation'] ?? null;
-                                    $result['commentaire_passer_evaluateur'] = $ancienChampEvalue['commentaire_evaluateur'] ?? null;
-                                    $result['date_appreciation_passer'] = $ancienChampEvalue['date_appreciation'] ?? null;
+                                    // Convertir en array si c'est un objet
+                                    $ancienChampArray = is_array($ancienChampEvalue) ? $ancienChampEvalue : (array)$ancienChampEvalue;
+                                    $result['appreciation_passer'] = $ancienChampArray['appreciation'] ?? null;
+                                    $result['commentaire_passer_evaluateur'] = $ancienChampArray['commentaire_evaluateur'] ?? null;
+                                    $result['date_appreciation_passer'] = $ancienChampArray['date_appreciation'] ?? null;
                                 }
 
                                 return $result;
@@ -2687,9 +2689,11 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
                 // C'est un champ qui n'était pas "passé", on ajoute les anciennes valeurs avec "_passer"
                 if (!$champEvalue && $ancienChampEvalue) {
-                    $result['appreciation_passer'] = $ancienChampEvalue['appreciation'] ?? null;
-                    $result['commentaire_passer_evaluateur'] = $ancienChampEvalue['commentaire_evaluateur'] ?? null;
-                    $result['date_appreciation_passer'] = $ancienChampEvalue['date_appreciation'] ?? null;
+                    // Convertir en array si c'est un objet
+                    $ancienChampArray = is_array($ancienChampEvalue) ? $ancienChampEvalue : (array)$ancienChampEvalue;
+                    $result['appreciation_passer'] = $ancienChampArray['appreciation'] ?? null;
+                    $result['commentaire_passer_evaluateur'] = $ancienChampArray['commentaire_evaluateur'] ?? null;
+                    $result['date_appreciation_passer'] = $ancienChampArray['date_appreciation'] ?? null;
                 }
 
                 return $result;
