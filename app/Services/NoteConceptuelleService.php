@@ -626,7 +626,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     /**
      * Récupérer une note conceptuelle d'un projet
      */
-    public function getForProject(int $projetId): JsonResponse
+    public function getForProject($projetId): JsonResponse
     {
         try {
 
@@ -2923,8 +2923,9 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     /**
      * Récupérer les détails de validation de l'étude de profil pour un projet
      */
-    public function getDetailsEtudeProfil(int $projetId): JsonResponse
+    public function getDetailsEtudeProfil($projetId): JsonResponse
     {
+        dd($projetId);
         try {
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
