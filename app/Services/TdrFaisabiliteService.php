@@ -2571,7 +2571,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             } else {
                 // Si retour ou non_accepte, mettre null (pas de copie dans pivot)
                 // Les anciennes valeurs seront dans le JSON evaluation avec le suffixe "_passer"
-                dump($champ);
             }
         }
 
@@ -2597,6 +2596,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         // Récupérer l'ancienne évaluation pour référence
         $ancienneEvaluation = $evaluationTerminee->evaluation ?? [];
         $anciensChampsEvalues = collect($ancienneEvaluation['champs_evalues'] ?? []);
+
+        dd($anciensChampsEvalues);
 
         $evaluationComplete = [
             'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationTdrFaisabilite()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
