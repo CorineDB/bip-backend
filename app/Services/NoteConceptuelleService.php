@@ -3357,7 +3357,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         })->toArray();
 
         // Construire le JSON evaluation basé sur les champs copiés
-        $resultatsExamen = $this->calculerResultatsControleQualite($nouveauRapport, ['evaluations_champs' => $evaluationsChamps]);
+        $resultatsExamen = $this->calculerResultatsControleQualite($newEvaluation, ['evaluations_champs' => $evaluationsChamps]);
 
         // Récupérer l'ancienne évaluation pour référence
         $ancienneEvaluation = $evaluationTerminee->evaluation ?? [];
