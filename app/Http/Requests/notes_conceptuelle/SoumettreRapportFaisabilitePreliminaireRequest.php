@@ -45,6 +45,17 @@ class SoumettreRapportFaisabilitePreliminaireRequest extends FormRequest
             'analyse_financiere.flux_tresorerie' => $estSoumise ? 'required|array' : 'nullable|array',
             'analyse_financiere.flux_tresorerie.*' => 'numeric',
             'analyse_financiere.taux_actualisation' => $estSoumise ? 'required|numeric|min:0|max:100' : 'nullable|numeric|min:0|max:100',
+
+
+
+            // Analyse financière requise seulement si le projet est MOU ET soumis
+            'analyse_financiere'                            => ($estSoumise) ? 'required|array' : 'nullable|array|min:0',
+            'analyse_financiere.duree_vie'                  => ($estSoumise) ? 'required|numeric' : 'nullable|numeric',
+            'analyse_financiere.taux_actualisation'         => ($estSoumise) ? 'required|numeric' : 'nullable|numeric',
+            'analyse_financiere.investissement_initial'     => ($estSoumise) ? 'required|numeric' : 'nullable|numeric',
+            'analyse_financiere.flux_tresorerie'            => ($estSoumise) ? 'required|array|min:' . ($this->input("analyse_financiere.duree_vie") ?? 1) : 'nullable|array',
+            'analyse_financiere.flux_tresorerie.*.t'        => ($estSoumise) ? 'required|numeric|min:1|max:' . ($this->input("analyse_financiere.duree_vie") ?? 1) : 'nullable|numeric',
+            'analyse_financiere.flux_tresorerie.*.CFt'      => ($estSoumise) ? 'required|numeric|min:0' : 'nullable|numeric'
         ];
     }
 
