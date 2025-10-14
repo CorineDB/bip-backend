@@ -19,6 +19,7 @@ class TdrResource extends BaseApiResource
         return [
             'id' => $this->id,
             'projet_id' => $this->projet_id,
+            'parent_id' => $this->parent_id,
             'type' => $this->type,
             'statut' => $this->statut,
             'statutCode' => $this->statut != 'brouillon' ? 1 : 0,

@@ -656,86 +656,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $grilleEvaluation]);
             }
 
-            // Calculer le résultat de l'évaluation si elle existe et est terminée
-            /*$resultatsEvaluation = null;
-            $actionsSuivantes = null;
-            $evaluationsChamps = [];
-
-            if ($evaluation && $evaluation->statut == 1) {
-                // Recalculer le résultat pour l'évaluation terminée
-                $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation["champs_evalues"];
-                foreach ($champs_evalues as $champ) {
-                    $champ =  (array)$champ;
-                    $evaluationsChamps[] = [
-                        'champ_id' => isset($champ["champ_id"]) ? $champ["champ_id"] : null,
-                        'label' => isset($champ["label"]) ? $champ["label"] : null,
-                        'attribut' => isset($champ["attribut"]) ? $champ["attribut"] : null,
-                        'type_champ' => isset($champ["type_champ"]) ? $champ["type_champ"] : "textearea",
-                        'ordre_affichage' => isset($champ["ordre_affichage"]) ? $champ["ordre_affichage"] : 0,
-                        'appreciation' =>  isset($champ["appreciation"]) ? $champ["appreciation"] : null,
-                        'commentaire_evaluateur' =>  isset($champ["commentaire_evaluateur"]) ? $champ["commentaire_evaluateur"] : null,
-                        'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
-                    ];
-                }
-                $resultatsEvaluation = $evaluation->resultats_evaluation;
-            } else {
-                foreach ($evaluation->champs_evalue as $champ) {
-                    $evaluationsChamps[] = [
-                        'champ_id' => $champ->id,
-                        'appreciation' => $champ->pivot->note,
-                        'commentaire_evaluateur' => $champ->pivot->commentaires,
-                        'date_appreciation' => $champ->pivot->date_note
-                    ];
-                }
-
-                $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
-            }*/
-
             // Déterminer les actions suivantes selon le résultat
             $actionsSuivantes = $this->getActionsSuivantesSelonResultat($resultatsEvaluation['resultat_global']);
-
-            // Récupérer toutes les évaluations du projet pour ce type
-            /*$evaluations = $projet->evaluations()
-                ->where('statut', 1)
-                ->where('id', "<>", $evaluation->id)
-                ->where('type_evaluation', 'tdr-faisabilite')
-                ->with(['champs_evalue' => function ($query) {
-                    $query->orderBy('ordre_affichage');
-                }])
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-            // Construire l'historique des évaluations
-            $historiqueEvaluations = $evaluations->map(function ($evaluation) {
-                // Recalculer le résultat pour chaque évaluation
-
-                //$resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $evaluationsChamps]);
-                $resultatsEvaluation = $evaluation->resultats_evaluation;
-                $champs_evalues = is_string($evaluation->evaluation) ? json_decode($evaluation->evaluation)->champs_evalues : $evaluation->evaluation["champs_evalues"];
-                return [
-                    'id' => $evaluation->id,
-                    'statut' => $evaluation->statut, // 0=en cours, 1=terminée
-                    'evaluateur' => $evaluation->evaluateur ? new UserResource($evaluation->evaluateur) : 'N/A',
-                    'date_debut' => Carbon::parse($evaluation->date_debut_evaluation)->format("Y-m-d h:i:s"),
-                    'date_fin' => Carbon::parse($evaluation->date_fin_evaluation)->format("Y-m-d h:i:s"),
-                    'commentaire_global' => $evaluation->commentaire,
-                    'resultat_global' => $resultatsEvaluation['resultat_global'] ?? null,
-                    'message_resultat' => $resultatsEvaluation['message_resultat'] ?? null,
-                    'champs_evalues' => collect($champs_evalues)->map(function ($champ) {
-                        $champ = (array)$champ;
-                        return [
-                            'champ_id' => isset($champ["champ_id"]) ? $champ["champ_id"] : null,
-                            'label' => isset($champ["label"]) ? $champ["label"] : null,
-                            'attribut' => isset($champ["attribut"]) ? $champ["attribut"] : null,
-                            'type_champ' =>  isset($champ["type_champ"]) ? $champ["type_champ"] : "textearea",
-                            'ordre_affichage' => isset($champ["ordre_affichage"]) ? $champ["ordre_affichage"] : 0,
-                            'appreciation' =>  isset($champ["appreciation"]) ? $champ["appreciation"] : null,
-                            'commentaire_evaluateur' =>  isset($champ["commentaire_evaluateur"]) ? $champ["commentaire_evaluateur"] : null,
-                            'date_appreciation' =>  isset($champ["date_appreciation"]) ? $champ["date_appreciation"] : null,
-                        ];
-                    })
-                ];
-            });*/
 
             return response()->json([
                 'success' => true,
