@@ -2597,7 +2597,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         $ancienneEvaluation = $evaluationTerminee->evaluation ?? [];
         $anciensChampsEvalues = collect($ancienneEvaluation['champs_evalues'] ?? []);
 
-        dd($anciensChampsEvalues);
+        dd($evaluationTerminee->evaluation);
 
         $evaluationComplete = [
             'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationTdrFaisabilite()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
