@@ -108,6 +108,16 @@ class Commentaire extends Model
     }
 
     /**
+     * Fichiers attachés au commentaire
+     */
+    public function fichiers()
+    {
+        return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id')
+            ->active()
+            ->ordered();
+    }
+
+    /**
      * The model's boot method.
      */
     protected static function boot()
