@@ -2594,10 +2594,12 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         $resultatsExamen = $this->calculerResultatEvaluationTdr($newEvaluation, ['evaluations_champs' => $evaluationsChamps]);
 
         // Récupérer l'ancienne évaluation pour référence
-        $ancienneEvaluation = $evaluationTerminee->evaluation ?? [];
+        $ancienneEvaluation = is_string($evaluationTerminee->evaluation)
+            ? json_decode($evaluationTerminee->evaluation, true)
+            : ($evaluationTerminee->evaluation ?? []);
         $anciensChampsEvalues = collect($ancienneEvaluation['champs_evalues'] ?? []);
 
-        dd($evaluationTerminee->evaluation['champs_evalues']);
+        dd($evaluationTerminee->evaluation);
 
         $evaluationComplete = [
             'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationTdrFaisabilite()->all_champs)->map(function ($champ) use ($newEvaluation, $anciensChampsEvalues) {
@@ -2632,8 +2634,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             })->toArray(),
             'statistiques' => $resultatsExamen
         ];
-
-        dd($evaluationComplete);
 
         // Mettre à jour avec les données complètes
         $newEvaluation->evaluation = $evaluationComplete;
