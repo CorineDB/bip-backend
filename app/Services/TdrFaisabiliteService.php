@@ -2619,8 +2619,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
                 // C'est un champ qui n'était pas "passé", on ajoute les anciennes valeurs avec "_passer"
                 if (!$champEvalue && $ancienChampEvalue) {
-                    dd("IF");
-                    dd($anciensChampsEvalues->toArray());
                     // Convertir en array si c'est un objet
                     $ancienChampArray = is_array($ancienChampEvalue) ? $ancienChampEvalue : (array)$ancienChampEvalue;
                     $result['appreciation_passer'] = $ancienChampArray['appreciation'] ?? null;
