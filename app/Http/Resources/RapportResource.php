@@ -40,7 +40,7 @@ class RapportResource extends BaseApiResource
                 return new UserResource($this->validateur);
             }),
 
-            'historique_des_rapports' => $this->whenLoaded('historique', fn() => RapportResource::collection($this->historique)),
+            'historique_des_rapports' => $this->historique,// $this->whenLoaded('historique', fn() => RapportResource::collection($this->historique)),
 
 
             'historique_des_evaluations_rapports' => $this->whenLoaded('evaluations', function () {
