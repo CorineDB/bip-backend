@@ -3286,7 +3286,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     {
         // Récupérer l'évaluation terminée du rapport parent
         $evaluationTerminee = $ancienRapport->evaluations()
-            ->where('type_evaluation', 'rapport-faisabilite-preliminaire')
+            ->where('type_evaluation', 'controle-qualite-rapport-faisabilite-preliminaire')
             ->where('statut', 1)
             ->orderBy('created_at', 'desc')
             ->first();
@@ -3322,7 +3322,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         foreach ($champsEvalues as $champ) {
             $note = $champ->pivot->note;
 
-            if (in_array($note, ['conforme', 'non_applicable'])) {
+            if (in_array($note, ['passable', 'non_applicable'])) {
                 // Si conforme ou non_applicable, copier tel quel
                 $newEvaluation->champs_evalue()->attach($champ->id, [
                     'note' => $note,
@@ -3377,7 +3377,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ];
 
                 // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
-                // C'est un champ qui n'était pas "conforme" ou "non_applicable", on ajoute les anciennes valeurs avec "_passer"
+                // C'est un champ qui n'était pas "passable" ou "non_applicable", on ajoute les anciennes valeurs avec "_passer"
                 if (!$champEvalue && $ancienChampEvalue) {
                     $result['appreciation_passer'] = $ancienChampEvalue['appreciation'] ?? null;
                     $result['commentaire_passer_evaluateur'] = $ancienChampEvalue['commentaire_evaluateur'] ?? null;
@@ -3420,10 +3420,13 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Déterminer le statut selon est_soumise
             $statut = $estSoumise ? 'soumis' : 'brouillon';
 
+            // Extraire les données de documents
+            $documentsData = $data['documents'] ?? [];
+
             // Préparer les données du rapport
             $rapportData = [
                 'projet_id' => $projetId,
-                'type' => 'faisabilite_preliminaire',
+                'type' => 'faisabilite-preliminaire',
                 'statut' => $statut,
                 'intitule' => $data['intitule'] ?? 'Rapport de faisabilité préliminaire',
                 'date_soumission' => $estSoumise ? now() : null,
@@ -3432,7 +3435,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             // Chercher un rapport existant pour ce projet et type
             $rapportExistant = Rapport::where('projet_id', $projetId)
-                ->where('type', 'faisabilite_preliminaire')
+                ->where('type', 'faisabilite-preliminaire')
                 ->orderBy("created_at", "desc")
                 ->first();
 
@@ -3451,6 +3454,93 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 // Créer un nouveau rapport (première version)
                 $rapport = Rapport::create($rapportData);
                 $message = 'Rapport de faisabilité préliminaire créé avec succès.';
+            }
+
+            // Gérer les documents/fichiers du rapport
+            if (isset($documentsData["rapport_faisabilite_preliminaire"])) {
+                $this->gererFichierRapportFaisabilite($rapport, $documentsData['rapport_faisabilite_preliminaire']);
+            }
+
+            if (isset($documentsData["tdr_faisabilite_preliminaire"])) {
+                $this->gererFichierRapportFaisabilite($rapport, $documentsData['tdr_faisabilite_preliminaire']);
+            }
+
+            if (isset($documentsData["check_suivi_rapport"])) {
+                $this->gererFichierRapportFaisabilite($rapport, $documentsData['check_suivi_rapport']);
+            }
+
+            // Gérer l'analyse financière et calculer la VAN et le TRI
+            if ($estSoumise && isset($data['analyse_financiere'])) {
+                $updateData = [];
+                $analyseFinanciere = $data['analyse_financiere'];
+
+                $requiredFields = ['duree_vie', 'investissement_initial', 'flux_tresorerie', 'taux_actualisation'];
+
+                foreach ($requiredFields as $field) {
+                    // validation de présence de $analyseFinanciere[$field]
+                    if (!isset($analyseFinanciere[$field]) && !empty($analyseFinanciere[$field])) {
+                        throw ValidationException::withMessages([
+                            "analyse_financiere.$field" => "Le champ $field est obligatoire lorsque le projet est financé. " . $analyseFinanciere[$field]
+                        ]);
+                    }
+                    // validations supplémentaires pour les champs spécifiques
+                    // Il faut savoir que les donnees sont soumis dans un formdata donc tout est string
+
+                    if ($field === 'duree_vie') {
+
+                        $value = $analyseFinanciere[$field];
+
+                        // Vérifie que c'est bien un nombre ET un entier positif
+                        if (!ctype_digit((string)$value) || (int)$value <= 0) {
+                            throw ValidationException::withMessages([
+                                "analyse_financiere.$field" => "Le champ $field doit être un nombre entier positif (sans virgule)."
+                            ]);
+                        }
+
+                        // Optionnel : convertir proprement en entier
+                        $analyseFinanciere[$field] = (int)$value;
+                    }
+
+                    // Ajouter d'autres validations spécifiques si nécessaire
+                    if (in_array($field, ['investissement_initial', 'taux_actualisation'])) {
+                        if (!is_numeric($analyseFinanciere[$field])) {
+                            throw ValidationException::withMessages([
+                                "analyse_financiere.$field" => "Le champ $field doit être une date valide au format AAAA-MM-JJ."
+                            ]);
+                        }
+
+                        // Optionnel : forcer la conversion en float si tu veux l'utiliser ensuite
+                        $analyseFinanciere[$field] = (float) $analyseFinanciere[$field];
+                    }
+                }
+
+                // Préparer les données pour le fill() et la mise à jour
+                $financialData = [
+                    'duree_vie' => $analyseFinanciere['duree_vie'] ?? $projet->duree_vie,
+                    'investissement_initial' => $analyseFinanciere['investissement_initial'] ?? $projet->investissement_initial,
+                    'flux_tresorerie' => $analyseFinanciere['flux_tresorerie'] ?? $projet->flux_tresorerie,
+                    'taux_actualisation' => $analyseFinanciere['taux_actualisation'] ?? $projet->taux_actualisation,
+                ];
+
+                // Mettre à jour le modèle en mémoire avec les nouvelles données financières
+                $rapport->fill($financialData);
+
+                // Calculer la VAN et le TRI à partir des données mises à jour
+                $van = $rapport->calculerVAN();
+                $rapport->van = $van;
+                $tri = $rapport->calculerTRI();
+
+                // Ajouter toutes les données financières et les résultats au tableau de mise à jour
+                $updateData = array_merge($updateData, $financialData);
+
+                if ($van !== null) {
+                    $updateData['van'] = $van;
+                }
+                if ($tri !== null) {
+                    $updateData['tri'] = $tri;
+                }
+
+                $rapport->update($updateData);
             }
 
             // Cas spécifique : Resoumission d'un rapport retourné (R_VALIDATION_PROFIL_NOTE_AMELIORER)

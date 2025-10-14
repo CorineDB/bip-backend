@@ -37,6 +37,14 @@ class SoumettreRapportFaisabilitePreliminaireRequest extends FormRequest
             'documents.tdr_faisabilite_preliminaire' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
             'documents.check_suivi_rapport' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
             'documents.autres.*' => 'nullable|' . self::DOCUMENT_RULE,
+
+            // Analyse financière pour calcul VAN et TRI
+            'analyse_financiere' => $estSoumise ? 'required|array' : 'nullable|array',
+            'analyse_financiere.duree_vie' => $estSoumise ? 'required|integer|min:1' : 'nullable|integer|min:1',
+            'analyse_financiere.investissement_initial' => $estSoumise ? 'required|numeric|min:0' : 'nullable|numeric|min:0',
+            'analyse_financiere.flux_tresorerie' => $estSoumise ? 'required|array' : 'nullable|array',
+            'analyse_financiere.flux_tresorerie.*' => 'numeric',
+            'analyse_financiere.taux_actualisation' => $estSoumise ? 'required|numeric|min:0|max:100' : 'nullable|numeric|min:0|max:100',
         ];
     }
 
@@ -56,6 +64,21 @@ class SoumettreRapportFaisabilitePreliminaireRequest extends FormRequest
             'documents.rapport_faisabilite_preliminaire.required' => 'Le rapport de faisabilité préliminaire est obligatoire.',
             'documents.tdr_faisabilite_preliminaire.required' => 'Le TDR de faisabilité préliminaire est obligatoire.',
             'documents.check_suivi_rapport.required' => 'Le checklist de suivi du rapport est obligatoire.',
+            'analyse_financiere.required' => 'L\'analyse financière est obligatoire pour la soumission.',
+            'analyse_financiere.array' => 'L\'analyse financière doit être un tableau.',
+            'analyse_financiere.duree_vie.required' => 'La durée de vie du projet est obligatoire.',
+            'analyse_financiere.duree_vie.integer' => 'La durée de vie doit être un nombre entier.',
+            'analyse_financiere.duree_vie.min' => 'La durée de vie doit être au moins 1 an.',
+            'analyse_financiere.investissement_initial.required' => 'L\'investissement initial est obligatoire.',
+            'analyse_financiere.investissement_initial.numeric' => 'L\'investissement initial doit être un nombre.',
+            'analyse_financiere.investissement_initial.min' => 'L\'investissement initial doit être supérieur ou égal à 0.',
+            'analyse_financiere.flux_tresorerie.required' => 'Les flux de trésorerie sont obligatoires.',
+            'analyse_financiere.flux_tresorerie.array' => 'Les flux de trésorerie doivent être un tableau.',
+            'analyse_financiere.flux_tresorerie.*.numeric' => 'Chaque flux de trésorerie doit être un nombre.',
+            'analyse_financiere.taux_actualisation.required' => 'Le taux d\'actualisation est obligatoire.',
+            'analyse_financiere.taux_actualisation.numeric' => 'Le taux d\'actualisation doit être un nombre.',
+            'analyse_financiere.taux_actualisation.min' => 'Le taux d\'actualisation doit être supérieur ou égal à 0.',
+            'analyse_financiere.taux_actualisation.max' => 'Le taux d\'actualisation ne peut pas dépasser 100.',
         ];
     }
 
@@ -71,6 +94,11 @@ class SoumettreRapportFaisabilitePreliminaireRequest extends FormRequest
             'documents.rapport_faisabilite_preliminaire' => 'rapport de faisabilité préliminaire',
             'documents.tdr_faisabilite_preliminaire' => 'TDR de faisabilité préliminaire',
             'documents.check_suivi_rapport' => 'checklist de suivi',
+            'analyse_financiere' => 'analyse financière',
+            'analyse_financiere.duree_vie' => 'durée de vie',
+            'analyse_financiere.investissement_initial' => 'investissement initial',
+            'analyse_financiere.flux_tresorerie' => 'flux de trésorerie',
+            'analyse_financiere.taux_actualisation' => 'taux d\'actualisation',
         ];
     }
 }
