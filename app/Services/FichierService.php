@@ -123,9 +123,12 @@ class FichierService extends BaseService implements FichierServiceInterface
             } else {
                 $data = [
                     'mes_fichiers' => FichierResource::collection($mesFichiers),
-                    'fichiers_partages' => FichierResource::collection($fichiersPartages),
+                    //'fichiers_partages' => FichierResource::collection($fichiersPartages),
                     'public' => FichierResource::collection($fichiersPublics),
                 ];
+
+
+                dd($data);
             }
 
             // Statistiques
@@ -149,7 +152,6 @@ class FichierService extends BaseService implements FichierServiceInterface
                 'dossiers_count' => $groupByFolder ? $this->countActiveFolders($user) : 0
             ];*/
 
-            dd($data);
 
             $data['stats'] = $stats;
 
