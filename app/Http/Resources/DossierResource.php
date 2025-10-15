@@ -26,10 +26,11 @@ class DossierResource extends BaseApiResource
             'icone' => $this->icone,
             'is_public' => $this->is_public,
 
-            // Relations
-            'parent' => $this->when($this->relationLoaded('parent') && $this->parent, function() {
+            // Relations - Ne pas inclure le parent complet pour éviter la récursion infinie
+            // Le parent_id suffit pour la navigation, la hiérarchie complète est construite ailleurs
+            /* 'parent' => $this->when($this->relationLoaded('parent') && $this->parent, function() {
                 return new self($this->parent);
-            }),
+            }), */
             
             'enfants' => $this->when($this->relationLoaded('children'), function() {
                 return self::collection($this->children);

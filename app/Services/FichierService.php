@@ -152,12 +152,11 @@ class FichierService extends BaseService implements FichierServiceInterface
 
             return response()->json([
                 'success' => true,
-                'data' => "data",
+                'data' => $data,
                 'message' => 'Fichiers récupérés avec succès'
             ]);
 
         } catch (\Exception $e) {
-            dd($e);
             return $this->errorResponse($e);
         }
     }
