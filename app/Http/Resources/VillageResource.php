@@ -18,6 +18,7 @@ class VillageResource extends BaseApiResource
         return [
             'id' => $this->hashed_id,
             'slug' => $this->slug,
+            'code' => $this->code,
             'nom' => $this->nom,
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
