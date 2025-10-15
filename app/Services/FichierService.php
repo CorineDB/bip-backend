@@ -129,7 +129,7 @@ class FichierService extends BaseService implements FichierServiceInterface
             }
 
             // Statistiques
-            $stats = [
+            /*$stats = [
                 'mes_fichiers_count' => $mesFichiers->count(),
                 'mes_fichiers_size' => $mesFichiers->sum('taille'),
                 'mes_fichiers_size_formatted' => $this->formatBytes($mesFichiers->sum('taille')),
@@ -147,9 +147,9 @@ class FichierService extends BaseService implements FichierServiceInterface
                 'total_size_formatted' => $this->formatBytes($mesFichiers->sum('taille') + $fichiersPartages->sum('taille') + $fichiersPublics->sum('taille')),
 
                 'dossiers_count' => $groupByFolder ? $this->countActiveFolders($user) : 0
-            ];
+            ];*/
 
-            dd($stats);
+            dd($data);
 
             $data['stats'] = $stats;
 
