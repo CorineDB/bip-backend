@@ -27,12 +27,9 @@ class UpdateVillageRequest extends FormRequest
         // Déhasher l'ID de la route (le middleware l'a déjà fait normalement)
         $villageId = $this->route('village');
 
-        dd($villageId);
-
         // Si l'ID est encore hashé (au cas où le middleware n'a pas fonctionné)
         if ($villageId && is_string($villageId) && !is_numeric($villageId)) {
             $villageId = Village::unhashId($villageId);
-            dd($villageId);
         }
 
         return [
