@@ -56,8 +56,6 @@ class FichierService extends BaseService implements FichierServiceInterface
                 ->where('uploaded_by', $user->id)
                 ->where('is_public', false);
 
-            dd($mesFichiersQuery);
-
             // Fichiers partagés avec moi (privés avec permissions)
             $fichiersPartagesQuery = Fichier::query()
                 ->with(['uploadedBy', 'permissions.grantedBy', 'dossier'])
@@ -74,6 +72,8 @@ class FichierService extends BaseService implements FichierServiceInterface
 
             // Appliquer les filtres communs aux trois catégories
             $queries = [$mesFichiersQuery, $fichiersPartagesQuery, $fichiersPublicsQuery];
+
+            dd($queries);
 
             foreach ($queries as $query) {
                 if (!empty($filters['dossier_id'])) {
