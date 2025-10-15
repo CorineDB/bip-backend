@@ -52,7 +52,7 @@ class FichierResource extends BaseApiResource
             // Relations
             'uploaded_by' => [
                 'id' => $this->uploaded_by,
-                'nom' => $this->whenLoaded('uploadedBy', fn() => $this->uploadedBy->nom),
+                'nom' => $this->whenLoaded('uploadedBy', fn() => $this->uploadedBy->personne->nom),
                 'email' => $this->whenLoaded('uploadedBy', fn() => $this->uploadedBy->email),
             ],
 

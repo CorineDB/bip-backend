@@ -996,6 +996,11 @@ class FichierService extends BaseService implements FichierServiceInterface
             return true;
         }
 
+        // Vérifier permissions explicites via le trait HasResourcePermissions
+        if ($fichier->hasPermission($user, $permission)) {
+            return true;
+        }
+
         // Vérifier permissions sur ressource attachée selon le ministère
         if ($fichier->fichier_attachable_type && $fichier->fichier_attachable_id) {
             return $this->aPermissionSurRessourceAttachee($user, $fichier);
