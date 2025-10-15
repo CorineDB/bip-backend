@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Exception;
 use App\Services\BaseService;
 use App\Repositories\Contracts\BaseRepositoryInterface;
-use App\Http\Resources\Contracts\ApiResourceInterface;
 use App\Http\Resources\FichierResource;
 use App\Http\Resources\DossierResource;
 use App\Repositories\Contracts\FichierRepositoryInterface;

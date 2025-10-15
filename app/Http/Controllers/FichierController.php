@@ -74,7 +74,7 @@ class FichierController extends Controller
      */
     public function partager(Request $request, $id): JsonResponse
     {
-        return $this->service->partagerFichier($id, $request->all());
+        return $this->service->partagerFichierAvecUtilisateurs($id, $request->all());
     }
 
     /**
