@@ -11,20 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        /* Schema::table('rapports', function (Blueprint $table) {
-            // Checklists pour préfaisabilité
-            $table->json('checklist_suivi_rapport_prefaisabilite')->nullable();
-            $table->json('checklists_mesures_adaptation_haut_risque')->nullable();
-
-            // Checklists pour faisabilité
-            $table->json('checklist_etude_faisabilite_marche')->nullable();
-            $table->json('checklist_etude_faisabilite_economique')->nullable();
-            $table->json('checklist_etude_faisabilite_technique')->nullable();
-            $table->json('checklist_etude_faisabilite_organisationnelle_et_juridique')->nullable();
-            $table->json('checklist_suivi_analyse_faisabilite_financiere')->nullable();
-            $table->json('checklist_suivi_etude_analyse_impact_environnementale_et_sociale')->nullable();
-            $table->json('checklist_suivi_assurance_qualite_rapport_etude_faisabilite')->nullable();
-        }); */
         if (Schema::hasTable('rapports')) {
             Schema::table('rapports', function (Blueprint $table) {
                 $columns = [
