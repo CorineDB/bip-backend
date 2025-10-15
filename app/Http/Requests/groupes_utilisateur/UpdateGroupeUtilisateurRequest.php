@@ -40,14 +40,12 @@ class UpdateGroupeUtilisateurRequest extends FormRequest
             'permissions.*' => [
                 'required',
                 'distinct',
-                'integer',
                 Rule::exists('permissions', 'id')->whereNull('deleted_at')
             ],
 
             // Rôles
             'roles' => 'nullable|array|min:1',
             'roles.*' => [
-                'integer',
                 Rule::exists('roles', 'id')
                     ->when($profilable, function ($query) use ($profilable) {
                         $query->where('roleable_type', get_class($profilable))

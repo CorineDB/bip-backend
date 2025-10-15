@@ -37,7 +37,6 @@ class AMCRequest extends FormRequest
             'reponses' => ["required", "array", "min:1"],
             'reponses.*.critere_id' => [
                 'required',
-                'integer',
                 Rule::exists('criteres', 'id')->whereNull('deleted_at'),
                 function ($attribute, $value, $fail) use ($ideeProjetId) {
                     $this->validateCritereInEvaluation($attribute, $value, $fail, $ideeProjetId);
@@ -45,7 +44,6 @@ class AMCRequest extends FormRequest
             ],
             'reponses.*.notation_id' => [
                 'required',
-                'integer',
                 Rule::exists('notations', 'id')->whereNull('deleted_at'),
                 function ($attribute, $value, $fail) {
                     $this->validateNotationForCritere($attribute, $value, $fail);

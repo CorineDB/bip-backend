@@ -17,11 +17,13 @@ class ArrondissementResource extends BaseApiResource
     {
         return [
             'id' => $this->id,
+            'arrondissementHashId' => $this->hashed_id,
             'slug' => $this->slug,
             'nom' => $this->nom,
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
-            'communeId' => $this->communeId
+            'communeId' => $this->communeId,
+            'communeHashId' => $this->commune->hashed_id
         ];
     }
 

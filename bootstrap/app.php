@@ -23,9 +23,15 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.client' => \Laravel\Passport\Http\Middleware\CheckToken::class,
             'scope' => \Laravel\Passport\Http\Middleware\CheckTokenForAnyScope::class,
             'oauth.audit' => \App\Http\Middleware\OAuthAuditMiddleware::class,
+            'unhash.ids' => \App\Http\Middleware\UnhashRouteParameters::class,
         ]);
         $middleware->use([
             \App\Http\Middleware\CorsMiddleware::class
+        ]);
+
+        // Ajouter le middleware UnhashRouteParameters pour les routes API
+        $middleware->api(append: [
+            \App\Http\Middleware\UnhashRouteParameters::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -25,10 +25,10 @@ class ModifierEvaluationClimatiqueRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $ideeProjetId = $this->route('ideeProjetId');
-        
+
         // Charger l'idée de projet
         $this->ideeProjet = IdeeProjet::find($ideeProjetId);
-        
+
         // Charger l'évaluation climatique pour cette idée de projet
         $this->evaluation = Evaluation::where('projetable_type', 'App\Models\IdeeProjet')
             ->where('projetable_id', $ideeProjetId)
@@ -44,12 +44,11 @@ class ModifierEvaluationClimatiqueRequest extends FormRequest
     public function rules(): array
     {
         $ideeProjetId = $this->route('ideeProjetId');
-        
+
         return [
             'reponses' => 'required|array|min:1',
             'reponses.*.critere_id' => [
                 'required',
-                'integer',
                 Rule::exists('criteres', 'id')->whereNull('deleted_at'),
                 function ($attribute, $value, $fail) use ($ideeProjetId) {
                     $this->validateCritereForResponsable($attribute, $value, $fail, $ideeProjetId);
@@ -57,7 +56,6 @@ class ModifierEvaluationClimatiqueRequest extends FormRequest
             ],
             'reponses.*.notation_id' => [
                 'nullable',
-                'integer',
                 Rule::exists('notations', 'id')->whereNull('deleted_at'),
                 function ($attribute, $value, $fail) {
                     if ($value) { // Si une notation est fournie, la valider
@@ -82,13 +80,13 @@ class ModifierEvaluationClimatiqueRequest extends FormRequest
     }
 
     /**
-     * Valide que le critère appartient à l'évaluation climatique et que l'utilisateur 
+     * Valide que le critère appartient à l'évaluation climatique et que l'utilisateur
      * connecté est bien le responsable de l'idée de projet.
      */
     private function validateCritereForResponsable($attribute, $critereId, $fail, $ideeProjetId)
     {
         $responsableId = auth()->id();
-        
+
         if (!$this->evaluation) {
             $fail('Aucune évaluation climatique trouvée pour cette idée de projet.');
             return;

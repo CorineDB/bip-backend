@@ -25,7 +25,7 @@ class UpdateCommentaireRequest extends FormRequest
 
             // IDs des fichiers à supprimer
             'fichiers_a_supprimer' => ['nullable', 'array'],
-            'fichiers_a_supprimer.*' => ['integer', Rule::exists('fichiers', 'id')->whereNull('deleted_at')],
+            'fichiers_a_supprimer.*' => [Rule::exists('fichiers', 'id')->whereNull('deleted_at')],
         ];
 
         // Si on autorise le déplacement du commentaire vers une autre ressource
@@ -39,12 +39,11 @@ class UpdateCommentaireRequest extends FormRequest
                 $rules['commentaireable_type'] = ['required', 'string'];
                 $rules['commentaireable_id'] = [
                     'required',
-                    'integer',
                     Rule::exists($map[$typeLower], 'id')
                 ];
             } else {
                 $rules['commentaireable_type'] = ['required', 'string', 'max:255'];
-                $rules['commentaireable_id'] = ['required', 'integer', 'min:1'];
+                $rules['commentaireable_id'] = ['required', 'min:1'];
             }
         }
 

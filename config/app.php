@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Base Integre Programmable'),
 
     /*
     |--------------------------------------------------------------------------
@@ -121,6 +121,20 @@ return [
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
-    ]
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Hashids Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration pour le hashage des IDs avec Hashids.
+    | Le salt doit être unique et secret pour votre application.
+    | La longueur minimale détermine la longueur des IDs hashés générés.
+    |
+    */
+
+    'hashids_salt' => env('HASHIDS_SALT', env('APP_KEY')),
+    'hashids_min_length' => env('HASHIDS_MIN_LENGTH', 13),
 
 ];

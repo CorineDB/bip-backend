@@ -90,10 +90,6 @@ class StoreGroupeUtilisateurRequest extends FormRequest
                     ->whereNull("roleId")
                     ->whereNull('deleted_at')
             ],
-            /* 'users.*' => [
-                'integer',
-                Rule::exists('users', 'id')->whereNull("roleId")->whereNull("roleId")->whereNull('deleted_at')
-            ], */
 
             // Email utilisateur
             'users.*.email' => [

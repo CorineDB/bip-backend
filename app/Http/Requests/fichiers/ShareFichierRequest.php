@@ -16,7 +16,7 @@ class ShareFichierRequest extends FormRequest
     {
         return [
             'user_ids' => ['required', 'array', 'min:1', 'max:50'],
-            'user_ids.*' => ['required', 'integer', Rule::exists('users', 'id')],
+            'user_ids.*' => ['required', Rule::exists('users', 'id')],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', Rule::in(['view', 'edit', 'download', 'share', 'delete'])],
             'expires_at' => ['nullable', 'date', 'after:now'],

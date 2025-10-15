@@ -53,7 +53,6 @@ class UpdateGroupeUtilisateurRequestcop extends FormRequest
             // Utilisateurs (optionnels à la création)
             'users' => 'nullable|array',
             'users.*.id' => [
-                'integer',
                 Rule::exists('users', 'id')/* ->whereNull("roleId")->whereNull("roleId") */->whereNull('deleted_at')
             ],
             // Données utilisateur de base
