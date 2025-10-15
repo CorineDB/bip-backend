@@ -24,7 +24,7 @@ class CommentaireResource extends BaseApiResource
             'commentateur' => $this->when($this->relationLoaded('commentateur'), function() {
                 return $this->commentateur ? [
                     'id' => $this->commentateur->id,
-                    'name' => $this->commentateur->name,
+                    'name' => $this->commentateur->nom,
                     'email' => $this->commentateur->email,
                 ] : null;
             }),
@@ -36,7 +36,26 @@ class CommentaireResource extends BaseApiResource
 
             // Réponses (sous-commentaires)
             'reponses' => $this->when($this->relationLoaded('enfants'), function() {
-                return static::collection($this->enfants);
+                return $this->enfants->map(function($enfant) {
+                    return [
+                        'id' => $enfant->id,
+                        'commentaire' => $enfant->commentaire,
+                        'date' => $enfant->date?->format('Y-m-d H:i:s'),
+                        'commentateur' => $enfant->commentateur ? [
+                            'id' => $enfant->commentateur->id,
+                            'name' => $enfant->commentateur->name,
+                            'email' => $enfant->commentateur->email,
+                        ] : null,
+                        'fichiers' => $enfant->relationLoaded('fichiers') ? FichierResource::collection($enfant->fichiers) : [],
+                        'nb_fichiers' => $enfant->relationLoaded('fichiers') ? $enfant->fichiers->count() : 0,
+                        'parent' => [
+                            'id' => $this->id,
+                            'commentaire' => $this->commentaire,
+                        ],
+                        'created_at' => $enfant->created_at?->format('Y-m-d H:i:s'),
+                        'updated_at' => $enfant->updated_at?->format('Y-m-d H:i:s'),
+                    ];
+                });
             }),
 
             // Parent (si c'est une réponse)
