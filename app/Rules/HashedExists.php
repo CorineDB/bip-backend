@@ -46,28 +46,41 @@ class HashedExists implements ValidationRule
             return;
         }
 
-        // Déhasher l'ID en utilisant le modèle si disponible
-        $unhashedId = null;
-
-        if ($this->modelClass && method_exists($this->modelClass, 'unhashId')) {
-            $unhashedId = $this->modelClass::unhashId($value);
+        // Si c'est déjà un entier, pas besoin de déhasher
+        if (is_int($value)) {
+            $unhashedId = $value;
         } else {
-            // Fallback: essayer de déhasher avec Hashids directement
-            try {
-                $hashids = new \Hashids\Hashids(
-                    config('app.hashids_salt', config('app.key')),
-                    config('app.hashids_min_length', 8)
-                );
-                $decoded = $hashids->decode($value);
-                $unhashedId = !empty($decoded) ? $decoded[0] : null;
-            } catch (\Exception $e) {
-                $unhashedId = null;
-            }
-        }
+            // Déhasher l'ID en utilisant le modèle si disponible
+            $unhashedId = null;
 
-        if ($unhashedId === null) {
-            $fail("Le {$attribute} fourni n'est pas valide.");
-            return;
+            if ($this->modelClass && method_exists($this->modelClass, 'unhashId')) {
+                $unhashedId = $this->modelClass::unhashId($value);
+            } else {
+                // Fallback: essayer de déhasher avec Hashids directement
+                try {
+                    $hashids = new \Hashids\Hashids(
+                        config('app.hashids_salt', config('app.key')),
+                        config('app.hashids_min_length', 8)
+                    );
+                    $decoded = $hashids->decode($value);
+                    $unhashedId = !empty($decoded) ? $decoded[0] : null;
+                } catch (\Exception $e) {
+                    $unhashedId = null;
+                }
+            }
+
+            if ($unhashedId === null) {
+                $fail("Le {$attribute} fourni n'est pas valide.");
+                return;
+            }
+
+            // Modifier directement la valeur dans la Request
+            $request = request();
+            if ($request) {
+                $request->merge([
+                    $attribute => $unhashedId
+                ]);
+            }
         }
 
         // Vérifier que l'ID existe dans la table

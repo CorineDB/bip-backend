@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\villages\UpdateVillageRequest;
 use App\Services\Contracts\VillageServiceInterface;
 use Illuminate\Http\JsonResponse;
 
@@ -23,5 +24,11 @@ class VillageController extends Controller
     public function show($id): JsonResponse
     {
         return $this->service->find($id);
+    }
+
+    public function update(UpdateVillageRequest $request, $id): JsonResponse
+    {
+        dd($request->validated());
+        return $this->service->update($id, $request->validate());
     }
 }

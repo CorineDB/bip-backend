@@ -55,6 +55,12 @@ class HashedExistsMultiple implements ValidationRule
         $unhashedIds = [];
 
         foreach ($value as $index => $hashedId) {
+            // Si c'est déjà un entier, pas besoin de déhasher
+            if (is_int($hashedId)) {
+                $unhashedIds[] = $hashedId;
+                continue;
+            }
+
             $unhashedId = null;
 
             if ($this->modelClass && method_exists($this->modelClass, 'unhashId')) {
@@ -79,6 +85,14 @@ class HashedExistsMultiple implements ValidationRule
             }
 
             $unhashedIds[] = $unhashedId;
+        }
+
+        // Modifier directement la valeur dans la Request
+        $request = request();
+        if ($request) {
+            $request->merge([
+                $attribute => $unhashedIds
+            ]);
         }
 
         // Vérifier que tous les IDs existent dans la table
