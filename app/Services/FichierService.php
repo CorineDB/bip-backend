@@ -112,7 +112,7 @@ class FichierService extends BaseService implements FichierServiceInterface
             $groupByFolder = $filters['group_by_folder'] ?? true;
             $data = [];
 
-            dd($mesFichiers);
+            dd(FichierResource::collection($mesFichiers));
 
             if ($groupByFolder) {
                 $data = [
