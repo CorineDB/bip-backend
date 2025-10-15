@@ -41,4 +41,16 @@ class CommentaireController extends Controller
     {
         return $this->service->delete($id);
     }
+
+    /**
+     * Récupérer tous les commentaires d'une ressource spécifique
+     *
+     * @param string $resourceType - Type de ressource (projet, note, tdr, rapport, etc.)
+     * @param int $resourceId - ID de la ressource
+     * @return JsonResponse
+     */
+    public function getByResource(string $resourceType, int $resourceId): JsonResponse
+    {
+        return $this->service->getCommentairesParRessource($resourceType, $resourceId);
+    }
 }

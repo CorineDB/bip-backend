@@ -19,6 +19,10 @@ class StoreCommentaireRequest extends FormRequest
         $rules = [
             'commentaire' => ['required', 'string', 'min:10', 'max:5000'],
             'commentaire_id' => ['nullable', Rule::exists('commentaires', 'id')->whereNull('deleted_at')],
+
+            // Règles pour les fichiers
+            'fichiers' => ['nullable', 'array', 'max:5'],
+            'fichiers.*' => ['file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx,txt'],
         ];
 
         $type = $this->input('commentaireable_type');
@@ -59,10 +63,17 @@ class StoreCommentaireRequest extends FormRequest
             'commentaireable_type.max' => 'Le type de ressource commentée ne doit pas dépasser 255 caractères.',
             'commentaireable_type.in' => 'Le type de ressource commentée n’est pas valide.',
 
-            'commentaireable_id.required' => 'L’identifiant de la ressource commentée est obligatoire.',
-            'commentaireable_id.integer' => 'L’identifiant de la ressource commentée doit être un entier.',
-            'commentaireable_id.min' => 'L’identifiant de la ressource commentée doit être supérieur à 0.',
-            'commentaireable_id.exists' => 'La ressource commentée spécifiée n’existe pas.'
+            'commentaireable_id.required' => 'L'identifiant de la ressource commentée est obligatoire.',
+            'commentaireable_id.integer' => 'L'identifiant de la ressource commentée doit être un entier.',
+            'commentaireable_id.min' => 'L'identifiant de la ressource commentée doit être supérieur à 0.',
+            'commentaireable_id.exists' => 'La ressource commentée spécifiée n'existe pas.',
+
+            // Fichiers
+            'fichiers.array' => 'Les fichiers doivent être fournis sous forme de tableau.',
+            'fichiers.max' => 'Vous ne pouvez pas joindre plus de 5 fichiers.',
+            'fichiers.*.file' => 'Chaque élément doit être un fichier valide.',
+            'fichiers.*.max' => 'Chaque fichier ne doit pas dépasser 10 Mo.',
+            'fichiers.*.mimes' => 'Les fichiers doivent être de type: pdf, jpg, jpeg, png, doc, docx, xls, xlsx, txt.'
         ];
     }
 

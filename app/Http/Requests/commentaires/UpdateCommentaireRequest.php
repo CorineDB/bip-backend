@@ -17,7 +17,15 @@ class UpdateCommentaireRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'commentaire' => ['required', 'string', 'min:10', 'max:5000'],
+            'commentaire' => ['nullable', 'string', 'min:10', 'max:5000'],
+
+            // Règles pour les fichiers
+            'fichiers' => ['nullable', 'array', 'max:5'],
+            'fichiers.*' => ['file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx,txt'],
+
+            // IDs des fichiers à supprimer
+            'fichiers_a_supprimer' => ['nullable', 'array'],
+            'fichiers_a_supprimer.*' => ['integer', Rule::exists('fichiers', 'id')->whereNull('deleted_at')],
         ];
 
         // Si on autorise le déplacement du commentaire vers une autre ressource
@@ -79,9 +87,21 @@ class UpdateCommentaireRequest extends FormRequest
             'commentaireable_type.required' => 'Le type de la ressource commentée est obligatoire.',
             'commentaireable_type.string' => 'Le type de la ressource commentée doit être du texte.',
             'commentaireable_type.max' => 'Le type de la ressource commentée ne doit pas dépasser 255 caractères.',
-            'commentaireable_id.required' => 'L’identifiant de la ressource commentée est obligatoire.',
-            'commentaireable_id.integer' => 'L’identifiant de la ressource commentée doit être un nombre entier.',
-            'commentaireable_id.min' => 'L’identifiant de la ressource commentée doit être supérieur à 0.',
+            'commentaireable_id.required' => 'L'identifiant de la ressource commentée est obligatoire.',
+            'commentaireable_id.integer' => 'L'identifiant de la ressource commentée doit être un nombre entier.',
+            'commentaireable_id.min' => 'L'identifiant de la ressource commentée doit être supérieur à 0.',
+
+            // Fichiers
+            'fichiers.array' => 'Les fichiers doivent être fournis sous forme de tableau.',
+            'fichiers.max' => 'Vous ne pouvez pas joindre plus de 5 fichiers.',
+            'fichiers.*.file' => 'Chaque élément doit être un fichier valide.',
+            'fichiers.*.max' => 'Chaque fichier ne doit pas dépasser 10 Mo.',
+            'fichiers.*.mimes' => 'Les fichiers doivent être de type: pdf, jpg, jpeg, png, doc, docx, xls, xlsx, txt.',
+
+            // Fichiers à supprimer
+            'fichiers_a_supprimer.array' => 'Les IDs des fichiers à supprimer doivent être fournis sous forme de tableau.',
+            'fichiers_a_supprimer.*.integer' => 'Chaque ID de fichier doit être un nombre entier.',
+            'fichiers_a_supprimer.*.exists' => 'Le fichier spécifié n\'existe pas ou a déjà été supprimé.',
         ];
     }
 }
