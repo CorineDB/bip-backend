@@ -33,13 +33,11 @@ class CommentaireResource extends BaseApiResource
             'fichiers' => $this->when($this->relationLoaded('fichiers'), function() {
                 return FichierResource::collection($this->fichiers);
             }),
-            'nb_fichiers' => $this->when($this->relationLoaded('fichiers'), $this->fichiers->count()),
 
             // Réponses (sous-commentaires)
             'reponses' => $this->when($this->relationLoaded('enfants'), function() {
                 return static::collection($this->enfants);
             }),
-            'nb_reponses' => $this->when($this->relationLoaded('enfants'), $this->enfants->count()),
 
             // Parent (si c'est une réponse)
             'parent' => $this->when($this->parent !== null, function() {
