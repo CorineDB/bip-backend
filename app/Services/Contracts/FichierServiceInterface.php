@@ -39,11 +39,6 @@ interface FichierServiceInterface extends AbstractServiceInterface
     public function supprimerFichier(string $id): JsonResponse;
 
     /**
-     * Obtenir les statistiques des fichiers de l'utilisateur
-     */
-    public function getStatistiquesUtilisateur(): JsonResponse;
-
-    /**
      * Vérifier les permissions d'accès à un fichier
      */
     public function verifierPermissionsFichier(string $id, string $permission = 'view'): bool;
