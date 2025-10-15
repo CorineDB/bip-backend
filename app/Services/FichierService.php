@@ -127,8 +127,6 @@ class FichierService extends BaseService implements FichierServiceInterface
                 ];
             }
 
-            dd($data);
-
             // Statistiques
             $stats = [
                 'mes_fichiers_count' => $mesFichiers->count(),
