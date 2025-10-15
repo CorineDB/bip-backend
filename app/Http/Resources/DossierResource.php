@@ -62,8 +62,8 @@ class DossierResource extends BaseApiResource
                 ];
             }),
 
-            // Navigation
-            'breadcrumb' => $this->getBreadcrumb(),
+            // Navigation - Breadcrumb est construit dans le service pour éviter les récursions
+            // 'breadcrumb' => $this->getBreadcrumb(),
             'full_path' => $this->full_path,
 
             // Permissions
@@ -191,9 +191,9 @@ class DossierResource extends BaseApiResource
         $user = auth()->user();
         if (!$user) return false;
 
-        // Créateur peut créer des sous-dossiers
+        // Créateur peut créer des sous-dossiers si la profondeur max n'est pas atteinte
         if ($this->created_by === $user->id) {
-            return $this->canCreateSubfolder(10); // Limite de profondeur
+            return $this->profondeur < 10; // Limite de profondeur
         }
 
         return false;
