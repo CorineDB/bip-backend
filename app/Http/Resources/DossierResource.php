@@ -31,15 +31,17 @@ class DossierResource extends BaseApiResource
             /* 'parent' => $this->when($this->relationLoaded('parent') && $this->parent, function() {
                 return new self($this->parent);
             }), */
-            
-            'enfants' => $this->when($this->relationLoaded('children'), function() {
+
+            // Ne pas inclure les enfants non plus car la hiérarchie est déjà construite dans le service
+            /* 'enfants' => $this->when($this->relationLoaded('children'), function() {
                 return self::collection($this->children);
-            }),
+            }), */
 
             'created_by' => $this->whenLoaded('createdBy', function() {
+                if (!$this->createdBy) return null;
                 return [
                     'id' => $this->createdBy->id,
-                    'nom' => $this->createdBy->nom,
+                    'nom' => $this->createdBy->personne->nom ?? null,
                     'email' => $this->createdBy->email
                 ];
             }),
@@ -55,7 +57,7 @@ class DossierResource extends BaseApiResource
                     'count' => $this->fichiers->count(),
                     'taille_totale' => $this->fichiers->sum('taille'),
                     'taille_formatee' => $this->formatBytes($this->fichiers->sum('taille')),
-                    'derniere_modification' => $this->fichiers->max('updated_at') ? 
+                    'derniere_modification' => $this->fichiers->max('updated_at') ?
                         Carbon::parse($this->fichiers->max('updated_at'))->format('d/m/Y H:i:s') : null
                 ];
             }),
@@ -96,14 +98,14 @@ class DossierResource extends BaseApiResource
                     'couleurs_disponibles' => [
                         '#2563EB' => 'Bleu',
                         '#059669' => 'Vert',
-                        '#DC2626' => 'Rouge', 
+                        '#DC2626' => 'Rouge',
                         '#7C3AED' => 'Violet',
                         '#EA580C' => 'Orange',
                         '#0891B2' => 'Cyan',
                         '#6B7280' => 'Gris'
                     ],
                     'icones_disponibles' => [
-                        'folder-open', 'folder', 'chart-bar', 'fire', 
+                        'folder-open', 'folder', 'chart-bar', 'fire',
                         'adjustments', 'document-text', 'archive', 'collection'
                     ]
                 ]
@@ -117,11 +119,11 @@ class DossierResource extends BaseApiResource
     private function formatBytes(int $bytes): string
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        
+
         for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
             $bytes /= 1024;
         }
-        
+
         return round($bytes, 2) . ' ' . $units[$i];
     }
 
@@ -132,9 +134,6 @@ class DossierResource extends BaseApiResource
     {
         $user = auth()->user();
         if (!$user) return false;
-
-        // Admin peut tout voir
-        if ($user->hasRole('admin')) return true;
 
         // Créateur peut voir
         if ($this->created_by === $user->id) return true;
@@ -153,9 +152,6 @@ class DossierResource extends BaseApiResource
         $user = auth()->user();
         if (!$user) return false;
 
-        // Admin peut tout modifier
-        if ($user->hasRole('admin')) return true;
-
         // Créateur peut modifier
         if ($this->created_by === $user->id) return true;
 
@@ -170,20 +166,17 @@ class DossierResource extends BaseApiResource
         $user = auth()->user();
         if (!$user) return false;
 
-        // Admin peut tout supprimer
-        if ($user->hasRole('admin')) return true;
-
         // Créateur peut supprimer si dossier vide
         if ($this->created_by === $user->id) {
             // Vérifier que le dossier est vide (pas de fichiers ni de sous-dossiers)
-            $hasFichiers = $this->relationLoaded('fichiers') ? 
-                $this->fichiers->count() > 0 : 
+            $hasFichiers = $this->relationLoaded('fichiers') ?
+                $this->fichiers->count() > 0 :
                 $this->fichiers()->count() > 0;
-                
+
             $hasEnfants = $this->relationLoaded('children') ?
                 $this->children->count() > 0 :
                 $this->children()->count() > 0;
-                
+
             return !$hasFichiers && !$hasEnfants;
         }
 
@@ -197,9 +190,6 @@ class DossierResource extends BaseApiResource
     {
         $user = auth()->user();
         if (!$user) return false;
-
-        // Admin peut créer partout
-        if ($user->hasRole('admin')) return true;
 
         // Créateur peut créer des sous-dossiers
         if ($this->created_by === $user->id) {
@@ -216,9 +206,6 @@ class DossierResource extends BaseApiResource
     {
         $user = auth()->user();
         if (!$user) return false;
-
-        // Admin peut uploader partout
-        if ($user->hasRole('admin')) return true;
 
         // Créateur peut uploader
         if ($this->created_by === $user->id) return true;

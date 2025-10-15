@@ -1454,7 +1454,7 @@ class FichierService extends BaseService implements FichierServiceInterface
 
         // Récupérer tous les dossiers et remonter jusqu'aux racines
         foreach ($dossierIds as $dossierId) {
-            $dossier = Dossier::with(['parent', 'createdBy'])->find($dossierId);
+            $dossier = Dossier::with(['createdBy'])->find($dossierId);
             if ($dossier) {
                 // Ajouter le dossier et tous ses parents
                 $current = $dossier;
@@ -1462,7 +1462,8 @@ class FichierService extends BaseService implements FichierServiceInterface
                     if (!$todosDossiers->contains('id', $current->id)) {
                         $todosDossiers->push($current);
                     }
-                    $current = $current->parent;
+                    // Charger le parent manuellement si nécessaire
+                    $current = $current->parent_id ? Dossier::find($current->parent_id) : null;
                 }
             }
         }
@@ -1535,6 +1536,9 @@ class FichierService extends BaseService implements FichierServiceInterface
         // Charger les fichiers dans le dossier pour DossierResource
         $dossier->setRelation('fichiers', $fichiersDuDossier);
 
+        // Construire le breadcrumb manuellement sans charger les parents
+        $breadcrumb = $this->buildBreadcrumbFromCollection($dossier, $todosDossiers);
+
         return [
             'type' => 'dossier',
             'dossier' => new DossierResource($dossier),
@@ -1560,9 +1564,31 @@ class FichierService extends BaseService implements FichierServiceInterface
             'taille_formatee' => $this->formatBytes($totalTaille),
 
             // Navigation
-            'breadcrumb' => $dossier->getBreadcrumb(),
+            'breadcrumb' => $breadcrumb,
             'can_navigate_up' => $dossier->parent_id !== null
         ];
+    }
+
+    /**
+     * Construire le breadcrumb depuis la collection de dossiers déjà chargés
+     */
+    private function buildBreadcrumbFromCollection($dossier, $todosDossiers): array
+    {
+        $breadcrumb = collect();
+        $current = $dossier;
+
+        while ($current) {
+            $breadcrumb->prepend([
+                'id' => $current->id,
+                'nom' => $current->nom,
+                'profondeur' => $current->profondeur
+            ]);
+
+            // Trouver le parent dans la collection au lieu de le charger depuis la DB
+            $current = $current->parent_id ? $todosDossiers->firstWhere('id', $current->parent_id) : null;
+        }
+
+        return $breadcrumb->toArray();
     }
 
     /**
