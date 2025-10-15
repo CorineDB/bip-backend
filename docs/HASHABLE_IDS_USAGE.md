@@ -36,7 +36,7 @@ Ajoutez ces variables dans votre fichier `.env`:
 HASHIDS_SALT="votre-clé-secrète-unique"
 
 # Longueur minimale des IDs hashés (optionnel, par défaut 8)
-HASHIDS_MIN_LENGTH=8
+HASHIDS_MIN_LENGTH=64
 ```
 
 ⚠️ **Important:** Ne changez jamais le `HASHIDS_SALT` en production, sinon tous les IDs hashés existants deviendront invalides.
@@ -47,7 +47,7 @@ La configuration est déjà ajoutée:
 
 ```php
 'hashids_salt' => env('HASHIDS_SALT', env('APP_KEY')),
-'hashids_min_length' => env('HASHIDS_MIN_LENGTH', 8),
+'hashids_min_length' => env('HASHIDS_MIN_LENGTH', 64),
 ```
 
 ---

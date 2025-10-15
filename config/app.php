@@ -135,6 +135,6 @@ return [
     */
 
     'hashids_salt' => env('HASHIDS_SALT', env('APP_KEY')),
-    'hashids_min_length' => env('HASHIDS_MIN_LENGTH', 13),
+    'hashids_min_length' => env('HASHIDS_MIN_LENGTH', 64),
 
 ];

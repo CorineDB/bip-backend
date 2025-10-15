@@ -60,7 +60,7 @@ class HashedExists implements ValidationRule
                 try {
                     $hashids = new \Hashids\Hashids(
                         config('app.hashids_salt', config('app.key')),
-                        config('app.hashids_min_length', 8)
+                        config('app.hashids_min_length', 64)
                     );
                     $decoded = $hashids->decode($value);
                     $unhashedId = !empty($decoded) ? $decoded[0] : null;
@@ -82,8 +82,6 @@ class HashedExists implements ValidationRule
                 ]);
             }
         }
-
-        dd($request->all());
 
         // Vérifier que l'ID existe dans la table
         $query = DB::table($this->table)->where($this->column, $unhashedId);

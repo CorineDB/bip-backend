@@ -14,7 +14,7 @@ trait HashableId
     {
         // Utiliser une clé spécifique depuis le config ou générer une clé par défaut
         $salt = config('app.hashids_salt', config('app.key'));
-        $minLength = config('app.hashids_min_length', 13);
+        $minLength = config('app.hashids_min_length', 64);
 
         return new Hashids($salt, $minLength);
     }
