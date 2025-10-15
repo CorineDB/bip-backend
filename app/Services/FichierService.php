@@ -120,8 +120,6 @@ class FichierService extends BaseService implements FichierServiceInterface
                     //'structure_dossiers' => $this->getFolderStructure($user)
                 ];
 
-                dd($data);
-
             } else {
                 $data = [
                     'mes_fichiers' => FichierResource::collection($mesFichiers),
@@ -150,6 +148,8 @@ class FichierService extends BaseService implements FichierServiceInterface
 
                 'dossiers_count' => $groupByFolder ? $this->countActiveFolders($user) : 0
             ];
+
+            dd($data);
 
 
             $data['stats'] = $stats;
