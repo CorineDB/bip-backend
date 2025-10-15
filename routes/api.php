@@ -111,21 +111,25 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
     Route::group(['middleware' => ['auth:api']], function () {
         // Geographic & Administrative Resources
-        Route::apiResource('arrondissements', ArrondissementController::class)->only(['index', 'show']);
-        Route::apiResource('communes', CommuneController::class)->only(['index', 'show']);
-        Route::apiResource('departements', DepartementController::class)->only(['index', 'show']);
-        Route::apiResource('villages', VillageController::class)->only(['index', 'show']);
+        Route::apiResource('arrondissements', ArrondissementController::class)->only(['index', 'show'])
+            ->parameters(['arrondissements' => 'arrondissementId']);
+        Route::apiResource('communes', CommuneController::class)->only(['index', 'show'])
+            ->parameters(['communes' => 'communeId']);
+        Route::apiResource('departements', DepartementController::class)->only(['index', 'show'])
+            ->parameters(['departements' => 'departementId']);
+        Route::apiResource('villages', VillageController::class)->only(['index', 'show'])
+            ->parameters(['villages' => 'villageId']);
 
         Route::prefix('departements')->group(function () {
-            Route::get('{id}/communes', [DepartementController::class, 'communes']);
+            Route::get('{departementId}/communes', [DepartementController::class, 'communes']);
         });
 
         Route::prefix('communes')->group(function () {
-            Route::get('{id}/arrondissements', [CommuneController::class, 'arrondissements']);
+            Route::get('{communeId}/arrondissements', [CommuneController::class, 'arrondissements']);
         });
 
         Route::prefix('arrondissements')->group(function () {
-            Route::get('{id}/villages', [ArrondissementController::class, 'villages']);
+            Route::get('{arrondissementId}/villages', [ArrondissementController::class, 'villages']);
         });
 
         // Organization & People Management
@@ -135,7 +139,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         Route::controller(OrganisationController::class)->group(function () {
             Route::get('ministeres', 'ministeres');
-            Route::get('ministeres/{id}/organismes_tutelle', 'organismes_tutelle');
+            Route::get('ministeres/{ministereId}/organismes_tutelle', 'organismes_tutelle');
         });
 
         Route::apiResource('personnes', PersonneController::class);
@@ -259,9 +263,9 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::controller(SecteurController::class)->group(function () {
             Route::get('all-secteurs', 'all_secteurs');
             Route::get('grands-secteurs', 'grands_secteurs');
-            Route::get('grands-secteurs/{id}/secteurs', 'secteurs_grand_secteur');
+            Route::get('grands-secteurs/{secteur}/secteurs', 'secteurs_grand_secteur');
             Route::get('secteurs-seul', 'secteurs');
-            Route::get('secteurs/{id}/sous-secteurs', 'sous_secteurs_secteur');
+            Route::get('secteurs/{secteur}/sous-secteurs', 'sous_secteurs_secteur');
             Route::get('sous-secteurs', 'sous_secteurs');
         });
 
@@ -274,7 +278,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             ->parameters(['types-programme' => 'type_programme']);
 
         Route::prefix('programmes')->name('programmes.')->controller(TypeProgrammeController::class)->group(function () {
-            Route::get("{id}/composants-programme", "composants_de_programme");
+            Route::get("{idProgramme}/composants-programme", "composants_de_programme");
             Route::get("{idProgramme}/composants-programme/{idComposantProgramme}", "composants_composants_de_programme");
             Route::get("/", "programmes");
         });
@@ -341,11 +345,6 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklistSuiviRapportPrefaisabilite']);
         });
 
-        /* Route::prefix('canevas-check-liste-mesures-adaptation')->group(function () {
-            Route::get('', [DocumentController::class, 'canevasChecklistMesuresAdaptation']);
-            Route::post('', [DocumentController::class, 'createOrUpdateCanevasChecklistMesuresAdaptation']);
-        }); */
-
         //ChecklistEtudeFaisabiliteMarche
         Route::prefix('canevas-check-liste-etude-faisabilite-marche')->group(function () {
             Route::get('', [DocumentController::class, 'canevasChecklisteEtudeFaisabiliteMarche']);
@@ -389,20 +388,6 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         Route::get('canevas-check-listes-suivi-rapport-etude-faisabilite', [DocumentController::class, 'canevasChecklistesSuiviRapportEtudeFaisabilite']);
 
-
-        /* Route::prefix('canevas-tdr-prefaisabilite')->group(function () {
-            Route::get('', [DocumentController::class, 'canevasRedactionTdrPrefaisabilite']);
-            Route::post('', [DocumentController::class, 'createOrUpdateCanevasRedactionTdrPrefaisabilite']);
-        });
-        Route::post('configurer-checklist-tdr-prefaisabilite', [DocumentController::class, 'configurerChecklistTdrPrefaisabilite']);
-        */
-        /* Route::prefix('canevas-tdr-faisabilite')->group(function () {
-            Route::get('', [DocumentController::class, 'canevasRedactionTdrFaisabilite']);
-            Route::post('', [DocumentController::class, 'createOrUpdateCanevasRedactionTdrFaisabilite']);
-        });
-
-        Route::post('configurer-checklist-tdr-faisabilite', [DocumentController::class, 'configurerChecklistTdrFaisabilite']); */
-
         Route::apiResource('categories-document', CategorieDocumentController::class)
             ->parameters(['categories-document' => 'categorie_document']);
 
@@ -420,7 +405,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         // Routes de partage de fichiers
         Route::prefix('fichiers')->group(function () {
-            Route::post('{id}/partager', [FichierController::class, 'partager'])->name('fichiers.partager');
+            Route::post('{fichier}/partager', [FichierController::class, 'partager'])->name('fichiers.partager');
             Route::get('partages-avec-moi', [FichierController::class, 'fichiersPartagesAvecMoi'])->name('fichiers.partages-avec-moi');
             Route::get('recents', [FichierController::class, 'fichiers Recents'])->name('fichiers.recents');
         });
@@ -443,7 +428,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::apiResource('evaluations', EvaluationController::class);
 
         // Routes spécifiques pour les évaluations
-        Route::prefix('evaluations')->group(function () {
+        /*Route::prefix('evaluations')->group(function () {
             Route::post('with-evaluateurs', [EvaluationController::class, 'createWithEvaluateurs'])
                 ->name('evaluations.create-with-evaluateurs');
             Route::post('{id}/assign-evaluateurs', [EvaluationController::class, 'assignEvaluateurs'])
@@ -454,7 +439,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
                 ->name('evaluations.finalize');
             Route::get('{id}/evaluateurs', [EvaluationController::class, 'evaluateurs'])
                 ->name('evaluations.evaluateurs');
-        });
+        });*/
 
         // Routes pour l'évaluation climatique unique des idées de projet
         Route::prefix('idees-projet/{ideeProjetId}/evaluation-climatique')->group(function () {
@@ -549,7 +534,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         });
 
         // Checklist des mesures d'adaptation pour projets à haut risque
-        Route::get('checklist-mesures-adaptation/{id}/secteur', [\App\Http\Controllers\CategorieCritereController::class, 'getChecklistMesuresAdaptationSecteur'])
+        Route::get('checklist-mesures-adaptation/{secteurId}/secteur', [\App\Http\Controllers\CategorieCritereController::class, 'getChecklistMesuresAdaptationSecteur'])
             ->name('checklist-mesures-adaptation.get');
         Route::get('checklist-mesures-adaptation', [\App\Http\Controllers\CategorieCritereController::class, 'getChecklistMesuresAdaptation'])
             ->name('checklist-mesures-adaptation.get');
@@ -733,7 +718,7 @@ Route::prefix('keycloak-auths')->group(function () {
         */
     });
 });
-
+/*
 Route::get('/update-villages', function () {
 
         // 1. CHARGEMENT et PRÉPARATION des données GeoJSON
@@ -1096,7 +1081,7 @@ Route::get('/traitement-villages', function () {
         */
 
         // Vérifier si le village (par son nom) est déjà dans la liste avant d'ajouter
-        $exists = false;
+        /*$exists = false;
         foreach ($villages_ref as $v) {
             if ($v["code"] === $village) {
                 $exists = true;
@@ -1193,7 +1178,7 @@ Route::get('/fusion-arrondissements', function () {
     }*/
 
     // 5. AFFICHAGE FINAL
-    return response()->json($structure_administrative);
+    /*return response()->json($structure_administrative);
 });
 
 Route::get('/update-villages', function () {
@@ -1262,7 +1247,7 @@ Route::get('/test-json', function () {
                     $slug .= $count;
                 }*/
 
-                Village::updateOrCreate([
+                /*Village::updateOrCreate([
                     'code' => $code,
                     'slug' => $slug,
                     'arrondissementId' => $arrondissementRecord->id
@@ -1274,7 +1259,7 @@ Route::get('/test-json', function () {
                     'arrondissementId' => $arrondissementRecord->id,
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]);
+                ]);*/
 
                 /*DB::table('villages')->insert([
                     'code' => $code,
@@ -1284,7 +1269,7 @@ Route::get('/test-json', function () {
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);*/
-            }
+            /*}
         }
     }
 
@@ -1530,7 +1515,7 @@ Route::get('/peupler-villages-json', function () {
                     $slug .= $count;
                 }*/
 
-                Village::updateOrCreate([
+                /*Village::updateOrCreate([
                     'code' => $code,
                     'slug' => $slug,
                     'arrondissementId' => $arrondissementRecord->id
@@ -1542,7 +1527,7 @@ Route::get('/peupler-villages-json', function () {
                     'arrondissementId' => $arrondissementRecord->id,
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]);
+                ]);*/
 
                 /*DB::table('villages')->insert([
                     'code' => $code,
@@ -1552,9 +1537,10 @@ Route::get('/peupler-villages-json', function () {
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);*/
-            }
+            /*}
         }
     }
 
     return response()->json(Village::all());
 });
+*/
