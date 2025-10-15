@@ -31,12 +31,7 @@ interface FichierServiceInterface extends AbstractServiceInterface
     /**
      * Partager un fichier avec d'autres utilisateurs
      */
-    public function partagerFichier(string $id, array $data): JsonResponse;
-
-    /**
-     * Créer un lien de partage temporaire
-     */
-    public function creerLienPartageTemporaire(string $id, array $data): JsonResponse;
+    public function partagerFichierAvecUtilisateurs(string $id, array $data): JsonResponse;
 
     /**
      * Supprimer un fichier (seulement les fichiers uploadés librement)
