@@ -23,6 +23,8 @@ class FichierController extends Controller
 
     public function index(FilterRequest $request): JsonResponse
     {
+        $data = $this->service->all($request->validated());
+        dd($data);
         return $this->service->all($request->validated());
     }
 

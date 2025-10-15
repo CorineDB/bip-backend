@@ -150,8 +150,6 @@ class FichierService extends BaseService implements FichierServiceInterface
 
             $data['stats'] = $stats;
 
-
-            dd($data);
             return response()->json([
                 'success' => true,
                 'data' => $data,
