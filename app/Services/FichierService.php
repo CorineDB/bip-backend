@@ -108,11 +108,11 @@ class FichierService extends BaseService implements FichierServiceInterface
                 ->orderBy('created_at', 'desc')
                 ->get();
 
-            dd($mesFichiers);
-
             // Grouper par dossier si demandé
             $groupByFolder = $filters['group_by_folder'] ?? true;
             $data = [];
+
+            dd($groupByFolder);
 
             if ($groupByFolder) {
                 $data = [
