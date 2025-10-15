@@ -119,8 +119,6 @@ class FichierService extends BaseService implements FichierServiceInterface
                     //'structure_dossiers' => $this->getFolderStructure($user)
                 ];
 
-                dd($data);
-
             } else {
                 $data = [
                     'mes_fichiers' => FichierResource::collection($mesFichiers),
@@ -128,6 +126,8 @@ class FichierService extends BaseService implements FichierServiceInterface
                     'public' => FichierResource::collection($fichiersPublics),
                 ];
             }
+
+            dd($data);
 
             // Statistiques
             $stats = [
@@ -152,6 +152,8 @@ class FichierService extends BaseService implements FichierServiceInterface
 
             $data['stats'] = $stats;
 
+
+            dd($data);
             return response()->json([
                 'success' => true,
                 'data' => $data,
