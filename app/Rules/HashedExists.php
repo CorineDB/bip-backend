@@ -83,6 +83,8 @@ class HashedExists implements ValidationRule
             }
         }
 
+        dd($request->all());
+
         // Vérifier que l'ID existe dans la table
         $query = DB::table($this->table)->where($this->column, $unhashedId);
 
