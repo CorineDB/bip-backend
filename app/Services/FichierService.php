@@ -117,8 +117,9 @@ class FichierService extends BaseService implements FichierServiceInterface
                     'mes_fichiers' => $this->groupFichiersByDossierAvecProfondeur($mesFichiers, $user),
                     'fichiers_partages' => $this->groupFichiersByDossierAvecProfondeur($fichiersPartages, $user),
                     'public' => $this->groupFichiersByDossierAvecProfondeur($fichiersPublics, $user),
-                    'structure_dossiers' => $this->getFolderStructure($user),
+                    'structure_dossiers' => $this->getFolderStructure($user)
                 ];
+
             } else {
                 $data = [
                     'mes_fichiers' => FichierResource::collection($mesFichiers),
@@ -128,7 +129,7 @@ class FichierService extends BaseService implements FichierServiceInterface
             }
 
             // Statistiques
-            $stats = [
+            /*$stats = [
                 'mes_fichiers_count' => $mesFichiers->count(),
                 'mes_fichiers_size' => $mesFichiers->sum('taille'),
                 'mes_fichiers_size_formatted' => $this->formatBytes($mesFichiers->sum('taille')),
@@ -146,7 +147,9 @@ class FichierService extends BaseService implements FichierServiceInterface
                 'total_size_formatted' => $this->formatBytes($mesFichiers->sum('taille') + $fichiersPartages->sum('taille') + $fichiersPublics->sum('taille')),
 
                 'dossiers_count' => $groupByFolder ? $this->countActiveFolders($user) : 0
-            ];
+            ];*/
+
+            dd($data);
 
             $data['stats'] = $stats;
 
@@ -829,30 +832,6 @@ class FichierService extends BaseService implements FichierServiceInterface
     }
 
     /**
-     * Partager un fichier avec d'autres utilisateurs
-     */
-    public function partagerFichier(string $id, array $data): JsonResponse
-    {
-        // TODO: Implémenter la logique de partage
-        return response()->json([
-            'success' => false,
-            'message' => 'Fonctionnalité de partage à implémenter'
-        ], 501);
-    }
-
-    /**
-     * Créer un lien de partage temporaire
-     */
-    public function creerLienPartageTemporaire(string $id, array $data): JsonResponse
-    {
-        // TODO: Implémenter la logique de lien temporaire
-        return response()->json([
-            'success' => false,
-            'message' => 'Fonctionnalité de lien temporaire à implémenter'
-        ], 501);
-    }
-
-    /**
      * Supprimer un fichier (seulement les fichiers uploadés librement)
      */
     public function supprimerFichier(string $id): JsonResponse
@@ -900,44 +879,6 @@ class FichierService extends BaseService implements FichierServiceInterface
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la suppression du fichier'
-            ], 500);
-        }
-    }
-
-    /**
-     * Obtenir les statistiques des fichiers de l'utilisateur
-     */
-    public function getStatistiquesUtilisateur(): JsonResponse
-    {
-        try {
-            $user = Auth::user();
-
-            $query = $this->buildPermissionsQuery($user);
-
-            $stats = [
-                'total_fichiers' => $query->count(),
-                'taille_totale' => $query->sum('taille'),
-                'par_categorie' => $query->groupBy('categorie')
-                                       ->selectRaw('categorie, count(*) as total, sum(taille) as taille')
-                                       ->pluck('total', 'categorie'),
-                'par_type' => $query->groupBy('mime_type')
-                                   ->selectRaw('mime_type, count(*) as total')
-                                   ->limit(10)
-                                   ->pluck('total', 'mime_type'),
-                'fichiers_recents' => $query->orderBy('created_at', 'desc')
-                                           ->limit(5)
-                                           ->get(['id', 'nom_original', 'created_at'])
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $stats
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de la récupération des statistiques'
             ], 500);
         }
     }
@@ -1639,47 +1580,6 @@ class FichierService extends BaseService implements FichierServiceInterface
             ->get();
 
         return $this->buildFolderTreeWithResource($dossiers);
-    }
-
-    /**
-     * Construire l'arbre hiérarchique des dossiers
-     */
-    private function buildFolderTree($dossiers): array
-    {
-        $tree = [];
-        $indexed = [];
-
-        // Indexer tous les dossiers par ID
-        foreach ($dossiers as $dossier) {
-            $indexed[$dossier->id] = [
-                'id' => $dossier->id,
-                'nom' => $dossier->nom,
-                'description' => $dossier->description,
-                'path' => $dossier->path,
-                'profondeur' => $dossier->profondeur,
-                'parent_id' => $dossier->parent_id,
-                'couleur' => $dossier->couleur,
-                'icone' => $dossier->icone,
-                'is_public' => $dossier->is_public,
-                'created_at' => $dossier->created_at,
-                'enfants' => []
-            ];
-        }
-
-        // Construire l'arbre
-        foreach ($indexed as $id => $dossier) {
-            if ($dossier['parent_id'] === null) {
-                // Dossier racine
-                $tree[] = &$indexed[$id];
-            } else {
-                // Dossier enfant
-                if (isset($indexed[$dossier['parent_id']])) {
-                    $indexed[$dossier['parent_id']]['enfants'][] = &$indexed[$id];
-                }
-            }
-        }
-
-        return $tree;
     }
 
     /**
