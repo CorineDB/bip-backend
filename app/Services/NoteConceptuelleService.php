@@ -2347,16 +2347,18 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             }
 
             // Valider que l'action choisie est autorisée selon le type de projet (est_dur)
-            $actionsAutorisees = $this->getActionsAutoriseesSelonTypeProjet($projet, $data);
+            /*
+                $actionsAutorisees = $this->getActionsAutoriseesSelonTypeProjet($projet, $data);
 
-            if (!in_array($data['decision'], $actionsAutorisees)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cette action n\'est pas autorisée pour ce type de projet.',
-                    'actions_autorisees' => $actionsAutorisees,
-                    'est_dur' => $projet->est_dur ? 1 : 0
-                ], 403);
-            }
+                if (!in_array($data['decision'], $actionsAutorisees)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cette action n\'est pas autorisée pour ce type de projet.',
+                        'actions_autorisees' => $actionsAutorisees,
+                        'est_dur' => $projet->est_dur ? 1 : 0
+                    ], 403);
+                }
+            */
 
             // Déterminer si c'est une soumission ou un brouillon
             $action = $data['action'] ?? 'submit';
