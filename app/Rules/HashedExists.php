@@ -77,6 +77,7 @@ class HashedExists implements ValidationRule
             // Modifier directement la valeur dans la Request
             $request = request();
             if ($request) {
+                dd($unhashedId);
                 $request->merge([
                     $attribute => $unhashedId
                 ]);
