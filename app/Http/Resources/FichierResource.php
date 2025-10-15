@@ -67,15 +67,46 @@ class FichierResource extends BaseApiResource
             ),
 
             // Permissions de l'utilisateur actuel
-            /* 'permissions' => $this->when(
+            'permissions' => $this->when(
                 auth()->check(),
-                [
-                    'can_view' => $this->canView(),
-                    'can_download' => $this->canDownload(),
-                    'can_delete' => $this->canDelete(),
-                    'can_share' => $this->canShare(),
-                ]
-            ), */
+                function() {
+                    $user = auth()->user();
+                    return [
+                        'can_view' => $this->canView(),
+                        'can_download' => $this->canDownload(),
+                        'can_delete' => $this->canDelete(),
+                        'can_share' => $this->canShare(),
+                        'can_edit' => $this->hasPermission($user, 'edit') || $this->uploaded_by === $user->id || $user->hasRole('admin'),
+                    ];
+                }
+            ),
+
+            // Partages actifs
+            'partages' => $this->when(
+                auth()->check() && ($this->uploaded_by === auth()->id() || auth()->user()->hasRole('admin')),
+                function() {
+                    return $this->permissions()
+                        ->with('user:id,nom,email')
+                        ->where('is_active', true)
+                        ->where(function($q) {
+                            $q->whereNull('expires_at')
+                              ->orWhere('expires_at', '>', now());
+                        })
+                        ->get()
+                        ->map(function($permission) {
+                            return [
+                                'user' => [
+                                    'id' => $permission->user->id,
+                                    'nom' => $permission->user->nom,
+                                    'email' => $permission->user->email,
+                                ],
+                                'permission_type' => $permission->permission_type,
+                                'expires_at' => $permission->expires_at?->format('Y-m-d H:i:s'),
+                                'granted_at' => $permission->created_at->format('Y-m-d H:i:s'),
+                            ];
+                        });
+                }
+            ),
 
             // Métadonnées
             'metadata' => $this->metadata,
@@ -129,7 +160,8 @@ class FichierResource extends BaseApiResource
         // Fichier public
         if ($this->is_public) return true;
 
-        // TODO: Vérifier permissions sur ressource attachée
+        // Vérifier permissions explicites
+        if ($this->hasPermission($user, 'view')) return true;
 
         return false;
     }
@@ -139,7 +171,16 @@ class FichierResource extends BaseApiResource
      */
     protected function canDownload(): bool
     {
-        return $this->canView(); // Même logique pour l'instant
+        $user = auth()->user();
+        if (!$user) return false;
+
+        // Si peut voir, peut télécharger
+        if ($this->canView()) return true;
+
+        // Vérifier permission download explicite
+        if ($this->hasPermission($user, 'download')) return true;
+
+        return false;
     }
 
     /**
@@ -158,6 +199,9 @@ class FichierResource extends BaseApiResource
             return true;
         }
 
+        // Vérifier permission delete explicite
+        if ($this->hasPermission($user, 'delete')) return true;
+
         return false;
     }
 
@@ -174,6 +218,9 @@ class FichierResource extends BaseApiResource
 
         // Propriétaire peut partager
         if ($this->uploaded_by === $user->id) return true;
+
+        // Vérifier permission share explicite
+        if ($this->hasPermission($user, 'share')) return true;
 
         return false;
     }

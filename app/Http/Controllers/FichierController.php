@@ -7,6 +7,7 @@ use App\Http\Requests\fichiers\FilterRequest;
 use Illuminate\Http\Request;
 use App\Http\Requests\fichiers\StoreFichierRequest;
 use App\Http\Requests\fichiers\UpdateFichierRequest;
+use App\Http\Requests\fichiers\ShareFichierRequest;
 use App\Services\Contracts\FichierServiceInterface;
 use Illuminate\Http\JsonResponse;
 
@@ -72,9 +73,9 @@ class FichierController extends Controller
     /**
      * Partager un fichier avec d'autres utilisateurs
      */
-    public function partager(Request $request, $id): JsonResponse
+    public function partager(ShareFichierRequest $request, $id): JsonResponse
     {
-        return $this->service->partagerFichierAvecUtilisateurs($id, $request->all());
+        return $this->service->partagerFichierAvecUtilisateurs($id, $request->validated());
     }
 
     /**
@@ -99,5 +100,21 @@ class FichierController extends Controller
     public function telechargerFichierParHash(string $hash)
     {
         return $this->service->telechargerFichier($hash);
+    }
+
+    /**
+     * Récupérer les fichiers partagés avec moi
+     */
+    public function fichiersPartagesAvecMoi(Request $request): JsonResponse
+    {
+        return $this->service->getFichiersPartagesAvecMoi($request->all());
+    }
+
+    /**
+     * Récupérer les fichiers récents
+     */
+    public function fichiersRecents(): JsonResponse
+    {
+        return $this->service->getFileQueue();
     }
 }

@@ -418,6 +418,13 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::get('visualiserFichier/{hash}', [FichierController::class, 'visualiserFichierParHash'])->name('fichiers.view');
         Route::get('telechargerFichier/{hash}', [FichierController::class, 'telechargerFichierParHash'])->name('fichiers.download');
 
+        // Routes de partage de fichiers
+        Route::prefix('fichiers')->group(function () {
+            Route::post('{id}/partager', [FichierController::class, 'partager'])->name('fichiers.partager');
+            Route::get('partages-avec-moi', [FichierController::class, 'fichiersPartagesAvecMoi'])->name('fichiers.partages-avec-moi');
+            Route::get('recents', [FichierController::class, 'fichiers Recents'])->name('fichiers.recents');
+        });
+
         // Fichier - Routes resource
         Route::apiResource('fichiers', FichierController::class);
 

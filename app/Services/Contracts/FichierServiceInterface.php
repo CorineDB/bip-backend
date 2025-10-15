@@ -34,6 +34,16 @@ interface FichierServiceInterface extends AbstractServiceInterface
     public function partagerFichierAvecUtilisateurs(string $id, array $data): JsonResponse;
 
     /**
+     * Obtenir les fichiers partagés avec moi
+     */
+    public function getFichiersPartagesAvecMoi(array $filters = []): JsonResponse;
+
+    /**
+     * Obtenir la file d'attente des fichiers récents
+     */
+    public function getFileQueue(): JsonResponse;
+
+    /**
      * Supprimer un fichier (seulement les fichiers uploadés librement)
      */
     public function supprimerFichier(string $id): JsonResponse;
