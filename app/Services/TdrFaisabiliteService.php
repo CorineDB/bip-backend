@@ -25,6 +25,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Helpers\SlugHelper;
+use App\Http\Resources\EvaluationResource;
 use App\Http\Resources\FichierResource;
 use App\Http\Resources\RapportResource;
 use App\Models\Dgpd;
@@ -1032,7 +1033,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         'evaluateur' => new UserResource($evaluationValidation->evaluateur),
                         'date_debut' => Carbon::parse($evaluationValidation->date_debut_evaluation)->format("Y-m-d h:i:s"),
                         'date_fin' => Carbon::parse($evaluationValidation->date_fin_evaluation)->format("Y-m-d h:i:s"),
-                        'commentaire_global' => $evaluationValidation->commentaire
+                        'commentaire_global' => $evaluationValidation->commentaire,
+                        'historique_evaluations' => EvaluationResource::collection($evaluationValidation->historique_evaluations)
                     ] : null,
                     'fichiers_validation' => FichierResource::collection($fichiersValidation),
                     'checklist_suivi_validation' => ($evaluationValidation && $evaluationValidation->evaluation && isset($evaluationValidation->evaluation["champs_evalues"])) ? $evaluationValidation->evaluation["champs_evalues"] : null

@@ -2240,7 +2240,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'statut_rapport' => $rapport->statut,
                     'statut_projet' => $projet->statut->value,
                     'action' => $estBrouillon ? 'draft' : 'submit',
-                    'rapport' => new RapportResource($rapport->load("historique_des_rapports"))
+                    'rapport' => new RapportResource($rapport->load("historique_des_rapports_prefaisabilite"))
                 ]
             ]);
         } catch (Exception $e) {
@@ -3093,28 +3093,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
-     * Traiter les informations pour un projet à haut risque
-     */
-    private function traiterProjetHautRisque(Projet $projet, array $data): void
-    {
-        if (isset($data['checklist_haut_risque'])) {
-            // Récupérer les métadonnées existantes ou créer un nouveau tableau
-            $metadata = $projet->metadata ?? [];
-
-            // Ajouter les informations de haut risque
-            $metadata['haut_risque'] = [
-                'est_a_haut_risque' => true,
-                'checklist_validee' => $data['checklist_haut_risque'],
-                'date_validation_checklist' => now(),
-                'valide_par' => auth()->id()
-            ];
-
-            // Mettre à jour le projet
-            $projet->update(['metadata' => $metadata]);
-        }
-    }
-
-    /**
      * Sauvegarder les données de validation sans changer le statut
      */
     private function sauvegarderDonneesValidation(Projet $projet, array $data): void
@@ -3383,119 +3361,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         $rapport->save();
     }
 
-
-    /**
-     * Déterminer si une nouvelle version doit être créée pour le rapport
-     */
-    private function doitCreerNouvelleVersionRapport(Projet $projet): bool
-    {
-        // Pour les rapports : compter les soumissions précédentes
-        $nombreSoumissions = $projet->workflows()
-            ->where('statut', StatutIdee::VALIDATION_PF)
-            ->count();
-
-        return $nombreSoumissions > 0;
-    }
-
-    /**
-     * Créer une nouvelle version du rapport
-     */
-    private function creerNouvelleVersionRapport(Projet $projet, $fichier, array $data): Fichier
-    {
-        // Récupérer la dernière version
-        $derniereVersion = $projet->rapports_prefaisabilite()
-            ->orderBy('created_at', 'desc')
-            ->first();
-
-        $nouvelleVersion = 1;
-        if ($derniereVersion) {
-            $versionActuelle = $derniereVersion->metadata['version'] ?? 1;
-            $nouvelleVersion = $versionActuelle + 1;
-
-            // Archiver l'ancienne version
-            $derniereVersion->update([
-                'is_active' => false,
-                'metadata' => array_merge($derniereVersion->metadata ?? [], [
-                    'statut' => 'archive',
-                    'archive_le' => now(),
-                    'remplace_par_version' => $nouvelleVersion
-                ])
-            ]);
-        }
-
-        return $this->sauvegarderFichierRapport($projet, $fichier, $data, $nouvelleVersion);
-    }
-
-    /**
-     * Remplacer le rapport existant (même cycle)
-     */
-    private function remplacerRapportExistant(Projet $projet, $fichier, array $data): Fichier
-    {
-        $rapportExistant = $projet->rapports_prefaisabilite()->where('is_active', true)->first();
-        $version = 1;
-
-        if ($rapportExistant) {
-            $version = $rapportExistant->metadata['version'] ?? 1;
-            // Supprimer l'ancien fichier physique
-            Storage::disk('public')->delete($rapportExistant->chemin);
-            $rapportExistant->delete();
-        }
-
-        return $this->sauvegarderFichierRapport($projet, $fichier, $data, $version);
-    }
-
-    /**
-     * Créer une nouvelle version du procès verbal
-     */
-    private function creerNouvelleVersionProcesVerbal(Projet $projet, $fichier, array $data): Fichier
-    {
-        // Récupérer la dernière version
-        $derniereVersion = $projet->fichiers()
-            ->where('categorie', 'proces-verbal-prefaisabilite')
-            ->orderBy('created_at', 'desc')
-            ->first();
-
-        $nouvelleVersion = 1;
-        if ($derniereVersion) {
-            $versionActuelle = $derniereVersion->metadata['version'] ?? 1;
-            $nouvelleVersion = $versionActuelle + 1;
-
-            // Archiver l'ancienne version
-            $derniereVersion->update([
-                'is_active' => false,
-                'metadata' => array_merge($derniereVersion->metadata ?? [], [
-                    'statut' => 'archive',
-                    'archive_le' => now(),
-                    'remplace_par_version' => $nouvelleVersion
-                ])
-            ]);
-        }
-
-        return $this->sauvegarderFichierProcesVerbal($projet, $fichier, $data, $nouvelleVersion);
-    }
-
-    /**
-     * Remplacer le procès verbal existant (même cycle)
-     */
-    private function remplacerProcesVerbalExistant(Projet $projet, $fichier, array $data): Fichier
-    {
-        $procesVerbalExistant = $projet->fichiers()
-            ->where('categorie', 'proces-verbal-prefaisabilite')
-            ->where('is_active', true)
-            ->first();
-
-        $version = 1;
-
-        if ($procesVerbalExistant) {
-            $version = $procesVerbalExistant->metadata['version'] ?? 1;
-            // Supprimer l'ancien fichier physique
-            Storage::disk('public')->delete($procesVerbalExistant->chemin);
-            $procesVerbalExistant->delete();
-        }
-
-        return $this->sauvegarderFichierProcesVerbal($projet, $fichier, $data, $version);
-    }
-
     /**
      * Envoyer une notification pour la validation de préfaisabilité
      */
@@ -3625,7 +3490,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             return response()->json([
                 'success' => true,
-                'data' => new \App\Http\Resources\RapportResource($rapport->load("historique_des_rapports")),
+                'data' => new \App\Http\Resources\RapportResource($rapport->load("historique")),
                 'message' => 'Détails de soumission du rapport de préfaisabilité récupérés avec succès.'
             ]);
         } catch (\Exception $e) {

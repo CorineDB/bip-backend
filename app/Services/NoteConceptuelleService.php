@@ -2591,7 +2591,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $evaluation->save();
             }
 
-            if ($projet->est_dur === true && isset($data["est_a_haut_risque"])) {
+            if ($data['decision'] === "faire_etude_prefaisabilite" && isset($data["est_a_haut_risque"])) {
                 $projet->est_a_haut_risque = $data["est_a_haut_risque"];
                 $projet->save();
             }
