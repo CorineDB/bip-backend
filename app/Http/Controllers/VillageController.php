@@ -25,10 +25,4 @@ class VillageController extends Controller
     {
         return $this->service->find($id);
     }
-
-    public function update(UpdateVillageRequest $request, $id): JsonResponse
-    {
-        dd($request->all());
-        return $this->service->update($id, $request->validate());
-    }
 }

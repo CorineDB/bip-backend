@@ -114,7 +114,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::apiResource('arrondissements', ArrondissementController::class)->only(['index', 'show']);
         Route::apiResource('communes', CommuneController::class)->only(['index', 'show']);
         Route::apiResource('departements', DepartementController::class)->only(['index', 'show']);
-        Route::apiResource('villages', VillageController::class)->only(['index', 'update', 'show']);
+        Route::apiResource('villages', VillageController::class)->only(['index', 'show']);
 
         Route::prefix('departements')->group(function () {
             Route::get('{id}/communes', [DepartementController::class, 'communes']);
