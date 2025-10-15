@@ -35,6 +35,25 @@ trait HasResourcePermissions
     // Accorder une permission
     public function grantPermission(User $user, string $permissionType, ?User $grantedBy = null, ?\Carbon\Carbon $expiresAt = null): ResourcePermission
     {
+        // Vérifier si la permission existe déjà
+        $existingPermission = $this->permissions()
+            ->where('user_id', $user->id)
+            ->where('permission_type', $permissionType)
+            ->first();
+
+        if ($existingPermission) {
+            // Mettre à jour la permission existante
+            $existingPermission->update([
+                'granted_by' => $grantedBy?->id ?? auth()->id(),
+                'expires_at' => $expiresAt,
+                'is_active' => true,
+                'deleted_at' => null // Réactiver si soft deleted
+            ]);
+
+            return $existingPermission;
+        }
+
+        // Créer une nouvelle permission
         return $this->permissions()->create([
             'user_id' => $user->id,
             'permission_type' => $permissionType,

@@ -152,9 +152,6 @@ class FichierResource extends BaseApiResource
         $user = auth()->user();
         if (!$user) return false;
 
-        // Admin peut tout voir
-        if ($user->hasRole('admin')) return true;
-
         // Propriétaire peut voir
         if ($this->uploaded_by === $user->id) return true;
 
@@ -192,9 +189,6 @@ class FichierResource extends BaseApiResource
         $user = auth()->user();
         if (!$user) return false;
 
-        // Admin peut tout supprimer
-        if ($user->hasRole('admin')) return true;
-
         // Propriétaire peut supprimer ses fichiers non attachés
         if ($this->uploaded_by === $user->id && !$this->fichier_attachable_id) {
             return true;
@@ -213,9 +207,6 @@ class FichierResource extends BaseApiResource
     {
         $user = auth()->user();
         if (!$user) return false;
-
-        // Admin peut partager
-        if ($user->hasRole('admin')) return true;
 
         // Propriétaire peut partager
         if ($this->uploaded_by === $user->id) return true;
