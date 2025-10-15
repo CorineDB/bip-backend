@@ -122,7 +122,7 @@ class FichierService extends BaseService implements FichierServiceInterface
             } else {
                 $data = [
                     'mes_fichiers' => FichierResource::collection($mesFichiers),
-                'fichiers_partages' => FichierResource::collection($fichiersPartages),
+                    'fichiers_partages' => FichierResource::collection($fichiersPartages),
                     'public' => FichierResource::collection($fichiersPublics),
                 ];
             }
@@ -1474,7 +1474,7 @@ class FichierService extends BaseService implements FichierServiceInterface
         $dossiersRacine = $todosDossiers->where('parent_id', null);
 
         foreach ($dossiersRacine as $dossierRacine) {
-            $result[$dossierRacine->id] = $this->buildDossierHierarchyWithFiles(
+            $result[] = $this->buildDossierHierarchyWithFiles(
                 $dossierRacine,
                 $todosDossiers,
                 $fichiersParDossier
@@ -1484,7 +1484,7 @@ class FichierService extends BaseService implements FichierServiceInterface
         // 4. Ajouter les fichiers sans dossier
         $fichiersSansDossier = $fichiersParDossier->get(null);
         if ($fichiersSansDossier && $fichiersSansDossier->count() > 0) {
-            $result['sans_dossier'] = [
+            $result[] = [
                 'type' => 'sans_dossier',
                 'dossier' => null,
                 'nom_dossier' => 'Fichiers sans dossier',
