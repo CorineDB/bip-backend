@@ -410,6 +410,8 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::apiResource('workflows', WorkflowController::class);
 
         // Commentaire
+        Route::get('commentaires/{resourceType}/{resourceId}', [CommentaireController::class, 'getByResource'])
+            ->name('commentaires.by-resource');
         Route::apiResource('commentaires', CommentaireController::class);
 
         // Fichier - Routes personnalisées AVANT la resource
