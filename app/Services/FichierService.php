@@ -115,9 +115,9 @@ class FichierService extends BaseService implements FichierServiceInterface
             if ($groupByFolder) {
                 $data = [
                     'mes_fichiers' => $this->groupFichiersByDossierAvecProfondeur($mesFichiers, $user),
-                    //'fichiers_partages' => $this->groupFichiersByDossierAvecProfondeur($fichiersPartages, $user),
+                    'fichiers_partages' => $this->groupFichiersByDossierAvecProfondeur($fichiersPartages, $user),
                     'public' => $this->groupFichiersByDossierAvecProfondeur($fichiersPublics, $user),
-                    /* 'structure_dossiers' => $this->getFolderStructure($user), */
+                    'structure_dossiers' => $this->getFolderStructure($user)
                 ];
 
             } else {
@@ -148,6 +148,8 @@ class FichierService extends BaseService implements FichierServiceInterface
 
                 'dossiers_count' => $groupByFolder ? $this->countActiveFolders($user) : 0
             ];
+
+            dd($stats);
 
             $data['stats'] = $stats;
 
