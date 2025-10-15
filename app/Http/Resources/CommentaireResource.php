@@ -39,9 +39,10 @@ class CommentaireResource extends BaseApiResource
         }
 
         // Ajouter le parent si c'est une réponse
-        if ($this->relationLoaded('parent')) {
+        /*if ($this->relationLoaded('parent')) {
             $data['parent'] = $this->parent ? new static($this->parent) : null;
-        }
+        }*/
+        $data['parent'] = $this->parent ? new static($this->parent) : null;
 
         // Ajouter la ressource commentée si elle est chargée
         if ($this->relationLoaded('commentaireable')) {
