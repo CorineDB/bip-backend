@@ -76,7 +76,7 @@ class FichierResource extends BaseApiResource
                         'can_download' => $this->canDownload(),
                         'can_delete' => $this->canDelete(),
                         'can_share' => $this->canShare(),
-                        'can_edit' => $this->hasPermission($user, 'edit') || $this->uploaded_by === $user->id || $user->hasRole('admin'),
+                        'can_edit' => $this->hasPermission($user, 'edit') || $this->uploaded_by === $user->id,
                     ];
                 }
             ),
