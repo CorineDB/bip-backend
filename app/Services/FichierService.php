@@ -108,7 +108,6 @@ class FichierService extends BaseService implements FichierServiceInterface
                 ->orderBy('created_at', 'desc')
                 ->get();
 
-            dd($fichiersPartages);
             dd($fichiersPublics);
             dd($mesFichiers);
 
