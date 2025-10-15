@@ -112,8 +112,6 @@ class FichierService extends BaseService implements FichierServiceInterface
             $groupByFolder = $filters['group_by_folder'] ?? true;
             $data = [];
 
-            dd($groupByFolder);
-
             if ($groupByFolder) {
                 $data = [
                     'mes_fichiers' => $this->groupFichiersByDossierAvecProfondeur($mesFichiers, $user),
@@ -121,6 +119,8 @@ class FichierService extends BaseService implements FichierServiceInterface
                     'public' => $this->groupFichiersByDossierAvecProfondeur($fichiersPublics, $user),
                     'structure_dossiers' => $this->getFolderStructure($user),
                 ];
+
+                dd($data);
             } else {
                 $data = [
                     'mes_fichiers' => FichierResource::collection($mesFichiers),
