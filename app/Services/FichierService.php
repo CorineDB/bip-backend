@@ -149,10 +149,9 @@ class FichierService extends BaseService implements FichierServiceInterface
                 'dossiers_count' => $groupByFolder ? $this->countActiveFolders($user) : 0
             ];
 
-            dd($data);
-
-
             $data['stats'] = $stats;
+
+            dd($data);
 
             return response()->json([
                 'success' => true,
