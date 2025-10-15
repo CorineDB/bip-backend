@@ -116,8 +116,8 @@ class FichierService extends BaseService implements FichierServiceInterface
                 $data = [
                     'mes_fichiers' => $this->groupFichiersByDossierAvecProfondeur($mesFichiers, $user),
                     'fichiers_partages' => $this->groupFichiersByDossierAvecProfondeur($fichiersPartages, $user),
-                    'public' => $this->groupFichiersByDossierAvecProfondeur($fichiersPublics, $user),
-                    'structure_dossiers' => $this->getFolderStructure($user),
+                    /* 'public' => $this->groupFichiersByDossierAvecProfondeur($fichiersPublics, $user),
+                    'structure_dossiers' => $this->getFolderStructure($user), */
                 ];
 
                 dd($data);
