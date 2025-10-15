@@ -157,6 +157,7 @@ class FichierService extends BaseService implements FichierServiceInterface
             ]);
 
         } catch (\Exception $e) {
+            dd($e);
             return $this->errorResponse($e);
         }
     }
