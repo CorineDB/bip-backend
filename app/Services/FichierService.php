@@ -50,6 +50,8 @@ class FichierService extends BaseService implements FichierServiceInterface
         try {
             $user = Auth::user();
 
+            dd($user);
+
             // Mes fichiers (privés seulement)
             $mesFichiersQuery = Fichier::query()
                 ->with(['uploadedBy', 'permissions', 'dossier'])
