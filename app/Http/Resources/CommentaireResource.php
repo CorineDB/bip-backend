@@ -15,44 +15,56 @@ class CommentaireResource extends BaseApiResource
      */
     public function toArray(Request $request): array
     {
-        $data = parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'commentaire' => $this->commentaire,
+            'date' => $this->date?->format('Y-m-d H:i:s'),
 
-        // Ajouter les relations si elles sont chargées
-        if ($this->relationLoaded('commentateur')) {
-            $data['commentateur'] = $this->commentateur ? [
-                'id' => $this->commentateur->id,
-                'name' => $this->commentateur->name,
-                'email' => $this->commentateur->email,
-            ] : null;
-        }
+            // Informations sur le commentateur
+            'commentateur' => $this->when($this->relationLoaded('commentateur'), function() {
+                return $this->commentateur ? [
+                    'id' => $this->commentateur->id,
+                    'name' => $this->commentateur->name,
+                    'email' => $this->commentateur->email,
+                ] : null;
+            }),
 
-        // Ajouter les fichiers attachés
-        if ($this->relationLoaded('fichiers')) {
-            $data['fichiers'] = FichierResource::collection($this->fichiers);
-            //$data['nb_fichiers'] = $this->fichiers->count();
-        }
+            // Fichiers attachés au commentaire
+            'fichiers' => $this->when($this->relationLoaded('fichiers'), function() {
+                return FichierResource::collection($this->fichiers);
+            }),
+            'nb_fichiers' => $this->when($this->relationLoaded('fichiers'), $this->fichiers->count()),
 
-        // Ajouter les réponses (sous-commentaires)
-        if ($this->relationLoaded('enfants')) {
-            $data['reponses'] = static::collection($this->enfants);
-            //$data['nb_reponses'] = $this->enfants->count();
-        }
+            // Réponses (sous-commentaires)
+            'reponses' => $this->when($this->relationLoaded('enfants'), function() {
+                return static::collection($this->enfants);
+            }),
+            'nb_reponses' => $this->when($this->relationLoaded('enfants'), $this->enfants->count()),
 
-        // Ajouter le parent si c'est une réponse
-        /*if ($this->relationLoaded('parent')) {
-            $data['parent'] = $this->parent ? new static($this->parent) : null;
-        }*/
-        $data['parent'] = $this->parent ? new static($this->parent) : null;
+            // Parent (si c'est une réponse)
+            'parent' => $this->when($this->parent !== null, function() {
+                return $this->parent ? [
+                    'id' => $this->parent->id,
+                    'commentaire' => $this->parent->commentaire,
+                    'date' => $this->parent->date?->format('Y-m-d H:i:s'),
+                    'commentateur' => $this->parent->commentateur ? [
+                        'id' => $this->parent->commentateur->id,
+                        'name' => $this->parent->commentateur->name,
+                        'email' => $this->parent->commentateur->email,
+                    ] : null,
+                ] : null;
+            }),
 
-        // Ajouter la ressource commentée si elle est chargée
-        if ($this->relationLoaded('commentaireable')) {
-            $data['ressource_commentee'] = $this->commentaireable ? [
+            // Ressource commentée
+            'ressource_commentee' => [
                 'type' => class_basename($this->commentaireable_type),
                 'id' => $this->commentaireable_id,
-            ] : null;
-        }
+            ],
 
-        return $data;
+            // Timestamps
+            'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
+            'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
+        ];
     }
 
     /**
