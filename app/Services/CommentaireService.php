@@ -38,6 +38,47 @@ class CommentaireService extends BaseService implements CommentaireServiceInterf
     }
 
     /**
+     * Récupérer un commentaire par son ID avec toutes ses relations
+     *
+     * @param int|string $id
+     * @return JsonResponse
+     */
+    public function find(int|string $id): JsonResponse
+    {
+        try {
+            $commentaire = $this->commentaireRepository->getInstance()
+                ->with([
+                    'commentateur',
+                    'fichiers.uploadedBy',
+                    'parent.commentateur',
+                    'parent.fichiers.uploadedBy',
+                    'enfants.commentateur',
+                    'enfants.fichiers.uploadedBy',
+                    'enfants.parent'
+                ])
+                ->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => new CommentaireResource($commentaire)
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Commentaire non trouvé'
+            ], 404);
+        } catch (Exception $e) {
+            Log::error('Erreur lors de la récupération du commentaire', [
+                'commentaire_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
      * Créer un commentaire avec possibilité d'attacher des fichiers
      *
      * @param array $data - Doit contenir:

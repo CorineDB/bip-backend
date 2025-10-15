@@ -7,6 +7,14 @@ use Illuminate\Http\JsonResponse;
 interface CommentaireServiceInterface extends AbstractServiceInterface
 {
     /**
+     * Récupérer un commentaire par son ID avec toutes ses relations
+     *
+     * @param int|string $id
+     * @return JsonResponse
+     */
+    public function find(int|string $id): JsonResponse;
+
+    /**
      * Créer un commentaire avec possibilité d'attacher des fichiers
      *
      * @param array $data - Doit contenir:
