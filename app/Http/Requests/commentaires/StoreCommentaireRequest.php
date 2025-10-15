@@ -63,10 +63,10 @@ class StoreCommentaireRequest extends FormRequest
             'commentaireable_type.max' => 'Le type de ressource commentée ne doit pas dépasser 255 caractères.',
             'commentaireable_type.in' => 'Le type de ressource commentée n’est pas valide.',
 
-            'commentaireable_id.required' => 'L'identifiant de la ressource commentée est obligatoire.',
-            'commentaireable_id.integer' => 'L'identifiant de la ressource commentée doit être un entier.',
-            'commentaireable_id.min' => 'L'identifiant de la ressource commentée doit être supérieur à 0.',
-            'commentaireable_id.exists' => 'La ressource commentée spécifiée n'existe pas.',
+            'commentaireable_id.required' => "L'identifiant de la ressource commentée est obligatoire.",
+            'commentaireable_id.integer' => "L'identifiant de la ressource commentée doit être un entier.",
+            'commentaireable_id.min' => "L'identifiant de la ressource commentée doit être supérieur à 0.",
+            'commentaireable_id.exists' => "La ressource commentée spécifiée n'existe pas.",
 
             // Fichiers
             'fichiers.array' => 'Les fichiers doivent être fournis sous forme de tableau.',
