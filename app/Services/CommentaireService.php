@@ -99,7 +99,7 @@ class CommentaireService extends BaseService implements CommentaireServiceInterf
 
             // Recharger le commentaire avec ses relations
             $commentaire = $this->commentaireRepository->getInstance()
-                ->with(['commentateur', 'fichiers.uploadedBy', 'enfants'])
+                ->with(['commentateur', 'fichiers.uploadedBy', 'enfants', 'parent'])
                 ->find($commentaire->id);
 
             Log::info('Commentaire créé avec succès', [
@@ -174,7 +174,7 @@ class CommentaireService extends BaseService implements CommentaireServiceInterf
 
             // Recharger le commentaire avec ses relations
             $commentaire = $this->commentaireRepository->getInstance()
-                ->with(['commentateur', 'fichiers.uploadedBy', 'enfants'])
+                ->with(['commentateur', 'fichiers.uploadedBy', 'enfants', 'parent'])
                 ->find($id);
 
             Log::info('Commentaire mis à jour avec succès', [
@@ -288,7 +288,8 @@ class CommentaireService extends BaseService implements CommentaireServiceInterf
                     'commentateur',
                     'fichiers.uploadedBy',
                     'enfants.commentateur',
-                    'enfants.fichiers.uploadedBy'
+                    'enfants.fichiers.uploadedBy',
+                    'enfants.parent'
                 ])
                 ->orderBy('created_at', 'desc')
                 ->get();
