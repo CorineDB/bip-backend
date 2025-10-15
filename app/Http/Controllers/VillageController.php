@@ -28,7 +28,7 @@ class VillageController extends Controller
 
     public function update(UpdateVillageRequest $request, $id): JsonResponse
     {
-        dd($request->validated());
+        dd($request->all());
         return $this->service->update($id, $request->validate());
     }
 }

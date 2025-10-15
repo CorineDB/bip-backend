@@ -81,7 +81,6 @@ class HashedExists implements ValidationRule
                     $attribute => $unhashedId
                 ]);
             }
-                dd( $request->all());
         }
 
         // Vérifier que l'ID existe dans la table
