@@ -17,13 +17,13 @@ class CommuneResource extends BaseApiResource
     {
         return [
             'id' => $this->id,
-            'communeHashId' => $this->hashed_id,
+            'id' => $this->hashed_id,
             'slug' => $this->slug,
             'nom' => $this->nom,
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
             'departementId' => $this->departementId,
-            'departementHashId' => $this->departement->hashed_id
+            'departementId' => $this->departement?->hashed_id
         ];
     }
 

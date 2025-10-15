@@ -17,7 +17,7 @@ class DepartementResource extends BaseApiResource
     {
         return [
             'id' => $this->id,
-            'departementHashId' => $this->hashed_id,
+            'id' => $this->hashed_id,
             'slug' => $this->slug,
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,

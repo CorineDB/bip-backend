@@ -16,13 +16,13 @@ class VillageResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->hashed_id,
             'slug' => $this->slug,
             'nom' => $this->nom,
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
             'arrondissementId' => $this->arrondissementId,
-            'arrondissementHashId' => $this->arrondissement->hashed_id
+            'arrondissementId' => $this->arrondissement?->hashed_id
         ];
     }
 
