@@ -283,13 +283,14 @@ class CommentaireService extends BaseService implements CommentaireServiceInterf
             $commentaires = $this->commentaireRepository->getInstance()
                 ->where('commentaireable_type', $fullResourceType)
                 ->where('commentaireable_id', $resourceId)
-                ->whereNull('commentaire_id') // Seulement les commentaires racine
+                // Retirer whereNull('commentaire_id') pour inclure TOUS les commentaires (racine ET réponses)
                 ->with([
                     'commentateur',
                     'fichiers.uploadedBy',
+                    'parent.commentateur',
                     'enfants.commentateur',
                     'enfants.fichiers.uploadedBy',
-                    'enfants.parent'
+                    'enfants.parent.commentateur'
                 ])
                 ->orderBy('created_at', 'desc')
                 ->get();
