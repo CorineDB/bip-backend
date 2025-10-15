@@ -73,8 +73,6 @@ class FichierService extends BaseService implements FichierServiceInterface
             // Appliquer les filtres communs aux trois catégories
             $queries = [$mesFichiersQuery, $fichiersPartagesQuery, $fichiersPublicsQuery];
 
-            dd($queries);
-
             foreach ($queries as $query) {
                 if (!empty($filters['dossier_id'])) {
                     if ($filters['dossier_id'] === 'null') {
@@ -109,6 +107,10 @@ class FichierService extends BaseService implements FichierServiceInterface
             $fichiersPublics = $fichiersPublicsQuery
                 ->orderBy('created_at', 'desc')
                 ->get();
+
+            dd($fichiersPartages);
+            dd($fichiersPublics);
+            dd($mesFichiers);
 
             // Grouper par dossier si demandé
             $groupByFolder = $filters['group_by_folder'] ?? true;
