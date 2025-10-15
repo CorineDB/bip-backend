@@ -86,7 +86,7 @@ class FichierResource extends BaseApiResource
                 auth()->check() && ($this->uploaded_by === auth()->id() || auth()->user()->hasRole('admin')),
                 function() {
                     return $this->permissions()
-                        ->with('user:id,nom,email')
+                        ->with(['user:id,email,personneId', 'user.personne:id,nom,prenom'])
                         ->where('is_active', true)
                         ->where(function($q) {
                             $q->whereNull('expires_at')
@@ -97,7 +97,8 @@ class FichierResource extends BaseApiResource
                             return [
                                 'user' => [
                                     'id' => $permission->user->id,
-                                    'nom' => $permission->user->nom,
+                                    'nom' => $permission->user->personne->nom ?? '',
+                                    'prenom' => $permission->user->personne->prenom ?? '',
                                     'email' => $permission->user->email,
                                 ],
                                 'permission_type' => $permission->permission_type,
