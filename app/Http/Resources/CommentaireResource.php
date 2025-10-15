@@ -29,13 +29,13 @@ class CommentaireResource extends BaseApiResource
         // Ajouter les fichiers attachés
         if ($this->relationLoaded('fichiers')) {
             $data['fichiers'] = FichierResource::collection($this->fichiers);
-            $data['nb_fichiers'] = $this->fichiers->count();
+            //$data['nb_fichiers'] = $this->fichiers->count();
         }
 
         // Ajouter les réponses (sous-commentaires)
         if ($this->relationLoaded('enfants')) {
             $data['reponses'] = static::collection($this->enfants);
-            $data['nb_reponses'] = $this->enfants->count();
+            //$data['nb_reponses'] = $this->enfants->count();
         }
 
         // Ajouter le parent si c'est une réponse
