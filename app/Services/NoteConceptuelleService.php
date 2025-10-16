@@ -1079,7 +1079,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'success' => true,
                 'data' => [
                     'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet", "historique_des_evaluations_notes_conceptuelle")),
-                    'evaluation' => [
+                    /* 'evaluation' => [
                         'id' => $evaluation->id,
                         'type_evaluation' => $evaluation->type_evaluation,
                         'date_debut_evaluation' => $evaluation->date_debut_evaluation ? Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
@@ -1095,7 +1095,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                             $champ_evalue = collect($evaluation->champs_evalue)
                                 ->firstWhere('attribut', $champ["attribut"]);
                             return [
-                                'id' => $champ["id"],
+                                'id' => $champ_evalue ? $champ_evalue['pivot']['id'] : null,
+                                'champ_id' => $champ["id"],
                                 'label' => $champ["label"],
                                 'attribut' => $champ["attribut"],
                                 'valeur' => $champ["valeur"],
@@ -1107,7 +1108,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         }),
                         'historique_evaluations' => EvaluationResource::collection($evaluation->historique_evaluations)
                     ],
-                    'resultats_examen' =>  $resultatsExamen, //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen
+                    'resultats_examen' =>  $resultatsExamen, */ //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen
                 ]
             ]);
         } catch (Exception $e) {
