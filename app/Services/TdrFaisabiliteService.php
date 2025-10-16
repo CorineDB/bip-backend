@@ -412,6 +412,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationTdrFaisabilite()->all_champs)->map(function ($champ) use ($evaluation) {
                     $champEvalue = collect($evaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                     return [
+                        'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                         'champ_id' => $champ['id'],
                         'label' => $champ['label'],
                         'attribut' => $champ['attribut'],
@@ -547,6 +548,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 foreach ($champs_evalues as $champ) {
                     $champ =  (array)$champ;
                     $grilleEvaluation[] = [
+                        'id' => isset($champ["id"]) ? $champ["id"] : null,
                         'champ_id' => isset($champ["champ_id"]) ? $champ["champ_id"] : null,
                         'label' => isset($champ["label"]) ? $champ["label"] : null,
                         'attribut' => isset($champ["attribut"]) ? $champ["attribut"] : null,
@@ -581,6 +583,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 foreach ($canevasAppreciation->all_champs as $champ) {
                     $evaluationExistante = null;
                     $data = [
+                        'id' => null,
                         'champ_id' => $champ->id,
                         'label' => $champ->label,
                         'attribut' => $champ->attribut,
@@ -600,6 +603,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
                             if ($evaluationExistante) {
                                 $data = [
+                                    'id' => isset($evaluationExistante["id"]) ? $evaluationExistante["id"] : null,
                                     'champ_id' => $champ->id,
                                     'label' => $champ->label,
                                     'attribut' => $champ->attribut,
@@ -616,6 +620,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
                             if ($evaluationExistante) {
                                 $data = [
+                                    'id' => $evaluationExistante->pivot->id ?? null,
                                     'champ_id' => $champ->id,
                                     'label' => $champ->label,
                                     'attribut' => $champ->attribut,
@@ -857,6 +862,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                                 $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
                                 $result = [
+                                    'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                                     'champ_id' => $champ['id'],
                                     'label' => $champ['label'],
                                     'attribut' => $champ['attribut'],
@@ -988,7 +994,21 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             // Récupérer l'évaluation en cours ou la dernière évaluation selon le statut
             $evaluationValidation = null;
 
-            // Pour le statut VALIDATION_PF, récupérer l'évaluation de validation
+            // Récupérer l'évaluation en cours ou la dernière évaluation selon le statut
+            $evaluationValidation = null;
+            $fichiersValidation = [];
+
+            $rapport = $projet->rapportFaisabilite()->first();
+
+            if (!$rapport) {
+                return response()->json([
+                    'success' => false,
+                    'data' => null,
+                    'message' => 'Aucun Rapport de préfaisabilité soumis trouvé pour ce projet.'
+                ], 404);
+            }
+
+            // Pour le statut VALIDATION_F, récupérer l'évaluation de validation
             $evaluationValidation = $projet->evaluations()
                 ->where('type_evaluation', 'validation-etude-faisabilite')
                 ->with(['champs_evalue' => function ($query) {
@@ -997,12 +1017,15 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            // Récupérer les fichiers de validation attachés au projet
-            $fichiersValidation = $projet->fichiers()
-                ->where('categorie', 'rapport-validation-faisabilite')
-                ->where('is_active', true)
-                ->orderBy('created_at', 'desc')
-                ->get();
+            if ($evaluationValidation) {
+
+                // Récupérer les fichiers de validation attachés au projet
+                $fichiersValidation = $evaluationValidation->fichiers()
+                    ->where('categorie', 'rapport-validation-faisabilite')
+                    ->where('is_active', true)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            }
 
             return response()->json([
                 'success' => true,
@@ -1011,7 +1034,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'projet' => new ProjetResource($projet),
                     'tdr' => new TdrResource($projet->tdrFaisabilite->first()),
                     'rapport' => new RapportResource($projet->rapportFaisabilite()->first()),
-
                     'evaluation_validation' => $evaluationValidation ? [
                         'id' => $evaluationValidation->id,
                         'evaluation' => $evaluationValidation->evaluation,
@@ -1664,6 +1686,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite()->all_champs)->map(function ($champ) use ($evaluationValidation) {
                         $champEvalue = collect($evaluationValidation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                         return [
+                            'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                             'champ_id' => $champ['id'],
                             'label' => $champ['label'],
                             'attribut' => $champ['attribut'],
@@ -2589,6 +2612,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
                 //dump($ancienChampEvalue);
                 $result = [
+                    'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                     'champ_id' => $champ['id'],
                     'label' => $champ['label'],
                     'attribut' => $champ['attribut'],
@@ -3559,7 +3583,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         );
 
         // Créer l'enregistrement du fichier via la relation polymorphe
-        $fichierCree = $projet->fichiers()->create([
+        $fichierCree = $evaluation->fichiers()->create([
             'nom_original' => $fichier->getClientOriginalName(),
             'nom_stockage' => $nomStockage,
             'chemin' => $path,
