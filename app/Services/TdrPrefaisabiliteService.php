@@ -3367,6 +3367,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         $checklist_suivi =  collect($this->documentRepository->getCanevasChecklistSuiviRapportPrefaisabilite()->all_champs)->map(function ($champ) use ($rapport) {
             $champEvalue = collect($rapport->champs)->firstWhere('attribut', $champ['attribut']);
             return [
+                'id'                => $champEvalue && isset($champEvalue['pivot']['id']) ? $champEvalue['pivot']['id'] : null,
                 'champ_id'          => $champ['id'],
                 'label'             => $champ['label'],
                 'attribut'          => $champ['attribut'],
@@ -4026,7 +4027,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Vérifier que tous les checkpoints de la soumission sont présents dans la validation
             foreach ($checkpointsSoumission as $index => $checkpointSoumis) {
-                $checkpointId = $checkpointSoumis['id'] ?? null;
+                // Utiliser champ_id car c'est l'identifiant stable du champ, pas l'id du pivot qui change
+                $checkpointId = $checkpointSoumis['champ_id'] ?? null;
 
                 if (!$checkpointId) {
                     continue;
