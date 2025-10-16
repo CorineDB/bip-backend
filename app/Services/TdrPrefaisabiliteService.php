@@ -1769,13 +1769,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     ]);
             }
 
-            // Gérer la mise à jour et la duplication du rapport pour les rejets (reprendre/abandonner)
-            if (in_array($data['action'], ['reprendre', 'abandonner'])) {
-                // Récupérer le rapport de préfaisabilité actuel
-                $rapportActuel = $projet->rapportPrefaisabilite()->first();
+            // Gérer la mise à jour du rapport selon l'action
+            $rapportActuel = $projet->rapportPrefaisabilite()->first();
 
-                if ($rapportActuel) {
-                    // Mettre à jour le rapport actuel avec les informations de validation
+            if ($rapportActuel) {
+                if (in_array($data['action'], ['reprendre', 'abandonner'])) {
+                    // Pour les rejets: mettre à jour le rapport actuel comme rejeté et dupliquer
                     $rapportActuel->update([
                         'statut' => 'rejete',
                         'date_validation' => now(),
@@ -1802,6 +1801,20 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                     // Note: Les fichiers ne sont pas dupliqués
                     // L'évaluation sera dupliquée lors de la resoumission dans soumettreRapportPrefaisabilite
+                } elseif (in_array($data['action'], ['maturite', 'faisabilite'])) {
+                    // Pour les validations: mettre à jour le rapport comme validé
+                    $rapportActuel->update([
+                        'statut' => 'valide',
+                        'date_validation' => now(),
+                        'decision' => [
+                            'action' => $data['action'],
+                            'date' => now()->format('Y-m-d H:i:s'),
+                            'validateur_id' => auth()->id(),
+                            'validateur_nom' => auth()->user()->nom . ' ' . auth()->user()->prenom
+                        ],
+                        'commentaire_validation' => $data['synthese_recommandations'] ?? $messageAction,
+                        'validateur_id' => auth()->id()
+                    ]);
                 }
             }
 

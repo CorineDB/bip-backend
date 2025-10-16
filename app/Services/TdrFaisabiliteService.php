@@ -1162,6 +1162,11 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             $this->traiterChampsChecklistsSuiviFaisabilite($rapport, $checklistData);
 
+            // Dupliquer l'évaluation si c'est une resoumission (parent_id existe) et ce n'est pas un brouillon
+            if ($rapport->parent_id && !$estBrouillon) {
+                $this->dupliquerEvaluationPourResoumission($rapport);
+            }
+
             // Changer le statut du projet seulement pour les soumissions finales
             if (!$estBrouillon) {
 
@@ -1706,6 +1711,55 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 ]);
 
                 $evaluationValidation->save();
+
+                // Gérer la mise à jour du rapport selon l'action
+                $rapportActuel = $projet->rapportFaisabilite()->first();
+
+                if ($rapportActuel) {
+                    if (in_array($data['action'], ['reprendre', 'abandonner'])) {
+                        // Pour les rejets: mettre à jour le rapport actuel comme rejeté et dupliquer
+                        $rapportActuel->update([
+                            'statut' => 'rejete',
+                            'date_validation' => now(),
+                            'decision' => [
+                                'action' => $data['action'],
+                                'date' => now()->format('Y-m-d H:i:s'),
+                                'validateur_id' => auth()->id(),
+                                'validateur_nom' => auth()->user()->nom . ' ' . auth()->user()->prenom
+                            ],
+                            'commentaire_validation' => $data['commentaire'] ?? null,
+                            'validateur_id' => auth()->id()
+                        ]);
+
+                        // Dupliquer uniquement le rapport avec statut brouillon
+                        $nouveauRapport = $rapportActuel->replicate();
+                        $nouveauRapport->statut = 'brouillon';
+                        $nouveauRapport->parent_id = $rapportActuel->id;
+                        $nouveauRapport->date_soumission = null;
+                        $nouveauRapport->date_validation = null;
+                        $nouveauRapport->validateur_id = null;
+                        $nouveauRapport->decision = null;
+                        $nouveauRapport->commentaire_validation = null;
+                        $nouveauRapport->save();
+
+                        // Note: Les fichiers ne sont pas dupliqués
+                        // L'évaluation sera dupliquée lors de la resoumission dans soumettreRapportFaisabilite
+                    } elseif ($data['action'] === 'maturite') {
+                        // Pour la validation: mettre à jour le rapport comme validé
+                        $rapportActuel->update([
+                            'statut' => 'valide',
+                            'date_validation' => now(),
+                            'decision' => [
+                                'action' => $data['action'],
+                                'date' => now()->format('Y-m-d H:i:s'),
+                                'validateur_id' => auth()->id(),
+                                'validateur_nom' => auth()->user()->nom . ' ' . auth()->user()->prenom
+                            ],
+                            'commentaire_validation' => $data['commentaire'] ?? null,
+                            'validateur_id' => auth()->id()
+                        ]);
+                    }
+                }
 
                 $resultVerificationCoherence = $this->verifierCoherenceSuiviRapport($projet, $data['checklist_suivi_validation']);
                 if (!$resultVerificationCoherence['success']) {
@@ -3373,6 +3427,46 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     }
 
     /**
+     * Dupliquer l'évaluation du projet pour la resoumission du rapport
+     */
+    private function dupliquerEvaluationPourResoumission(Rapport $rapport): void
+    {
+        // Récupérer le projet
+        $projet = $rapport->projet;
+
+        if (!$projet) {
+            return;
+        }
+
+        // Récupérer l'évaluation de validation-etude-faisabilite du projet
+        $evaluationParent = $projet->evaluations()
+            ->where('type_evaluation', 'validation-etude-faisabilite')
+            ->where('statut', 1)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$evaluationParent) {
+            return;
+        }
+
+        // Dupliquer l'évaluation pour la resoumission
+        $nouvelleEvaluation = $evaluationParent->replicate();
+        $nouvelleEvaluation->projetable_type = get_class($projet);
+        $nouvelleEvaluation->projetable_id = $projet->id;
+        $nouvelleEvaluation->id_evaluation = $evaluationParent->id; // Lien vers l'évaluation parente
+        $nouvelleEvaluation->date_debut_evaluation = null;
+        $nouvelleEvaluation->date_fin_evaluation = null;
+        $nouvelleEvaluation->valider_le = null;
+        $nouvelleEvaluation->evaluateur_id = null;
+        $nouvelleEvaluation->valider_par = null;
+        $nouvelleEvaluation->commentaire = null;
+        $nouvelleEvaluation->evaluation = null;
+        $nouvelleEvaluation->resultats_evaluation = null;
+        $nouvelleEvaluation->statut = 0; // En cours
+        $nouvelleEvaluation->save();
+    }
+
+    /**
      * Vérifier la cohérence du suivi rapport entre soumission et validation
      */
     private function verifierCoherenceSuiviRapport($projet, array $checklistSuiviValidation): array
@@ -3425,7 +3519,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             // Vérifier que tous les checkpoints de la soumission sont présents dans la validation
             foreach ($checkpointsSoumission as $index => $checkpointSoumis) {
-                $checkpointId = $checkpointSoumis['id'] ?? null;
+                // Utiliser champ_id car c'est l'identifiant stable du champ, pas l'id du pivot qui change
+                $checkpointId = $checkpointSoumis['champ_id'] ?? null;
 
                 if (!$checkpointId) {
                     continue;
@@ -3450,7 +3545,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     continue;
                 }
 
-                $checkpointSoumis = $checkpointsSoumission->firstWhere('id', $checkpointId);
+                $checkpointSoumis = $checkpointsSoumission->firstWhere('champ_id', $checkpointId);
 
                 if (!$checkpointSoumis) {
                     $incoherences[] = [

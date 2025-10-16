@@ -639,16 +639,11 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ->first();
 
             if (!$noteConceptuelle) {
-                // Créer une nouvelle note conceptuelle pour ce projet
-                $noteConceptuelle = $this->repository->create([
-                    'projetId' => $projet->id
-                ]);
-                $noteConceptuelle->load('projet');
 
                 return response()->json([
                     'success' => true,
                     'message' => 'Note conceptuelle non trouvée pour ce projet.',
-                    'data' => $noteConceptuelle
+                    'data' => $projet
                 ], 206);
             }
 
