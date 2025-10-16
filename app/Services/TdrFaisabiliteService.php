@@ -993,18 +993,31 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             // Récupérer l'évaluation en cours ou la dernière évaluation selon le statut
             $evaluationValidation = null;
-
-            // Récupérer l'évaluation en cours ou la dernière évaluation selon le statut
-            $evaluationValidation = null;
             $fichiersValidation = [];
 
-            $rapport = $projet->rapportFaisabilite()->first();
+            // Récupérer le rapport selon le statut du projet
+            // Si en validation, on veut le dernier rapport soumis
+            // Sinon, on récupère le dernier rapport valide ou rejeté pour consultation
+            if ($projet->statut->value === StatutIdee::VALIDATION_F->value) {
+                $rapport = $projet->rapports()
+                    ->where('type', 'faisabilite')
+                    ->where('statut', 'soumis')
+                    ->latest('created_at')
+                    ->first();
+            } else {
+                // Pour les autres statuts, récupérer le dernier rapport non-brouillon
+                $rapport = $projet->rapports()
+                    ->where('type', 'faisabilite')
+                    ->whereIn('statut', ['soumis', 'valide', 'rejete'])
+                    ->latest('created_at')
+                    ->first();
+            }
 
             if (!$rapport) {
                 return response()->json([
                     'success' => false,
                     'data' => null,
-                    'message' => 'Aucun Rapport de préfaisabilité soumis trouvé pour ce projet.'
+                    'message' => 'Aucun rapport de faisabilité trouvé pour ce projet.'
                 ], 404);
             }
 
@@ -1033,7 +1046,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'data' => [
                     'projet' => new ProjetResource($projet),
                     'tdr' => new TdrResource($projet->tdrFaisabilite->first()),
-                    'rapport' => new RapportResource($projet->rapportFaisabilite()->first()),
+                    'rapport' => new RapportResource($rapport),
                     'evaluation_validation' => $evaluationValidation ? [
                         'id' => $evaluationValidation->id,
                         'evaluation' => $evaluationValidation->evaluation,
@@ -1713,7 +1726,12 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 $evaluationValidation->save();
 
                 // Gérer la mise à jour du rapport selon l'action
-                $rapportActuel = $projet->rapportFaisabilite()->first();
+                // Récupérer le dernier rapport soumis (pas un brouillon)
+                $rapportActuel = $projet->rapports()
+                    ->where('type', 'faisabilite')
+                    ->where('statut', 'soumis')
+                    ->latest('created_at')
+                    ->first();
 
                 if ($rapportActuel) {
                     if (in_array($data['action'], ['reprendre', 'abandonner'])) {

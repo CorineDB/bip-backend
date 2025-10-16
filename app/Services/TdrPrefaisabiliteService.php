@@ -1770,7 +1770,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
 
             // Gérer la mise à jour du rapport selon l'action
-            $rapportActuel = $projet->rapportPrefaisabilite()->first();
+            // Récupérer le dernier rapport soumis (pas un brouillon)
+            $rapportActuel = $projet->rapports()
+                ->where('type', 'prefaisabilite')
+                ->where('statut', 'soumis')
+                ->latest('created_at')
+                ->first();
 
             if ($rapportActuel) {
                 if (in_array($data['action'], ['reprendre', 'abandonner'])) {
@@ -1905,13 +1910,29 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $evaluationValidation = null;
             $fichiersValidation = [];
 
-            $rapport = $projet->rapportPrefaisabilite()->first();
+            // Récupérer le rapport selon le statut du projet
+            // Si en validation, on veut le dernier rapport soumis
+            // Sinon, on récupère le dernier rapport valide ou rejeté pour consultation
+            if ($projet->statut->value === StatutIdee::VALIDATION_PF->value) {
+                $rapport = $projet->rapports()
+                    ->where('type', 'prefaisabilite')
+                    ->where('statut', 'soumis')
+                    ->latest('created_at')
+                    ->first();
+            } else {
+                // Pour les autres statuts, récupérer le dernier rapport non-brouillon
+                $rapport = $projet->rapports()
+                    ->where('type', 'prefaisabilite')
+                    ->whereIn('statut', ['soumis', 'valide', 'rejete'])
+                    ->latest('created_at')
+                    ->first();
+            }
 
             if (!$rapport) {
                 return response()->json([
                     'success' => false,
                     'data' => null,
-                    'message' => 'Aucun Rapport de préfaisabilité soumis trouvé pour ce projet.'
+                    'message' => 'Aucun rapport de préfaisabilité trouvé pour ce projet.'
                 ], 404);
             }
 
