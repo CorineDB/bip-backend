@@ -180,6 +180,13 @@ class Tdr extends Model
      */
     public function fichiersRapport(): MorphMany
     {
+        $typeEvaluation = match ($this->type) {
+            'prefaisabilite' => 'tdr-prefaisabilite',
+            'faisabilite' => 'tdr-faisabilite',
+            default => 'tdr-'.$this->type
+        };
+
+        return $this->fichiers()->byCategorie($typeEvaluation);
         return $this->fichiers()->byCategorie('tdr-prefaisabilite');
     }
 
@@ -313,6 +320,13 @@ class Tdr extends Model
      */
     public function evaluationTerminer()
     {
+        $typeEvaluation = match ($this->type) {
+            'prefaisabilite' => 'tdr-prefaisabilite',
+            'faisabilite' => 'tdr-faisabilite',
+            default => 'tdr-'.$this->type
+        };
+
+        return $this->evaluations()->evaluationTermine($typeEvaluation)->first();
         return $this->evaluations()->evaluationTermine('tdr-prefaisabilite')->first();
     }
 
@@ -321,7 +335,13 @@ class Tdr extends Model
      */
     public function evaluationEnCours()
     {
-        return $this->evaluations()->evaluationsEnCours('tdr-prefaisabilite')->first();
+        $typeEvaluation = match ($this->type) {
+            'prefaisabilite' => 'tdr-prefaisabilite',
+            'faisabilite' => 'tdr-faisabilite',
+            default => 'tdr-'.$this->type
+        };
+
+        return $this->evaluations()->evaluationsEnCours($typeEvaluation)->first();
     }
 
     /**
@@ -329,6 +349,13 @@ class Tdr extends Model
      */
     public function evaluationParent()
     {
+        $typeEvaluation = match ($this->type) {
+            'prefaisabilite' => 'tdr-prefaisabilite',
+            'faisabilite' => 'tdr-faisabilite',
+            default => 'tdr-'.$this->type
+        };
+
+        return $this->evaluations()->evaluationParent($typeEvaluation)->first();
         return $this->evaluations()->evaluationParent('tdr-prefaisabilite')->first();
     }
 

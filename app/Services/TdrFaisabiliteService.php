@@ -385,19 +385,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     throw ValidationException::withMessages(["evaluations_champs" => "Veuillez apprecier le canevas "]);
                 }
 
-                /*if (!isset($data["numero_dossier"])) {
-                    throw ValidationException::withMessages([
-                        "numero_dossier" => "Le numéro du dossier est obligatoire pour l'évaluation."
-                    ]);
-                }
-
-                if (!isset($data["numero_contrat"])) {
-                    throw ValidationException::withMessages([
-                        "numero_contrat" => "Le numéro du contrat est obligatoire pour l'évaluation."
-                    ]);
-                }
-                */
-
                 if (!isset($data["accept_term"])) {
                     throw ValidationException::withMessages([
                         "accept_term" => "Vous devez accepter les termes pour poursuivre l'évaluation."
