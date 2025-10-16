@@ -18,6 +18,7 @@ class CommentaireResource extends BaseApiResource
         return [
             'id' => $this->id,
             'commentaire' => $this->commentaire,
+            'commentaire_id' => $this->commentaire_id,
             'date' => $this->date?->format('Y-m-d H:i:s'),
 
             // Informations sur le commentateur
