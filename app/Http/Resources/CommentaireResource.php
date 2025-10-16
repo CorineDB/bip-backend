@@ -23,11 +23,7 @@ class CommentaireResource extends BaseApiResource
 
             // Informations sur le commentateur
             'commentateur' => $this->when($this->relationLoaded('commentateur'), function() {
-                return $this->commentateur ? [
-                    'id' => $this->commentateur->id,
-                    'name' => $this->commentateur->nom,
-                    'email' => $this->commentateur->email,
-                ] : null;
+                return $this->commentateur ? new UserResource($this->commentateur->load("role")) : null;
             }),
 
             // Fichiers attachés au commentaire
@@ -65,11 +61,7 @@ class CommentaireResource extends BaseApiResource
                     'id' => $this->parent->id,
                     'commentaire' => $this->parent->commentaire,
                     'date' => $this->parent->date?->format('Y-m-d H:i:s'),
-                    'commentateur' => $this->parent->commentateur ? [
-                        'id' => $this->parent->commentateur->id,
-                        'name' => $this->parent->commentateur->name,
-                        'email' => $this->parent->commentateur->email,
-                    ] : null,
+                    'commentateur' => $this->parent->commentateur ? new UserResource($this->parent->commentateur->load("role")) : null,
                 ] : null;
             }),
 

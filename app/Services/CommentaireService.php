@@ -326,14 +326,13 @@ class CommentaireService extends BaseService implements CommentaireServiceInterf
                 ->where('commentaireable_id', $resourceId)
                 // Retirer whereNull('commentaire_id') pour inclure TOUS les commentaires (racine ET réponses)
                 ->with([
-                    'commentateur',
+                    'commentateur.personne',
                     'fichiers.uploadedBy',
-                    'parent.commentateur',
+                    'parent.commentateur.personne',
                     'enfants.commentateur',
                     'enfants.fichiers.uploadedBy',
                     'enfants.parent.commentateur'
                 ])
-                ->orderBy('created_at', 'desc')
                 ->get();
 
             return response()->json([
