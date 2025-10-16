@@ -1079,7 +1079,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
                         'valider_par' => $evaluation->valider_par,
                         'commentaire' => $evaluation->commentaire,
-                        'evaluation' => collect($evaluation->evaluation)->map(function ($champ_evaluer) {
+                        'evaluation' => ["champs_evalues" => collect($evaluation->evaluation["champs_evalues"])->map(function ($champ_evaluer) {
                             return $champ_evaluer;
 
                             return [
@@ -1093,7 +1093,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                                 'date_note' => $champ_evalue ? $champ_evalue["pivot"]["date_note"] : null,
                                 'updated_at' => $champ_evalue ? $champ_evalue["pivot"]["updated_at"] : null,
                             ];
-                        }),
+                        }), "statistiques" => $evaluation->evaluation["statistiques"]],
                         'resultats_evaluation' => $resultatsExamen, //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen,
                         'statut' => $evaluation->statut,
                         //'champs' => collect($noteConceptuelle->note_conceptuelle)->map(function ($champ) use ($evaluation) {
