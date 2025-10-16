@@ -146,6 +146,7 @@ class Commentaire extends Model
             'tdr' => \App\Models\Tdr::class,
             'rapport' => \App\Models\Rapport::class,
             'evaluation' => \App\Models\Evaluation::class,
+            'evaluation_champ' => \App\Models\EvaluationChamp::class,
             'decision' => \App\Models\Decision::class,
             'champ_projet' => \App\Models\ChampProjet::class,
             'evaluation_critere' => \App\Models\EvaluationCritere::class
@@ -160,6 +161,7 @@ class Commentaire extends Model
         'idee_de_projet' => "l'",
         'fichier' => 'le',
         'evaluation' => "l'",
+        'evaluation_champ' => "l'",
         'decision' => 'la',
         'champ_projet' => 'le',
         'evaluation_critere' => "l'",
