@@ -1079,21 +1079,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
                         'valider_par' => $evaluation->valider_par,
                         'commentaire' => $evaluation->commentaire,
-                        'evaluation' => ["champs_evaluer" => collect($evaluation->evaluation["champs_evalues"])->map(function ($champ_evaluer) {
-                            return $champ_evaluer;
-
-                            return [
-                                'id' => $champ_evalue ? $champ_evalue['pivot']['id'] : null,
-                                'champ_id' => $champ["id"],
-                                'label' => $champ["label"],
-                                'attribut' => $champ["attribut"],
-                                'valeur' => $champ["valeur"],
-                                'appreciation' => $champ_evalue ? $champ_evalue["pivot"]["note"] : null,
-                                'commentaire' => $champ_evalue ? $champ_evalue["pivot"]["commentaires"] : null,
-                                'date_note' => $champ_evalue ? $champ_evalue["pivot"]["date_note"] : null,
-                                'updated_at' => $champ_evalue ? $champ_evalue["pivot"]["updated_at"] : null,
-                            ];
-                        }), "statistiques" => $evaluation->evaluation["statistiques"]],
+                        'evaluation' => $evaluation->evaluation,
                         'resultats_evaluation' => $resultatsExamen, //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen,
                         'statut' => $evaluation->statut,
                         //'champs' => collect($noteConceptuelle->note_conceptuelle)->map(function ($champ) use ($evaluation) {
