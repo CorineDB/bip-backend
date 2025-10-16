@@ -1042,14 +1042,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         try {
             $noteConceptuelle = $this->repository->findOrFail($noteConceptuelleId);
 
-            /* $evaluation = $this->evaluationRepository->getModel()
-                ->where('projetable_type', NoteConceptuelle::class)
-                ->where('projetable_id', $noteConceptuelle->id)
-                ->where('type_evaluation', 'note_conceptuelle')
-                ->with(['evaluateur', 'validator'])
-                //->orderBy('created_at', 'desc')
-                ->first(); */
-
             $evaluation = $noteConceptuelle->evaluationEnCours();
 
             if (!$evaluation) {
@@ -1079,7 +1071,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'success' => true,
                 'data' => [
                     'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet", "historique_des_evaluations_notes_conceptuelle")),
-                    /* 'evaluation' => [
+                    'evaluation' => [
                         'id' => $evaluation->id,
                         'type_evaluation' => $evaluation->type_evaluation,
                         'date_debut_evaluation' => $evaluation->date_debut_evaluation ? Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
@@ -1106,9 +1098,9 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                                 'updated_at' => $champ_evalue ? $champ_evalue["pivot"]["updated_at"] : null,
                             ];
                         }),
-                        'historique_evaluations' => EvaluationResource::collection($evaluation->historique_evaluations)
+                        //'historique_evaluations' => EvaluationResource::collection($evaluation->historique_evaluations)
                     ],
-                    'resultats_examen' =>  $resultatsExamen, */ //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen
+                    'resultats_examen' =>  $resultatsExamen, //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen
                 ]
             ]);
         } catch (Exception $e) {
