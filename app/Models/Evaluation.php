@@ -569,7 +569,7 @@ class Evaluation extends Model
     public function champs_evalue()
     {
         return $this->belongsToMany(Champ::class, 'evaluation_champs', 'evaluationId', 'champId')
-                    ->withPivot('note', 'date_note', "commentaires")
+                    ->withPivot('id', 'note', 'date_note', "commentaires")
                     ->withTimestamps();
     }
 
