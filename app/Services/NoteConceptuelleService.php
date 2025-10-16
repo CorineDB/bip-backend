@@ -643,7 +643,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 return response()->json([
                     'success' => true,
                     'message' => 'Note conceptuelle non trouvée pour ce projet.',
-                    'data' => $projet
+                    'data' => ["projet" => $projet]
                 ], 206);
             }
 
