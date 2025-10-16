@@ -1079,7 +1079,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
                         'valider_par' => $evaluation->valider_par,
                         'commentaire' => $evaluation->commentaire,
-                        'evaluation' => ["champs_evalues" => collect($evaluation->evaluation["champs_evalues"])->map(function ($champ_evaluer) {
+                        'evaluation' => ["champs_evaluer" => collect($evaluation->evaluation["champs_evalues"])->map(function ($champ_evaluer) {
                             return $champ_evaluer;
 
                             return [
