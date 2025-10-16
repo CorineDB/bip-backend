@@ -802,7 +802,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluationEnCours) {
                         $champEvalue = collect($evaluationEnCours->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                         return [
-                            "id" => $champEvalue["id"],
+                            'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                             'champ_id' => $champ['id'],
                             'label' => $champ['label'],
                             'attribut' => $champ['attribut'],
@@ -845,6 +845,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluationEnCours) {
                         $champEvalue = collect($evaluationEnCours->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                         return [
+                            'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                             'champ_id' => $champ['id'],
                             'label' => $champ['label'],
                             'attribut' => $champ['attribut'],
@@ -1979,7 +1980,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                             $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
                             $result = [
-                                "id" => $champEvalue["id"],
+                                'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                                 'champ_id' => $champ['id'],
                                 'label' => $champ['label'],
                                 'attribut' => $champ['attribut'],
@@ -2160,7 +2161,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                             $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
                             $result = [
-                                "id" => $champEvalue["id"],
+                                'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                                 'champ_id' => $champ['id'],
                                 'label' => $champ['label'],
                                 'attribut' => $champ['attribut'],
@@ -2460,7 +2461,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire()->all_champs)->map(function ($champ) use ($evaluationRapport) {
                             $champEvalue = collect($evaluationRapport->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                             return [
-                                "id" => $champEvalue["id"],
+                                'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                                 'champ_id' => $champ['id'],
                                 'label' => $champ['label'],
                                 'attribut' => $champ['attribut'],
@@ -2841,7 +2842,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                                 $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
                                 $result = [
-                                    "id" => $champEvalue["id"],
+                                    'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                                     'champ_id' => $champ['id'],
                                     'label' => $champ['label'],
                                     'attribut' => $champ['attribut'],
@@ -3376,7 +3377,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
                 $result = [
-                    "id" => $champEvalue["id"],
+                    'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                     'champ_id' => $champ['id'],
                     'label' => $champ['label'],
                     'attribut' => $champ['attribut'],
@@ -3716,7 +3717,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                                 $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
                                 $result = [
-                                    "id" => $champEvalue["id"],
+                                    'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                                     'champ_id' => $champ['id'],
                                     'label' => $champ['label'],
                                     'attribut' => $champ['attribut'],
