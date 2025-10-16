@@ -29,7 +29,6 @@ class EvaluationResource extends BaseApiResource
             'evaluation' => $this->evaluation,
             'resultats_evaluation' => $this->resultats_evaluation,
             'statut' => $this->statut,
-            '$champEvalue'
             'evaluateurs' => $this->getActiveEvaluationsByUser()->mapWithKeys(function($evaluateur){
                 //$evaluateur = User::find($evaluateur);
                 return $evaluateur;

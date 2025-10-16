@@ -1098,7 +1098,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                                 'updated_at' => $champ_evalue ? $champ_evalue["pivot"]["updated_at"] : null,
                             ];
                         }),
-                        'historique_evaluations' => $evaluation->historique_evaluations,//EvaluationResource::collection($evaluation->historique_evaluations)
+                        'historique_evaluations' => EvaluationResource::collection($evaluation->historique_evaluations)
                     ],
                     'resultats_examen' =>  $resultatsExamen, //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen
                 ]
