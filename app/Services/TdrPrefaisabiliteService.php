@@ -2280,7 +2280,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             return response()->json([
                 'success' => true,
-                'data' => new \App\Http\Resources\RapportResource($rapport->load("historique_des_rapports_prefaisabilite")),
+                'data' => new \App\Http\Resources\RapportResource($rapport->load("fichiers", "historique_des_rapports_prefaisabilite")),
                 'message' => 'Détails de soumission du rapport de préfaisabilité récupérés avec succès.'
             ]);
         } catch (\Exception $e) {
