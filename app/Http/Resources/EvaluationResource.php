@@ -18,14 +18,15 @@ class EvaluationResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,
+            //'id' => $this->hashed_id,
             'type_evaluation' => $this->type_evaluation,
-            'id_evaluation' => $this->id_evaluation,
             'date_debut_evaluation' => Carbon::parse($this->date_debut_evaluation)->format("d/m/Y H:m:i"),
             'date_fin_evaluation' => Carbon::parse($this->date_fin_evaluation)->format("d/m/Y H:m:i"),
             'valider_le' => Carbon::parse($this->valider_le)->format("d/m/Y H:m:i"),
-            'valider_par' => $this->valider_par,
+            'valider_par' => $this->valider_par,//$this->validator?->hashed_id,//valider_par,
             'commentaire' => $this->commentaire,
-            'id_evaluation' => $this->id_evaluation,
+            'id_evaluation' => $this->id_evaluation, //$this->parentEvaluation?->hashed_id,
             'evaluation' => $this->evaluation,
             'resultats_evaluation' => $this->resultats_evaluation,
             'statut' => $this->statut,
@@ -33,7 +34,7 @@ class EvaluationResource extends BaseApiResource
                 //$evaluateur = User::find($evaluateur);
                 return $evaluateur;
                 return [
-                    'id' => $evaluateur->id,
+                    'id' => $evaluateur->hashed_id,
                     'nom_complet' => $evaluateur->personne->nom . " " . $evaluateur->personne->prenom,
                     'email' => $evaluateur->email,
                     "evaluation_individuel" => $evaluationIndividuel
