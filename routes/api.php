@@ -705,6 +705,8 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
     // Étape 2 : Le SSO renvoie ici après login
     Route::get('/callback', function (Request $request) {
+
+        dd($request->all());
         $code = $request->query('code');
         $state = $request->query('state');
 
