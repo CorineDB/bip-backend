@@ -747,7 +747,9 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             ['email' => $payload['sub']],
             [
                 'name' => $payload['name'] ?? 'Inconnu',
-                "provider_user_id" => $payload['sub'] ?? "mdc.bipsigfp@gouv.bj"
+                "provider" => "ad",
+                "provider_user_id" => $payload['sub'] ?? "mdc.bipsigfp@gouv.bj",
+                "username" => $payload['sub'] ?? "mdc.bipsigfp@gouv.bj"
             ]
         );
 
