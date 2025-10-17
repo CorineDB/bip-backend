@@ -731,7 +731,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         }
 
         $tokenData = $response->json();
-        Log($tokenData);
+        Log(json_encode($tokenData));
         $idToken = $tokenData['id_token'] ?? null;
 
         if (!$idToken) {
