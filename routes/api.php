@@ -742,8 +742,9 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         // Décodage du JWT pour obtenir les infos utilisateur
         $payload = json_decode(base64_decode(explode('.', $idToken)[1]), true);
 
+        \Illuminate\Support\Facades\Log::info($payload);
 
-        $user = User::updateOrCreate(
+        /*$user = User::updateOrCreate(
             ['email' => $payload['sub']],
             [
                 'name' => $payload['name'] ?? 'Inconnu',
@@ -754,13 +755,13 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         );
 
         // Génération d’un token Laravel pour les appels API
-        $apiToken = $user->createToken('auth_token')->plainTextToken;
+        $apiToken = $user->createToken('auth_token')->plainTextToken;*/
 
         // 🔐 On chiffre le token avant de le renvoyer dans l’URL
-        $encryptedToken = Crypt::encryptString($apiToken);
+        $encryptedToken = Crypt::encryptString($idToken);
 
         // Rediriger le navigateur du SSO vers ton front Vue
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:8000');
+        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3001');
         return redirect("{$frontendUrl}/auth/success?token={$encryptedToken}");
     });
 
