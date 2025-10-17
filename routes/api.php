@@ -745,7 +745,10 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         $user = User::updateOrCreate(
             ['email' => $payload['sub']],
-            ['name' => $payload['name'] ?? 'Inconnu']
+            [
+                'name' => $payload['name'] ?? 'Inconnu',
+                "provider_user_id" => $payload['sub'] ?? "mdc.bipsigfp@gouv.bj"
+            ]
         );
 
         // Génération d’un token Laravel pour les appels API
