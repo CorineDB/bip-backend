@@ -39,10 +39,9 @@ use App\Http\Controllers\TdrPrefaisabiliteController;
 use App\Http\Controllers\TdrFaisabiliteController;
 use App\Http\Controllers\PassportClientController;
 use App\Models\User;
-use Illuminate\Http\Client\Request;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 
