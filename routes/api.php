@@ -732,7 +732,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         }
 
         $tokenData = $response->json();
-        \Illuminate\Support\Facades\Log(json_encode($tokenData));
+        \Illuminate\Support\Facades\Log::info(json_encode($tokenData));
         $idToken = $tokenData['id_token'] ?? null;
 
         if (!$idToken) {
