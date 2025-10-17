@@ -45,6 +45,18 @@ return [
     'passport' => [
         'token_url' => env('PASSPORT_TOKEN_URL', 'http://localhost:8000/oauth/token'),
     ],
+    'azure' => [
+        'client_id' => env('AZURE_CLIENT_ID'),
+        'client_secret' => env('AZURE_CLIENT_SECRET'),
+        'redirect' => env('AZURE_REDIRECT_URI'),
+        'tenant' => env('AZURE_TENANT_ID', 'common'),
+    ],
+    'gov' => [
+        'url' => env('GOV_AUTH_BASE_URL', 'https://pprodofficial.service-public.bj'),
+        'client_id' => env('GOV_CLIENT_ID'),
+        'client_secret' => env('GOV_CLIENT_SECRET'),
+        'redirect' => env('GOV_REDIRECT_URI'),
+    ],
 
 
 ];
