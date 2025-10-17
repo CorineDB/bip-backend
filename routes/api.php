@@ -44,6 +44,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 // Get authenticated user
 /* Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -731,7 +732,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         }
 
         $tokenData = $response->json();
-        Log(json_encode($tokenData));
+        \Illuminate\Support\Facades\Log(json_encode($tokenData));
         $idToken = $tokenData['id_token'] ?? null;
 
         if (!$idToken) {
