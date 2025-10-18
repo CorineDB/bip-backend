@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\CommentaireCreated;
 use App\Http\Resources\CommentaireResource;
 use App\Services\BaseService;
 use App\Repositories\Contracts\BaseRepositoryInterface;
@@ -142,6 +143,10 @@ class CommentaireService extends BaseService implements CommentaireServiceInterf
             $commentaire = $this->commentaireRepository->getInstance()
                 ->with(['commentateur', 'fichiers.uploadedBy', 'enfants', 'parent'])
                 ->find($commentaire->id);
+
+            // Dispatcher l'événement de création en temps réel
+            // Le listener SendCommentaireNotifications se chargera d'envoyer les notifications
+            event(new CommentaireCreated($commentaire));
 
             Log::info('Commentaire créé avec succès', [
                 'commentaire_id' => $commentaire->id,

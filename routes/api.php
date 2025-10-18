@@ -206,7 +206,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             Route::put('{projetId}/note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'updateForProject']);
             Route::get('{projetId}/note-conceptuelle', [NoteConceptuelleController::class, 'getForProject']);
             Route::delete('{projetId}/note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'deleteForProject']);
-            //Route::get('{projetId}/details-validation-note-conceptuelle/{noteId}', [NoteConceptuelleController::class, 'getValidationDetails']);
+
             // Route pour la validation à l'étape étude de profil
             Route::get('{projetId}/details-etude-profil', [NoteConceptuelleController::class, 'getDetailsEtudeProfil']);
             Route::post('{projetId}/valider-etude-profil', [NoteConceptuelleController::class, 'validerEtudeProfil']);
@@ -744,24 +744,11 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         \Illuminate\Support\Facades\Log::info($payload);
 
-        /*$user = User::updateOrCreate(
-            ['email' => $payload['sub']],
-            [
-                'name' => $payload['name'] ?? 'Inconnu',
-                "provider" => "ad",
-                "provider_user_id" => $payload['sub'] ?? "mdc.bipsigfp@gouv.bj",
-                "username" => $payload['sub'] ?? "mdc.bipsigfp@gouv.bj"
-            ]
-        );
-
-        // Génération d’un token Laravel pour les appels API
-        $apiToken = $user->createToken('auth_token')->plainTextToken;*/
-
         // 🔐 On chiffre le token avant de le renvoyer dans l’URL
         $encryptedToken = Crypt::encryptString($idToken);
 
         // Rediriger le navigateur du SSO vers ton front Vue
-        $frontendUrl = env('FRONTEND_URL', 'http://192.168.1.30:3000');
+        $frontendUrl = env('FRONTEND_URL', 'http://192.168.1.5:3001');
         return redirect("{$frontendUrl}/auth/success?token={$encryptedToken}");
     });
 
@@ -808,3 +795,11 @@ Route::prefix('keycloak-auths')->group(function () {
         */
     });
 });
+
+// Route de test pour auth:api
+Route::get('/test-auth', function() {
+    return response()->json([
+        'success' => true,
+        'user' => auth()->user()->email
+    ]);
+})->middleware('auth:api');

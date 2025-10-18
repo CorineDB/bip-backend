@@ -266,6 +266,8 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
                     'date_fin_evaluation' => $evaluation->date_fin_evaluation,
                     'evaluateur_id' => $evaluation->evaluateur_id,
                     'valider_par' => $evaluation->valider_par,
+
+                    'valider_par' => $evaluation->valider_par,
                     'valider_le' => $evaluation->valider_le,
                     'commentaire' => $evaluation->commentaire,
                     'evaluation' => $evaluation->evaluation,

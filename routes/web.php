@@ -9,3 +9,7 @@ Route::match(['GET', 'POST'], '/auth/callback', [AuthController::class, 'callbac
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/test-echo', function () {
+    return view('echo-test');
+});

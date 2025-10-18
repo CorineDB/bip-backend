@@ -27,6 +27,9 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\IdeeProjetTransformee::class => [
             \App\Listeners\DupliquerIdeeProjetVersProjet::class,
         ],
+        \App\Events\CommentaireCreated::class => [
+            \App\Listeners\SendCommentaireNotifications::class,
+        ],
     ];
 
     /**

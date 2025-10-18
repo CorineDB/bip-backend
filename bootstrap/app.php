@@ -37,6 +37,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         // Configuration des exceptions API en utilisant ExceptionTrait
         $exceptions->render(function (Throwable $exception, $request) {
+            // Exclure broadcasting/auth pour permettre à Laravel de gérer l'authentification
+            if ($request->is('broadcasting/auth')) {
+                return null;
+            }
+
             // Pour les requêtes API, retourner du JSON
             if ($request->expectsJson() || $request->is('api/*')) {
                 $handler = new class {

@@ -11,9 +11,12 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 Broadcast::channel('idee.de.projet.creer.{idee}', IdeeProjetChannel::class);
 Broadcast::channel('ministere.{ministere}', MinistereChannel::class);
 
-/*
-Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
-    return (int) $user->id === (int) $id;
+// Canal pour les commentaires d'une ressource
+Broadcast::channel('commentaires.{type}.{id}', function ($user, $type, $id) {
+    info('🔍 Canal auth test', ['user' => $user, 'type' => $type, 'id' => $id]);
+    // Autoriser tous les utilisateurs authentifiés à écouter les commentaires
+    // Vous pouvez ajouter des vérifications plus spécifiques si nécessaire
+    return true;
+    return $user !== null;
 });
-Broadcast::channel('idee.de.projet.creer.{idee}', IdeeProjetChannel::class);
-Broadcast::channel('auto.evalation.climatique.preliminiaire.{idee}', IdeeProjetChannel::class);*/
+
