@@ -26,7 +26,7 @@ class ProjetResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->id,//->hashed_id,
             // Identifiants et métadonnées
             'identifiant_bip' => $this->identifiant_bip,
             'identifiant_sigfp' => $this->identifiant_sigfp,
@@ -103,9 +103,10 @@ class ProjetResource extends BaseApiResource
 
             'champs' => $this->champs->map(function ($champ) {
                 return [
-                    'id' => $champ->id,
+                    'id' => $champ->id,//->hashed_id,
                     'attribut' => $champ->attribut,
-                    'value' => $champ->pivot->valeur
+                    'value' => $champ->pivot->valeur,
+                    'pivot_id' => $champ->pivot->id
                 ];
             }),
             // Relations principales (loaded when needed)
@@ -152,9 +153,9 @@ class ProjetResource extends BaseApiResource
 
             'composants' => $this->composants->map(function ($composant) {
                     return [
-                        'id' => $composant->id,
+                        'id' => $composant->id,//->hashed_id,
                         'intitule' => $composant->intitule,
-                        'type_programme' => $composant->typeProgramme->id ?? null
+                        'type_programme' => $composant->typeProgramme->hashed_id ?? null
                     ];
             }),
 
@@ -163,7 +164,7 @@ class ProjetResource extends BaseApiResource
             'types_intervention' => $this->whenLoaded('typesIntervention', function () {
                 return $this->typesIntervention->map(function ($type) {
                     return [
-                        'id' => $type->id,
+                        'id' => $type->id,//->hashed_id,
                         'nom' => $type->nom
                     ];
                 });

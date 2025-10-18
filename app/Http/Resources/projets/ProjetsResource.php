@@ -23,6 +23,7 @@ class ProjetsResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
+            //'id' => $this->hashed_id,
             'id' => $this->id,
             // Identifiants et métadonnées
             'identifiant_bip' => $this->identifiant_bip,
@@ -30,6 +31,7 @@ class ProjetsResource extends BaseApiResource
             'sigle' => $this->sigle,
             'titre_projet' => $this->titre_projet,
             'porteur_projet' => $this->porteur_projet,
+            'origine' => $this->origine,
             'est_a_haut_risque' => $this->est_a_haut_risque,
             'est_dur' => $this->est_dur,
             'est_ancien' => $this->est_ancien,
@@ -62,6 +64,10 @@ class ProjetsResource extends BaseApiResource
 
             // Données JSON structurées
             'cout_estimatif_projet' => $this->cout_estimatif_projet ?? [],
+
+            'date_debut_etude' => $this->date_debut_etude,
+            'date_fin_etude' => $this->date_fin_etude,
+            'decision' => $this->decision ?? [],
 
             'secteur' => new SecteurResourcePublic($this->secteur),
             'created_at' => Carbon::parse($this->created_at)->format("Y-m-d H:i:s"),
