@@ -11,12 +11,10 @@ use App\Http\Resources\DepartementResource;
 use App\Http\Resources\CommuneResource;
 use App\Repositories\Contracts\DepartementRepositoryInterface;
 use App\Services\Contracts\DepartementServiceInterface;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Redis;
 
 class DepartementService extends BaseService implements DepartementServiceInterface
 {
-    //use CachableService;
+    use CachableService;
 
     protected BaseRepositoryInterface $repository;
 
@@ -38,29 +36,50 @@ class DepartementService extends BaseService implements DepartementServiceInterf
         return DepartementResource::class;
     }
 
-    public function all(): JsonResponse
+    /**
+     * Récupère tous les départements avec mise en cache
+     */
+    /*public function all(): JsonResponse
     {
         try {
-            /* $departements = $this->cacheGet('all', [], function () {
-                return $this->repository->all();
-            }); */
+            if ($this->cacheExists('all', [])) {
+                $cached = $this->cacheGet('all', [], function() {
+                    return null;
+                });
+                return response()->json($cached);
+            }
 
-             $departements = $this->repository->all();
+            $responseData = [];
+            foreach ($this->repository->getModel()->cursor() as $departement) {
+                $responseData[] = (new DepartementResource($departement))->resolve();
+            }
 
-            return $this->resourceClass::collection($departements)->response();
+            $this->cachePut('all', $responseData, []);
+
+            return response()->json($responseData);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
     }
 
-    public function find(int|string $id): JsonResponse
+    /**
+     * Récupère un département par son ID avec mise en cache
+     */
+    /*public function find(int|string $id): JsonResponse
     {
         try {
-            $departement = /* $this->cacheGet('find', ['id' => $id], function () use ($id) {
-                return */ $this->repository->findOrFail($id);
-            //});
+            if ($this->cacheExists('find', ['id' => $id])) {
+                $cached = $this->cacheGet('find', ['id' => $id], function() {
+                    return null;
+                });
+                return response()->json($cached);
+            }
 
-            return (new $this->resourceClass($departement))->response();
+            $departement = $this->repository->findOrFail($id);
+            $responseData = (new DepartementResource($departement))->resolve();
+            $this->cachePut('find', $responseData, ['id' => $id]);
+
+            return response()->json($responseData);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
@@ -69,103 +88,41 @@ class DepartementService extends BaseService implements DepartementServiceInterf
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
-    }
+    }*/
 
+    /**
+     * Récupère les communes d'un département avec mise en cache
+     */
     public function communes($idDepartement): JsonResponse
     {
         try {
-            $communes = /* $this->cacheGet('communes', ['departement_id' => $idDepartement], function () use ($idDepartement) {
-                return  */$this->repository->findOrFail($idDepartement)->communes;
-            //}, 43200); // 12h pour les communes
 
-            return CommuneResource::collection($communes)->response();
+            $communes = $this->repository->findOrFail($idDepartement)->communes;
+
+            return $this->resourceClass::collection($communes)->response();
+
+            $params = ['departement_id' => $idDepartement];
+
+            if ($this->cacheExists('communes', $params)) {
+                $cached = $this->cacheGet('communes', $params, function() {
+                    return null;
+                });
+                return response()->json($cached);
+            }
+
+            $communes = $this->repository->findOrFail($idDepartement)->communes;
+
+            $responseData = [];
+            foreach ($communes as $commune) {
+                $responseData[] = (new CommuneResource($commune))->resolve();
+            }
+
+            // TTL réduit à 12h car plus dynamique
+            $this->cachePut('communes', $responseData, $params, 43200);
+
+            return response()->json($responseData);
         } catch (Exception $e) {
             return $this->errorResponse($e);
-        }
-    }
-
-    public function create(array $data): JsonResponse
-    {
-        try {
-            $departement = $this->repository->create($data);
-
-            // Invalider et reconstruire le cache automatiquement
-            $this->refreshCacheAfterUpdate();
-
-            return (new $this->resourceClass($departement))->response();
-        } catch (Exception $e) {
-            return $this->errorResponse($e);
-        }
-    }
-
-    public function update($id, array $data): JsonResponse
-    {
-        try {
-            $departement = $this->repository->update($id, $data);
-
-            // Invalider et reconstruire le cache automatiquement
-            $this->refreshCacheAfterUpdate();
-
-            return (new $this->resourceClass($departement))->response();
-        } catch (Exception $e) {
-            return $this->errorResponse($e);
-        }
-    }
-
-    public function delete($id): JsonResponse
-    {
-        try {
-            $this->repository->delete($id);
-
-            // Invalider et reconstruire le cache automatiquement
-            $this->refreshCacheAfterUpdate();
-
-            return response()->json(['message' => 'Département supprimé avec succès']);
-        } catch (Exception $e) {
-            return $this->errorResponse($e);
-        }
-    }
-
-    /**
-     * Invalide et reconstruit automatiquement le cache après modification
-     */
-    protected function refreshCacheAfterUpdate(): void
-    {
-        // Configuration des caches à reconstruire automatiquement
-        $refreshMethods = [
-            'all' => [
-                'method' => 'all',
-                'params' => [],
-                'callback' => fn() => $this->repository->all(),
-                'ttl' => $this->cacheTtl
-            ]
-        ];
-
-        // Utilise la méthode générique du trait
-        //$this->refreshAllCache($refreshMethods);
-
-        // Optionnel: pré-charger les caches les plus utilisés
-        $this->preloadPopularCaches();
-    }
-
-    /**
-     * Pré-charge les caches populaires en arrière-plan
-     */
-    protected function preloadPopularCaches(): void
-    {
-        try {
-            // Récupérer les 3 premiers départements et pré-charger leurs communes
-            $topDepartements = $this->repository->all();
-
-            /* foreach ($topDepartements as $departement) {
-                $this->refreshCache('communes',
-                    ['departement_id' => $departement->id],
-                    fn() => $departement->communes,
-                    43200
-                );
-            } */
-        } catch (Exception $e) {
-            \Log::info('Preload cache skipped: ' . $e->getMessage());
         }
     }
 }
