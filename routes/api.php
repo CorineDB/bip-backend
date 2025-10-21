@@ -694,8 +694,11 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         $state = Str::uuid()->toString();
         $callbackUrl = config('services.gov.redirect');
 
-        // Stocker le FRONT_URL correspondant à ce state pour 5 minutes
-        Cache::put("oauth_state:{$state}", request('frontend_origin'), 300);
+        // Stocker le FRONT_URL correspondant à ce state sans expiration
+        Cache::put("oauth_state:{$state}", [
+            'frontend_origin' => request('frontend_origin'),
+            'created_at' => now()->timestamp
+        ]);
 
         $params = http_build_query([
             'client_id' => config('services.gov.client_id'),
