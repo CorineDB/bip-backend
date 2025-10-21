@@ -695,10 +695,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         $callbackUrl = config('services.gov.redirect');
 
         // Stocker le FRONT_URL correspondant à ce state pour 5 minutes
-        Cache::put("oauth_state:{$state}", [
-            'frontend_origin' => request('frontend_origin'),
-            'created_at' => now()->timestamp
-        ], 300);
+        Cache::put("oauth_state:{$state}", request('frontend_origin'), 300);
 
         $params = http_build_query([
             'client_id' => config('services.gov.client_id'),
@@ -721,14 +718,14 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         $code = $request->query('code');
         $state = $request->query('state');
 
-        // Récupérer les données du state depuis le cache
-        $stateData = Cache::pull("oauth_state:{$state}");
-
-        if (!$stateData || !$code) {
+        // Retrouver l'origine front correspondante
+        $frontendUrl = Cache::pull("oauth_state:{$state}", env('FRONTEND_URL'));
+        if (!$frontendUrl || !$code) {
             return response()->json(['error' => 'Session expirée ou invalide'], 400);
         }
-
-        $frontendUrl = $stateData['frontend_origin'] ?? env('FRONTEND_URL', 'http://192.168.8.105:3000');
+        /* if (!$code) {
+            return response()->json(['error' => 'Code manquant'], 400);
+        } */
 
         // Échange du code contre un token
         $response = Http::asForm()
@@ -753,72 +750,14 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         // Décodage du JWT pour obtenir les infos utilisateur
         $payload = json_decode(base64_decode(explode('.', $idToken)[1]), true);
+
         \Illuminate\Support\Facades\Log::info($payload);
 
-        // Récupérer l'email depuis le payload
-        $email = $payload['email'] ?? $stateData['email'] ?? null;
+        // 🔐 On chiffre le token avant de le renvoyer dans l'URL
+        $encryptedToken = Crypt::encryptString($idToken);
 
-        if (!$email) {
-            return response()->json(['error' => 'Email manquant dans le token'], 400);
-        }
-
-        // Vérifier si l'utilisateur existe dans notre système
-        $utilisateur = \App\Models\User::where('email', $email)->first();
-
-        if (!$utilisateur) {
-            return redirect("{$frontendUrl}/auth/error?message=" . urlencode('Utilisateur non trouvé dans le système BIP'));
-        }
-
-        // Vérifier si c'est un mode d'activation
-        $isActivationMode = $stateData['activation_mode'] ?? false;
-        $compteDejaActive = $utilisateur->email_verified_at !== null && $utilisateur->statut === 1;
-
-        // Activer le compte si pas encore activé et en mode activation
-        if ($isActivationMode && !$compteDejaActive) {
-            // Activation du compte
-            if ($utilisateur->email_verified_at === null) {
-                $utilisateur->email_verified_at = now();
-            }
-
-            if ($utilisateur->statut === 0) {
-                $utilisateur->statut = 1;
-            }
-
-            $utilisateur->first_connexion = now();
-
-            // Nettoyer les données de vérification
-            $utilisateur->account_verification_request_sent_at = null;
-            $utilisateur->link_is_valide = false;
-            $utilisateur->token = null;
-        }
-
-        $utilisateur->last_connection = now();
-        $utilisateur->save();
-
-        // Générer le token d'authentification BIP (Passport)
-        $bipToken = $utilisateur->createToken('Bip-Token')->accessToken;
-
-        // Log de l'activation
-        $acteur = $utilisateur->personne ? $utilisateur->personne->nom . " " . $utilisateur->personne->prenom : "Inconnu";
-        $message = $compteDejaActive
-            ? "{$acteur} s'est connecté via AD."
-            : "{$acteur} a activé son compte et s'est connecté via AD.";
-
-        \Illuminate\Support\Facades\Log::info($message, [
-            'user_id' => $utilisateur->id,
-            'email' => $utilisateur->email,
-            'compte_active' => !$compteDejaActive
-        ]);
-
-        // 🔐 Chiffrer les données à renvoyer
-        $dataToEncrypt = json_encode([
-            'id_token' => $idToken,
-            'bip_token' => $bipToken,
-            'compte_nouvellement_active' => !$compteDejaActive
-        ]);
-        $encryptedToken = Crypt::encryptString($dataToEncrypt);
-
-        // Rediriger vers le front avec le token chiffré
+        // Rediriger le navigateur du SSO vers ton front Vue
+        $frontendUrl = env('FRONTEND_URL', 'http://192.168.1.5:3001');
         return redirect("{$frontendUrl}/auth/success?token={$encryptedToken}");
     });
 
