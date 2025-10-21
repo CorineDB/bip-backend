@@ -3,6 +3,8 @@
 namespace App\Http\Requests\financements;
 
 use App\Enums\EnumTypeFinancement;
+use App\Models\Financement;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -10,7 +12,7 @@ class StoreFinancementRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
@@ -19,7 +21,26 @@ class StoreFinancementRequest extends FormRequest
             'nom'=> ['required', 'string', Rule::unique('financements', 'nom')->whereNull('deleted_at')],
             'nom_usuel' => 'required|string',
             'type' => ['required', Rule::in(EnumTypeFinancement::values())],
-            'financementId' => ['sometimes', Rule::exists('financements', 'id')->whereNull('deleted_at')]
+            'financementId' => [Rule::requiredIf($this->input("type") != "type"), new HashedExists(Financement::class),
+
+                /* function ($attribute, $value, $fail) {
+                    $exists = Financement::with(['parent'])->findByHashedId("id", $value)->when($this->input("type") == "secteur", function($query){
+                        $query->whereNull('financementId')->where('type', 'type');
+                    })->when($this->input("type") == "nature", function($query){
+
+                        $query->with("parent")->where('type', 'source')->whereHas('parent', function ($query) {
+                            $query->where('type', 'type');
+                        });
+                    })->whereNull('deleted_at')->exists();
+
+                    if (!$exists && $this->input("type") == "source") {
+                        $fail('Le Type de financement est inconnu');
+                    }
+                    else if (!$exists && $this->input("type") == "nature") {
+                        $fail('La source de financement est inconnue');
+                    }
+                } */
+            ]
         ];
     }
 

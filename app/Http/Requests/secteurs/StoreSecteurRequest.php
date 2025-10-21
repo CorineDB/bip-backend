@@ -11,7 +11,16 @@ class StoreSecteurRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
+    }
+
+    protected function prepareForValidation(): void
+    {
+        // Unhash secteurId if it's a hashed string
+        if ($this->has('secteurId') && is_string($this->input('secteurId')) && !is_numeric($this->input('secteurId'))) {
+            $unhashedId = Secteur::unhashId($this->input('secteurId'));
+            $this->merge(['secteurId' => $unhashedId]);
+        }
     }
 
     public function rules(): array

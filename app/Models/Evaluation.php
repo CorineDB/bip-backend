@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HashableId;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Collection;
 
 class Evaluation extends Model
 {
-    use HasFactory, SoftDeletes/*, HasSecureIds*/;
+    use HasFactory, SoftDeletes, HashableId;
 
     /**
      * The table associated with the model.
@@ -148,7 +148,8 @@ class Evaluation extends Model
         return $this->hasMany(Evaluation::class, 'projetable_id', 'projetable_id')
             ->where('projetable_type', $this->projetable_type)
             ->where('type_evaluation', $this->type_evaluation)
-            ->where('id', '!=', $this->id)
+            ->where('statut', 1)
+            //->where('id', '!=', $this->id)
             ->orderByDesc('created_at');
     }
 
@@ -482,7 +483,7 @@ class Evaluation extends Model
             ->groupBy('critere_id')
             ->map(function ($critereEvaluations) {
                 $critere = $critereEvaluations->first()->critere;
-                if (str_contains(strtolower($critere->intitule ?? ''), 'impact climatique')) {
+                if (str_contains(strtolower($critere->intitule ?? ''), 'climat')) {
                     $notes = $critereEvaluations->pluck('note')->filter();
                 } else {
                     $notes = $critereEvaluations->pluck('notation.valeur')->filter();
@@ -500,6 +501,14 @@ class Evaluation extends Model
                     'evaluateurs' => $critereEvaluations->pluck('evaluateur.nom')->filter()->toArray()
                 ];
             });
+    }
+
+    /**
+     * Relation avec les fichiers du rapport
+     */
+    public function fichiers()
+    {
+        return $this->morphMany(Fichier::class, 'fichier_attachable', 'fichier_attachable_type', 'fichier_attachable_id');
     }
 
     /**
@@ -569,6 +578,7 @@ class Evaluation extends Model
     public function champs_evalue()
     {
         return $this->belongsToMany(Champ::class, 'evaluation_champs', 'evaluationId', 'champId')
+                    ->using(EvaluationChamp::class)
                     ->withPivot('id', 'note', 'date_note', "commentaires")
                     ->withTimestamps();
     }

@@ -7,7 +7,10 @@ use Illuminate\Validation\Validator;
 use App\Models\Projet;
 use App\Models\Notation;
 use App\Models\CategorieCritere;
+use App\Models\Champ;
+use App\Models\Critere;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
+use App\Rules\HashedExists;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Http;
@@ -15,6 +18,7 @@ use Illuminate\Support\Facades\Http;
 class SoumettreRapportPrefaisabiliteRequest extends FormRequest
 {
     protected $champs = [];
+    protected $canevas = [];
     protected $projet = null;
 
     /**
@@ -22,7 +26,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; //auth()->check() && in_array(auth()->user()->type, ['dpaf', 'admin']);
+        return auth()->check(); //auth()->check() && in_array(auth()->user()->type, ['dpaf', 'admin']);
     }
 
     /**
@@ -40,11 +44,12 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
         $this->projet = Projet::with('secteur.parent')->findOrFail($projetId);
 
         // Récupérer le canevas de checklist de suivi
-        $canevas = $this->getChecklistSuiviPrefaisabilite();
+        $this->canevas = $canevas = $this->getChecklistSuiviPrefaisabilite();
         if (!empty($canevas)) {
             // Extraire tous les IDs des champs du canevas
             $champsValides = $this->extractAllFields($canevas);
-            $this->champs = collect($champsValides)->pluck('id')->filter()->toArray();
+            //$this->champs = collect($champsValides)->pluck('id')->filter()->toArray();
+            $this->champs = collect($champsValides)->pluck('hashed_id')->filter()->toArray();
         }
     }
 
@@ -58,6 +63,8 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
             ->withCount('criteres')
             ->first();
         $nombreCriteresRequis = $categorieChecklist ? $categorieChecklist->criteres_count : 4;
+
+        $action = $this->input('action', 'submit');
 
         return [
             // Action: submit (soumettre) ou draft (brouillon)
@@ -80,27 +87,20 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
             // Checklist contrôle des adaptations pour projets à haut risque
             'checklist_controle_adaptation_haut_risque' =>
             $this->projet->est_a_haut_risque ? 'required|array' : 'nullable',
-            /*
-                'checklist_controle_adaptation_haut_risque.criteres' => [
-                    'required_with:checklist_controle_adaptation_haut_risque',
-                    'array',
-                    $this->input('action', 'submit') === 'draft' ? 'min:0' : "size:$nombreCriteresRequis"
-                ],
-            */
             'checklist_controle_adaptation_haut_risque.criteres' => [
                 $this->projet->est_a_haut_risque ? 'required_with:checklist_controle_adaptation_haut_risque|array' . ($this->input('action', 'submit') === 'draft' ? '|min:0' : "|size:$nombreCriteresRequis") : 'nullable',
             ],
 
-            'checklist_controle_adaptation_haut_risque.criteres.*' => ['required_with:checklist_controle_adaptation_haut_risque.criteres', 'array'],
-            'checklist_controle_adaptation_haut_risque.criteres.*.critere_id' => 'required|integer|exists:criteres,id',
+            //'checklist_controle_adaptation_haut_risque.criteres.*' => ['required_with:checklist_controle_adaptation_haut_risque.criteres', 'array'],
+            //'checklist_controle_adaptation_haut_risque.criteres.*.critere_id' => [/* 'required|integer|exists:criteres,id', */ 'required', new HashedExists(Critere::class)],
 
             // Les mesures sont requises seulement si action != draft
-            'checklist_controle_adaptation_haut_risque.criteres.*.mesures_selectionnees' => [
+            /*'checklist_controle_adaptation_haut_risque.criteres.*.mesures_selectionnees' => [
                 'required_unless:action,draft',
                 'array',
                 'min:1'
-            ],
-            'checklist_controle_adaptation_haut_risque.criteres.*.mesures_selectionnees.*' => 'integer|exists:notations,id',
+            ],*/
+            //'checklist_controle_adaptation_haut_risque.criteres.*.mesures_selectionnees.*' => /* 'integer|exists:notations,id' */[new HashedExists(Notation::class)],
 
             // Checklist de suivi de rapport de préfaisabilité
             'checklist_suivi_rapport_prefaisabilite' => [
@@ -108,7 +108,12 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
                 'array',
                 $this->input('action', 'submit') === 'draft' ? 'min:0' : 'min:' . count($this->champs)
             ],
-            'checklist_suivi_rapport_prefaisabilite.*.checkpoint_id' => ['required_unless:action,draft', "in:" . implode(",", $this->champs)],
+            'checklist_suivi_rapport_prefaisabilite.*.checkpoint_id' => [
+                $action ? "required" : "nullable",
+                $action ? "in:" . implode(",", $this->champs) : "nullable",
+                $action ? new HashedExists(Champ::class) : "nullable",
+                //'required_unless:action,draft', "in:" . implode(",", $this->champs), new HashedExists(Champ::class)
+            ],
             // Les règles dynamiques seront ajoutées dans withValidator
             //'checklist_suivi_rapport_prefaisabilite.*.reponse' => 'required_unless:action,draft|string',
             //'checklist_suivi_rapport_prefaisabilite.*.commentaire' => 'required_unless:action,draft|string|min:10|max:1000',
@@ -161,7 +166,8 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
             return;
         }
 
-        $criteresValides = $categorieChecklist->criteres->pluck('id')->toArray();
+        //$criteresValides = $categorieChecklist->criteres->pluck('id')->toArray();
+        $criteresValides = $categorieChecklist->criteres->pluck('hashed_id')->toArray();
         $totalCriteresRequis = $categorieChecklist->criteres->count();
 
         /* foreach ($checklist['criteres'] as $index => $critere) {
@@ -218,6 +224,29 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
                 }
             }
         }
+
+        // Déhasher les IDs après validation
+        $allData = $this->all();
+        if (isset($allData['checklist_controle_adaptation_haut_risque']['criteres'])) {
+            foreach ($allData['checklist_controle_adaptation_haut_risque']['criteres'] as $index => &$critere) {
+                // Déhasher critere_id
+                if (isset($critere['critere_id']) && !is_int($critere['critere_id'])) {
+                    $critere['critere_id'] = Critere::unhashId($critere['critere_id']);
+                }
+
+                // Déhasher mesures_selectionnees
+                if (isset($critere['mesures_selectionnees']) && is_array($critere['mesures_selectionnees'])) {
+                    foreach ($critere['mesures_selectionnees'] as $mesureIndex => &$mesure) {
+                        if (!is_int($mesure)) {
+                            $mesure = Notation::unhashId($mesure);
+                        }
+                    }
+                    unset($mesure);
+                }
+            }
+            unset($critere);
+            $this->replace($allData);
+        }
     }
 
     /**
@@ -233,6 +262,7 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
         $estSoumise = $this->input('action', 'submit') === 'submit';
         $canevasFields = $this->getCanevasFieldsWithConfigs();
 
+        $champs = collect($this->canevas)->pluck('hashed_id')->filter()->toArray();
 
         foreach ($checklistSuivi as $index => $evaluation) {
             $checkpointId = $evaluation['checkpoint_id'] ?? null;
@@ -271,12 +301,22 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
 
             // Validation de l'explication selon show_explanation
             $this->validateExplication($validator, $index, $explication, $fieldConfig, $estSoumise);
+
+            // Déhasher le checkpoint_id après validation
+            if ($checkpointId && !is_int($checkpointId)) {
+                $checkpointIdDehashed = Champ::unhashId($checkpointId);
+                $allData = $this->all();
+                $allData['checklist_suivi_rapport_prefaisabilite'][$index]['checkpoint_id'] = $checkpointIdDehashed;
+                $this->replace($allData);
+            }
         }
 
         // Vérifier que tous les champs obligatoires sont présents pour la soumission finale
         if ($estSoumise && !empty($this->champs)) {
+
             $champsEvalues = collect($checklistSuivi)->pluck('checkpoint_id')->toArray();
-            $champsManquants = array_diff($this->champs, $champsEvalues);
+            //$champsManquants = array_diff($this->champs, $champsEvalues);
+            $champsManquants = array_diff($champs, $champsEvalues);
 
             if (!empty($champsManquants)) {
                 $validator->errors()->add(

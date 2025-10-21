@@ -3,10 +3,10 @@
 namespace App\Rules;
 
 use Closure;
-use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
-class HashedExistsMultiple implements ValidationRule
+class HashedExistsMultiple implements Rule
 {
     protected string $table;
     protected string $column;
@@ -37,18 +37,21 @@ class HashedExistsMultiple implements ValidationRule
     }
 
     /**
-     * Valider l'attribut (tableau d'IDs hashés)
+     * Determine if the validation rule passes.
+     *
+     * @param  string  $attribute
+     * @param  mixed  $value
+     * @return bool
      */
-    public function validate(string $attribute, mixed $value, Closure $fail): void
+    public function passes($attribute, $value)
     {
-        if (!is_array($value)) {
-            $fail("Le champ {$attribute} doit être un tableau.");
-            return;
+        // Si la valeur est vide ou null, on considère que c'est valide (pour gérer 'nullable')
+        if ($value === null || (is_array($value) && empty($value))) {
+            return true;
         }
 
-        if (empty($value)) {
-            $fail("Le champ {$attribute} ne peut pas être vide.");
-            return;
+        if (!is_array($value)) {
+            return false;
         }
 
         // Déhasher tous les IDs
@@ -80,34 +83,40 @@ class HashedExistsMultiple implements ValidationRule
             }
 
             if ($unhashedId === null) {
-                $fail("L'élément à l'index {$index} du champ {$attribute} n'est pas valide.");
-                return;
+                return false;
             }
 
             $unhashedIds[] = $unhashedId;
         }
 
-        // Modifier directement la valeur dans la Request
-        $request = request();
-        if ($request) {
-            $request->merge([
-                $attribute => $unhashedIds
-            ]);
-        }
+        // Modifier directement la valeur dans la Request avec gestion des attributs imbriqués
+        $this->setNestedAttributeValue($attribute, $unhashedIds);
 
         // Vérifier que tous les IDs existent dans la table
         $query = DB::table($this->table)->whereIn($this->column, $unhashedIds);
 
         // Appliquer le callback where si fourni
         if ($this->whereCallback) {
-            $query = call_user_func($this->whereCallback, $query);
+            $result = call_user_func($this->whereCallback, $query);
+            // Si le callback retourne une query, l'utiliser, sinon garder la query actuelle
+            if ($result !== null) {
+                $query = $result;
+            }
         }
 
         $count = $query->count();
 
-        if ($count !== count($unhashedIds)) {
-            $fail("Certains éléments du champ {$attribute} n'existent pas.");
-        }
+        return $count === count($unhashedIds);
+    }
+
+    /**
+     * Get the validation error message.
+     *
+     * @return string
+     */
+    public function message()
+    {
+        return "Certains éléments du champ :attribute n'existent pas.";
     }
 
     /**
@@ -125,5 +134,39 @@ class HashedExistsMultiple implements ValidationRule
     public static function make(string $table, string $column = 'id'): self
     {
         return new self($table, $column);
+    }
+
+    /**
+     * Set the value for a nested attribute in the request data.
+     *
+     * @param string $attribute
+     * @param mixed $value
+     */
+    private function setNestedAttributeValue($attribute, $value)
+    {
+        // Split the attribute by '.' to get the individual levels
+        $keys = explode('.', $attribute);
+
+        // Get the full request data and store it in a variable
+        $input = request()->all();
+
+        // Traverse through the keys and create the nested array path
+        $current = &$input; // Reference to the root of the array
+
+        // Traverse the keys to get the nested attribute
+        foreach ($keys as $key) {
+            // If the key doesn't exist, create it as an empty array
+            if (!isset($current[$key])) {
+                $current[$key] = [];
+            }
+            // Traverse deeper into the array by reference
+            $current = &$current[$key];
+        }
+
+        // Set the final value
+        $current = $value;
+
+        // Now put the modified data back into the request
+        request()->merge($input);
     }
 }

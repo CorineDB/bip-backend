@@ -371,7 +371,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -460,6 +460,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ->first();
 
             if ($tdrExistant && $tdrExistant->statut === 'soumis') {
+                throw new Exception("Le tdr est deja soumis", 403);
                 // Si un TDR soumis existe déjà, créer une nouvelle version avec parent_id
                 $tdrData['parent_id'] = $tdrExistant->id;
                 $tdr = \App\Models\Tdr::create($tdrData);
@@ -559,15 +560,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'message' => $message,
                 'data' => [
                     'tdr' => new TdrResource($tdr),
-                    'fichier_id' => $fichierTdr ? $fichierTdr->id : null,
-                    'projet_id' => $projet->id,
+                    'fichier_id' => $fichierTdr ? $fichierTdr->hashed_id : null,
+                    'projet_id' => $projet->hashed_id,
                     'ancien_statut' => in_array($projet->statut->value, [StatutIdee::TDR_PREFAISABILITE->value, StatutIdee::R_TDR_PREFAISABILITE->value]) ? $projet->statut->value : StatutIdee::TDR_PREFAISABILITE->value,
                     'nouveau_statut' => $estSoumise ? StatutIdee::EVALUATION_TDR_PF->value : $projet->statut->value,
                     'fichier_url' => $fichierTdr ? $fichierTdr->url : null,
                     'resume' => $data['resume'] ?? null,
                     'tdr_pre_faisabilite' => $data['tdr_pre_faisabilite'] ?? null,
                     'type_tdr' => $data['type_tdr'] ?? null,
-                    'soumis_par' => auth()->id(),
+                    'soumis_par' => auth()->user()->hashed_id,
                     'soumis_le' => $estSoumise ? now()->format('d/m/Y H:i:s') : null
                 ]
             ]);
@@ -658,7 +659,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationTdrPrefaisabilite()->all_champs)->map(function ($champ) use ($evaluation) {
                     $champEvalue = collect($evaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                     return [
-                        'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                        /* 'id' => $champEvalue ? $champEvalue->pivot->id : null, //$champEvalue ? $champEvalue['pivot']['id'] : null,
                         'champ_id' => $champ['id'],
                         'label' => $champ['label'],
                         'attribut' => $champ['attribut'],
@@ -666,7 +667,18 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'type_champ' => $champ['type_champ'],
                         'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                         'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                        'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                        'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null, */
+
+
+                        'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                        'champ_id' => $champ?->hashed_id,
+                        'label' => $champ?->label,
+                        'attribut' => $champ?->attribut,
+                        'ordre_affichage' => $champ?->ordre_affichage,
+                        'type_champ' => $champ?->type_champ,
+                        'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                        'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                        'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                     ];
                 })->toArray(),
 
@@ -718,11 +730,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'success' => true,
                 'message' => $this->getMessageSuccesEvaluation($resultatsEvaluation['resultat_global']),
                 'data' => [
-                    'evaluation_id' => $evaluation->id,
+                    'evaluation_id' => $evaluation->hashed_id,
                     'evaluation' => $evaluation,
-                    'projet_id' => $projet->id,
+                    'projet_id' => $projet->hashed_id,
                     'resultat_global' => $resultatsEvaluation['resultat_global'],
-                    'evaluateur_id' => auth()->id(),
+                    'evaluateur_id' => auth()->user()->hashed_id,
                     'date_evaluation' => now()->format('d/m/Y H:i:s'),
                     'statistiques' => $resultatsEvaluation
                 ]
@@ -743,7 +755,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -758,7 +770,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             if (!$tdr) {
                 return response()->json([
                     'success' => false,
-                    'data' => null,
+                    'data' => ['projet' => $projet],
                     'message' => 'Aucun TDR de préfaisabilité soumis trouvé pour ce projet.'
                 ], 404);
             }
@@ -836,7 +848,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         // On commence par vérifier si la structure "evaluation['champs_evalues']" existe
                         if (isset($evaluation->evaluation['champs_evalues'])) {
                             $evaluationExistante = collect($evaluation->evaluation['champs_evalues'])
-                                ->firstWhere('champ_id', $champ->id);
+                                ->firstWhere('champ_id', $champ->hashed_id);
+                            //->firstWhere('champ_id', $champ->id);
 
                             if ($evaluationExistante) {
                                 $data = [
@@ -883,7 +896,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                     $grilleEvaluation[] = array_merge([
                         "id" => null,
-                        'champ_id' => $champ->id,
+                        'champ_id' => $champ->hashed_id,
                         'label' => $champ->label,
                         'attribut' => $champ->attribut,
                         'type_champ' => $champ->type_champ,
@@ -903,10 +916,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'data' => [
                     'tdr' => new TdrResource($tdr->load(['fichiers', 'projet', "historique_des_evaluations_tdrs_prefaisabilite"])),
                     'evaluation_existante' => $evaluation ? [
-                        'id' => $evaluation->id,
+                        'id' => $evaluation->hashed_id,
                         'statut' => $evaluation->statut, // 0=en cours, 1=terminée
                         'valider_le' => $evaluation->valider_le?->format('d/m/Y H:i:s'),
-                        'valider_par' => $evaluation->valider_par,
+                        'valider_par' => $evaluation->validator?->hashed_id, //$evaluation->valider_par,
                         'evaluateur' => new UserResource($evaluation->evaluateur),
                         'date_debut' => Carbon::parse($evaluation->date_debut_evaluation)->format("Y-m-d h:i:s"),
                         'date_fin' => Carbon::parse($evaluation->date_fin_evaluation)->format("Y-m-d h:i:s"),
@@ -938,7 +951,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 //->orderBy('created_at', 'desc')
                 ->first(); */
 
-            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -985,12 +998,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'data' => [
                     'tdr' => new TdrResource($tdr->load(['fichiers', 'projet'])),
                     'evaluation' => [
-                        'id' => $evaluation->id,
+                        'id' => $evaluation->hashed_id,
                         'type_evaluation' => $evaluation->type_evaluation,
                         'date_debut_evaluation' => $evaluation->date_debut_evaluation ? Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
                         'date_fin_evaluation' => $evaluation->date_fin_evaluation ? Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
                         'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
-                        'valider_par' => $evaluation->valider_par,
+                        'valider_par' => $evaluation->validator?->hashed_id, //$evaluation->valider_par,
                         'commentaire' => $evaluation->commentaire,
                         'evaluation' => $evaluation->evaluation,
                         'resultats_evaluation' => $resultatsExamen, //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen,
@@ -1005,14 +1018,25 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             $champEvalueJSON = $champsEvaluesJSON->firstWhere('attribut', $champ["attribut"]);
 
                             $result = [
-                                'id' => $champ_evalue ? $champ_evalue['pivot']['id'] : null,
+                                /*'id' => $champ_evalue ? $champ_evalue['pivot']['id'] : null,
                                 'label' => $champ["label"],
                                 'attribut' => $champ["attribut"],
                                 'valeur' => $champ["valeur"],
                                 'appreciation' => $champ_evalue ? $champ_evalue["pivot"]["note"] : null,
                                 'commentaire' => $champ_evalue ? $champ_evalue["pivot"]["commentaires"] : null,
                                 'date_note' => $champ_evalue ? $champ_evalue["pivot"]["date_note"] : null,
-                                'updated_at' => $champ_evalue ? $champ_evalue["pivot"]["updated_at"] : null,
+                                'updated_at' => $champ_evalue ? $champ_evalue["pivot"]["updated_at"] : null,*/
+
+
+                                'id' => $champ_evalue ? $champ_evalue?->pivot?->hashed_id : null,
+                                'champ_id' => $champ?->hashed_id,
+                                'label' => $champ?->label,
+                                'attribut' => $champ?->attribut,
+                                'ordre_affichage' => $champ?->ordre_affichage,
+                                'type_champ' => $champ?->type_champ,
+                                'date_note' => $champ_evalue ? $champ_evalue?->pivot?->valeur : null,
+                                'commentaire' => $champ_evalue ? $champ_evalue?->pivot?->commentaires : null,
+                                'updated_at' => $champ_evalue ? $champ_evalue?->pivot?->updated_at : null,
                             ];
 
                             // Ajouter les anciennes valeurs "_passer" si elles existent
@@ -1086,7 +1110,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $evaluationsChamps = [];
             foreach ($evaluation->champs_evalue as $champ) {
                 $evaluationsChamps[] = [
-                    "id" => $champ->id,
+                    "id" => $champ->hashed_id,
                     'champ_id' => $champ->pivot->champ_id,
                     'appreciation' => $champ->pivot->note,
                     'commentaire' => $champ->pivot->commentaires
@@ -1221,7 +1245,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                                 $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
                                 $result = [
-                                    'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                                    /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                                     'champ_id' => $champ['id'],
                                     'label' => $champ['label'],
                                     'attribut' => $champ['attribut'],
@@ -1230,6 +1254,18 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                                     'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                                     'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
                                     'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                                    */
+
+
+                                    'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                                    'champ_id' => $champ?->hashed_id,
+                                    'label' => $champ?->label,
+                                    'attribut' => $champ?->attribut,
+                                    'ordre_affichage' => $champ?->ordre_affichage,
+                                    'type_champ' => $champ?->type_champ,
+                                    'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                                    'commentaire' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                                    'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                                 ];
 
                                 // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
@@ -1298,13 +1334,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'success' => true,
                 'message' => $messageAction,
                 'data' => [
-                    'evaluation_id' => $evaluation->id,
-                    'projet_id' => $projet->id,
+                    'evaluation_id' => $evaluation->hashed_id,
+                    'projet_id' => $projet->hashed_id,
                     'action' => $data['action'],
                     'ancien_statut' => StatutIdee::EVALUATION_TDR_PF->value,
                     'nouveau_statut' => $nouveauStatut->value,
                     'commentaire' => $data['commentaire'] ?? null,
-                    'decision_par' => auth()->id(),
+                    'decision_par' => auth()->user()->hashed_id,
                     'decision_le' => now()->format('d/m/Y H:i:s'),
                     'resultats_evaluation' => $resultatsEvaluation
                 ]
@@ -1650,7 +1686,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'champs_evalues' => collect($this->documentRepository->getCanevasChecklistSuiviRapportPrefaisabilite()->all_champs)->map(function ($champ) use ($evaluationValidation) {
                         $champEvalue = collect($evaluationValidation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                         return [
-                            'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                            /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                             'champ_id' => $champ['id'],
                             'label' => $champ['label'],
                             'attribut' => $champ['attribut'],
@@ -1658,7 +1694,18 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             'type_champ' => $champ['type_champ'],
                             'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                             'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                            'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                            'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,*/
+
+
+                            'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                            'champ_id' => $champ?->hashed_id,
+                            'label' => $champ?->label,
+                            'attribut' => $champ?->attribut,
+                            'ordre_affichage' => $champ?->ordre_affichage,
+                            'type_champ' => $champ?->type_champ,
+                            'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                            'commentaire' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                            'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                         ];
                     })->toArray(),
                     'decision' => ['decision' => $data['action'], 'commentaire' => $data['commentaire']],
@@ -1878,7 +1925,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -1962,12 +2009,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'tdr' => new TdrResource($projet->tdrPrefaisabilite->first()),
                     'rapport' => new RapportResource($rapport),
                     'evaluation_validation' => $evaluationValidation ? [
-                        'id' => $evaluationValidation->id,
+                        'id' => $evaluationValidation->hashed_id,
                         'evaluation' => $evaluationValidation->evaluation,
                         'decision' => $evaluationValidation->resultats_evaluation,
                         'statut' => $evaluationValidation->statut, // 0=en cours, 1=terminée
                         'valider_le' => $evaluationValidation->valider_le?->format('d/m/Y H:i:s'),
-                        'valider_par' => $evaluationValidation->valider_par,
+                        'valider_par' => $evaluationValidation->validator?->hashed_id, //$evaluationValidation->valider_par,
                         'evaluateur' => new UserResource($evaluationValidation->evaluateur),
                         'date_debut' => Carbon::parse($evaluationValidation->date_debut_evaluation)->format("Y-m-d h:i:s"),
                         'date_fin' => Carbon::parse($evaluationValidation->date_fin_evaluation)->format("Y-m-d h:i:s"),
@@ -2166,7 +2213,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
 
             // Traiter la checklist de contrôle d'adaptation si projet à haut risque
-            if ($projet->est_a_haut_risque) {
+            /* if ($projet->est_a_haut_risque) {
                 if (!$estBrouillon && (!isset($data['checklist_controle_adaptation_haut_risque']) || $data['checklist_controle_adaptation_haut_risque'] == null)) {
                     throw new Exception("Il faut faire le suivi des mesures d'adaptation", 1);
                 }
@@ -2195,7 +2242,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'data_keys' => array_keys($data)
                     ]);
                 }
-            }
+            } */
 
             // Traiter la checklist de suivi pour la soumission finale
             if (isset($data['checklist_suivi_rapport_prefaisabilite'])) {
@@ -2326,14 +2373,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'success' => true,
                 'message' => $message,
                 'data' => [
-                    'rapport_id' => $rapport->id,
-                    'projet_id' => $projet->id,
+                    'rapport_id' => $rapport->hashed_id,
+                    'projet_id' => $projet->hashed_id,
                     'statut_rapport' => $rapport->statut,
                     'statut_projet' => $projet->statut->value
                 ]
             ]);
         } catch (Exception $e) {
             DB::rollBack();
+            \Log::info($e->getMessage());
             return $this->errorResponse($e);
         }
     }
@@ -2358,7 +2406,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 return response()->json([
                     'success' => false,
                     'message' => 'Aucun rapport soumis trouvé pour ce projet.',
-                    'data' => null
+                    'data' => ["projet" => $projet]
                 ], 206);
             }
 
@@ -2808,7 +2856,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
                 $result = [
-                    'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                    /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                     'champ_id' => $champ['id'],
                     'label' => $champ['label'],
                     'attribut' => $champ['attribut'],
@@ -2816,7 +2864,18 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     'type_champ' => $champ['type_champ'],
                     'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                     'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,*/
+
+
+                    'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                    'champ_id' => $champ?->hashed_id,
+                    'label' => $champ?->label,
+                    'attribut' => $champ?->attribut,
+                    'ordre_affichage' => $champ?->ordre_affichage,
+                    'type_champ' => $champ?->type_champ,
+                    'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                    'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                    'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                 ];
 
                 // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
@@ -3236,7 +3295,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     foreach ($mesuresSelectionnees as $mesureId) {
                         $mesureDetail = $mesures->get($mesureId);
                         $mesuresFormatees[] = [
-                            'id' => $mesureDetail->id,
+                            'id' => $mesureDetail->hashed_id,
                             'libelle' => $mesureDetail->libelle,
                             'valeur' => $mesureDetail->valeur,
                             'commentaire' => $mesureDetail->commentaire
@@ -3245,7 +3304,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
                     // Ajouter le critère formaté
                     $criteresFormates[] = [
-                        'id' => $critereDetail->id,
+                        'id' => $critereDetail->hashed_id,
                         'intitule' => $critereDetail->intitule,
                         'ponderation' => $critereDetail->ponderation,
                         'commentaire' => $critereDetail->commentaire,
@@ -3401,7 +3460,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         $checklist_suivi =  collect($this->documentRepository->getCanevasChecklistSuiviRapportPrefaisabilite()->all_champs)->map(function ($champ) use ($rapport) {
             $champEvalue = collect($rapport->champs)->firstWhere('attribut', $champ['attribut']);
             return [
-                'id'                => $champEvalue && isset($champEvalue['pivot']['id']) ? $champEvalue['pivot']['id'] : null,
+                /*'id'                => $champEvalue && isset($champEvalue['pivot']['id']) ? $champEvalue['pivot']['id'] : null,
                 'champ_id'          => $champ['id'],
                 'label'             => $champ['label'],
                 'attribut'          => $champ['attribut'],
@@ -3409,7 +3468,20 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'type_champ'        => $champ['type_champ'],
                 'valeur'            => $champEvalue && isset($champEvalue['pivot']['valeur']) ? $champEvalue['pivot']['valeur'] : null,
                 'commentaire'       => $champEvalue && isset($champEvalue['pivot']['commentaire']) ? $champEvalue['pivot']['commentaire'] : null,
-                'updated_at'        => $champEvalue && isset($champEvalue['pivot']['updated_at']) ? Carbon::parse($champEvalue['pivot']['updated_at'])->format("Y-m-d H:i:s") : null
+                'updated_at'        => $champEvalue && isset($champEvalue['pivot']['updated_at']) ? Carbon::parse($champEvalue['pivot']['updated_at'])->format("Y-m-d H:i:s") : null,
+                */
+
+
+
+                'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                'champ_id' => $champ?->hashed_id,
+                'label' => $champ?->label,
+                'attribut' => $champ?->attribut,
+                'ordre_affichage' => $champ?->ordre_affichage,
+                'type_champ' => $champ?->type_champ,
+                'valeur' => $champEvalue ? $champEvalue?->pivot?->valeur : null,
+                'commentaire' => $champEvalue ? $champEvalue?->pivot?->commentaire : null,
+                'updated_at' => $champEvalue ? $champEvalue?->pivot?->updated_at : null,
             ];
         })->toArray();
 
@@ -3536,6 +3608,11 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 auth()->user()->personne->id
             );
 
+            // Si c'est une resoumission (le rapport a un parent_id), créer une nouvelle évaluation avec statut -1
+            if ($rapport && $rapport->parent_id) {
+                $this->creerEvaluationRapportResoumis($projet, $rapport);
+            }
+
             DB::commit();
 
             // Envoyer une notification
@@ -3545,20 +3622,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'success' => true,
                 'message' => 'Rapport d\'évaluation ex-ante soumis avec succès.',
                 'data' => [
-                    'projet_id' => $projet->id,
+                    'projet_id' => $projet->hashed_id,
                     'ancien_statut' => StatutIdee::MATURITE->value,
                     'nouveau_statut' => StatutIdee::RAPPORT->value,
-                    'rapport_principal' => $rapport ? $rapport : null,
-                    'annexes' => collect($fichiersAnnexes)->map(function ($fichier) {
-                        return [
-                            'id' => $fichier->id,
-                            'nom' => $fichier->nom_original,
-                            'url' => $fichier->url
-                        ];
-                    }),
-                    'nombre_annexes' => count($fichiersAnnexes),
-                    'soumis_par' => auth()->id(),
-                    'soumis_le' => now()->format('d/m/Y H:i:s')
                 ]
             ]);
         } catch (Exception $e) {
@@ -3584,7 +3650,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le rapport soumis le plus récent
             $rapport = \App\Models\Rapport::where('projet_id', $projetId)
                 ->where('type', 'evaluation_ex_ante')
-                ->where('statut', 'soumis')
+                //->where('statut', 'soumis')
                 ->with(['fichiersRapport', 'soumisPar', 'projet', 'champs', 'documentsAnnexes'])
                 ->latest('created_at')
                 ->first();
@@ -3644,6 +3710,20 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ], 422);
             }
 
+            // Récupérer le dernier rapport d'évaluation ex-ante soumis
+            $rapportExistant = \App\Models\Rapport::where('projet_id', $projet->id)
+                ->where('type', 'evaluation_ex_ante')
+                ->where('statut', 'soumis')
+                ->latest('created_at')
+                ->first();
+
+            if (!$rapportExistant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun rapport d\'évaluation ex-ante soumis trouvé pour ce projet.'
+                ], 422);
+            }
+
             $nouveauStatut = null;
             $messageAction = '';
 
@@ -3657,10 +3737,17 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'valider_le' => now(),
                 'evaluateur_id' => auth()->id(),
                 'valider_par' => auth()->id(),
-                'commentaire' => $data['commentaire'] ?? $messageAction,
+                'commentaire' => $data['commentaire'] ?? '',
                 'evaluation' => $data,
                 'resultats_evaluation' => $data['action'],
                 'statut' => 1
+            ]);
+
+            // Mettre à jour le rapport existant avec la date de validation et la décision
+            $rapportExistant->update([
+                'date_validation' => now(),
+                'decision' => $data['action'],
+                'commentaire_validation' => $data['commentaire'] ?? null
             ]);
 
             switch ($data['action']) {
@@ -3685,6 +3772,18 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'sous_phase' => $this->getSousPhaseFromStatut($nouveauStatut)
                     ]);
                     $messageAction = 'Corrections demandées sur le rapport d\'évaluation ex-ante.';
+
+                    // Créer un nouveau rapport en brouillon pour les corrections
+                    $nouveauRapport = \App\Models\Rapport::create([
+                        'projet_id' => $projet->id,
+                        'type' => 'evaluation_ex_ante',
+                        'statut' => 'brouillon',
+                        'intitule' => 'Rapport d\'évaluation ex-ante (Corrections)',
+                        'parent_id' => $rapportExistant->id,
+                        'recommandation' => $rapportExistant->recommandation,
+                        'info_cabinet_etude' => null,
+                        'soumis_par_id' => null
+                    ]);
                     break;
             }
 
@@ -3757,6 +3856,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ], 422);
             }
 
+            // Récupérer le dernier rapport d'évaluation ex-ante soumis
+            $rapportEvaluationExAnte = \App\Models\Rapport::where('projet_id', $projet->id)
+                ->where('type', 'evaluation_ex_ante')
+                ->with(['fichiersRapport', 'procesVerbaux', 'soumisPar', 'projet', 'documentsAnnexes'])
+                ->latest('created_at')
+                ->first();
+
             // Pour le statut VALIDATION_PF, récupérer l'évaluation de validation
             $evaluationValidation = $projet->evaluations()
                 ->where('type_evaluation', 'validation-final-evaluation-ex-ante')
@@ -3768,13 +3874,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'message' => 'Détails de validation récupérés avec succès.',
                 'data' => [
                     'projet' => new ProjetsResource($projet),
+                    'rapport' => $rapportEvaluationExAnte ? new RapportResource($rapportEvaluationExAnte->load("historique")) : null,
                     'evaluation_validation' => $evaluationValidation ? [
-                        'id' => $evaluationValidation->id,
+                        'id' => $evaluationValidation->hashed_id,
                         'evaluation' => $evaluationValidation->evaluation,
                         'decision' => $evaluationValidation->resultats_evaluation,
                         'statut' => $evaluationValidation->statut, // 0=en cours, 1=terminée
                         'valider_le' => $evaluationValidation->valider_le?->format('d/m/Y H:i:s'),
-                        'valider_par' => $evaluationValidation->valider_par,
+                        'valider_par' => $evaluationValidation->validator?->hashed_id, //$evaluationValidation->valider_par,
+                        //'valider_par' => $evaluationValidation->valider_par,
                         'evaluateur' => new UserResource($evaluationValidation->evaluateur),
                         'date_debut' => Carbon::parse($evaluationValidation->date_debut_evaluation)->format("Y-m-d h:i:s"),
                         'date_fin' => Carbon::parse($evaluationValidation->date_fin_evaluation)->format("Y-m-d h:i:s"),
@@ -3806,32 +3914,42 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
      */
     private function gererRapportEvaluationExAnte(Projet $projet, $fichier, array $data): ?Rapport
     {
-        // Récupérer le dernier rapport d'évaluation ex-ante s'il existe
-        $rapportExistant = $projet->rapportEvaluationExAnte()->first();
+        // Récupérer le dernier rapport d'évaluation ex-ante (peu importe le statut)
+        $rapportExistant = \App\Models\Rapport::where('projet_id', $projet->id)
+            ->where('type', 'evaluation_ex_ante')
+            ->orderBy('created_at', 'desc')
+            ->first();
 
         // Préparer les données du rapport
         $rapportData = [
-            'projet_id' => $projet->id,
-            'type' => 'evaluation_ex_ante',
-            'statut' => 'soumis',
-            'intitule' => 'Rapport d\'évaluation ex-ante',
             'recommandation' => $data['recommandation'] ?? null,
-            'info_cabinet_etude' => [
-                'nom_cabinet' => $data['cabinet_etude']['nom_cabinet'] ?? null,
-                'contact_cabinet' => $data['cabinet_etude']['contact_cabinet'] ?? null,
-            ],
             'date_soumission' => now(),
             'soumis_par_id' => auth()->id()
         ];
 
-        // Créer ou mettre à jour le rapport selon la même logique que préfaisabilité
-        if ($rapportExistant && $rapportExistant->statut === 'soumis') {
-            // Si un rapport soumis existe déjà, créer une nouvelle version
-            $rapportData['parent_id'] = $rapportExistant->id;
-            $rapport = Rapport::create($rapportData);
-        } else {
-            // Créer un nouveau rapport (première version)
-            $rapport = Rapport::create($rapportData);
+        $rapport = null;
+
+        // Cas 1: Un rapport en brouillon existe (après corrections)
+        if ($rapportExistant && $rapportExistant->statut === 'brouillon') {
+            // Mettre à jour le rapport brouillon et le passer en statut 'soumis'
+            $rapportExistant->update(array_merge($rapportData, [
+                'statut' => 'soumis',
+                'intitule' => 'Rapport d\'évaluation ex-ante (Resoumission)'
+            ]));
+            $rapport = $rapportExistant;
+        }
+        // Cas 2: Un rapport soumis existe déjà (première soumission était déjà faite)
+        elseif ($rapportExistant && $rapportExistant->statut === 'soumis') {
+            throw new Exception("Rapport final deja soumis Processing Request", 1);
+        }
+        // Cas 3: Première soumission (aucun rapport n'existe)
+        else {
+            $rapport = \App\Models\Rapport::create(array_merge($rapportData, [
+                'projet_id' => $projet->id,
+                'type' => 'evaluation_ex_ante',
+                'statut' => 'soumis',
+                'intitule' => 'Rapport d\'évaluation ex-ante'
+            ]));
         }
 
         // Attacher le fichier au rapport
@@ -3848,17 +3966,53 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
+     * Compter le nombre de versions d'un type de rapport
+     */
+    private function compterVersionsRapport(Projet $projet, string $typeRapport): int
+    {
+        return \App\Models\Rapport::where('projet_id', $projet->id)
+            ->where('type', $typeRapport)
+            ->count();
+    }
+
+    /**
      * Sauvegarder le fichier d'évaluation ex-ante lié à un rapport
      */
     private function sauvegarderFichierEvaluationExAnte(Rapport $rapport, $fichier, array $data): Fichier
     {
-        // Générer les informations du fichier
+        $categorie = $data['categorie'];
+        $nouveauHash = $data['hash_md5'];
+
+        // Vérifier si un fichier de cette catégorie existe déjà pour ce rapport
+        $fichierExistant = $rapport->fichiers()
+            ->where('categorie', $categorie)
+            ->where('ordre', $data['ordre'])
+            ->first();
+
+        // Si un fichier de la même catégorie existe déjà
+        if ($fichierExistant) {
+            // Si c'est le même fichier (même hash MD5), le retourner sans rien faire
+            if ($fichierExistant->hash_md5 === $nouveauHash) {
+                return $fichierExistant;
+            }
+
+            // Sinon, désactiver l'ancien fichier et créer un nouveau
+            $fichierExistant->update([
+                'is_active' => false,
+                'metadata' => array_merge($fichierExistant->metadata ?? [], [
+                    'statut' => 'remplace',
+                    'remplace_le' => now()->toDateTimeString()
+                ])
+            ]);
+        }
+
+        // Générer les informations du nouveau fichier
         $nomOriginal = $fichier->getClientOriginalName();
         $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = "evaluation_ex_ante_{$rapport->id}_{$data['ordre']}.{$extension}";
+        $nomStockage = "evaluation_ex_ante_{$rapport->id}_{$categorie}_{$data['ordre']}_" . time() . ".{$extension}";
 
         // Structure du chemin : projets/hash(projet->identifiantBip)/evaluation_ex_ante/validation_final/
-        $hashProjet = hash('sha256', $rapport->projet->identifiant_bip ?? $rapport->projet_id);
+        $hashProjet = hash('sha256', $rapport->projet->identifiant_bip ?? $rapport->projet->hashed_id);
         $chemin = $fichier->storeAs("projets/{$hashProjet}/evaluation_ex_ante/validation_final", $nomStockage, 'local');
 
         // Créer l'enregistrement Fichier
@@ -3869,18 +4023,19 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             'extension' => $extension,
             'mime_type' => $fichier->getMimeType(),
             'taille' => $fichier->getSize(),
-            'hash_md5' => $data['hash_md5'],
-            'description' => 'Rapport d\'évaluation ex-ante',
+            'hash_md5' => $nouveauHash,
+            'description' => $categorie === 'rapport' ? 'Rapport d\'évaluation ex-ante' : 'Annexe du rapport d\'évaluation ex-ante',
             'commentaire' => $data['commentaire'] ?? null,
             'metadata' => [
                 'type_document' => 'evaluation-ex-ante',
                 'rapport_id' => $rapport->id,
                 'projet_id' => $rapport->projet_id,
-                'version' => 1,
-                'statut' => 'actif'
+                'version' => $fichierExistant ? ($fichierExistant->metadata['version'] ?? 1) + 1 : 1,
+                'statut' => 'actif',
+                'remplace_fichier_id' => $fichierExistant?->id
             ],
             'ordre' => $data['ordre'],
-            'categorie' => $data['categorie'],
+            'categorie' => $categorie,
             'is_active' => true,
             'uploaded_by' => auth()->id(),
             'fichier_attachable_type' => 'App\\Models\\Rapport',
@@ -3896,23 +4051,14 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         // Calculer le hash du nouveau fichier
         $nouveauHash = md5_file($fichier->getRealPath());
 
-        // Vérifier s'il y a déjà une annexe identique dans ce rapport
-        $annexeIdentique = $rapport->documentsAnnexes()
-            ->where('hash_md5', $nouveauHash)
-            ->where('ordre', $index + 2)
-            ->first();
-
-        if ($annexeIdentique) {
-            return $annexeIdentique;
-        }
-
-        // Attacher l'annexe au rapport
+        // Préparer les données de l'annexe
         $annexeData = array_merge($data, [
             'hash_md5' => $nouveauHash,
             'categorie' => 'annexe',
-            'ordre' => $index + 2
+            'ordre' => $index + 2 // Les annexes commencent à l'ordre 2 (1 étant le rapport principal)
         ]);
 
+        // La fonction sauvegarderFichierEvaluationExAnte gère maintenant la déduplication
         return $this->sauvegarderFichierEvaluationExAnte($rapport, $fichier, $annexeData);
     }
 
@@ -3932,6 +4078,39 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
+     * Créer une nouvelle évaluation lors de la resoumission d'un rapport
+     */
+    private function creerEvaluationRapportResoumis($projet, $rapport): void
+    {
+        // Récupérer l'évaluation parent (la dernière évaluation terminée)
+        $evaluationParent = $projet->evaluations()
+            ->where('type_evaluation', 'validation-final-evaluation-ex-ante')
+            ->where('statut', 1) // Évaluation terminée
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        // Créer une nouvelle évaluation avec statut = -1 (en attente de validation)
+        $nouvelleEvaluation = $projet->evaluations()->create([
+            'type_evaluation' => 'validation-final-evaluation-ex-ante',
+            'evaluateur_id' => null, // Sera assigné lors de l'évaluation
+            'evaluation' => [],
+            'resultats_evaluation' => null,
+            'date_debut_evaluation' => null,
+            'date_fin_evaluation' => null,
+            'statut' => -1, // En attente de validation
+            'id_evaluation' => $evaluationParent ? $evaluationParent->id : null, // Lien vers l'évaluation parent
+            'commentaire' => 'Rapport resoumis après corrections'
+        ]);
+
+        // Associer l'évaluation au rapport dans les metadata
+        if ($rapport) {
+            $metadata = $rapport->metadata ?? [];
+            $metadata['evaluation_id'] = $nouvelleEvaluation->id;
+            $rapport->update(['metadata' => $metadata]);
+        }
+    }
+
+    /**
      * Récupérer le rapport soumis pour un projet
      */
     public function getRapportSoumis($projetId): JsonResponse
@@ -3941,7 +4120,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier les permissions d'accès
-            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== \App\Models\Dgpd::class) {
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere?->id && auth()->user()->profilable_type !== \App\Models\Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'accès pour effectuer cette action", 403);
             }
 
@@ -4052,6 +4231,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $checkpointsSoumission = collect($checklistSuiviSoumission);
             $checkpointsValidation = collect($checklistSuiviValidation);
 
+
             // Log pour debug
             \Log::info('Vérification cohérence suivi rapport', [
                 'projet_id' => $projet->id,
@@ -4062,13 +4242,17 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Vérifier que tous les checkpoints de la soumission sont présents dans la validation
             foreach ($checkpointsSoumission as $index => $checkpointSoumis) {
                 // Utiliser champ_id car c'est l'identifiant stable du champ, pas l'id du pivot qui change
-                $checkpointId = $checkpointSoumis['champ_id'] ?? null;
+                $checkpointIdSoumis = $checkpointSoumis['champ_id'] ?? null;
 
-                if (!$checkpointId) {
+                if (!$checkpointIdSoumis) {
                     continue;
                 }
 
+                // Déhasher l'ID de soumission pour la comparaison (il est hashé dans la BDD)
+                $checkpointId = is_int($checkpointIdSoumis) ? $checkpointIdSoumis : \App\Models\Champ::unhashId($checkpointIdSoumis);
+
                 $checkpointValidation = $checkpointsValidation->firstWhere('checkpoint_id', $checkpointId);
+                //throw new Exception("Error Processing Request " . $checkpointId . " Valid : " . json_encode($checkpointValidation), 403);
 
                 if (!$checkpointValidation) {
                     $incoherences[] = [
@@ -4079,7 +4263,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 }
 
                 // Comparer les données entre soumission et validation
-                /*if ($checkpointValidation) {
+                if ($checkpointValidation) {
                     // Comparer les remarques
                     $remarqueSoumission = $checkpointSoumis['remarque'] ?? null;
                     $remarqueValidation = $checkpointValidation['remarque'] ?? null;
@@ -4107,7 +4291,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     }
 
                     // Comparer les explications
-                    $explicationSoumission = $checkpointSoumis['explication'] ?? null;
+                    /*$explicationSoumission = $checkpointSoumis['explication'] ?? null;
                     $explicationValidation = $checkpointValidation['explication'] ?? null;
 
                     // Vérifier si une explication était présente à la soumission mais absente à la validation
@@ -4119,23 +4303,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                             'validation' => 'vide',
                             'message' => "Le checkpoint {$checkpointId} avait une explication lors de la soumission mais n'en a pas lors de la validation."
                         ];
-                    }
-
-                    // Vérifier si les explications sont différentes
-                    if (!empty($explicationSoumission) && !empty($explicationValidation) && $explicationSoumission !== $explicationValidation) {
-                        $incoherences[] = [
-                            'type' => 'explication_modifiee',
-                            'checkpoint_id' => $checkpointId,
-                            'soumission' => $explicationSoumission,
-                            'validation' => $explicationValidation,
-                            'message' => "Le checkpoint {$checkpointId} a une explication différente entre la soumission et la validation."
-                        ];
-                    }
-                }*/
+                    }*/
+                }
             }
 
             // Vérifier s'il y a des checkpoints supplémentaires dans la validation
-            foreach ($checkpointsValidation as $checkpointValidation) {
+            /*foreach ($checkpointsValidation as $checkpointValidation) {
                 $checkpointId = $checkpointValidation['checkpoint_id'] ?? null;
 
                 if (!$checkpointId) {
@@ -4151,7 +4324,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'message' => "Le checkpoint {$checkpointId} est présent dans la validation mais n'était pas dans la soumission."
                     ];
                 }
-            }
+            }*/
 
             // S'il y a des incohérences, retourner une erreur
             if (!empty($incoherences)) {

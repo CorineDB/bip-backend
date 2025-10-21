@@ -89,7 +89,13 @@ class UserService extends BaseService implements UserServiceInterface
         try {
             DB::beginTransaction();
 
-            if (!($role = $this->roleRepository->findById($data["roleId"]))) throw new Exception("Role introuvable", 400);
+            // Le rôle est optionnel maintenant
+            $role = null;
+            if (isset($data["roleId"]) && !empty($data["roleId"])) {
+                if (!($role = $this->roleRepository->findById($data["roleId"]))) {
+                    throw new Exception("Role introuvable", 400);
+                }
+            }
 
             //if (!(auth()->user()->hasRole("administrateur", "super-admin", "super-administrateur", "organisation", "dpaf", "dgpd")))  throw new Exception("L'utilisateur a un rôle inconnu", 400);
 
@@ -132,11 +138,24 @@ class UserService extends BaseService implements UserServiceInterface
             $profilable_id =  (auth()->user()->hasRole("administrateur", "super-admin", "super-administrateur")) ? null : Auth::user()->profilable_id;
             $profilable_type =  (auth()->user()->hasRole("administrateur", "super-admin", "super-administrateur")) ? null : Auth::user()->profilable_type;
 
-            $user = $this->repository->create(array_merge($data, ["roleId" => $role->id, 'type' => $role->slug, 'profilable_type' => $profilable_type, 'profilable_id' => $profilable_id]));
+            // Préparer les données de l'utilisateur
+            $userData = array_merge($data, [
+                'profilable_type' => $profilable_type,
+                'profilable_id' => $profilable_id
+            ]);
 
-            // Création de la personne
+            // Ajouter roleId et type seulement si un rôle est fourni
+            if ($role) {
+                $userData['roleId'] = $role->id;
+                $userData['type'] = $role->slug;
+            }
 
-            $user->roles()->attach([$role->id]);
+            $user = $this->repository->create($userData);
+
+            // Attacher le rôle seulement si fourni
+            if ($role) {
+                $user->roles()->attach([$role->id]);
+            }
 
             $user->refresh();
 
@@ -176,7 +195,7 @@ class UserService extends BaseService implements UserServiceInterface
             DB::commit();
 
             //Envoyer les identifiants de connexion à l'utilisateur via son email
-            dispatch(new SendEmailJob($user, "confirmation-de-compte"))->delay(now()->addSeconds(15));
+            //dispatch(new SendEmailJob($user, "confirmation-de-compte"))->delay(now()->addSeconds(15));
 
             dispatch(new SendEmailJob($user, "confirmation-compte", $password))->delay(now()->addMinutes(1));
 
@@ -213,6 +232,18 @@ class UserService extends BaseService implements UserServiceInterface
 
             // Suppression des données de personne du tableau de données utilisateur
             unset($data['personne']);
+
+            // Gérer la mise à jour du rôle si fourni
+            if (isset($data['roleId']) && !empty($data['roleId'])) {
+                $role = $this->roleRepository->findById($data['roleId']);
+                if (!$role) {
+                    throw new Exception("Role introuvable", 400);
+                }
+                $data['type'] = $role->slug;
+
+                // Synchroniser le rôle (détacher les anciens, attacher le nouveau)
+                $user->roles()->sync([$role->id]);
+            }
 
             // Mise à jour de l'utilisateur
             $updated = $this->repository->update($id, $data);

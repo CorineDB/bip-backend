@@ -17,7 +17,7 @@ class ListNoteConceptuelleResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->hashed_id,
             'intitule' => $this->intitule,
             'numero_contrat' => $this->numero_contrat,
             'numero_dossier' => $this->numero_dossier,

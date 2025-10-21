@@ -16,7 +16,7 @@ class DgpdResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
+            "id" => $this->hashed_id,
             "nom" => $this->nom,
             "description" => $this->description,
             "admin"=> $this->when($this->user, function(){

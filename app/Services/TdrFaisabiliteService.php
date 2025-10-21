@@ -126,7 +126,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifications des droits d'accès (identique à faisabilité)
-            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -495,7 +495,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -968,7 +968,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             // Récupérer le projet
             $projet = $this->projetRepository->findOrFail($projetId);
 
-            if (auth()->user()->profilable->ministere?->id !== $projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -3492,7 +3492,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         try {
             // Récupérer le dernier rapport de faisabilité soumis
             $rapportFaisabilite = $projet->rapportFaisabilite()
-                ->where('statut', 'soumis')
+                //->where('statut', 'soumis')
                 ->latest('created_at')
                 ->first();
 
@@ -3538,11 +3538,14 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             // Vérifier que tous les checkpoints de la soumission sont présents dans la validation
             foreach ($checkpointsSoumission as $index => $checkpointSoumis) {
                 // Utiliser champ_id car c'est l'identifiant stable du champ, pas l'id du pivot qui change
-                $checkpointId = $checkpointSoumis['champ_id'] ?? null;
+                $checkpointIdSoumis = $checkpointSoumis['champ_id'] ?? null;
 
-                if (!$checkpointId) {
+                if (!$checkpointIdSoumis) {
                     continue;
                 }
+
+                // Déhasher l'ID de soumission pour la comparaison (il est hashé dans la BDD)
+                $checkpointId = is_int($checkpointIdSoumis) ? $checkpointIdSoumis : \App\Models\Champ::unhashId($checkpointIdSoumis);
 
                 $checkpointValidation = $checkpointsValidation->firstWhere('checkpoint_id', $checkpointId);
 
@@ -3556,7 +3559,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             }
 
             // Vérifier s'il y a des checkpoints supplémentaires dans la validation
-            foreach ($checkpointsValidation as $checkpointValidation) {
+            /*foreach ($checkpointsValidation as $checkpointValidation) {
                 $checkpointId = $checkpointValidation['checkpoint_id'] ?? null;
 
                 if (!$checkpointId) {
@@ -3572,7 +3575,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                         'message' => "Le checkpoint {$checkpointId} est présent dans la validation mais n'était pas dans la soumission."
                     ];
                 }
-            }
+            }*/
 
             // S'il y a des incohérences, retourner une erreur
             if (!empty($incoherences)) {

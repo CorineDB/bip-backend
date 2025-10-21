@@ -2,14 +2,18 @@
 
 namespace App\Http\Requests\tdrs;
 
+use App\Models\Champ;
 use App\Repositories\DocumentRepository;
 use App\Repositories\Contracts\TdrRepositoryInterface;
+use App\Rules\HashedExists;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class EvaluerTdrsRequest extends FormRequest
 {
+    protected $canevas = null;
+
     protected $champs = [];
 
     protected $champsAEvaluer = [];
@@ -18,7 +22,8 @@ class EvaluerTdrsRequest extends FormRequest
 
     protected $champsDejaPassés = [];
 
-    protected $champsNonPassés = [];
+    protected $champsNonPasses = [];
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -37,14 +42,14 @@ class EvaluerTdrsRequest extends FormRequest
         // Déterminer le nombre minimum et maximum de champs à évaluer
         // Si evaluer = true : on doit évaluer AU MINIMUM tous les champs non-passés
         // Si evaluer = false : on peut évaluer partiellement (brouillon)
-        $minChamps = $evaluer ? count($this->champsNonPassés) : 0;
+        $minChamps = $evaluer ? count($this->champsNonPasses) : 0;
         $maxChamps = count($this->champs); // Maximum = tous les champs du canevas
 
         return [
             'evaluer' => 'required|boolean',
 
             'evaluations_champs' => 'required_unless:evaluer,0|array|min:' . $minChamps . '|max:' . $maxChamps,
-            'evaluations_champs.*.champ_id' => ["required_with:evaluations_champs", "in:" . implode(",", $this->champsAEvaluer), Rule::exists("champs", "id",)],
+            'evaluations_champs.*.champ_id' => ["required_with:evaluations_champs", "in:" . implode(",", $this->champsAEvaluer),/* Rule::exists("champs", "id",), */ new HashedExists(Champ::class)],
             'evaluations_champs.*.appreciation' => ($evaluer ? 'required' : 'nullable') . '|in:' . implode(",", $this->appreciations),
             'evaluations_champs.*.commentaire' => 'nullable|string|min:10',
 
@@ -69,7 +74,11 @@ class EvaluerTdrsRequest extends FormRequest
 
             // 1. Vérifier que TOUS les champs du canevas ont été évalués
             $champsEvaluesIds = collect($evaluationsChamps)->pluck('champ_id')->toArray();
-            $champsManquants = array_diff($this->champs, $champsEvaluesIds);
+            //$champsManquants = array_diff($this->champs, $champsEvaluesIds);
+
+            $champs = $this->canevas?->all_champs->pluck("id")->toArray();
+
+            $champsManquants = array_diff($champs, $champsEvaluesIds);
 
             if (!empty($champsManquants)) {
                 $validator->errors()->add(
@@ -109,7 +118,7 @@ class EvaluerTdrsRequest extends FormRequest
      */
     public function messages(): array
     {
-        $minRequis = count($this->champsNonPassés);
+        $minRequis = count($this->champsNonPasses);
 
         return [
             'evaluations_champs.required' => 'Les évaluations des champs sont obligatoires.',
@@ -144,7 +153,7 @@ class EvaluerTdrsRequest extends FormRequest
 
     public function prepareForValidation()
     {
-        $canevas = app()->make(DocumentRepository::class)->getModel()
+        $this->canevas = $canevas = app()->make(DocumentRepository::class)->getModel()
             ->where('type', 'checklist')
             ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-appreciation-tdrs-prefaisabilite'))
             ->orderBy('created_at', 'desc')->first();
@@ -153,7 +162,8 @@ class EvaluerTdrsRequest extends FormRequest
 
         $this->appreciations = collect($evaluationConfigs['options_notation'] ?? [])->pluck('appreciation')->toArray();
 
-        $this->champs = $canevas->all_champs->pluck("id")->toArray();
+        //$this->champs = $canevas->all_champs->pluck("id")->toArray();
+        $this->champs = $canevas->all_champs->pluck("hashed_id")->toArray();
 
         // Récupérer l'évaluation en cours pour identifier les champs déjà passés
         // SEULEMENT si le TDR a un parent (réévaluation après retour/rejet)
@@ -183,7 +193,7 @@ class EvaluerTdrsRequest extends FormRequest
         }
 
         // Calculer les champs non passés (pour le minimum requis)
-        $this->champsNonPassés = array_diff($this->champs, $this->champsDejaPassés);
+        $this->champsNonPasses = array_diff($this->champs, $this->champsDejaPassés);
 
         // Tous les champs peuvent être soumis (même ceux déjà passés peuvent être réévalués)
         $this->champsAEvaluer = $this->champs;

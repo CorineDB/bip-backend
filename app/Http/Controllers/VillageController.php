@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\villages\UpdateVillageRequest;
+use App\Http\Requests\villages\FilterVillageRequest;
 use App\Services\Contracts\VillageServiceInterface;
 use Illuminate\Http\JsonResponse;
 
@@ -19,6 +20,11 @@ class VillageController extends Controller
     public function index(): JsonResponse
     {
         return $this->service->all();
+    }
+
+    public function filter(FilterVillageRequest $request): JsonResponse
+    {
+        return $this->service->filter($request->validated());
     }
 
     public function show($id): JsonResponse

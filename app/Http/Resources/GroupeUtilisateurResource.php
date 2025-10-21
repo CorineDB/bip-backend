@@ -16,7 +16,7 @@ class GroupeUtilisateurResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
+            "id" => $this->hashed_id,
             "nom" => $this->nom,
             "roles" => $this->whenLoaded('roles', function(){
                 return RoleResource::collection($this->roles);

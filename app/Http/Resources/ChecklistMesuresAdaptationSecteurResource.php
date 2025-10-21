@@ -16,7 +16,7 @@ class ChecklistMesuresAdaptationSecteurResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->hashed_id,
             'type' => $this->type,
             'slug' => $this->slug,
             'is_mandatory' => $this->is_mandatory,
@@ -44,7 +44,7 @@ class ChecklistMesuresAdaptationSecteurResource extends BaseApiResource
             'criteres' => $this->whenLoaded('criteres', function () {
                 return $this->criteres->map(function ($critere) {
                     return [
-                        'id' => $critere->id,
+                        'id' => $critere->hashed_id,
                         'intitule' => $critere->intitule,
                         'description' => $critere->commentaire,
                         'ponderation' => $critere->ponderation,
@@ -54,7 +54,7 @@ class ChecklistMesuresAdaptationSecteurResource extends BaseApiResource
                         // Mesures d'adaptation par secteur
                         'mesures' => $critere->notations->map(function ($notation) {
                             return [
-                                'id' => $notation->id,
+                                'id' => $notation->hashed_id,
                                 'libelle' => $notation->libelle,
                                 'valeur' => $notation->valeur,
                                 'description' => $notation->commentaire
@@ -85,7 +85,7 @@ class ChecklistMesuresAdaptationSecteurResource extends BaseApiResource
             'fichiers_reference' => $this->when($this->relationLoaded('fichiers'), function() {
                 return $this->fichiers->map(function ($fichier) {
                     return [
-                        'id' => $fichier->id,
+                        'id' => $fichier->hashed_id,
                         'nom' => $fichier->nom_original,
                         'type' => $fichier->extension,
                         'taille' => $fichier->taille_formatee,

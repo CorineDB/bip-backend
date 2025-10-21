@@ -16,9 +16,9 @@ class RapportResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'projet_id' => $this->projet_id,
-            //'parent_id' => $this->parent_id,
+            'id' => $this->hashed_id,
+            'projet_id' => $this->projet?->hashed_id,
+            'parent_id' => $this->parent?->hashed_id,
             'type' => $this->type,
             'statut' => $this->statut,
             'statutCode' => $this->statut === 'validé' ? 2 : ($this->statut === 'soumis' ? 1 : 0),
@@ -30,6 +30,12 @@ class RapportResource extends BaseApiResource
             'date_validation' => $this->date_validation,
             'commentaire_validation' => $this->commentaire_validation,
             'decision' => $this->decision,
+            'duree_vie' => $this->duree_vie,
+            'investissement_initial' => $this->investissement_initial,
+            'tri' => $this->tri,
+            'van' => $this->van,
+            'flux_tresorerie' => $this->flux_tresorerie,
+            'taux_actualisation' => $this->taux_actualisation,
             'projet' => $this->whenLoaded('projet', function () {
                 return new ProjetsResource($this->projet);
             }),
@@ -40,18 +46,18 @@ class RapportResource extends BaseApiResource
                 return new UserResource($this->validateur);
             }),
 
-            'historique_des_rapports' => $this->historique,// $this->whenLoaded('historique', fn() => RapportResource::collection($this->historique)),
+            'historique_des_rapports' => $this->whenLoaded('historique', fn() => RapportResource::collection($this->historique)),
 
 
             'historique_des_evaluations_rapports' => $this->whenLoaded('evaluations', function () {
                 return $this->historique_des_evaluations_rapports_faisabilite->pluck("evaluations")->collapse()->map(function ($evaluation) {
                     return [
-                        'id' => $evaluation->id,
+                        'id' => $evaluation->hashed_id,
                         'type_evaluation' => $evaluation->type_evaluation,
                         'date_debut_evaluation' => $evaluation->date_debut_evaluation ? \Carbon\Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
                         'date_fin_evaluation' => $evaluation->date_fin_evaluation ? \Carbon\Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
                         'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
-                        'valider_par' => $evaluation->valider_par,
+                        'valider_par' => $evaluation->validator?->hashed_id,//$evaluation->valider_par,
                         'commentaire' => $evaluation->commentaire,
                         'evaluation' => $evaluation->evaluation,
                         'resultats_evaluation' => $evaluation->resultats_evaluation,
@@ -60,44 +66,6 @@ class RapportResource extends BaseApiResource
                 });
             }),
 
-            /*
-            'historique_des_rapports' => $this->type == 'faisabilite'
-                ? $this->whenLoaded('historique_des_rapports_faisabilite', fn() => RapportResource::collection($this->historique_des_rapports_faisabilite))
-                : ($this->type == 'prefaisabilite' ? $this->whenLoaded('historique_des_rapports_prefaisabilite', fn() => RapportResource::collection($this->historique_des_rapports_prefaisabilite)) : null),
-            'historique_des_evaluations_rapports' => $this->type == 'faisabilite'
-                ? $this->whenLoaded('historique_des_evaluations_rapports_faisabilite', function () {
-                    return $this->historique_des_evaluations_rapports_faisabilite->pluck("evaluations")->collapse()->map(function ($evaluation) {
-                        return [
-                            'id' => $evaluation->id,
-                            'type_evaluation' => $evaluation->type_evaluation,
-                            'date_debut_evaluation' => $evaluation->date_debut_evaluation ? \Carbon\Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
-                            'date_fin_evaluation' => $evaluation->date_fin_evaluation ? \Carbon\Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
-                            'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
-                            'valider_par' => $evaluation->valider_par,
-                            'commentaire' => $evaluation->commentaire,
-                            'evaluation' => $evaluation->evaluation,
-                            'resultats_evaluation' => $evaluation->resultats_evaluation,
-                            'statut' => $evaluation->statut
-                        ];
-                    });
-                })
-                : ($this->type == 'prefaisabilite' ? $this->whenLoaded('historique_des_evaluations_rapports_prefaisabilite', function () {
-                    return $this->historique_des_evaluations_rapports_prefaisabilite->pluck("evaluations")->collapse()->map(function ($evaluation) {
-                        return [
-                            'id' => $evaluation->id,
-                            'type_evaluation' => $evaluation->type_evaluation,
-                            'date_debut_evaluation' => $evaluation->date_debut_evaluation ? \Carbon\Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
-                            'date_fin_evaluation' => $evaluation->date_fin_evaluation ? \Carbon\Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
-                            'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
-                            'valider_par' => $evaluation->valider_par,
-                            'commentaire' => $evaluation->commentaire,
-                            'evaluation' => $evaluation->evaluation,
-                            'resultats_evaluation' => $evaluation->resultats_evaluation,
-                            'statut' => $evaluation->statut
-                        ];
-                    });
-                }) : null),
-            */
             // Checklists de mesures d'adaptation (si projet à haut risque)
             'checklist_mesures_adaptation' => $this->type == "prefaisabilite" ? $this->whenLoaded('projet', function () {
                 return $this->projet->est_a_haut_risque ?
@@ -135,7 +103,7 @@ class RapportResource extends BaseApiResource
             'est_dernier_rapport' => $this->when(
                 $this->type && $this->projet_id,
                 fn() => $this->estDernierRapport()
-            ),
+            )
         ];
     }
 

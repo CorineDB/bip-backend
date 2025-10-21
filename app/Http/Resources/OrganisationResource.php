@@ -16,11 +16,11 @@ class OrganisationResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
+            "id" => $this->hashed_id,
             "nom"=> $this->nom,
             "type"=> $this->type,
             "description"=> $this->description,
-            "parentId"=> $this->parentId,
+            "parentId"=> $this->parent?->hash_id,
             "admin"=> $this->when($this->admin, function(){
                 return new UserResource($this->admin->user);
             })

@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\categories_critere\checklistMesuresAdaptation\CreateOrUpdateChecklistRequest;
 use App\Http\Requests\categories_critere\StoreCategorieCritereRequest;
 use App\Http\Requests\categories_critere\UpdateCategorieCritereRequest;
+use App\Http\Requests\categories_critere\UpdateGrilleAMCRequest;
+use App\Http\Requests\categories_critere\UpdateGrilleEvaluationClimatiqueRequest;
+use App\Http\Requests\categories_critere\UpdateGrilleEvaluationPertinenceRequest;
 use App\Services\Contracts\CategorieCritereServiceInterface;
 use Illuminate\Http\JsonResponse;
 
@@ -171,7 +174,7 @@ class CategorieCritereController extends Controller
      *     )
      * )
      */
-    public function updateGrilleEvaluationPreliminaire(UpdateCategorieCritereRequest $request): JsonResponse
+    public function updateGrilleEvaluationPreliminaire(UpdateGrilleEvaluationClimatiqueRequest $request): JsonResponse
     {
         return $this->service->updateGrilleEvaluationPreliminaire($request->all());
     }
@@ -338,7 +341,7 @@ class CategorieCritereController extends Controller
      *     )
      * )
      */
-    public function updateGrilleAnalyseMultiCriteres(UpdateCategorieCritereRequest $request): JsonResponse
+    public function updateGrilleAnalyseMultiCriteres(UpdateGrilleAMCRequest $request): JsonResponse
     {
         return $this->service->updateGrilleAnalyseMultiCriteres($request->all());
     }
@@ -354,7 +357,7 @@ class CategorieCritereController extends Controller
     /**
      * Mettre à jour la grille d'évaluation de pertinence
      */
-    public function updateGrilleEvaluationPertinence(UpdateCategorieCritereRequest $request): JsonResponse
+    public function updateGrilleEvaluationPertinence(UpdateGrilleEvaluationPertinenceRequest $request): JsonResponse
     {
         return $this->service->updateGrilleEvaluationPertinence($request->all());
     }

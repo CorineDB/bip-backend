@@ -46,7 +46,7 @@ class OrganisationController extends Controller
         return $this->service->ministeres();
     }
 
-    public function organismes_de_tutelle($idMinistere): JsonResponse{
-        return $this->service->organismes_de_tutelle($idMinistere);
+    public function organismes_tutelle($ministereId): JsonResponse{
+        return $this->service->organismes_de_tutelle($ministereId);
     }
 }

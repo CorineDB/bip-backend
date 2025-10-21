@@ -17,9 +17,9 @@ class TdrResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'projet_id' => $this->projet_id,
-            'parent_id' => $this->parent_id,
+            'id' => $this->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
+            'parent_id' => $this->parent?->hashed_id,
             'type' => $this->type,
             'statut' => $this->statut,
             'statutCode' => $this->statut != 'brouillon' ? 1 : 0,
@@ -44,34 +44,34 @@ class TdrResource extends BaseApiResource
             'nombre_non_accepte' => $this->nombre_non_accepte,
 
             // Relations
-            'projet' => $this->whenLoaded('projet', function(){
+            'projet' => $this->whenLoaded('projet', function () {
                 return new ProjetsResource($this->projet);
             }),
-            'soumis_par' => $this->whenLoaded('soumisPar', function(){
+            'soumis_par' => $this->whenLoaded('soumisPar', function () {
                 return new UserResource($this->soumisPar);
             }),
-            'validateur' => $this->whenLoaded('validateur', function(){
+            'validateur' => $this->whenLoaded('validateur', function () {
                 return new UserResource($this->validateur);
             }),
-            'rediger_par' => $this->whenLoaded('redigerPar', function(){
+            'rediger_par' => $this->whenLoaded('redigerPar', function () {
                 return new UserResource($this->redigerPar);
             }),
-            'evaluateur' => $this->whenLoaded('evaluateur', function(){
+            'evaluateur' => $this->whenLoaded('evaluateur', function () {
                 return new UserResource($this->evaluateur);
             }),
             'historique_des_tdrs' => $this->type == 'faisabilite'
                 ? $this->whenLoaded('historique_des_tdrs_faisabilite', fn() => TdrResource::collection($this->historique_des_tdrs_faisabilite))
                 : $this->whenLoaded('historique_des_tdrs_prefaisabilite', fn() => TdrResource::collection($this->historique_des_tdrs_prefaisabilite)),
             "historique_des_evaluations_tdrs" => $this->type == 'faisabilite'
-                ? $this->whenLoaded('historique_des_evaluations_tdrs_faisabilite', function() {
+                ? $this->whenLoaded('historique_des_evaluations_tdrs_faisabilite', function () {
                     return $this->historique_des_evaluations_tdrs_faisabilite->pluck("evaluations")->collapse()->map(function ($evaluation) {
                         return [
-                            'id' => $evaluation->id,
+                            'id' => $evaluation->hashed_id,
                             'type_evaluation' => $evaluation->type_evaluation,
                             'date_debut_evaluation' => $evaluation->date_debut_evaluation ? Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
                             'date_fin_evaluation' => $evaluation->date_fin_evaluation ? Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
                             'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
-                            'valider_par' => $evaluation->valider_par,
+                            'valider_par' => $evaluation->validator?->hashed_id, //$evaluation->valider_par,
                             'commentaire' => $evaluation->commentaire,
                             'evaluation' => $evaluation->evaluation,
                             'resultats_evaluation' => $evaluation->resultats_evaluation,
@@ -79,15 +79,15 @@ class TdrResource extends BaseApiResource
                         ];
                     });
                 })
-                : $this->whenLoaded('historique_des_evaluations_tdrs_prefaisabilite', function() {
+                : $this->whenLoaded('historique_des_evaluations_tdrs_prefaisabilite', function () {
                     return $this->historique_des_evaluations_tdrs_prefaisabilite->pluck("evaluations")->collapse()->map(function ($evaluation) {
                         return [
-                            'id' => $evaluation->id,
+                            'id' => $evaluation->hashed_id,
                             'type_evaluation' => $evaluation->type_evaluation,
                             'date_debut_evaluation' => $evaluation->date_debut_evaluation ? Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
                             'date_fin_evaluation' => $evaluation->date_fin_evaluation ? Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
                             'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
-                            'valider_par' => $evaluation->valider_par,
+                            'valider_par' => $evaluation->validator?->hashed_id, //$evaluation->valider_par,
                             'commentaire' => $evaluation->commentaire,
                             'evaluation' => $evaluation->evaluation,
                             'resultats_evaluation' => $evaluation->resultats_evaluation,
@@ -96,34 +96,14 @@ class TdrResource extends BaseApiResource
                     });
                 }),
 
-            /*'historique_des_tdrs_prefaisabilite' =>  $this->historique_des_tdrs_prefaisabilite/* $this->whenLoaded("historique_des_tdrs_prefaisabilite", function(){
-                return $this->historique_des_tdrs_prefaisabilite;
-            }),
-            "historique_des_evaluations_tdrs_prefaisabilite" => $this->historique_des_evaluations_tdrs_prefaisabilite /* $this->whenLoaded("historique_des_evaluations_tdrs_prefaisabilite", function(){
-                $this->historique_des_evaluations_tdrs_prefaisabilite->pluck("evaluations")->collapse()->map(function($evaluation){
-                    return [
-                        'id' => $evaluation->id,
-                        'type_evaluation' => $evaluation->type_evaluation,
-                        'date_debut_evaluation' => $evaluation->date_debut_evaluation ? Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
-                        'date_fin_evaluation' => $evaluation->date_fin_evaluation ? Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
-                        'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
-                        'valider_par' => $evaluation->valider_par,
-                        'commentaire' => $evaluation->commentaire,
-                        'evaluation' => $evaluation->evaluation,
-                        'resultats_evaluation' => $evaluation->resultats_evaluation,
-                        'statut' => $evaluation->statut
-                    ];
-                });
-            }),*/
-
             // Fichiers par type
-            'fichier_tdr' => $this->whenLoaded('fichiers', function() {
+            'fichier_tdr' => $this->whenLoaded('fichiers', function () {
                 $typeDocument = $this->type === 'faisabilite' ? 'tdr-faisabilite' : 'tdr-prefaisabilite';
                 $fichier = $this->fichiers->where('metadata.type_document', $typeDocument)->first();
                 return new FichierResource($fichier);
             }),
 
-            'autres_documents' => $this->whenLoaded('fichiers', function() {
+            'autres_documents' => $this->whenLoaded('fichiers', function () {
                 $typeDocument = $this->type === 'faisabilite' ? 'autre-document-faisabilite' : 'autre-document-prefaisabilite';
                 return FichierResource::collection($this->fichiers->where('metadata.type_document', $typeDocument)->values());
             }),

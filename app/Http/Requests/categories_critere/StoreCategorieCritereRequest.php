@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\categories_critere;
 
+use App\Models\Critere;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +11,7 @@ class StoreCategorieCritereRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
@@ -27,9 +29,10 @@ class StoreCategorieCritereRequest extends FormRequest
 
             'criteres.*.id' => [
                 'sometimes',
-                Rule::exists('criteres', 'id')
+                new HashedExists(Critere::class)
+                /* Rule::exists('criteres', 'id')
                     ->whereNull('categorie_critere_id')
-                    ->whereNull('deleted_at')
+                    ->whereNull('deleted_at') */
             ],
             'criteres.*.intitule' => 'required|string',
             'criteres.*.ponderation' => 'required|numeric|min:0',

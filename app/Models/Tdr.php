@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HashableId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ use Carbon\Carbon;
 
 class Tdr extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HashableId;
 
     /**
      * The table associated with the model.
@@ -215,7 +216,8 @@ class Tdr extends Model
     public function historique_des_tdrs_prefaisabilite()
     {
         return $this->hasMany(Tdr::class, 'projet_id', 'projet_id')
-                    ->where('id', '!=', $this->id)
+                    //->where('id', '!=', $this->id)
+                    ->where('statut', '<>', 'brouillon')->whereHas("versions")
                     ->where('type', 'prefaisabilite')
                     ->orderBy('created_at', 'desc');
     }
@@ -226,7 +228,7 @@ class Tdr extends Model
     public function historique_des_evaluations_tdrs_prefaisabilite()
     {
         return $this->historique_des_tdrs_prefaisabilite()->with(["evaluations" => function($query){
-            $query->where("type_evaluation", "tdr-prefaisabilite")->orderBy("created_at", "desc");
+            $query->where("type_evaluation", "tdr-prefaisabilite")->where('statut', 1)->whereHas("childEvaluations")->orderBy("created_at", "desc");
         }]);
     }
 
@@ -236,7 +238,9 @@ class Tdr extends Model
     public function historique_des_tdrs_faisabilite()
     {
         return $this->hasMany(Tdr::class, 'projet_id', 'projet_id')
-                    ->where('id', '!=', $this->id)
+                    /*->where('id', '!=', $this->id)
+                    ->where('statut', 1)*/
+                    ->where('statut', '<>', 'brouillon')->whereHas("versions")
                     ->where('type', 'faisabilite')
                     ->orderBy('created_at', 'desc');
     }
@@ -247,7 +251,7 @@ class Tdr extends Model
     public function historique_des_evaluations_tdrs_faisabilite()
     {
         return $this->historique_des_tdrs_faisabilite()->with(["evaluations" => function($query){
-            $query->where("type_evaluation", "tdr-faisabilite")->orderBy("created_at", "desc");
+            $query->where("type_evaluation", "tdr-faisabilite")->where('statut', 1)->whereHas("childEvaluations")->orderBy("created_at", "desc");
         }]);
     }
 

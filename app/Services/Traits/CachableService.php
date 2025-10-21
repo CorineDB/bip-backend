@@ -69,8 +69,9 @@ trait CachableService
 
     protected function cacheForget(string $method, array $params = []): void
     {
+        $config = $this->getCacheConfig();
         $cacheKey = $this->generateCacheKey($method, $params);
-        Cache::forget($cacheKey);
+        Cache::tags($config['tags'])->forget($cacheKey);
     }
 
     protected function cacheInvalidate(array $additionalTags = []): void
@@ -102,8 +103,15 @@ trait CachableService
 
     protected function cacheExists(string $method, array $params = []): bool
     {
+        if (!$this->shouldCache()) {
+            return false;
+        }
+
+        $config = $this->getCacheConfig();
         $cacheKey = $this->generateCacheKey($method, $params);
-        return Cache::has($cacheKey);
+
+        // IMPORTANT : Utiliser tags() comme dans cachePut()
+        return Cache::tags($config['tags'])->has($cacheKey);
     }
 
     protected function shouldCache(): bool

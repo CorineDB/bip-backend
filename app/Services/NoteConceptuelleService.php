@@ -83,7 +83,11 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Extraire les données spécifiques au payload
             $champsData = $data['champs'] ?? [];
             $documentsData = $data['documents'] ?? [];
-            $estSoumise = $data['est_soumise'] ?? false;
+
+            // Convertir les valeurs boolean qui arrivent en string depuis FormData
+            $estSoumise = filter_var($data['est_soumise'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $estMouActuel = filter_var($data['est_mou'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
             $projetId = $data['projetId'] ?? null;
 
             if (!$projetId) {
@@ -97,12 +101,12 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $projet = $this->projetRepository->findOrFail($projetId);
 
             // Vérifier que le projet est au bon statut
-            /* if ($projet->statut->value != StatutIdee::NOTE_CONCEPTUEL->value && $projet->statut->value != StatutIdee::R_VALIDATION_NOTE_AMELIORER->value) {
+            if ($projet->statut->value != StatutIdee::NOTE_CONCEPTUEL->value && $projet->statut->value != StatutIdee::R_VALIDATION_NOTE_AMELIORER->value) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le projet n\'est pas à l\'étape de redaction de la note conceptuelle.'
                 ], 403);
-            } */
+            }
 
             // Déterminer le statut selon est_soumise
             $statut = $estSoumise ? 'soumise' : 'brouillon';
@@ -114,7 +118,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $statutNumeric = match ($statut) {
                 'soumise'   => 1,
                 'brouillon' => 0,
-                default     => 0 // brouillon
+                default     => -1 // brouillon
             };
 
             $noteData = [
@@ -127,13 +131,17 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Chercher ou créer une note conceptuelle unique par projet
             $noteConceptuelle = $this->repository->getModel()
                 ->where('projetId', $projetId)
-                ->where('statut', '<>', 1)
+                //->where('statut', '<>', 1)
                 ->orderBy("created_at", "desc")
                 ->first();
 
             if ($noteConceptuelle) {
 
-                if (auth()->user()->profilable?->ministere?->id !== $noteConceptuelle->projet->ministere->id) {
+                if ($noteConceptuelle->statut) {
+                    throw new Exception("Vous avez deja soumis la note conceptuelle", 403);
+                }
+
+                if (auth()->user()->profilable?->ministere?->id !== $noteConceptuelle->projet->ministere?->id) {
                     throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
                 }
 
@@ -175,6 +183,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $noteFiles["note_conceptuelle"] = $documentsData["note_conceptuelle"];
                 }
 
+                if (isset($documentsData["autres"])) {
+                    $noteFiles["autres"] = $documentsData["autres"];
+                }
+
                 if (isset($documentsData["analyse_pre_risque_facteurs_reussite"])) {
                     $noteFiles["analyse_pre_risque_facteurs_reussite"] = $documentsData["analyse_pre_risque_facteurs_reussite"];
                 }
@@ -184,11 +196,12 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             $noteConceptuelle->note_conceptuelle = $noteConceptuelle->champs->map(function ($champ) {
                 return [
-                    'id' => $champ->id,
+                    'id' => $champ->hashed_id,
                     'label' => $champ->label,
                     'attribut' => $champ->attribut,
                     'ordre_affichage' => $champ['ordre_affichage'],
                     'type_champ' => $champ['type_champ'],
+                    'pivot_id' => $champ->pivot->hashed_id,
                     'valeur' => $champ->pivot->valeur,
                     'commentaire' => $champ->pivot->commentaire,
                     'updated_at' => $champ->pivot->updated_at
@@ -199,55 +212,81 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             $noteConceptuelle->save();
 
+            // Gérer le rapport de faisabilité préliminaire selon est_mou
+            $estMouPrecedent = $projet->est_mou ?? false;
+
             // Récupérer le dernier rapport de préfaisabilité s'il existe
             $rapportExistant = $projet->rapportFaisabilitePreliminaire()->first();
 
-            // Préparer les données du rapport
-            $rapportData = [
-                'projet_id' => $projet->id,
-                'type' => 'faisabilite-preliminaire',
-                'statut' => $estSoumise ? 'brouillon' : 'soumis',
-                'intitule' => 'Rapport de faisabilité préliminaire',
-                'checklist_suivi' => [],
-                'info_cabinet_etude' => [],
-                'recommandation' => null,
-                'soumis_par_id' => auth()->id(),
-                'date_soumission' =>  $estSoumise ? now() : null,
-            ];
+            // Si est_mou change de true à false ET que la note est soumise, supprimer le rapport existant
+            if ($estSoumise && $estMouPrecedent === true && $estMouActuel === false && $rapportExistant) {
+                // Supprimer les fichiers associés au rapport
+                if ($rapportExistant->fichiers) {
+                    foreach ($rapportExistant->fichiers as $fichier) {
+                        $fichier->delete();
+                    }
+                }
+                // Supprimer le rapport
+                $rapportExistant->delete();
+                $rapportExistant = null;
+            }
 
-            // Créer ou mettre à jour le rapport
-            if ($rapportExistant && $rapportExistant->statut === 'brouillon') {
-                // Mettre à jour le rapport existant s'il est en brouillon
-                $rapport = $rapportExistant;
-                $rapport->fill($rapportData);
-                $rapport->save();
-                $message = $estSoumise ? 'Rapport sauvegardé en brouillon.' : 'Rapport soumis avec succès.';
-            } elseif ($rapportExistant && $rapportExistant->statut === 'soumis' && !$estSoumise) {
-                // Si un rapport soumis existe déjà et qu'on soumet à nouveau, créer une nouvelle version
-                $rapportData['parent_id'] = $rapportExistant->id;
-                $rapport = Rapport::create($rapportData);
-                $message = 'Nouvelle version du rapport soumise avec succès.';
+            // Créer ou mettre à jour le rapport UNIQUEMENT si est_mou est true
+            if ($estMouActuel === true) {
+                // Préparer les données du rapport
+                $rapportData = [
+                    'projet_id' => $projet->id,
+                    'type' => 'faisabilite-preliminaire',
+                    'statut' => $estSoumise ? 'soumis' : 'brouillon',
+                    'intitule' => 'Rapport de faisabilité préliminaire',
+                    'checklist_suivi' => [],
+                    'info_cabinet_etude' => [],
+                    'recommandation' => null,
+                    'soumis_par_id' => auth()->id(),
+                    'date_soumission' =>  $estSoumise ? now() : null,
+                ];
+
+                $rapportExistant->fill($rapportData);
+
+                // Créer ou mettre à jour le rapport
+                if ($rapportExistant && $rapportExistant->statut === 'brouillon') {
+                    // Mettre à jour le rapport existant s'il est en brouillon
+                    $rapport = $rapportExistant;
+                    $rapport->fill($rapportData);
+                    $rapport->save();
+                    $message = $estSoumise ? 'Rapport sauvegardé en brouillon.' : 'Rapport soumis avec succès.';
+                } elseif ($rapportExistant && $rapportExistant->statut === 'soumis' && !$estSoumise) {
+                    throw new Exception("Rapport deja soumis");
+                    // Si un rapport soumis existe déjà et qu'on soumet à nouveau, créer une nouvelle version
+                    $rapportData['parent_id'] = $rapportExistant->id;
+                    $rapport = Rapport::create($rapportData);
+                    $message = 'Nouvelle version du rapport soumise avec succès.';
+                } else {
+                    // Créer un nouveau rapport (première version)
+                    $rapport = Rapport::create($rapportData);
+                    $message = $estSoumise ? 'Rapport sauvegardé en brouillon.' : 'Rapport soumis avec succès.';
+                }
+
+                $rapport->fill($data["analyse_financiere"]);
+
+                if (isset($documentsData["rapport_faisabilite_preliminaire"])) {
+                    $this->gererFichierRapportFaisabilite($rapport, $documentsData['rapport_faisabilite_preliminaire'], 'rapport_faisabilite_preliminaire');
+                }
+
+                if (isset($documentsData["tdr_faisabilite_preliminaire"])) {
+                    $this->gererFichierRapportFaisabilite($rapport, $documentsData['tdr_faisabilite_preliminaire'], 'tdr_faisabilite_preliminaire');
+                }
+
+                if (isset($documentsData["check_suivi_rapport"])) {
+                    $this->gererFichierRapportFaisabilite($rapport, $documentsData['check_suivi_rapport'], 'check_suivi_rapport');
+                }
             } else {
-                // Créer un nouveau rapport (première version)
-                $rapport = Rapport::create($rapportData);
-                $message = $estSoumise ? 'Rapport sauvegardé en brouillon.' : 'Rapport soumis avec succès.';
+                // Si est_mou est false, on ne crée pas de rapport
+                $rapport = null;
             }
 
-            if (isset($documentsData["rapport_faisabilite_preliminaire"])) {
-                $this->gererFichierRapportFaisabilite($rapport, $documentsData['rapport_faisabilite_preliminaire']);
-            }
-
-            if (isset($documentsData["tdr_faisabilite_preliminaire"])) {
-                $this->gererFichierRapportFaisabilite($rapport, $documentsData['tdr_faisabilite_preliminaire']);
-            }
-
-            if (isset($documentsData["check_suivi_rapport"])) {
-                $this->gererFichierRapportFaisabilite($rapport, $documentsData['check_suivi_rapport']);
-            }
-
-            if ($estSoumise) {
-                // Gérer l'analyse financière et calculer la VAN et le TRI
-                if (isset($data['analyse_financiere'])) {
+            // Gérer l'analyse financière : enregistrer les valeurs et calculer VAN/TRI si soumis
+            if ($estMouActuel && $rapport && isset($data['analyse_financiere'])) {
                     $updateData = [];
                     $analyseFinanciere = $data['analyse_financiere'];
 
@@ -302,23 +341,25 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     // Mettre à jour le modèle en mémoire avec les nouvelles données financières
                     $rapport->fill($financialData);
 
-                    // Calculer la VAN et le TRI à partir des données mises à jour
-                    $van = $rapport->calculerVAN();
-                    $rapport->van = $van;
-                    $tri = $rapport->calculerTRI();
-
-                    // Ajouter toutes les données financières et les résultats au tableau de mise à jour
+                    // Ajouter les données financières au tableau de mise à jour
                     $updateData = array_merge($updateData, $financialData);
 
-                    if ($van !== null) {
-                        $updateData['van'] = $van;
-                    }
-                    if ($tri !== null) {
-                        $updateData['tri'] = $tri;
+                    // Calculer VAN/TRI uniquement si la note est soumise
+                    if ($estSoumise) {
+                        // Calculer la VAN et le TRI à partir des données mises à jour
+                        $van = $rapport->calculerVAN();
+                        $rapport->van = $van;
+                        $tri = $rapport->calculerTRI();
+
+                        if ($van !== null) {
+                            $updateData['van'] = $van;
+                        }
+                        if ($tri !== null) {
+                            $updateData['tri'] = $tri;
+                        }
                     }
 
                     $rapport->update($updateData);
-                }
             }
 
             if ($projet->statut->value == StatutIdee::NOTE_CONCEPTUEL->value && $noteConceptuelle->statut == 1 && $estSoumise) {
@@ -391,7 +432,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Récupérer la note conceptuelle pour obtenir le projetId
             $noteConceptuelle = $this->repository->findOrFail($id);
 
-            if (auth()->user()->profilable?->ministere?->id !== $noteConceptuelle->projet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $noteConceptuelle->projet->ministere?->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -411,7 +452,9 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 throw new Exception("Vous n'avez pas les droits d'acces de modifier cette note conceptuelle", 403);
             }
 
-            $estSoumise = $data['est_soumise'] ?? false;
+            // Convertir les valeurs boolean qui arrivent en string depuis FormData
+            $estSoumise = filter_var($data['est_soumise'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $estMouActuel = filter_var($data['est_mou'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
             // Déterminer le statut selon est_soumise
             $statut = $estSoumise ? 'soumise' : 'brouillon';
@@ -465,25 +508,154 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             $noteConceptuelle->save();
 
+            $noteConceptuelle->projet->update(["est_mou" => $data["est_mou"]]);
+
+            // Gérer le rapport de faisabilité préliminaire selon est_mou
+            $projet = $noteConceptuelle->projet;
+            $estMouActuel = $data['est_mou'] ?? false;
+            $estMouPrecedent = $projet->est_mou ?? false;
+
+            // Récupérer le dernier rapport de préfaisabilité s'il existe
+            $rapportExistant = $projet->rapportFaisabilitePreliminaire()->first();
+
+            // Si est_mou change de true à false ET que la note est soumise, supprimer le rapport existant
+            if ($estSoumise && $estMouPrecedent === true && $estMouActuel === false && $rapportExistant) {
+                // Supprimer les fichiers associés au rapport
+                if ($rapportExistant->fichiers) {
+                    foreach ($rapportExistant->fichiers as $fichier) {
+                        $fichier->delete();
+                    }
+                }
+                // Supprimer le rapport
+                $rapportExistant->delete();
+                $rapportExistant = null;
+            }
+
+            // Créer ou mettre à jour le rapport UNIQUEMENT si est_mou est true
+            if ($estMouActuel === true) {
+                // Préparer les données du rapport
+                $rapportData = [
+                    'projet_id' => $projet->id,
+                    'type' => 'faisabilite-preliminaire',
+                    'statut' => $estSoumise ? 'brouillon' : 'soumis',
+                    'intitule' => 'Rapport de faisabilité préliminaire',
+                    'checklist_suivi' => [],
+                    'info_cabinet_etude' => [],
+                    'recommandation' => null,
+                    'soumis_par_id' => auth()->id(),
+                    'date_soumission' =>  $estSoumise ? now() : null,
+                ];
+
+                // Créer ou mettre à jour le rapport
+                if ($rapportExistant && $rapportExistant->statut === 'brouillon') {
+                    // Mettre à jour le rapport existant s'il est en brouillon
+                    $rapport = $rapportExistant;
+                    $rapport->fill($rapportData);
+                    $rapport->save();
+                } elseif ($rapportExistant && $rapportExistant->statut === 'soumis' && !$estSoumise) {
+                    throw new Exception("Rapport deja soumis");
+                } else {
+                    // Créer un nouveau rapport (première version)
+                    $rapport = \App\Models\Rapport::create($rapportData);
+                }
+
+                if (isset($documentsData["rapport_faisabilite_preliminaire"])) {
+                    $this->gererFichierRapportFaisabilite($rapport, $documentsData['rapport_faisabilite_preliminaire'], 'rapport_faisabilite_preliminaire');
+                }
+
+                if (isset($documentsData["tdr_faisabilite_preliminaire"])) {
+                    $this->gererFichierRapportFaisabilite($rapport, $documentsData['tdr_faisabilite_preliminaire'], 'tdr_faisabilite_preliminaire');
+                }
+
+                if (isset($documentsData["check_suivi_rapport"])) {
+                    $this->gererFichierRapportFaisabilite($rapport, $documentsData['check_suivi_rapport'], 'check_suivi_rapport');
+                }
+
+                // Gérer l'analyse financière si la note est soumise et est_mou est true
+                if ($estSoumise && isset($data['analyse_financiere'])) {
+                    $updateData = [];
+                    $analyseFinanciere = $data['analyse_financiere'];
+
+                    $requiredFields = ['duree_vie', 'investissement_initial', 'flux_tresorerie', 'taux_actualisation'];
+
+                    foreach ($requiredFields as $field) {
+                        // validation de présence de $analyseFinanciere[$field]
+                        if (!isset($analyseFinanciere[$field]) && !empty($analyseFinanciere[$field])) {
+                            throw \Illuminate\Validation\ValidationException::withMessages([
+                                "analyse_financiere.$field" => "Le champ $field est obligatoire lorsque le projet est financé. " . $analyseFinanciere[$field]
+                            ]);
+                        }
+
+                        if ($field === 'duree_vie') {
+                            $value = $analyseFinanciere[$field];
+
+                            // Vérifie que c'est bien un nombre ET un entier positif
+                            if (!ctype_digit((string)$value) || (int)$value <= 0) {
+                                throw \Illuminate\Validation\ValidationException::withMessages([
+                                    "analyse_financiere.$field" => "Le champ $field doit être un nombre entier positif (sans virgule)."
+                                ]);
+                            }
+
+                            // Optionnel : convertir proprement en entier
+                            $analyseFinanciere[$field] = (int)$value;
+                        }
+
+                        // Ajouter d'autres validations spécifiques si nécessaire
+                        if (in_array($field, ['investissement_initial', 'taux_actualisation'])) {
+                            if (!is_numeric($analyseFinanciere[$field])) {
+                                throw \Illuminate\Validation\ValidationException::withMessages([
+                                    "analyse_financiere.$field" => "Le champ $field doit être une date valide au format AAAA-MM-JJ."
+                                ]);
+                            }
+
+                            // Optionnel : forcer la conversion en float si tu veux l'utiliser ensuite
+                            $analyseFinanciere[$field] = (float) $analyseFinanciere[$field];
+                        }
+                    }
+
+                    // Préparer les données pour le fill() et la mise à jour
+                    $financialData = [
+                        'duree_vie' => $analyseFinanciere['duree_vie'] ?? $projet->duree_vie,
+                        'investissement_initial' => $analyseFinanciere['investissement_initial'] ?? $projet->investissement_initial,
+                        'flux_tresorerie' => $analyseFinanciere['flux_tresorerie'] ?? $projet->flux_tresorerie,
+                        'taux_actualisation' => $analyseFinanciere['taux_actualisation'] ?? $projet->taux_actualisation,
+                    ];
+
+                    // Mettre à jour le modèle en mémoire avec les nouvelles données financières
+                    $rapport->fill($financialData);
+
+                    // Calculer la VAN et le TRI à partir des données mises à jour
+                    $van = $rapport->calculerVAN();
+                    $rapport->van = $van;
+                    $tri = $rapport->calculerTRI();
+
+                    // Ajouter toutes les données financières et les résultats au tableau de mise à jour
+                    $updateData = array_merge($updateData, $financialData);
+
+                    if ($van !== null) {
+                        $updateData['van'] = $van;
+                    }
+                    if ($tri !== null) {
+                        $updateData['tri'] = $tri;
+                    }
+
+                    $rapport->update($updateData);
+                }
+            }
+
             if ($noteConceptuelle->projet->statut->value == StatutIdee::NOTE_CONCEPTUEL->value && $noteConceptuelle->statut == 1 && $estSoumise) {
 
                 $noteConceptuelle->projet->fill([
                     'statut' => StatutIdee::EVALUATION_NOTE,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::EVALUATION_NOTE),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::EVALUATION_NOTE),
-                    'type_projet' => TypesProjet::simple
+                    'type_projet' => TypesProjet::simple,
+                    'est_mou' => $data["est_mou"] ?? false
                 ]);
             }
-            /*
 
-            if ($noteConceptuelle->projet->statut == StatutIdee::NOTE_CONCEPTUEL) {
-                $noteConceptuelle->projet->update([
-                    'statut' => StatutIdee::VALIDATION_NOTE_AMELIORER,
-                    'phase' => $this->getPhaseFromStatut(StatutIdee::VALIDATION_NOTE_AMELIORER),
-                    'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::VALIDATION_NOTE_AMELIORER),
-                    'type_projet' => TypesProjet::simple
-                ]);
-            } */
+            $noteConceptuelle->projet->save();
+            $noteConceptuelle->projet->refresh();
 
             return (new $this->resourceClass($noteConceptuelle))
                 ->additional(['message' => $message])
@@ -494,7 +666,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         }
     }
 
-    public function validateNote(int $projetId, int $noteId, array $data): JsonResponse
+    public function validateNote($projetId, int $noteId, array $data): JsonResponse
     {
         try {
 
@@ -647,12 +819,18 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ], 206);
             }
 
-            if (auth()->user()->profilable->ministere?->id !== $noteConceptuelle->projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable->ministere?->id !== $noteConceptuelle->projet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
+            // Récupérer le dernier rapport de préfaisabilité s'il existe
+            $rapportExistant = $noteConceptuelle->projet->rapportFaisabilitePreliminaire()->first();
+
             return (new $this->resourceClass($noteConceptuelle->load("fichiers", "projet", "historique_des_notes_conceptuelle")))
-                ->additional(['message' => 'Note conceptuelle validée avec succès.'])
+                ->additional(['message' => 'Note conceptuelle validée avec succès.', "data" => [
+                    'rapportFaisabilitePreliminaire' => $rapportExistant ? new RapportResource($rapportExistant->load(["fichiers", "historique"])) : null,
+
+                ]])
                 ->response()
                 ->setStatusCode(200);
         } catch (Exception $e) {
@@ -661,7 +839,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         }
     }
 
-    public function getValidationDetails(int $projetId, int $noteId): JsonResponse
+    public function getValidationDetails($projetId, int $noteId): JsonResponse
     {
         try {
             // Vérifier que le projet existe
@@ -680,7 +858,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ], 404);
             }
 
-            if (auth()->user()->profilable?->ministere?->id !== $noteConceptuelle->projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable?->ministere?->id !== $noteConceptuelle->projet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -742,18 +920,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             $evaluationEnCours = $noteConceptuelle->evaluationEnCours();
 
-            /* if(isset($data["numero_dossier"])){
-                $noteConceptuelle->update([
-                    "numero_dossier" => $data["numero_dossier"]
-                ]);
-            }
-
-            if(isset($data["numero_contrat"])){
-                $noteConceptuelle->update([
-                    "numero_contrat" => $data["numero_contrat"]
-                ]);
-            } */
-
             if (isset($data["accept_term"])) {
                 $noteConceptuelle->update([
                     "accept_term" => $data["accept_term"]
@@ -791,9 +957,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $this->sauvegarderEvaluation($evaluationEnCours, $data['evaluations_champs']);
                 }
 
-
-                //if ($data["evaluer"]) {
-
                 $evaluationEnCours->refresh();
 
                 // Calculer les résultats d'examen finaux
@@ -804,7 +967,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluationEnCours) {
                         $champEvalue = collect($evaluationEnCours->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                         return [
-                            'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                            /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                             'champ_id' => $champ['id'],
                             'label' => $champ['label'],
                             'attribut' => $champ['attribut'],
@@ -812,7 +975,18 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                             'type_champ' => $champ['type_champ'],
                             'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                             'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                            'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                            'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,*/
+
+
+                            'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                            'champ_id' => $champ?->hashed_id,
+                            'label' => $champ?->label,
+                            'attribut' => $champ?->attribut,
+                            'ordre_affichage' => $champ?->ordre_affichage,
+                            'type_champ' => $champ?->type_champ,
+                            'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                            'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                            'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                         ];
                     })->toArray(),
                     'statistiques' => $resultatsExamen
@@ -847,7 +1021,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluationEnCours) {
                         $champEvalue = collect($evaluationEnCours->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                         return [
-                            'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                            /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                             'champ_id' => $champ['id'],
                             'label' => $champ['label'],
                             'attribut' => $champ['attribut'],
@@ -855,7 +1029,18 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                             'type_champ' => $champ['type_champ'],
                             'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                             'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                            'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                            'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,*/
+
+
+                            'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                            'champ_id' => $champ?->hashed_id,
+                            'label' => $champ?->label,
+                            'attribut' => $champ?->attribut,
+                            'ordre_affichage' => $champ?->ordre_affichage,
+                            'type_champ' => $champ?->type_champ,
+                            'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                            'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                            'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                         ];
                     })->toArray(),
                     'statistiques' => $resultatsExamen
@@ -893,7 +1078,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'success' => true,
                 'message' => $message,
                 'data' => [
-                    'evaluation_id'         => $evaluationEnCours->id,
+                    'evaluation_id'         => $evaluationEnCours->hashed_id,
                     'evaluation'            => $resultatsExamen,
                     'statut'                => $evaluationEnCours->statut,
                     'appreciations'         => $evaluationEnCours,
@@ -1074,12 +1259,12 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'data' => [
                     'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet", "historique_des_evaluations_notes_conceptuelle")),
                     'evaluation' => [
-                        'id' => $evaluation->id,
+                        'id' => $evaluation->hashed_id,
                         'type_evaluation' => $evaluation->type_evaluation,
                         'date_debut_evaluation' => $evaluation->date_debut_evaluation ? Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
                         'date_fin_evaluation' => $evaluation->date_fin_evaluation ? Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
                         'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
-                        'valider_par' => $evaluation->valider_par,
+                        'valider_par' => $evaluation->validator?->hashed_id, //$evaluation->valider_par,
                         'commentaire' => $evaluation->commentaire,
                         'evaluation' => $evaluation->evaluation,
                         'resultats_evaluation' => $resultatsExamen, //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen,
@@ -1088,21 +1273,23 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'champs' => collect($this->documentRepository->getCanevasAppreciationNoteConceptuelle()->all_champs)->map(function ($champ) use ($evaluation) {
                             $champ_evalue = collect($evaluation->champs_evalue)
                                 ->firstWhere('attribut', $champ["attribut"]);
+
                             return [
-                                'id' => $champ_evalue ? $champ_evalue['pivot']['id'] : null,
-                                'champ_id' => $champ["id"],
-                                'label' => $champ["label"],
-                                'attribut' => $champ["attribut"],
-                                'valeur' => $champ["valeur"],
-                                'appreciation' => $champ_evalue ? $champ_evalue["pivot"]["note"] : null,
-                                'commentaire' => $champ_evalue ? $champ_evalue["pivot"]["commentaires"] : null,
-                                'date_note' => $champ_evalue ? $champ_evalue["pivot"]["date_note"] : null,
-                                'updated_at' => $champ_evalue ? $champ_evalue["pivot"]["updated_at"] : null,
+                                'id' => $champ_evalue ? $champ_evalue?->pivot?->hashed_id : null,
+                                'champ_id' => $champ?->hashed_id,
+                                'label' => $champ?->label,
+                                'attribut' => $champ?->attribut,
+                                'valeur' => $champ?->valeur,
+                                'appreciation' => $champ_evalue ? $champ_evalue?->pivot?->note : null,
+                                'commentaire' => $champ_evalue ? $champ_evalue?->pivot?->commentaires : null,
+                                'date_note' => $champ_evalue ? $champ_evalue?->pivot?->date_note : null,
+                                'updated_at' => $champ_evalue ? $champ_evalue?->pivot?->updated_at : null,
                             ];
                         }),
                         'historique_evaluations' => EvaluationResource::collection($evaluation->historique_evaluations)
                     ],
-                    'resultats_examen' =>  $resultatsExamen, //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen
+                    'resultats_examen' => $resultatsExamen, //($evaluation->statut && $noteConceptuelle->projet->statut != StatutIdee::EVALUATION_NOTE) ? $evaluation->resultats_evaluation : $resultatsExamen
+
                 ]
             ]);
         } catch (Exception $e) {
@@ -1799,10 +1986,11 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             }
 
             // Calculer les résultats d'examen finaux
-            $resultatsExamen = /* (is_array($evaluation->resultats_evaluation) && !empty($evaluation->resultats_evaluation)) ? $evaluation->resultats_evaluation :  */ $this->calculerResultatsExamen($noteConceptuelle, $evaluation);
+            $resultatsExamen = $this->calculerResultatsExamen($noteConceptuelle, $evaluation);
 
             // Mettre à jour l'évaluation avec les données complètes
             $evaluation->fill([
+                'resultats_evaluation' => $resultatsExamen,
                 'valider_par' => auth()->id(),
                 'valider_le' => now(),
                 'commentaire' => ($evaluation->commentaire ?? '') . "\n\nCommentaire de confirmation: " . ($data['commentaire_confirmation'] ?? '')
@@ -1852,7 +2040,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $noteConceptuelle->refresh();
                     $newNote = $noteConceptuelle->replicate();
 
-                    $newNote->statut = 0; // Brouillon
+                    $newNote->statut = -1; // Brouillon
                     $newNote->decision = [];
                     $newNote->accept_term = false;
                     $newNote->parentId = $noteConceptuelle->id;
@@ -1871,7 +2059,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $newEvaluation->projetable_type = get_class($newNote);
                     $newEvaluation->id_evaluation = $evaluation->id; // Lien vers l'évaluation parent
                     $newEvaluation->canevas = $evaluation->canevas; // Copier le canevas
-                    $newEvaluation->statut = 0; // En cours
+                    $newEvaluation->statut = -1; // En cours
                     $newEvaluation->date_debut_evaluation = now();
                     $newEvaluation->date_fin_evaluation = null;
                     $newEvaluation->valider_le = null;
@@ -1975,7 +2163,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                             $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
                             $result = [
-                                'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                                /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                                 'champ_id' => $champ['id'],
                                 'label' => $champ['label'],
                                 'attribut' => $champ['attribut'],
@@ -1983,7 +2171,17 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                                 'type_champ' => $champ['type_champ'],
                                 'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                                 'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,*/
+
+                                'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                                'champ_id' => $champ?->hashed_id,
+                                'label' => $champ?->label,
+                                'attribut' => $champ?->attribut,
+                                'ordre_affichage' => $champ?->ordre_affichage,
+                                'type_champ' => $champ?->type_champ,
+                                'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                                'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                                'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                             ];
 
                             // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
@@ -2015,7 +2213,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
                     $newNote = $noteConceptuelle->replicate();
 
-                    $newNote->statut = 0; // Brouillon
+                    $newNote->statut = -1; // Brouillon
                     $newNote->decision = [];
                     $newNote->accept_term = false;
                     $newNote->parentId = $noteConceptuelle->id;
@@ -2052,7 +2250,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $newEvaluation->projetable_type = get_class($newNote);
                     $newEvaluation->id_evaluation = $evaluation->id; // Lien vers l'évaluation parent
                     $newEvaluation->canevas = $evaluation->canevas; // Copier le canevas
-                    $newEvaluation->statut = 0; // En cours
+                    $newEvaluation->statut = -1; // En cours
                     $newEvaluation->date_debut_evaluation = now();
                     $newEvaluation->date_fin_evaluation = null;
                     $newEvaluation->valider_le = null;
@@ -2156,7 +2354,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                             $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
                             $result = [
-                                'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                                /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                                 'champ_id' => $champ['id'],
                                 'label' => $champ['label'],
                                 'attribut' => $champ['attribut'],
@@ -2164,7 +2362,18 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                                 'type_champ' => $champ['type_champ'],
                                 'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                                 'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,*/
+
+
+                                'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                                'champ_id' => $champ?->hashed_id,
+                                'label' => $champ?->label,
+                                'attribut' => $champ?->attribut,
+                                'ordre_affichage' => $champ?->ordre_affichage,
+                                'type_champ' => $champ?->type_champ,
+                                'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                                'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                                'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                             ];
 
                             // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
@@ -2210,9 +2419,9 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'success' => true,
                 'message' => 'Résultat de l\'évaluation confirmé avec succès.',
                 'data' => [
-                    'evaluation_id' => $evaluation->id,
+                    'evaluation_id' => $evaluation->hased_id,
                     'statut' => $evaluation->statut,
-                    'note_conceptuelle_id' => $noteConceptuelle->id,
+                    'note_conceptuelle_id' => $noteConceptuelle->hashed_id,
                     'statut' => $noteConceptuelle->statut,
                     'resultat_final' => $resultatsExamen['resultat_global'],
                     'decision' => $noteConceptuelle->decision,
@@ -2306,9 +2515,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     /**
      * Validation du projet à l'étape Etude de profil (SFD-009)
      */
-    public function validerEtudeDeProfil(int $projetId, array $data): JsonResponse
+    public function validerEtudeDeProfil($projetId, array $data): JsonResponse
     {
         try {
+
             // Vérifier les autorisations
             if (auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
@@ -2344,20 +2554,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'message' => 'Aucune note conceptuelle trouvée pour ce projet.'
                 ], 404);
             }
-
-            // Valider que l'action choisie est autorisée selon le type de projet (est_dur)
-            /*
-                $actionsAutorisees = $this->getActionsAutoriseesSelonTypeProjet($projet, $data);
-
-                if (!in_array($data['decision'], $actionsAutorisees)) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Cette action n\'est pas autorisée pour ce type de projet.',
-                        'actions_autorisees' => $actionsAutorisees,
-                        'est_dur' => $projet->est_dur ? 1 : 0
-                    ], 403);
-                }
-            */
 
             // Déterminer si c'est une soumission ou un brouillon
             $action = $data['action'] ?? 'submit';
@@ -2430,12 +2626,20 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     ]);
 
                     // Sauvegarder les valeurs de checklist_suivi dans les relations champs_evalue
-                    foreach ($checklist_suivi as $item) {
+                    foreach ($rapportExistant->champs as $item) {
+
                         $evaluationRapport->champs_evalue()->syncWithoutDetaching([
-                            $item['champ_id'] => [
+                            /* $item['champ_id'] => [
                                 'note' => $item['valeur'],
                                 'date_note' => $item['updated_at'] ?? now(),
                                 'commentaires' => $item['commentaire'] ?? null,
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ] */
+                            $item->pivot->champId => [
+                                'note' => $item->pivot->valeur,
+                                'date_note' => $item->pivot->created_at ?? now(),
+                                'commentaires' => $item->pivot->commentaire ?? null,
                                 'created_at' => now(),
                                 'updated_at' => now()
                             ]
@@ -2456,7 +2660,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire()->all_champs)->map(function ($champ) use ($evaluationRapport) {
                             $champEvalue = collect($evaluationRapport->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                             return [
-                                'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                                /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                                 'champ_id' => $champ['id'],
                                 'label' => $champ['label'],
                                 'attribut' => $champ['attribut'],
@@ -2464,12 +2668,22 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                                 'type_champ' => $champ['type_champ'],
                                 'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                                 'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                                'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,*/
+
+                                'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                                'champ_id' => $champ?->hashed_id,
+                                'label' => $champ?->label,
+                                'attribut' => $champ?->attribut,
+                                'ordre_affichage' => $champ?->ordre_affichage,
+                                'type_champ' => $champ?->type_champ,
+                                'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                                'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                                'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                             ];
                         })->toArray(),
                         'statistiques' => $resultatsEvaluation,
                         'date_evaluation' => now(),
-                        'confirme_par' => ($estBrouillon && $data["decision"] === "") ? new UserResource(auth()->user()) : null
+                        'confirme_par' => ($estBrouillon && $data['decision'] === "faire_etude_faisabilite_preliminaire") ? null : new UserResource(auth()->user())
                     ];
 
                     // Mettre à jour l'évaluation du rapport avec les données complètes
@@ -2648,10 +2862,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 'success' => true,
                 'message' => $this->getMessageSuccesValidation($data['decision']),
                 'data' => [
-                    'evaluation' => $evaluation,
-                    'evaluationRapport' => $evaluationRapport,
+                    /* 'evaluation' => new EvaluationResource($evaluation),
+                    'evaluationRapport' => new EvaluationResource($evaluationRapport),
                     'projet_id' => $projet,
-                    'rapport' => $projet->rapportFaisabilitePreliminaire()->first()->load("evaluations"),
+                    'rapport' => $projet->rapportFaisabilitePreliminaire()->first()->load("evaluations"), */
                     'ancien_statut' => StatutIdee::VALIDATION_PROFIL->value,
                     'decision' => $data['decision'],
                     'commentaire' => $data['commentaire'] ?? '',
@@ -2668,7 +2882,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      * Confirmer la validation de l'étude de profil pour les cas "non accepté"
      * Permet de choisir entre "reviser_note_conceptuelle" ou "abandonner_projet"
      */
-    public function confirmerValidationEtudeProfilNonAcceptee(int $projetId, array $data): JsonResponse
+    public function confirmerValidationEtudeProfilNonAcceptee($projetId, array $data): JsonResponse
     {
         try {
             // Vérifier les autorisations
@@ -2771,7 +2985,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $noteConceptuelle->refresh();
                     $newNote = $noteConceptuelle->replicate();
 
-                    $newNote->statut = 0; // Brouillon
+                    $newNote->statut = -1; // Brouillon
                     $newNote->decision = [];
                     $newNote->accept_term = false;
                     $newNote->parentId = $noteConceptuelle->id;
@@ -2794,7 +3008,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         $newEvaluation->projetable_type = get_class($newNote);
                         $newEvaluation->id_evaluation = $evaluationNote->id;
                         $newEvaluation->canevas = $evaluationNote->canevas;
-                        $newEvaluation->statut = 0; // En cours
+                        $newEvaluation->statut = -1; // En cours
                         $newEvaluation->date_debut_evaluation = now();
                         $newEvaluation->date_fin_evaluation = null;
                         $newEvaluation->valider_le = null;
@@ -2837,7 +3051,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                                 $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
                                 $result = [
-                                    'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                                    /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                                     'champ_id' => $champ['id'],
                                     'label' => $champ['label'],
                                     'attribut' => $champ['attribut'],
@@ -2845,7 +3059,18 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                                     'type_champ' => $champ['type_champ'],
                                     'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                                     'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,*/
+
+
+                                    'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                                    'champ_id' => $champ?->hashed_id,
+                                    'label' => $champ?->label,
+                                    'attribut' => $champ?->attribut,
+                                    'ordre_affichage' => $champ?->ordre_affichage,
+                                    'type_champ' => $champ?->type_champ,
+                                    'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                                    'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                                    'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                                 ];
 
                                 // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
@@ -2935,6 +3160,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Récupérer la note conceptuelle du projet
             $noteConceptuelle = $this->repository->getModel()
                 ->where('projetId', $projetId)
+                ->where('statut', 1)
                 ->orderBy('created_at', 'desc')
                 ->first();
 
@@ -2945,7 +3171,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ], 404);
             }
 
-            if (auth()->user()->profilable->ministere?->id !== $noteConceptuelle->projet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable->ministere?->id !== $noteConceptuelle->projet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -2958,12 +3184,14 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ->orderBy('created_at', 'desc')
                 ->first();
 
+            $rapportFaisabilitePrelim = $projet->rapportFaisabilitePreliminaire()->first();
+
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet")),
+                    'note_conceptuelle' => new $this->resourceClass($noteConceptuelle->load("projet", "projet.rapportFaisabilitePreliminaire")),
                     'validation' => $evaluation ? [
-                        'id' => $evaluation->id,
+                        'id' => $evaluation->hashed_id,
                         'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:i:s") : null,
                         'valider_par' => new UserResource($evaluation->validator),
                         'decision' => $evaluation->evaluation,
@@ -2971,7 +3199,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         'commentaire' => $evaluation->commentaire,
                         'historique_evaluations' => EvaluationResource::collection($evaluation->historique_evaluations)
                     ] : null,
-                    'rapport' => $projet->rapportFaisabilitePreliminaire()->first() ? new RapportResource($projet->rapportFaisabilitePreliminaire()->first()->load(["historique"])) : null,
+
+                    'rapport' => $rapportFaisabilitePrelim ? new RapportResource($rapportFaisabilitePrelim->load(["fichiers", "historique"])) : null
                 ]
             ]);
         } catch (Exception $e) {
@@ -2982,104 +3211,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
         }
     }
-
-    /**
-     * Récupérer les résultats d'évaluation pour la validation
-     */
-    private function getResultatsEvaluationPourValidation($noteConceptuelle): array
-    {
-        // Trouver l'évaluation confirmée la plus récente
-        $evaluation = $noteConceptuelle->evaluations()
-            ->where('type_evaluation', 'note-conceptuelle')
-            ->where('statut', 1) // Terminée
-            ->whereNotNull('valider_par') // Confirmée
-            ->whereNotNull('valider_le') // Confirmée
-            ->orderBy('created_at', 'desc')
-            ->first();
-
-        if (!$evaluation || !$evaluation->resultats_evaluation) {
-            return [
-                'resultat_global' => 'non_defini',
-                'evaluation_existe' => false
-            ];
-        }
-
-        return array_merge($evaluation->resultats_evaluation, [
-            'evaluation_existe' => true,
-            'evaluation_id' => $evaluation->id
-        ]);
-    }
-
-
-
-    /**
-     * Traiter la checklist de suivi du rapport de préfaisabilité
-     */
-    private function traiterChecklistSuiviRapportFaisabilitePreliminaire($rapport, array $checklistData, bool $estBrouillon = false, array $fichiers = []): array
-    {
-        try {
-            DB::beginTransaction();
-            /*
-            // Récupérer le dernier rapport de préfaisabilité s'il existe
-            $rapportExistant = $projet->rapportPrefaisabilite()->first();
-
-            // Déterminer le parent_id pour la hiérarchie (uniquement si soumission finale et rapport existe)
-            $parentId = null;
-            if ($rapportExistant && !$estBrouillon) {
-                $parentId = $rapportExistant->id;
-            }
-
-            // Créer le nouveau rapport
-            $rapport = \App\Models\Rapport::create([
-                'projet_id' => $rapport->projet->id,
-                'parent_id' => $parentId,
-                'type' => 'prefaisabilite',
-                'statut' => $estBrouillon ? 'brouillon' : 'soumis',
-                'intitule' => 'Rapport de préfaisabilité - ' . $rapport->projet->titre_projet,
-                'checklist_suivi' => $checklistData, // Stocker directement les données
-                'info_cabinet_etude' => $fichiers['cabinet_etude'] ?? null,
-                'recommandation' => $fichiers['recommandation'] ?? null,
-                'date_soumission' => $estBrouillon ? null : now(),
-                'soumis_par_id' => $estBrouillon ? null : auth()->id()
-            ]);
-            */
-
-            // Associer les fichiers au rapport si ils existent
-            if (!empty($fichiers)) {
-                // Fichier rapport principal
-                if (isset($fichiers['rapport'])) {
-                    $this->attacherFichierAuRapport($rapport, $fichiers['rapport'], 'rapport');
-                }
-
-                // Procès verbal
-                if (isset($fichiers['proces_verbal'])) {
-                    $this->attacherFichierAuRapport($rapport, $fichiers['proces_verbal'], 'proces-verbal');
-                }
-            }
-
-            // Traiter les données de checklist via la relation champs() si nécessaire
-            $this->traiterChampsChecklistSuivi($rapport, $checklistData);
-
-            DB::commit();
-
-            return [
-                'success' => true,
-                'message' => $estBrouillon ?
-                    'Checklist de suivi sauvegardée en brouillon.' :
-                    'Checklist de suivi du rapport de préfaisabilité validée avec succès.',
-                'rapport_id' => $rapport->id,
-                'projet_id' => $rapport->projet->id,
-                'est_brouillon' => $estBrouillon
-            ];
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return [
-                'success' => false,
-                'message' => 'Erreur lors du traitement de la checklist de suivi: ' . $e->getMessage()
-            ];
-        }
-    }
-
 
     /**
      * Traiter les champs de checklist via la relation champs()
@@ -3109,14 +3240,25 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         $checklist_suivi =  collect($this->documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire()->all_champs)->map(function ($champ) use ($rapport) {
             $champEvalue = collect($rapport->champs)->firstWhere('attribut', $champ['attribut']);
             return [
-                'champ_id'          => $champ['id'],
+                /*'champ_id'          => $champ['id'],
                 'label'             => $champ['label'],
                 'attribut'          => $champ['attribut'],
                 'ordre_affichage'   => $champ['ordre_affichage'],
                 'type_champ'        => $champ['type_champ'],
                 'valeur'            => $champEvalue && isset($champEvalue['pivot']['valeur']) ? $champEvalue['pivot']['valeur'] : null,
                 'commentaire'       => $champEvalue && isset($champEvalue['pivot']['commentaire']) ? $champEvalue['pivot']['commentaire'] : null,
-                'updated_at'        => $champEvalue && isset($champEvalue['pivot']['updated_at']) ? Carbon::parse($champEvalue['pivot']['updated_at'])->format("Y-m-d H:i:s") : null
+                'updated_at'        => $champEvalue && isset($champEvalue['pivot']['updated_at']) ? Carbon::parse($champEvalue['pivot']['updated_at'])->format("Y-m-d H:i:s") : null,*/
+
+
+                'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                'champ_id' => $champ?->hashed_id,
+                'label' => $champ?->label,
+                'attribut' => $champ?->attribut,
+                'ordre_affichage' => $champ?->ordre_affichage,
+                'type_champ' => $champ?->type_champ,
+                'valeur' => $champEvalue ? $champEvalue?->pivot?->valeur : null,
+                'commentaire' => $champEvalue ? $champEvalue?->pivot?->commentaire : null,
+                'updated_at' => $champEvalue ? $champEvalue?->pivot?->updated_at : null,
             ];
         })->toArray();
 
@@ -3182,7 +3324,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'statut' => StatutIdee::MATURITE,
                     'phase' => $this->getPhaseFromStatut(StatutIdee::MATURITE),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::MATURITE),
-                    'type_projet' => TypesProjet::simple
+                    'type_projet' => TypesProjet::simple,
+                    'est_mou' => true
                 ]);
 
                 if ($rapport) {
@@ -3307,7 +3450,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         $newEvaluation->projetable_type = get_class($nouveauRapport);
         $newEvaluation->id_evaluation = $evaluationTerminee->id; // Lien vers l'évaluation parent
         $newEvaluation->canevas = $evaluationTerminee->canevas; // Copier le canevas
-        $newEvaluation->statut = 0; // En cours
+        $newEvaluation->statut = -1; // En cours
         $newEvaluation->date_debut_evaluation = now();
         $newEvaluation->date_fin_evaluation = null;
         $newEvaluation->valider_le = null;
@@ -3372,7 +3515,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
                 $result = [
-                    'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                    /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                     'champ_id' => $champ['id'],
                     'label' => $champ['label'],
                     'attribut' => $champ['attribut'],
@@ -3380,7 +3523,17 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'type_champ' => $champ['type_champ'],
                     'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                     'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,*/
+
+                    'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                    'champ_id' => $champ?->hashed_id,
+                    'label' => $champ?->label,
+                    'attribut' => $champ?->attribut,
+                    'ordre_affichage' => $champ?->ordre_affichage,
+                    'type_champ' => $champ?->type_champ,
+                    'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                    'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                    'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                 ];
 
                 // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
@@ -3447,6 +3600,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ->first();
 
             if ($rapportExistant && $rapportExistant->statut === 'soumis') {
+                throw new Exception("Le rapport a deja ete soumis", 403);
+
                 // Si un rapport soumis existe déjà, créer une nouvelle version avec parent_id
                 $rapportData['parent_id'] = $rapportExistant->id;
                 $rapport = Rapport::create($rapportData);
@@ -3465,15 +3620,15 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             // Gérer les documents/fichiers du rapport
             if (isset($documentsData["rapport_faisabilite_preliminaire"])) {
-                $this->gererFichierRapportFaisabilite($rapport, $documentsData['rapport_faisabilite_preliminaire']);
+                $this->gererFichierRapportFaisabilite($rapport, $documentsData['rapport_faisabilite_preliminaire'], 'rapport_faisabilite_preliminaire');
             }
 
             if (isset($documentsData["tdr_faisabilite_preliminaire"])) {
-                $this->gererFichierRapportFaisabilite($rapport, $documentsData['tdr_faisabilite_preliminaire']);
+                $this->gererFichierRapportFaisabilite($rapport, $documentsData['tdr_faisabilite_preliminaire'], 'tdr_faisabilite_preliminaire');
             }
 
             if (isset($documentsData["check_suivi_rapport"])) {
-                $this->gererFichierRapportFaisabilite($rapport, $documentsData['check_suivi_rapport']);
+                $this->gererFichierRapportFaisabilite($rapport, $documentsData['check_suivi_rapport'], 'check_suivi_rapport');
             }
 
             // Gérer l'analyse financière et calculer la VAN et le TRI
@@ -3627,7 +3782,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'phase' => $this->getPhaseFromStatut(StatutIdee::TDR_PREFAISABILITE),
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::TDR_PREFAISABILITE),
                     'type_projet' => TypesProjet::complexe1,
-                    'est_dur' => true
+                    'est_dur' => true,
+                    'est_mou' => false
                 ]);
                 return StatutIdee::TDR_PREFAISABILITE;
 
@@ -3637,7 +3793,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $noteConceptuelle->refresh();
                     $newNote = $noteConceptuelle->replicate();
 
-                    $newNote->statut = 0; // Brouillon
+                    $newNote->statut = -1; // Brouillon
                     $newNote->decision = [];
                     $newNote->accept_term = false;
                     $newNote->parentId = $noteConceptuelle->id;
@@ -3660,7 +3816,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         $newEvaluation->projetable_type = get_class($newNote);
                         $newEvaluation->id_evaluation = $evaluation->id; // Lien vers l'évaluation parent
                         $newEvaluation->canevas = $evaluation->canevas; // Copier le canevas
-                        $newEvaluation->statut = 0; // En cours
+                        $newEvaluation->statut = -1; // En cours
                         $newEvaluation->date_debut_evaluation = now();
                         $newEvaluation->date_fin_evaluation = null;
                         $newEvaluation->valider_le = null;
@@ -3712,7 +3868,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                                 $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
                                 $result = [
-                                    'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                                    /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                                     'champ_id' => $champ['id'],
                                     'label' => $champ['label'],
                                     'attribut' => $champ['attribut'],
@@ -3720,7 +3876,19 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                                     'type_champ' => $champ['type_champ'],
                                     'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                                     'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,*/
+
+
+
+                                    'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                                    'champ_id' => $champ?->hashed_id,
+                                    'label' => $champ?->label,
+                                    'attribut' => $champ?->attribut,
+                                    'ordre_affichage' => $champ?->ordre_affichage,
+                                    'type_champ' => $champ?->type_champ,
+                                    'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                                    'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                                    'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                                 ];
 
                                 // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
@@ -4004,6 +4172,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             \App\Enums\StatutIdee::VALIDATION_PROFIL => \App\Enums\PhasesIdee::identification,
             \App\Enums\StatutIdee::VALIDATION_NOTE_AMELIORER => \App\Enums\PhasesIdee::identification,
             \App\Enums\StatutIdee::MATURITE => \App\Enums\PhasesIdee::evaluation_ex_tante,
+            \App\Enums\StatutIdee::TDR_PREFAISABILITE => \App\Enums\PhasesIdee::evaluation_ex_tante,
             default => \App\Enums\PhasesIdee::identification,
         };
     }
@@ -4027,6 +4196,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             \App\Enums\StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER => \App\Enums\SousPhaseIdee::etude_de_profil,
 
             StatutIdee::MATURITE => \App\Enums\SousPhaseIdee::redaction_rapport_evaluation_ex_ante,
+            \App\Enums\StatutIdee::TDR_PREFAISABILITE => \App\Enums\SousPhaseIdee::etude_de_prefaisabilite,
+
             default => \App\Enums\SousPhaseIdee::etude_de_profil,
         };
     }
@@ -4375,7 +4546,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     /**
      * Créer ou récupérer la structure de dossiers pour les notes conceptuelle de l'etude de profil
      */
-    private function getOrCreateNoteConceptuelleFolderStructure(int $projetId, string $type = 'note-conceptuelle'): ?Dossier
+    private function getOrCreateNoteConceptuelleFolderStructure($projetId, string $type = 'note-conceptuelle'): ?Dossier
     {
         try {
             // Récupérer le projet pour avoir l'identifiant BIP
@@ -4519,25 +4690,34 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     /**
      * Gérer le fichier rapport avec versioning intelligent
      */
-    private function gererFichierRapportFaisabilite(Rapport $rapport, $fichier): ?Fichier
+    private function gererFichierRapportFaisabilite(Rapport $rapport, $fichier, string $categorie = 'rapport'): ?Fichier
     {
         // Calculer le hash du nouveau fichier
         $nouveauHash = md5_file($fichier->getRealPath());
 
-        // Vérifier s'il y a déjà un fichier rapport avec le même hash lié à ce rapport
-        $fichierIdentique = $rapport->fichiersRapport()
+        // Vérifier s'il y a déjà un fichier avec le même hash ET la même catégorie lié à ce rapport
+        $fichierIdentique = $rapport->fichiers()
             ->where('hash_md5', $nouveauHash)
+            ->where('categorie', $categorie)
             ->where('is_active', true)
             ->first();
 
+        // Si le fichier est identique (même hash et même catégorie), on l'ignore
         if ($fichierIdentique) {
             return $fichierIdentique;
         }
 
-        // Désactiver les anciens fichiers rapport de ce rapport
-        $rapport->fichiersRapport()
+        // Supprimer les anciens fichiers de cette catégorie uniquement
+        $anciensFichiers = $rapport->fichiers()
+            ->where('categorie', $categorie)
             ->where('is_active', true)
-            ->update(['is_active' => false]);
+            ->get();
+
+        foreach ($anciensFichiers as $ancienFichier) {
+            $ancienFichier->update(['is_active' => false]);
+            // Optionnel : supprimer physiquement le fichier
+            $this->removeSpecificFiles($ancienFichier);
+        }
 
         // Hasher les IDs pour le chemin selon le pattern projets/{hash_projet_id}/etude_de_faisabilite/rapport/{hash_id}
         $hashedProjectId = hash('sha256', $rapport->projet->identifiant_bip);
@@ -4559,7 +4739,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             'taille' => $fichier->getSize(),
             'hash_md5' => $nouveauHash,
             'description' => 'Rapport de faisabilité',
-            'categorie' => 'rapport',
+            'categorie' => $categorie,
             'is_active' => true,
             'uploaded_by' => auth()->id(),
             'metadata' => [

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\commentaires\StoreCommentaireRequest;
 use App\Http\Requests\commentaires\UpdateCommentaireRequest;
 use App\Services\Contracts\CommentaireServiceInterface;
+use Exception;
 use Illuminate\Http\JsonResponse;
 
 class CommentaireController extends Controller
@@ -46,10 +47,10 @@ class CommentaireController extends Controller
      * Récupérer tous les commentaires d'une ressource spécifique
      *
      * @param string $resourceType - Type de ressource (projet, note, tdr, rapport, etc.)
-     * @param int $resourceId - ID de la ressource
+     * @param $resourceId - ID de la ressource
      * @return JsonResponse
      */
-    public function getByResource(string $resourceType, int $resourceId): JsonResponse
+    public function getByResource(string $resourceType, $resourceId): JsonResponse
     {
         return $this->service->getCommentairesParRessource($resourceType, $resourceId);
     }

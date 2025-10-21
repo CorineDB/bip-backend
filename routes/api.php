@@ -89,6 +89,9 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         Route::post('reinitialisation-de-mot-de-passe', [OAuthController::class, 'reinitialisationDeMotDePasse'])->name('reinitialisationDeMotDePasse');
 
+        // Callback Active Directory pour activation et authentification
+        Route::get('ad-callback', [OAuthController::class, 'adCallback'])->name('adCallback');
+
         Route::group(['middleware' => ['auth:api']], function () {
             Route::controller('App\Http\Controllers\OAuthController')->group(function () {
 
@@ -119,6 +122,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             ->parameters(['departements' => 'departementId']);
         Route::apiResource('villages', VillageController::class)->only(['index', 'show'])
             ->parameters(['villages' => 'villageId']);
+        Route::post('villages/filter', [VillageController::class, 'filter']);
 
         Route::prefix('departements')->group(function () {
             Route::get('{departementId}/communes', [DepartementController::class, 'communes']);
@@ -153,8 +157,13 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::prefix('notifications')->group(function () {
             Route::get('/', [NotificationController::class, 'index']);
             Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+            Route::get('/unread', [NotificationController::class, 'unread']);
+            Route::get('/read', [NotificationController::class, 'read']);
+            Route::get('/type/{type}', [NotificationController::class, 'byType']);
             Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
             Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
+            Route::delete('/delete-all-read', [NotificationController::class, 'deleteAllRead']);
+            Route::delete('/delete-all', [NotificationController::class, 'deleteAll']);
             Route::delete('/{id}', [NotificationController::class, 'destroy']);
         });
 
@@ -632,12 +641,12 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         });
 
         Route::get('/sous-phase-idee', function () {
-            return [
+            return response()->json([
                 'statut'        => "success",
                 'message'       => "Liste des sous d'idee de projet",
                 'data'          => \App\Enums\SousPhaseIdee::options(),
                 'statutCode'    => 200
-            ];
+            ]);
         });
 
         // Project composants & Configuration
@@ -709,14 +718,14 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         $code = $request->query('code');
         $state = $request->query('state');
 
-        // Retrouver l’origine front correspondante
-        $frontendUrl = Cache::pull("oauth_state:{$state}", env('FRONTEND_URL'));
-        if (!$frontendUrl || !$code) {
+        // Récupérer les données du state depuis le cache
+        $stateData = Cache::pull("oauth_state:{$state}");
+
+        if (!$stateData || !$code) {
             return response()->json(['error' => 'Session expirée ou invalide'], 400);
         }
-        /* if (!$code) {
-            return response()->json(['error' => 'Code manquant'], 400);
-        } */
+
+        $frontendUrl = $stateData['frontend_origin'] ?? env('FRONTEND_URL', 'http://192.168.8.105:3000');
 
         // Échange du code contre un token
         $response = Http::asForm()
@@ -728,7 +737,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             ]);
 
         if ($response->failed()) {
-            return response()->json(['error' => 'Impossible d’obtenir le token'], 401);
+            return response()->json(['error' => 'Impossible d\'obtenir le token'], 401);
         }
 
         $tokenData = $response->json();
@@ -741,14 +750,72 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         // Décodage du JWT pour obtenir les infos utilisateur
         $payload = json_decode(base64_decode(explode('.', $idToken)[1]), true);
-
         \Illuminate\Support\Facades\Log::info($payload);
 
-        // 🔐 On chiffre le token avant de le renvoyer dans l’URL
-        $encryptedToken = Crypt::encryptString($idToken);
+        // Récupérer l'email depuis le payload
+        $email = $payload['email'] ?? $stateData['email'] ?? null;
 
-        // Rediriger le navigateur du SSO vers ton front Vue
-        $frontendUrl = env('FRONTEND_URL', 'http://192.168.1.5:3001');
+        if (!$email) {
+            return response()->json(['error' => 'Email manquant dans le token'], 400);
+        }
+
+        // Vérifier si l'utilisateur existe dans notre système
+        $utilisateur = \App\Models\User::where('email', $email)->first();
+
+        if (!$utilisateur) {
+            return redirect("{$frontendUrl}/auth/error?message=" . urlencode('Utilisateur non trouvé dans le système BIP'));
+        }
+
+        // Vérifier si c'est un mode d'activation
+        $isActivationMode = $stateData['activation_mode'] ?? false;
+        $compteDejaActive = $utilisateur->email_verified_at !== null && $utilisateur->statut === 1;
+
+        // Activer le compte si pas encore activé et en mode activation
+        if ($isActivationMode && !$compteDejaActive) {
+            // Activation du compte
+            if ($utilisateur->email_verified_at === null) {
+                $utilisateur->email_verified_at = now();
+            }
+
+            if ($utilisateur->statut === 0) {
+                $utilisateur->statut = 1;
+            }
+
+            $utilisateur->first_connexion = now();
+
+            // Nettoyer les données de vérification
+            $utilisateur->account_verification_request_sent_at = null;
+            $utilisateur->link_is_valide = false;
+            $utilisateur->token = null;
+        }
+
+        $utilisateur->last_connection = now();
+        $utilisateur->save();
+
+        // Générer le token d'authentification BIP (Passport)
+        $bipToken = $utilisateur->createToken('Bip-Token')->accessToken;
+
+        // Log de l'activation
+        $acteur = $utilisateur->personne ? $utilisateur->personne->nom . " " . $utilisateur->personne->prenom : "Inconnu";
+        $message = $compteDejaActive
+            ? "{$acteur} s'est connecté via AD."
+            : "{$acteur} a activé son compte et s'est connecté via AD.";
+
+        \Illuminate\Support\Facades\Log::info($message, [
+            'user_id' => $utilisateur->id,
+            'email' => $utilisateur->email,
+            'compte_active' => !$compteDejaActive
+        ]);
+
+        // 🔐 Chiffrer les données à renvoyer
+        $dataToEncrypt = json_encode([
+            'id_token' => $idToken,
+            'bip_token' => $bipToken,
+            'compte_nouvellement_active' => !$compteDejaActive
+        ]);
+        $encryptedToken = Crypt::encryptString($dataToEncrypt);
+
+        // Rediriger vers le front avec le token chiffré
         return redirect("{$frontendUrl}/auth/success?token={$encryptedToken}");
     });
 

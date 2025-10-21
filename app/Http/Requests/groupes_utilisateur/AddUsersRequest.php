@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\groupes_utilisateur;
 
+use App\Models\User;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +11,7 @@ class AddUsersRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
@@ -21,7 +23,9 @@ class AddUsersRequest extends FormRequest
             // Cas 1 : utilisateur existant
             'users.*.id' => [
                 'required_without:users.*.email',   // obligatoire si pas d'email
-                Rule::exists('users', 'id')->whereNull('deleted_at')
+                new HashedExists(User::class, 'id', function($query) {
+                    $query->whereNull('deleted_at');
+                })
             ],
 
             // Cas 2 : nouvel utilisateur

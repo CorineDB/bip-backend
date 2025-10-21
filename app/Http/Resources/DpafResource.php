@@ -16,7 +16,7 @@ class DpafResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
+            "id" => $this->hashed_id,
             "nom" => $this->nom,
             "description" => $this->description,
             "admin" => $this->when($this->user, function () {
@@ -24,7 +24,7 @@ class DpafResource extends BaseApiResource
             }),
             "ministere" => $this->when($this->ministere, function () {
                 return [
-                    "id" => $this->ministere->id,
+                    "id" => $this->ministere->hashed_id,
                     "nom" => $this->ministere->nom,
                     "type" => $this->ministere->type
                 ];

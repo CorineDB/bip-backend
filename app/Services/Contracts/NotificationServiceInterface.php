@@ -16,4 +16,9 @@ interface NotificationServiceInterface extends AbstractServiceInterface
         array $channels = ['database']
     ): JsonResponse;
     public function deleteNotification(string $notificationId): JsonResponse;
+    public function getUnreadNotifications(int $userId): JsonResponse;
+    public function getReadNotifications(int $userId): JsonResponse;
+    public function getNotificationsByType(int $userId, string $type): JsonResponse;
+    public function deleteAllReadNotifications(int $userId): JsonResponse;
+    public function deleteAllNotifications(int $userId): JsonResponse;
 }

@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\HashableId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class NoteConceptuelle extends Model
 {
-    use HasFactory, SoftDeletes/*, HasSecureIds*/;
+    use HasFactory, SoftDeletes, HashableId;
 
     /**
      * The table associated with the model.
@@ -102,6 +104,7 @@ class NoteConceptuelle extends Model
     {
         return $this->hasMany(NoteConceptuelle::class, 'projetId', 'projetId')
                     ->where('id', '!=', $this->id)
+                    ->where('statut', '!=', 0)->whereHas("children")
                     ->orderBy('created_at', 'desc');
     }
 
@@ -111,7 +114,7 @@ class NoteConceptuelle extends Model
     public function historique_des_evaluations_notes_conceptuelle()
     {
         return $this->historique_des_notes_conceptuelle()->with(["evaluations" => function($query){
-            $query->where("type_evaluation", "note-conceptuelle")->orderBy("created_at", "desc");
+            $query->where("type_evaluation", "note-conceptuelle")->where('statut', '=', 1)->whereHas("childEvaluations")->orderBy("created_at", "desc");
         }]);
     }
 
@@ -121,7 +124,7 @@ class NoteConceptuelle extends Model
     public function historique_validation()
     {
         return $this->historique_des_notes_conceptuelle()->with(["evaluations" => function($query){
-            $query->where("type_evaluation", "note-conceptuelle")->orderBy("created_at", "desc");
+            $query->where("type_evaluation", "validation-etude-profil")->where('statut', '=', 1)->whereHas("childEvaluations")->orderBy("created_at", "desc");
         }]);
     }
 
@@ -131,6 +134,14 @@ class NoteConceptuelle extends Model
     public function parent(): BelongsTo
     {
         return $this->belongsTo(NoteConceptuelle::class, 'parentId');
+    }
+
+    /**
+     * Relation avec le TDR parent (version précédente)
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(NoteConceptuelle::class, 'parentId');
     }
 
     /**

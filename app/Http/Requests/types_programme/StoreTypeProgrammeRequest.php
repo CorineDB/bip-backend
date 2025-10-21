@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\types_programme;
 
+use App\Models\TypeProgramme;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +11,7 @@ class StoreTypeProgrammeRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
@@ -27,8 +29,7 @@ class StoreTypeProgrammeRequest extends FormRequest
             ],
             'typeId' => [
                 'required_if:type,composant-programme',
-                Rule::exists('types_programme', 'id')
-                    ->whereNull('deleted_at')
+                new HashedExists(TypeProgramme::class)
             ],
         ];
     }

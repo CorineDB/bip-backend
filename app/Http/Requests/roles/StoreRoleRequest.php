@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\roles;
 
+use App\Models\Permission;
+use App\Rules\HashedExistsMultiple;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +11,7 @@ class StoreRoleRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
@@ -25,8 +27,7 @@ class StoreRoleRequest extends FormRequest
             ->whereNull('deleted_at')],
 
             'description' => 'nullable|string|max:1000',
-            'permissions' => ['required', 'array', 'min:1'],
-            'permissions.*' => ['required', 'distinct', Rule::exists('permissions', 'id')->whereNull('deleted_at')],
+            'permissions' => ['required', 'array', 'min:1', new HashedExistsMultiple(Permission::class)],
         ];
     }
 

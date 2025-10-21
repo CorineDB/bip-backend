@@ -11,10 +11,11 @@ use App\Models\Champ;
 use App\Models\ChampProjet;
 use App\Models\Fichier;
 use App\Models\Commentaire;
+use App\Traits\HashableId;
 
 class Rapport extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HashableId;
 
     /**
      * The table associated with the model.
@@ -302,8 +303,9 @@ class Rapport extends Model
     public function historique_des_rapports_prefaisabilite()
     {
         return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')
-            ->where('id', '!=', $this->id)
+            //->where('id', '!=', $this->id)
             ->where('type', 'prefaisabilite')
+            ->where('statut', '<>', 'brouillon')->whereHas("enfants")
             ->orderBy('created_at', 'desc');
     }
 
@@ -313,7 +315,7 @@ class Rapport extends Model
     public function historique_des_evaluations_rapports_prefaisabilite()
     {
         return $this->historique_des_rapports_prefaisabilite()->with(["evaluations" => function ($query) {
-            $query->where("type_evaluation", "rapport-prefaisabilite")->orderBy("created_at", "desc");
+            $query->where("type_evaluation", "rapport-prefaisabilite")->where('statut', '=', 1)->whereHas("childEvaluations")->orderBy("created_at", "desc");
         }]);
     }
 
@@ -323,8 +325,9 @@ class Rapport extends Model
     public function historique_des_rapports_faisabilite()
     {
         return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')
-            ->where('id', '!=', $this->id)
+            //->where('id', '!=', $this->id)
             ->where('type', 'faisabilite')
+            ->where('statut', '<>', 'brouillon')->whereHas("enfants")
             ->orderBy('created_at', 'desc');
     }
 
@@ -334,7 +337,7 @@ class Rapport extends Model
     public function historique_des_evaluations_rapports_faisabilite()
     {
         return $this->historique_des_rapports_faisabilite()->with(["evaluations" => function ($query) {
-            $query->where("type_evaluation", "rapport-faisabilite")->orderBy("created_at", "desc");
+            $query->where("type_evaluation", "rapport-faisabilite")->where('statut', '=', 1)->whereHas("childEvaluations")->orderBy("created_at", "desc");
         }]);
     }
 
@@ -349,7 +352,7 @@ class Rapport extends Model
     {
         return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')
             ->where('type', $this->type)
-            ->where('id', '!=', $this->id)
+            ->where('statut', '<>', 'brouillon')->whereHas("enfants")
             ->orderBy('created_at', 'desc');
     }
 

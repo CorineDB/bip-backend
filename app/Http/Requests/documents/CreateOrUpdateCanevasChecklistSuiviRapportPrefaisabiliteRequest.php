@@ -3,7 +3,10 @@
 namespace App\Http\Requests\documents;
 
 use App\Enums\EnumTypeChamp;
+use App\Models\Champ;
+use App\Models\ChampSection;
 use App\Models\Document;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -13,7 +16,7 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
 
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function prepareForValidation()
@@ -189,6 +192,21 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
                 continue;
             }
 
+            // Validation de l'ID hashé si présent (pour les mises à jour)
+            if (isset($element['id'])) {
+                $idValidator = null;
+
+                if ($element['element_type'] === 'field') {
+                    $idValidator = new HashedExists(Champ::class);
+                } elseif ($element['element_type'] === 'section') {
+                    $idValidator = new HashedExists(ChampSection::class);
+                }
+
+                if ($idValidator && !$idValidator->passes("{$currentPath}.id", $element['id'])) {
+                    $validator->errors()->add("{$currentPath}.id", $idValidator->message());
+                }
+            }
+
             // Validation de l'ordre d'affichage
             if (!isset($element['ordre_affichage']) || !is_integer($element['ordre_affichage']) || $element['ordre_affichage'] < 1) {
                 $validator->errors()->add("{$currentPath}.ordre_affichage",
@@ -246,12 +264,22 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
                 'Le type de champ est obligatoire.');
         }
 
-        // Validation des propriétés supplémentaires
-        if (isset($element['id']) && (!is_integer($element['id']) || $element['id'] < 1)) {
-            $validator->errors()->add("{$path}.id",
-                'L\'ID du champ doit être un entier positif.');
+        // Validation des IDs hashés si présents
+        if (isset($element['sectionId'])) {
+            $sectionIdValidator = new HashedExists(ChampSection::class);
+            if (!$sectionIdValidator->passes("{$path}.sectionId", $element['sectionId'])) {
+                $validator->errors()->add("{$path}.sectionId", $sectionIdValidator->message());
+            }
         }
 
+        if (isset($element['documentId'])) {
+            $documentIdValidator = new HashedExists(Document::class);
+            if (!$documentIdValidator->passes("{$path}.documentId", $element['documentId'])) {
+                $validator->errors()->add("{$path}.documentId", $documentIdValidator->message());
+            }
+        }
+
+        // Validation des propriétés supplémentaires
         if (isset($element['info']) && !is_string($element['info'])) {
             $validator->errors()->add("{$path}.info",
                 'Le champ info doit être une chaîne de caractères.');
@@ -275,16 +303,6 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
         if (isset($element['isEvaluated']) && !is_bool($element['isEvaluated'])) {
             $validator->errors()->add("{$path}.isEvaluated",
                 'Le champ isEvaluated doit être un booléen.');
-        }
-
-        if (isset($element['sectionId']) && $element['sectionId'] !== null && (!is_integer($element['sectionId']) || $element['sectionId'] < 1)) {
-            $validator->errors()->add("{$path}.sectionId",
-                'Le sectionId doit être un entier positif ou null.');
-        }
-
-        if (isset($element['documentId']) && (!is_integer($element['documentId']) || $element['documentId'] < 1)) {
-            $validator->errors()->add("{$path}.documentId",
-                'Le documentId doit être un entier positif.');
         }
 
         if (isset($element['champ_standard']) && !is_bool($element['champ_standard'])) {
@@ -317,12 +335,22 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
                 'L\'intitulé de la section est obligatoire et ne doit pas dépasser 255 caractères.');
         }
 
-        // Validation des propriétés supplémentaires
-        if (isset($element['id']) && (!is_integer($element['id']) || $element['id'] < 1)) {
-            $validator->errors()->add("{$path}.id",
-                'L\'ID de la section doit être un entier positif.');
+        // Validation des IDs hashés si présents
+        if (isset($element['parentSectionId'])) {
+            $parentSectionIdValidator = new HashedExists(ChampSection::class);
+            if (!$parentSectionIdValidator->passes("{$path}.parentSectionId", $element['parentSectionId'])) {
+                $validator->errors()->add("{$path}.parentSectionId", $parentSectionIdValidator->message());
+            }
         }
 
+        if (isset($element['documentId'])) {
+            $documentIdValidator = new HashedExists(Document::class);
+            if (!$documentIdValidator->passes("{$path}.documentId", $element['documentId'])) {
+                $validator->errors()->add("{$path}.documentId", $documentIdValidator->message());
+            }
+        }
+
+        // Validation des propriétés supplémentaires
         if (isset($element['description']) && !is_string($element['description'])) {
             $validator->errors()->add("{$path}.description",
                 'La description de la section doit être une chaîne de caractères.');
@@ -331,11 +359,6 @@ class CreateOrUpdateCanevasChecklistSuiviRapportPrefaisabiliteRequest extends Fo
         if (isset($element['type']) && !is_string($element['type'])) {
             $validator->errors()->add("{$path}.type",
                 'Le type de section doit être une chaîne de caractères.');
-        }
-
-        if (isset($element['parentSectionId']) && $element['parentSectionId'] !== null && (!is_integer($element['parentSectionId']) || $element['parentSectionId'] < 1)) {
-            $validator->errors()->add("{$path}.parentSectionId",
-                'Le parentSectionId doit être un entier positif ou null.');
         }
     }
 

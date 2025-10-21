@@ -54,5 +54,5 @@ interface CommentaireServiceInterface extends AbstractServiceInterface
      * @param int $resourceId
      * @return JsonResponse
      */
-    public function getCommentairesParRessource(string $resourceType, int $resourceId): JsonResponse;
+    public function getCommentairesParRessource(string $resourceType, $resourceId): JsonResponse;
 }

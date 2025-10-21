@@ -15,7 +15,7 @@ class ChampResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id'                => $this->id,
+            'id'                => $this->hashed_id,
             'label'             => $this->label,
             'info'              => $this->info,
             'key'               => $this->attribut,
@@ -26,8 +26,8 @@ class ChampResource extends BaseApiResource
             'isEvaluated'       => (bool) $this->isEvaluated,
             'ordre_affichage'   => (int) $this->ordre_affichage,
             'type_champ'        => $this->type_champ,
-            'sectionId'         => $this->sectionId,
-            'documentId'        => $this->documentId,
+            'sectionId'         => $this->section->hashed_id,
+            'documentId'        => $this->document->hashed_id,
             'meta_options'      => $this->meta_options ?: (object)[],
             'champ_standard'    => (bool) $this->champ_standard,
             'startWithNewLine'  => $this->startWithNewLine

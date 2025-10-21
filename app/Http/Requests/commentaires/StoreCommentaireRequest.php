@@ -3,9 +3,11 @@
 namespace App\Http\Requests\commentaires;
 
 use App\Models\Commentaire;
+use App\Models\EvaluationChamp;
+use App\Models\Projet;
+use App\Rules\HashedExists;
+use Exception;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-
 
 class StoreCommentaireRequest extends FormRequest
 {
@@ -16,32 +18,28 @@ class StoreCommentaireRequest extends FormRequest
 
     public function rules(): array
     {
-        $rules = [
-            'commentaire' => ['required', 'string', 'min:10', 'max:5000'],
-            'commentaire_id' => ['nullable', Rule::exists('commentaires', 'id')->whereNull('deleted_at')],
 
+        $type = $this->input('commentaireable_type');
+        $map = Commentaire::getCommentaireableMap();
+
+        $typeLower = strtolower($type);
+
+        $modelClass = null;
+        if (isset($map[$typeLower])) {
+            $modelClass = $map[$typeLower];
+        } else {
+            $modelClass = Projet::class;
+        }
+
+        return [
+            'commentaire' => ['required', 'string', 'min:1', 'max:5000'],
+            'commentaire_id' => ['nullable', new HashedExists(Commentaire::class)],
+            'commentaireable_type' => ['required', "string", "max:100"],
+            'commentaireable_id' => ['required',  new HashedExists($modelClass)],
             // Règles pour les fichiers
             'fichiers' => ['nullable', 'array', 'max:5'],
             'fichiers.*' => ['file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx,txt'],
         ];
-
-        $type = $this->input('commentaireable_type');
-        $map = array_map(fn($class) => (new $class)->getTable(), Commentaire::getCommentaireableMap());
-
-        $typeLower = strtolower($type);
-
-        if (isset($map[$typeLower])) {
-            $rules['commentaireable_type'] = ['required', 'string'];
-            $rules['commentaireable_id'] = [
-                'required',
-                Rule::exists($map[$typeLower], 'id'),
-            ];
-        } else {
-            $rules['commentaireable_type'] = ['required', 'string', 'max:255'];
-            $rules['commentaireable_id'] = ['required', 'min:1'];
-        }
-
-        return $rules;
     }
 
     public function messages(): array
@@ -98,10 +96,38 @@ class StoreCommentaireRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+
+            /* $type = $this->input('commentaireable_type');
+            $map = Commentaire::getCommentaireableMap();
+
+            $typeLower = strtolower($type);
+
+            if (isset($map[$typeLower])) {
+                $modelClass = $map[$typeLower];
+
+                $idValidator = new HashedExists($modelClass);
+
+                if ($idValidator && !$idValidator->passes("commentaireable_id", $this->input('commentaireable_id'))) {
+                    $validator->errors()->add("commentaireable_id", $idValidator->message());
+                }
+                throw new Exception(json_encode(request()->all()), 403);
+            } else {
+                $rules['commentaireable_type'] = ['required', 'string', 'max:255'];
+                $rules['commentaireable_id'] = ['required', 'min:1'];
+            } */
+
             if ($this->has('commentaireable_name')) {
                 $validator->setCustomMessages([
-                    'commentaireable_id.exists' => $this->commentaireable_name . ' spécifié(e) n’existe pas ou a été supprimé(e).',
+                    'commentaireable_id.exists' => $this->commentaireable_name . " spécifié(e) n'existe pas ou a été supprimé(e).",
                 ]);
+            }
+
+            $this->merge(["commentaireable_id" => request()->get("commentaireable_id")]);
+
+            // Récupérer les valeurs déhashées et les merger
+            $unhashedValues = $this->attributes->get('_unhashed_values', []);
+            if (!empty($unhashedValues)) {
+                $this->merge($unhashedValues);
             }
         });
     }

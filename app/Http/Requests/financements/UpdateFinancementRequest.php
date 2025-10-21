@@ -3,6 +3,8 @@
 namespace App\Http\Requests\financements;
 
 use App\Enums\EnumTypeFinancement;
+use App\Models\Financement;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -10,18 +12,47 @@ class UpdateFinancementRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $financementId = $this->route('financement');
+
+        if ($financementId && is_string($financementId) && !is_numeric($financementId)) {
+            $financementId = Financement::unhashId($financementId);
+            $this->merge(['_financement_id' => $financementId]);
+        }
     }
 
     public function rules(): array
     {
-        $financementId = $this->route('financement') ? (is_string($this->route('financement')) ? $this->route('financement') : ($this->route('financement')->id)) : $this->route('id');
+        $financementId = $this->input('_financement_id') ?? $this->route('financement');
 
         return [
             'nom'=> ['required', 'string', Rule::unique('financements', 'nom')->ignore($financementId)->whereNull('deleted_at')],
             'nom_usuel' => 'required|string',
             'type' => ['required', Rule::in(EnumTypeFinancement::values())],
-            'financementId' => ['sometimes', Rule::exists('financements', 'id')->whereNull('deleted_at'), 'different:' . $financementId]
+            'financementId' => [Rule::requiredIf($this->input("type") != "type"), 'sometimes', new HashedExists(Financement::class), 'different:' . $financementId,
+
+                /* function ($attribute, $value, $fail) {
+                    $exists = Financement::findByHashedId("id", $value)->when($this->input("type") == "secteur", function($query){
+                        $query->whereNull('financementId')->where('type', 'type');
+                    })->when($this->input("type") == "nature", function($query){
+
+                        $query->where('type', 'source')->whereHas('parent', function ($query) {
+                            $query->where('type', 'type');
+                        });
+                    })->whereNull('deleted_at')->exists();
+
+                    if (!$exists && $this->input("type") == "source") {
+                        $fail('Le Type de financement est inconnue');
+                    }
+                    else if (!$exists && $this->input("type") == "nature") {
+                        $fail('La source de financement est inconnue');
+                    }
+                } */
+            ]
         ];
     }
 

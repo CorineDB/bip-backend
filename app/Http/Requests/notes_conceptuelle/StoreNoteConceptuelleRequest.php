@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\RequiredIf;
 use App\Repositories\Contracts\FichierRepositoryInterface;
 use App\Models\NoteConceptuelle;
+use App\Models\Rapport;
+use App\Rules\HashedExists;
+use Illuminate\Validation\ValidationException;
 
 class StoreNoteConceptuelleRequest extends FormRequest
 {
@@ -18,7 +21,7 @@ class StoreNoteConceptuelleRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
@@ -28,8 +31,20 @@ class StoreNoteConceptuelleRequest extends FormRequest
         $estMou = $this->input('est_mou', true);
         $noteId = $this->input('noteId');
 
+        // Validation de l'ID hashé si présent (pour les mises à jour)
+        if ($noteId) {
+
+            $idValidator = new HashedExists(NoteConceptuelle::class);
+
+            if ($idValidator && !$idValidator->passes("noteId", $this->input('noteId'))) {
+                ValidationException::withMessages(["noteId" => $idValidator->message()]);
+            }
+
+            $noteId = NoteConceptuelle::findByHashedIdOrFail($noteId)->id;
+        }
+
         // Vérifier si noteId existe et est valide dans la table notes_conceptuelle
-        $noteExists = $noteId ? DB::table('notes_conceptuelle')->where('id', $noteId)->whereNull('deleted_at')->exists() : false;
+        $noteExists = $noteId ? $noteId !== null : false;
 
         if (empty($canevas)) {
             return [
@@ -67,9 +82,25 @@ class StoreNoteConceptuelleRequest extends FormRequest
             return !$this->noteHasUploadedDocument($noteId, $categorie);
         };
 
-        $finalRules = array_merge([
+        // closure pour déterminer si un document MOU spécifique doit être requis
+        $needRequiredMouDocument = function (string $categorie) use ($estMou, $estSoumise, $noteExists, $noteId): bool {
+            // Document requis uniquement si est_mou = true ET est_soumise = true
+            if (!$estMou || !$estSoumise) {
+                return false;
+            }
+
+            // si pas de note existante, on exige le fichier
+            if (!$noteExists) {
+                return true;
+            }
+
+            // si note existante => récupérer le projet associé et vérifier si le document existe sur le projet
+            return !$this->projetHasUploadedDocument($noteId, $categorie);
+        };
+
+        /*$finalRules = array_merge([
             'est_soumise' => 'required|boolean',
-            'noteId' => ['sometimes', Rule::exists('notes_conceptuelle', 'id')->whereNull('deleted_at')],
+            'noteId' => ['sometimes', new HashedExists(NoteConceptuelle::class)],
 
             'champs' => $estSoumise ? 'required|array' : 'nullable|array|min:0',
             'documents' => $estSoumise ? 'required|array' : 'nullable|array',
@@ -77,11 +108,11 @@ class StoreNoteConceptuelleRequest extends FormRequest
             'documents.analyse_pre_risque_facteurs_reussite' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
             'documents.etude_pre_faisabilite' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
             'documents.note_conceptuelle' => $estSoumise ? 'required|' . self::DOCUMENT_RULE : 'nullable|' . self::DOCUMENT_RULE,
-        ], $dynamicRules);
+        ], $dynamicRules);*/
 
         $finalRules = array_merge([
             'est_soumise' => 'required|boolean',
-            'noteId' => ['sometimes', Rule::exists('notes_conceptuelle', 'id')->whereNull('deleted_at')],
+            'noteId' => ['sometimes', new HashedExists(NoteConceptuelle::class)],
             'est_mou' => $estSoumise ? 'required|boolean' : 'nullable|boolean',
 
             'champs' => $estSoumise ? 'required|array' : 'nullable|array|min:0',
@@ -94,28 +125,23 @@ class StoreNoteConceptuelleRequest extends FormRequest
                 ...(explode('|', self::DOCUMENT_RULE))
 
             ],
-            /*
-                'documents.etude_pre_faisabilite' => [
-                    new RequiredIf(fn() => $needRequiredDocument('etude_pre_faisabilite')),
-                    ...(explode('|', self::DOCUMENT_RULE))
-                ],
-            */
+
             'documents.note_conceptuelle' => [
                 new RequiredIf(fn() => $needRequiredDocument('note_conceptuelle')),
                 ...(explode('|', self::DOCUMENT_RULE))
             ],
 
-            // Documents requis si est_mou = true
+            // Documents requis si est_mou = true (vérification sur le projet associé)
             'documents.rapport_faisabilite_preliminaire' => [
-                new RequiredIf(fn() => $estMou && !$this->noteHasUploadedDocument($noteId, 'rapport_faisabilite_preliminaire')),
+                new RequiredIf(fn() => $needRequiredMouDocument('rapport_faisabilite_preliminaire')),
                 ...(explode('|', self::DOCUMENT_RULE))
             ],
             'documents.tdr_faisabilite_preliminaire' => [
-                new RequiredIf(fn() => $estMou && !$this->noteHasUploadedDocument($noteId, 'tdr_faisabilite_preliminaire')),
+                new RequiredIf(fn() => $needRequiredMouDocument('tdr_faisabilite_preliminaire')),
                 ...(explode('|', self::DOCUMENT_RULE))
             ],
             'documents.check_suivi_rapport' => [
-                new RequiredIf(fn() => $estMou && !$this->noteHasUploadedDocument($noteId, 'check_suivi_rapport')),
+                new RequiredIf(fn() => $needRequiredMouDocument('check_suivi_rapport')),
                 ...(explode('|', self::DOCUMENT_RULE))
             ],
 
@@ -164,6 +190,61 @@ class StoreNoteConceptuelleRequest extends FormRequest
                 ->exists();
         } catch (\Exception $e) {
             \Log::warning("Erreur lors de la vérification des fichiers pour la note {$noteId}: " . $e->getMessage());
+            // En cas d'erreur on considère qu'il n'y a pas de fichier uploadé (donc il sera requis)
+            return false;
+        }
+    }
+
+    /**
+     * Vérifie si le projet associé à la note a déjà un fichier uploadé pour la catégorie donnée.
+     * Pour les documents de rapport (rapport_faisabilite_preliminaire, tdr_faisabilite_preliminaire, check_suivi_rapport),
+     * on vérifie sur le rapport de faisabilité préliminaire du projet.
+     */
+    private function projetHasUploadedDocument($noteId, string $categorie): bool
+    {
+        try {
+            if (empty($noteId)) {
+                return false;
+            }
+
+            // Récupérer la note conceptuelle
+            $note = NoteConceptuelle::find($noteId);
+            if (!$note) {
+                return false;
+            }
+
+            // Récupérer le projet associé
+            $projet = $note->projet;
+            if (!$projet) {
+                return false;
+            }
+
+            // Récupérer le dernier rapport de faisabilité préliminaire
+            $rapport = $projet->rapportFaisabilitePreliminaire()->first();
+            if (!$rapport) {
+                return false;
+            }
+
+            $fichierRepo = app(FichierRepositoryInterface::class);
+
+            // certains repository exposent getInstance() ou getModel() : essayer getInstance() puis getModel()
+            $queryable = null;
+            if (method_exists($fichierRepo, 'getInstance')) {
+                $queryable = $fichierRepo->getInstance();
+            } elseif (method_exists($fichierRepo, 'getModel')) {
+                $queryable = $fichierRepo->getModel();
+            } else {
+                // fallback : utiliser le model direct
+                $queryable = \App\Models\Fichier::query();
+            }
+
+            // Vérifier si le fichier existe sur le rapport de faisabilité préliminaire
+            return $queryable->where('fichier_attachable_id', $rapport->id)
+                ->where('fichier_attachable_type', \App\Models\Rapport::class)
+                ->where('categorie', $categorie)
+                ->exists();
+        } catch (\Exception $e) {
+            \Log::warning("Erreur lors de la vérification des fichiers pour le rapport du projet de la note {$noteId}: " . $e->getMessage());
             // En cas d'erreur on considère qu'il n'y a pas de fichier uploadé (donc il sera requis)
             return false;
         }

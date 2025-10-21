@@ -9,12 +9,12 @@ class UpdateDgpdRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
     {
-        $dgpdId = $this->route('dgpd') ? (is_string($this->route('dgpd')) ? $this->route('dgpd') : ($this->route('dgpd')->id)) : $this->route('id');
+        $dgpdId = $this->route('dgpd') ? ((is_string($this->route('dgpd'))  || is_numeric($this->route('dgpd'))) ? $this->route('dgpd') : ($this->route('dgpd')->id)) : $this->route('id');
 
         return [
             'nom' => ['required', 'string', Rule::unique('dgpd', 'nom')->ignore($dgpdId)->whereNull('deleted_at')],

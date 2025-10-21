@@ -16,7 +16,7 @@ class PermissionResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->hashed_id,
             'slug' => $this->slug,
             'nom' => $this->nom
         ];

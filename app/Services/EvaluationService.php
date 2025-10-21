@@ -41,6 +41,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Notification;
 use App\Events\IdeeProjetTransformee;
 use App\Http\Resources\CategorieCritereResource;
+use App\Http\Resources\CritereResource;
 use App\Http\Resources\idees_projet\IdeesProjetResource;
 use App\Http\Resources\UserResource;
 use App\Models\IdeeProjet;
@@ -83,7 +84,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere?->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -107,10 +108,20 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'statut' => 1
             ]);
 
-            // Vérifier que l'évaluation climatique existe
+            // CODE EXISTANT COMMENTÉ - Conservé pour référence
+            /*
             $evaluationClimatique = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'climatique')
+                ->firstOrFail();
+            */
+
+            // NOUVEAU CODE - Récupérer uniquement l'évaluation climatique terminée (statut = 1)
+            $evaluationClimatique = Evaluation::where('projetable_type', get_class($ideeProjet))
+                ->where('projetable_id', $ideeProjet->id)
+                ->where('type_evaluation', 'climatique')
+                ->where('statut', 1)
+                ->orderBy("created_at", "desc")
                 ->firstOrFail();
 
             $criteresEvaluationClimatique = $evaluationClimatique->evaluationCriteres()
@@ -133,9 +144,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ->get();
 
                 $evaluationClimatique->update([
-                    'resultats_evaluation' => [],
+                    //'resultats_evaluation' => [],
                     'evaluation' => EvaluationCritereResource::collection($criteresEvaluationClimatique),
-                    'valider_le' => null,
+                    //'valider_le' => null,
                     'statut' => 1  // Marquer comme terminée
                 ]);
             } else {
@@ -152,6 +163,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $this->enregistrerWorkflow($ideeProjet, StatutIdee::BROUILLON);
                 $this->enregistrerDecision($ideeProjet, 'Rejet par Responsable hiérarchique', $attributs["commentaire"] ?? 'Idée rejetée - Retour en phase de rédaction');
 
+                // CODE EXISTANT COMMENTÉ - L'évaluation climatique est déjà terminée (statut=1), pas besoin de la modifier
+                /*
                 // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
                 $evaluateurs = $evaluation->evaluateursClimatique()->get();
 
@@ -189,6 +202,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ]);
 
                 $criteresEvaluationClimatique->get()->each->update(["est_archiver" => true]);
+                */
+
+                // L'évaluation climatique reste inchangée (déjà terminée avec statut=1)
             }
 
             $ideeProjet->refresh();
@@ -247,7 +263,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere?->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -267,7 +283,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'data' => [
                     'idee_projet' => new IdeesProjetResource($ideeProjet),
                     'evaluation' => $evaluation ? [
-                        'id' => $evaluation->id,
+                        'id' => $evaluation->hashed_id,
                         'valider_le' => Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i"),
                         'valider_par' => new UserResource($evaluation->validator),
                         'decision' => $evaluation->evaluation,
@@ -297,9 +313,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if ($ideeProjet->statut->value != StatutIdee::VALIDATION->value) {
+            /* if ($ideeProjet->statut->value != StatutIdee::VALIDATION->value) {
                 throw new Exception("L'idee de projet n'est pas a l'etape de validation");
-            }
+            } */
 
             // Vérifier s'il existe une évaluation précédente validée
             $evaluationPrecedente = Evaluation::where('projetable_type', get_class($ideeProjet))
@@ -359,6 +375,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'statut' => -1  // Marquer comme terminée
                 ]); */
 
+                // CODE EXISTANT COMMENTÉ
+                /*
                 // Vérifier que l'évaluation climatique existe
                 $evaluationClimatique = Evaluation::where('projetable_type', get_class($ideeProjet))
                     ->where('projetable_id', $ideeProjet->id)
@@ -385,6 +403,108 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
                 $criteresEvaluationAMC->each->update(["est_archiver" => true]);
                 $criteresEvaluationClimatique->each->update(["est_archiver" => true]);
+                */
+
+                // NOUVEAU CODE - Dupliquer l'évaluation climatique pour reprise
+                // Récupérer la dernière évaluation climatique terminée
+                $evaluationClimatiquePrecedente = Evaluation::where('projetable_type', get_class($ideeProjet))
+                    ->where('projetable_id', $ideeProjet->id)
+                    ->where('type_evaluation', 'climatique')
+                    ->where('statut', 1)
+                    ->whereNotNull('date_fin_evaluation')
+                    ->orderByDesc('created_at')
+                    ->firstOrFail();
+
+                // Dupliquer l'évaluation climatique
+                $nouvelleEvaluationClimatique = Evaluation::create([
+                    'projetable_id' => $ideeProjet->id,
+                    'projetable_type' => get_class($ideeProjet),
+                    'type_evaluation' => 'climatique',
+                    'statut' => 1,
+                    'date_debut_evaluation' => now(),
+                    'date_fin_evaluation' => null, // Permet la reprise
+                    'evaluation' => $evaluationClimatiquePrecedente->evaluation ?? [],
+                    'resultats_evaluation' => $evaluationClimatiquePrecedente->resultats_evaluation ?? [],
+                    'id_evaluation' => $evaluationClimatiquePrecedente->id
+                ]);
+
+
+                // Copier TOUS les critères actifs (internes ET externes) vers la nouvelle évaluation climatique
+                $tousCriteresActifs = $evaluationClimatiquePrecedente->evaluationCriteres()
+                    ->active()
+                    ->get();
+
+                foreach ($tousCriteresActifs as $critere) {
+                    EvaluationCritere::create([
+                        'evaluation_id' => $nouvelleEvaluationClimatique->id,
+                        'critere_id' => $critere->critere_id,
+                        'evaluateur_id' => $critere->evaluateur_id,
+                        'categorie_critere_id' => $critere->categorie_critere_id,
+                        'notation_id' => $critere->notation_id,
+                        'note' => $critere->note,
+                        'commentaire' => $critere->commentaire,
+                        'is_auto_evaluation' => $critere->is_auto_evaluation,
+                        'est_archiver' => false
+                    ]);
+                }
+
+                // Archiver uniquement les évaluations externes dans la NOUVELLE évaluation climatique
+                $criteresExternesNouveaux = $nouvelleEvaluationClimatique->evaluationCriteres()
+                    ->evaluationExterne()
+                    ->active()
+                    ->get();
+
+                $criteresExternesNouveaux->each->update(['est_archiver' => true]);
+
+                // Dupliquer l'évaluation AMC pour reprise
+                $evaluationAMCPrecedente = Evaluation::where('projetable_type', get_class($ideeProjet))
+                    ->where('projetable_id', $ideeProjet->id)
+                    ->where('type_evaluation', 'amc')
+                    ->where('statut', 1)
+                    ->orderByDesc('created_at')
+                    ->first();
+
+                if ($evaluationAMCPrecedente) {
+                    // Dupliquer l'évaluation AMC avec statut -1 (BROUILLON)
+                    $nouvelleEvaluationAMC = Evaluation::create([
+                        'projetable_id' => $ideeProjet->id,
+                        'projetable_type' => get_class($ideeProjet),
+                        'type_evaluation' => 'amc',
+                        'statut' => -1, // BROUILLON
+                        'date_debut_evaluation' => now(),
+                        'date_fin_evaluation' => null,
+                        'evaluation' => $evaluationAMCPrecedente->evaluation ?? [],
+                        'resultats_evaluation' => $evaluationAMCPrecedente->resultats_evaluation ?? [],
+                        'id_evaluation' => $evaluationAMCPrecedente->id
+                    ]);
+
+                    // Copier TOUS les critères actifs vers la nouvelle évaluation AMC
+                    $tousCriteresAMCActifs = $evaluationAMCPrecedente->evaluationCriteres()
+                        ->active()
+                        ->get();
+
+                    foreach ($tousCriteresAMCActifs as $critereAMC) {
+                        EvaluationCritere::create([
+                            'evaluation_id' => $nouvelleEvaluationAMC->id,
+                            'critere_id' => $critereAMC->critere_id,
+                            'evaluateur_id' => $critereAMC->evaluateur_id,
+                            'categorie_critere_id' => $critereAMC->categorie_critere_id,
+                            'notation_id' => $critereAMC->notation_id,
+                            'note' => $critereAMC->note,
+                            'commentaire' => $critereAMC->commentaire,
+                            'is_auto_evaluation' => $critereAMC->is_auto_evaluation,
+                            'est_archiver' => false
+                        ]);
+                    }
+
+                    // Archiver TOUTES les évaluations (internes et externes) dans la NOUVELLE évaluation AMC
+                    $tousCriteresAMCNouveaux = $nouvelleEvaluationAMC->evaluationCriteres()
+                        ->active()
+                        ->get();
+
+                    $tousCriteresAMCNouveaux->each->update(['est_archiver' => true]);
+                }
+
             }
 
             DB::commit();
@@ -454,7 +574,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         try {
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -474,7 +594,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'data' => [
                     'idee_projet' => new IdeesProjetResource($ideeProjet),
                     'evaluation' => $evaluation ? [
-                        'id' => $evaluation->id,
+                        'id' => $evaluation->hashed_id,
                         'valider_le' => Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i"),
                         'valider_par' => new UserResource($evaluation->validator),
                         'decision' => $evaluation->evaluation,
@@ -504,14 +624,24 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere?->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
-            // Vérifier que l'évaluation climatique existe
+            // CODE EXISTANT COMMENTÉ - Conservé pour référence
+            /*
             $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'climatique')
+                ->firstOrFail();
+            */
+
+            // NOUVEAU CODE - Ajouté pour récupérer la dernière évaluation en cours
+            $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
+                ->where('projetable_id', $ideeProjet->id)
+                ->where('type_evaluation', 'climatique')
+                ->where('statut', 0)
+                ->orderBy('created_at', 'desc')
                 ->firstOrFail();
 
             if ($evaluation->statut == 1) {
@@ -645,7 +775,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere?->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -653,10 +783,20 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 throw new Exception("Vous n'avez pas les droits pour effectuer cette action", 403);
             }
 
-            // Vérifier que l'évaluation climatique existe
+            // CODE EXISTANT COMMENTÉ - Conservé pour référence
+            /*
             $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'climatique')
+                ->firstOrFail();
+            */
+
+            // NOUVEAU CODE - Ajouté pour récupérer la dernière évaluation en cours
+            $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
+                ->where('projetable_id', $ideeProjet->id)
+                ->where('type_evaluation', 'climatique')
+                ->where("statut", 0)
+                ->orderByDesc('created_at')
                 ->firstOrFail();
 
             if ($evaluation->statut == 1) {
@@ -672,6 +812,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 throw new Exception("Auto-evauation climatique toujours en veuillez patientez", 403);
             }
 
+            // CODE EXISTANT COMMENTÉ - Conservé pour référence
+            /*
             $criteresEvaluation = $evaluation->evaluationCriteres()
                 ->autoEvaluation()
                 ->active()->get();
@@ -705,6 +847,71 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ]);
 
             $criteresEvaluation->each->update(["est_archiver" => true]);
+            */
+
+            // NOUVEAU CODE - Finaliser l'évaluation avant de réinitialiser l'idée (comme pour pertinence)
+            // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
+            $evaluateurs = $evaluation->evaluateursClimatique()->get();
+
+            if ($evaluateurs->count() == 0) {
+                throw new Exception('Aucun évaluateur trouvé avec la permission "effectuer-evaluation-climatique-idee-projet"', 404);
+            }
+
+            // Calculer les résultats finaux avant de finaliser l'évaluation
+            $criteres = $evaluation->criteres;
+
+            $evaluationCriteres = new Collection();
+
+            foreach ($evaluateurs as $evaluateur) {
+                foreach ($criteres as $critere) {
+                    $evaluationCritere = $evaluation->evaluationCriteres()
+                        ->autoEvaluation()
+                        ->active()
+                        ->where('critere_id', $critere->id)
+                        ->where('evaluateur_id', $evaluateur->id)
+                        ->firstOrNew([
+                            'evaluation_id' => $evaluation->id,
+                            'critere_id' => $critere->id,
+                            'evaluateur_id' => $evaluateur->id,
+                        ], [
+                            'categorie_critere_id' => $critere->categorie_critere_id,
+                            'note' => 'En attente',
+                            'notation_id' => null,
+                            'is_auto_evaluation' => true,
+                            'est_archiver' => false
+                        ]);
+
+                    $evaluationCriteres->push($evaluationCritere->load(['critere', 'notation', 'categorieCritere', 'evaluateur']));
+                }
+            }
+
+            $aggregatedScores = $evaluation->aggregateScoresByCritere($evaluationCriteres);
+            $finalResults = $this->calculateFinalResults($aggregatedScores);
+
+            $grilleEvaluation = CategorieCritere::where('slug', 'evaluation-preliminaire-multi-projet-impact-climatique')->first();
+
+            // Mettre à jour l'évaluation avec les résultats finaux
+            $evaluation->update([
+                'resultats_evaluation' => $finalResults,
+                'valider_le' => now(),
+                'date_fin_evaluation' => now(),
+                'statut' => 1,
+                'canevas' => $grilleEvaluation ? (new CategorieCritereResource($grilleEvaluation))->toArray(request()) : null,
+            ]);
+
+            // Maintenant réinitialiser l'idée de projet pour refaire
+            $ideeProjet->update([
+                'est_soumise' => false,
+                //'score_climatique' => 0,
+                //'identifiant_bip' => null, //$this->generateIdentifiantBip(),
+                'statut' => StatutIdee::BROUILLON,
+                'phase' => $this->getPhaseFromStatut(StatutIdee::BROUILLON),
+                'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::BROUILLON),
+            ]);
+
+            // Enregistrer le workflow et la décision
+            $this->enregistrerWorkflow($ideeProjet, StatutIdee::BROUILLON);
+            $this->enregistrerDecision($ideeProjet, 'Réévaluation climatique demandée', 'Score climatique insatisfaisant (' . ($finalResults['score_final_pondere'] ?? 0) . ') - Retour en phase de rédaction');
 
             DB::commit();
 
@@ -763,8 +970,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ->whereNotNull('notation_id')
             ->where('note', '!=', 'En attente')
             ->count();
+
         $totalEvaluationsAttendues = $totalEvaluateurs * $totalCriteres;
-        return $totalCriteres > 0 ? ($completedCriteres * 100 / $totalEvaluationsAttendues) : 0;
+        return $totalEvaluationsAttendues ? ($totalCriteres > 0 ? ($completedCriteres * 100 / $totalEvaluationsAttendues) : 0 ) : 0;
     }
 
     /**
@@ -781,7 +989,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $ponderation = $data['ponderation'] ?? 0;
 
             $results[] = [
-                'critere_id' => $critereId,
+                'critere_id' => Critere::find($critereId)?->hashed_id,
                 'critere_nom' => $data['critere']->intitule ?? 'N/A',
                 'ponderation' => $ponderation,
                 'ponderation_pct' => $ponderation . '%',
@@ -848,7 +1056,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -860,6 +1068,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ], 403);
             }
 
+            // CODE EXISTANT COMMENTÉ - Conservé pour référence
+            /*
             $evaluation = Evaluation::where(
                 'projetable_id',
                 $ideeProjet->id
@@ -885,6 +1095,94 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 "statut"  => $is_auto_evaluation ? 0 : 1,
                 "date_fin_evaluation" => $is_auto_evaluation ? null : now()
             ]);
+            */
+
+            // NOUVEAU CODE - Ajouté pour gérer id_evaluation et lier aux évaluations précédentes
+            $is_auto_evaluation = auth()->user()->type == "analyste-dgpd" ? false : true;
+
+            // Charger l'évaluation selon le type de profil
+            if ($is_auto_evaluation) {
+                // Responsable-projet: chercher évaluation avec statut -1 ou 0
+                $evaluation = Evaluation::where('projetable_id', $ideeProjet->id)
+                    ->where('projetable_type', get_class($ideeProjet))
+                    ->whereIn("statut", [-1, 0])
+                    ->where('type_evaluation', 'climatique')
+                    ->orderByDesc('created_at')
+                    ->first();
+            } else {
+                // Analyste-dgpd: chercher évaluation avec statut 1 et date_fin_evaluation null
+                $evaluation = Evaluation::where('projetable_id', $ideeProjet->id)
+                    ->where('projetable_type', get_class($ideeProjet))
+                    ->where('statut', 1)
+                    ->whereNull('date_fin_evaluation')
+                    ->where('type_evaluation', 'climatique')
+                    ->orderByDesc('created_at')
+                    ->first();
+
+                if (!$evaluation) {
+                    throw new Exception("L'idée de projet n'est pas à l'étape de l'analyse", 403);
+                }
+            }
+
+            // Validation du statut de l'idée selon le type d'utilisateur
+            if ($is_auto_evaluation) {
+                // Responsable-projet: statut doit être BROUILLON
+                if ($ideeProjet->statut != StatutIdee::BROUILLON) {
+                    throw new Exception("Evaluation climatique ne peut-etre effectuer qu'a une idee a l'etape de brouillon", 403);
+                }
+                // Vérifier si l'évaluation est déjà terminée pour responsable-projet
+                if ($ideeProjet->statut != StatutIdee::BROUILLON && ($evaluation?->statut == 1 && $evaluation?->date_fin_evaluation != null)) {
+                    throw new Exception("Evaluation climatique deja termine", 403);
+                }
+            } else {
+                // Analyste-dgpd: statut doit être ANALYSE ou AMC
+                if ($ideeProjet->statut != StatutIdee::ANALYSE && $ideeProjet->statut != StatutIdee::AMC) {
+                    throw new Exception("L'evaluation climatique externe ne peut être effectuée que sur des idées en statut ANALYSE ou AMC", 403);
+                }
+                // Vérifier si l'évaluation externe est déjà terminée pour analyste-dgpd
+                if (($ideeProjet->statut == StatutIdee::ANALYSE || $ideeProjet->statut == StatutIdee::AMC) && ($evaluation?->statut == 1 && $evaluation?->date_fin_evaluation != null)) {
+                    throw new Exception("Evaluation climatique externe deja termine", 403);
+                }
+            }
+
+            // Vérifier si une évaluation en cours existe déjà
+            if ($evaluation) {
+
+                // Mettre à jour l'évaluation existante
+                $evaluation->update([
+                    "type_evaluation" => "climatique",
+                    "statut"  => $is_auto_evaluation ? 0 : 1,
+                    "date_fin_evaluation" => $is_auto_evaluation ? null : now()
+                ]);
+            } else {
+                // Vérifier s'il existe une évaluation climatique déjà effectuée (terminée)
+                $evaluationPrecedente = Evaluation::where('projetable_id', $ideeProjet->id)
+                                ->where('projetable_type', get_class($ideeProjet))
+                                ->where('statut', 1)
+                                ->where('type_evaluation', 'climatique')
+                                ->whereNotNull('date_fin_evaluation')
+                                ->orderByDesc('created_at')
+                                ->first();
+
+                // Créer une nouvelle évaluation
+                $evaluationData = [
+                    'projetable_id' => $ideeProjet->id,
+                    'projetable_type' => get_class($ideeProjet),
+                    "type_evaluation" => "climatique",
+                    "evaluation" => [],
+                    "resultats_evaluation" => [],
+                    'statut' => $is_auto_evaluation ? 0 : 1,
+                    'date_debut_evaluation' => now(),
+                    "date_fin_evaluation" => $is_auto_evaluation ? null : now()
+                ];
+
+                // Ajouter l'id de l'évaluation précédente si elle existe
+                if ($evaluationPrecedente) {
+                    $evaluationData['id_evaluation'] = $evaluationPrecedente->id;
+                }
+
+                $evaluation = Evaluation::create($evaluationData);
+            }
 
             $isAssigned = false;
             if ($is_auto_evaluation == false && auth()->user()->type == "analyste-dgpd" && auth()->user()->profilable_type == Dgpd::class) {
@@ -949,8 +1247,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $evaluationCritere = EvaluationCritere::where([
                     'evaluation_id' => $evaluation->id,
                     'evaluateur_id' => $evaluateurId,
-                    'categorie_critere_id' => $reponse["categorie_critere_id"],
-                    'critere_id' => $reponse['critere_id'],
+                    'categorie_critere_id' => $critere->categorie_critere_id,
+                    'critere_id' => $critere->id,
                     'est_archiver' => false, // ← ici la condition
                     'is_auto_evaluation' => $is_auto_evaluation,
                 ])->first();
@@ -969,8 +1267,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     $evaluationCritere = EvaluationCritere::create([
                         'evaluation_id' => $evaluation->id,
                         'evaluateur_id' => $evaluateurId,
-                        'categorie_critere_id' => $reponse["categorie_critere_id"],
-                        'critere_id' => $reponse['critere_id'],
+                        'categorie_critere_id' => $critere->categorie_critere_id,
+                        'critere_id' => $critere->id,
                         'notation_id' => $notation->id,
                         'note' => $notation->valeur,
                         'commentaire' => $reponse['commentaire'] ?? null,
@@ -1014,6 +1312,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ->with(['critere', 'notation', 'categorieCritere'])
                     ->get();
 
+
                 $score_pondere_par_critere = $evaluationClimatiqueReponses->groupBy('critere_id')->map(function ($critereEvaluations) {
                     $critere = $critereEvaluations->first()->critere;
 
@@ -1047,6 +1346,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ],
                     "resultats_evaluation" => []
                 ]);
+
 
                 $evaluationCritere = EvaluationCritere::updateOrCreate(
                     [
@@ -1109,8 +1409,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'success' => true,
                 'message' => 'Réponses d\'évaluation climatique soumises avec succès',
                 'data' => [
-                    'evaluation_id' => $evaluation->id,
-                    'reponses_soumises' => count($reponses),
+                    'evaluation_id' => $evaluation->hashed_id,
+                    'reponses_soumises' => count($reponses)/*
                     'evaluateur_reponses' => EvaluationCritereResource::collection($evaluationClimatiqueReponses),
                     'evaluateur_stats' => [
                         'total_criteres' => $evaluationClimatiqueReponses->count(),
@@ -1118,7 +1418,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                         'criteres_en_attente' => $evaluationClimatiqueReponses->filter->isPending()->count(),
                         'taux_completion' => $evaluationClimatiqueReponses->count() > 0 ?
                             (($evaluationClimatiqueReponses->filter->isCompleted()->count() / $evaluationClimatiqueReponses->count()) * 100) : 0
-                    ]
+                    ] */
                 ]
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -1188,28 +1488,53 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere?->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
-            $evaluation = Evaluation::firstOrCreate([
-                'projetable_id' => $ideeProjet->id,
-                'projetable_type' => get_class($ideeProjet),
-                "type_evaluation" => "climatique"
-            ], [
-                "type_evaluation" => "climatique",
-                "statut"  => 0,
-                "date_debut_evaluation" => now(),
-                "evaluation" => [],
-                "resultats_evaluation" => []
-            ]);
+            // Récupérer la dernière évaluation climatique ou préparer une nouvelle instance
+            $evaluation = Evaluation::where('projetable_id', $ideeProjet->id)
+                ->where('projetable_type', get_class($ideeProjet))
+                ->where('type_evaluation', 'climatique')
+                ->orderBy('created_at', 'desc')
+                ->firstOrNew([
+                    'projetable_id' => $ideeProjet->id,
+                    'projetable_type' => get_class($ideeProjet),
+                    'type_evaluation' => 'climatique'
+                ], [
+                    'type_evaluation' => 'climatique',
+                    'statut' => -1,
+                    'date_debut_evaluation' => now(),
+                    'evaluation' => [],
+                    'resultats_evaluation' => []
+                ]);
 
-            // Vérifier que c'est une évaluation climatique
-            if ($evaluation->type_evaluation !== 'climatique') {
+            if(!$evaluation){
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Cette évaluation n\'est pas de type climatique'
-                ], 400);
+                    'success' => true,
+                    'message' => 'Aucune evaluation',
+                    'data' => null
+                ], 206);
+            }
+
+            // Si c'est une nouvelle évaluation (pas encore enregistrée)
+            if (!$evaluation->exists) {
+                // Vérifier s'il existe une évaluation climatique déjà effectuée (terminée)
+                $evaluationPrecedente = Evaluation::where('projetable_id', $ideeProjet->id)
+                    ->where('projetable_type', get_class($ideeProjet))
+                    ->where('statut', 1)
+                    ->where('type_evaluation', 'climatique')
+                    ->whereNotNull('date_fin_evaluation')
+                    ->orderByDesc('created_at')
+                    ->first();
+
+                // Ajouter l'id de l'évaluation précédente si elle existe
+                if ($evaluationPrecedente) {
+                    $evaluation->id_evaluation = $evaluationPrecedente->id;
+                }
+
+                // Sauvegarder la nouvelle évaluation
+                $evaluation->save();
             }
 
             if ($evaluation->statut != 1) {
@@ -1301,7 +1626,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'data' => [
                     "statut_idee" => $ideeProjet->statut,
                     "idee_projet" => new IdeesProjetResource($ideeProjet),
-                    'evaluation' => new EvaluationResource($evaluation),
+                    'evaluation' => new EvaluationResource($evaluation->load("historique_evaluations")),
 
                     //'score_climatique' => $scoreClimatique,
 
@@ -1343,7 +1668,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             return [
                 'evaluateur' => [
-                    'id' => $evaluateur->id ?? $evaluateurId,
+                    'id' => $evaluateur->hashed_id ?? $evaluateurId,
                     'nom_complet' => $evaluateur->personne->nom . ' ' . $evaluateur->personne->prenom ?? 'Inconnu',
                     'email' => $evaluateur->email ?? null
                 ],
@@ -1775,6 +2100,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 throw new Exception("AMC deja effectuer", 403);
             }
 
+            // Récupérer la dernière évaluation climatique terminée
             $evaluationClimatique = Evaluation::where(
                 'projetable_id',
                 $ideeProjet->id
@@ -1782,6 +2108,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'projetable_type',
                 get_class($ideeProjet)
             )->where('type_evaluation', 'climatique')
+                ->orderByDesc('created_at')
                 ->first();
 
             if (!$evaluationClimatique) throw new Exception("L'auto-Evaluation climatique pas encore effectuer", 403);
@@ -1794,13 +2121,16 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 throw new Exception("Veuillez effectuez l'evaluation climatique d'abord", 403);
             }
 
+            // Récupérer la dernière évaluation AMC
             $evaluation = Evaluation::where(
                 'projetable_id',
                 $ideeProjet->id
             )->where(
                 'projetable_type',
                 get_class($ideeProjet)
-            )->where('type_evaluation', "amc")->first();
+            )->where('type_evaluation', "amc")
+                ->orderByDesc('created_at')
+                ->first();
 
             if ($evaluation->statut == 1) {
                 throw new Exception("Evaluation de l'amc deja effectuer", 403);
@@ -1812,6 +2142,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->where('type_evaluation', 'climatique')
                 ->firstOrFail(); */
 
+            // CODE EXISTANT COMMENTÉ
+            /*
             $evaluation = Evaluation::updateOrCreate([
                 'projetable_id' => $ideeProjet->id,
                 'projetable_type' => get_class($ideeProjet),
@@ -1822,6 +2154,44 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 "evaluation" => [...($evaluation->evaluation ?? [])],
                 "resultats_evaluation" => [...($evaluation->evaluation ??  [])]
             ]);
+            */
+
+            // NOUVEAU CODE - Vérifier si une évaluation en cours existe déjà
+            $is_auto_evaluation = false;
+
+            if ($evaluation) {
+                $evaluation->update([
+                    "type_evaluation" => "amc",
+                    "statut"  => $is_auto_evaluation ? 0 : 1,
+                    "date_fin_evaluation" => $is_auto_evaluation ? null : now()
+                ]);
+            } else {
+                // Chercher une évaluation AMC précédente terminée
+                $evaluationPrecedente = Evaluation::where('projetable_id', $ideeProjet->id)
+                    ->where('projetable_type', get_class($ideeProjet))
+                    ->where('statut', 1)
+                    ->where('type_evaluation', 'amc')
+                    ->whereNotNull('date_fin_evaluation')
+                    ->orderByDesc('created_at')
+                    ->first();
+
+                $evaluationData = [
+                    'projetable_id' => $ideeProjet->id,
+                    'projetable_type' => get_class($ideeProjet),
+                    "type_evaluation" => "amc",
+                    "evaluation" => [],
+                    "resultats_evaluation" => [],
+                    'statut' => $is_auto_evaluation ? 0 : 1,
+                    'date_debut_evaluation' => now(),
+                    "date_fin_evaluation" => $is_auto_evaluation ? null : now()
+                ];
+
+                if ($evaluationPrecedente) {
+                    $evaluationData['id_evaluation'] = $evaluationPrecedente->id;
+                }
+
+                $evaluation = Evaluation::create($evaluationData);
+            }
 
             // Vérifier et mettre à jour les réponses
             foreach ($reponses as $reponse) {
@@ -1975,7 +2345,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'success' => true,
                 'message' => 'Réponses d\'évaluation climatique soumises avec succès',
                 'data' => [
-                    'evaluation_id' => $evaluation->id,
+                    'evaluation_id' => $evaluation->hashed_id,
                     'reponses_soumises' => count($reponses),
                     'evaluateur_reponses' => EvaluationCritereResource::collection($evaluateurReponses),
                     'evaluateur_stats' => [
@@ -2018,12 +2388,15 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 throw new Exception("Veuillez faire valider l'idee de projet en interne par un responsable hierachique", 403);
             }
 
-            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
+            // Récupérer uniquement l'évaluation climatique terminée (statut = 1)
             $evaluationClimatique = $ideeProjet->evaluations()
                 ->where('type_evaluation', 'climatique')
+                ->where('statut', 1)
+                ->orderBy("created_at", "desc")
                 ->first();
 
             if (!$evaluationClimatique) {
@@ -2032,9 +2405,25 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 throw new Exception("L'auto evaluation climatique en interne est toujours en cours veuillez a l'effectuer en premier", 403);
             }
 
+
+            // CODE EXISTANT COMMENTÉ
+            /*
             $evaluation = $ideeProjet->evaluations()
                 ->where('type_evaluation', 'amc')->where("statut", 1)
                 ->first();
+            */
+
+            // NOUVEAU CODE - Utiliser firstOrNew avec orderBy pour charger la dernière évaluation ou créer une nouvelle
+            $evaluation = $ideeProjet->evaluations()
+                ->where('type_evaluation', 'amc')
+                //->whereIn("statut", [-1, 1])
+                ->orderByDesc('created_at')
+                ->first()/* OrNew([
+                    'projetable_id' => $ideeProjet->id,
+                    'projetable_type' => get_class($ideeProjet),
+                    'type_evaluation' => 'amc',
+                    //'statut' => -1,
+                ]) */;
 
             /* if (($ideeProjet->statut != StatutIdee::AMC || $ideeProjet->statut != StatutIdee::ANALYSE) && $evaluation->statut == 1) {
                 throw new Exception("AMC deja effectuer", 403);
@@ -2093,20 +2482,22 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
                     $moyenne_evaluateurs = $notes->average();
                     return [
-                        'critere' => $critere,
+                        'critere' => new CritereResource($critere),
                         'ponderation' => $critere->ponderation,
                         'ponderation_pct' => $critere->ponderation . '%',
                         'score_pondere' => $moyenne_evaluateurs * ($critere->ponderation / 100)
                     ];
                 });
+
             }
 
             $categorie = CategorieCritere::with("criteres")->where("slug", 'grille-analyse-multi-critere')->first();
 
-            if ($evaluation) {
+            if ($evaluation && $evaluation->statut === 1) {
                 $aggregatedScores = $evaluation->getAMCAggregatedScores();
             } else {
 
+                $evaluation = null;
                 $aggregatedScores = $categorie->criteres->map(function ($critere) {
                     return [
                         'critere' => $critere,
@@ -2118,6 +2509,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 });
             }
 
+
             $finalResults = $this->calculateFinalResults($aggregatedScores, 'amc');
 
             return response()->json([
@@ -2127,7 +2519,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     "evaluation" => $evaluation,
                     'evaluation_climatique' => [
                         "score_climatique" => ($score_pondere_par_critere->sum('score_pondere') / $categorie->criteres->count()),
-                        "scores_pondere_par_critere" => array_values($score_pondere_par_critere->toArray()),/*  EvaluationCritereResource::collection($critereClimatiqueEvaluer)->resource->toArray()) */
+                        "scores_pondere_par_critere" => array_values($score_pondere_par_critere->toArray()),
                         "evaluation_effectuer" => EvaluationCritereResource::collection($critereClimatiqueEvaluer)
                     ],
                     'evaluation_amc' => $evaluation ? new EvaluationResource($evaluation) : null,
@@ -2402,7 +2794,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id && auth()->user()->profilable_type !== Dgpd::class) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -2415,11 +2807,11 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             }
 
             $evaluation = Evaluation::where('projetable_id', $ideeProjet->id)
-                            ->where('projetable_type', get_class($ideeProjet))
-                            ->whereIn("statut", [-1, 0])
-                            ->where('type_evaluation', 'pertinence')
-                            ->orderByDesc('created_at')
-                            ->first();
+                ->where('projetable_type', get_class($ideeProjet))
+                ->whereIn("statut", [-1, 0])
+                ->where('type_evaluation', 'pertinence')
+                ->orderByDesc('created_at')
+                ->first();
 
             if ($ideeProjet->statut != StatutIdee::BROUILLON) {
                 throw new Exception("Evaluation de pertinence ne peut-etre effectuer qu'a une idee a l'etape de brouillon", 403);
@@ -2430,19 +2822,49 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $is_auto_evaluation = true;
 
-            $evaluation = Evaluation::updateOrCreate([
-                'projetable_id' => $ideeProjet->id,
-                'projetable_type' => get_class($ideeProjet),
-                "type_evaluation" => "pertinence"
-            ], [
-                "type_evaluation" => "pertinence",
-                "statut"  => $is_auto_evaluation ? 0 : 1,
-                "date_fin_evaluation" => $is_auto_evaluation ? null : now()
-            ]);
+            // Vérifier si une évaluation en cours existe déjà
+            if ($evaluation) {
+
+                // Mettre à jour l'évaluation existante
+                $evaluation->update([
+                    "type_evaluation" => "pertinence",
+                    "statut"  => 0,
+                    "date_fin_evaluation" => null
+                ]);
+            } else {
+                // Vérifier s'il existe une évaluation de pertinence déjà effectuée (terminée)
+                $evaluationPrecedente = Evaluation::where('projetable_id', $ideeProjet->id)
+                                ->where('projetable_type', get_class($ideeProjet))
+                                ->where('statut', 1)
+                                ->where('type_evaluation', 'pertinence')
+                                ->whereNotNull('date_fin_evaluation')
+                                ->orderByDesc('created_at')
+                                ->first();
+
+                // Créer une nouvelle évaluation
+                $evaluationData = [
+                    'projetable_id' => $ideeProjet->id,
+                    'projetable_type' => get_class($ideeProjet),
+                    "type_evaluation" => "pertinence",
+                    "evaluation" => [],
+                    "resultats_evaluation" => [],
+                    'type_evaluation' => 'pertinence',
+                    'statut' => 0,
+                    'date_debut_evaluation' => now(),
+                    "date_fin_evaluation" => null
+                ];
+
+                // Ajouter l'id de l'évaluation précédente si elle existe
+                if ($evaluationPrecedente) {
+                    $evaluationData['id_evaluation'] = $evaluationPrecedente->id;
+                }
+
+                $evaluation = Evaluation::create($evaluationData);
+            }
 
             $isAssigned = false;
             if ($is_auto_evaluation) {
-                if ((auth()->user()->profilable_type == Organisation::class || auth()->user()->profilable_type == Dpaf::class) && auth()->user()->profilable?->ministere && $ideeProjet->ministere && (auth()->user()->profilable->ministere?->id == $ideeProjet->ministere->id)) {
+                if ((auth()->user()->profilable_type == Organisation::class || auth()->user()->profilable_type == Dpaf::class) && auth()->user()->profilable?->ministere && $ideeProjet->ministere && (auth()->user()->profilable->ministere?->id == $ideeProjet->ministere?->id)) {
                     $isAssigned = $evaluation->evaluateursPertinence()->where("id", auth()->id())->first()?->hasPermissionTo('effectuer-evaluation-pertinence-idee-projet');
                 }
             }
@@ -2458,6 +2880,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             foreach ($reponses as $reponse) {
                 // Vérifier que le critère appartient à la bonne catégorie ou est obligatoire
                 $critere = Critere::with('categorie_critere')->find($reponse['critere_id']);
+
 
                 if (!$critere) {
                     return response()->json([
@@ -2496,8 +2919,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $evaluationCritere = EvaluationCritere::where([
                     'evaluation_id' => $evaluation->id,
                     'evaluateur_id' => $evaluateurId,
-                    'categorie_critere_id' => $reponse["categorie_critere_id"],
-                    'critere_id' => $reponse['critere_id'],
+                    'categorie_critere_id' => $critere->categorie_critere_id,
+                    'critere_id' => $critere->id,//$reponse['critere_id'],
                     'est_archiver' => false, // ← ici la condition
                     'is_auto_evaluation' => $is_auto_evaluation,
                 ])->first();
@@ -2516,8 +2939,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     $evaluationCritere = EvaluationCritere::create([
                         'evaluation_id' => $evaluation->id,
                         'evaluateur_id' => $evaluateurId,
-                        'categorie_critere_id' => $reponse["categorie_critere_id"],
-                        'critere_id' => $reponse['critere_id'],
+                        'categorie_critere_id' => $critere->categorie_critere_id,
+                        'critere_id' => $critere->id,
                         'notation_id' => $notation->id,
                         'note' => $notation->valeur,
                         'commentaire' => $reponse['commentaire'] ?? null,
@@ -2575,16 +2998,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'success' => true,
                 'message' => 'Réponses d\'évaluation de pertinence soumises avec succès',
                 'data' => [
-                    'evaluation_id' => $evaluation->id,
-                    'reponses_soumises' => count($reponses),
-                    'evaluateur_reponses' => EvaluationCritereResource::collection($evaluationPertinenceReponses),
-                    'evaluateur_stats' => [
-                        'total_criteres' => $evaluationPertinenceReponses->count(),
-                        'criteres_evalues' => $evaluationPertinenceReponses->filter->isCompleted()->count(),
-                        'criteres_en_attente' => $evaluationPertinenceReponses->filter->isPending()->count(),
-                        'taux_completion' => $evaluationPertinenceReponses->count() > 0 ?
-                            (($evaluationPertinenceReponses->filter->isCompleted()->count() / $evaluationPertinenceReponses->count()) * 100) : 0
-                    ]
+                    'evaluation_id' => $evaluation->hashed_id,
+                    'reponses_soumises' => count($reponses)
                 ]
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -2616,7 +3031,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere?->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -2624,6 +3039,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $evaluation = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'pertinence')
+                ->where('statut', 0)
                 ->firstOrFail();
 
             if ($evaluation->statut == 1) {
@@ -2684,15 +3100,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $ideeProjet->update([
                 'score_pertinence' => $finalResults['score_final_pondere'],
                 'est_coherent' => true,
-                //'statut' => StatutIdee::IDEE_DE_PROJET,  // Marquer comme terminée
-
-                //'phase' => $this->getPhaseFromStatut(StatutIdee::IDEE_DE_PROJET),
-                //'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::IDEE_DE_PROJET),
-
-                // Enregistrer le canevas pertinence dans l'idée projet
-                /**
-                 * Enregistrement du canevas utiliser pour l'evaluation de pertinence dans l'idée projet
-                 */
                 'canevas_appreciation_pertinence' => $grilleEvaluation ? (new CategorieCritereResource($grilleEvaluation))->toArray(request()) : null,
             ]);
 
@@ -2703,7 +3110,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $evaluation->update([
                 'resultats_evaluation' => $finalResults,
                 'valider_le' => now(),
-
                 'date_fin_evaluation'   => now(),
                 'statut' => 1  // Marquer comme terminée
             ]);
@@ -2757,7 +3163,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere?->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
@@ -2770,6 +3176,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'pertinence')
                 ->where("statut", 0)
+                ->orderByDesc('created_at')
                 ->firstOrFail();
 
             if ($evaluation->statut == 1) {
@@ -2839,6 +3246,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             // Maintenant réinitialiser pour refaire
             $ideeProjet->update([
                 'est_soumise' => false,
+                'est_coherent' => false,
                 'statut' => StatutIdee::BROUILLON,
                 'phase' => $this->getPhaseFromStatut(StatutIdee::BROUILLON),
                 'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::BROUILLON),
@@ -2847,14 +3255,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             // Enregistrer le workflow et la décision
             $this->enregistrerWorkflow($ideeProjet, StatutIdee::BROUILLON);
             $this->enregistrerDecision($ideeProjet, 'Réévaluation pertinence demandée', 'Score pertinence insatisfaisant (' . ($finalResults['score_final_pondere'] ?? 0) . ') - Retour en phase de rédaction');
-
-            // Réinitialiser l'évaluation
-            $evaluation->update([
-                'resultats_evaluation' => [],
-                'evaluation' => [],
-                'valider_le' => null,
-                'statut' => 0
-            ]);
 
             DB::commit();
 
@@ -3017,19 +3417,38 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere->id) {
+            if (auth()->user()->profilable?->ministere?->id !== $ideeProjet->ministere?->id) {
                 throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
             }
 
             // Récupérer la dernière évaluation de pertinence
-            $derniereEvaluation = Evaluation::where('projetable_id', $ideeProjet->id)
+            $evaluation = Evaluation::where('projetable_id', $ideeProjet->id)
                 ->where('projetable_type', get_class($ideeProjet))
                 ->where('type_evaluation', 'pertinence')
                 ->orderBy('created_at', 'desc')
-                ->first();
+                ->firstOrNew([
+                    'projetable_id' => $ideeProjet->id,
+                    'projetable_type' => get_class($ideeProjet),
+                    'type_evaluation' => 'pertinence'
+                ], [
+                    'type_evaluation' => 'pertinence',
+                    'statut' => 0,
+                    'date_debut_evaluation' => now(),
+                    'evaluation' => [],
+                    'resultats_evaluation' => []
+                ]);
+
+            if(!$evaluation){
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Aucune evaluation',
+                    'data' => null
+                ], 206);
+            }
+
 
             // Si la dernière évaluation est terminée, créer une nouvelle avec le lien parent
-            if ($derniereEvaluation && $derniereEvaluation->statut == 1) {
+            /*if ($derniereEvaluation && $derniereEvaluation->statut == 1) {
                 $evaluation = Evaluation::create([
                     'projetable_id' => $ideeProjet->id,
                     'projetable_type' => get_class($ideeProjet),
@@ -3040,7 +3459,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'evaluation' => [],
                     'resultats_evaluation' => []
                 ]);
-            } else {
+            }  else {
                 // Sinon, utiliser firstOrCreate (évaluation en cours ou créer nouvelle)
                 $evaluation = Evaluation::firstOrCreate([
                     'projetable_id' => $ideeProjet->id,
@@ -3053,7 +3472,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'evaluation' => [],
                     'resultats_evaluation' => []
                 ]);
-            }
+            } */
 
             if ($evaluation->statut != 1) {
                 // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation de pertinence
@@ -3123,7 +3542,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'data' => [
                     "statut_idee" => $ideeProjet->statut,
                     "idee_projet" => new IdeesProjetResource($ideeProjet),
-                    'evaluation' => new EvaluationResource($evaluation),
+                    'evaluation' => new EvaluationResource($evaluation->load("historique_evaluations")),
                     // Taux de progression global
                     'taux_progression_global' => [
                         'pourcentage' => $completionPercentage,

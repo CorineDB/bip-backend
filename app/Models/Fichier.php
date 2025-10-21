@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HashableId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +11,7 @@ use App\Traits\HasResourcePermissions;
 
 class Fichier extends Model
 {
-    use HasFactory, SoftDeletes, HasResourcePermissions;
+    use HasFactory, SoftDeletes, HashableId, HasResourcePermissions;
 
     /**
      * The table associated with the model.

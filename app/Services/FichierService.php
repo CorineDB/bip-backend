@@ -1055,13 +1055,8 @@ class FichierService extends BaseService implements FichierServiceInterface
      */
     private function peutSupprimerFichier(User $user, $fichier): bool
     {
-        // Admin peut tout supprimer
-        if ($user->hasRole('admin')) {
-            return true;
-        }
-
         // Propriétaire peut supprimer ses fichiers non attachés
-        if ($fichier->uploaded_by === $user->id && !$fichier->fichier_attachable_id) {
+        if ($fichier->uploaded_by === $user->id/*  && !$fichier->fichier_attachable_id */) {
             return true;
         }
 
@@ -1236,15 +1231,33 @@ class FichierService extends BaseService implements FichierServiceInterface
      */
     private function peutSupprimerFichierAttache(User $user, $fichier): bool
     {
-        // Admin peut supprimer
-        if ($user->hasRole('admin')) {
-            return true;
-        }
-
-        // Propriétaire peut supprimer ses fichiers libres, mais pas les attachés critiques
+        // Propriétaire peut supprimer ses fichiers si la ressource attachée est en brouillon
         if ($fichier->uploaded_by === $user->id) {
-            // TODO: Vérifier si la ressource attachée permet la suppression
-            return false; // Prudent : ne pas permettre par défaut
+            // Vérifier le statut de la ressource attachée
+            if ($fichier->fichier_attachable_type && $fichier->fichier_attachable_id) {
+                $attachableClass = $fichier->fichier_attachable_type;
+
+                // Vérifier que la classe existe
+                if (class_exists($attachableClass)) {
+                    $attachable = $attachableClass::find($fichier->fichier_attachable_id);
+
+                    if ($attachable && isset($attachable->statut)) {
+                        $statut = $attachable->statut;
+
+                        // Convertir le statut en valeur si c'est un enum
+                        if (is_object($statut) && method_exists($statut, 'value')) {
+                            $statut = $statut->value;
+                        }
+
+                        // Autoriser la suppression si statut est brouillon, -1 ou 0
+                        if (in_array($statut, ['brouillon', 'retour_travail_supplementaire', -1, 0], true)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false; // Ressource attachée n'est pas en brouillon
         }
 
         return false;

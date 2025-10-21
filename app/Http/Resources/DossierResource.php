@@ -16,12 +16,12 @@ class DossierResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->hashed_id,
             'nom' => $this->nom,
             'description' => $this->description,
             'path' => $this->path,
             'profondeur' => $this->profondeur,
-            'parent_id' => $this->parent_id,
+            'parent_id' => $this->parent?->hashed_id,
             'couleur' => $this->couleur,
             'icone' => $this->icone,
             'is_public' => $this->is_public,
@@ -40,7 +40,7 @@ class DossierResource extends BaseApiResource
             'created_by' => $this->whenLoaded('createdBy', function() {
                 if (!$this->createdBy) return null;
                 return [
-                    'id' => $this->createdBy->id,
+                    'id' => $this->createdBy->hashed_id,
                     'nom' => $this->createdBy->personne->nom ?? null,
                     'email' => $this->createdBy->email
                 ];

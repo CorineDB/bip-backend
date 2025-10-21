@@ -319,16 +319,18 @@ class CommentaireService extends BaseService implements CommentaireServiceInterf
      * @param int $resourceId
      * @return JsonResponse
      */
-    public function getCommentairesParRessource(string $resourceType, int $resourceId): JsonResponse
+    public function getCommentairesParRessource(string $resourceType, $resourceId): JsonResponse
     {
         try {
             // Mapper le type court vers la classe complète si nécessaire
             $map = \App\Models\Commentaire::getCommentaireableMap();
             $fullResourceType = $map[strtolower($resourceType)] ?? $resourceType;
 
+            $resource = $fullResourceType::findByHashedIdOrFail($resourceId);
+
             $commentaires = $this->commentaireRepository->getInstance()
                 ->where('commentaireable_type', $fullResourceType)
-                ->where('commentaireable_id', $resourceId)
+                ->where('commentaireable_id', $resource->id)
                 // Retirer whereNull('commentaire_id') pour inclure TOUS les commentaires (racine ET réponses)
                 ->with([
                     'commentateur.personne',

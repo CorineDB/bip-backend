@@ -17,7 +17,7 @@ class UserResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
+            "id" => $this->hashed_id,
             "nom" => $this->personne->nom,
             "prenom" => $this->personne->prenom,
             "email" => $this->email,

@@ -21,6 +21,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Laravel\Passport\Client;
@@ -2123,8 +2124,256 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
         }
     }
 
-    public function handleProviderCallback(string $code, string $state): JsonResponse{
+    /**
+     * Gère l'authentification et l'activation via Active Directory
+     *
+     * @param array $adUserInfo Informations de l'utilisateur depuis l'AD
+     * @param array|null $stateData Données du state (optionnel)
+     * @return array
+     */
+    public function handleADAuthentication(array $adUserInfo, ?array $stateData = null): array
+    {
+        DB::beginTransaction();
 
-        return response()->json(['message' => 'Callback AD not implemented'], 501);
+        try {
+            $email = $adUserInfo['email'] ?? null;
+
+            if (!$email) {
+                return [
+                    'success' => false,
+                    'message' => 'Email manquant dans les données Active Directory'
+                ];
+            }
+
+            // Vérifier si l'utilisateur existe dans notre système
+            $utilisateur = $this->repository->findByAttribute('email', $email);
+
+            if (!$utilisateur) {
+                DB::rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'Utilisateur non trouvé dans le système BIP. Veuillez contacter votre administrateur.'
+                ];
+            }
+
+            // Mettre à jour les informations de l'utilisateur avec les données de l'AD
+            if (isset($adUserInfo['given_name']) && $utilisateur->personne) {
+                $utilisateur->personne->prenom = $adUserInfo['given_name'];
+            }
+            if (isset($adUserInfo['family_name']) && $utilisateur->personne) {
+                $utilisateur->personne->nom = $adUserInfo['family_name'];
+            }
+            if (isset($adUserInfo['name']) && $utilisateur->personne && !isset($adUserInfo['given_name'])) {
+                // Si on a le nom complet mais pas given_name/family_name séparés
+                $nameParts = explode(' ', $adUserInfo['name'], 2);
+                $utilisateur->personne->prenom = $nameParts[0] ?? '';
+                $utilisateur->personne->nom = $nameParts[1] ?? '';
+            }
+            if ($utilisateur->personne) {
+                $utilisateur->personne->save();
+            }
+
+            // Vérifier si le compte est déjà activé
+            $compteDejaActive = $utilisateur->email_verified_at !== null;
+
+            // Activer le compte si pas encore activé
+            if (!$compteDejaActive) {
+                $utilisateur->email_verified_at = now();
+                $utilisateur->statut = 1;
+                $utilisateur->first_connexion = now();
+
+                // Nettoyer les données de vérification
+                if ($stateData && isset($stateData['activation_token'])) {
+                    $utilisateur->account_verification_request_sent_at = null;
+                    $utilisateur->link_is_valide = false;
+                    $utilisateur->token = null;
+                }
+            }
+
+            $utilisateur->last_connection = now();
+            $utilisateur->save();
+
+            // Générer le token d'authentification BIP (Passport)
+            $bipToken = $utilisateur->createToken('Bip-Token')->toArray();
+
+            $utilisateur->lastRequest = date('Y-m-d H:i:s');
+            $utilisateur->save();
+
+            DB::commit();
+
+            // Log de l'activation
+            $acteur = $utilisateur->personne ? $utilisateur->personne->nom . " " . $utilisateur->personne->prenom : "Inconnu";
+            $message = $compteDejaActive
+                ? Str::ucfirst($acteur) . " s'est connecté via AD."
+                : Str::ucfirst($acteur) . " a activé son compte et s'est connecté via AD.";
+
+            Log::info($message, [
+                'user_id' => $utilisateur->id,
+                'email' => $utilisateur->email,
+                'compte_active' => !$compteDejaActive
+            ]);
+
+            return [
+                'success' => true,
+                'data' => $bipToken,
+                'user' => $utilisateur,
+                'compte_active' => !$compteDejaActive,
+                'message' => $compteDejaActive
+                    ? 'Authentification réussie via Active Directory'
+                    : 'Compte activé et authentification réussie via Active Directory'
+            ];
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            Log::error('Erreur lors de l\'authentification AD: ' . $th->getMessage(), [
+                'email' => $adUserInfo['email'] ?? 'unknown',
+                'trace' => $th->getTraceAsString()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => $th->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Gère le callback de l'Active Directory après authentification
+     *
+     * @param string $code Code d'autorisation de l'AD
+     * @param string $state État contenant les informations de l'utilisateur
+     * @return JsonResponse
+     */
+    public function handleProviderCallback(string $code, string $state): JsonResponse
+    {
+        DB::beginTransaction();
+
+        try {
+            // Décrypter le state pour obtenir les informations de l'utilisateur
+            $stateData = json_decode(base64_decode($state), true);
+
+            if (!$stateData || !isset($stateData['email'])) {
+                throw new Exception("State invalide ou manquant", 400);
+            }
+
+            // Échanger le code contre un token AD
+            $tokenResponse = Http::asForm()->post(
+                config('keycloak.base_url') . '/realms/' . config('keycloak.realm') . '/protocol/openid-connect/token',
+                [
+                    'grant_type' => 'authorization_code',
+                    'client_id' => config('keycloak.client_id'),
+                    'client_secret' => config('keycloak.client_secret'),
+                    'code' => $code,
+                    'redirect_uri' => config('keycloak.redirect_uri')
+                ]
+            );
+
+            if (!$tokenResponse->successful()) {
+                throw new Exception("Échec de l'échange du code d'autorisation", 400);
+            }
+
+            $tokenData = $tokenResponse->json();
+            $accessToken = $tokenData['access_token'];
+
+            // Obtenir les informations de l'utilisateur depuis l'AD
+            $userInfoResponse = Http::withToken($accessToken)
+                ->get(config('keycloak.base_url') . '/realms/' . config('keycloak.realm') . '/protocol/openid-connect/userinfo');
+
+            if (!$userInfoResponse->successful()) {
+                throw new Exception("Impossible de récupérer les informations utilisateur", 400);
+            }
+
+            $adUserInfo = $userInfoResponse->json();
+            $email = $adUserInfo['email'] ?? $stateData['email'];
+
+            // Vérifier si l'utilisateur existe dans notre système
+            $utilisateur = $this->repository->findByAttribute('email', $email);
+
+            if (!$utilisateur) {
+                DB::rollBack();
+                return response()->json([
+                    'statut' => 'error',
+                    'message' => 'Utilisateur non trouvé dans le système BIP. Veuillez contacter votre administrateur.',
+                    'errors' => []
+                ], 404);
+            }
+
+            // Mettre à jour les informations de l'utilisateur avec les données de l'AD
+            if (isset($adUserInfo['given_name']) && $utilisateur->personne) {
+                $utilisateur->personne->prenom = $adUserInfo['given_name'];
+            }
+            if (isset($adUserInfo['family_name']) && $utilisateur->personne) {
+                $utilisateur->personne->nom = $adUserInfo['family_name'];
+            }
+            if ($utilisateur->personne) {
+                $utilisateur->personne->save();
+            }
+
+            // Vérifier si le compte est déjà activé
+            $compteDejaActive = $utilisateur->email_verified_at !== null;
+
+            // Activer le compte si pas encore activé
+            if (!$compteDejaActive) {
+                $utilisateur->email_verified_at = now();
+                $utilisateur->statut = 1;
+                $utilisateur->first_connexion = now();
+
+                // Nettoyer les données de vérification
+                if (isset($stateData['activation_token'])) {
+                    $utilisateur->account_verification_request_sent_at = null;
+                    $utilisateur->link_is_valide = false;
+                    $utilisateur->token = null;
+                }
+            }
+
+            $utilisateur->last_connection = now();
+            $utilisateur->save();
+
+            // Générer le token d'authentification BIP (Passport)
+            $bipToken = $utilisateur->createToken('Bip-Token')->toArray();
+
+            $utilisateur->lastRequest = date('Y-m-d H:i:s');
+            $utilisateur->save();
+
+            DB::commit();
+
+            // Log de l'activation
+            $acteur = $utilisateur->personne ? $utilisateur->personne->nom . " " . $utilisateur->personne->prenom : "Inconnu";
+            $message = $compteDejaActive
+                ? Str::ucfirst($acteur) . " s'est connecté via AD."
+                : Str::ucfirst($acteur) . " a activé son compte et s'est connecté via AD.";
+
+            \Log::info($message, [
+                'user_id' => $utilisateur->id,
+                'email' => $utilisateur->email,
+                'compte_active' => !$compteDejaActive
+            ]);
+
+            return response()->json([
+                'statut' => 'success',
+                'message' => $compteDejaActive
+                    ? 'Authentification réussie via Active Directory'
+                    : 'Compte activé et authentification réussie via Active Directory',
+                'data' => new LoginResource($bipToken),
+                'compte_nouvellement_active' => !$compteDejaActive,
+                'statutCode' => Response::HTTP_OK
+            ], Response::HTTP_OK);
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            \Log::error('Erreur lors du callback AD: ' . $th->getMessage(), [
+                'code' => $code,
+                'state' => $state,
+                'trace' => $th->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'statut' => 'error',
+                'message' => $th->getMessage(),
+                'errors' => []
+            ], $th->getCode() ?: Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }

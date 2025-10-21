@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HashableId;
 use App\Enums\EnumTypeOrganisation;
 use App\Services\Traits\HasPermissionTrait;
 use App\Traits\HasScopedPermissions;
@@ -21,7 +22,7 @@ use Illuminate\Support\Str;
 
 class User extends Authenticatable implements OAuthenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasPermissionTrait, HasScopedPermissions, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, HasPermissionTrait, HasScopedPermissions, SoftDeletes, HashableId;
 
     /**
      * The table associated with the model.

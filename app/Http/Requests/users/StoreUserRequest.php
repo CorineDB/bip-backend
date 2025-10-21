@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\users;
 
+use App\Models\Role;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +11,7 @@ class StoreUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
@@ -22,13 +24,17 @@ class StoreUserRequest extends FormRequest
         return [
             'email' => ["required", "email", "max:255", Rule::unique('users', 'email')->whereNull('deleted_at')],
 
-            'roleId' => ['required', Rule::exists('roles', 'id')->where("roleable_id", $profilable ? $profilable->id : null)->where("roleable_type", $profilable ? get_class($profilable) : null)->whereNull('deleted_at')],
+            'roleId' => ['nullable', new HashedExists(Role::class, 'id', function($query) use ($profilable) {
+                $query->where("roleable_id", $profilable ? $profilable->id : null)
+                      ->where("roleable_type", $profilable ? get_class($profilable) : null)
+                      ->whereNull('deleted_at');
+            })],
 
             // Attributs de personne
             'personne.nom' => 'required|string|max:255',
             'personne.prenom' => 'required|string|max:255',
             'personne.poste' => 'nullable|string|max:255',
-            //'personne.organismeId'=> ["sometimes", Rule::requiredIf($isRequired), Rule::exists('organisations', 'id')->whereNull('deleted_at')]
+            //'personne.organismeId'=> ["sometimes", Rule::requiredIf($isRequired), new HashedExists(Organisation::class)]
         ];
     }
 

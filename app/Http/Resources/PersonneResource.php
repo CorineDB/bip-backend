@@ -15,6 +15,11 @@ class PersonneResource extends BaseApiResource
      */
     public function toArray(Request $request): array
     {
+        return [
+            'id' => $this->hashed_id,
+            'nom' => $this->nom,
+            'prenom' => $this->prenom,
+        ];
         return parent::toArray($request);
     }
 

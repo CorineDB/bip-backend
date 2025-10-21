@@ -12,7 +12,7 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
     private $fiche = null;
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function withValidator($validator)

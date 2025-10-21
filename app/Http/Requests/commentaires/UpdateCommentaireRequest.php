@@ -3,6 +3,9 @@
 namespace App\Http\Requests\commentaires;
 
 use App\Models\Commentaire;
+use App\Models\Fichier;
+use App\Rules\HashedExists;
+use App\Rules\HashedExistsMultiple;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -14,44 +17,15 @@ class UpdateCommentaireRequest extends FormRequest
         return auth()->check() /*&& $this->commentaire->commentateurId === auth()->id()*/;
     }
 
-    public function rules(): array
+    protected function prepareForValidation(): void
     {
-        $rules = [
-            'commentaire' => ['nullable', 'string', 'min:10', 'max:5000'],
+        $commentaireId = $this->route('commentaire');
 
-            // Règles pour les fichiers
-            'fichiers' => ['nullable', 'array', 'max:5'],
-            'fichiers.*' => ['file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx,txt'],
-
-            // IDs des fichiers à supprimer
-            'fichiers_a_supprimer' => ['nullable', 'array'],
-            'fichiers_a_supprimer.*' => [Rule::exists('fichiers', 'id')->whereNull('deleted_at')],
-        ];
-
-        // Si on autorise le déplacement du commentaire vers une autre ressource
-        $type = $this->input('commentaireable_type');
-
-        if ($type) {
-            $map = array_map(fn($class) => (new $class)->getTable(), Commentaire::getCommentaireableMap());
-            $typeLower = strtolower($type);
-
-            if (isset($map[$typeLower])) {
-                $rules['commentaireable_type'] = ['required', 'string'];
-                $rules['commentaireable_id'] = [
-                    'required',
-                    Rule::exists($map[$typeLower], 'id')
-                ];
-            } else {
-                $rules['commentaireable_type'] = ['required', 'string', 'max:255'];
-                $rules['commentaireable_id'] = ['required', 'min:1'];
-            }
+        if ($commentaireId && is_string($commentaireId) && !is_numeric($commentaireId)) {
+            $commentaireId = Commentaire::unhashId($commentaireId);
+            $this->merge(['_commentaire_id' => $commentaireId]);
         }
 
-        return $rules;
-    }
-
-    protected function prepareForValidation()
-    {
         if ($this->commentaireable_type) {
             $type = strtolower($this->commentaireable_type);
 
@@ -65,12 +39,48 @@ class UpdateCommentaireRequest extends FormRequest
         }
     }
 
+    public function rules(): array
+    {
+        $rules = [
+            'commentaire' => ['nullable', 'string', 'min:10', 'max:5000'],
+
+            // Règles pour les fichiers
+            'fichiers' => ['nullable', 'array', 'max:5'],
+            'fichiers.*' => ['file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx,txt'],
+
+            // IDs des fichiers à supprimer
+            'fichiers_a_supprimer' => ['nullable', 'array', new HashedExistsMultiple(Fichier::class)],
+        ];
+
+        // Si on autorise le déplacement du commentaire vers une autre ressource
+        $type = $this->input('commentaireable_type');
+
+        if ($type) {
+            $map = Commentaire::getCommentaireableMap();
+            $typeLower = strtolower($type);
+
+            if (isset($map[$typeLower])) {
+                $modelClass = $map[$typeLower];
+                $rules['commentaireable_type'] = ['required', 'string'];
+                $rules['commentaireable_id'] = [
+                    'required',
+                    new HashedExists($modelClass)
+                ];
+            } else {
+                $rules['commentaireable_type'] = ['required', 'string', 'max:255'];
+                $rules['commentaireable_id'] = ['required', 'min:1'];
+            }
+        }
+
+        return $rules;
+    }
+
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
             if ($this->has('commentaireable_name')) {
                 $validator->setCustomMessages([
-                    'commentaireable_id.exists' => $this->commentaireable_name . ' spécifié(e) n’existe pas ou a été supprimé(e).',
+                    'commentaireable_id.exists' => $this->commentaireable_name . ' spécifié(e) n\'existe pas ou a été supprimé(e).',
                 ]);
             }
         });
@@ -86,9 +96,9 @@ class UpdateCommentaireRequest extends FormRequest
             'commentaireable_type.required' => 'Le type de la ressource commentée est obligatoire.',
             'commentaireable_type.string' => 'Le type de la ressource commentée doit être du texte.',
             'commentaireable_type.max' => 'Le type de la ressource commentée ne doit pas dépasser 255 caractères.',
-            'commentaireable_id.required' => 'L'identifiant de la ressource commentée est obligatoire.',
-            'commentaireable_id.integer' => 'L'identifiant de la ressource commentée doit être un nombre entier.',
-            'commentaireable_id.min' => 'L'identifiant de la ressource commentée doit être supérieur à 0.',
+            'commentaireable_id.required' => 'L\'identifiant de la ressource commentée est obligatoire.',
+            'commentaireable_id.integer' => 'L\'identifiant de la ressource commentée doit être un nombre entier.',
+            'commentaireable_id.min' => 'L\'identifiant de la ressource commentée doit être supérieur à 0.',
 
             // Fichiers
             'fichiers.array' => 'Les fichiers doivent être fournis sous forme de tableau.',

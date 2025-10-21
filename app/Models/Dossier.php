@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HashableId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\HasResourcePermissions;
 
 class Dossier extends Model
 {
-    use SoftDeletes, HasResourcePermissions;
+    use SoftDeletes, HashableId, HasResourcePermissions;
 
     protected $table = 'dossiers';
 
@@ -69,7 +70,7 @@ class Dossier extends Model
 
     public function permissions()
     {
-        return $this->hasMany(DossierPermission::class);
+        //return $this->hasMany(DossierPermission::class);
     }
 
     // Méthodes utiles
@@ -128,7 +129,7 @@ class Dossier extends Model
     {
         $breadcrumb = collect();
         $current = $this;
-        
+
         while ($current) {
             $breadcrumb->prepend([
                 'id' => $current->id,
@@ -137,7 +138,7 @@ class Dossier extends Model
             ]);
             $current = $current->parent;
         }
-        
+
         return $breadcrumb;
     }
 

@@ -8,6 +8,7 @@ use App\Http\Requests\faisabilite\EvaluerTdrsFaisabiliteRequest;
 use App\Http\Requests\faisabilite\SoumettreRapportFaisabiliteRequest;
 use App\Http\Requests\faisabilite\ValiderEtudeFaisabiliteRequest;
 use App\Http\Requests\faisabilite\ValiderTdrsRequest;
+use App\Http\Requests\tdrs\ValidationEtudePrefaisabiliteRequest;
 use App\Http\Requests\tdrs_faisabilite\StoreTdrFaisabiliteRequest;
 use App\Http\Requests\tdrs_faisabilite\UpdateTdrFaisabiliteRequest;
 use App\Services\Contracts\TdrFaisabiliteServiceInterface;
@@ -126,7 +127,7 @@ class TdrFaisabiliteController extends Controller
     /**
      * Valider l'étude de faisabilité (SFD-017)
      */
-    public function validerEtudeFaisabilite(\Illuminate\Http\Request $request, $projetId): JsonResponse
+    public function validerEtudeFaisabilite(ValiderEtudeFaisabiliteRequest $request, $projetId): JsonResponse
     {
         return $this->service->validerEtudeFaisabilite($projetId, $request->all());
     }

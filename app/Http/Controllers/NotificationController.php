@@ -151,4 +151,123 @@ class NotificationController extends Controller
     {
         return $this->notificationService->deleteNotification($id);
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/notifications/unread",
+     *     summary="Récupérer uniquement les notifications non lues",
+     *     tags={"Notifications"},
+     *     security={{"passport": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des notifications non lues",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items())
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Non authentifié")
+     * )
+     */
+    public function unread(): JsonResponse
+    {
+        return $this->notificationService->getUnreadNotifications(Auth::id());
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/notifications/read",
+     *     summary="Récupérer uniquement les notifications lues",
+     *     tags={"Notifications"},
+     *     security={{"passport": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des notifications lues",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items())
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Non authentifié")
+     * )
+     */
+    public function read(): JsonResponse
+    {
+        return $this->notificationService->getReadNotifications(Auth::id());
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/notifications/type/{type}",
+     *     summary="Récupérer les notifications par type",
+     *     tags={"Notifications"},
+     *     security={{"passport": {}}},
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="path",
+     *         required=true,
+     *         description="Type de notification (classe complète)",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des notifications du type spécifié",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items())
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Non authentifié")
+     * )
+     */
+    public function byType(string $type): JsonResponse
+    {
+        return $this->notificationService->getNotificationsByType(Auth::id(), $type);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/notifications/delete-all-read",
+     *     summary="Supprimer toutes les notifications lues",
+     *     tags={"Notifications"},
+     *     security={{"passport": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Notifications lues supprimées",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="All read notifications deleted successfully."),
+     *             @OA\Property(property="deleted_count", type="integer", example=10)
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Non authentifié")
+     * )
+     */
+    public function deleteAllRead(): JsonResponse
+    {
+        return $this->notificationService->deleteAllReadNotifications(Auth::id());
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/notifications/delete-all",
+     *     summary="Supprimer toutes les notifications",
+     *     tags={"Notifications"},
+     *     security={{"passport": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Toutes les notifications supprimées",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="All notifications deleted successfully."),
+     *             @OA\Property(property="deleted_count", type="integer", example=25)
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Non authentifié")
+     * )
+     */
+    public function deleteAll(): JsonResponse
+    {
+        return $this->notificationService->deleteAllNotifications(Auth::id());
+    }
 }

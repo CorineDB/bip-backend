@@ -13,7 +13,7 @@ class CreateOrUpdateCanevasRedactionTdrFaisabiliteRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function prepareForValidation()

@@ -3,11 +3,6 @@
 namespace App\Http\Resources\idees_projet;
 
 use App\Http\Resources\BaseApiResource;
-use App\Http\Resources\CibleResource;
-use App\Http\Resources\EvaluationResource;
-use App\Http\Resources\FinancementResource;
-use App\Http\Resources\LieuInterventionResource;
-use App\Http\Resources\OddResource;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -23,7 +18,7 @@ class IdeesProjetResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->hashed_id,
             // Identifiants et métadonnées
             'identifiant_bip' => $this->identifiant_bip,
             'identifiant_sigfp' => $this->identifiant_sigfp,
@@ -32,7 +27,7 @@ class IdeesProjetResource extends BaseApiResource
             'porteur_projet' => $this->porteur_projet,
             'est_un_projet' => $this->projet ? true : false,
             'projetId' => $this->when($this->projet, function(){
-                return $this->projet->id;
+                return $this->projet->hashed_id;
             }),
 
             // Statuts et phases

@@ -16,12 +16,12 @@ class ComposantProgrammeResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
+            "id" => $this->hashed_id,
             "indice"=> $this->indice,
             "intitule"=> $this->intitule,
             "programme_ou_composant"=> $this->when($this->typeProgramme, function() {
                 return [
-                    "id" => $this->typeProgramme->id,
+                    "id" => $this->typeProgramme->hashed_id,
                     "type_programme"=> $this->typeProgramme->type_programme
                 ];
             })

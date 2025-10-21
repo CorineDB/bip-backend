@@ -19,7 +19,7 @@ class FichierResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this?->hashed_id,
             'nom_original' => $this->nom_original,
             'nom_stockage' => $this->nom_stockage,
             'extension' => $this->extension,
@@ -51,7 +51,7 @@ class FichierResource extends BaseApiResource
 
             // Relations
             'uploaded_by' => [
-                'id' => $this->uploaded_by,
+                'id' => $this->uploadedBy?->hashed_id,//uploaded_by,
                 'nom' => $this->whenLoaded('uploadedBy', fn() => $this->uploadedBy->personne->nom),
                 'email' => $this->whenLoaded('uploadedBy', fn() => $this->uploadedBy->email),
             ],
@@ -61,7 +61,7 @@ class FichierResource extends BaseApiResource
                 $this->fichier_attachable_id && $this->fichier_attachable_type,
                 [
                     'type' => $this->fichier_attachable_type,
-                    'id' => $this->fichier_attachable_id,
+                    'id' => $this->fichierAttachable?->hashed_id,//fichier_attachable_id,
                     'nom' => $this->whenLoaded('fichierAttachable', fn() => $this->fichierAttachable->nom ?? $this->fichierAttachable->titre ?? 'Sans nom')
                 ]
             ),
@@ -96,7 +96,7 @@ class FichierResource extends BaseApiResource
                         ->map(function($permission) {
                             return [
                                 'user' => [
-                                    'id' => $permission->user->id,
+                                    'id' => $permission->user?->hashed_id,
                                     'nom' => $permission->user->personne->nom ?? '',
                                     'prenom' => $permission->user->personne->prenom ?? '',
                                     'email' => $permission->user->email,

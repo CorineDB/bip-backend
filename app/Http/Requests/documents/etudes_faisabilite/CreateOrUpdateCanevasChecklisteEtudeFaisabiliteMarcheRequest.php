@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests\documents\etudes_faisabilite;
 
+use App\Models\Champ;
+use App\Models\ChampSection;
 use App\Models\Document;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -13,7 +16,7 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteMarcheRequest extends FormR
 
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function prepareForValidation()
@@ -155,7 +158,7 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteMarcheRequest extends FormR
             'guide_suivi.*.option'         => 'required|string|max:255',
             'guide_suivi.*.description'    => 'nullable|string|max:1000',
             'forms' => 'required|array|min:1',
-            'forms.*' => 'required|array',
+            'forms.*' => 'required|array'
         ];
     }
 
@@ -208,6 +211,21 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteMarcheRequest extends FormR
                     'Le type d\'élément doit être "field" ou "section".'
                 );
                 continue;
+            }
+
+            // Validation de l'ID hashé si présent (pour les mises à jour)
+            if (isset($element['id'])) {
+                $idValidator = null;
+
+                if ($element['element_type'] === 'field') {
+                    $idValidator = new HashedExists(Champ::class);
+                } elseif ($element['element_type'] === 'section') {
+                    $idValidator = new HashedExists(ChampSection::class);
+                }
+
+                if ($idValidator && !$idValidator->passes("{$currentPath}.id", $element['id'])) {
+                    $validator->errors()->add("{$currentPath}.id", $idValidator->message());
+                }
             }
 
             // Validation de l'ordre d'affichage
@@ -273,6 +291,21 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteMarcheRequest extends FormR
                 'Le type de champ est obligatoire.');
         }
 
+        // Validation des IDs hashés si présents
+        if (isset($element['sectionId'])) {
+            $sectionIdValidator = new HashedExists(ChampSection::class);
+            if (!$sectionIdValidator->passes("{$path}.sectionId", $element['sectionId'])) {
+                $validator->errors()->add("{$path}.sectionId", $sectionIdValidator->message());
+            }
+        }
+
+        if (isset($element['documentId'])) {
+            $documentIdValidator = new HashedExists(Document::class);
+            if (!$documentIdValidator->passes("{$path}.documentId", $element['documentId'])) {
+                $validator->errors()->add("{$path}.documentId", $documentIdValidator->message());
+            }
+        }
+
         // Meta options obligatoires
         if (!isset($element['meta_options']) || !is_array($element['meta_options'])) {
             $validator->errors()->add("{$path}.meta_options",
@@ -291,6 +324,21 @@ class CreateOrUpdateCanevasChecklisteEtudeFaisabiliteMarcheRequest extends FormR
         if (!isset($element['intitule']) || !is_string($element['intitule']) || strlen($element['intitule']) > 255) {
             $validator->errors()->add("{$path}.intitule",
                 'L\'intitulé de la section est obligatoire et ne doit pas dépasser 255 caractères.');
+        }
+
+        // Validation des IDs hashés si présents
+        if (isset($element['parentSectionId'])) {
+            $parentSectionIdValidator = new HashedExists(ChampSection::class);
+            if (!$parentSectionIdValidator->passes("{$path}.parentSectionId", $element['parentSectionId'])) {
+                $validator->errors()->add("{$path}.parentSectionId", $parentSectionIdValidator->message());
+            }
+        }
+
+        if (isset($element['documentId'])) {
+            $documentIdValidator = new HashedExists(Document::class);
+            if (!$documentIdValidator->passes("{$path}.documentId", $element['documentId'])) {
+                $validator->errors()->add("{$path}.documentId", $documentIdValidator->message());
+            }
         }
     }
 

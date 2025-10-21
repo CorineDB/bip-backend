@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\types_intervention;
 
+use App\Models\TypeIntervention;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,12 +11,12 @@ class UpdateTypeInterventionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
     {
-        $typeInterventionId = $this->route('type_intervention') ? (is_string($this->route('type_intervention')) ? $this->route('type_intervention') : ($this->route('type_intervention')->id)) :  $this->route('id');
+        $typeInterventionId = $this->route('type_intervention') ? ((is_string($this->route('type_intervention')) || (is_numeric($this->route('type_intervention')))) ? $this->route('type_intervention') : ($this->route('type_intervention')->id)) :  $this->route('id');
 
         return [
             'type_intervention' => [
@@ -24,7 +26,7 @@ class UpdateTypeInterventionRequest extends FormRequest
                 'max:65535',
                 Rule::unique('types_intervention', 'type_intervention')->ignore($typeInterventionId)->whereNull('deleted_at')
             ],
-            'secteurId' => ['sometimes', Rule::exists('secteurs', 'id')->whereNull('deleted_at')]
+            'secteurId' => ['sometimes', new HashedExists(TypeIntervention::class)]
         ];
     }
 

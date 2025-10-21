@@ -58,24 +58,76 @@ class SendEmailJob implements ShouldQueue
             if ($this->type == "confirmation-compte") {
                 $details['view'] = "emails.auth.confirmation_compte";
                 $details['subject'] = "Activation de votre compte BIP - Bienvenue";
+
+                // Générer le lien de connexion AD en utilisant la même logique que /ad-auth/redirect
+                $state = \Illuminate\Support\Str::uuid()->toString();
+                $callbackUrl = config('services.gov.redirect');
+
+                // Stocker des informations supplémentaires dans le state pour l'activation
+                \Illuminate\Support\Facades\Cache::put("oauth_state:{$state}", [
+                    'frontend_origin' => config('mail.client_app.url') ?? config('app.url'),
+                    'email' => $this->user->email,
+                    'activation_mode' => true,
+                    'user_id' => $this->user->id
+                ], 300); // 5 minutes
+
+                $params = http_build_query([
+                    'client_id' => config('services.gov.client_id'),
+                    'redirect_uri' => $callbackUrl,
+                    'response_type' => 'code',
+                    'scope' => 'openid',
+                    'state' => $state,
+                    'authError' => 'true',
+                ]);
+
+                $loginLink = config('services.gov.url') . '/official/login?' . $params;
+
                 $details['content'] = [
                     "greeting" => "Bienvenu Mr/Mme " . $this->user->personne->nom,
-                    "introduction" => "Voici vos identifiant de connexion",
+                    "introduction" => "Votre compte BIP a été créé avec succès. Veuillez cliquer sur le lien ci-dessous pour vous connecter avec Active Directory et activer votre compte",
                     "identifiant" => $this->user->email,
                     "password" => $this->password,
-                    "lien" => $lien,
+                    "lien" => $loginLink,
+                    "lien_label" => "Se connecter à BIP"
                 ];
+                Log::notice("Lien de connexion AD généré: " . $loginLink);
                 $mailer = new ConfirmationDeCompteEmail($details);
             } elseif ($this->type == "confirmation-de-compte") {
 
                 $details['view'] = "emails.auth.confirmation_de_compte";
                 $details['subject'] = "Confirmez votre inscription sur BIP - Action requise";
+
+                // Générer le lien de connexion AD pour activation
+                $state = \Illuminate\Support\Str::uuid()->toString();
+                $callbackUrl = config('services.gov.redirect');
+
+                // Stocker des informations pour l'activation
+                \Illuminate\Support\Facades\Cache::put("oauth_state:{$state}", [
+                    'frontend_origin' => config('mail.client_app.url') ?? config('app.url'),
+                    'email' => $this->user->email,
+                    'activation_token' => $this->user->token,
+                    'activation_mode' => true,
+                    'user_id' => $this->user->hashe_id
+                ], 300); // 5 minutes
+
+                $params = http_build_query([
+                    'client_id' => config('services.gov.client_id'),
+                    'redirect_uri' => $callbackUrl,
+                    'response_type' => 'code',
+                    'scope' => 'openid',
+                    'state' => $state,
+                    'authError' => 'true',
+                ]);
+
+                $activationLink = config('services.gov.url') . '/official/login?' . $params;
+
                 $details['content'] = [
                     "greeting" => "Bienvenu Mr/Mme " . $this->user->personne->nom,
-                    "introduction" => "Voici votre lien d'activation de votre compte",
-                    "lien" => $lien . "/activation/" . $this->user->token,
+                    "introduction" => "Veuillez cliquer sur le lien ci-dessous pour vous connecter avec Active Directory et activer votre compte BIP",
+                    "lien" => $activationLink,
+                    "lien_label" => "Activer mon compte"
                 ];
-                Log::notice($lien . "/activation/" . $this->user->token);
+                Log::notice("Lien d'activation AD généré: " . $activationLink);
                 $mailer = new ConfirmationDeCompteEmail($details);
             } elseif ($this->type == "reinitialisation-mot-de-passe") {
 

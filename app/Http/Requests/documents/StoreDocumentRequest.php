@@ -10,7 +10,7 @@ class StoreDocumentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function withValidator($validator)

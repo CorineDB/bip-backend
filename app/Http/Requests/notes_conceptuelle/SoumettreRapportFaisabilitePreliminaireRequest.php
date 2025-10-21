@@ -4,6 +4,7 @@ namespace App\Http\Requests\notes_conceptuelle;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Models\Rapport;
+use App\Rules\HashedExists;
 use Illuminate\Validation\Rule;
 
 class SoumettreRapportFaisabilitePreliminaireRequest extends FormRequest
@@ -15,7 +16,7 @@ class SoumettreRapportFaisabilitePreliminaireRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     /**
@@ -28,7 +29,7 @@ class SoumettreRapportFaisabilitePreliminaireRequest extends FormRequest
 
         return [
             'est_soumise' => 'required|boolean',
-            'rapportId' => ['sometimes', Rule::exists('rapports', 'id')->whereNull('deleted_at')],
+            'rapportId' => ['sometimes', new HashedExists(Rapport::class) /* Rule::exists('rapports', 'id')->whereNull('deleted_at') */],
             'intitule' => $estSoumise ? 'required|string|max:500' : 'nullable|string|max:500',
 
             // Documents

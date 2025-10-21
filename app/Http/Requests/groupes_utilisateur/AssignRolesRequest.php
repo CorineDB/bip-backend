@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\groupes_utilisateur;
 
+use App\Models\Permission;
+use App\Models\Role;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +12,7 @@ class AssignRolesRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
@@ -18,15 +21,22 @@ class AssignRolesRequest extends FormRequest
         return [
             'roles' => [Rule::requiredIf(count($this->input("permissions"))), "array", "min:1"],
             'roles.*' => [
-                Rule::exists("roles", "id")
-                ->when($profilable, function($query) use($profilable) {
-                    $query->where("roleable_type", get_class($profilable))
-                    ->where("roleable_id", $profilable->id);
+                new HashedExists(Role::class, 'id', function($query) use($profilable) {
+                    if ($profilable) {
+                        $query->where("roleable_type", get_class($profilable))
+                              ->where("roleable_id", $profilable->id);
+                    }
+                    $query->whereNull("deleted_at");
                 })
-                ->whereNull("deleted_at")
             ],
             "permissions" => [Rule::requiredIf(count($this->input("roles"))), "array", "min:1"],
-            "permissions.*" => ["required", "distinct", Rule::exists("permissions", "id")->whereNull("deleted_at")],
+            "permissions.*" => [
+                "required",
+                "distinct",
+                new HashedExists(Permission::class, 'id', function($query) {
+                    $query->whereNull("deleted_at");
+                })
+            ],
         ];
     }
 

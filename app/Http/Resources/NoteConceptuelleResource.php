@@ -18,9 +18,9 @@ class NoteConceptuelleResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->hashed_id,
             'intitule' => $this->intitule,
-            'parentId' => $this->parentId,
+            'parentId' => $this->parent?->hashed_id,
             'numero_contrat' => $this->numero_contrat,
             'numero_dossier' => $this->numero_dossier,
             'accept_term' => $this->accept_term,
@@ -39,12 +39,12 @@ class NoteConceptuelleResource extends BaseApiResource
             'historique_des_evaluations_notes_conceptuelle' => $this->whenLoaded('historique_des_evaluations_notes_conceptuelle', function() {
                 return $this->historique_des_evaluations_notes_conceptuelle->pluck("evaluations")->collapse()->map(function ($evaluation) {
                     return [
-                        'id' => $evaluation->id,
+                        'id' => $evaluation->hashed_id,
                         'type_evaluation' => $evaluation->type_evaluation,
                         'date_debut_evaluation' => $evaluation->date_debut_evaluation ? Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
                         'date_fin_evaluation' => $evaluation->date_fin_evaluation ? Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
                         'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
-                        'valider_par' => $evaluation->valider_par,
+                        'valider_par' => $evaluation->validator?->hashed_id,//valider_par,$evaluation->valider_par,
                         'commentaire' => $evaluation->commentaire,
                         'evaluation' => $evaluation->evaluation,
                         'resultats_evaluation' => $evaluation->resultats_evaluation,
@@ -55,7 +55,7 @@ class NoteConceptuelleResource extends BaseApiResource
             'champs' => $this->whenLoaded('champs', function () {
                 return $this->champs->map(function ($champ) {
                     return [
-                        'id' => $champ->id,
+                        'id' => $champ->hashed_id,
                         'label' => $champ->label,
                         'attribut' => $champ->attribut,
                         'type_champ' => $champ->type_champ,

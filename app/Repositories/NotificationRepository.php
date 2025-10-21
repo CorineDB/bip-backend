@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Models\Notification;
 use App\Repositories\Contracts\NotificationRepositoryInterface;
 use App\Repositories\Eloquent\BaseRepository;
 use Illuminate\Notifications\DatabaseNotification;
@@ -58,5 +57,52 @@ class NotificationRepository extends BaseRepository implements NotificationRepos
             return $notification->delete();
         }
         return false;
+    }
+
+    public function getUnreadNotifications(int $userId, int $perPage = 20)
+    {
+        return $this->model
+            ->where('notifiable_id', $userId)
+            ->where('notifiable_type', 'App\Models\User')
+            ->whereNull('read_at')
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+    }
+
+    public function getReadNotifications(int $userId, int $perPage = 20)
+    {
+        return $this->model
+            ->where('notifiable_id', $userId)
+            ->where('notifiable_type', 'App\Models\User')
+            ->whereNotNull('read_at')
+            ->orderBy('read_at', 'desc')
+            ->paginate($perPage);
+    }
+
+    public function getNotificationsByType(int $userId, string $type, int $perPage = 20)
+    {
+        return $this->model
+            ->where('notifiable_id', $userId)
+            ->where('notifiable_type', 'App\Models\User')
+            ->where('type', $type)
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+    }
+
+    public function deleteAllReadNotifications(int $userId): int
+    {
+        return $this->model
+            ->where('notifiable_id', $userId)
+            ->where('notifiable_type', 'App\Models\User')
+            ->whereNotNull('read_at')
+            ->delete();
+    }
+
+    public function deleteAllNotifications(int $userId): int
+    {
+        return $this->model
+            ->where('notifiable_id', $userId)
+            ->where('notifiable_type', 'App\Models\User')
+            ->delete();
     }
 }

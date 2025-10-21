@@ -3,6 +3,8 @@
 namespace App\Http\Requests\organisations;
 
 use App\Enums\EnumTypeOrganisation;
+use App\Models\Organisation;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -10,7 +12,7 @@ class StoreOrganisationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
@@ -19,7 +21,7 @@ class StoreOrganisationRequest extends FormRequest
             'nom'=> ['required', 'string', Rule::unique('organisations', 'nom')->whereNull('deleted_at')],
             'description' => 'nullable|string',
             'type' => ['required', Rule::in(EnumTypeOrganisation::values())],
-            'parentId' => [Rule::requiredIf($this->type != 'ministere'), Rule::exists('organisations', 'id')->whereNull('deleted_at')],
+            'parentId' => [Rule::requiredIf($this->type != 'ministere'), new HashedExists(Organisation::class)],
 
             "admin"       =>      ["sometimes", "array", "min:1"],
             'admin.email' => ["sometimes", "email", "max:255", Rule::unique('users', 'email')->whereNull('deleted_at')],

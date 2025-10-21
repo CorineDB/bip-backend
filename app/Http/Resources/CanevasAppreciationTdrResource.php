@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\CategorieDocument;
 use Illuminate\Http\Request;
 
 class CanevasAppreciationTdrResource extends BaseApiResource
@@ -15,11 +16,11 @@ class CanevasAppreciationTdrResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id'                    => $this->id,
+            'id'                    => $this->hashed_id,
             'nom'                   => $this->nom,
             'description'           => $this->description,
             'type'                  => $this->type,
-            'categorie'             => $this->categorie,
+            'categorie'             => new CategorieDocumentResource($this->categorie),
             'evaluation_configs'    => $this->evaluation_configs,
             'forms'                 => $this->buildFormsStructure()
         ];
@@ -54,7 +55,7 @@ class CanevasAppreciationTdrResource extends BaseApiResource
         return [
             'element_type' => 'field',
             'ordre_affichage' => $champ->ordre_affichage,
-            'id' => $champ->id,
+            'id' => $champ->hashed_id,
             'label' => $champ->label,
             'info' => $champ->info ?? '',
             'key' => $champ->attribut,
@@ -64,8 +65,8 @@ class CanevasAppreciationTdrResource extends BaseApiResource
             'default_value' => $champ->default_value,
             'isEvaluated' => $champ->isEvaluated,
             'type_champ' => $champ->type_champ,
-            'sectionId' => $champ->sectionId,
-            'documentId' => $champ->documentId,
+            'sectionId' => $champ->section?->hashed_id,
+            'documentId' => $champ->document?->hashed_id,
             'meta_options' => $champ->meta_options ?? [],
             'champ_standard' => $champ->champ_standard,
             'startWithNewLine' => $champ->startWithNewLine
@@ -80,12 +81,12 @@ class CanevasAppreciationTdrResource extends BaseApiResource
         $sectionData = [
             'element_type' => 'section',
             'ordre_affichage' => $section->ordre_affichage,
-            'id' => $section->id,
+            'id' => $section->hashed_id,
             'key' => $section->slug,
             'intitule' => $section->intitule,
             'description' => $section->description ?? '',
             'type' => $section->type,
-            'parentSectionId' => $section->parentSectionId,
+            'parentSectionId' => $section->parentSection?->hashed_id,
             'elements' => []
         ];
 

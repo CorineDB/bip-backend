@@ -16,12 +16,12 @@ class TypeProgrammeResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
+            "id" => $this->hashed_id,
             "type_programme"=> $this->type_programme,
             "slug"=> $this->slug,
             "programme_ou_composant"=> $this->when($this->parent, function() {
                 return [
-                    "id" => $this->parent->id,
+                    "id" => $this->parent->hashed_id,
                     "type_programme"=> $this->parent->type_programme
                 ];
             })

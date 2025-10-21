@@ -26,7 +26,7 @@ class ProjetResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,//->hashed_id,
+            'id' => $this->hashed_id,
             // Identifiants et métadonnées
             'identifiant_bip' => $this->identifiant_bip,
             'identifiant_sigfp' => $this->identifiant_sigfp,
@@ -35,6 +35,7 @@ class ProjetResource extends BaseApiResource
 
             'est_a_haut_risque' => $this->est_a_haut_risque,
             'est_dur' => $this->est_dur,
+            "est_mou" => $this->est_mou,
             'est_ancien' => $this->est_ancien,
             'info_etude_prefaisabilite' => $this->info_etude_prefaisabilite,
             'info_etude_faisabilite' => $this->info_etude_faisabilite,
@@ -103,7 +104,7 @@ class ProjetResource extends BaseApiResource
 
             'champs' => $this->champs->map(function ($champ) {
                 return [
-                    'id' => $champ->id,//->hashed_id,
+                    'id' => $champ->hashed_id,
                     'attribut' => $champ->attribut,
                     'value' => $champ->pivot->valeur,
                     'pivot_id' => $champ->pivot->id
@@ -126,23 +127,29 @@ class ProjetResource extends BaseApiResource
             'taux_actualisation' => $this->taux_actualisation,
 
             // TDRs
-            'tdr_prefaisabilite' => $this->whenLoaded('tdrPrefaisabilite', function() {
+            'tdr_prefaisabilite' => $this->whenLoaded('tdrPrefaisabilite', function () {
                 return $this->tdrPrefaisabilite->first() ? new TdrResource($this->tdrPrefaisabilite->first()) : null;
             }),
-            'tdr_faisabilite' => $this->whenLoaded('tdrFaisabilite', function() {
+            'tdr_faisabilite' => $this->whenLoaded('tdrFaisabilite', function () {
                 return $this->tdrFaisabilite->first() ? new TdrResource($this->tdrFaisabilite->first()) : null;
             }),
 
+            // Rapports faisabilite) preliminaire
+            'rapport_faisabilite_preliminaire' => $this->when($this->est_mou, function () {
+                $rapportFaisabilitePreliminaire = $this->rapportFaisabilitePreliminaire->first();
+                return $rapportFaisabilitePreliminaire ? new RapportResource($rapportFaisabilitePreliminaire) : null;
+            }),
+
             // Rapports etudes (prefaisabilite et faisabilite)
-            'rapport_prefaisabilite' => $this->whenLoaded('rapportPrefaisabilite', function() {
+            'rapport_prefaisabilite' => $this->whenLoaded('rapportPrefaisabilite', function () {
                 return $this->rapportPrefaisabilite->first() ? new RapportResource($this->rapportPrefaisabilite->first()) : null;
             }),
 
-            'rapport_faisabilite' => $this->whenLoaded('rapportFaisabilite', function() {
+            'rapport_faisabilite' => $this->whenLoaded('rapportFaisabilite', function () {
                 return $this->rapportFaisabilite->first() ? new RapportResource($this->rapportFaisabilite->first()) : null;
             }),
 
-            'rapport_evaluation_ex_ante' => $this->whenLoaded('rapportEvaluationExAnte', function() {
+            'rapport_evaluation_ex_ante' => $this->whenLoaded('rapportEvaluationExAnte', function () {
                 return $this->rapportEvaluationExAnte->first() ? new RapportResource($this->rapportEvaluationExAnte->first()) : null;
             }),
 
@@ -152,11 +159,11 @@ class ProjetResource extends BaseApiResource
             'sources_de_financement' => $this->whenLoaded('sources_de_financement', FinancementResource::collection($this->sources_de_financement)),
 
             'composants' => $this->composants->map(function ($composant) {
-                    return [
-                        'id' => $composant->id,//->hashed_id,
-                        'intitule' => $composant->intitule,
-                        'type_programme' => $composant->typeProgramme->hashed_id ?? null
-                    ];
+                return [
+                    'id' => $composant->hashed_id,
+                    'intitule' => $composant->intitule,
+                    'type_programme' => $composant->typeProgramme?->hashed_id ?? null
+                ];
             }),
 
             'lieux_intervention' => LieuInterventionResource::collection($this->lieuxIntervention),
@@ -164,7 +171,7 @@ class ProjetResource extends BaseApiResource
             'types_intervention' => $this->whenLoaded('typesIntervention', function () {
                 return $this->typesIntervention->map(function ($type) {
                     return [
-                        'id' => $type->id,//->hashed_id,
+                        'id' => $type->hashed_id,
                         'nom' => $type->nom
                     ];
                 });

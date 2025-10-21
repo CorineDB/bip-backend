@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HashableId;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 use Illuminate\Database\Eloquent\Relations\MorphPivot;
 
 class ChampProjet extends MorphPivot
 {
+    use SoftDeletes, HashableId;
     protected $table = 'champs_projet';
 
     protected $fillable = [

@@ -16,13 +16,13 @@ class FinancementResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
+            "id" => $this->hashed_id,
             "nom" => $this->nom,
             "nom_usuel" => $this->nom_usuel,
             "type" => $this->type,
             "financement" => $this->when($this->parent, function () {
                 return [
-                    "id" => $this->parent->id,
+                    "id" => $this->parent->hashed_id,
                     "nom" => $this->parent->nom,
                     "nom_usuel" => $this->parent->nom_usuel,
                     "type" => $this->parent->type,

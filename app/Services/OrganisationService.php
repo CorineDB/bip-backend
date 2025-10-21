@@ -2,14 +2,18 @@
 
 namespace App\Services;
 
+use App\Enums\EnumTypeOrganisation;
 use Illuminate\Http\JsonResponse;
 use Exception;
 use App\Services\BaseService;
+use App\Services\Traits\CachableService;
 use App\Services\Contracts\OrganisationServiceInterface;
 use App\Http\Resources\OrganisationResource;
 use App\Jobs\SendEmailJob;
+use App\Jobs\CreateDefaultOrganisationRoles;
 use App\Models\Dpaf;
 use App\Models\Organisation;
+use App\Observers\OrganisationObserver;
 use App\Repositories\Contracts\OrganisationRepositoryInterface;
 use App\Repositories\Contracts\PersonneRepositoryInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
@@ -24,7 +28,13 @@ use Illuminate\Support\Str;
 
 class OrganisationService extends BaseService implements OrganisationServiceInterface
 {
-    use GenerateTemporaryPassword;
+    use GenerateTemporaryPassword, CachableService;
+
+    // Configuration du cache
+    protected int $cacheTtl = 3600; // 1h
+    protected array $cacheTags = ['organisations'];
+    protected string $cachePrefix = 'bip';
+    protected bool $cacheEnabled = true;
 
     protected PersonneRepositoryInterface $personneRepository;
     protected RoleRepositoryInterface $roleRepository;
@@ -49,6 +59,7 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
     public function all(): JsonResponse
     {
         try {
+
             $organisations = $this->repository->getModel()
                 ->when(Auth::user()->profilable_id && Auth::user()->profilable_type == Organisation::class, function ($query) {
                     $query->descendantsFromMinistere(auth()->user()->profilable?->ministere?->id);
@@ -57,6 +68,37 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
                 })->latest()->get();
 
             return ($this->resourceClass::collection($organisations))->response();
+
+            $user = Auth::user();
+            $params = [
+                'user_id' => $user->id,
+                'profilable_id' => $user->profilable_id,
+                'profilable_type' => $user->profilable_type,
+                'ministere_id' => $user->profilable?->ministere?->id
+            ];
+
+            if ($this->cacheExists('all', $params)) {
+                $cached = $this->cacheGet('all', $params, function () {
+                    return null;
+                });
+                return response()->json($cached);
+            }
+
+            $organisations = $this->repository->getModel()
+                ->when(Auth::user()->profilable_id && Auth::user()->profilable_type == Organisation::class, function ($query) {
+                    $query->descendantsFromMinistere(auth()->user()->profilable?->ministere?->id);
+                })->when(Auth::user()->profilable_id && Auth::user()->profilable_type == Dpaf::class, function ($query) {
+                    $query->descendantsFromMinistere(auth()->user()->profilable?->ministere?->id);
+                })->latest()->get();
+
+            $responseData = [];
+            foreach ($organisations as $item) {
+                $responseData[] = (new OrganisationResource($item))->resolve();
+            }
+
+            $this->cachePut('all', $responseData, $params);
+
+            return response()->json($responseData);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
@@ -83,7 +125,6 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
 
                 // Création de la personne
                 $personne = $this->personneRepository->create(array_merge($personneData, ["organismeId" => $organisation->id]));
-
 
                 $role = $this->roleRepository->findByAttribute('slug', 'organisation');
 
@@ -112,12 +153,17 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
                 //Envoyer les identifiants de connexion à l'utilisateur via son email
                 //dispatch(new SendEmailJob($organisation->user, "confirmation-compte", $password))->delay(now()->addSeconds(15));
 
-                dispatch(new SendEmailJob($organisation->user, "confirmation-de-compte"))->delay(now()->addSeconds(15));
+                //dispatch(new SendEmailJob($organisation->user, "confirmation-de-compte"))->delay(now()->addSeconds(15));
 
                 dispatch(new SendEmailJob($organisation->user, "confirmation-compte", $password))->delay(now()->addMinutes(1));
             }
 
             $organisation->refresh();
+            if ($organisation->type === EnumTypeOrganisation::MINISTERE) {
+
+                // Créer automatiquement les rôles de base pour l'organisation
+                dispatch(new CreateDefaultOrganisationRoles($organisation))->delay(now()->addSeconds(5));
+            }
 
             DB::commit();
 
@@ -125,7 +171,7 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
 
             $message = Str::ucfirst($acteur) . " a crée l'organisation {$organisation->nom}.";
 
-            return response()->json(['statut' => 'success', 'message' => "Organisation crée", 'data' => $organisation, 'statutCode' => Response::HTTP_OK], Response::HTTP_OK);
+            return response()->json(['statut' => 'success', 'message' => "Organisation crée", 'data' => new OrganisationResource($organisation), 'statutCode' => Response::HTTP_OK], Response::HTTP_OK);
         } catch (\Throwable $th) {
 
             DB::rollBack();
@@ -194,7 +240,7 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
 
             //LogActivity::addToLog("Modification", $message, get_class($uniteeDeGestion), $uniteeDeGestion->id);
 
-            return response()->json(['statut' => 'success', 'message' => "Compte organisation modifié", 'data' => $organisation, 'statutCode' => Response::HTTP_OK], Response::HTTP_OK);
+            return response()->json(['statut' => 'success', 'message' => "Compte organisation modifié", 'data' => new OrganisationObserver($organisation), 'statutCode' => Response::HTTP_OK], Response::HTTP_OK);
         } catch (\Throwable $th) {
 
             DB::rollBack();
@@ -206,8 +252,27 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
     public function ministeres(): JsonResponse
     {
         try {
+
             $data = $this->repository->getModel()->where("type", "ministere")->whereNull("parentId")->get();
-            return $this->resourceClass::collection($data)->response();
+            return ($this->resourceClass::collection($data))->response();
+
+            if ($this->cacheExists('ministeres', [])) {
+                $cached = $this->cacheGet('ministeres', [], function () {
+                    return null;
+                });
+                return response()->json($cached);
+            }
+
+            $data = $this->repository->getModel()->where("type", "ministere")->whereNull("parentId")->get();
+
+            $responseData = [];
+            foreach ($data as $item) {
+                $responseData[] = (new OrganisationResource($item))->resolve();
+            }
+
+            $this->cachePut('ministeres', $responseData, []);
+
+            return response()->json($responseData);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -216,8 +281,29 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
     public function organismes_de_tutelle($idMinistere): JsonResponse
     {
         try {
+
             $data = $this->repository->findOrFail($idMinistere)->children;
-            return $this->resourceClass::collection($data)->response();
+            return ($this->resourceClass::collection($data))->response();
+
+            $params = ['ministere_id' => $idMinistere];
+
+            if ($this->cacheExists('organismes_de_tutelle', $params)) {
+                $cached = $this->cacheGet('organismes_de_tutelle', $params, function () {
+                    return null;
+                });
+                return response()->json($cached);
+            }
+
+            $data = $this->repository->findOrFail($idMinistere)->children;
+
+            $responseData = [];
+            foreach ($data as $item) {
+                $responseData[] = (new OrganisationResource($item))->resolve();
+            }
+
+            $this->cachePut('organismes_de_tutelle', $responseData, $params, 43200);
+
+            return response()->json($responseData);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }

@@ -2,20 +2,23 @@
 
 namespace App\Http\Requests\notes_conceptuelle;
 
+use App\Models\Champ;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
 class ValiderEtudeProfilRequest extends FormRequest
 {
     protected $champs = [];
+    protected $canevas = [];
 
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true; //auth()->check() && in_array(auth()->user()->type, ['comite_ministeriel', 'dpaf', 'admin']);
+        return auth()->check(); /*&& in_array(auth()->user()->type, ['comite_ministeriel', 'dpaf', 'admin']);*/
     }
 
     /**
@@ -30,11 +33,12 @@ class ValiderEtudeProfilRequest extends FormRequest
         }
 
         // Récupérer le canevas de checklist de suivi de l'étude de profil
-        $canevas = $this->getChecklistSuiviEtudeProfil();
+        $this->canevas = $canevas = $this->getChecklistSuiviEtudeProfil();
         if (!empty($canevas)) {
             // Extraire tous les IDs des champs du canevas
             $champsValides = $this->extractAllFields($canevas);
-            $this->champs = collect($champsValides)->pluck('id')->filter()->toArray();
+            //$this->champs = collect($champsValides)->pluck('id')->filter()->toArray();
+            $this->champs = collect($champsValides)->pluck('hashed_id')->filter()->toArray();
         }
     }
 
@@ -64,6 +68,7 @@ class ValiderEtudeProfilRequest extends FormRequest
             ],
             'checklist_suivi_rapport_faisabilite_preliminaire.*.checkpoint_id' => [
                 $requireChecklist ? 'required' : 'nullable',
+                $requireChecklist ? new HashedExists(Champ::class) : "null",
                 !empty($this->champs) ? "in:" . implode(",", $this->champs) : 'nullable'
             ],
 
@@ -193,6 +198,7 @@ class ValiderEtudeProfilRequest extends FormRequest
         $estSoumise = $this->input('action', 'submit') === 'submit';
         $canevasFields = $this->getCanevasFieldsWithConfigs();
 
+        $champs = collect($this->canevas)->pluck('id')->filter()->toArray();
 
         foreach ($checklistSuivi as $index => $evaluation) {
             $checkpointId = $evaluation['checkpoint_id'] ?? null;
@@ -200,7 +206,8 @@ class ValiderEtudeProfilRequest extends FormRequest
             $explication = $evaluation['explication'] ?? null;
 
             // Vérifier que le checkpoint_id existe dans le canevas
-            if ($checkpointId && !in_array($checkpointId, $this->champs)) {
+            //if ($checkpointId && !in_array($checkpointId, $this->champs)) {
+            if ($checkpointId && !in_array($checkpointId, $champs)) {
                 $validator->errors()->add(
                     "checklist_suivi_rapport_faisabilite_preliminaire.{$index}.checkpoint_id",
                     "Le champ sélectionné n'appartient pas à la checklist de suivi."
@@ -236,7 +243,8 @@ class ValiderEtudeProfilRequest extends FormRequest
         // Vérifier que tous les champs obligatoires sont présents pour la soumission finale
         if ($estSoumise && !empty($this->champs)) {
             $champsEvalues = collect($checklistSuivi)->pluck('checkpoint_id')->toArray();
-            $champsManquants = array_diff($this->champs, $champsEvalues);
+            //$champsManquants = array_diff($this->champs, $champsEvalues);
+            $champsManquants = array_diff($champs, $champsEvalues);
 
             if (!empty($champsManquants)) {
                 $validator->errors()->add(

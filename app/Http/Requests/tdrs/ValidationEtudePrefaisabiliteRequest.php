@@ -6,8 +6,11 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 use App\Models\Projet;
 use App\Models\Notation;
+use App\Models\Champ;
+use App\Models\Critere;
 use App\Models\CategorieCritere;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
+use App\Rules\HashedExists;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Http;
@@ -22,7 +25,7 @@ class ValidationEtudePrefaisabiliteRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; //auth()->check() && in_array(auth()->user()->type, ['dpaf', 'admin']);
+        return auth()->check();// && in_array(auth()->user()->type, ['dpaf', 'admin']);
     }
 
     /**
@@ -39,12 +42,12 @@ class ValidationEtudePrefaisabiliteRequest extends FormRequest
         // Récupérer le projet avec ses relations
         $this->projet = Projet::with('secteur.parent')->findOrFail($projetId);
 
-        // Récupérer le canevas de checklist de suivi
-        $canevas = $this->getChecklistSuiviPrefaisabilite();
+        // Récupérer le canevas de checklist de suivi de validation
+        $canevas = $this->getChecklistSuiviValidation();
         if (!empty($canevas)) {
             // Extraire tous les IDs des champs du canevas
             $champsValides = $this->extractAllFields($canevas);
-            $this->champs = collect($champsValides)->pluck('id')->filter()->toArray();
+            $this->champs = collect($champsValides)->pluck('hashed_id')->filter()->toArray();
         }
     }
 
@@ -53,72 +56,74 @@ class ValidationEtudePrefaisabiliteRequest extends FormRequest
      */
     public function rules(): array
     {
-        // Récupérer le nombre de critères requis dynamiquement
-        $categorieChecklist = \App\Models\CategorieCritere::where('slug', 'checklist-mesures-adaptation-haut-risque')
-            ->withCount('criteres')
-            ->first();
-        $nombreCriteresRequis = $categorieChecklist ? $categorieChecklist->criteres_count : 4;
+        $action = $this->input('action', 'sauvegarder');
+        $estSoumise = !in_array($action, ['sauvegarder', 'draft']);
+
+        // Définir les actions permises selon la nature du projet (est_dur)
+        if (isset($this->projet->est_dur) && $this->projet->est_dur === false) {
+            $actionsPermises = ['maturite', 'reprendre', 'abandonner', 'sauvegarder'];
+        } else {
+            $actionsPermises = ['maturite', 'faisabilite', 'reprendre', 'abandonner', 'sauvegarder'];
+        }
 
         return [
-            // Action: submit (soumettre) ou draft (brouillon)
-            'action' => 'required|string|in:submit,draft',
+            // Action de validation
+            'action' => ['required', 'string', Rule::in($actionsPermises)],
 
-            // Fichiers requis uniquement pour la soumission finale
-            'rapport' => 'required_unless:action,draft|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
-            'proces_verbal' => 'required_unless:action,draft|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+            // Checklist de suivi de validation (obligatoire sauf pour sauvegarder)
+            'checklist_suivi_validation' => [
+                $action !== 'sauvegarder' ? 'required' : 'nullable',
+                'array'
+            ],
+            'checklist_suivi_validation.*.checkpoint_id' => [
+                'required_with:checklist_suivi_validation',
+                new HashedExists(Champ::class)
+            ],
+            'checklist_suivi_validation.*.remarque' => 'required_with:checklist_suivi_validation|string',
+            'checklist_suivi_validation.*.explication' => 'nullable|string|max:1000',
 
-            // Informations cabinet requises uniquement pour la soumission finale
-            "cabinet_etude" => "required_unless:action,draft|array",
-            'cabinet_etude.nom_cabinet' => 'required_unless:action,draft|string|max:255',
-            'cabinet_etude.contact_cabinet' => 'required_unless:action,draft|string|max:255',
-            'cabinet_etude.email_cabinet' => 'required_unless:action,draft|email|max:255',
-            'cabinet_etude.adresse_cabinet' => 'required_unless:action,draft|string|max:500',
-
-            // Recommandation requise uniquement pour la soumission finale
-            'recommandation' => 'required_unless:action,draft|string|max:500',
-
-            // Checklist contrôle des adaptations pour projets à haut risque
-            'checklist_controle_adaptation_haut_risque' =>
-            $this->projet->est_a_haut_risque ? 'required|array' : 'nullable',
-            /*
-                'checklist_controle_adaptation_haut_risque.criteres' => [
-                    'required_with:checklist_controle_adaptation_haut_risque',
-                    'array',
-                    $this->input('action', 'submit') === 'draft' ? 'min:0' : "size:$nombreCriteresRequis"
-                ],
-            */
-            'checklist_controle_adaptation_haut_risque.criteres' => [
-                $this->projet->est_a_haut_risque ? 'required_with:checklist_controle_adaptation_haut_risque|array' . ($this->input('action', 'submit') === 'draft' ? '|min:0' : "|size:$nombreCriteresRequis") : 'nullable',
+            // Synthèse et recommandations (obligatoire si action != sauvegarder)
+            'synthese_recommandations' => [
+                $action !== 'sauvegarder' ? 'required' : 'nullable',
+                'string',
+                'min:10'
             ],
 
-            'checklist_controle_adaptation_haut_risque.criteres.*' => ['required_with:checklist_controle_adaptation_haut_risque.criteres', 'array'],
-            'checklist_controle_adaptation_haut_risque.criteres.*.critere_id' => 'required|integer|exists:criteres,id',
+            // Commentaire (optionnel)
+            'commentaire' => 'nullable|string|max:1000',
 
-            // Les mesures sont requises seulement si action != draft
-            'checklist_controle_adaptation_haut_risque.criteres.*.mesures_selectionnees' => [
-                'required_unless:action,draft',
-                'array',
-                'min:1'
+            // Liste de présence (optionnel)
+            'liste_presence' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx|max:20480',
+
+            // Informations de financement (conditionnelles)
+            'etude_prefaisabilite' => function ($attribute, $value, $fail) {
+                // Validation conditionnelle basée sur info_etude_prefaisabilite.est_finance
+                if (isset($this->projet->info_etude_prefaisabilite['est_finance']) &&
+                    filter_var($this->projet->info_etude_prefaisabilite['est_finance'], FILTER_VALIDATE_BOOLEAN)) {
+                    if (empty($value)) {
+                        $fail("Les informations de financement sont requises lorsque le projet est financé.");
+                    }
+                }
+            },
+            'etude_prefaisabilite.date_demande' => [
+                'nullable',
+                'date_format:Y-m-d'
             ],
-            'checklist_controle_adaptation_haut_risque.criteres.*.mesures_selectionnees.*' => 'integer|exists:notations,id',
-
-            // Checklist de suivi de rapport de préfaisabilité
-            'checklist_suivi_rapport_prefaisabilite' => [
-                'required_unless:action,draft',
-                'array',
-                $this->input('action', 'submit') === 'draft' ? 'min:0' : 'min:' . count($this->champs)
+            'etude_prefaisabilite.date_obtention' => [
+                'nullable',
+                'date_format:Y-m-d',
+                'after_or_equal:etude_prefaisabilite.date_demande'
             ],
-            'checklist_suivi_rapport_prefaisabilite.*.checkpoint_id' => ['required_unless:action,draft', "in:" . implode(",", $this->champs)],
-            // Les règles dynamiques seront ajoutées dans withValidator
-            //'checklist_suivi_rapport_prefaisabilite.*.reponse' => 'required_unless:action,draft|string',
-            //'checklist_suivi_rapport_prefaisabilite.*.commentaire' => 'required_unless:action,draft|string|min:10|max:1000',
-
-            "etude_prefaisabilite"                  => "required_unless:action,draft|array|min:1",
-            'etude_prefaisabilite.est_finance'      => 'required_with:etude_prefaisabilite|boolean',
-            /*'etude_prefaisabilite.date_demande'   => 'required_with:etude_prefaisabilite|date|date_format:Y-m-d',
-            'etude_prefaisabilite.date_obtention'   => 'required_with:etude_prefaisabilite|date|date_format:Y-m-d|after_or_equal:etude_prefaisabilite.date_demande',
-            'etude_prefaisabilite.montant'          => 'required_with:etude_prefaisabilite|numeric|min:0',
-            'etude_prefaisabilite.reference'        => 'required_with:etude_prefaisabilite|string|max:25',*/
+            'etude_prefaisabilite.montant' => [
+                'nullable',
+                'numeric',
+                'min:0'
+            ],
+            'etude_prefaisabilite.reference' => [
+                'nullable',
+                'string',
+                'max:100'
+            ],
         ];
     }
 
@@ -128,11 +133,84 @@ class ValidationEtudePrefaisabiliteRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
-            if ($this->projet->est_a_haut_risque) {
-                $this->validateChecklistAgainstProjectSector($validator);
+            $this->validateChecklistSuiviValidation($validator);
+
+            // Déhasher les IDs après validation réussie
+            if (!$validator->errors()->any()) {
+                $this->dehashChecklistSuiviValidation();
             }
-            $this->validateChecklistSuiviPrefaisabilite($validator);
         });
+    }
+
+    /**
+     * Valider la checklist de suivi de validation
+     */
+    private function validateChecklistSuiviValidation(Validator $validator): void
+    {
+        $checklistSuivi = $this->input('checklist_suivi_validation');
+        if (!$checklistSuivi || !is_array($checklistSuivi)) {
+            return;
+        }
+
+        $action = $this->input('action', 'sauvegarder');
+        $canevasFields = $this->getCanevasFieldsWithConfigs();
+
+        foreach ($checklistSuivi as $index => $evaluation) {
+            $checkpointId = $evaluation['checkpoint_id'] ?? null;
+            $remarque = $evaluation['remarque'] ?? null;
+            $explication = $evaluation['explication'] ?? null;
+
+            // Vérifier que le checkpoint_id existe dans le canevas
+            if ($checkpointId && !in_array($checkpointId, $this->champs)) {
+                $validator->errors()->add(
+                    "checklist_suivi_validation.{$index}.checkpoint_id",
+                    "Le champ sélectionné n'appartient pas à la checklist de suivi."
+                );
+                continue;
+            }
+
+            // Récupérer la configuration du champ
+            $fieldConfig = $canevasFields[$checkpointId] ?? null;
+
+            // Validation de la remarque selon le canevas
+            if ($action !== 'sauvegarder') {
+                if (empty($remarque)) {
+                    $validator->errors()->add(
+                        "checklist_suivi_validation.{$index}.remarque",
+                        "La remarque est obligatoire."
+                    );
+                } else {
+                    $this->validateRemarqueValue($validator, $index, $remarque, $fieldConfig, 'checklist_suivi_validation');
+                }
+            }
+
+            // Déhasher le checkpoint_id après validation
+            if ($checkpointId && !is_int($checkpointId)) {
+                $checkpointIdDehashed = Champ::unhashId($checkpointId);
+                $allData = $this->all();
+                $allData['checklist_suivi_validation'][$index]['checkpoint_id'] = $checkpointIdDehashed;
+                $this->replace($allData);
+            }
+        }
+    }
+
+    /**
+     * Déhasher les IDs de la checklist de suivi de validation
+     */
+    private function dehashChecklistSuiviValidation(): void
+    {
+        $checklistSuivi = $this->input('checklist_suivi_validation');
+        if (!$checklistSuivi || !is_array($checklistSuivi)) {
+            return;
+        }
+
+        $allData = $this->all();
+        foreach ($checklistSuivi as $index => $evaluation) {
+            if (isset($evaluation['checkpoint_id']) && !is_int($evaluation['checkpoint_id'])) {
+                $allData['checklist_suivi_validation'][$index]['checkpoint_id'] = Champ::unhashId($evaluation['checkpoint_id']);
+            }
+        }
+        $this->replace($allData);
     }
 
     /**
@@ -293,62 +371,28 @@ class ValidationEtudePrefaisabiliteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'rapport.required' => 'Le fichier rapport est obligatoire.',
-            'rapport.file' => 'Le rapport doit être un fichier.',
-            'rapport.mimes' => 'Le rapport doit être un fichier PDF, DOC ou DOCX.',
-            'rapport.max' => 'Le fichier rapport ne peut dépasser 20 MB.',
-
-            'cabinet_etude.nom_cabinet.required' => 'Le nom du cabinet est obligatoire.',
-            'cabinet_etude.nom_cabinet.string' => 'Le nom du cabinet doit être du texte.',
-            'cabinet_etude.nom_cabinet.max' => 'Le nom du cabinet ne peut dépasser 255 caractères.',
-
-            'cabinet_etude.contact_cabinet.required' => 'Le contact du cabinet est obligatoire.',
-            'cabinet_etude.contact_cabinet.string' => 'Le contact du cabinet doit être du texte.',
-            'cabinet_etude.contact_cabinet.max' => 'Le contact du cabinet ne peut dépasser 255 caractères.',
-
-            'cabinet_etude.email_cabinet.required' => 'L\'email du cabinet est obligatoire.',
-            'cabinet_etude.email_cabinet.email' => 'L\'email du cabinet doit être une adresse email valide.',
-            'cabinet_etude.email_cabinet.max' => 'L\'email du cabinet ne peut dépasser 255 caractères.',
-
-            'cabinet_etude.telephone_cabinet.string' => 'Le téléphone du cabinet doit être du texte.',
-            'cabinet_etude.telephone_cabinet.max' => 'Le téléphone du cabinet ne peut dépasser 20 caractères.',
-
-            'cabinet_etude.adresse_cabinet.string' => 'L\'adresse du cabinet doit être du texte.',
-            'cabinet_etude.adresse_cabinet.max' => 'L\'adresse du cabinet ne peut dépasser 500 caractères.',
-
             // Messages pour l'action
-            'action.in' => 'L\'action doit être "submit" ou "draft".',
+            'action.required' => 'L\'action est requise.',
+            'action.in' => 'L\'action doit être une des valeurs autorisées.',
 
-            // Messages pour les fichiers
-            'rapport.required_unless' => 'Le fichier rapport est obligatoire pour la soumission finale.',
-            'proces_verbal.required_unless' => 'Le procès verbal est obligatoire pour la soumission finale.',
+            // Messages pour la checklist de suivi de validation
+            'checklist_suivi_validation.required' => 'La checklist de suivi de validation est obligatoire.',
+            'checklist_suivi_validation.array' => 'La checklist de suivi doit être un tableau.',
+            'checklist_suivi_validation.*.checkpoint_id.required_with' => 'L\'ID du point de contrôle est obligatoire.',
+            'checklist_suivi_validation.*.remarque.required_with' => 'La remarque est obligatoire.',
+            'checklist_suivi_validation.*.explication.max' => 'L\'explication ne peut dépasser 1000 caractères.',
 
-            // Messages pour le cabinet
-            'cabinet_etude.required_unless' => 'Les informations du cabinet sont obligatoires pour la soumission finale.',
-            'recommandation.required_unless' => 'La recommandation est obligatoire pour la soumission finale.',
+            // Messages pour synthèse et recommandations
+            'synthese_recommandations.required' => 'La synthèse et recommandations est obligatoire.',
+            'synthese_recommandations.min' => 'La synthèse et recommandations doit contenir au moins 10 caractères.',
 
-            // Messages pour la checklist
-            'checklist_controle_adaptation_haut_risque.criteres.required_with' => 'Les critères de la checklist sont obligatoires.',
-            'checklist_controle_adaptation_haut_risque.criteres.*.critere_id.required' => 'L\'ID du critère est obligatoire.',
-            'checklist_controle_adaptation_haut_risque.criteres.*.critere_id.exists' => 'Le critère sélectionné n\'existe pas.',
-            'checklist_controle_adaptation_haut_risque.criteres.*.mesures_selectionnees.required_unless' => 'Pour soumettre le rapport, toutes les mesures doivent être sélectionnées pour chaque critère.',
-            'checklist_controle_adaptation_haut_risque.criteres.*.mesures_selectionnees.*.exists' => 'Une ou plusieurs mesures sélectionnées n\'existent pas.',
-            'checklist_controle_adaptation_haut_risque.criteres.*.mesures_selectionnees.*.integer' => 'L\'ID de la mesure doit être un nombre entier.',
-
-            // Messages pour la checklist de suivi
-            'checklist_suivi_rapport_prefaisabilite.required' => 'La checklist de suivi de rapport de préfaisabilité est obligatoire.',
-            'checklist_suivi_rapport_prefaisabilite.array' => 'La checklist de suivi doit être un tableau.',
-            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.required_with' => 'Les évaluations des champs de la checklist de suivi sont obligatoires.',
-            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.array' => 'Les évaluations des champs doivent être un tableau.',
-            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.min' => 'Au moins une évaluation de champ est requise.',
-            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.champ_id.required' => 'L\'ID du champ est obligatoire.',
-            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.champ_id.integer' => 'L\'ID du champ doit être un nombre entier.',
-            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.reponse.required_unless' => 'La réponse est obligatoire pour la soumission finale.',
-            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.reponse.string' => 'La réponse doit être du texte.',
-            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.commentaire.required_unless' => 'Le commentaire est obligatoire pour la soumission finale.',
-            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.commentaire.string' => 'Le commentaire doit être du texte.',
-            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.commentaire.min' => 'Le commentaire doit contenir au moins 10 caractères.',
-            'checklist_suivi_rapport_prefaisabilite.evaluations_champs.*.commentaire.max' => 'Le commentaire ne peut dépasser 1000 caractères.',
+            // Messages pour les informations de financement
+            'etude_prefaisabilite.date_demande.date_format' => 'La date de demande doit être au format AAAA-MM-JJ.',
+            'etude_prefaisabilite.date_obtention.date_format' => 'La date d\'obtention doit être au format AAAA-MM-JJ.',
+            'etude_prefaisabilite.date_obtention.after_or_equal' => 'La date d\'obtention doit être postérieure ou égale à la date de demande.',
+            'etude_prefaisabilite.montant.numeric' => 'Le montant doit être un nombre.',
+            'etude_prefaisabilite.montant.min' => 'Le montant doit être positif.',
+            'etude_prefaisabilite.reference.max' => 'La référence ne peut dépasser 100 caractères.',
         ];
     }
 
@@ -738,7 +782,7 @@ class ValidationEtudePrefaisabiliteRequest extends FormRequest
     }
 
     /**
-     * Récupérer le canevas depuis la base de données
+     * Récupérer le canevas de checklist de suivi de rapport de préfaisabilité
      */
     protected function getChecklistSuiviPrefaisabilite(): array
     {
@@ -757,9 +801,28 @@ class ValidationEtudePrefaisabiliteRequest extends FormRequest
     }
 
     /**
+     * Récupérer le canevas de checklist de suivi de validation de préfaisabilité
+     */
+    protected function getChecklistSuiviValidation(): array
+    {
+        $documentRepository = app(DocumentRepositoryInterface::class);
+        $canevas = $documentRepository->getModel()
+            ->where('type', 'checklist')
+            ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-check-liste-suivi-rapport-prefaisabilite'))
+            ->orderBy('created_at', 'desc')
+            ->first();
+        if (!$canevas || !$canevas->all_champs) {
+            return [];
+        }
+
+        // Convertir la Collection en array
+        return $canevas->all_champs->toArray();
+    }
+
+    /**
      * Valider la valeur de la remarque selon les options du champ
      */
-    private function validateRemarqueValue(Validator $validator, int $index, $remarque, ?array $fieldConfig): void
+    private function validateRemarqueValue(Validator $validator, int $index, $remarque, ?array $fieldConfig, string $fieldName = 'checklist_suivi_rapport_prefaisabilite'): void
     {
         if (!$fieldConfig) return;
 
@@ -768,7 +831,7 @@ class ValidationEtudePrefaisabiliteRequest extends FormRequest
 
         if (!in_array($remarque, $validValues)) {
             $validator->errors()->add(
-                "checklist_suivi_rapport_prefaisabilite.{$index}.remarque",
+                "{$fieldName}.{$index}.remarque",
                 "La remarque doit être une des valeurs autorisées: " . implode(', ', $validValues)
             );
         }

@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests\categories_critere\checklistMesuresAdaptation;
 
+use App\Models\Critere;
+use App\Models\Notation;
 use App\Models\Secteur;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -11,7 +14,7 @@ class CreateOrUpdateChecklistRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
@@ -22,8 +25,9 @@ class CreateOrUpdateChecklistRequest extends FormRequest
 
             'criteres.*.id' => [
                 'sometimes',
-                Rule::exists('criteres', 'id')
-                    ->whereNull('deleted_at')
+                new HashedExists(Critere::class)
+                /* Rule::exists('criteres', 'id')
+                    ->whereNull('deleted_at') */
             ],
             'criteres.*.intitule' => ['required', 'string', 'max:255'],
             'criteres.*.ponderation' => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -35,9 +39,10 @@ class CreateOrUpdateChecklistRequest extends FormRequest
 
             'criteres.*.secteurs.*.secteur_id' => [
                 'required',
-                Rule::exists('secteurs', 'id')
+                new HashedExists(Secteur::class)
+                /* Rule::exists('secteurs', 'id')
                     //->where('type', 'sous-secteur')
-                    ->whereNull('deleted_at')
+                    ->whereNull('deleted_at') */
             ],
 
             // Structure des mesures par secteur
@@ -45,8 +50,9 @@ class CreateOrUpdateChecklistRequest extends FormRequest
 
             'criteres.*.secteurs.*.mesures.*.id' => [
                 'sometimes',
-                Rule::exists('notations', 'id')
-                    ->whereNull('deleted_at')
+                new HashedExists(Notation::class)
+                /* Rule::exists('notations', 'id')
+                    ->whereNull('deleted_at') */
             ],
             'criteres.*.secteurs.*.mesures.*.libelle' => ['required', 'string', 'max:255'],
             'criteres.*.secteurs.*.mesures.*.valeur' => ['nullable', 'string', 'max:100'],

@@ -6,8 +6,11 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 use App\Models\Projet;
 use App\Models\Notation;
+use App\Models\Champ;
+use App\Models\Critere;
 use App\Models\CategorieCritere;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
+use App\Rules\HashedExists;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Http;
@@ -58,49 +61,49 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
         $canevasAssurance = $this->getChecklistBySlug('canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite');
         if (!empty($canevasAssurance)) {
             $champsValides = $this->extractAllFields($canevasAssurance);
-            $this->champsAssuranceQualite = collect($champsValides)->pluck('id')->filter()->toArray();
+            $this->champsAssuranceQualite = collect($champsValides)->pluck('hashed_id')->filter()->toArray();
         }
 
         // 2. Technique
         $canevasTechnique = $this->getChecklistBySlug('canevas-check-liste-etude-faisabilite-technique');
         if (!empty($canevasTechnique)) {
             $champsValides = $this->extractAllFields($canevasTechnique);
-            $this->champsTechnique = collect($champsValides)->pluck('id')->filter()->toArray();
+            $this->champsTechnique = collect($champsValides)->pluck('hashed_id')->filter()->toArray();
         }
 
         // 3. Économique
         $canevasEconomique = $this->getChecklistBySlug('canevas-check-liste-etude-faisabilite-economique');
         if (!empty($canevasEconomique)) {
             $champsValides = $this->extractAllFields($canevasEconomique);
-            $this->champsEconomique = collect($champsValides)->pluck('id')->filter()->toArray();
+            $this->champsEconomique = collect($champsValides)->pluck('hashed_id')->filter()->toArray();
         }
 
         // 4. Marché
         $canevasMarche = $this->getChecklistBySlug('canevas-check-liste-etude-faisabilite-marche');
         if (!empty($canevasMarche)) {
             $champsValides = $this->extractAllFields($canevasMarche);
-            $this->champsMarche = collect($champsValides)->pluck('id')->filter()->toArray();
+            $this->champsMarche = collect($champsValides)->pluck('hashed_id')->filter()->toArray();
         }
 
         // 5. Organisationnelle et juridique
         $canevasOrgJur = $this->getChecklistBySlug('canevas-check-liste-de-suivi-etude-de-faisabilite-organisationnelle-juridique');
         if (!empty($canevasOrgJur)) {
             $champsValides = $this->extractAllFields($canevasOrgJur);
-            $this->champsOrganisationnelleJuridique = collect($champsValides)->pluck('id')->filter()->toArray();
+            $this->champsOrganisationnelleJuridique = collect($champsValides)->pluck('hashed_id')->filter()->toArray();
         }
 
         // 6. Analyse financière
         $canevasFinanciere = $this->getChecklistBySlug('canevas-check-liste-de-suivi-analyse-de-faisabilite-financiere');
         if (!empty($canevasFinanciere)) {
             $champsValides = $this->extractAllFields($canevasFinanciere);
-            $this->champsAnalyseFinanciere = collect($champsValides)->pluck('id')->filter()->toArray();
+            $this->champsAnalyseFinanciere = collect($champsValides)->pluck('hashed_id')->filter()->toArray();
         }
 
         // 7. Impact environnemental et social
         $canevasImpact = $this->getChecklistBySlug('canevas-check-liste-de-suivi-etude-analyse-impact-environnementale-sociale');
         if (!empty($canevasImpact)) {
             $champsValides = $this->extractAllFields($canevasImpact);
-            $this->champsImpactEnvironnemental = collect($champsValides)->pluck('id')->filter()->toArray();
+            $this->champsImpactEnvironnemental = collect($champsValides)->pluck('hashed_id')->filter()->toArray();
         }
 
         // Conserver la variable $this->champs pour compatibilité avec le code existant (assurance qualité)
@@ -137,7 +140,7 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
                 'array',
                 $this->input('action', 'submit') === 'draft' ? 'min:0' : 'min:' . count($this->champsAssuranceQualite)
             ],
-            'checklist_suivi_assurance_qualite.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsAssuranceQualite)],
+            'checklist_suivi_assurance_qualite.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsAssuranceQualite), new HashedExists(Champ::class)],
 
             // 2. Checklist étude faisabilité technique
             'checklist_etude_faisabilite_technique' => [
@@ -145,7 +148,7 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
                 'array',
                 $this->input('action', 'submit') === 'draft' ? 'min:0' : 'min:' . count($this->champsTechnique)
             ],
-            'checklist_etude_faisabilite_technique.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsTechnique)],
+            'checklist_etude_faisabilite_technique.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsTechnique), new HashedExists(Champ::class)],
 
             // 3. Checklist étude faisabilité économique
             'checklist_etude_faisabilite_economique' => [
@@ -153,7 +156,7 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
                 'array',
                 $this->input('action', 'submit') === 'draft' ? 'min:0' : 'min:' . count($this->champsEconomique)
             ],
-            'checklist_etude_faisabilite_economique.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsEconomique)],
+            'checklist_etude_faisabilite_economique.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsEconomique), new HashedExists(Champ::class)],
 
             // 4. Checklist étude faisabilité marché
             'checklist_etude_faisabilite_marche' => [
@@ -161,7 +164,7 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
                 'array',
                 $this->input('action', 'submit') === 'draft' ? 'min:0' : 'min:' . count($this->champsMarche)
             ],
-            'checklist_etude_faisabilite_marche.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsMarche)],
+            'checklist_etude_faisabilite_marche.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsMarche), new HashedExists(Champ::class)],
 
             // 5. Checklist étude faisabilité organisationnelle et juridique
             'checklist_etude_faisabilite_organisationnelle_juridique' => [
@@ -169,7 +172,7 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
                 'array',
                 $this->input('action', 'submit') === 'draft' ? 'min:0' : 'min:' . count($this->champsOrganisationnelleJuridique)
             ],
-            'checklist_etude_faisabilite_organisationnelle_juridique.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsOrganisationnelleJuridique)],
+            'checklist_etude_faisabilite_organisationnelle_juridique.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsOrganisationnelleJuridique), new HashedExists(Champ::class)],
 
             // 6. Checklist suivi analyse de faisabilité financière
             'checklist_suivi_analyse_faisabilite_financiere' => [
@@ -177,7 +180,7 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
                 'array',
                 $this->input('action', 'submit') === 'draft' ? 'min:0' : 'min:' . count($this->champsAnalyseFinanciere)
             ],
-            'checklist_suivi_analyse_faisabilite_financiere.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsAnalyseFinanciere)],
+            'checklist_suivi_analyse_faisabilite_financiere.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsAnalyseFinanciere), new HashedExists(Champ::class)],
 
             // 7. Checklist suivi étude analyse impact environnementale et sociale
             'checklist_suivi_etude_analyse_impact_environnemental_social' => [
@@ -185,7 +188,7 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
                 'array',
                 $this->input('action', 'submit') === 'draft' ? 'min:0' : 'min:' . count($this->champsImpactEnvironnemental)
             ],
-            'checklist_suivi_etude_analyse_impact_environnemental_social.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsImpactEnvironnemental)],
+            'checklist_suivi_etude_analyse_impact_environnemental_social.*.checkpoint_id' => ['required', "in:" . implode(",", $this->champsImpactEnvironnemental), new HashedExists(Champ::class)],
 
             "analyse_financiere"                            => "sometimes|required_unless:action,draft|array|min:3",
             'analyse_financiere.duree_vie'                  => 'sometimes|required_unless:action,draft|numeric',
@@ -265,6 +268,14 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
 
             // Validation de l'explication selon show_explanation
             $this->validateExplicationGeneric($validator, $checklistName, $index, $explication, $fieldConfig, $estSoumise);
+
+            // Déhasher le checkpoint_id après validation
+            if ($checkpointId && !is_int($checkpointId)) {
+                $checkpointIdDehashed = Champ::unhashId($checkpointId);
+                $allData = $this->all();
+                $allData[$checklistName][$index]['checkpoint_id'] = $checkpointIdDehashed;
+                $this->replace($allData);
+            }
         }
 
         // Vérifier que tous les champs obligatoires sont présents pour la soumission finale
@@ -547,8 +558,8 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
 
         $fieldsWithConfigs = [];
         foreach ($canevas as $field) {
-            if (!empty($field['id'])) {
-                $fieldsWithConfigs[$field['id']] = $field;
+            if (!empty($field['hashed_id'])) {
+                $fieldsWithConfigs[$field['hashed_id']] = $field;
             }
         }
 

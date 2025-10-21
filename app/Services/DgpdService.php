@@ -100,7 +100,7 @@ class DgpdService extends BaseService implements DgpdServiceInterface
                 /*dispatch(new SendEmailJob($dgpd->user, "confirmation-compte", $password))->delay(now()->addSeconds(15));
                 dispatch(new SendEmailJob($dgpd->user, "confirmation-de-compte"))->delay(now()->addSeconds(15));*/
 
-                dispatch(new SendEmailJob($dgpd->user, "confirmation-de-compte"))->delay(now()->addSeconds(15));
+                //dispatch(new SendEmailJob($dgpd->user, "confirmation-de-compte"))->delay(now()->addSeconds(15));
 
                 dispatch(new SendEmailJob($dgpd->user, "confirmation-compte", $password))->delay(now()->addMinutes(1));
 

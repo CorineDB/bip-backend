@@ -17,7 +17,7 @@ class CategorieCritereResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->hashed_id,
             'type' => $this->type,
             'slug' => $this->slug,
             'is_mandatory' => $this->is_mandatory,

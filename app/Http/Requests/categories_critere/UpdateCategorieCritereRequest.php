@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests\categories_critere;
 
+use App\Models\Critere;
+use App\Models\Notation;
 use App\Repositories\CategorieCritereRepository;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -12,7 +15,7 @@ class UpdateCategorieCritereRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     /**
@@ -20,7 +23,7 @@ class UpdateCategorieCritereRequest extends FormRequest
      */
     public function prepareForValidation(): void
     {
-        $categorieId = $this->route('categorie_critere') ? (is_string($this->route('categorie_critere')) ? $this->route('categorie_critere') : ($this->route('categorie_critere')->id)) : $this->route('id');
+        $categorieId = $this->route('categorie_critere') ? (is_string($this->route('categorie_critere')  || is_numeric($this->route('categorie_critere')) ) ? $this->route('categorie_critere') : ($this->route('categorie_critere')->id)) : $this->route('id');
 
         // Récupérer le projet avec ses relations
         $this->categorie = app(CategorieCritereRepository::class)->getModel()->findByKey($categorieId);
@@ -36,8 +39,9 @@ class UpdateCategorieCritereRequest extends FormRequest
             'notations' => 'sometimes|array|min:1',
             'notations.*.id' => [
                 'sometimes',
-                Rule::exists('notations', 'id')
-                    ->whereNull('deleted_at')
+                new HashedExists(Notation::class)
+                /* Rule::exists('notations', 'id')
+                    ->whereNull('deleted_at') */
             ],
             'notations.*.libelle' => 'required_with:notations|string|max:255|distinct',
             'notations.*.valeur' => 'required_with:notations|numeric|max:255|distinct',
@@ -47,8 +51,9 @@ class UpdateCategorieCritereRequest extends FormRequest
 
             'criteres.*.id' => [
                 'sometimes',
-                Rule::exists('criteres', 'id')
-                    ->whereNull('deleted_at')
+                new HashedExists(Critere::class)
+                /* Rule::exists('criteres', 'id')
+                    ->whereNull('deleted_at') */
             ],
 
             'criteres.*.intitule' => 'required_with:criteres|string',
@@ -60,8 +65,9 @@ class UpdateCategorieCritereRequest extends FormRequest
 
             'criteres.*.notations.*.id' => [
                 'sometimes',
-                Rule::exists('notations', 'id')
-                    ->whereNull('deleted_at')
+                new HashedExists(Notation::class)
+                /* Rule::exists('notations', 'id')
+                    ->whereNull('deleted_at') */
             ],
 
             'criteres.*.notations.*.libelle' => 'required_with:criteres.*.notations|string|max:255',

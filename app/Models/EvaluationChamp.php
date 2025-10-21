@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HashableId;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EvaluationChamp extends Pivot
 {
-    use SoftDeletes;
+    use SoftDeletes, HashableId;
 
     /**
      * The table associated with the model.

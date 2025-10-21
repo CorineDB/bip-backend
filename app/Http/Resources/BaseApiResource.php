@@ -166,7 +166,7 @@ abstract class BaseApiResource extends JsonResource implements ApiResourceInterf
             'timestamp' => now()->toISOString(),
             'resource_info' => [
                 'type' => 'single',
-                'id' => $this->resource->id ?? null,
+                'id' => $this->resource->hashed_id ?? null,
             ],
         ];
     }

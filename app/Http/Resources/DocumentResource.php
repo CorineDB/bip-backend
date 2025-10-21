@@ -16,7 +16,7 @@ class DocumentResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id'          => $this->id,
+            'id'          => $this->hashed_id,
             'nom'         => $this->nom,
             'description' => $this->description,
             'type'        => $this->type,
@@ -37,12 +37,12 @@ class DocumentResource extends BaseApiResource
                         ->sortBy('ordre_affichage')
                 );
             }),
-            'forms'       => $this->buildOrderedElementsResource(),
+            /* 'forms'       => $this->buildOrderedElementsResource(),
             // Fichiers attachés au document
             'fichiers'    => $this->when($this->relationLoaded('fichiers') && $this->fichiers->count(), function() {
                 return $this->fichiers->map(function ($fichier) {
                     return [
-                        'id' => $fichier->id,
+                        'id' => $fichier->hashed_id,
                         'nom_original' => $fichier->nom_original,
                         'extension' => $fichier->extension,
                         'mime_type' => $fichier->mime_type,
@@ -57,7 +57,7 @@ class DocumentResource extends BaseApiResource
                     ];
                 });
             }),
-            'evaluation_configs' => $this->evaluation_configs
+            'evaluation_configs' => $this->evaluation_configs */
         ];
     }
 

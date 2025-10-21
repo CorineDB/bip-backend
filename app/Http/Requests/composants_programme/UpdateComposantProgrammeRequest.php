@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\composants_programme;
 
+use App\Models\TypeProgramme;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +11,7 @@ class UpdateComposantProgrammeRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
@@ -20,7 +22,7 @@ class UpdateComposantProgrammeRequest extends FormRequest
             'indice' => 'required|integer|min:1',
             'intitule'=> ['required', 'string', Rule::unique('composants_programme', 'intitule')->ignore($composantProgrammeId)->whereNull('deleted_at')],
 
-            'typeId' => ['required', Rule::exists('types_programme', 'id')->whereNull('deleted_at')],
+            'typeId' => ['required', new HashedExists(TypeProgramme::class)],
         ];
     }
 

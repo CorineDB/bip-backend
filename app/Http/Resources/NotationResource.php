@@ -16,10 +16,10 @@ class NotationResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'critere_id' => $this->when($this->critere_id, $this->critere_id) ,
-            'secteur_id' => $this->when($this->secteur_id, $this->secteur_id) ,
-            'categorie_critere_id' => $this->categorie_critere_id,
+            'id' => $this->hashed_id,
+            'critere_id' => $this->critere?->hashed_id,
+            'secteur_id' => $this->when($this->secteur, fn() => $this->secteur?->hashed_id ),
+            'categorie_critere_id' => $this->categorie_critere->hashed_id,
             'libelle' => $this->libelle,
             'valeur' => $this->valeur,
             'commentaire' => $this->commentaire

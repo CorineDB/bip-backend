@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EnumTypeChamp;
-use App\Helpers\SlugHelper;
+use App\Traits\HashableId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 
 class Champ extends Model
 {
-    use HasFactory, SoftDeletes/*, HasSecureIds*/;
+    use HasFactory, SoftDeletes, HashableId;
 
     /**
      * The table associated with the model.
@@ -126,6 +126,7 @@ class Champ extends Model
     public function evaluations()
     {
         return $this->belongsToMany(Evaluation::class, "evaluation_champs", "champId", "evaluationId")
+                    ->using(EvaluationChamp::class)
                     ->withPivot("note", "date_note", "commentaires")
                     ->withTimestamps();
     }

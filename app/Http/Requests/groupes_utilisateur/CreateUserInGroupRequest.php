@@ -9,7 +9,7 @@ class CreateUserInGroupRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array

@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HashableId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class UserPermissionScope extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HashableId;
 
     protected $table = 'user_permission_scope';
 

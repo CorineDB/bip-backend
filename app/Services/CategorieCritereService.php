@@ -6,7 +6,6 @@ use App\Helpers\SlugHelper;
 use Illuminate\Http\JsonResponse;
 use Exception;
 use App\Services\BaseService;
-use App\Services\Traits\CachableService;
 use App\Repositories\Contracts\BaseRepositoryInterface;
 use App\Repositories\Contracts\CategorieCritereRepositoryInterface;
 use App\Services\Contracts\CategorieCritereServiceInterface;
@@ -25,14 +24,7 @@ use Illuminate\Validation\ValidationException;
 
 class CategorieCritereService extends BaseService implements CategorieCritereServiceInterface
 {
-    //use CachableService;
-
     protected BaseRepositoryInterface $repository;
-
-    protected int $cacheTtl = 43200; // 12h - critères changent moins souvent
-    protected array $cacheTags = ['reference', 'categories_criteres'];
-    protected string $cachePrefix = 'bip';
-    protected bool $cacheEnabled = true;
 
     public function __construct(
         CategorieCritereRepositoryInterface $repository
@@ -44,6 +36,60 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
     {
         return CategorieCritereResource::class;
     }
+
+    /**
+     * Toutes les catégories de critères avec cache
+     */
+    /*public function all(): JsonResponse
+    {
+        try {
+            if ($this->cacheExists('all', [])) {
+                $cached = $this->cacheGet('all', [], function() {
+                    return null;
+                });
+                return response()->json($cached);
+            }
+
+            $responseData = [];
+            foreach ($this->repository->getModel()->cursor() as $item) {
+                $responseData[] = (new CategorieCritereResource($item))->resolve();
+            }
+
+            $this->cachePut('all', $responseData, []);
+
+            return response()->json($responseData);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }*/
+
+    /**
+     * Une catégorie de critère par ID avec cache
+     */
+    /*public function find(int|string $id): JsonResponse
+    {
+        try {
+            if ($this->cacheExists('find', ['id' => $id])) {
+                $cached = $this->cacheGet('find', ['id' => $id], function() {
+                    return null;
+                });
+                return response()->json($cached);
+            }
+
+            $item = $this->repository->findOrFail($id);
+            $responseData = (new CategorieCritereResource($item))->resolve();
+            $this->cachePut('find', $responseData, ['id' => $id]);
+
+            return response()->json($responseData);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Catégorie de critère non trouvée.',
+            ], 404);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }*/
 
     public function create(array $data): JsonResponse
     {
@@ -212,8 +258,9 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 ], 404);
             }
 
-            return (new $this->resourceClass($grille->load(['criteres.notations', 'notations', 'fichiers'])))
-                ->response();
+            return (new $this->resourceClass($grille->load(['criteres.notations', 'notations', 'fichiers'])))->response();
+
+            return response()->json($responseData);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -347,8 +394,9 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 ], 404);
             }
 
-            return (new $this->resourceClass($grille->load(['notations', 'fichiers'])))
-                ->response();
+            return (new $this->resourceClass($grille->load(['notations', 'fichiers'])))->response();
+
+            return response()->json($responseData);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -516,11 +564,13 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 ], 404);
             }
 
-            return response()->json([
+            $responseData = [
                 'success' => true,
                 'message' => 'Checklist des mesures d\'adaptation récupérée avec succès.',
-                'data' => new ChecklistMesuresAdaptationResource($checklistCategorie->load(['criteres.notations.secteur', 'fichiers']))
-            ]);
+                'data' => (new ChecklistMesuresAdaptationResource($checklistCategorie->load(['criteres.notations.secteur', 'fichiers'])))->resolve()
+            ];
+
+            return response()->json($responseData);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -563,12 +613,14 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 'fichiers'
             ]);
 
-            return response()->json([
+            $responseData = [
                 'success' => true,
                 'message' => 'Checklist des mesures d\'adaptation récupérée avec succès pour le secteur "' . $secteur->nom . '".',
-                'data' => new ChecklistMesuresAdaptationSecteurResource($checklistCategorie),
-                'secteur' => new SecteurResource($secteur)
-            ]);
+                'data' => (new ChecklistMesuresAdaptationSecteurResource($checklistCategorie))->resolve(),
+                'secteur' => (new SecteurResource($secteur))->resolve()
+            ];
+
+            return response()->json($responseData);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
@@ -721,8 +773,9 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 ], 404);
             }
 
-            return (new $this->resourceClass($grille->load(['criteres.notations', 'notations', 'fichiers'])))
-                ->response();
+            $responseData = (new $this->resourceClass($grille->load(['criteres.notations', 'notations', 'fichiers'])))->resolve();
+
+            return response()->json($responseData);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }

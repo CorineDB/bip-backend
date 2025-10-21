@@ -6,13 +6,14 @@ use App\Enums\PhasesIdee;
 use App\Enums\SousPhaseIdee;
 use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
+use App\Traits\HashableId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Projet extends Model
 {
-    use HasFactory, SoftDeletes/*, HasSecureIds*/;
+    use HasFactory, SoftDeletes, HashableId;
 
     /**
      * The table associated with the model.
@@ -95,6 +96,7 @@ class Projet extends Model
         'info_cabinet_etude_prefaisabilite',
         'info_cabinet_etude_faisabilite',
         'est_a_haut_risque',
+        'est_mou',
         'est_dur',
         'mesures_adaptation',
         'info_etude_prefaisabilite',
@@ -124,6 +126,7 @@ class Projet extends Model
         'est_a_haut_risque' => 'boolean',
         'est_ancien'=>'boolean',
         'est_dur' => 'boolean',
+        'est_mou' => 'boolean',
         'cout_estimatif_projet' => 'array',
         'ficheIdee' => 'array',
         'info_etude_prefaisabilite' => 'array',

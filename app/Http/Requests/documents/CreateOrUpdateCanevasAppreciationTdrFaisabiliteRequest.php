@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests\documents;
 
+use App\Models\Champ;
+use App\Models\ChampSection;
 use App\Models\Document;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class CreateOrUpdateCanevasAppreciationTdrFaisabiliteRequest extends FormRequest
 {
@@ -12,7 +14,7 @@ class CreateOrUpdateCanevasAppreciationTdrFaisabiliteRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function prepareForValidation()
@@ -142,14 +144,71 @@ class CreateOrUpdateCanevasAppreciationTdrFaisabiliteRequest extends FormRequest
                     }
                 }
             ],
-            'description' => 'nullable|string|max:65535',/*
-            'type' => ['required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
-            'categorieId'                       => 'required|exists:categories_document,id', */
+            'description' => 'nullable|string|max:65535',
             'options_notation'                  => 'required|array|min:2',
             'options_notation.*.libelle'        => 'required|string|max:255',
             'options_notation.*.appreciation'   => 'required|string|max:255',
             'options_notation.*.description'    => 'nullable|string|max:1000',
             'accept_text'                       => 'required|string|min:10',
+
+            // Validation de evaluation_configs - Configuration paramétrable des règles et algorithmes
+            'evaluation_configs'                                      => 'required|array',
+            'evaluation_configs.criteres_evaluation'                  => 'required|array',
+
+            // Configuration de base
+            'evaluation_configs.criteres_evaluation.commentaire_obligatoire' => 'nullable|boolean',
+            'evaluation_configs.criteres_evaluation.seuil_acceptation' => 'required|integer|min:0',
+
+            // Règles de décision paramétrables avec notifications intégrées
+            'evaluation_configs.criteres_evaluation.regles_decision'   => 'required|array',
+
+            // Règle PASSE
+            'evaluation_configs.criteres_evaluation.regles_decision.passe' => 'required|array',
+            'evaluation_configs.criteres_evaluation.regles_decision.passe.condition' => 'required|string|max:255',
+            'evaluation_configs.criteres_evaluation.regles_decision.passe.description' => 'required|string|max:1000',
+            'evaluation_configs.criteres_evaluation.regles_decision.passe.message' => 'required|string|max:500',
+            'evaluation_configs.criteres_evaluation.regles_decision.passe.statut_final' => 'required|string|max:100',
+            'evaluation_configs.criteres_evaluation.regles_decision.passe.notification' => 'required|array',
+            'evaluation_configs.criteres_evaluation.regles_decision.passe.notification.titre' => 'required|string|max:255',
+            'evaluation_configs.criteres_evaluation.regles_decision.passe.notification.message' => 'required|string|max:1000',
+            'evaluation_configs.criteres_evaluation.regles_decision.passe.notification.type' => 'required|string|in:success,info,warning,error',
+
+            // Règle RETOUR
+            'evaluation_configs.criteres_evaluation.regles_decision.retour' => 'required|array',
+            'evaluation_configs.criteres_evaluation.regles_decision.retour.condition' => 'required|string|max:255',
+            'evaluation_configs.criteres_evaluation.regles_decision.retour.description' => 'required|string|max:1000',
+            'evaluation_configs.criteres_evaluation.regles_decision.retour.message' => 'required|string|max:500',
+            'evaluation_configs.criteres_evaluation.regles_decision.retour.statut_final' => 'required|string|max:100',
+            'evaluation_configs.criteres_evaluation.regles_decision.retour.max_retour_allowed' => 'required|integer|min:0',
+            'evaluation_configs.criteres_evaluation.regles_decision.retour.notification' => 'required|array',
+            'evaluation_configs.criteres_evaluation.regles_decision.retour.notification.titre' => 'required|string|max:255',
+            'evaluation_configs.criteres_evaluation.regles_decision.retour.notification.message' => 'required|string|max:1000',
+            'evaluation_configs.criteres_evaluation.regles_decision.retour.notification.type' => 'required|string|in:success,info,warning,error',
+
+            // Règle NON ACCEPTE
+            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte' => 'required|array',
+            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.condition' => 'required|string|max:255',
+            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.description' => 'required|string|max:1000',
+            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.message' => 'required|string|max:500',
+            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.statut_final' => 'required|string|max:100',
+            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.triggers' => 'required|array',
+            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.notification' => 'required|array',
+            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.notification.titre' => 'required|string|max:255',
+            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.notification.message' => 'required|string|max:1000',
+            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.notification.type' => 'required|string|in:success,info,warning,error',
+
+            // Algorithme de décision paramétrable (étapes d'évaluation)
+            'evaluation_configs.criteres_evaluation.algorithme_decision' => 'required|array',
+            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes' => 'required|array',
+            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.ordre' => 'required|integer|min:1',
+            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.condition' => 'required|string|max:255',
+            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.description' => 'required|string|max:1000',
+            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.action_si_echec' => 'nullable|string|max:100',
+            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.action_si_respecte' => 'nullable|string|max:100',
+            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.action_si_depassement' => 'nullable|string|max:100',
+            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.seuil_max' => 'nullable|integer|min:0',
+            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.logique' => 'nullable|array',
+
             // Forms array - structure flexible avec validation récursive
             'forms' => 'required|array|min:1',
             'forms.*' => 'required|array',
@@ -176,7 +235,60 @@ class CreateOrUpdateCanevasAppreciationTdrFaisabiliteRequest extends FormRequest
 
             // Validation de l'ordre d'affichage unique par niveau
             $this->validateOrderPerLevel($validator);
+
+            // Validation de la cohérence entre options_notation et regles_decision
+            $this->validateEvaluationConfigsCoherence($validator);
         });
+    }
+
+    /**
+     * Valide la cohérence entre options_notation et regles_decision
+     */
+    private function validateEvaluationConfigsCoherence($validator)
+    {
+        // Récupérer les valeurs d'appreciation de options_notation
+        $optionsNotation = $this->input('options_notation', []);
+        $appreciations = collect($optionsNotation)->pluck('appreciation')->toArray();
+
+        // Vérifier si evaluation_configs.criteres_evaluation.regles_decision existe
+        $reglesDecision = $this->input('evaluation_configs.criteres_evaluation.regles_decision', []);
+
+        if (!empty($reglesDecision)) {
+            $reglesKeys = array_keys($reglesDecision);
+
+            // Vérifier que chaque appréciation du guide a une règle correspondante
+            foreach ($appreciations as $appreciation) {
+                if (!in_array($appreciation, $reglesKeys)) {
+                    $validator->errors()->add('evaluation_configs.criteres_evaluation.regles_decision',
+                        "La règle de décision pour l'appréciation '{$appreciation}' est manquante. " .
+                        "Chaque appréciation de options_notation doit avoir une règle de décision correspondante.");
+                }
+            }
+        }
+
+        // Validation de l'algorithme de décision
+        $algorithme = $this->input('evaluation_configs.criteres_evaluation.algorithme_decision.etapes', []);
+        if (!empty($algorithme)) {
+            // Vérifier que les actions référencent des règles valides
+            $actionsValides = array_merge($appreciations, ['check_final', 'check_next']);
+
+            foreach ($algorithme as $index => $etape) {
+                if (isset($etape['action_si_echec']) && !in_array($etape['action_si_echec'], $actionsValides)) {
+                    $validator->errors()->add("evaluation_configs.criteres_evaluation.algorithme_decision.etapes.{$index}.action_si_echec",
+                        "L'action '{$etape['action_si_echec']}' n'est pas valide. Utilisez une des appréciations définies: " . implode(', ', $appreciations));
+                }
+
+                if (isset($etape['action_si_respecte']) && !in_array($etape['action_si_respecte'], $actionsValides)) {
+                    $validator->errors()->add("evaluation_configs.criteres_evaluation.algorithme_decision.etapes.{$index}.action_si_respecte",
+                        "L'action '{$etape['action_si_respecte']}' n'est pas valide.");
+                }
+
+                if (isset($etape['action_si_depassement']) && !in_array($etape['action_si_depassement'], $actionsValides)) {
+                    $validator->errors()->add("evaluation_configs.criteres_evaluation.algorithme_decision.etapes.{$index}.action_si_depassement",
+                        "L'action '{$etape['action_si_depassement']}' n'est pas valide.");
+                }
+            }
+        }
     }
 
     /**
@@ -192,6 +304,21 @@ class CreateOrUpdateCanevasAppreciationTdrFaisabiliteRequest extends FormRequest
                 $validator->errors()->add("{$currentPath}.element_type",
                     'Le type d\'élément doit être "field" ou "section".');
                 continue;
+            }
+
+            // Validation de l'ID hashé si présent (pour les mises à jour)
+            if (isset($element['id'])) {
+                $idValidator = null;
+
+                if ($element['element_type'] === 'field') {
+                    $idValidator = new HashedExists(Champ::class);
+                } elseif ($element['element_type'] === 'section') {
+                    $idValidator = new HashedExists(ChampSection::class);
+                }
+
+                if ($idValidator && !$idValidator->passes("{$currentPath}.id", $element['id'])) {
+                    $validator->errors()->add("{$currentPath}.id", $idValidator->message());
+                }
             }
 
             // Validation de l'ordre d'affichage
@@ -245,10 +372,28 @@ class CreateOrUpdateCanevasAppreciationTdrFaisabiliteRequest extends FormRequest
 
         // L'attribut est déjà validé dans validateFormsStructure
 
-        // Type de champ obligatoire
+        // Type de champ obligatoire et doit être 'radio'
         if (!isset($element['type_champ']) || !is_string($element['type_champ'])) {
             $validator->errors()->add("{$path}.type_champ",
                 'Le type de champ est obligatoire.');
+        } elseif ($element['type_champ'] !== 'radio') {
+            $validator->errors()->add("{$path}.type_champ",
+                'Le type de champ doit être "radio" pour les canevas d\'appréciation.');
+        }
+
+        // Validation des IDs hashés si présents
+        if (isset($element['sectionId'])) {
+            $sectionIdValidator = new HashedExists(ChampSection::class);
+            if (!$sectionIdValidator->passes("{$path}.sectionId", $element['sectionId'])) {
+                $validator->errors()->add("{$path}.sectionId", $sectionIdValidator->message());
+            }
+        }
+
+        if (isset($element['documentId'])) {
+            $documentIdValidator = new HashedExists(Document::class);
+            if (!$documentIdValidator->passes("{$path}.documentId", $element['documentId'])) {
+                $validator->errors()->add("{$path}.documentId", $documentIdValidator->message());
+            }
         }
 
         // Meta options obligatoires
@@ -256,7 +401,7 @@ class CreateOrUpdateCanevasAppreciationTdrFaisabiliteRequest extends FormRequest
             $validator->errors()->add("{$path}.meta_options",
                 'Les options métadonnées sont obligatoires pour les champs.');
         } else {
-            $this->validateMetaOptions($element['meta_options'], $path, $validator);
+            $this->validateMetaOptions($element, $path, $validator);
         }
     }
 
@@ -270,17 +415,70 @@ class CreateOrUpdateCanevasAppreciationTdrFaisabiliteRequest extends FormRequest
             $validator->errors()->add("{$path}.intitule",
                 'L\'intitulé de la section est obligatoire et ne doit pas dépasser 255 caractères.');
         }
+
+        // Validation des IDs hashés si présents
+        if (isset($element['parentSectionId'])) {
+            $parentSectionIdValidator = new HashedExists(ChampSection::class);
+            if (!$parentSectionIdValidator->passes("{$path}.parentSectionId", $element['parentSectionId'])) {
+                $validator->errors()->add("{$path}.parentSectionId", $parentSectionIdValidator->message());
+            }
+        }
+
+        if (isset($element['documentId'])) {
+            $documentIdValidator = new HashedExists(Document::class);
+            if (!$documentIdValidator->passes("{$path}.documentId", $element['documentId'])) {
+                $validator->errors()->add("{$path}.documentId", $documentIdValidator->message());
+            }
+        }
     }
 
     /**
      * Valide les meta options d'un champ
      */
-    private function validateMetaOptions($metaOptions, $path, $validator)
+    private function validateMetaOptions($element, $path, $validator)
     {
+        $metaOptions = $element['meta_options'];
+        $typeChamp = $element['type_champ'] ?? null;
+
         // Configs obligatoire
         if (!isset($metaOptions['configs']) || !is_array($metaOptions['configs'])) {
             $validator->errors()->add("{$path}.meta_options.configs",
                 'La section configs est obligatoire dans les options métadonnées.');
+        } else {
+            // Validation spécifique pour les champs de type radio
+            if ($typeChamp === 'radio') {
+                if (!isset($metaOptions['configs']['options']) || !is_array($metaOptions['configs']['options'])) {
+                    $validator->errors()->add("{$path}.meta_options.configs.options",
+                        'La section options est obligatoire dans configs pour les champs de type radio.');
+                } elseif (empty($metaOptions['configs']['options'])) {
+                    $validator->errors()->add("{$path}.meta_options.configs.options",
+                        'La section options doit contenir au moins une option pour les champs de type radio.');
+                } else {
+                    // Vérifier que les options correspondent au options_notation
+                    $optionsNotation = $this->input('options_notation', []);
+                    $configOptions = $metaOptions['configs']['options'];
+
+                    // Créer des tableaux pour la comparaison
+                    $optionsAttendues = collect($optionsNotation)->map(function ($item) {
+                        return [
+                            'label' => $item['libelle'] ?? '',
+                            'value' => $item['appreciation'] ?? ''
+                        ];
+                    })->sortBy('value')->values()->toArray();
+
+                    $optionsFournies = collect($configOptions)->map(function ($item) {
+                        return [
+                            'label' => $item['label'] ?? '',
+                            'value' => $item['value'] ?? ''
+                        ];
+                    })->sortBy('value')->values()->toArray();
+
+                    if ($optionsAttendues !== $optionsFournies) {
+                        $validator->errors()->add("{$path}.meta_options.configs.options",
+                            'Les options de configs.options doivent correspondre exactement aux entrées du options_notation (appreciation → value, libelle → label).');
+                    }
+                }
+            }
         }
 
         // Conditions obligatoire
@@ -305,6 +503,32 @@ class CreateOrUpdateCanevasAppreciationTdrFaisabiliteRequest extends FormRequest
         if (!isset($metaOptions['validations_rules']) || !is_array($metaOptions['validations_rules'])) {
             $validator->errors()->add("{$path}.meta_options.validations_rules",
                 'La section validations_rules est obligatoire dans les options métadonnées.');
+        } else {
+            // Validation spécifique pour les champs de type radio
+            if ($typeChamp === 'radio') {
+                if (!isset($metaOptions['validations_rules']['in']) || !is_array($metaOptions['validations_rules']['in'])) {
+                    $validator->errors()->add("{$path}.meta_options.validations_rules.in",
+                        'La règle "in" est obligatoire dans validations_rules pour les champs de type radio.');
+                } elseif (empty($metaOptions['validations_rules']['in'])) {
+                    $validator->errors()->add("{$path}.meta_options.validations_rules.in",
+                        'La règle "in" doit contenir au moins une valeur pour les champs de type radio.');
+                } else {
+                    // Vérifier que les valeurs "in" correspondent aux appreciations du options_notation
+                    $optionsNotation = $this->input('options_notation', []);
+                    $appreciationsAttendues = collect($optionsNotation)->pluck('appreciation')->toArray();
+                    $valeursIn = $metaOptions['validations_rules']['in'];
+
+                    // Trier les deux tableaux pour la comparaison
+                    sort($appreciationsAttendues);
+                    sort($valeursIn);
+
+                    if ($appreciationsAttendues !== $valeursIn) {
+                        $validator->errors()->add("{$path}.meta_options.validations_rules.in",
+                            'Les valeurs de la règle "in" doivent correspondre exactement aux appréciations définies dans options_notation: [' .
+                            implode(', ', $appreciationsAttendues) . ']');
+                    }
+                }
+            }
         }
     }
 

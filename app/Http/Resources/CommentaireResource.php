@@ -16,9 +16,9 @@ class CommentaireResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->hashed_id,
             'commentaire' => $this->commentaire,
-            'commentaire_id' => $this->commentaire_id,
+            'commentaire_id' => $this->parent?->hashed_id,
             'date' => $this->date?->format('Y-m-d H:i:s'),
 
             // Informations sur le commentateur
@@ -35,18 +35,14 @@ class CommentaireResource extends BaseApiResource
             'reponses' => $this->when($this->relationLoaded('enfants'), function() {
                 return $this->enfants->map(function($enfant) {
                     return [
-                        'id' => $enfant->id,
+                        'id' => $enfant->hashed_id,
                         'commentaire' => $enfant->commentaire,
                         'date' => $enfant->date?->format('Y-m-d H:i:s'),
-                        'commentateur' => $enfant->commentateur ? [
-                            'id' => $enfant->commentateur->id,
-                            'name' => $enfant->commentateur->name,
-                            'email' => $enfant->commentateur->email,
-                        ] : null,
+                        'commentateur' => $enfant->commentateur ? new UserResource($enfant->commentateur) : null,
                         'fichiers' => $enfant->relationLoaded('fichiers') ? FichierResource::collection($enfant->fichiers) : [],
                         'nb_fichiers' => $enfant->relationLoaded('fichiers') ? $enfant->fichiers->count() : 0,
                         'parent' => [
-                            'id' => $this->id,
+                            'id' => $this->hashed_id,
                             'commentaire' => $this->commentaire,
                         ],
                         'created_at' => $enfant->created_at?->format('Y-m-d H:i:s'),
@@ -58,7 +54,7 @@ class CommentaireResource extends BaseApiResource
             // Parent (si c'est une réponse)
             'parent' => $this->when($this->parent !== null, function() {
                 return $this->parent ? [
-                    'id' => $this->parent->id,
+                    'id' => $this->parent->hashed_id,
                     'commentaire' => $this->parent->commentaire,
                     'date' => $this->parent->date?->format('Y-m-d H:i:s'),
                     'commentateur' => $this->parent->commentateur ? new UserResource($this->parent->commentateur->load("role")) : null,
@@ -68,7 +64,7 @@ class CommentaireResource extends BaseApiResource
             // Ressource commentée
             'ressource_commentee' => [
                 'type' => class_basename($this->commentaireable_type),
-                'id' => $this->commentaireable_id,
+                'id' => $this->commentaireable->hashed_id,
             ],
 
             // Timestamps

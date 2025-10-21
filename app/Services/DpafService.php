@@ -109,7 +109,7 @@ class DpafService extends BaseService implements DpafServiceInterface
                 //Envoyer les identifiants de connexion à l'utilisateur via son email
                 //dispatch(new SendEmailJob($dpaf->user, "confirmation-compte", $password))->delay(now()->addSeconds(15));
 
-                dispatch(new SendEmailJob($dpaf->user, "confirmation-de-compte"))->delay(now()->addSeconds(15));
+                //dispatch(new SendEmailJob($dpaf->user, "confirmation-de-compte"))->delay(now()->addSeconds(15));
 
                 dispatch(new SendEmailJob($dpaf->user, "confirmation-compte", $password))->delay(now()->addMinutes(1));
 
@@ -125,7 +125,7 @@ class DpafService extends BaseService implements DpafServiceInterface
 
             //LogActivity::addToLog("Enrégistrement", $message, get_class($uniteeDeGestion), $uniteeDeGestion->id);
 
-            return response()->json(['statut' => 'success', 'message' => "Compte dpaf créé", 'data' => $dpaf, 'statutCode' => Response::HTTP_OK], Response::HTTP_OK);
+            return response()->json(['statut' => 'success', 'message' => "Compte dpaf créé", 'data' => new DpafResource($dpaf), 'statutCode' => Response::HTTP_OK], Response::HTTP_OK);
 
         } catch (\Throwable $th) {
 
@@ -170,7 +170,7 @@ class DpafService extends BaseService implements DpafServiceInterface
 
             //LogActivity::addToLog("Modification", $message, get_class($uniteeDeGestion), $uniteeDeGestion->id);
 
-            return response()->json(['statut' => 'success', 'message' => "Compte dpaf modifié", 'data' => $dpaf, 'statutCode' => Response::HTTP_OK], Response::HTTP_OK);
+            return response()->json(['statut' => 'success', 'message' => "Compte dpaf modifié", 'data' => new DpafResource($dpaf), 'statutCode' => Response::HTTP_OK], Response::HTTP_OK);
 
         } catch (\Throwable $th) {
 

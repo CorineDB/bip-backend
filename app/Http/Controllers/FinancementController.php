@@ -48,9 +48,9 @@ class FinancementController extends Controller
         return $this->service->types_de_financement();
     }
 
-    public function natures_type_de_financement($idTypeFinancement): JsonResponse
+    public function natures_type_de_financement($idType): JsonResponse
     {
-        return $this->service->natures_type_de_financement($idTypeFinancement);
+        return $this->service->natures_type_de_financement($idType);
     }
 
     public function natures_de_financement(): JsonResponse

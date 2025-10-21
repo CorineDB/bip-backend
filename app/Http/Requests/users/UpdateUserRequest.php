@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\users;
 
+use App\Models\Role;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,25 +11,29 @@ class UpdateUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
     {
-        $userId = $this->route('user') ? (is_string($this->route('user')) ? $this->route('user') : ($this->route('user')->id)) : $this->route('id');
+        $userId = $this->route('user') ? ((is_string($this->route('user')) || is_numeric($this->route('user'))) ? $this->route('user') : ($this->route('user')->id)) : $this->route('id');
 
         $profilable = auth()->user()->profilable;
         $isRequired = $profilable ? (((get_class($profilable) == "App\\Models\\Dpaf") || (get_class($profilable) == "App\\Models\\dgpd")) && !auth()->user()->personne->organismeId) : false;
 
 
         return [
-            'roleId' => ['required', Rule::exists('roles', 'id')->where("roleable_id", $profilable ? $profilable->id : null)->where("roleable_type", $profilable ? get_class($profilable) : null)->whereNull('deleted_at')],
+            'roleId' => ['nullable', new HashedExists(Role::class, 'id', function($query) use ($profilable) {
+                $query->where("roleable_id", $profilable ? $profilable->id : null)
+                      ->where("roleable_type", $profilable ? get_class($profilable) : null)
+                      ->whereNull('deleted_at');
+            })],
 
             // Attributs de personne
             'personne.nom' => 'required|string|max:255',
             'personne.prenom' => 'required|string|max:255',
             'personne.poste' => 'nullable|string|max:255',
-            //'personne.organismeId'=> ["sometimes", Rule::requiredIf($isRequired), Rule::exists('organisations', 'id')->whereNull('deleted_at')]
+            //'personne.organismeId'=> ["sometimes", Rule::requiredIf($isRequired), new HashedExists(Organisation::class)]
         ];
     }
 

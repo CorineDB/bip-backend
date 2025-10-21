@@ -96,4 +96,62 @@ class VillageService extends BaseService implements VillageServiceInterface
             return $this->errorResponse($e);
         }
     }*/
+
+    /**
+     * Filtre et recherche les villages avec pagination
+     */
+    public function filter(array $filters): JsonResponse
+    {
+        try {
+            $query = $this->repository->getModel()
+                ->with(['arrondissement.commune.departement']);
+
+            // Recherche par nom ou code
+            if (!empty($filters['search'])) {
+                $search = $filters['search'];
+                $query->where(function ($q) use ($search) {
+                    $q->where('nom', 'LIKE', "%{$search}%")
+                      ->orWhere('code', 'LIKE', "%{$search}%");
+                });
+            }
+
+            // Filtre par arrondissement
+            if (!empty($filters['arrondissement_id'])) {
+                $query->where('arrondissementId', $filters['arrondissement_id']);
+            }
+
+            // Filtre par commune
+            if (!empty($filters['commune_id'])) {
+                $query->whereHas('arrondissement', function ($q) use ($filters) {
+                    $q->where('communeId', $filters['commune_id']);
+                });
+            }
+
+            // Filtre par département
+            if (!empty($filters['departement_id'])) {
+                $query->whereHas('arrondissement.commune', function ($q) use ($filters) {
+                    $q->where('departementId', $filters['departement_id']);
+                });
+            }
+
+            // Pagination
+            $perPage = $filters['per_page'] ?? 50;
+            $paginated = $query->orderBy('nom')->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => VillageResource::collection($paginated->items()),
+                'pagination' => [
+                    'current_page' => $paginated->currentPage(),
+                    'last_page' => $paginated->lastPage(),
+                    'per_page' => $paginated->perPage(),
+                    'total' => $paginated->total(),
+                    'from' => $paginated->firstItem(),
+                    'to' => $paginated->lastItem(),
+                ],
+            ]);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
 }

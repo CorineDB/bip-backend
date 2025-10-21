@@ -8,6 +8,7 @@ use App\Http\Requests\projets\evaluation_ex_ante\ValiderRapportFinalRequest;
 use App\Http\Requests\tdrs\SoumettreTdrsRequest;
 use App\Http\Requests\tdrs\EvaluerTdrsRequest;
 use App\Http\Requests\tdrs\SoumettreRapportPrefaisabiliteRequest;
+use App\Http\Requests\tdrs\ValidationEtudePrefaisabiliteRequest;
 use App\Http\Requests\tdrs\ValiderTdrsRequest;
 use App\Http\Requests\tdrs_prefaisabilite\StoreTdrPrefaisabiliteRequest;
 use App\Http\Requests\tdrs_prefaisabilite\UpdateTdrPrefaisabiliteRequest;
@@ -125,6 +126,7 @@ class TdrPrefaisabiliteController extends Controller
      */
     public function soumettreRapportPrefaisabilite(SoumettreRapportPrefaisabiliteRequest $request, $projetId): JsonResponse
     {
+        //throw new \Exception(json_encode($request->all()));
         return $this->service->soumettreRapportPrefaisabilite($projetId, $request->all());
     }
 
@@ -139,7 +141,7 @@ class TdrPrefaisabiliteController extends Controller
     /**
      * Valider l'étude de préfaisabilité (SFD-013)
      */
-    public function validerEtudePrefaisabilite(Request $request, $projetId): JsonResponse
+    public function validerEtudePrefaisabilite(ValidationEtudePrefaisabiliteRequest $request, $projetId): JsonResponse
     {
         return $this->service->validerEtudePrefaisabilite($projetId, $request->all());
     }

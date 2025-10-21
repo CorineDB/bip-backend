@@ -11,12 +11,28 @@ class UpdateSecteurRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
+    }
+
+    protected function prepareForValidation(): void
+    {
+        // Unhash route parameter
+        $secteurId = $this->route('secteur');
+        if ($secteurId && is_string($secteurId) && !is_numeric($secteurId)) {
+            $secteurId = Secteur::unhashId($secteurId);
+            $this->merge(['_secteur_id' => $secteurId]);
+        }
+
+        // Unhash secteurId field (parent) if it's a hashed string
+        if ($this->has('secteurId') && is_string($this->input('secteurId')) && !is_numeric($this->input('secteurId'))) {
+            $unhashedId = Secteur::unhashId($this->input('secteurId'));
+            $this->merge(['secteurId' => $unhashedId]);
+        }
     }
 
     public function rules(): array
     {
-        $secteurId = $this->route('secteur') ? (is_string($this->route('secteur')) ? $this->route('secteur') : ($this->route('secteur')->id)) : $this->route('id');
+        $secteurId = $this->input('_secteur_id') ?? $this->route('secteur');
 
         return [
             'nom' => ['required', 'string', Rule::unique('secteurs', 'nom')->ignore($secteurId)->whereNull('deleted_at')],

@@ -3,10 +3,10 @@
 namespace App\Rules;
 
 use Closure;
-use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
-class HashedExists implements ValidationRule
+class HashedExists implements Rule
 {
     protected string $table;
     protected string $column;
@@ -37,13 +37,17 @@ class HashedExists implements ValidationRule
     }
 
     /**
-     * Valider l'attribut
+     * Determine if the validation rule passes.
+     *
+     * @param  string  $attribute
+     * @param  mixed  $value
+     * @return bool
      */
-    public function validate(string $attribute, mixed $value, Closure $fail): void
+    public function passes($attribute, $value)
     {
-        if (empty($value)) {
-            $fail("Le champ {$attribute} est requis.");
-            return;
+        // Si la valeur est vide, on considère que c'est valide (pour gérer 'nullable')
+        if (empty($value) || $value === null || $value === '') {
+            return true;
         }
 
         // Si c'est déjà un entier, pas besoin de déhasher
@@ -70,17 +74,11 @@ class HashedExists implements ValidationRule
             }
 
             if ($unhashedId === null) {
-                $fail("Le {$attribute} fourni n'est pas valide.");
-                return;
+                return false;
             }
 
-            // Modifier directement la valeur dans la Request
-            $request = request();
-            if ($request) {
-                $request->merge([
-                    $attribute => $unhashedId
-                ]);
-            }
+            // Modifier directement la valeur dans la Request avec gestion des attributs imbriqués
+            $this->setNestedAttributeValue($attribute, $unhashedId);
         }
 
         // Vérifier que l'ID existe dans la table
@@ -88,12 +86,24 @@ class HashedExists implements ValidationRule
 
         // Appliquer le callback where si fourni
         if ($this->whereCallback) {
-            $query = call_user_func($this->whereCallback, $query);
+            $result = call_user_func($this->whereCallback, $query);
+            // Si le callback retourne une query, l'utiliser, sinon garder la query actuelle
+            if ($result !== null) {
+                $query = $result;
+            }
         }
 
-        if (!$query->exists()) {
-            $fail("Le {$attribute} sélectionné n'existe pas.");
-        }
+        return $query->exists();
+    }
+
+    /**
+     * Get the validation error message.
+     *
+     * @return string
+     */
+    public function message()
+    {
+        return "Le :attribute sélectionné n'existe pas.";
     }
 
     /**
@@ -111,5 +121,55 @@ class HashedExists implements ValidationRule
     public static function make(string $table, string $column = 'id'): self
     {
         return new self($table, $column);
+    }
+
+    /**
+     * Set the value for a nested attribute in the request data.
+     * Gère les structures imbriquées y compris les tableaux avec indices numériques.
+     *
+     * @param string $attribute
+     * @param mixed $value
+     */
+    private function setNestedAttributeValue($attribute, $value)
+    {
+        // Split the attribute by '.' to get the individual levels
+        $keys = explode('.', $attribute);
+
+        // Obtenir le request actuel
+        $request = request();
+
+        // Get the full request data and store it in a variable
+        $input = $request->all();
+
+        // Traverse through the keys and create the nested array path
+        $current = &$input; // Reference to the root of the array
+        $lastKey = array_pop($keys); // Extraire la dernière clé
+
+        // Parcourir tous les niveaux sauf le dernier
+        foreach ($keys as $key) {
+            // Si c'est un indice numérique ou une clé qui n'existe pas encore
+            if (is_numeric($key)) {
+                $key = (int) $key;
+            }
+
+            // Si la clé n'existe pas ou n'est pas un tableau, l'initialiser
+            if (!isset($current[$key]) || !is_array($current[$key])) {
+                $current[$key] = [];
+            }
+
+            // Descendre d'un niveau dans la structure par référence
+            $current = &$current[$key];
+        }
+
+        // Gérer la dernière clé
+        if (is_numeric($lastKey)) {
+            $lastKey = (int) $lastKey;
+        }
+
+        // Définir la valeur finale
+        $current[$lastKey] = $value;
+
+        // Remplacer complètement les données du request
+        $request->replace($input);
     }
 }

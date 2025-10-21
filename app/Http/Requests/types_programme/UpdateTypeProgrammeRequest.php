@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\types_programme;
 
+use App\Models\TypeProgramme;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,14 +11,14 @@ class UpdateTypeProgrammeRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
     {
         // Récupère l'ID du type_programme en fonction de la route
         $typeProgrammeId = $this->route('type_programme')
-            ? (is_string($this->route('type_programme'))
+            ? ((is_string($this->route('type_programme')) || is_numeric($this->route('type_programme')))
                 ? $this->route('type_programme')
                 : $this->route('type_programme')->id)
             : $this->route('id');
@@ -36,8 +38,7 @@ class UpdateTypeProgrammeRequest extends FormRequest
             ],
             'typeId' => [
                 'required_if:type,composant-programme',
-                Rule::exists('types_programme', 'id')
-                    ->whereNull('deleted_at'),
+                new HashedExists(TypeProgramme::class),
                 "different:$typeProgrammeId" // ne peut pas être son propre parent
             ],
         ];

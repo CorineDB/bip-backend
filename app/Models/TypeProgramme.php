@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HashableId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +10,7 @@ use Illuminate\Support\Str;
 
 class TypeProgramme extends Model
 {
-    use HasFactory, SoftDeletes/*, HasSecureIds*/;
+    use HasFactory, SoftDeletes, HashableId;
 
     /**
      * The table associated with the model.

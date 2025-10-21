@@ -6,13 +6,14 @@ use App\Enums\PhasesIdee;
 use App\Enums\SousPhaseIdee;
 use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
+use App\Traits\HashableId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class IdeeProjet extends Model
 {
-    use HasFactory, SoftDeletes/*, HasSecureIds*/;
+    use HasFactory, SoftDeletes, HashableId;
 
     /**
      * The table associated with the model.
@@ -402,6 +403,18 @@ class IdeeProjet extends Model
     public function evaluationsAMC()
     {
         return $this->morphMany(Evaluation::class, 'projetable')->where("type", "amc");
+    }
+
+    /**
+     * Relation pour charger l'historique de toutes les évaluations terminées
+     * (pertinence, climatique, amc)
+     */
+    public function historiqueEvaluations(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')
+            ->where('statut', 1)
+            ->whereNotNull('date_fin_evaluation')
+            ->orderByDesc('created_at');
     }
 
     public function fichiers()

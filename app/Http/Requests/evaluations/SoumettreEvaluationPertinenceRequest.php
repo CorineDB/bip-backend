@@ -3,8 +3,11 @@
 namespace App\Http\Requests\evaluations;
 
 use App\Models\CategorieCritere;
+use App\Models\Critere;
 use App\Models\Evaluation;
 use App\Models\EvaluationCritere;
+use App\Models\Notation;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,7 +18,7 @@ class SoumettreEvaluationPertinenceRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     /**
@@ -43,15 +46,15 @@ class SoumettreEvaluationPertinenceRequest extends FormRequest
         return [
             'reponses' => ["required", "array", "min:1"],
             'reponses.*.critere_id' => [
-                'required',
-                Rule::exists('criteres', 'id')->whereNull('deleted_at'),
+                'required', new HashedExists(Critere::class),
+                //Rule::exists('criteres', 'id')->whereNull('deleted_at'),
                 function ($attribute, $value, $fail) use ($ideeProjetId) {
                     $this->validateCritereInEvaluation($attribute, $value, $fail, $ideeProjetId);
                 }
             ],
             'reponses.*.notation_id' => [
-                'required',
-                Rule::exists('notations', 'id')->whereNull('deleted_at'),
+                'required',new HashedExists(Notation::class),
+                //Rule::exists('notations', 'id')->whereNull('deleted_at'),
                 function ($attribute, $value, $fail) {
                     $this->validateNotationForCritere($attribute, $value, $fail);
                 }
@@ -100,7 +103,7 @@ class SoumettreEvaluationPertinenceRequest extends FormRequest
 
         // Vérifier que le critère appartient à la bonne catégorie pour l'évaluation de pertinence
         if ($this->categorieCritere) {
-            $critere = \App\Models\Critere::find($critereId);
+            $critere = \App\Models\Critere::findByHashedId($critereId);
 
             if (($critere && (($critere->categorie_critere_id !== $this->categorieCritere->id)))) {
                 $fail('Ce critère n\'appartient pas à la catégorie d\'évaluation de pertinence.');
@@ -128,7 +131,7 @@ class SoumettreEvaluationPertinenceRequest extends FormRequest
         }
 
         // Récupérer le critère et sa catégorie
-        $critere = \App\Models\Critere::find($critereId);
+        $critere = \App\Models\Critere::findByHashedId($critereId);
         if (!$critere) {
             return; // Le critère sera validé par sa propre règle
         }

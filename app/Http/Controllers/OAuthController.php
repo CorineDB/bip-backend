@@ -454,4 +454,77 @@ class OAuthController extends Controller
         return $this->oauthService->refresh_token($request);
     }
 
+    /**
+     * Gère le callback de l'Active Directory
+     *
+     * @OA\Get(
+     *     path="/api/passport-auths/ad-callback",
+     *     tags={"Auth - Active Directory"},
+     *     summary="Callback Active Directory",
+     *     description="Gère le callback de l'Active Directory après authentification de l'utilisateur",
+     *     @OA\Parameter(
+     *         name="code",
+     *         in="query",
+     *         description="Code d'autorisation retourné par l'AD",
+     *         required=true,
+     *         @OA\Schema(type="string", example="abc123def456")
+     *     ),
+     *     @OA\Parameter(
+     *         name="state",
+     *         in="query",
+     *         description="État encodé contenant les informations utilisateur",
+     *         required=true,
+     *         @OA\Schema(type="string", example="eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20ifQ==")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Authentification et activation réussies",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="statut", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Compte activé et authentification réussie via Active Directory"),
+     *             @OA\Property(property="compte_nouvellement_active", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="access_token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."),
+     *                 @OA\Property(property="token_type", type="string", example="Bearer"),
+     *                 @OA\Property(property="expires_in", type="integer", example=86400)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Code ou state invalide",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="statut", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="State invalide ou manquant")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Utilisateur non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="statut", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Utilisateur non trouvé dans le système BIP")
+     *         )
+     *     )
+     * )
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function adCallback(Request $request)
+    {
+        $code = $request->query('code');
+        $state = $request->query('state');
+
+        if (!$code || !$state) {
+            return response()->json([
+                'statut' => 'error',
+                'message' => 'Code ou state manquant',
+                'errors' => []
+            ], 400);
+        }
+
+        return $this->oauthService->handleProviderCallback($code, $state);
+    }
+
 }

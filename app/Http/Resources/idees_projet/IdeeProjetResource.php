@@ -23,7 +23,7 @@ class IdeeProjetResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->hashed_id,
             // Identifiants et métadonnées
             'identifiant_bip' => $this->identifiant_bip,
             'identifiant_sigfp' => $this->identifiant_sigfp,
@@ -39,7 +39,7 @@ class IdeeProjetResource extends BaseApiResource
             'est_soumise' => $this->est_soumise,
             'est_un_projet' => $this->projet ? true : false,
             'projetId' => $this->when($this->projet, function(){
-                return $this->projet->id;
+                return $this->projet->hashed_id;
             }),
 
             // Descriptions et contenus principaux
@@ -100,9 +100,10 @@ class IdeeProjetResource extends BaseApiResource
 
             'champs' => $this->champs->map(function ($champ) {
                 return [
-                    'id' => $champ->id,
+                    'id' => $champ->hashed_id,
                     'attribut' => $champ->attribut,
-                    'value' => $champ->pivot->valeur
+                    'value' => $champ->pivot->valeur,
+                    'pivot_id' => $champ->pivot->hashed_id
                 ];
             }),
             // Relations principales (loaded when needed)
@@ -120,9 +121,9 @@ class IdeeProjetResource extends BaseApiResource
 
             'composants' => $this->composants->map(function ($composant) {
                     return [
-                        'id' => $composant->id,
+                        'id' => $composant->hashed_id,
                         'intitule' => $composant->intitule,
-                        'type_programme' => $composant->typeProgramme->id ?? null
+                        'type_programme' => $composant->typeProgramme->hashed_id ?? null
                     ];
             }),
 
@@ -131,7 +132,7 @@ class IdeeProjetResource extends BaseApiResource
             'types_intervention' => $this->whenLoaded('typesIntervention', function () {
                 return $this->typesIntervention->map(function ($type) {
                     return [
-                        'id' => $type->id,
+                        'id' => $type->hashed_id,
                         'nom' => $type->nom
                     ];
                 });

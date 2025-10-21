@@ -16,8 +16,11 @@ class UnhashRouteParameters
     protected array $hashableParameters = [
         'id' => null, // null = déhasher sans vérification de modèle
         'arrondissement' => \App\Models\Arrondissement::class,
+        'arrondissementId' => \App\Models\Arrondissement::class,
         'village' => \App\Models\Village::class,
+        'villageId' => \App\Models\Village::class,
         'commune' => \App\Models\Commune::class,
+        'communeId' => \App\Models\Commune::class,
         'ideeProjetId' => \App\Models\IdeeProjet::class,
         'idee_projet' => \App\Models\IdeeProjet::class,
         'projetId' => \App\Models\Projet::class,
@@ -37,9 +40,12 @@ class UnhashRouteParameters
         'secteur' => \App\Models\Secteur::class,
         'financement' => \App\Models\Financement::class,
         'idNature' => \App\Models\Financement::class,
+        'idType' => \App\Models\Financement::class,
         'noteId' => \App\Models\NoteConceptuelle::class,
         'evaluationId' => \App\Models\Evaluation::class,
         'organisation' => \App\Models\Organisation::class,
+        'organisationId' => \App\Models\Organisation::class,
+        'ministereId' => \App\Models\Organisation::class,
         'permission' => \App\Models\Permission::class,
         'role' => \App\Models\Role::class,
         'userId' => \App\Models\User::class,
@@ -49,10 +55,8 @@ class UnhashRouteParameters
         'type_intervention' => \App\Models\TypeIntervention::class,
         'type_programme' => \App\Models\TypeProgramme::class,
         'dpaf' => \App\Models\Dpaf::class,
+        'dgpd' => \App\Models\Dgpd::class,
         'groupe_utilisateur' => \App\Models\GroupeUtilisateur::class,
-
-
-
         'user_id' => \App\Models\User::class,
         'fichier_id' => \App\Models\Fichier::class,
         'dossier_id' => \App\Models\Dossier::class,
@@ -74,6 +78,7 @@ class UnhashRouteParameters
         $parameters = $route->parameters();
 
         foreach ($parameters as $key => $value) {
+
             // Vérifier si ce paramètre doit être déhashé
             if ($this->shouldUnhash($key) && is_string($value)) {
                 $unhashedValue = $this->unhashParameter($key, $value);

@@ -3,7 +3,11 @@
 namespace App\Http\Requests\documents\canevas_redaction_note_conceptuelle;
 
 use App\Enums\EnumTypeChamp;
+use App\Models\CategorieDocument;
+use App\Models\Champ;
+use App\Models\ChampSection;
 use App\Models\Document;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -13,7 +17,7 @@ class CreateOrUpdateCanevasRedactionNoteConceptuelleRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
 
@@ -46,14 +50,14 @@ class CreateOrUpdateCanevasRedactionNoteConceptuelleRequest extends FormRequest
     {
         $keyField = null;
         $elementType = $element['element_type'] ?? 'inconnu';
-        
+
         // Pour les fields, on utilise 'attribut', pour les sections 'key'
         if ($elementType === 'field' && isset($element['attribut'])) {
             $keyField = $element['attribut'];
         } elseif ($elementType === 'section' && isset($element['key'])) {
             $keyField = $element['key'];
         }
-        
+
         if ($keyField) {
             if (in_array($keyField, $keys)) {
                 if ($elementType === 'field') {
@@ -147,7 +151,7 @@ class CreateOrUpdateCanevasRedactionNoteConceptuelleRequest extends FormRequest
             ],
             'description' => 'nullable|string|max:65535',
             'type' => ['required', 'string', Rule::in(['document', 'formulaire', 'grille', 'checklist'])],
-            'categorieId' => 'required|integer|exists:categories_document,id',
+            'categorieId' => ['required', new HashedExists(CategorieDocument::class)],
 
             // Forms array - structure flexible avec validation récursive
             'forms' => 'required|array|min:1',
@@ -190,6 +194,21 @@ class CreateOrUpdateCanevasRedactionNoteConceptuelleRequest extends FormRequest
                 $validator->errors()->add("{$currentPath}.element_type",
                     'Le type d\'élément doit être "field" ou "section".');
                 continue;
+            }
+
+            // Validation de l'ID hashé si présent (pour les mises à jour)
+            if (isset($element['id'])) {
+                $idValidator = null;
+
+                if ($element['element_type'] === 'field') {
+                    $idValidator = new HashedExists(Champ::class);
+                } elseif ($element['element_type'] === 'section') {
+                    $idValidator = new HashedExists(ChampSection::class);
+                }
+
+                if ($idValidator && !$idValidator->passes("{$currentPath}.id", $element['id'])) {
+                    $validator->errors()->add("{$currentPath}.id", $idValidator->message());
+                }
             }
 
             // Validation de l'ordre d'affichage
@@ -249,6 +268,21 @@ class CreateOrUpdateCanevasRedactionNoteConceptuelleRequest extends FormRequest
                 'Le type de champ est obligatoire.');
         }
 
+        // Validation des IDs hashés si présents
+        if (isset($element['sectionId'])) {
+            $sectionIdValidator = new HashedExists(ChampSection::class);
+            if (!$sectionIdValidator->passes("{$path}.sectionId", $element['sectionId'])) {
+                $validator->errors()->add("{$path}.sectionId", $sectionIdValidator->message());
+            }
+        }
+
+        if (isset($element['documentId'])) {
+            $documentIdValidator = new HashedExists(Document::class);
+            if (!$documentIdValidator->passes("{$path}.documentId", $element['documentId'])) {
+                $validator->errors()->add("{$path}.documentId", $documentIdValidator->message());
+            }
+        }
+
         // Meta options obligatoires
         if (!isset($element['meta_options']) || !is_array($element['meta_options'])) {
             $validator->errors()->add("{$path}.meta_options",
@@ -267,6 +301,21 @@ class CreateOrUpdateCanevasRedactionNoteConceptuelleRequest extends FormRequest
         if (!isset($element['intitule']) || !is_string($element['intitule']) || strlen($element['intitule']) > 255) {
             $validator->errors()->add("{$path}.intitule",
                 'L\'intitulé de la section est obligatoire et ne doit pas dépasser 255 caractères.');
+        }
+
+        // Validation des IDs hashés si présents
+        if (isset($element['parentSectionId'])) {
+            $parentSectionIdValidator = new HashedExists(ChampSection::class);
+            if (!$parentSectionIdValidator->passes("{$path}.parentSectionId", $element['parentSectionId'])) {
+                $validator->errors()->add("{$path}.parentSectionId", $parentSectionIdValidator->message());
+            }
+        }
+
+        if (isset($element['documentId'])) {
+            $documentIdValidator = new HashedExists(Document::class);
+            if (!$documentIdValidator->passes("{$path}.documentId", $element['documentId'])) {
+                $validator->errors()->add("{$path}.documentId", $documentIdValidator->message());
+            }
         }
     }
 

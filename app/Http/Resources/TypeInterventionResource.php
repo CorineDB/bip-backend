@@ -16,11 +16,11 @@ class TypeInterventionResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
+            "id" => $this->hashed_id,
             "type_intervention"=> $this->type_intervention,
             "secteur"=> $this->when($this->secteur, function() {
                 return [
-                    "id" => $this->secteur->id,
+                    "id" => $this->secteur->hashed_id,
                     "nom"=> $this->secteur->nom,
                     "type"=> $this->secteur->type
                 ];

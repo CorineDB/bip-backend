@@ -144,4 +144,64 @@ class NotificationService extends BaseService implements NotificationServiceInte
     {
         return $this->deleteNotification($id);
     }
+
+    public function getUnreadNotifications(int $userId): JsonResponse
+    {
+        try {
+            $notifications = $this->repository->getUnreadNotifications($userId);
+            return NotificationResource::collection($notifications)->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function getReadNotifications(int $userId): JsonResponse
+    {
+        try {
+            $notifications = $this->repository->getReadNotifications($userId);
+            return NotificationResource::collection($notifications)->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function getNotificationsByType(int $userId, string $type): JsonResponse
+    {
+        try {
+            $notifications = $this->repository->getNotificationsByType($userId, $type);
+            return NotificationResource::collection($notifications)->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function deleteAllReadNotifications(int $userId): JsonResponse
+    {
+        try {
+            $count = $this->repository->deleteAllReadNotifications($userId);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'All read notifications deleted successfully.',
+                'deleted_count' => $count,
+            ]);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function deleteAllNotifications(int $userId): JsonResponse
+    {
+        try {
+            $count = $this->repository->deleteAllNotifications($userId);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'All notifications deleted successfully.',
+                'deleted_count' => $count,
+            ]);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
 }

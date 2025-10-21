@@ -4,6 +4,7 @@ namespace App\Http\Requests\organisations;
 
 use App\Enums\EnumTypeOrganisation;
 use App\Models\Organisation;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -11,12 +12,22 @@ class UpdateOrganisationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $organisationId = $this->route('organisation');
+
+        if ($organisationId && is_string($organisationId) && !is_numeric($organisationId)) {
+            $organisationId = Organisation::unhashId($organisationId);
+            $this->merge(['_organisation_id' => $organisationId]);
+        }
     }
 
     public function rules(): array
     {
-        $organisationId = $this->route('organisation') ? (is_string($this->route('organisation')) ? $this->route('organisation') : ($this->route('organisation')->id)) : $this->route('id');
+        $organisationId = $this->input('_organisation_id') ?? $this->route('organisation');
 
         $personneId = Organisation::find($organisationId)?->personnes()->whereHas("user", function ($query) {
             $query->where("type", "organisation");
@@ -27,7 +38,7 @@ class UpdateOrganisationRequest extends FormRequest
 
             'description' => 'nullable|string',
             'type' => ['required', Rule::in(EnumTypeOrganisation::values())],
-            'parentId' => [Rule::requiredIf($this->type != 'ministere'), Rule::exists('organisations', 'id')->whereNull('deleted_at'), 'different:' . $organisationId],
+            'parentId' => [Rule::requiredIf($this->type != 'ministere'), new HashedExists(Organisation::class), 'different:' . $organisationId],
 
             "admin" => ["sometimes", "array", "min:1"],
             'admin.email' => ["sometimes", "email", "max:255", Rule::unique('users', 'email')->ignore($personneId)->whereNull('deleted_at')],

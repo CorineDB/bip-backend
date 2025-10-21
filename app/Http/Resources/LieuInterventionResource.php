@@ -16,7 +16,7 @@ class LieuInterventionResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
+            "id" => $this->hashed_id,
             "village"=> $this->village ? new VillageResource($this->village) : null,
             "arrondissement"=> $this->arrondissement ? new ArrondissementResource($this->arrondissement) : null,
             "commune"=> $this->commune ? new CommuneResource($this->commune) : null,

@@ -21,6 +21,7 @@ use App\Models\Dgpd;
 use App\Models\Dpaf;
 use App\Models\Organisation;
 use App\Models\User;
+use App\Models\Evaluation;
 use Illuminate\Support\Facades\Auth;
 
 class IdeeProjetService extends BaseService implements IdeeProjetServiceInterface
@@ -737,7 +738,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
         // Structure de base avec les informations de la fiche
         $ficheIdeeStructure = [
-            'document_id' => $ficheIdee->id,
+            'document_id' => $ficheIdee->hashed_id,
             'document_nom' => $ficheIdee->nom ?? 'Fiche Idée de Projet',
             'document_version' => $ficheIdee->version ?? '1.0',
             'date_creation' => now()->toISOString(),
@@ -751,7 +752,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
         // Organiser les sections avec champs vides
         foreach ($ficheIdee->sections as $section) {
             $sectionData = [
-                'id' => $section->id,
+                'id' => $section->hashed_id,
                 'nom' => $section->nom,
                 'ordre' => $section->ordre_affichage,
                 'champs' => []
@@ -759,7 +760,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             foreach ($section->champs as $champ) {
                 $champData = [
-                    'id' => $champ->id,
+                    'id' => $champ->hashed_id,
                     'nom' => $champ->nom,
                     'label' => $champ->label,
                     'type_champ' => $champ->type_champ,
@@ -774,7 +775,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                 $sectionData['champs'][] = $champData;
 
                 // Ajouter à l'index global des valeurs (vides)
-                $ficheIdeeStructure['champs_values'][$champ->id] = [
+                $ficheIdeeStructure['champs_values'][$champ->hashed_id] = [
                     'attribut' => $champ->attribut,
                     'valeur' => null,
                     'valeur_attribut' => null,
@@ -796,7 +797,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             foreach ($ficheIdee->champs as $champ) {
                 $champData = [
-                    'id' => $champ->id,
+                    'id' => $champ->hashed_id,
                     'nom' => $champ->nom,
                     'label' => $champ->label,
                     'type_champ' => $champ->type_champ,
@@ -974,7 +975,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             $ficheIdee["formData"] = $idee->champs->map(function ($champ) {
                 return [
-                    'id' => $champ->id,
+                    'id' => $champ->hashed_id,
                     'attribut' => $champ->attribut,
                     'value' => $champ->pivot->valeur
                 ];
@@ -986,16 +987,29 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             $idee->refresh();
 
-            DB::commit();
-
             // Déclencher l'event seulement si l'idée passe de non-soumise à soumise
+            $nouvelEtatSoumise = $idee->est_soumise;
+
             if (
-                isset($data['est_soumise']) &&
-                $data['est_soumise'] === true &&
-                $ancienEtatSoumise !== true
+                $ancienEtatSoumise !== $nouvelEtatSoumise &&
+                $nouvelEtatSoumise === true
             ) {
                 event(new IdeeProjetCree($idee));
+
+                // Ne pas créer l'évaluation si est_coherent est false
+                if ($idee->est_coherent === false) {
+                    // Créer automatiquement une évaluation de pertinence
+                    $this->creerEvaluationPertinence($idee);
+                }
+
+                // Créer automatiquement une évaluation climatique si est_coherent est true et statut est BROUILLON
+                if ($idee->est_coherent === true && $idee->statut == StatutIdee::BROUILLON) {
+                    $this->creerEvaluationClimatique($idee);
+                }
             }
+
+
+            DB::commit();
 
             return (new $this->resourceClass($idee))
                 ->additional(['message' => 'Idée de projet sauvegardée avec succès.'])
@@ -1042,4 +1056,84 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             return $this->errorResponse($e);
         }
     }
+
+    /**
+     * Créer automatiquement une évaluation de pertinence lors de la soumission d'une idée de projet
+     * Ne crée l'évaluation que si est_coherent n'est pas false
+     *
+     * @param IdeeProjet $ideeProjet L'idée de projet soumise
+     * @return void
+     */
+    protected function creerEvaluationPertinence(IdeeProjet $ideeProjet): void
+    {
+        // Réinitialiser le score de pertinence à 0
+        $ideeProjet->score_pertinence = 0;
+        $ideeProjet->save();
+
+        // Vérifier s'il existe une évaluation de pertinence déjà effectuée (terminée)
+        $evaluationPrecedente = Evaluation::where('projetable_id', $ideeProjet->id)
+            ->where('projetable_type', get_class($ideeProjet))
+            ->where('statut', 1)
+            ->where('type_evaluation', 'pertinence')
+            ->whereNotNull('date_fin_evaluation')
+            ->orderByDesc('created_at')
+            ->first();
+
+        // Créer la nouvelle évaluation
+        $evaluationData = [
+            'projetable_id' => $ideeProjet->id,
+            'projetable_type' => get_class($ideeProjet),
+            'type_evaluation' => 'pertinence',
+            'statut' => -1,
+            'date_debut_evaluation' => now(),
+            'evaluation' => [],
+            'resultats_evaluation' => []
+        ];
+
+        // Ajouter l'id de l'évaluation précédente si elle existe
+        if ($evaluationPrecedente) {
+            $evaluationData['id_evaluation'] = $evaluationPrecedente->id;
+        }
+
+        Evaluation::create($evaluationData);
+    }
+
+    /**
+     * Créer une nouvelle évaluation climatique pour une idée de projet
+     * Appelée uniquement si le statut est BROUILLON et est_soumise === true
+     */
+    protected function creerEvaluationClimatique(IdeeProjet $ideeProjet): void
+    {
+        // Réinitialiser le score climatique à 0
+        $ideeProjet->score_climatique = 0;
+        $ideeProjet->save();
+
+        // Vérifier s'il existe une évaluation climatique déjà effectuée (terminée)
+        $evaluationPrecedente = Evaluation::where('projetable_id', $ideeProjet->id)
+            ->where('projetable_type', get_class($ideeProjet))
+            ->where('statut', 1)
+            ->where('type_evaluation', 'climatique')
+            ->whereNotNull('date_fin_evaluation')
+            ->orderByDesc('created_at')
+            ->first();
+
+        // Créer la nouvelle évaluation
+        $evaluationData = [
+            'projetable_id' => $ideeProjet->id,
+            'projetable_type' => get_class($ideeProjet),
+            'type_evaluation' => 'climatique',
+            'statut' => -1,
+            'date_debut_evaluation' => now(),
+            'evaluation' => [],
+            'resultats_evaluation' => []
+        ];
+
+        // Ajouter l'id de l'évaluation précédente si elle existe
+        if ($evaluationPrecedente) {
+            $evaluationData['id_evaluation'] = $evaluationPrecedente->id;
+        }
+
+        Evaluation::create($evaluationData);
+    }
+
 }

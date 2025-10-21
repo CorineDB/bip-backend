@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\roles;
 
+use App\Models\Role;
+use App\Models\Permission;
+use App\Rules\HashedExistsMultiple;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,12 +12,22 @@ class UpdateRoleRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $roleId = $this->route('role');
+
+        if ($roleId && is_string($roleId) && !is_numeric($roleId)) {
+            $roleId = Role::unhashId($roleId);
+            $this->merge(['_role_id' => $roleId]);
+        }
     }
 
     public function rules(): array
     {
-        $roleId = $this->route('role') ? (is_string($this->route('role')) ? $this->route('role') : ($this->route('role')->id)) : $this->route('id');
+        $roleId = $this->input('_role_id') ?? $this->route('role');
 
         $profilable = auth()->user()->profilable;
 
@@ -25,8 +38,7 @@ class UpdateRoleRequest extends FormRequest
                 ->where('roleable_id', $profilable->id);
             })->whereNull('deleted_at')],
             'description' => 'nullable|string|max:1000',
-            'permissions' => ['sometimes', 'array', 'min:1'],
-            'permissions.*' => ['required', 'distinct', Rule::exists('permissions', 'id')->whereNull('deleted_at')],
+            'permissions' => ['sometimes', 'array', 'min:1', new HashedExistsMultiple(Permission::class)],
         ];
     }
 

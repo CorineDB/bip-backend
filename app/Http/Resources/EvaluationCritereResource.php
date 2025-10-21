@@ -16,7 +16,7 @@ class EvaluationCritereResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->hashed_id,
             'note' => $this->note,
             'commentaire' => $this->commentaire,
             'is_completed' => $this->isCompleted(),
@@ -27,7 +27,7 @@ class EvaluationCritereResource extends BaseApiResource
             // Relations
             'evaluateur' => $this->whenLoaded('evaluateur', function () {
                 return [
-                    'id' => $this->evaluateur->id,
+                    'id' => $this->evaluateur->hashed_id,
                     'nom_complet' => $this->evaluateur->personne->nom . " " . $this->evaluateur->personne->prenom,
                     'email' => $this->evaluateur->email,
                 ];
@@ -35,7 +35,7 @@ class EvaluationCritereResource extends BaseApiResource
 
             'critere' => $this->whenLoaded('critere', function () {
                 return [
-                    'id' => $this->critere->id,
+                    'id' => $this->critere->hashed_id,
                     'intitule' => $this->critere->intitule,
                     'ponderation' => $this->critere->ponderation,
                     'ponderation_pct' => $this->critere->ponderation . '%',
@@ -46,7 +46,7 @@ class EvaluationCritereResource extends BaseApiResource
 
             'notation' => $this->whenLoaded('notation', function () {
                 return [
-                    'id' => $this->notation->id,
+                    'id' => $this->notation->hashed_id,
                     'libelle' => $this->notation->libelle,
                     'valeur' => $this->notation->valeur,
                     'commentaire' => $this->notation->commentaire,
@@ -55,7 +55,7 @@ class EvaluationCritereResource extends BaseApiResource
 
             'categorie_critere' => $this->whenLoaded('categorieCritere', function () {
                 return [
-                    'id' => $this->categorieCritere->id,
+                    'id' => $this->categorieCritere->hashed_id,
                     'nom' => $this->categorieCritere->nom,
                     'description' => $this->categorieCritere->description,
                 ];
@@ -63,7 +63,7 @@ class EvaluationCritereResource extends BaseApiResource
 
             'evaluation' => $this->whenLoaded('evaluation', function () {
                 return [
-                    'id' => $this->evaluation->id,
+                    'id' => $this->evaluation->hashed_id,
                     'type_evaluation' => $this->evaluation->type_evaluation,
                     'date_debut_evaluation' => $this->evaluation->date_debut_evaluation,
                 ];

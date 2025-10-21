@@ -16,7 +16,7 @@ class ProgrammeResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
+            "id" => $this->hashed_id,
             "slug"=> $this->slug,
             "type_programme"=> $this->type_programme
         ];

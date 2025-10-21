@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HashableId;
 use App\Enums\EnumTypeOrganisation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class Organisation extends Model
 {
-    use HasFactory, SoftDeletes/*, HasSecureIds*/;
+    use HasFactory, SoftDeletes, HashableId;
 
     /**
      * The table associated with the model.

@@ -2,9 +2,18 @@
 
 namespace App\Http\Requests\idees_projet;
 
+use App\Models\Arrondissement;
+use App\Models\CategorieProjet;
+use App\Models\Cible;
+use App\Models\Commune;
 use App\Models\ComposantProgramme;
+use App\Models\Departement;
 use App\Models\Document;
 use App\Models\Financement;
+use App\Models\Odd;
+use App\Models\Secteur;
+use App\Models\Village;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -17,7 +26,7 @@ class StoreIdeeProjetRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     /**
@@ -267,43 +276,56 @@ class StoreIdeeProjetRequest extends FormRequest
             'parties_prenantes.*' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:65535'],
             'public_cible' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:65535'],
 
-            'categorieId' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", Rule::exists('categories_projet', 'id')->whereNull('deleted_at')],
-            'secteurId' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", Rule::exists('secteurs', 'id')->where("type", 'sous-secteur')->whereNull('deleted_at')],
+            'categorieId' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", new HashedExists(CategorieProjet::class) /*Rule::exists('categories_projet', 'id')->whereNull('deleted_at')*/],
+            'secteurId' => [
+                $isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable",
+                new HashedExists(Secteur::class),
+                /*Rule::exists('secteurs', 'id')->where("type", 'sous-secteur')->whereNull('deleted_at')*/
+                /* function ($attribute, $value, $fail) {
+                    $exists = Secteur::findByHashedId('id', $value)->where("type", 'sous-secteur')->whereNull('deleted_at')
+                        ->exists();
+                    if (!$exists) {
+                        $fail('Le Sous-secteur est inconnu');
+                    }
+                } */
+            ],
             'odds' => $isSubmissionMode ? [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'array', 'min:1'] : ['nullable', 'array'],
             'odds.*' => [
                 Rule::requiredIf($isSubmissionMode),
-                Rule::exists('odds', 'id')->whereNull('deleted_at'),
+                new HashedExists(Odd::class),
+
             ],
             'cibles' => $isSubmissionMode ? [Rule::requiredIf($isSubmissionMode), 'array', 'min:1'] : ['nullable', 'array'],
             'cibles.*' => [
                 'required',
-                Rule::exists('cibles', 'id')->whereNull('deleted_at'),
+                new HashedExists(Cible::class),
             ],
             'departements' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['array', 'min:0'],
             'departements.*' => [
                 'required',
-                Rule::exists('departements', 'id')->whereNull("deleted_at")
+                new HashedExists(Departement::class),
             ],
             'communes' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['array', 'min:0'],
             'communes.*' => [
                 'required',
-                Rule::exists('communes', 'id')->whereNull("deleted_at")
+                new HashedExists(Commune::class),
             ],
             'arrondissements' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['array', 'min:0'],
             'arrondissements.*' => [
                 'required',
-                Rule::exists('arrondissements', 'id')->whereNull("deleted_at")
+                new HashedExists(Arrondissement::class),
             ],
             'villages' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['array', 'min:0'],
             'villages.*' => [
                 'required',
-                Rule::exists('villages', 'id')->whereNull("deleted_at")
+                new HashedExists(Village::class),
             ],
             'orientations_strategiques' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array', 'min:0'],
             'orientations_strategiques.*' => [
                 'required',
-                function ($attribute, $value, $fail) {
-                    $exists = ComposantProgramme::where('id', $value)
+                new HashedExists(ComposantProgramme::class),
+                /*function ($attribute, $value, $fail) {
+                    $exists = ComposantProgramme::findByHashedId('id', $value)
                         ->whereHas('typeProgramme', function ($query) {
                             $query->where('slug', 'orientation-strategique-pnd');
                         })
@@ -312,13 +334,14 @@ class StoreIdeeProjetRequest extends FormRequest
                     if (!$exists) {
                         $fail('Orientation strategique inconnu');
                     }
-                }
+                }*/
             ],
             'objectifs_strategiques' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array', 'min:0'],
             'objectifs_strategiques.*' => [
                 'required',
-                function ($attribute, $value, $fail) {
-                    $exists = ComposantProgramme::where('id', $value)
+                new HashedExists(ComposantProgramme::class),
+                /*function ($attribute, $value, $fail) {
+                    $exists = ComposantProgramme::findByHashedId('id', $value)
                         ->whereHas('typeProgramme', function ($query) {
                             $query->where('slug', 'objectif-strategique-pnd');
                         })
@@ -327,12 +350,12 @@ class StoreIdeeProjetRequest extends FormRequest
                     if (!$exists) {
                         $fail('Objectif strategique inconnu');
                     }
-                }
+                }*/
             ],
             'resultats_strategiques' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array', 'min:0'],
             'resultats_strategiques.*' => [
-                'required',
-                function ($attribute, $value, $fail) {
+                'required', new HashedExists(ComposantProgramme::class),
+                /*function ($attribute, $value, $fail) {
                     $exists = ComposantProgramme::where('id', $value)
                         ->whereHas('typeProgramme', function ($query) {
                             $query->where('slug', 'resultats-strategique-pnd');
@@ -342,25 +365,27 @@ class StoreIdeeProjetRequest extends FormRequest
                     if (!$exists) {
                         $fail('Resultats strategique inconnu');
                     }
-                }
+                }*/
             ],
 
             'sources_financement' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array', 'min:0'],
             'sources_financement.*' => [
                 'required',
-                function ($attribute, $value, $fail) {
+                new HashedExists(ComposantProgramme::class),
+                /* function ($attribute, $value, $fail) {
                     $exists = Financement::where('id', $value)->where('type', 'source')
                         ->exists();
 
                     if (!$exists) {
                         $fail('La source de financement inconnu');
                     }
-                }
+                } */
             ],
             'axes_pag' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array', 'min:0'],
             'axes_pag.*' => [
                 'required',
-                function ($attribute, $value, $fail) {
+                new HashedExists(ComposantProgramme::class),
+                /*function ($attribute, $value, $fail) {
                     $exists = ComposantProgramme::where('id', $value)
                         ->whereHas('typeProgramme', function ($query) {
                             $query->where('slug', 'axe-pag');
@@ -370,12 +395,13 @@ class StoreIdeeProjetRequest extends FormRequest
                     if (!$exists) {
                         $fail('Axe du pag connu');
                     }
-                }
+                }*/
             ],
             'actions_pag' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array', 'min:0'],
             'actions_pag.*' => [
                 'required',
-                function ($attribute, $value, $fail) {
+                new HashedExists(ComposantProgramme::class),
+                /*function ($attribute, $value, $fail) {
                     $exists = ComposantProgramme::where('id', $value)
                         ->whereHas('typeProgramme', function ($query) {
                             $query->where('slug', 'action-pag');
@@ -385,12 +411,13 @@ class StoreIdeeProjetRequest extends FormRequest
                     if (!$exists) {
                         $fail('Action du pag connu');
                     }
-                }
+                }*/
             ],
             'piliers_pag' => $isSubmissionMode ? ['required', 'array', 'min:1'] : ['nullable', 'array', 'min:0'],
             'piliers_pag.*' => [
                 'required',
-                function ($attribute, $value, $fail) {
+                new HashedExists(ComposantProgramme::class),
+                /*function ($attribute, $value, $fail) {
                     $exists = ComposantProgramme::where('id', $value)
                         ->whereHas('typeProgramme', function ($query) {
                             $query->where('slug', 'pilier-pag');
@@ -400,7 +427,7 @@ class StoreIdeeProjetRequest extends FormRequest
                     if (!$exists) {
                         $fail('Pilier du pag connu');
                     }
-                }
+                }*/
             ],
         ];
 

@@ -15,13 +15,13 @@ class ChampSectionResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id'               => $this->id,
+            'id'               => $this->hashed_id,
             'key'              => $this->slug,
             'intitule'         => $this->intitule,
             'description'      => $this->description,
             'ordre_affichage'  => $this->ordre_affichage,
             'type'             => $this->type,
-            'parentSectionId'  => $this->parentSectionId,
+            'parentSectionId'  => $this->parentSection?->hashed_id,
             // Champs triés par ordre d'affichage
             'champs'    => $this->when($this->champs->count(), function() {
                 return ChampResource::collection(

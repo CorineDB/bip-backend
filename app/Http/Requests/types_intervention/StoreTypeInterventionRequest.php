@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\types_intervention;
 
+use App\Models\Secteur;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +11,7 @@ class StoreTypeInterventionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
@@ -17,7 +19,7 @@ class StoreTypeInterventionRequest extends FormRequest
         return [
             'type_intervention'=> ['required', 'string', 'max:65535', Rule::unique('types_intervention', 'type_intervention')->whereNull('deleted_at')],
 
-            'secteurId' => ['required', Rule::exists('secteurs', 'id')->whereNull('deleted_at')],
+            'secteurId' => ['required', new HashedExists(Secteur::class)],
         ];
     }
 

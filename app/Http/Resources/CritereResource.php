@@ -16,8 +16,8 @@ class CritereResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'categorie_critere_id' => $this->categorie_critere_id,
+            'id' => $this->hashed_id,
+            'categorie_critere_id' => $this->categorie_critere?->hashed_id,
             'intitule' => $this->intitule,
             'ponderation' => $this->ponderation,
             'commentaire' => $this->commentaire,

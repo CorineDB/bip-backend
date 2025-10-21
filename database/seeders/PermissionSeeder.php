@@ -82,9 +82,11 @@ class PermissionSeeder extends Seeder
 
             "creer-le-canevas-de-la-fiche-idee-de-projet", "modifier-le-canevas-de-la-fiche-idee-de-projet", "consulter-le-canevas-de-la-fiche-idee-de-projet", "remplir-le-canevas-de-la-fiche-idee-de-projet", "telecharger-la-fiche-synthese-une-idee-de-projet",
 
-            "creer-la-grille-d-analyse-climatique-d-une-idee-de-projet", "modifier-la-grille-d-analyse-climatique-d-une-idee-de-projet", "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet", "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet", "effectuer-evaluation-climatique-idee-projet", "acceder-au-tableau-de-bord-climatique", "valider-le-score-d-analyse-climatique-interne-d-une-idee-de-projet", "valider-une-idee-de-projet-en-interne",
+            "creer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet", "modifier-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet", "consulter-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet", "imprimer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet", "effectuer-evaluation-pertinence-idee-projet", "valider-le-score-de-pertinence-d-une-idee-de-projet", "relancer-l-evaluation-de-pertinence-d-une-idee-de-projet", "acceder-au-tableau-de-bord-de-pertinence", "exporter-le-resultats-de-l-analyse-d-une-idee-de-projet", "commenter-le-resultats-de-l-analyse-d-une-idee-de-projet",
 
-            "creer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet", "modifier-la-grille-d-analyse-multi-critere-d-une-idee-de-projet", "consulter-la-grille-d-analyse-multi-critere-d-une-idee-de-projet", "imprimer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet", "effectuer-l-analyse-climatique-d-une-idee-de-projet", "acceder-au-tableau-d-amc", "effectuer-l-amc-d-une-idee-de-projet", "valider-une-idee-de-projet-a-projet", "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+            "creer-la-grille-d-analyse-climatique-d-une-idee-de-projet", "modifier-la-grille-d-analyse-climatique-d-une-idee-de-projet", "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet", "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet", "effectuer-evaluation-climatique-idee-projet", "acceder-au-tableau-de-bord-climatique", "valider-le-score-d-analyse-climatique-interne-d-une-idee-de-projet", "valider-une-idee-de-projet-en-interne", "exporter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet", "commenter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
+
+            "creer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet", "modifier-la-grille-d-analyse-multi-critere-d-une-idee-de-projet", "consulter-la-grille-d-analyse-multi-critere-d-une-idee-de-projet", "imprimer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet", "effectuer-l-analyse-climatique-d-une-idee-de-projet", "acceder-au-tableau-d-amc", "effectuer-l-amc-d-une-idee-de-projet", "valider-une-idee-de-projet-a-projet", "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet", "commenter-le-resultats-de-l-amc-d-une-idee-de-projet",
 
             // Gestion les notes conceptuelle
             "gerer-les-notes-conceptuelle", "voir-la-liste-des-notes-conceptuelle", "creer-une-note-conceptuelle", "rediger-une-note-conceptuelle", "modifier-une-note-conceptuelle", "supprimer-une-note-conceptuelle", "commenter-une-note-conceptuelle", "voir-la-liste-des-commentaires-d-une-note-conceptuelle", "imprimer-une-note-conceptuelle", "televerser-une-note-conceptuelle", "attacher-des-documents-relatifs-a-une-note-conceptuelle", "voir-les-documents-relatifs-a-une-note-conceptuelle", "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
@@ -93,8 +95,12 @@ class PermissionSeeder extends Seeder
 
             "creer-l-outil-d-analyse-d-une-note-conceptuelle", "modifier-l-outil-d-analyse-d-une-note-conceptuelle", "consulter-l-outil-d-analyse-d-une-note-conceptuelle", "imprimer-l-outil-d-analyse-d-une-note-conceptuelle",
 
+            // FAISABILITE PRELIMINAIRE
+            "soumettre-un-rapport-de-faisabilite-preliminaire","modifier-un-rapport-de-faisabilite-preliminaire", "supprimer-un-rapport-de-faisabilite-preliminaire", "telecharger-un-rapport-de-faisabilite-preliminaire", "commenter-un-rapport-de-faisabilite-preliminaire", "valider-une-etude-de-prefaisabilite", "gerer-les-rapports-de-faisabilite-preliminaire", "voir-la-liste-des-rapports-de-faisabilite-preliminaire",
+
+
             // TDRs
-            "soumettre-un-tdr-de-prefaisabilite", "voir-la-liste-des-tdrs-de-prefaisabilite", "attacher-un-fichier-a-un-tdr-de-prefaisabilite", "supprimer-un-tdr-de-prefaisabilite", "apprecier-un-tdr-de-prefaisabilite", "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-prefaisabilite", "telecharger-un-fichier-complementaire-d-un-tdr-de-prefaisabilite",
+            "soumettre-un-tdr-de-prefaisabilite", "voir-la-liste-des-tdrs-de-prefaisabilite", "attacher-un-fichier-a-un-tdr-de-prefaisabilite", "supprimer-un-tdr-de-prefaisabilite", "apprecier-un-tdr-de-prefaisabilite", "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-prefaisabilite", "telecharger-un-fichier-complementaire-d-un-tdr-de-prefaisabilite", "voir-details-de-l-appreciation-un-tdr-de-prefaisabilite", "exporter-l-appreciation-d-un-tdr-de-prefaisabilite", "commenter-l-appreciation-d-un-tdr-de-prefaisabilite",
             "soumettre-un-rapport-de-prefaisabilite","modifier-un-rapport-de-prefaisabilite", "supprimer-un-rapport-de-prefaisabilite", "telecharger-un-rapport-de-prefaisabilite", "valider-une-etude-de-prefaisabilite", "gerer-les-rapports-de-prefaisabilite", "voir-la-liste-des-rapports-de-prefaisabilite",
 
             "soumettre-un-tdr-de-faisabilite", "voir-la-liste-des-tdrs-de-faisabilite", "attacher-un-fichier-a-un-tdr-de-faisabilite", "supprimer-un-tdr-de-faisabilite", "apprecier-un-tdr-de-faisabilite", "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite", "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite",
@@ -270,7 +276,7 @@ class PermissionSeeder extends Seeder
                 "soumettre-un-tdr-de-faisabilite", "voir-la-liste-des-tdrs-de-faisabilite", "attacher-un-fichier-a-un-tdr-de-faisabilite", "supprimer-un-tdr-de-faisabilite", "apprecier-un-tdr-de-faisabilite", "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite", "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite",
                 "soumettre-un-rapport-de-faisabilite","modifier-un-rapport-de-faisabilite", "supprimer-un-rapport-de-faisabilite", "telecharger-un-rapport-de-faisabilite", "valider-une-etude-de-faisabilite", "gerer-les-rapports-de-faisabilite", "voir-la-liste-des-rapports-de-faisabilite",
 
-                "soumettre-un-rapport-d-evaluation-ex-ante","modifier-un-rapport-d-evaluation-ex-ante", "supprimer-un-rapport-d-evaluation-ex-ante", "telecharger-un-rapport-d-evaluation-ex-ante", "valider-un-rapport-evaluation-ex-ante", "gerer-les-rapports-d-evaluation-ex-ante", "voir-la-liste-des-rapports-d-evaluation-ex-ante", "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante",
+                "telecharger-un-rapport-d-evaluation-ex-ante", "valider-un-rapport-evaluation-ex-ante", "gerer-les-rapports-d-evaluation-ex-ante", "voir-la-liste-des-rapports-d-evaluation-ex-ante", "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante",
 
                 "consulter-le-canevas-d-appreciation-d-un-tdr", "imprimer-le-canevas-d-appreciation-d-un-tdr",
 
@@ -342,7 +348,7 @@ class PermissionSeeder extends Seeder
                 "soumettre-un-tdr-de-faisabilite", "voir-la-liste-des-tdrs-de-faisabilite", "attacher-un-fichier-a-un-tdr-de-faisabilite", "supprimer-un-tdr-de-faisabilite", "apprecier-un-tdr-de-faisabilite", "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite", "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite",
                 "soumettre-un-rapport-de-faisabilite","modifier-un-rapport-de-faisabilite", "supprimer-un-rapport-de-faisabilite", "telecharger-un-rapport-de-faisabilite", "valider-une-etude-de-faisabilite", "gerer-les-rapports-de-faisabilite", "voir-la-liste-des-rapports-de-faisabilite",
 
-                "soumettre-un-rapport-d-evaluation-ex-ante","modifier-un-rapport-d-evaluation-ex-ante", "supprimer-un-rapport-d-evaluation-ex-ante", "telecharger-un-rapport-d-evaluation-ex-ante", "valider-un-rapport-evaluation-ex-ante", "gerer-les-rapports-d-evaluation-ex-ante", "voir-la-liste-des-rapports-d-evaluation-ex-ante", "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante",
+                "soumettre-un-rapport-d-evaluation-ex-ante","modifier-un-rapport-d-evaluation-ex-ante", "supprimer-un-rapport-d-evaluation-ex-ante", "telecharger-un-rapport-d-evaluation-ex-ante", "gerer-les-rapports-d-evaluation-ex-ante", "voir-la-liste-des-rapports-d-evaluation-ex-ante", "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante",
 
                 "consulter-le-canevas-d-appreciation-d-un-tdr", "imprimer-le-canevas-d-appreciation-d-un-tdr",
 
@@ -387,7 +393,7 @@ class PermissionSeeder extends Seeder
             "nom" => "Admin",
             "prenom" => "Admin",
             "poste" => "Administrateur general"
-            
+
         ]);
 
         // Supprimer les anciens utilisateurs et créer les nouveaux

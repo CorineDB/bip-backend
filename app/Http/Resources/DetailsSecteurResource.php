@@ -16,7 +16,7 @@ class DetailsSecteurResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
+            "id" => $this->hashed_id,
             "nom"=> $this->nom,
             "type"=> $this->type,
             "secteurs"=> $this->when($this->type->value == "grand-secteur", function(){

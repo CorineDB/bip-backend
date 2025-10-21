@@ -2,21 +2,24 @@
 
 namespace App\Http\Requests\groupes_utilisateur;
 
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\User;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\User;
 
 class UpdateGroupeUtilisateurRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
     {
         $groupeId = $this->route('groupe_utilisateur')
-            ? (is_string($this->route('groupe_utilisateur'))
+            ? ((is_string($this->route('groupe_utilisateur')) || is_numeric($this->route('groupe_utilisateur')))
                 ? $this->route('groupe_utilisateur')
                 : $this->route('groupe_utilisateur')->id)
             : $this->route('id');
@@ -40,25 +43,30 @@ class UpdateGroupeUtilisateurRequest extends FormRequest
             'permissions.*' => [
                 'required',
                 'distinct',
-                Rule::exists('permissions', 'id')->whereNull('deleted_at')
+                new HashedExists(Permission::class, 'id', function($query) {
+                    $query->whereNull('deleted_at');
+                })
             ],
 
             // Rôles
             'roles' => 'nullable|array|min:1',
             'roles.*' => [
-                Rule::exists('roles', 'id')
-                    ->when($profilable, function ($query) use ($profilable) {
+                new HashedExists(Role::class, 'id', function($query) use ($profilable) {
+                    if ($profilable) {
                         $query->where('roleable_type', get_class($profilable))
                               ->where('roleable_id', $profilable->id);
-                    })
-                    ->whereNull('deleted_at')
+                    }
+                    $query->whereNull('deleted_at');
+                })
             ],
 
             // Utilisateurs (optionnels)
             'users' => 'nullable|array',
             'users.*.id' => [
                 'required_without:users.*.email',
-                Rule::exists('users', 'id')->whereNull('deleted_at')
+                new HashedExists(User::class, 'id', function($query) {
+                    $query->whereNull('deleted_at');
+                })
             ],
             'users.*.email' => [
                 'required_without:users.*.id',

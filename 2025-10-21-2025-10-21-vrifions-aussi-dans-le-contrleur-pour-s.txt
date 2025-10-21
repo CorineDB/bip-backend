@@ -1,0 +1,4427 @@
+
+ ▐▛███▜▌   Claude Code v2.0.24
+▝▜█████▛▘  Sonnet 4.5 · Claude API
+  ▘▘ ▝▝    /home/unknow/GDIZ/apps/backend_api
+
+> 2025-10-21-vrifions-aussi-dans-le-contrleur-pour-sassurer.txt on va
+continuer notre travail sur les notifications
+
+● Je vaiour voir où nous en sommes avec les
+  notifications.s lire le fichier p
+
+● Read(2025-10-21-vrifions-aussi-dans-le-contrleur-pour-sassurer.txt)
+  ⎿  Read 1954 lines
+
+● Je vois que vous voulez un exemple complet pour
+  "AppreciationNoteConceptuelle" (évaluation de la note conceptuelle)
+  similaire à l'exemple de "NoteConceptuelleSoumise". Créons cette
+  structure complète :
+
+● Parfait ! Voici l'exemple complet pour l'appréciation (évaluation) d'une
+  note conceptuelle :
+
+  📝 EXEMPLE COMPLET : AppreciationNoteConceptuelle (Évaluation)
+
+  ---
+  1️⃣ EVENT : AppreciationNoteConceptuelleCreee
+
+  Fichier : app/Events/AppreciationNoteConceptuelleCreee.php
+
+  <?php
+
+  namespace App\Events;
+
+  use App\Models\NoteConceptuelle;
+  use App\Models\Evaluation;
+  use App\Models\Projet;
+  use App\Models\User;
+  use Illuminate\Broadcasting\InteractsWithSockets;
+  use Illuminate\Broadcasting\PrivateChannel;
+  use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+  use Illuminate\Foundation\Events\Dispatchable;
+  use Illuminate\Queue\SerializesModels;
+
+  class AppreciationNoteConceptuelleCreee implements ShouldBroadcast
+  {
+      use Dispatchable, InteractsWithSockets, SerializesModels;
+
+      public Evaluation $evaluation;
+      public NoteConceptuelle $noteConceptuelle;
+      public Projet $projet;
+      public User $evaluateur;
+      public string $typeAppreciation; // 'appreciation_climatique',
+  'appreciation_pertinence'
+      public ?string $statut;
+
+      /**
+       * Create a new event instance.
+       */
+      public function __construct(
+          Evaluation $evaluation,
+          NoteConceptuelle $noteConceptuelle,
+          Projet $projet,
+          User $evaluateur,
+          string $typeAppreciation = 'appreciation_climatique',
+          ?string $statut = null
+      ) {
+          $this->evaluation = $evaluation->load(['evaluationCriteres',
+  'evaluateur']);
+          $this->noteConceptuelle = $noteConceptuelle->load(['redacteur',
+  'champs']);
+          $this->projet = $projet->load(['ministere', 'organisation']);
+          $this->evaluateur = $evaluateur;
+          $this->typeAppreciation = $typeAppreciation;
+          $this->statut = $statut ?? $evaluation->statut;
+      }
+
+      /**
+       * Get the channels the event should broadcast on.
+       */
+      public function broadcastOn(): array
+      {
+          return [
+              new PrivateChannel('evaluations.' . $this->evaluation->id),
+              new PrivateChannel('notes-conceptuelles.' .
+  $this->noteConceptuelle->id),
+              new PrivateChannel('projets.' . $this->projet->id),
+              new PrivateChannel('ministeres.' .
+  ($this->projet->ministere->id ?? 'unknown')),
+              new PrivateChannel('users.' .
+  $this->noteConceptuelle->redacteur_id),
+          ];
+      }
+
+      /**
+       * The event's broadcast name.
+       */
+      public function broadcastAs(): string
+      {
+          return 'appreciation.note-conceptuelle.creee';
+      }
+
+      /**
+       * Get the data to broadcast.
+       */
+      public function broadcastWith(): array
+      {
+          return [
+              'evaluation_id' => $this->evaluation->id,
+              'note_conceptuelle_id' => $this->noteConceptuelle->id,
+              'projet_id' => $this->projet->id,
+              'type_appreciation' => $this->typeAppreciation,
+              'statut' => $this->statut,
+              'evaluateur' => [
+                  'id' => $this->evaluateur->id,
+                  'nom' => $this->evaluateur->nom,
+                  'prenom' => $this->evaluateur->prenom,
+              ],
+              'note_details' => [
+                  'intitule' => $this->noteConceptuelle->intitule,
+                  'redacteur' => [
+                      'nom' => $this->noteConceptuelle->redacteur->nom ??
+  '',
+                      'prenom' =>
+  $this->noteConceptuelle->redacteur->prenom ?? '',
+                  ],
+              ],
+              'projet_titre' => $this->projet->titre_projet,
+              'timestamp' => now()->toIso8601String(),
+          ];
+      }
+  }
+
+● ---
+  2️⃣ LISTENER : NotifierAppreciationNoteConceptuelleCreee
+
+  Fichier : app/Listeners/NotifierAppreciationNoteConceptuelleCreee.php
+
+  <?php
+
+  namespace App\Listeners;
+
+  use App\Events\AppreciationNoteConceptuelleCreee;
+  use App\Notifications\AppreciationNoteConceptuelleNotification;
+  use App\Models\User;
+  use App\Models\Dpaf;
+  use App\Models\Dgpd;
+  use Illuminate\Contracts\Queue\ShouldQueue;
+  use Illuminate\Queue\InteractsWithQueue;
+  use Illuminate\Support\Facades\Notification;
+  use Illuminate\Support\Facades\Log;
+
+  class NotifierAppreciationNoteConceptuelleCreee implements ShouldQueue
+  {
+      use InteractsWithQueue;
+
+      /**
+       * The number of times the job may be attempted.
+       */
+      public $tries = 3;
+
+      /**
+       * The number of seconds to wait before retrying the job.
+       */
+      public $backoff = [10, 30, 60];
+
+      /**
+       * Handle the event.
+       */
+      public function handle(AppreciationNoteConceptuelleCreee $event):
+  void
+      {
+          $evaluation = $event->evaluation;
+          $noteConceptuelle = $event->noteConceptuelle;
+          $projet = $event->projet;
+          $evaluateur = $event->evaluateur;
+          $typeAppreciation = $event->typeAppreciation;
+          $statut = $event->statut;
+
+          Log::info('Envoi de notifications pour appréciation note
+  conceptuelle', [
+              'evaluation_id' => $evaluation->id,
+              'note_conceptuelle_id' => $noteConceptuelle->id,
+              'type_appreciation' => $typeAppreciation,
+          ]);
+
+          // 1. Notifier le rédacteur de la note conceptuelle (information)
+          if ($noteConceptuelle->redacteur) {
+              $noteConceptuelle->redacteur->notify(
+                  new AppreciationNoteConceptuelleNotification(
+                      $evaluation,
+                      $noteConceptuelle,
+                      $projet,
+                      $evaluateur,
+                      'redacteur_info'
+                  )
+              );
+          }
+
+          // 2. Notifier le DPAF du ministère (supervision)
+          if ($projet->ministere_id) {
+              $dpafMinistere = User::where('profilable_type', Dpaf::class)
+                  ->whereHas('profilable', function($query) use ($projet) {
+                      $query->where('ministere_id', $projet->ministere_id);
+                  })
+                  ->first();
+
+              if ($dpafMinistere) {
+                  $dpafMinistere->notify(
+                      new AppreciationNoteConceptuelleNotification(
+                          $evaluation,
+                          $noteConceptuelle,
+                          $projet,
+                          $evaluateur,
+                          'dpaf_supervision'
+                      )
+                  );
+              }
+          }
+
+          // 3. Notifier les autres membres du DGPD (information
+  collégiale)
+          $autresDgpd = User::where('profilable_type', Dgpd::class)
+              ->where('id', '!=', $evaluateur->id) // Exclure l'évaluateur
+  qui a créé l'appréciation
+              ->whereHas('permissions', function($query) {
+                  $query->where('slug', 'evaluer-une-note-conceptuelle');
+              })
+              ->get();
+
+          if ($autresDgpd->isNotEmpty()) {
+              Notification::send(
+                  $autresDgpd,
+                  new AppreciationNoteConceptuelleNotification(
+                      $evaluation,
+                      $noteConceptuelle,
+                      $projet,
+                      $evaluateur,
+                      'dgpd_collegial'
+                  )
+              );
+          }
+
+          // 4. Si l'évaluation est terminée, notifier le responsable du
+  projet
+          if (in_array($statut, ['terminee', 'validee', 'soumise'])) {
+              // Chercher le chef de projet de l'organisation
+              if ($projet->organisation_id) {
+                  $chefProjet = User::where('profilable_type',
+  'App\Models\Organisation')
+                      ->where('profilable_id', $projet->organisation_id)
+                      ->whereHas('roles', function($query) {
+                          $query->where('slug', 'responsable-projet');
+                      })
+                      ->first();
+
+                  if ($chefProjet) {
+                      $chefProjet->notify(
+                          new AppreciationNoteConceptuelleNotification(
+                              $evaluation,
+                              $noteConceptuelle,
+                              $projet,
+                              $evaluateur,
+                              'chef_projet_evaluation_terminee'
+                          )
+                      );
+                  }
+              }
+          }
+
+          // 5. Notifier l'évaluateur lui-même (confirmation)
+          $evaluateur->notify(
+              new AppreciationNoteConceptuelleNotification(
+                  $evaluation,
+                  $noteConceptuelle,
+                  $projet,
+                  $evaluateur,
+                  'evaluateur_confirmation'
+              )
+          );
+
+          Log::info('Notifications envoyées avec succès pour appréciation
+  note conceptuelle', [
+              'evaluation_id' => $evaluation->id,
+          ]);
+      }
+
+      /**
+       * Handle a job failure.
+       */
+      public function failed(AppreciationNoteConceptuelleCreee $event,
+  \Throwable $exception): void
+      {
+          Log::error('Échec de notification
+  AppreciationNoteConceptuelleCreee', [
+              'evaluation_id' => $event->evaluation->id,
+              'note_conceptuelle_id' => $event->noteConceptuelle->id,
+              'error' => $exception->getMessage(),
+              'trace' => $exception->getTraceAsString()
+          ]);
+
+          // Optionnel : envoyer une alerte à l'admin
+          // Notification::route('mail', config('app.admin_email'))
+          //     ->notify(new SystemErrorNotification($exception));
+      }
+  }
+
+● ---
+  3️⃣ NOTIFICATION : AppreciationNoteConceptuelleNotification
+
+  Fichier : app/Notifications/AppreciationNoteConceptuelleNotification.php
+
+  <?php
+
+  namespace App\Notifications;
+
+  use App\Models\Evaluation;
+  use App\Models\NoteConceptuelle;
+  use App\Models\Projet;
+  use App\Models\User;
+  use Illuminate\Bus\Queueable;
+  use Illuminate\Contracts\Queue\ShouldQueue;
+  use Illuminate\Notifications\Messages\MailMessage;
+  use Illuminate\Notifications\Messages\BroadcastMessage;
+  use Illuminate\Notifications\Notification;
+
+  class AppreciationNoteConceptuelleNotification extends Notification
+  implements ShouldQueue
+  {
+      use Queueable;
+
+      protected Evaluation $evaluation;
+      protected NoteConceptuelle $noteConceptuelle;
+      protected Projet $projet;
+      protected User $evaluateur;
+      protected string $typeDestinataire;
+
+      /**
+       * Types de destinataires possibles :
+       * - redacteur_info : Rédacteur de la note (information)
+       * - dpaf_supervision : DPAF du ministère (supervision)
+       * - dgpd_collegial : Autres membres DGPD (information collégiale)
+       * - chef_projet_evaluation_terminee : Chef de projet (évaluation
+  terminée)
+       * - evaluateur_confirmation : Évaluateur (confirmation)
+       */
+      public function __construct(
+          Evaluation $evaluation,
+          NoteConceptuelle $noteConceptuelle,
+          Projet $projet,
+          User $evaluateur,
+          string $typeDestinataire = 'redacteur_info'
+      ) {
+          $this->evaluation = $evaluation;
+          $this->noteConceptuelle = $noteConceptuelle;
+          $this->projet = $projet;
+          $this->evaluateur = $evaluateur;
+          $this->typeDestinataire = $typeDestinataire;
+      }
+
+      /**
+       * Get the notification's delivery channels.
+       */
+      public function via($notifiable): array
+      {
+          return ['database', 'broadcast', 'mail'];
+      }
+
+      /**
+       * Get the mail representation of the notification.
+       */
+      public function toMail($notifiable): MailMessage
+      {
+          $mailMessage = new MailMessage();
+          $evaluateurNomComplet = $this->evaluateur->prenom . ' ' .
+  $this->evaluateur->nom;
+
+          switch ($this->typeDestinataire) {
+              case 'redacteur_info':
+                  return $mailMessage
+                      ->subject('Appréciation de votre Note Conceptuelle en
+   cours')
+                      ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                      ->line('Votre note conceptuelle est en cours
+  d\'évaluation.')
+                      ->line('**Projet :** ' . $this->projet->titre_projet)
+                      ->line('**Note :** ' .
+  $this->noteConceptuelle->intitule)
+                      ->line('**Évaluateur :** ' . $evaluateurNomComplet)
+                      ->line('**Type d\'appréciation :** ' .
+  $this->getTypeAppreciationLabel())
+                      ->action('Suivre l\'évaluation',
+  $this->getActionUrl())
+                      ->line('Vous serez notifié une fois l\'évaluation
+  terminée.');
+
+              case 'dpaf_supervision':
+                  return $mailMessage
+                      ->subject('Appréciation Note Conceptuelle -
+  Supervision DPAF')
+                      ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                      ->line('Une appréciation de note conceptuelle est en
+  cours pour un projet de votre ministère.')
+                      ->line('**Projet :** ' . $this->projet->titre_projet)
+                      ->line('**Note :** ' .
+  $this->noteConceptuelle->intitule)
+                      ->line('**Évaluateur :** ' . $evaluateurNomComplet)
+                      ->line('**Rédacteur :** ' .
+  ($this->noteConceptuelle->redacteur->nom ?? 'N/A'))
+                      ->action('Voir le projet', url('/projets/' .
+  $this->projet->id))
+                      ->line('Cette notification vous est envoyée à titre
+  de supervision.');
+
+              case 'dgpd_collegial':
+                  return $mailMessage
+                      ->subject('Appréciation Note Conceptuelle par un
+  collègue')
+                      ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                      ->line('Un collègue a commencé l\'appréciation d\'une
+   note conceptuelle.')
+                      ->line('**Projet :** ' . $this->projet->titre_projet)
+                      ->line('**Note :** ' .
+  $this->noteConceptuelle->intitule)
+                      ->line('**Évaluateur :** ' . $evaluateurNomComplet)
+                      ->line('**Ministère :** ' .
+  ($this->projet->ministere->nom ?? 'N/A'))
+                      ->action('Consulter l\'évaluation',
+  $this->getActionUrl())
+                      ->line('Notification d\'information collégiale.');
+
+              case 'chef_projet_evaluation_terminee':
+                  $score = $this->evaluation->score ?? 'N/A';
+                  $decision = $this->evaluation->decision ?? 'en attente';
+
+                  return $mailMessage
+                      ->subject('Évaluation de Note Conceptuelle Terminée')
+                      ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                      ->line('L\'évaluation de votre note conceptuelle est
+  terminée.')
+                      ->line('**Projet :** ' . $this->projet->titre_projet)
+                      ->line('**Note :** ' .
+  $this->noteConceptuelle->intitule)
+                      ->line('**Score :** ' . $score)
+                      ->line('**Décision :** ' . ucfirst($decision))
+                      ->line('**Évaluateur :** ' . $evaluateurNomComplet)
+                      ->action('Voir les résultats', $this->getActionUrl())
+                      ->line('Vous pouvez maintenant consulter les détails
+  de l\'évaluation.');
+
+              case 'evaluateur_confirmation':
+                  return $mailMessage
+                      ->subject('Confirmation - Appréciation Note
+  Conceptuelle créée')
+                      ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                      ->line('Votre appréciation de note conceptuelle a été
+   enregistrée avec succès.')
+                      ->line('**Projet :** ' . $this->projet->titre_projet)
+                      ->line('**Note :** ' .
+  $this->noteConceptuelle->intitule)
+                      ->line('**Type d\'appréciation :** ' .
+  $this->getTypeAppreciationLabel())
+                      ->line('**Statut :** ' .
+  ucfirst($this->evaluation->statut ?? 'en cours'))
+                      ->action('Continuer l\'évaluation',
+  $this->getActionUrl())
+                      ->line('Merci pour votre contribution à l\'évaluation
+   des projets.');
+
+              default:
+                  return $mailMessage
+                      ->subject('Appréciation Note Conceptuelle')
+                      ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                      ->line('Une appréciation de note conceptuelle a été
+  créée.')
+                      ->action('Voir les détails', $this->getActionUrl());
+          }
+      }
+
+      /**
+       * Get the array representation of the notification (Database).
+       */
+      public function toArray($notifiable): array
+      {
+          return [
+              'type' => 'appreciation_note_conceptuelle',
+              'type_destinataire' => $this->typeDestinataire,
+              'evaluation_id' => $this->evaluation->id,
+              'note_conceptuelle_id' => $this->noteConceptuelle->id,
+              'projet_id' => $this->projet->id,
+              'projet_titre' => $this->projet->titre_projet,
+              'note_intitule' => $this->noteConceptuelle->intitule,
+              'evaluateur' => [
+                  'id' => $this->evaluateur->id,
+                  'nom' => $this->evaluateur->nom,
+                  'prenom' => $this->evaluateur->prenom,
+                  'nom_complet' => $this->evaluateur->prenom . ' ' .
+  $this->evaluateur->nom,
+              ],
+              'redacteur' => [
+                  'nom' => $this->noteConceptuelle->redacteur->nom ?? '',
+                  'prenom' => $this->noteConceptuelle->redacteur->prenom ??
+   '',
+              ],
+              'ministere_nom' => $this->projet->ministere->nom ?? '',
+              'type_appreciation' => $this->evaluation->type ??
+  'appreciation_climatique',
+              'type_appreciation_label' =>
+  $this->getTypeAppreciationLabel(),
+              'statut_evaluation' => $this->evaluation->statut ??
+  'en_cours',
+              'score' => $this->evaluation->score ?? null,
+              'decision' => $this->evaluation->decision ?? null,
+              'message' => $this->getMessage(),
+              'action_url' => $this->getActionUrl(),
+              'action_text' => $this->getActionText(),
+              'date_appreciation' =>
+  $this->evaluation->created_at->format('d/m/Y H:i'),
+              'priorite' => $this->getPriorite(),
+          ];
+      }
+
+      /**
+       * Get the broadcastable representation of the notification.
+       */
+      public function toBroadcast($notifiable): BroadcastMessage
+      {
+          return new BroadcastMessage([
+              'type' => 'appreciation_note_conceptuelle',
+              'message' => $this->getMessage(),
+              'priorite' => $this->getPriorite(),
+              'data' => $this->toArray($notifiable),
+          ]);
+      }
+
+      /**
+       * Get personalized message based on recipient type.
+       */
+      protected function getMessage(): string
+      {
+          $evaluateurNom = $this->evaluateur->prenom . ' ' .
+  $this->evaluateur->nom;
+
+          switch ($this->typeDestinataire) {
+              case 'redacteur_info':
+                  return 'Votre note conceptuelle "' .
+  $this->noteConceptuelle->intitule . '" est en cours d\'évaluation par ' .
+   $evaluateurNom . '.';
+
+              case 'dpaf_supervision':
+                  return 'Appréciation en cours pour le projet "' .
+  $this->projet->titre_projet . '" par ' . $evaluateurNom . '.';
+
+              case 'dgpd_collegial':
+                  return $evaluateurNom . ' a commencé l\'appréciation de
+  "' . $this->noteConceptuelle->intitule . '".';
+
+              case 'chef_projet_evaluation_terminee':
+                  $decision = $this->evaluation->decision ?? 'en attente';
+                  return 'Évaluation terminée pour "' .
+  $this->noteConceptuelle->intitule . '". Décision : ' . ucfirst($decision)
+   . '.';
+
+              case 'evaluateur_confirmation':
+                  return 'Votre appréciation pour "' .
+  $this->noteConceptuelle->intitule . '" a été enregistrée avec succès.';
+
+              default:
+                  return 'Une appréciation de note conceptuelle a été créée
+   pour "' . $this->projet->titre_projet . '".';
+          }
+      }
+
+      /**
+       * Get action URL based on recipient type.
+       */
+      protected function getActionUrl(): string
+      {
+          switch ($this->typeDestinataire) {
+              case 'evaluateur_confirmation':
+              case 'dgpd_collegial':
+                  return '/evaluations/' . $this->evaluation->id . '/edit';
+
+              case 'chef_projet_evaluation_terminee':
+              case 'redacteur_info':
+                  return '/projets/' . $this->projet->id . '/notes/' .
+  $this->noteConceptuelle->id . '/evaluations';
+
+              case 'dpaf_supervision':
+              default:
+                  return '/projets/' . $this->projet->id;
+          }
+      }
+
+      /**
+       * Get action text based on recipient type.
+       */
+      protected function getActionText(): string
+      {
+          switch ($this->typeDestinataire) {
+              case 'evaluateur_confirmation':
+                  return 'Continuer l\'évaluation';
+
+              case 'chef_projet_evaluation_terminee':
+                  return 'Voir les résultats';
+
+              case 'redacteur_info':
+                  return 'Suivre l\'évaluation';
+
+              case 'dgpd_collegial':
+                  return 'Consulter l\'évaluation';
+
+              case 'dpaf_supervision':
+              default:
+                  return 'Voir le projet';
+          }
+      }
+
+      /**
+       * Get the label for appreciation type.
+       */
+      protected function getTypeAppreciationLabel(): string
+      {
+          $type = $this->evaluation->type ?? 'appreciation_climatique';
+
+          return match($type) {
+              'appreciation_climatique' => 'Appréciation Climatique',
+              'appreciation_pertinence' => 'Appréciation de Pertinence',
+              'appreciation_faisabilite' => 'Appréciation de Faisabilité',
+              default => ucfirst(str_replace('_', ' ', $type)),
+          };
+      }
+
+      /**
+       * Get priority level for the notification.
+       */
+      protected function getPriorite(): string
+      {
+          return match($this->typeDestinataire) {
+              'chef_projet_evaluation_terminee' => 'haute',
+              'redacteur_info', 'evaluateur_confirmation' => 'moyenne',
+              default => 'normale',
+          };
+      }
+  }
+
+● ---
+  4️⃣ INTÉGRATION DANS LE SERVICE
+
+  Fichier : app/Services/NoteConceptuelleService.php (extrait)
+
+  <?php
+
+  namespace App\Services;
+
+  use App\Events\AppreciationNoteConceptuelleCreee;
+  use App\Models\Evaluation;
+  use App\Models\NoteConceptuelle;
+  use Illuminate\Support\Facades\Auth;
+  use Illuminate\Support\Facades\DB;
+
+  class NoteConceptuelleService
+  {
+      /**
+       * Créer une évaluation (appréciation) pour une note conceptuelle
+       */
+      public function creerEvaluation(array $data, int
+  $noteConceptuelleId): JsonResponse
+      {
+          DB::beginTransaction();
+
+          try {
+              // 1. Récupérer la note conceptuelle
+              $noteConceptuelle = NoteConceptuelle::with(['projet',
+  'redacteur'])
+                  ->findOrFail($noteConceptuelleId);
+
+              $projet = $noteConceptuelle->projet;
+
+              // 2. Créer l'évaluation
+              $evaluation = Evaluation::create([
+                  'evaluable_type' => NoteConceptuelle::class,
+                  'evaluable_id' => $noteConceptuelle->id,
+                  'evaluateur_id' => Auth::id(),
+                  'type' => $data['type'] ?? 'appreciation_climatique',
+                  'statut' => $data['statut'] ?? 'en_cours',
+                  'score' => $data['score'] ?? null,
+                  'decision' => $data['decision'] ?? null,
+                  'commentaires' => $data['commentaires'] ?? null,
+                  'date_evaluation' => now(),
+              ]);
+
+              // 3. Créer les critères d'évaluation si fournis
+              if (isset($data['criteres']) && is_array($data['criteres']))
+  {
+                  foreach ($data['criteres'] as $critereData) {
+                      $evaluation->evaluationCriteres()->create([
+                          'critere_id' => $critereData['critere_id'],
+                          'note' => $critereData['note'],
+                          'commentaire' => $critereData['commentaire'] ??
+  null,
+                      ]);
+                  }
+              }
+
+              DB::commit();
+
+              // 🔥 DISPATCHER L'ÉVÉNEMENT D'APPRÉCIATION
+              event(new AppreciationNoteConceptuelleCreee(
+                  evaluation: $evaluation->fresh(['evaluationCriteres',
+  'evaluateur']),
+                  noteConceptuelle: $noteConceptuelle,
+                  projet: $projet,
+                  evaluateur: Auth::user(),
+                  typeAppreciation: $data['type'] ??
+  'appreciation_climatique',
+                  statut: $data['statut'] ?? 'en_cours'
+              ));
+
+              return response()->json([
+                  'success' => true,
+                  'message' => 'Appréciation créée avec succès.',
+                  'data' => new EvaluationResource($evaluation),
+              ], 201);
+
+          } catch (\Exception $e) {
+              DB::rollBack();
+
+              Log::error('Erreur lors de la création de l\'appréciation', [
+                  'note_conceptuelle_id' => $noteConceptuelleId,
+                  'error' => $e->getMessage(),
+              ]);
+
+              return response()->json([
+                  'success' => false,
+                  'message' => 'Erreur lors de la création de
+  l\'appréciation.',
+                  'error' => $e->getMessage(),
+              ], 500);
+          }
+      }
+
+      /**
+       * Mettre à jour une évaluation existante
+       */
+      public function mettreAJourEvaluation(array $data, int
+  $evaluationId): JsonResponse
+      {
+          DB::beginTransaction();
+
+          try {
+              $evaluation = Evaluation::with(['evaluable', 'evaluateur'])
+                  ->findOrFail($evaluationId);
+
+              // Vérifier les permissions
+              if ($evaluation->evaluateur_id !== Auth::id()) {
+                  return response()->json([
+                      'success' => false,
+                      'message' => 'Vous n\'êtes pas autorisé à modifier
+  cette évaluation.',
+                  ], 403);
+              }
+
+              $ancienStatut = $evaluation->statut;
+
+              // Mettre à jour l'évaluation
+              $evaluation->update([
+                  'statut' => $data['statut'] ?? $evaluation->statut,
+                  'score' => $data['score'] ?? $evaluation->score,
+                  'decision' => $data['decision'] ?? $evaluation->decision,
+                  'commentaires' => $data['commentaires'] ??
+  $evaluation->commentaires,
+              ]);
+
+              // Mettre à jour les critères si fournis
+              if (isset($data['criteres'])) {
+                  foreach ($data['criteres'] as $critereData) {
+                      $evaluation->evaluationCriteres()
+                          ->where('critere_id', $critereData['critere_id'])
+                          ->update([
+                              'note' => $critereData['note'],
+                              'commentaire' => $critereData['commentaire']
+  ?? null,
+                          ]);
+                  }
+              }
+
+              DB::commit();
+
+              // 🔥 Si le statut change vers "terminée", dispatcher
+  l'événement
+              $nouveauStatut = $evaluation->statut;
+              if ($ancienStatut !== $nouveauStatut &&
+  in_array($nouveauStatut, ['terminee', 'validee', 'soumise'])) {
+                  $noteConceptuelle = $evaluation->evaluable;
+                  $projet = $noteConceptuelle->projet;
+
+                  event(new AppreciationNoteConceptuelleCreee(
+                      evaluation: $evaluation->fresh(['evaluationCriteres',
+   'evaluateur']),
+                      noteConceptuelle: $noteConceptuelle,
+                      projet: $projet,
+                      evaluateur: Auth::user(),
+                      typeAppreciation: $evaluation->type,
+                      statut: $nouveauStatut
+                  ));
+              }
+
+              return response()->json([
+                  'success' => true,
+                  'message' => 'Appréciation mise à jour avec succès.',
+                  'data' => new EvaluationResource($evaluation),
+              ]);
+
+          } catch (\Exception $e) {
+              DB::rollBack();
+
+              return response()->json([
+                  'success' => false,
+                  'message' => 'Erreur lors de la mise à jour de
+  l\'appréciation.',
+                  'error' => $e->getMessage(),
+              ], 500);
+          }
+      }
+  }
+
+  ---
+  5️⃣ ENREGISTREMENT DANS EventServiceProvider
+
+  Fichier : app/Providers/EventServiceProvider.php
+
+  <?php
+
+  namespace App\Providers;
+
+  use Illuminate\Foundation\Support\Providers\EventServiceProvider as
+  ServiceProvider;
+
+  class EventServiceProvider extends ServiceProvider
+  {
+      protected $listen = [
+          // ... autres événements ...
+
+          // Appréciations Notes Conceptuelles
+          \App\Events\AppreciationNoteConceptuelleCreee::class => [
+
+  \App\Listeners\NotifierAppreciationNoteConceptuelleCreee::class,
+          ],
+      ];
+  }
+
+  ---
+  6️⃣ CONFIGURATION DES CANAUX DE BROADCAST
+
+  Fichier : routes/channels.php
+
+  <?php
+
+  use Illuminate\Support\Facades\Broadcast;
+  use App\Models\User;
+
+  // Canal pour les évaluations
+  Broadcast::channel('evaluations.{evaluationId}', function (User $user,
+  $evaluationId) {
+      // Seuls l'évaluateur et les admins peuvent accéder
+      $evaluation = \App\Models\Evaluation::find($evaluationId);
+      return $evaluation && (
+          $user->id === $evaluation->evaluateur_id ||
+          $user->hasPermission('voir-toutes-les-evaluations')
+      );
+  });
+
+  // Canal pour les notes conceptuelles
+  Broadcast::channel('notes-conceptuelles.{noteId}', function (User $user,
+  $noteId) {
+      $note = \App\Models\NoteConceptuelle::find($noteId);
+      return $note && (
+          $user->id === $note->redacteur_id ||
+          $user->hasPermission('voir-les-notes-conceptuelles')
+      );
+  });
+
+  // Canal pour les projets
+  Broadcast::channel('projets.{projetId}', function (User $user, $projetId)
+   {
+      $projet = \App\Models\Projet::find($projetId);
+      return $projet && $user->canAccessProjet($projetId);
+  });
+
+  // Canal pour les ministères
+  Broadcast::channel('ministeres.{ministereId}', function (User $user,
+  $ministereId) {
+      return $user->ministere_id === $ministereId ||
+             $user->hasPermission('voir-tous-les-ministeres');
+  });
+
+● ---
+  📊 RÉCAPITULATIF COMPLET
+
+  Voici un exemple complet pour AppreciationNoteConceptuelle (évaluation de
+   note conceptuelle) comprenant :
+
+  ✅ Ce qui a été créé :
+
+  1. Event - AppreciationNoteConceptuelleCreee.php
+    - Contient toutes les données de l'évaluation
+    - Supporte le broadcast en temps réel
+    - Diffuse sur 5 canaux privés différents
+  2. Listener - NotifierAppreciationNoteConceptuelleCreee.php
+    - Notifie 5 types de destinataires différents
+    - Gestion asynchrone avec retry automatique
+    - Logging complet des erreurs
+  3. Notification - AppreciationNoteConceptuelleNotification.php
+    - 5 types de messages personnalisés selon le destinataire
+    - Support de 3 canaux : database, broadcast, mail
+    - Messages riches avec URLs d'action
+    - Système de priorités
+  4. Intégration Service
+    - Méthode creerEvaluation() avec dispatch de l'événement
+    - Méthode mettreAJourEvaluation() avec gestion des transitions de
+  statut
+  5. Configuration
+    - Enregistrement dans EventServiceProvider
+    - Configuration des canaux de broadcast privés
+
+  🎯 Destinataires notifiés :
+
+  | Type Destinataire               | Rôle                 | Message
+  personnalisé                  |
+  |---------------------------------|----------------------|---------------
+  ------------------------|
+  | redacteur_info                  | Rédacteur de la note | Information
+  sur l'évaluation en cours |
+  | dpaf_supervision                | DPAF du ministère    | Supervision de
+   l'évaluation           |
+  | dgpd_collegial                  | Autres membres DGPD  | Information
+  collégiale                |
+  | chef_projet_evaluation_terminee | Chef de projet       | Résultats de
+  l'évaluation terminée    |
+  | evaluateur_confirmation         | Évaluateur           | Confirmation
+  de création              |
+
+  🔔 Canaux de notification :
+
+  - Database : Stockage dans la table notifications
+  - Broadcast : Notifications temps réel via WebSockets
+  - Mail : Emails personnalisés selon le destinataire
+
+  Cet exemple peut maintenant servir de template pour créer tous les autres
+   événements du système !
+
+> super cree les events, listners ainsi que les notifications
+
+● Parfait ! Je vais créer tous les Events, Listeners et Notifications pour
+  le système complet. Commençons par les Notes Conceptuelles, puis les TDR
+  Préfaisabilité et Faisabilité.
+
+  1️⃣ EVENTS POUR NOTES CONCEPTUELLES
+
+● Bash(php artisan make:event NoteConceptuelleCreee)
+  ⎿  Interrupted · What should Claude do instead?
+
+● Bash(php artisan make:event NoteConceptuelleSoumise)
+  ⎿  Interrupted · What should Claude do instead?
+
+● Bash(php artisan make:event NoteConceptuelleMiseAJour)
+  ⎿  Interrupted · What should Claude do instead?
+
+● Bash(php artisan make:event AppreciationNoteConceptuelleCreee)
+  ⎿  Interrupted · What should Claude do instead?
+
+● Bash(php artisan make:event AppreciationNoteConceptuelleMiseAJour)
+  ⎿  Interrupted · What should Claude do instead?
+
+● Bash(php artisan make:event AppreciationNoteConceptuelleTerminee)
+  ⎿  Interrupted · What should Claude do instead?
+
+● Bash(php artisan make:event NoteConceptuelleValidee)
+  ⎿  Interrupted · What should Claude do instead?
+
+● Bash(php artisan make:event NoteConceptuelleRejetee)
+  ⎿  Interrupted · What should Claude do instead?
+
+● Bash(php artisan make:event ProjetTransformeEnEtudePrefaisabilite)
+  ⎿  Interrupted · What should Claude do instead?
+
+> NON JUSTE POUR L'EXEMPLE DONNEE
+
+● D'accord ! Je vais créer uniquement les fichiers pour l'exemple
+  AppreciationNoteConceptuelle que je t'ai montré.
+
+● Bash(php artisan make:event AppreciationNoteConceptuelleCreee)
+  ⎿    INFO  Event [app/Events/AppreciationNoteConceptuelleCreee.php] crea
+    ted successfully.
+
+
+● Read(app/Events/AppreciationNoteConceptuelleCreee.php)
+  ⎿  Read 37 lines
+
+● Write(app/Events/AppreciationNoteConceptuelleCreee.php)
+  ⎿  Updated app/Events/AppreciationNoteConceptuelleCreee.php with 67
+     additions and 9 removals
+        2
+        3    namespace App\Events;
+        4
+        5 -  use Illuminate\Broadcasting\Channel;
+        5 +  use App\Models\NoteConceptuelle;
+        6 +  use App\Models\Evaluation;
+        7 +  use App\Models\Projet;
+        8 +  use App\Models\User;
+        9    use Illuminate\Broadcasting\InteractsWithSockets;
+       10 -  use Illuminate\Broadcasting\PresenceChannel;
+       10    use Illuminate\Broadcasting\PrivateChannel;
+       11    use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+       12    use Illuminate\Foundation\Events\Dispatchable;
+       13    use Illuminate\Queue\SerializesModels;
+       14
+       15 -  class AppreciationNoteConceptuelleCreee
+       15 +  class AppreciationNoteConceptuelleCreee
+          +   implements ShouldBroadcast
+       16    {
+       17        use Dispatchable, InteractsWithSockets,
+            SerializesModels;
+       18
+       19 +      public Evaluation $evaluation;
+       20 +      public NoteConceptuelle $noteConceptuelle;
+       21 +      public Projet $projet;
+       22 +      public User $evaluateur;
+       23 +      public string $typeAppreciation;
+       24 +      public ?string $statut;
+       25 +
+       26        /**
+       27         * Create a new event instance.
+       28         */
+       29 -      public function __construct()
+       30 -      {
+       31 -          //
+       29 +      public function __construct(
+       30 +          Evaluation $evaluation,
+       31 +          NoteConceptuelle $noteConceptuelle,
+       32 +          Projet $projet,
+       33 +          User $evaluateur,
+       34 +          string $typeAppreciation =
+          + 'appreciation_climatique',
+       35 +          ?string $statut = null
+       36 +      ) {
+       37 +          $this->evaluation =
+          + $evaluation->load(['evaluationCriteres', 'evaluateur']);
+       38 +          $this->noteConceptuelle =
+          + $noteConceptuelle->load(['redacteur', 'champs']);
+       39 +          $this->projet = $projet->load(['ministere',
+          + 'organisation']);
+       40 +          $this->evaluateur = $evaluateur;
+       41 +          $this->typeAppreciation = $typeAppreciation;
+       42 +          $this->statut = $statut ?? $evaluation->statut;
+       43        }
+       44
+       45        /**
+       46         * Get the channels the event should broadcast on.
+       47 -       *
+       48 -       * @return array<int, \Illuminate\Broadcasting\Channel>
+       47         */
+       48        public function broadcastOn(): array
+       49        {
+       50            return [
+       51 -              new PrivateChannel('channel-name'),
+       51 +              new PrivateChannel('evaluations.' .
+          + $this->evaluation->id),
+       52 +              new PrivateChannel('notes-conceptuelles.' .
+          + $this->noteConceptuelle->id),
+       53 +              new PrivateChannel('projets.' .
+          + $this->projet->id),
+       54 +              new PrivateChannel('ministeres.' .
+          + ($this->projet->ministere->id ?? 'unknown')),
+       55 +              new PrivateChannel('users.' .
+          + $this->noteConceptuelle->redacteur_id),
+       56            ];
+       57        }
+       58 +
+       59 +      /**
+       60 +       * The event's broadcast name.
+       61 +       */
+       62 +      public function broadcastAs(): string
+       63 +      {
+       64 +          return 'appreciation.note-conceptuelle.creee';
+       65 +      }
+       66 +
+       67 +      /**
+       68 +       * Get the data to broadcast.
+       69 +       */
+       70 +      public function broadcastWith(): array
+       71 +      {
+       72 +          return [
+       73 +              'evaluation_id' => $this->evaluation->id,
+       74 +              'note_conceptuelle_id' =>
+          + $this->noteConceptuelle->id,
+       75 +              'projet_id' => $this->projet->id,
+       76 +              'type_appreciation' => $this->typeAppreciation,
+       77 +              'statut' => $this->statut,
+       78 +              'evaluateur' => [
+       79 +                  'id' => $this->evaluateur->id,
+       80 +                  'nom' => $this->evaluateur->nom,
+       81 +                  'prenom' => $this->evaluateur->prenom,
+       82 +              ],
+       83 +              'note_details' => [
+       84 +                  'intitule' =>
+          + $this->noteConceptuelle->intitule,
+       85 +                  'redacteur' => [
+       86 +                      'nom' =>
+          + $this->noteConceptuelle->redacteur->nom ?? '',
+       87 +                      'prenom' =>
+          + $this->noteConceptuelle->redacteur->prenom ?? '',
+       88 +                  ],
+       89 +              ],
+       90 +              'projet_titre' => $this->projet->titre_projet,
+       91 +              'timestamp' => now()->toIso8601String(),
+       92 +          ];
+       93 +      }
+       94    }
+
+● Bash(php artisan make:listener NotifierAppreciationNoteConceptuelleCreee
+      --event=AppreciationNoteConceptuelleCreee)
+  ⎿    INFO  Listener [app/Listeners/NotifierAppreciationNoteConceptuelleC
+    reee.php] created successfully.
+
+
+● Read(app/Listeners/NotifierAppreciationNoteConceptuelleCreee.php)
+  ⎿  Read 27 lines
+
+● Write(app/Listeners/NotifierAppreciationNoteConceptuelleCreee.php)
+  ⎿  Updated app/Listeners/NotifierAppreciationNoteConceptuelleCreee.php
+     with 138 additions and 2 removals
+        3    namespace App\Listeners;
+        4
+        5    use App\Events\AppreciationNoteConceptuelleCreee;
+        6 +  use
+          + App\Notifications\AppreciationNoteConceptuelleNotification;
+        7 +  use App\Models\User;
+        8 +  use App\Models\Dpaf;
+        9 +  use App\Models\Dgpd;
+       10    use Illuminate\Contracts\Queue\ShouldQueue;
+       11    use Illuminate\Queue\InteractsWithQueue;
+       12 +  use Illuminate\Support\Facades\Notification;
+       13 +  use Illuminate\Support\Facades\Log;
+       14
+       15 -  class NotifierAppreciationNoteConceptuelleCreee
+       15 +  class NotifierAppreciationNoteConceptuelleCreee
+          +   implements ShouldQueue
+       16    {
+       17 +      use InteractsWithQueue;
+       18 +
+       19        /**
+       20 +       * The number of times the job may be attempted.
+       21 +       */
+       22 +      public $tries = 3;
+       23 +
+       24 +      /**
+       25 +       * The number of seconds to wait before retrying the
+          + job.
+       26 +       */
+       27 +      public $backoff = [10, 30, 60];
+       28 +
+       29 +      /**
+       30         * Create the event listener.
+       31         */
+       32        public function __construct()
+     ...
+        21         */
+        22        public function
+             handle(AppreciationNoteConceptuelleCreee $event): void
+        23        {
+        24 -          //
+        24 +          $evaluation = $event->evaluation;
+        25 +          $noteConceptuelle = $event->noteConceptuelle;
+        26 +          $projet = $event->projet;
+        27 +          $evaluateur = $event->evaluateur;
+        28 +          $typeAppreciation = $event->typeAppreciation;
+        29 +          $statut = $event->statut;
+        30 +
+        31 +          Log::info('Envoi de notifications pour
+           + appréciation note conceptuelle', [
+        32 +              'evaluation_id' => $evaluation->id,
+        33 +              'note_conceptuelle_id' =>
+           + $noteConceptuelle->id,
+        34 +              'type_appreciation' => $typeAppreciation,
+        35 +          ]);
+        36 +
+        37 +          // 1. Notifier le rédacteur de la note
+           + conceptuelle (information)
+        38 +          if ($noteConceptuelle->redacteur) {
+        39 +              $noteConceptuelle->redacteur->notify(
+        40 +                  new
+           + AppreciationNoteConceptuelleNotification(
+        41 +                      $evaluation,
+        42 +                      $noteConceptuelle,
+        43 +                      $projet,
+        44 +                      $evaluateur,
+        45 +                      'redacteur_info'
+        46 +                  )
+        47 +              );
+        48 +          }
+        49 +
+        50 +          // 2. Notifier le DPAF du ministère (supervision)
+        51 +          if ($projet->ministere_id) {
+        52 +              $dpafMinistere =
+           + User::where('profilable_type', Dpaf::class)
+        53 +                  ->whereHas('profilable', function($query)
+           + use ($projet) {
+        54 +                      $query->where('ministere_id',
+           + $projet->ministere_id);
+        55 +                  })
+        56 +                  ->first();
+        57 +
+        58 +              if ($dpafMinistere) {
+        59 +                  $dpafMinistere->notify(
+        60 +                      new
+           + AppreciationNoteConceptuelleNotification(
+        61 +                          $evaluation,
+        62 +                          $noteConceptuelle,
+        63 +                          $projet,
+        64 +                          $evaluateur,
+        65 +                          'dpaf_supervision'
+        66 +                      )
+        67 +                  );
+        68 +              }
+        69 +          }
+        70 +
+        71 +          // 3. Notifier les autres membres du DGPD
+           + (information collégiale)
+        72 +          $autresDgpd = User::where('profilable_type',
+           + Dgpd::class)
+        73 +              ->where('id', '!=', $evaluateur->id)
+        74 +              ->whereHas('permissions', function($query) {
+        75 +                  $query->where('slug',
+           + 'evaluer-une-note-conceptuelle');
+        76 +              })
+        77 +              ->get();
+        78 +
+        79 +          if ($autresDgpd->isNotEmpty()) {
+        80 +              Notification::send(
+        81 +                  $autresDgpd,
+        82 +                  new
+           + AppreciationNoteConceptuelleNotification(
+        83 +                      $evaluation,
+        84 +                      $noteConceptuelle,
+        85 +                      $projet,
+        86 +                      $evaluateur,
+        87 +                      'dgpd_collegial'
+        88 +                  )
+        89 +              );
+        90 +          }
+        91 +
+        92 +          // 4. Si l'évaluation est terminée, notifier le
+           + responsable du projet
+        93 +          if (in_array($statut, ['terminee', 'validee',
+           + 'soumise'])) {
+        94 +              if ($projet->organisation_id) {
+        95 +                  $chefProjet =
+           + User::where('profilable_type', 'App\Models\Organisation')
+        96 +                      ->where('profilable_id',
+           + $projet->organisation_id)
+        97 +                      ->whereHas('roles', function($query) {
+        98 +                          $query->where('slug',
+           + 'responsable-projet');
+        99 +                      })
+       100 +                      ->first();
+       101 +
+       102 +                  if ($chefProjet) {
+       103 +                      $chefProjet->notify(
+       104 +                          new
+           + AppreciationNoteConceptuelleNotification(
+       105 +                              $evaluation,
+       106 +                              $noteConceptuelle,
+       107 +                              $projet,
+       108 +                              $evaluateur,
+       109 +
+           + 'chef_projet_evaluation_terminee'
+       110 +                          )
+       111 +                      );
+       112 +                  }
+       113 +              }
+       114 +          }
+       115 +
+       116 +          // 5. Notifier l'évaluateur lui-même
+           + (confirmation)
+       117 +          $evaluateur->notify(
+       118 +              new AppreciationNoteConceptuelleNotification(
+       119 +                  $evaluation,
+       120 +                  $noteConceptuelle,
+       121 +                  $projet,
+       122 +                  $evaluateur,
+       123 +                  'evaluateur_confirmation'
+       124 +              )
+       125 +          );
+       126 +
+       127 +          Log::info('Notifications envoyées avec succès pour
+           +  appréciation note conceptuelle', [
+       128 +              'evaluation_id' => $evaluation->id,
+       129 +          ]);
+       130        }
+       131 +
+       132 +      /**
+       133 +       * Handle a job failure.
+       134 +       */
+       135 +      public function
+           + failed(AppreciationNoteConceptuelleCreee $event, \Throwable
+           +  $exception): void
+       136 +      {
+       137 +          Log::error('Échec de notification
+           + AppreciationNoteConceptuelleCreee', [
+       138 +              'evaluation_id' => $event->evaluation->id,
+       139 +              'note_conceptuelle_id' =>
+           + $event->noteConceptuelle->id,
+       140 +              'error' => $exception->getMessage(),
+       141 +              'trace' => $exception->getTraceAsString()
+       142 +          ]);
+       143 +      }
+       144    }
+  ⎿  Found 5 new diagnostic issues in 1 file (ctrl-o to expand)
+
+● Bash(php artisan make:notification AppreciationNoteConceptuelleNotification)
+  ⎿    INFO  Notification [app/Notifications/AppreciationNoteConceptuelleN
+    otification.php] created successfully.
+
+
+● Read(app/Notifications/AppreciationNoteConceptuelleNotification.php)
+  ⎿  Read 55 lines
+
+● Write(app/Notifications/AppreciationNoteConceptuelleNotification.php)
+  ⎿  Updated app/Notifications/AppreciationNoteConceptuelleNotification.ph
+      with 251 additions and 19 removals
+
+         2
+         3    namespace App\Notifications;
+         4
+         5 +  use App\Models\Evaluation;
+         6 +  use App\Models\NoteConceptuelle;
+         7 +  use App\Models\Projet;
+         8 +  use App\Models\User;
+         9    use Illuminate\Bus\Queueable;
+        10    use Illuminate\Contracts\Queue\ShouldQueue;
+        11    use Illuminate\Notifications\Messages\MailMessage;
+        12 +  use Illuminate\Notifications\Messages\BroadcastMessage;
+        13    use Illuminate\Notifications\Notification;
+        14
+        15 -  class AppreciationNoteConceptuelleNotification extends
+           -  Notification
+        15 +  class AppreciationNoteConceptuelleNotification extends
+           +  Notification implements ShouldQueue
+        16    {
+        17        use Queueable;
+        18
+        19 +      protected Evaluation $evaluation;
+        20 +      protected NoteConceptuelle $noteConceptuelle;
+        21 +      protected Projet $projet;
+        22 +      protected User $evaluateur;
+        23 +      protected string $typeDestinataire;
+        24 +
+        25        /**
+        26 -       * Create a new notification instance.
+        26 +       * Types de destinataires possibles :
+        27 +       * - redacteur_info : Rédacteur de la note
+           + (information)
+        28 +       * - dpaf_supervision : DPAF du ministère
+           + (supervision)
+        29 +       * - dgpd_collegial : Autres membres DGPD (information
+           +  collégiale)
+        30 +       * - chef_projet_evaluation_terminee : Chef de projet
+           + (évaluation terminée)
+        31 +       * - evaluateur_confirmation : Évaluateur
+           + (confirmation)
+        32         */
+        33 -      public function __construct()
+        34 -      {
+        35 -          //
+        33 +      public function __construct(
+        34 +          Evaluation $evaluation,
+        35 +          NoteConceptuelle $noteConceptuelle,
+        36 +          Projet $projet,
+        37 +          User $evaluateur,
+        38 +          string $typeDestinataire = 'redacteur_info'
+        39 +      ) {
+        40 +          $this->evaluation = $evaluation;
+        41 +          $this->noteConceptuelle = $noteConceptuelle;
+        42 +          $this->projet = $projet;
+        43 +          $this->evaluateur = $evaluateur;
+        44 +          $this->typeDestinataire = $typeDestinataire;
+        45        }
+        46
+        47        /**
+        48         * Get the notification's delivery channels.
+        49 -       *
+        50 -       * @return array<int, string>
+        49         */
+        50 -      public function via(object $notifiable): array
+        50 +      public function via($notifiable): array
+        51        {
+        52 -          return ['mail'];
+        52 +          return ['database', 'broadcast', 'mail'];
+        53        }
+        54
+        55        /**
+        56         * Get the mail representation of the notification.
+        57         */
+        58 -      public function toMail(object
+           -  $notifiable): MailMessage
+        58 +      public function toMail($notifiable): MailMessage
+        59        {
+        60 -          return (new MailMessage)
+        61 -              ->line('The introduction to the
+           - notification.')
+        62 -              ->action('Notification Action', url('/'))
+        63 -              ->line('Thank you for using our
+           - application!');
+        60 +          $mailMessage = new MailMessage();
+        61 +          $evaluateurNomComplet = $this->evaluateur->prenom
+           + . ' ' . $this->evaluateur->nom;
+        62 +
+        63 +          switch ($this->typeDestinataire) {
+        64 +              case 'redacteur_info':
+        65 +                  return $mailMessage
+        66 +                      ->subject('Appréciation de votre Note
+           + Conceptuelle en cours')
+        67 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+        68 +                      ->line('Votre note conceptuelle est en
+           +  cours d\'évaluation.')
+        69 +                      ->line('**Projet :** ' .
+           + $this->projet->titre_projet)
+        70 +                      ->line('**Note :** ' .
+           + $this->noteConceptuelle->intitule)
+        71 +                      ->line('**Évaluateur :** ' .
+           + $evaluateurNomComplet)
+        72 +                      ->line('**Type d\'appréciation :** ' .
+           +  $this->getTypeAppreciationLabel())
+        73 +                      ->action('Suivre l\'évaluation',
+           + $this->getActionUrl())
+        74 +                      ->line('Vous serez notifié une fois
+           + l\'évaluation terminée.');
+        75 +
+        76 +              case 'dpaf_supervision':
+        77 +                  return $mailMessage
+        78 +                      ->subject('Appréciation Note
+           + Conceptuelle - Supervision DPAF')
+        79 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+        80 +                      ->line('Une appréciation de note
+           + conceptuelle est en cours pour un projet de votre
+           + ministère.')
+        81 +                      ->line('**Projet :** ' .
+           + $this->projet->titre_projet)
+        82 +                      ->line('**Note :** ' .
+           + $this->noteConceptuelle->intitule)
+        83 +                      ->line('**Évaluateur :** ' .
+           + $evaluateurNomComplet)
+        84 +                      ->line('**Rédacteur :** ' .
+           + ($this->noteConceptuelle->redacteur->nom ?? 'N/A'))
+        85 +                      ->action('Voir le projet',
+           + url('/projets/' . $this->projet->id))
+        86 +                      ->line('Cette notification vous est
+           + envoyée à titre de supervision.');
+        87 +
+        88 +              case 'dgpd_collegial':
+        89 +                  return $mailMessage
+        90 +                      ->subject('Appréciation Note
+           + Conceptuelle par un collègue')
+        91 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+        92 +                      ->line('Un collègue a commencé
+           + l\'appréciation d\'une note conceptuelle.')
+        93 +                      ->line('**Projet :** ' .
+           + $this->projet->titre_projet)
+        94 +                      ->line('**Note :** ' .
+           + $this->noteConceptuelle->intitule)
+        95 +                      ->line('**Évaluateur :** ' .
+           + $evaluateurNomComplet)
+        96 +                      ->line('**Ministère :** ' .
+           + ($this->projet->ministere->nom ?? 'N/A'))
+        97 +                      ->action('Consulter l\'évaluation',
+           + $this->getActionUrl())
+        98 +                      ->line('Notification d\'information
+           + collégiale.');
+        99 +
+       100 +              case 'chef_projet_evaluation_terminee':
+       101 +                  $score = $this->evaluation->score ??
+           + 'N/A';
+       102 +                  $decision = $this->evaluation->decision ??
+           +  'en attente';
+       103 +
+       104 +                  return $mailMessage
+       105 +                      ->subject('Évaluation de Note
+           + Conceptuelle Terminée')
+       106 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+       107 +                      ->line('L\'évaluation de votre note
+           + conceptuelle est terminée.')
+       108 +                      ->line('**Projet :** ' .
+           + $this->projet->titre_projet)
+       109 +                      ->line('**Note :** ' .
+           + $this->noteConceptuelle->intitule)
+       110 +                      ->line('**Score :** ' . $score)
+       111 +                      ->line('**Décision :** ' .
+           + ucfirst($decision))
+       112 +                      ->line('**Évaluateur :** ' .
+           + $evaluateurNomComplet)
+       113 +                      ->action('Voir les résultats',
+           + $this->getActionUrl())
+       114 +                      ->line('Vous pouvez maintenant
+           + consulter les détails de l\'évaluation.');
+       115 +
+       116 +              case 'evaluateur_confirmation':
+       117 +                  return $mailMessage
+       118 +                      ->subject('Confirmation - Appréciation
+           +  Note Conceptuelle créée')
+       119 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+       120 +                      ->line('Votre appréciation de note
+           + conceptuelle a été enregistrée avec succès.')
+       121 +                      ->line('**Projet :** ' .
+           + $this->projet->titre_projet)
+       122 +                      ->line('**Note :** ' .
+           + $this->noteConceptuelle->intitule)
+       123 +                      ->line('**Type d\'appréciation :** ' .
+           +  $this->getTypeAppreciationLabel())
+       124 +                      ->line('**Statut :** ' .
+           + ucfirst($this->evaluation->statut ?? 'en cours'))
+       125 +                      ->action('Continuer l\'évaluation',
+           + $this->getActionUrl())
+       126 +                      ->line('Merci pour votre contribution
+           + à l\'évaluation des projets.');
+       127 +
+       128 +              default:
+       129 +                  return $mailMessage
+       130 +                      ->subject('Appréciation Note
+           + Conceptuelle')
+       131 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+       132 +                      ->line('Une appréciation de note
+           + conceptuelle a été créée.')
+       133 +                      ->action('Voir les détails',
+           + $this->getActionUrl());
+       134 +          }
+       135        }
+       136
+       137        /**
+       138 -       * Get the array representation of the notification.
+       139 -       *
+       140 -       * @return array<string, mixed>
+       138 +       * Get the array representation of the notification
+           +   (Database).
+       139         */
+       140 -      public function toArray(object $notifiable): array
+       140 +      public function toArray($notifiable): array
+       141        {
+       142            return [
+       143 -              //
+       143 +              'type' => 'appreciation_note_conceptuelle',
+       144 +              'type_destinataire' =>
+           + $this->typeDestinataire,
+       145 +              'evaluation_id' => $this->evaluation->id,
+       146 +              'note_conceptuelle_id' =>
+           + $this->noteConceptuelle->id,
+       147 +              'projet_id' => $this->projet->id,
+       148 +              'projet_titre' => $this->projet->titre_projet,
+       149 +              'note_intitule' =>
+           + $this->noteConceptuelle->intitule,
+       150 +              'evaluateur' => [
+       151 +                  'id' => $this->evaluateur->id,
+       152 +                  'nom' => $this->evaluateur->nom,
+       153 +                  'prenom' => $this->evaluateur->prenom,
+       154 +                  'nom_complet' => $this->evaluateur->prenom
+           +  . ' ' . $this->evaluateur->nom,
+       155 +              ],
+       156 +              'redacteur' => [
+       157 +                  'nom' =>
+           + $this->noteConceptuelle->redacteur->nom ?? '',
+       158 +                  'prenom' =>
+           + $this->noteConceptuelle->redacteur->prenom ?? '',
+       159 +              ],
+       160 +              'ministere_nom' =>
+           + $this->projet->ministere->nom ?? '',
+       161 +              'type_appreciation' => $this->evaluation->type
+           +  ?? 'appreciation_climatique',
+       162 +              'type_appreciation_label' =>
+           + $this->getTypeAppreciationLabel(),
+       163 +              'statut_evaluation' =>
+           + $this->evaluation->statut ?? 'en_cours',
+       164 +              'score' => $this->evaluation->score ?? null,
+       165 +              'decision' => $this->evaluation->decision ??
+           + null,
+       166 +              'message' => $this->getMessage(),
+       167 +              'action_url' => $this->getActionUrl(),
+       168 +              'action_text' => $this->getActionText(),
+       169 +              'date_appreciation' =>
+           + $this->evaluation->created_at->format('d/m/Y H:i'),
+       170 +              'priorite' => $this->getPriorite(),
+       171            ];
+       172        }
+       173 +
+       174 +      /**
+       175 +       * Get the broadcastable representation of the
+           + notification.
+       176 +       */
+       177 +      public function toBroadcast($notifiable):
+           + BroadcastMessage
+       178 +      {
+       179 +          return new BroadcastMessage([
+       180 +              'type' => 'appreciation_note_conceptuelle',
+       181 +              'message' => $this->getMessage(),
+       182 +              'priorite' => $this->getPriorite(),
+       183 +              'data' => $this->toArray($notifiable),
+       184 +          ]);
+       185 +      }
+       186 +
+       187 +      /**
+       188 +       * Get personalized message based on recipient type.
+       189 +       */
+       190 +      protected function getMessage(): string
+       191 +      {
+       192 +          $evaluateurNom = $this->evaluateur->prenom . ' ' .
+           +  $this->evaluateur->nom;
+       193 +
+       194 +          switch ($this->typeDestinataire) {
+       195 +              case 'redacteur_info':
+       196 +                  return 'Votre note conceptuelle "' .
+           + $this->noteConceptuelle->intitule . '" est en cours
+           + d\'évaluation par ' . $evaluateurNom . '.';
+       197 +
+       198 +              case 'dpaf_supervision':
+       199 +                  return 'Appréciation en cours pour le
+           + projet "' . $this->projet->titre_projet . '" par ' .
+           + $evaluateurNom . '.';
+       200 +
+       201 +              case 'dgpd_collegial':
+       202 +                  return $evaluateurNom . ' a commencé
+           + l\'appréciation de "' . $this->noteConceptuelle->intitule .
+           +  '".';
+       203 +
+       204 +              case 'chef_projet_evaluation_terminee':
+       205 +                  $decision = $this->evaluation->decision ??
+           +  'en attente';
+       206 +                  return 'Évaluation terminée pour "' .
+           + $this->noteConceptuelle->intitule . '". Décision : ' .
+           + ucfirst($decision) . '.';
+       207 +
+       208 +              case 'evaluateur_confirmation':
+       209 +                  return 'Votre appréciation pour "' .
+           + $this->noteConceptuelle->intitule . '" a été enregistrée
+           + avec succès.';
+       210 +
+       211 +              default:
+       212 +                  return 'Une appréciation de note
+           + conceptuelle a été créée pour "' .
+           + $this->projet->titre_projet . '".';
+       213 +          }
+       214 +      }
+       215 +
+       216 +      /**
+       217 +       * Get action URL based on recipient type.
+       218 +       */
+       219 +      protected function getActionUrl(): string
+       220 +      {
+       221 +          switch ($this->typeDestinataire) {
+       222 +              case 'evaluateur_confirmation':
+       223 +              case 'dgpd_collegial':
+       224 +                  return '/evaluations/' .
+           + $this->evaluation->id . '/edit';
+       225 +
+       226 +              case 'chef_projet_evaluation_terminee':
+       227 +              case 'redacteur_info':
+       228 +                  return '/projets/' . $this->projet->id .
+           + '/notes/' . $this->noteConceptuelle->id . '/evaluations';
+       229 +
+       230 +              case 'dpaf_supervision':
+       231 +              default:
+       232 +                  return '/projets/' . $this->projet->id;
+       233 +          }
+       234 +      }
+       235 +
+       236 +      /**
+       237 +       * Get action text based on recipient type.
+       238 +       */
+       239 +      protected function getActionText(): string
+       240 +      {
+       241 +          switch ($this->typeDestinataire) {
+       242 +              case 'evaluateur_confirmation':
+       243 +                  return 'Continuer l\'évaluation';
+       244 +
+       245 +              case 'chef_projet_evaluation_terminee':
+       246 +                  return 'Voir les résultats';
+       247 +
+       248 +              case 'redacteur_info':
+       249 +                  return 'Suivre l\'évaluation';
+       250 +
+       251 +              case 'dgpd_collegial':
+       252 +                  return 'Consulter l\'évaluation';
+       253 +
+       254 +              case 'dpaf_supervision':
+       255 +              default:
+       256 +                  return 'Voir le projet';
+       257 +          }
+       258 +      }
+       259 +
+       260 +      /**
+       261 +       * Get the label for appreciation type.
+       262 +       */
+       263 +      protected function getTypeAppreciationLabel(): string
+       264 +      {
+       265 +          $type = $this->evaluation->type ??
+           + 'appreciation_climatique';
+       266 +
+       267 +          return match($type) {
+       268 +              'appreciation_climatique' => 'Appréciation
+           + Climatique',
+       269 +              'appreciation_pertinence' => 'Appréciation de
+           + Pertinence',
+       270 +              'appreciation_faisabilite' => 'Appréciation de
+           +  Faisabilité',
+       271 +              default => ucfirst(str_replace('_', ' ',
+           + $type)),
+       272 +          };
+       273 +      }
+       274 +
+       275 +      /**
+       276 +       * Get priority level for the notification.
+       277 +       */
+       278 +      protected function getPriorite(): string
+       279 +      {
+       280 +          return match($this->typeDestinataire) {
+       281 +              'chef_projet_evaluation_terminee' => 'haute',
+       282 +              'redacteur_info', 'evaluateur_confirmation' =>
+           +  'moyenne',
+       283 +              default => 'normale',
+       284 +          };
+       285 +      }
+       286    }
+
+● Maintenant, mettons à jour le EventServiceProvider pour enregistrer notre
+   nouveau mapping :
+
+● Search(pattern: "**/EventServiceProvider.php")
+  ⎿  Found 3 files (ctrl+o to expand)
+
+● Read(app/Providers/EventServiceProvider.php)
+  ⎿  Read 51 lines
+
+● Update(app/Providers/EventServiceProvider.php)
+  ⎿  Updated app/Providers/EventServiceProvider.php with 5 additions
+       30            \App\Events\CommentaireCreated::class => [
+       31
+            \App\Listeners\SendCommentaireNotifications::class,
+       32            ],
+       33 +
+       34 +          // Appréciations Notes Conceptuelles
+       35 +
+          + \App\Events\AppreciationNoteConceptuelleCreee::class => [
+       36 +              \App\Listeners\NotifierAppreciationNoteConceptu
+          + elleCreee::class,
+       37 +          ],
+       38        ];
+       39
+       40        /**
+  ⎿  Found 1 new diagnostic issue in 1 file (ctrl-o to expand)
+
+● Parfait ! Maintenant testons que tout fonctionne bien :
+
+● Bash(php artisan event:list | grep -i appreciation)
+  ⎿   App\Events\AppreciationNoteConceptuelleCreee (ShouldBroadcast) .....
+    ........
+      ⇂ App\Listeners\NotifierAppreciationNoteConceptuelleCreee@handle (Sh
+    ouldQueue)
+
+
+
+● Excellent ! Le système est bien configuré. Maintenant vérifions qu'il n'y
+   a pas d'erreurs de syntaxe :
+
+● Bash(php -l app/Events/AppreciationNoteConceptuelleCreee.php && php -l
+      app/Listeners/NotifierAppreciationNoteConceptuelleCreee.php && php -l
+      app/Notifications/Apprec…)
+  ⎿ No syntax errors detected in app/Events/AppreciationNoteConceptuelleCr
+    eee.php
+    No syntax errors detected in app/Listeners/NotifierAppreciationNoteCon
+    … +3 lines (ctrl+o to expand)
+
+
+
+● Parfait ! Tous les fichiers sont créés sans erreur de syntaxe. Voici un
+  récapitulatif complet :
+
+  ✅ RÉCAPITULATIF - Exemple AppreciationNoteConceptuelle créé avec succès
+
+  📁 Fichiers créés :
+
+  1. Event - app/Events/AppreciationNoteConceptuelleCreee.php
+    - Implémente ShouldBroadcast pour diffusion temps réel
+    - Broadcast sur 5 canaux privés
+    - Contient toutes les données de l'évaluation
+  2. Listener - app/Listeners/NotifierAppreciationNoteConceptuelleCreee.php
+    - Implémente ShouldQueue pour exécution asynchrone
+    - 3 tentatives avec backoff (10s, 30s, 60s)
+    - Notifie 5 types de destinataires différents
+    - Gestion des erreurs avec failed()
+  3. Notification -
+  app/Notifications/AppreciationNoteConceptuelleNotification.php
+    - Implémente ShouldQueue
+    - Support de 3 canaux : database, broadcast, mail
+    - 5 types de messages personnalisés
+    - Système de priorités (haute, moyenne, normale)
+  4. Configuration - app/Providers/EventServiceProvider.php
+    - Mapping Event → Listener enregistré
+
+  ✅ Tests effectués :
+
+  - Événement correctement enregistré (vérifié avec php artisan event:list)
+  - Aucune erreur de syntaxe PHP
+  - Listener bien associé à l'événement
+
+  🎯 Destinataires notifiés :
+
+  | Type                            | Rôle                 | Priorité |
+  |---------------------------------|----------------------|----------|
+  | redacteur_info                  | Rédacteur de la note | Moyenne  |
+  | dpaf_supervision                | DPAF du ministère    | Normale  |
+  | dgpd_collegial                  | Autres membres DGPD  | Normale  |
+  | chef_projet_evaluation_terminee | Chef de projet       | Haute    |
+  | evaluateur_confirmation         | Évaluateur           | Moyenne  |
+
+  📡 Canaux de broadcast :
+
+  1. evaluations.{id} - Canal de l'évaluation
+  2. notes-conceptuelles.{id} - Canal de la note
+  3. projets.{id} - Canal du projet
+  4. ministeres.{id} - Canal du ministère
+  5. users.{id} - Canal de l'utilisateur (rédacteur)
+
+  Cet exemple est maintenant fonctionnel et prêt à l'emploi ! Tu peux
+  utiliser ce pattern pour créer tous les autres événements du système.
+
+> fait la meme chose pour l'exemple de NoteConceptuelleSoumise,
+NotifierNoteConceptuelleSoumise et NoteConceptuelleSoumiseNotification
+  ⎿ ⧉ Selected 1 lines from
+    2025-10-21-vrifions-aussi-dans-le-contrleur-pour-sassurer.txt in Visual
+    Studio Code
+
+● Parfait ! Je vais créer les fichiers pour NoteConceptuelleSoumise.
+
+● Bash(php artisan make:event NoteConceptuelleSoumise)
+  ⎿    INFO  Event [app/Events/NoteConceptuelleSoumise.php] created succes
+    sfully.
+
+
+● Write(app/Events/NoteConceptuelleSoumise.php)
+  ⎿  Updated app/Events/NoteConceptuelleSoumise.php with 56 additions and
+      removals
+        2
+        3    namespace App\Events;
+        4
+        5 -  use Illuminate\Broadcasting\Channel;
+        5 +  use App\Models\NoteConceptuelle;
+        6 +  use App\Models\Projet;
+        7 +  use App\Models\User;
+        8    use Illuminate\Broadcasting\InteractsWithSockets;
+        9 -  use Illuminate\Broadcasting\PresenceChannel;
+        9    use Illuminate\Broadcasting\PrivateChannel;
+       10    use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+       11    use Illuminate\Foundation\Events\Dispatchable;
+       12    use Illuminate\Queue\SerializesModels;
+       13
+       14 -  class NoteConceptuelleSoumise
+       14 +  class NoteConceptuelleSoumise implements ShouldBroadcast
+       15    {
+       16        use Dispatchable, InteractsWithSockets,
+            SerializesModels;
+       17
+       18 +      public NoteConceptuelle $noteConceptuelle;
+       19 +      public Projet $projet;
+       20 +      public User $acteur;
+       21 +      public ?string $ancienStatut;
+       22 +      public string $nouveauStatut;
+       23 +
+       24        /**
+       25         * Create a new event instance.
+       26         */
+       27 -      public function __construct()
+       28 -      {
+       29 -          //
+       27 +      public function __construct(
+       28 +          NoteConceptuelle $noteConceptuelle,
+       29 +          Projet $projet,
+       30 +          User $acteur,
+       31 +          ?string $ancienStatut = null,
+       32 +          string $nouveauStatut = 'soumise'
+       33 +      ) {
+       34 +          $this->noteConceptuelle =
+          + $noteConceptuelle->load(['redacteur', 'champs']);
+       35 +          $this->projet = $projet->load(['ministere',
+          + 'organisation']);
+       36 +          $this->acteur = $acteur;
+       37 +          $this->ancienStatut = $ancienStatut;
+       38 +          $this->nouveauStatut = $nouveauStatut;
+       39        }
+       40
+       41        /**
+       42         * Get the channels the event should broadcast on.
+       43 -       *
+       44 -       * @return array<int, \Illuminate\Broadcasting\Channel>
+       43         */
+       44        public function broadcastOn(): array
+       45        {
+       46            return [
+       47 -              new PrivateChannel('channel-name'),
+       47 +              new PrivateChannel('notes-conceptuelles.' .
+          + $this->noteConceptuelle->id),
+       48 +              new PrivateChannel('projets.' .
+          + $this->projet->id),
+       49 +              new PrivateChannel('ministeres.' .
+          + ($this->projet->ministere->id ?? 'unknown')),
+       50 +              new PrivateChannel('users.' .
+          + $this->noteConceptuelle->redacteur_id),
+       51            ];
+       52        }
+       53 +
+       54 +      /**
+       55 +       * The event's broadcast name.
+       56 +       */
+       57 +      public function broadcastAs(): string
+       58 +      {
+       59 +          return 'note-conceptuelle.soumise';
+       60 +      }
+       61 +
+       62 +      /**
+       63 +       * Get the data to broadcast.
+       64 +       */
+       65 +      public function broadcastWith(): array
+       66 +      {
+       67 +          return [
+       68 +              'note_conceptuelle_id' =>
+          + $this->noteConceptuelle->id,
+       69 +              'projet_id' => $this->projet->id,
+       70 +              'intitule' =>
+          + $this->noteConceptuelle->intitule,
+       71 +              'acteur' => [
+       72 +                  'id' => $this->acteur->id,
+       73 +                  'nom' => $this->acteur->nom,
+       74 +                  'prenom' => $this->acteur->prenom,
+       75 +              ],
+       76 +              'ancien_statut' => $this->ancienStatut,
+       77 +              'nouveau_statut' => $this->nouveauStatut,
+       78 +              'projet_titre' => $this->projet->titre_projet,
+       79 +              'ministere_nom' =>
+          + $this->projet->ministere->nom ?? '',
+       80 +              'timestamp' => now()->toIso8601String(),
+       81 +          ];
+       82 +      }
+       83    }
+
+● Bash(php artisan make:listener NotifierNoteConceptuelleSoumise
+      --event=NoteConceptuelleSoumise)
+  ⎿     INFO  Listener [app/Listeners/NotifierNoteConceptuelleSoumise.php]
+     created successfully.
+
+● Write(app/Listeners/NotifierNoteConceptuelleSoumise.php)
+  ⎿  Updated app/Listeners/NotifierNoteConceptuelleSoumise.php with 113
+     additions and 2 removals
+        3    namespace App\Listeners;
+        4
+        5    use App\Events\NoteConceptuelleSoumise;
+        6 +  use App\Notifications\NoteConceptuelleSoumiseNotification;
+        7 +  use App\Models\User;
+        8 +  use App\Models\Dpaf;
+        9 +  use App\Models\Dgpd;
+       10    use Illuminate\Contracts\Queue\ShouldQueue;
+       11    use Illuminate\Queue\InteractsWithQueue;
+       12 +  use Illuminate\Support\Facades\Notification;
+       13 +  use Illuminate\Support\Facades\Log;
+       14
+       15 -  class NotifierNoteConceptuelleSoumise
+       15 +  class NotifierNoteConceptuelleSoumise
+          +   implements ShouldQueue
+       16    {
+       17 +      use InteractsWithQueue;
+       18 +
+       19        /**
+       20 +       * The number of times the job may be attempted.
+       21 +       */
+       22 +      public $tries = 3;
+       23 +
+       24 +      /**
+       25 +       * The number of seconds to wait before retrying the
+          + job.
+       26 +       */
+       27 +      public $backoff = [10, 30, 60];
+       28 +
+       29 +      /**
+       30         * Create the event listener.
+       31         */
+       32        public function __construct()
+     ...
+        21         */
+        22        public function handle(NoteConceptuelleSoumise
+             $event): void
+        23        {
+        24 -          //
+        24 +          $noteConceptuelle = $event->noteConceptuelle;
+        25 +          $projet = $event->projet;
+        26 +          $acteur = $event->acteur;
+        27 +
+        28 +          Log::info('Envoi de notifications pour soumission
+           + de note conceptuelle', [
+        29 +              'note_conceptuelle_id' =>
+           + $noteConceptuelle->id,
+        30 +              'projet_id' => $projet->id,
+        31 +              'acteur_id' => $acteur->id,
+        32 +          ]);
+        33 +
+        34 +          // 1. Notifier le rédacteur (confirmation)
+        35 +          if ($noteConceptuelle->redacteur) {
+        36 +              $noteConceptuelle->redacteur->notify(
+        37 +                  new NoteConceptuelleSoumiseNotification(
+        38 +                      $noteConceptuelle,
+        39 +                      $projet,
+        40 +                      'confirmation'
+        41 +                  )
+        42 +              );
+        43 +          }
+        44 +
+        45 +          // 2. Notifier tous les utilisateurs DGPD
+           + (évaluation requise)
+        46 +          $utilisateursDgpd = User::where('profilable_type',
+           +  Dgpd::class)
+        47 +              ->whereHas('permissions', function($query) {
+        48 +                  $query->where('slug',
+           + 'evaluer-une-note-conceptuelle');
+        49 +              })
+        50 +              ->get();
+        51 +
+        52 +          if ($utilisateursDgpd->isNotEmpty()) {
+        53 +              Notification::send(
+        54 +                  $utilisateursDgpd,
+        55 +                  new NoteConceptuelleSoumiseNotification(
+        56 +                      $noteConceptuelle,
+        57 +                      $projet,
+        58 +                      'evaluation_requise'
+        59 +                  )
+        60 +              );
+        61 +          }
+        62 +
+        63 +          // 3. Notifier le DPAF du ministère (information)
+        64 +          if ($projet->ministere_id) {
+        65 +              $dpafMinistere =
+           + User::where('profilable_type', Dpaf::class)
+        66 +                  ->whereHas('profilable', function($query)
+           + use ($projet) {
+        67 +                      $query->where('ministere_id',
+           + $projet->ministere_id);
+        68 +                  })
+        69 +                  ->first();
+        70 +
+        71 +              if ($dpafMinistere) {
+        72 +                  $dpafMinistere->notify(
+        73 +                      new
+           + NoteConceptuelleSoumiseNotification(
+        74 +                          $noteConceptuelle,
+        75 +                          $projet,
+        76 +                          'information'
+        77 +                      )
+        78 +                  );
+        79 +              }
+        80 +          }
+        81 +
+        82 +          // 4. Notifier le chef de projet du ministère
+        83 +          if ($projet->organisation_id) {
+        84 +              $chefProjetMinistere =
+           + User::where('profilable_type', 'App\Models\Organisation')
+        85 +                  ->where('profilable_id',
+           + $projet->organisation_id)
+        86 +                  ->whereHas('roles', function($query) {
+        87 +                      $query->where('slug',
+           + 'responsable-projet');
+        88 +                  })
+        89 +                  ->first();
+        90 +
+        91 +              if ($chefProjetMinistere &&
+           + $chefProjetMinistere->id !== $acteur->id) {
+        92 +                  $chefProjetMinistere->notify(
+        93 +                      new
+           + NoteConceptuelleSoumiseNotification(
+        94 +                          $noteConceptuelle,
+        95 +                          $projet,
+        96 +                          'information'
+        97 +                      )
+        98 +                  );
+        99 +              }
+       100 +          }
+       101 +
+       102 +          Log::info('Notifications envoyées avec succès pour
+           +  soumission de note conceptuelle', [
+       103 +              'note_conceptuelle_id' =>
+           + $noteConceptuelle->id,
+       104 +          ]);
+       105        }
+       106 +
+       107 +      /**
+       108 +       * Handle a job failure.
+       109 +       */
+       110 +      public function failed(NoteConceptuelleSoumise $event,
+           +  \Throwable $exception): void
+       111 +      {
+       112 +          Log::error('Échec de notification
+           + NoteConceptuelleSoumise', [
+       113 +              'note_conceptuelle_id' =>
+           + $event->noteConceptuelle->id,
+       114 +              'projet_id' => $event->projet->id,
+       115 +              'error' => $exception->getMessage(),
+       116 +              'trace' => $exception->getTraceAsString()
+       117 +          ]);
+       118 +      }
+       119    }
+  ⎿  Found 4 new diagnostic issues in 1 file (ctrl-o to expand)
+
+● Bash(php artisan make:notification NoteConceptuelleSoumiseNotification)
+  ⎿    INFO  Notification [app/Notifications/NoteConceptuelleSoumiseNotifi
+    cation.php] created successfully.
+
+
+● Write(app/Notifications/NoteConceptuelleSoumiseNotification.php)
+  ⎿  Updated app/Notifications/NoteConceptuelleSoumiseNotification.php wit
+      155 additions and 19 removals
+         2
+         3    namespace App\Notifications;
+         4
+         5 +  use App\Models\NoteConceptuelle;
+         6 +  use App\Models\Projet;
+         7    use Illuminate\Bus\Queueable;
+         8    use Illuminate\Contracts\Queue\ShouldQueue;
+         9    use Illuminate\Notifications\Messages\MailMessage;
+        10 +  use Illuminate\Notifications\Messages\BroadcastMessage;
+        11    use Illuminate\Notifications\Notification;
+        12
+        13 -  class NoteConceptuelleSoumiseNotification extends
+           -  Notification
+        13 +  class NoteConceptuelleSoumiseNotification extends
+           +  Notification implements ShouldQueue
+        14    {
+        15        use Queueable;
+        16
+        17 +      protected NoteConceptuelle $noteConceptuelle;
+        18 +      protected Projet $projet;
+        19 +      protected string $typeDestinataire;
+        20 +
+        21        /**
+        22 -       * Create a new notification instance.
+        22 +       * Types de destinataires possibles :
+        23 +       * - confirmation : Rédacteur de la note (confirmation
+           +  de soumission)
+        24 +       * - evaluation_requise : DGPD (évaluation nécessaire)
+        25 +       * - information : DPAF et Chef de projet
+           + (information)
+        26         */
+        27 -      public function __construct()
+        28 -      {
+        29 -          //
+        27 +      public function __construct(
+        28 +          NoteConceptuelle $noteConceptuelle,
+        29 +          Projet $projet,
+        30 +          string $typeDestinataire = 'information'
+        31 +      ) {
+        32 +          $this->noteConceptuelle = $noteConceptuelle;
+        33 +          $this->projet = $projet;
+        34 +          $this->typeDestinataire = $typeDestinataire;
+        35        }
+        36
+        37        /**
+        38         * Get the notification's delivery channels.
+        39 -       *
+        40 -       * @return array<int, string>
+        39         */
+        40 -      public function via(object $notifiable): array
+        40 +      public function via($notifiable): array
+        41        {
+        42 -          return ['mail'];
+        42 +          return ['database', 'broadcast', 'mail'];
+        43        }
+        44
+        45        /**
+        46         * Get the mail representation of the notification.
+        47         */
+        48 -      public function toMail(object
+           -  $notifiable): MailMessage
+        48 +      public function toMail($notifiable): MailMessage
+        49        {
+        50 -          return (new MailMessage)
+        51 -              ->line('The introduction to the
+           - notification.')
+        52 -              ->action('Notification Action', url('/'))
+        53 -              ->line('Thank you for using our
+           - application!');
+        50 +          $mailMessage = new MailMessage();
+        51 +
+        52 +          switch ($this->typeDestinataire) {
+        53 +              case 'confirmation':
+        54 +                  return $mailMessage
+        55 +                      ->subject('Note Conceptuelle Soumise
+           + avec Succès')
+        56 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+        57 +                      ->line('Votre note conceptuelle a été
+           + soumise avec succès.')
+        58 +                      ->line('**Projet :** ' .
+           + $this->projet->titre_projet)
+        59 +                      ->line('**Note :** ' .
+           + $this->noteConceptuelle->intitule)
+        60 +                      ->line('Elle sera évaluée par la DGPD
+           + dans les prochains jours.')
+        61 +                      ->action('Voir la note',
+           + url('/projets/' . $this->projet->id . '/notes/' .
+           + $this->noteConceptuelle->id))
+        62 +                      ->line('Merci pour votre
+           + soumission.');
+        63 +
+        64 +              case 'evaluation_requise':
+        65 +                  return $mailMessage
+        66 +                      ->subject('Nouvelle Note Conceptuelle
+           + à Évaluer')
+        67 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+        68 +                      ->line('Une nouvelle note conceptuelle
+           +  nécessite votre évaluation.')
+        69 +                      ->line('**Projet :** ' .
+           + $this->projet->titre_projet)
+        70 +                      ->line('**Ministère :** ' .
+           + ($this->projet->ministere->nom ?? 'N/A'))
+        71 +                      ->line('**Soumise par :** ' .
+           + ($this->noteConceptuelle->redacteur->nom ?? 'N/A') . ' ' .
+           + ($this->noteConceptuelle->redacteur->prenom ?? ''))
+        72 +                      ->action('Évaluer maintenant',
+           + url('/evaluations/notes/' . $this->noteConceptuelle->id))
+        73 +                      ->line('Veuillez procéder à
+           + l\'évaluation dans les meilleurs délais.');
+        74 +
+        75 +              case 'information':
+        76 +              default:
+        77 +                  return $mailMessage
+        78 +                      ->subject('Note Conceptuelle Soumise')
+        79 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+        80 +                      ->line('Une note conceptuelle a été
+           + soumise pour évaluation.')
+        81 +                      ->line('**Projet :** ' .
+           + $this->projet->titre_projet)
+        82 +                      ->line('**Ministère :** ' .
+           + ($this->projet->ministere->nom ?? 'N/A'))
+        83 +                      ->line('**Soumise par :** ' .
+           + ($this->noteConceptuelle->redacteur->nom ?? 'N/A'))
+        84 +                      ->action('Voir les détails',
+           + url('/projets/' . $this->projet->id))
+        85 +                      ->line('Notification
+           + d\'information.');
+        86 +          }
+        87        }
+        88
+        89        /**
+        90 -       * Get the array representation of the notification.
+        91 -       *
+        92 -       * @return array<string, mixed>
+        90 +       * Get the array representation of the notification
+           +   (Database).
+        91         */
+        92 -      public function toArray(object $notifiable): array
+        92 +      public function toArray($notifiable): array
+        93        {
+        94            return [
+        95 -              //
+        95 +              'type' => 'note_conceptuelle_soumise',
+        96 +              'type_destinataire' =>
+           + $this->typeDestinataire,
+        97 +              'note_conceptuelle_id' =>
+           + $this->noteConceptuelle->id,
+        98 +              'projet_id' => $this->projet->id,
+        99 +              'projet_titre' => $this->projet->titre_projet,
+       100 +              'note_intitule' =>
+           + $this->noteConceptuelle->intitule,
+       101 +              'redacteur_nom' =>
+           + $this->noteConceptuelle->redacteur->nom ?? '',
+       102 +              'redacteur_prenom' =>
+           + $this->noteConceptuelle->redacteur->prenom ?? '',
+       103 +              'ministere_nom' =>
+           + $this->projet->ministere->nom ?? '',
+       104 +              'message' => $this->getMessage(),
+       105 +              'action_url' => $this->getActionUrl(),
+       106 +              'action_text' => $this->getActionText(),
+       107 +              'date_soumission' =>
+           + $this->noteConceptuelle->created_at->format('d/m/Y H:i'),
+       108 +              'priorite' => $this->getPriorite(),
+       109            ];
+       110        }
+       111 +
+       112 +      /**
+       113 +       * Get the broadcastable representation of the
+           + notification.
+       114 +       */
+       115 +      public function toBroadcast($notifiable):
+           + BroadcastMessage
+       116 +      {
+       117 +          return new BroadcastMessage([
+       118 +              'type' => 'note_conceptuelle_soumise',
+       119 +              'message' => $this->getMessage(),
+       120 +              'priorite' => $this->getPriorite(),
+       121 +              'data' => $this->toArray($notifiable),
+       122 +          ]);
+       123 +      }
+       124 +
+       125 +      /**
+       126 +       * Get personalized message based on recipient type.
+       127 +       */
+       128 +      protected function getMessage(): string
+       129 +      {
+       130 +          switch ($this->typeDestinataire) {
+       131 +              case 'confirmation':
+       132 +                  return 'Votre note conceptuelle "' .
+           + $this->noteConceptuelle->intitule . '" a été soumise avec
+           + succès.';
+       133 +
+       134 +              case 'evaluation_requise':
+       135 +                  return 'Une nouvelle note conceptuelle "'
+           + . $this->noteConceptuelle->intitule . '" nécessite votre
+           + évaluation.';
+       136 +
+       137 +              case 'information':
+       138 +              default:
+       139 +                  return 'Une note conceptuelle a été
+           + soumise pour le projet "' . $this->projet->titre_projet .
+           + '".';
+       140 +          }
+       141 +      }
+       142 +
+       143 +      /**
+       144 +       * Get action URL based on recipient type.
+       145 +       */
+       146 +      protected function getActionUrl(): string
+       147 +      {
+       148 +          switch ($this->typeDestinataire) {
+       149 +              case 'evaluation_requise':
+       150 +                  return '/evaluations/notes/' .
+           + $this->noteConceptuelle->id;
+       151 +
+       152 +              case 'confirmation':
+       153 +                  return '/projets/' . $this->projet->id .
+           + '/notes/' . $this->noteConceptuelle->id;
+       154 +
+       155 +              case 'information':
+       156 +              default:
+       157 +                  return '/projets/' . $this->projet->id;
+       158 +          }
+       159 +      }
+       160 +
+       161 +      /**
+       162 +       * Get action text based on recipient type.
+       163 +       */
+       164 +      protected function getActionText(): string
+       165 +      {
+       166 +          switch ($this->typeDestinataire) {
+       167 +              case 'evaluation_requise':
+       168 +                  return 'Évaluer maintenant';
+       169 +
+       170 +              case 'confirmation':
+       171 +                  return 'Voir la note';
+       172 +
+       173 +              case 'information':
+       174 +              default:
+       175 +                  return 'Voir le projet';
+       176 +          }
+       177 +      }
+       178 +
+       179 +      /**
+       180 +       * Get priority level for the notification.
+       181 +       */
+       182 +      protected function getPriorite(): string
+       183 +      {
+       184 +          return match($this->typeDestinataire) {
+       185 +              'evaluation_requise' => 'haute',
+       186 +              'confirmation' => 'moyenne',
+       187 +              default => 'normale',
+       188 +          };
+       189 +      }
+       190    }
+
+● Read(app/Providers/EventServiceProvider.php)
+  ⎿  Read 56 lines
+
+● Update(app/Providers/EventServiceProvider.php)
+  ⎿  Updated app/Providers/EventServiceProvider.php with 5 additions
+       31
+            \App\Listeners\SendCommentaireNotifications::class,
+       32            ],
+       33
+       34 +          // Notes Conceptuelles
+       35 +          \App\Events\NoteConceptuelleSoumise::class => [
+       36 +
+          + \App\Listeners\NotifierNoteConceptuelleSoumise::class,
+       37 +          ],
+       38 +
+       39            // Appréciations Notes Conceptuelles
+       40
+            \App\Events\AppreciationNoteConceptuelleCreee::class => [
+       41                \App\Listeners\NotifierAppreciationNoteConceptu
+            elleCreee::class,
+  ⎿  Found 1 new diagnostic issue in 1 file (ctrl-o to expand)
+
+● Parfait ! Vérifions que tout est bien enregistré :
+
+● Bash(php artisan event:list | grep -i "note\|appreciation")
+  ⎿   App\Events\AppreciationNoteConceptuelleCreee (ShouldBroadcast) .....
+    ........
+      ⇂ App\Listeners\NotifierAppreciationNoteConceptuelleCreee@handle (Sh
+    … +4 lines (ctrl+o to expand)
+
+
+
+● Bash(php -l app/Events/NoteConceptuelleSoumise.php && php -l
+      app/Listeners/NotifierNoteConceptuelleSoumise.php && php -l
+      app/Notifications/NoteConceptuelleSoumiseNot…)
+  ⎿ No syntax errors detected in app/Events/NoteConceptuelleSoumise.php
+    No syntax errors detected in app/Listeners/NotifierNoteConceptuelleSou
+    mise.php
+    … +2 lines (ctrl+o to expand)
+
+
+● Excellent ! Tous les fichiers sont créés et fonctionnels. Voici le
+  récapitulatif complet :
+
+  ✅ RÉCAPITULATIF COMPLET - 2 Exemples d'Events créés avec succès
+
+  📁 Fichiers créés :
+
+  1. NoteConceptuelleSoumise (Soumission de note conceptuelle)
+
+  Event - app/Events/NoteConceptuelleSoumise.php
+  - Implémente ShouldBroadcast
+  - Broadcast sur 4 canaux privés
+  - Contient : noteConceptuelle, projet, acteur, ancien/nouveau statut
+
+  Listener - app/Listeners/NotifierNoteConceptuelleSoumise.php
+  - Implémente ShouldQueue
+  - Notifie 4 types de destinataires :
+    a. Rédacteur (confirmation)
+    b. DGPD (évaluation requise)
+    c. DPAF du ministère (information)
+    d. Chef de projet (information)
+
+  Notification - app/Notifications/NoteConceptuelleSoumiseNotification.php
+  - 3 canaux : database, broadcast, mail
+  - 3 types de messages personnalisés
+  - Priorités : haute (DGPD), moyenne (rédacteur), normale (autres)
+
+  ---
+  2. AppreciationNoteConceptuelleCreee (Création d'évaluation)
+
+  Event - app/Events/AppreciationNoteConceptuelleCreee.php
+  - Broadcast sur 5 canaux privés
+  - Contient : evaluation, noteConceptuelle, projet, evaluateur
+
+  Listener - app/Listeners/NotifierAppreciationNoteConceptuelleCreee.php
+  - Notifie 5 types de destinataires :
+    a. Rédacteur (info)
+    b. DPAF (supervision)
+    c. Autres DGPD (collégial)
+    d. Chef de projet (si terminée)
+    e. Évaluateur (confirmation)
+
+  Notification -
+  app/Notifications/AppreciationNoteConceptuelleNotification.php
+  - 3 canaux : database, broadcast, mail
+  - 5 types de messages personnalisés
+  - Priorités : haute, moyenne, normale
+
+  ---
+  📋 Configuration
+
+  EventServiceProvider mis à jour avec les 2 mappings :
+  - NoteConceptuelleSoumise → NotifierNoteConceptuelleSoumise
+  - AppreciationNoteConceptuelleCreee →
+  NotifierAppreciationNoteConceptuelleCreee
+
+  ---
+  ✅ Validations effectuées :
+
+  - ✅ Événements enregistrés correctement
+  - ✅ Listeners associés avec ShouldQueue
+  - ✅ Aucune erreur de syntaxe PHP
+  - ✅ Broadcast configuré sur les deux événements
+
+  ---
+  📊 Comparaison des deux exemples :
+
+  | Aspect            | NoteConceptuelleSoumise |
+  AppreciationNoteConceptuelleCreee |
+  |-------------------|-------------------------|--------------------------
+  ---------|
+  | Canaux broadcast  | 4 canaux                | 5 canaux
+           |
+  | Destinataires     | 4 types                 | 5 types
+           |
+  | Types de messages | 3 types                 | 5 types
+           |
+  | Priorité haute    | DGPD                    | Chef projet (si terminée)
+           |
+  | Use case          | Soumission initiale     | Évaluation en cours
+           |
+
+  Ces deux exemples sont maintenant prêts à l'emploi et peuvent servir de
+  templates pour créer tous les autres événements du système ! 🎉
+
+> parlons des canaux de diffusion pour chaque cas
+
+● Excellent ! Parlons des canaux de diffusion (broadcast channels) pour
+  chaque cas d'événement. Je vais analyser les deux exemples créés et
+  proposer une stratégie complète pour les canaux.
+
+● Read(routes/channels.php)
+  ⎿  Read 21 lines
+
+● Parfait ! Maintenant analysons les besoins en canaux de diffusion.
+  Laisse-moi créer une documentation complète :
+
+  📡 STRATÉGIE COMPLÈTE DES CANAUX DE BROADCAST
+
+  🎯 Objectifs des canaux de diffusion
+
+  Les canaux de broadcast permettent :
+  1. Notifications temps réel via WebSockets
+  2. Sécurité - Chaque utilisateur ne reçoit que ce qu'il doit voir
+  3. Granularité - Cibler précisément les destinataires
+  4. Performance - Éviter de broadcaster à tous
+
+  ---
+  📊 ANALYSE DES CANAUX ACTUELS
+
+  1. NoteConceptuelleSoumise - 4 canaux
+
+  new PrivateChannel('notes-conceptuelles.' . $this->noteConceptuelle->id),
+  new PrivateChannel('projets.' . $this->projet->id),
+  new PrivateChannel('ministeres.' . $this->projet->ministere->id),
+  new PrivateChannel('users.' . $this->noteConceptuelle->redacteur_id),
+
+  Qui reçoit quoi ?
+
+  | Canal                    | Qui s'abonne ?                           |
+  Pourquoi ?                            |
+  |--------------------------|------------------------------------------|--
+  -------------------------------------|
+  | notes-conceptuelles.{id} | Rédacteur, évaluateurs assignés, DPAF    |
+  Suivre cette note spécifique          |
+  | projets.{id}             | Équipe projet, chef projet, organisation |
+  Suivre toutes les activités du projet |
+  | ministeres.{id}          | DPAF, personnel du ministère             |
+  Voir tous les projets du ministère    |
+  | users.{id}               | L'utilisateur rédacteur                  |
+  Notifications personnelles            |
+
+  ---
+  2. AppreciationNoteConceptuelleCreee - 5 canaux
+
+  new PrivateChannel('evaluations.' . $this->evaluation->id),
+  new PrivateChannel('notes-conceptuelles.' . $this->noteConceptuelle->id),
+  new PrivateChannel('projets.' . $this->projet->id),
+  new PrivateChannel('ministeres.' . $this->projet->ministere->id),
+  new PrivateChannel('users.' . $this->noteConceptuelle->redacteur_id),
+
+  Qui reçoit quoi ?
+
+  | Canal                    | Qui s'abonne ?                | Pourquoi ?
+                         |
+  |--------------------------|-------------------------------|-------------
+  -----------------------|
+  | evaluations.{id}         | Évaluateur, DGPD superviseurs | Suivre cette
+   évaluation spécifique |
+  | notes-conceptuelles.{id} | Rédacteur, équipe projet      | Voir les
+  évaluations de la note    |
+  | projets.{id}             | Équipe projet, organisation   | Toutes les
+  activités               |
+  | ministeres.{id}          | DPAF, ministère               | Vue
+  d'ensemble ministérielle       |
+  | users.{id}               | Rédacteur                     |
+  Notifications personnelles         |
+
+  ---
+  🏗️ STRATÉGIE COMPLÈTE DES CANAUX
+
+  Voici tous les canaux nécessaires pour le système complet :
+
+  Canaux par entité principale
+
+  | Canal                        | Description
+      | Cas d'usage                            | Exemple                 |
+  |------------------------------|-----------------------------------------
+  ----|----------------------------------------|-------------------------|
+  | users.{userId}               | Notifications personnelles d'un
+  utilisateur | Toutes notifications ciblées           | users.123
+        |
+  | projets.{projetId}           | Toutes activités d'un projet
+      | Soumissions, validations, commentaires | projets.456             |
+  | notes-conceptuelles.{noteId} | Activités d'une note conceptuelle
+      | Évaluations, validations, commentaires | notes-conceptuelles.789 |
+  | tdrs.{tdrId}                 | Activités d'un TDR (pré/faisabilité)
+      | Soumissions, évaluations               | tdrs.101                |
+  | evaluations.{evaluationId}   | Activités d'une évaluation
+      | Mise à jour, finalisation              | evaluations.202         |
+
+  Canaux par organisation
+
+  | Canal                    | Description                 | Qui s'abonne ?
+                 | Exemple          |
+  |--------------------------|-----------------------------|---------------
+  ---------------|------------------|
+  | ministeres.{ministereId} | Tous projets du ministère   | DPAF,
+  personnel ministère    | ministeres.5     |
+  | organisations.{orgId}    | Activités de l'organisation | Membres
+  organisation, admins | organisations.12 |
+  | dgpd                     | Activités globales DGPD     | Tous les DGPD
+                 | dgpd             |
+
+  Canaux par rôle/permission
+
+  | Canal            | Description                   | Qui s'abonne ?
+           | Exemple          |
+  |------------------|-------------------------------|---------------------
+  ---------|------------------|
+  | dgpd.evaluations | Nouvelles évaluations à faire | DGPD avec permission
+   évaluer | dgpd.evaluations |
+  | dpaf.validations | Validations en attente        | DPAF
+           | dpaf.validations |
+
+  ---
+  📋 CANAUX PAR TYPE D'ÉVÉNEMENT
+
+  Notes Conceptuelles
+
+  | Événement                            | Canaux de diffusion
+
+              |
+  |--------------------------------------|---------------------------------
+  -------------------------------------------------------------------------
+  ------------|
+  | NoteConceptuelleCreee                | projets.{id},
+  users.{redacteurId}
+                                |
+  | NoteConceptuelleSoumise              | notes-conceptuelles.{id},
+  projets.{id}, ministeres.{id}, users.{redacteurId}, dgpd.evaluations
+                    |
+  | NoteConceptuelleMiseAJour            | notes-conceptuelles.{id},
+  projets.{id}, users.{redacteurId}
+                    |
+  | AppreciationNoteConceptuelleCreee    | evaluations.{id},
+  notes-conceptuelles.{id}, projets.{id}, ministeres.{id},
+  users.{redacteurId}                       |
+  | AppreciationNoteConceptuelleTerminee | evaluations.{id},
+  notes-conceptuelles.{id}, projets.{id}, ministeres.{id},
+  users.{redacteurId}, users.{chefProjetId} |
+  | NoteConceptuelleValidee              | notes-conceptuelles.{id},
+  projets.{id}, ministeres.{id}, organisations.{id}, users.{redacteurId}
+                    |
+  | NoteConceptuelleRejetee              | notes-conceptuelles.{id},
+  projets.{id}, users.{redacteurId}
+                    |
+
+  TDR Préfaisabilité
+
+  | Événement                        | Canaux de diffusion
+                           |
+  |----------------------------------|-------------------------------------
+  -------------------------|
+  | TdrPrefaisabiliteCree            | projets.{id}, tdrs.{id}
+                           |
+  | TdrPrefaisabiliteSoumis          | tdrs.{id}, projets.{id},
+  ministeres.{id}, dgpd.evaluations   |
+  | EvaluationTdrPrefaisabiliteCreee | evaluations.{id}, tdrs.{id},
+  projets.{id}                    |
+  | TdrPrefaisabiliteValide          | tdrs.{id}, projets.{id},
+  ministeres.{id}, organisations.{id} |
+
+  TDR Faisabilité
+
+  | Événement                     | Canaux de diffusion
+                        |
+  |-------------------------------|----------------------------------------
+  ----------------------|
+  | TdrFaisabiliteCree            | projets.{id}, tdrs.{id}
+                        |
+  | TdrFaisabiliteSoumis          | tdrs.{id}, projets.{id},
+  ministeres.{id}, dgpd.evaluations   |
+  | EvaluationTdrFaisabiliteCreee | evaluations.{id}, tdrs.{id},
+  projets.{id}                    |
+  | TdrFaisabiliteValide          | tdrs.{id}, projets.{id},
+  ministeres.{id}, organisations.{id} |
+
+  ---
+  🔐 CONFIGURATION DES AUTORISATIONS (channels.php)
+
+  Voici la configuration complète recommandée pour routes/channels.php :
+
+  <?php
+
+  use App\Models\User;
+  use App\Models\Projet;
+  use App\Models\NoteConceptuelle;
+  use App\Models\Tdr;
+  use App\Models\Evaluation;
+  use App\Models\Organisation;
+  use App\Models\Dgpd;
+  use App\Models\Dpaf;
+  use Illuminate\Support\Facades\Broadcast;
+
+  // ============================================
+  // CANAUX PAR UTILISATEUR
+  // ============================================
+
+  // Canal personnel de l'utilisateur
+  Broadcast::channel('users.{userId}', function (User $user, $userId) {
+      return (int) $user->id === (int) $userId;
+  });
+
+  // ============================================
+  // CANAUX PAR PROJET
+  // ============================================
+
+  // Canal d'un projet spécifique
+  Broadcast::channel('projets.{projetId}', function (User $user, $projetId)
+   {
+      $projet = Projet::find($projetId);
+
+      if (!$projet) {
+          return false;
+      }
+
+      // Autoriser si :
+      // - Membre de l'organisation du projet
+      // - DPAF du ministère
+      // - DGPD
+      // - A permission de voir les projets
+      return $user->profilable_type === 'App\Models\Organisation' &&
+  $user->profilable_id === $projet->organisation_id
+          || $user->profilable_type === Dpaf::class &&
+  $user->profilable->ministere_id === $projet->ministere_id
+          || $user->profilable_type === Dgpd::class
+          || $user->hasPermission('voir-les-projets');
+  });
+
+  // ============================================
+  // CANAUX PAR NOTE CONCEPTUELLE
+  // ============================================
+
+  Broadcast::channel('notes-conceptuelles.{noteId}', function (User $user,
+  $noteId) {
+      $note = NoteConceptuelle::with('projet')->find($noteId);
+
+      if (!$note) {
+          return false;
+      }
+
+      // Autoriser si :
+      // - Rédacteur de la note
+      // - Membre de l'équipe projet
+      // - DGPD (évaluateurs)
+      // - DPAF du ministère
+      return $user->id === $note->redacteur_id
+          || ($user->profilable_type === 'App\Models\Organisation' &&
+  $user->profilable_id === $note->projet->organisation_id)
+          || $user->profilable_type === Dgpd::class
+          || ($user->profilable_type === Dpaf::class &&
+  $user->profilable->ministere_id === $note->projet->ministere_id)
+          || $user->hasPermission('voir-les-notes-conceptuelles');
+  });
+
+  // ============================================
+  // CANAUX PAR TDR
+  // ============================================
+
+  Broadcast::channel('tdrs.{tdrId}', function (User $user, $tdrId) {
+      $tdr = Tdr::with('projet')->find($tdrId);
+
+      if (!$tdr) {
+          return false;
+      }
+
+      return $user->profilable_type === 'App\Models\Organisation' &&
+  $user->profilable_id === $tdr->projet->organisation_id
+          || $user->profilable_type === Dgpd::class
+          || ($user->profilable_type === Dpaf::class &&
+  $user->profilable->ministere_id === $tdr->projet->ministere_id)
+          || $user->hasPermission('voir-les-tdrs');
+  });
+
+  // ============================================
+  // CANAUX PAR ÉVALUATION
+  // ============================================
+
+  Broadcast::channel('evaluations.{evaluationId}', function (User $user,
+  $evaluationId) {
+      $evaluation = Evaluation::find($evaluationId);
+
+      if (!$evaluation) {
+          return false;
+      }
+
+      // Autoriser si :
+      // - Évaluateur assigné
+      // - DGPD (supervision collégiale)
+      // - DPAF du ministère concerné
+      return $user->id === $evaluation->evaluateur_id
+          || $user->profilable_type === Dgpd::class
+          || $user->hasPermission('voir-toutes-les-evaluations');
+  });
+
+  // ============================================
+  // CANAUX PAR ORGANISATION
+  // ============================================
+
+  // Canal d'un ministère
+  Broadcast::channel('ministeres.{ministereId}', function (User $user,
+  $ministereId) {
+      // Autoriser si :
+      // - DPAF de ce ministère
+      // - DGPD (vue globale)
+      // - Personnel du ministère
+      return ($user->profilable_type === Dpaf::class &&
+  $user->profilable->ministere_id == $ministereId)
+          || $user->profilable_type === Dgpd::class
+          || $user->hasPermission('voir-tous-les-ministeres');
+  });
+
+  // Canal d'une organisation
+  Broadcast::channel('organisations.{organisationId}', function (User
+  $user, $organisationId) {
+      // Autoriser si :
+      // - Membre de cette organisation
+      // - Admin de l'organisation
+      return $user->profilable_type === 'App\Models\Organisation' &&
+  $user->profilable_id == $organisationId
+          || $user->hasPermission('gerer-les-organisations');
+  });
+
+  // ============================================
+  // CANAUX GLOBAUX PAR RÔLE
+  // ============================================
+
+  // Canal global DGPD - Toutes nouvelles évaluations
+  Broadcast::channel('dgpd.evaluations', function (User $user) {
+      return $user->profilable_type === Dgpd::class
+          && $user->hasPermission('evaluer-une-note-conceptuelle');
+  });
+
+  // Canal global DPAF - Toutes validations en attente
+  Broadcast::channel('dpaf.validations', function (User $user) {
+      return $user->profilable_type === Dpaf::class;
+  });
+
+  // ============================================
+  // CANAUX POUR COMMENTAIRES (existant)
+  // ============================================
+
+  Broadcast::channel('commentaires.{type}.{id}', function (User $user,
+  $type, $id) {
+      // Autoriser tous les utilisateurs authentifiés
+      return $user !== null;
+  });
+
+  ---
+  🎯 RECOMMANDATIONS PAR CAS D'USAGE
+
+  Cas 1 : Soumission de Note Conceptuelle
+
+  Canaux recommandés (par ordre de priorité) :
+  1. users.{redacteurId} - Haute priorité - Confirmation au rédacteur
+  2. dgpd.evaluations - Haute priorité - Alerte DGPD pour évaluation
+  3. notes-conceptuelles.{id} - Moyenne - Suivi de la note
+  4. projets.{id} - Moyenne - Contexte projet
+  5. ministeres.{id} - Basse - Vue d'ensemble ministère
+
+  Cas 2 : Création d'Appréciation
+
+  Canaux recommandés :
+  1. evaluations.{id} - Haute - Suivi de l'évaluation
+  2. users.{redacteurId} - Haute - Info au rédacteur
+  3. notes-conceptuelles.{id} - Moyenne - Lien avec la note
+  4. projets.{id} - Moyenne - Contexte
+  5. ministeres.{id} - Basse - Supervision
+
+  Cas 3 : Validation finale
+
+  Canaux recommandés :
+  1. users.{redacteurId} - Haute - Résultat au rédacteur
+  2. organisations.{id} - Haute - Toute l'équipe doit savoir
+  3. projets.{id} - Haute - Changement majeur
+  4. ministeres.{id} - Moyenne - Tracking ministériel
+  5. notes-conceptuelles.{id} - Moyenne - Historique
+
+  ---
+  💡 BONNES PRATIQUES
+
+  1. Toujours inclure le canal utilisateur personnel pour les notifications
+   ciblées
+  2. Utiliser des canaux hiérarchiques : user → entité → organisation →
+  global
+  3. Limiter les canaux globaux pour éviter le spam
+  4. Privilégier les canaux privés pour la sécurité
+  5. Documenter les autorisations dans chaque canal
+
+  Veux-tu que je mette à jour le fichier routes/channels.php avec cette
+  configuration complète ?
+
+> je pense a ministeres.{idMinistere}.projets.{idProjet}.notes-conceptuelle
+
+  ⎿ ⧉ Selected 1 lines from app/Services/OrganisationService.php in Visual
+    Studio Code
+
+● Excellente idée ! Tu proposes une approche hiérarchique et structurée
+  pour les canaux de broadcast. C'est beaucoup plus organisé et maintenable
+   !
+
+● Parfait ! Cette approche hiérarchique est bien meilleure. Laisse-moi te
+  proposer une architecture complète de canaux hiérarchiques.
+
+  🏗️ ARCHITECTURE HIÉRARCHIQUE DES CANAUX DE BROADCAST
+
+  🎯 Principe de la hiérarchie
+
+  Au lieu de broadcaster sur plusieurs canaux plats comme :
+  - notes-conceptuelles.{id}
+  - projets.{id}
+  - ministeres.{id}
+
+  On utilise une structure hiérarchique qui reflète l'organisation réelle :
+  ministeres.{id}.projets.{id}.notes-conceptuelles.{id}
+
+  ✅ Avantages de cette approche
+
+  1. Clarté : La structure reflète l'organisation métier
+  2. Filtrage facile : Subscribe au niveau qui t'intéresse
+  3. Scalabilité : Ajout de niveaux sans refactoring
+  4. Sécurité : Autorisations en cascade
+  5. Performance : Moins de canaux redondants
+
+  ---
+  📊 STRUCTURE HIÉRARCHIQUE COMPLÈTE
+
+  Niveau 1 : Ministère
+
+  ministeres.{ministereId}.*
+
+  Niveau 2 : Projet
+
+  ministeres.{ministereId}.projets.{projetId}.*
+
+  Niveau 3 : Entités du projet
+
+  ministeres.{ministereId}.projets.{projetId}.notes-conceptuelles.{noteId}.
+  *
+  ministeres.{ministereId}.projets.{projetId}.tdrs.{tdrId}.*
+  ministeres.{ministereId}.projets.{projetId}.commentaires.{commentaireId}
+
+  Niveau 4 : Sous-entités (optionnel)
+
+  ministeres.{ministereId}.projets.{projetId}.notes-conceptuelles.{noteId}.
+  evaluations.{evaluationId}
+  ministeres.{ministereId}.projets.{projetId}.tdrs.{tdrId}.evaluations.{eva
+  luationId}
+
+  ---
+  🎨 DÉFINITION COMPLÈTE DES CANAUX PAR CAS D'USAGE
+
+  1. Notes Conceptuelles
+
+  a) Note Conceptuelle Créée
+
+  // Canaux hiérarchiques
+  [
+      "ministeres.{ministereId}.projets.{projetId}.notes-conceptuelles.{not
+  eId}",
+      "ministeres.{ministereId}.projets.{projetId}",
+      "ministeres.{ministereId}",
+      "users.{redacteurId}",
+  ]
+
+  Qui écoute quoi ?
+  - ministeres.{id} → DPAF du ministère (vue globale)
+  - ministeres.{id}.projets.{id} → Équipe projet
+  - ministeres.{id}.projets.{id}.notes-conceptuelles.{id} → Rédacteur,
+  évaluateurs
+  - users.{id} → Notification personnelle du rédacteur
+
+  ---
+  b) Note Conceptuelle Soumise
+
+  [
+      "ministeres.{ministereId}.projets.{projetId}.notes-conceptuelles.{not
+  eId}",
+      "ministeres.{ministereId}.projets.{projetId}",
+      "ministeres.{ministereId}",
+      "dgpd.evaluations", // Canal global DGPD
+      "users.{redacteurId}",
+  ]
+
+  Qui écoute quoi ?
+  - dgpd.evaluations → Tous les DGPD (nouvelle évaluation à faire)
+  - Autres canaux comme ci-dessus
+
+  ---
+  c) Appréciation Note Conceptuelle Créée
+
+  [
+      "ministeres.{ministereId}.projets.{projetId}.notes-conceptuelles.{not
+  eId}.evaluations.{evaluationId}",
+      "ministeres.{ministereId}.projets.{projetId}.notes-conceptuelles.{not
+  eId}",
+      "ministeres.{ministereId}.projets.{projetId}",
+      "ministeres.{ministereId}",
+      "users.{redacteurId}",
+      "users.{evaluateurId}",
+  ]
+
+  Nouveauté : Le canal d'évaluation est imbriqué dans la note conceptuelle
+  !
+
+  ---
+  2. TDR Préfaisabilité
+
+  a) TDR Préfaisabilité Créé
+
+  [
+      "ministeres.{ministereId}.projets.{projetId}.tdrs.{tdrId}",
+      "ministeres.{ministereId}.projets.{projetId}",
+      "ministeres.{ministereId}",
+      "users.{redacteurId}",
+  ]
+
+  b) TDR Préfaisabilité Soumis
+
+  [
+      "ministeres.{ministereId}.projets.{projetId}.tdrs.{tdrId}",
+      "ministeres.{ministereId}.projets.{projetId}",
+      "ministeres.{ministereId}",
+      "dgpd.evaluations",
+      "users.{redacteurId}",
+  ]
+
+  c) Évaluation TDR Préfaisabilité Créée
+
+  [
+      "ministeres.{ministereId}.projets.{projetId}.tdrs.{tdrId}.evaluations
+  .{evaluationId}",
+      "ministeres.{ministereId}.projets.{projetId}.tdrs.{tdrId}",
+      "ministeres.{ministereId}.projets.{projetId}",
+      "ministeres.{ministereId}",
+      "users.{redacteurId}",
+      "users.{evaluateurId}",
+  ]
+
+  ---
+  3. TDR Faisabilité
+
+  Même structure que TDR Préfaisabilité :
+
+  [
+      "ministeres.{ministereId}.projets.{projetId}.tdrs-faisabilite.{tdrId}
+  .evaluations.{evaluationId}",
+
+  "ministeres.{ministereId}.projets.{projetId}.tdrs-faisabilite.{tdrId}",
+      "ministeres.{ministereId}.projets.{projetId}",
+      "ministeres.{ministereId}",
+      "users.{redacteurId}",
+      "users.{evaluateurId}",
+  ]
+
+  ---
+  4. Commentaires
+
+  [
+      "ministeres.{ministereId}.projets.{projetId}.commentaires.{commentair
+  eId}",
+      "ministeres.{ministereId}.projets.{projetId}",
+      "users.{auteurId}",
+      "users.{destinataireId}", // Si commentaire ciblé
+  ]
+
+  ---
+  5. Validations et Décisions
+
+  a) Note Conceptuelle Validée
+
+  [
+      "ministeres.{ministereId}.projets.{projetId}.notes-conceptuelles.{not
+  eId}",
+      "ministeres.{ministereId}.projets.{projetId}",
+      "ministeres.{ministereId}",
+      "organisations.{organisationId}", // Toute l'organisation doit savoir
+      "users.{redacteurId}",
+      "dpaf.validations", // Canal global DPAF
+  ]
+
+  b) Note Conceptuelle Rejetée
+
+  [
+      "ministeres.{ministereId}.projets.{projetId}.notes-conceptuelles.{not
+  eId}",
+      "ministeres.{ministereId}.projets.{projetId}",
+      "users.{redacteurId}",
+  ]
+
+  ---
+  🔐 CONFIGURATION DES AUTORISATIONS (channels.php)
+
+  Voici comment configurer les autorisations hiérarchiques :
+
+  <?php
+
+  use App\Models\User;
+  use App\Models\Projet;
+  use App\Models\NoteConceptuelle;
+  use App\Models\Tdr;
+  use App\Models\Evaluation;
+  use App\Models\Dgpd;
+  use App\Models\Dpaf;
+  use Illuminate\Support\Facades\Broadcast;
+
+  // ============================================
+  // NIVEAU 1 : MINISTÈRES
+  // ============================================
+
+  // Canal global du ministère
+  Broadcast::channel('ministeres.{ministereId}', function (User $user,
+  $ministereId) {
+      // DPAF du ministère OU DGPD OU permission globale
+      return ($user->profilable_type === Dpaf::class &&
+  $user->profilable->ministere_id == $ministereId)
+          || $user->profilable_type === Dgpd::class
+          || $user->hasPermission('voir-tous-les-ministeres');
+  });
+
+  // ============================================
+  // NIVEAU 2 : PROJETS D'UN MINISTÈRE
+  // ============================================
+
+  Broadcast::channel('ministeres.{ministereId}.projets.{projetId}',
+  function (User $user, $ministereId, $projetId) {
+      $projet = Projet::find($projetId);
+
+      if (!$projet || $projet->ministere_id != $ministereId) {
+          return false;
+      }
+
+      // Membre de l'organisation OU DPAF du ministère OU DGPD
+      return ($user->profilable_type === 'App\Models\Organisation' &&
+  $user->profilable_id === $projet->organisation_id)
+          || ($user->profilable_type === Dpaf::class &&
+  $user->profilable->ministere_id == $ministereId)
+          || $user->profilable_type === Dgpd::class
+          || $user->hasPermission('voir-les-projets');
+  });
+
+  // ============================================
+  // NIVEAU 3 : NOTES CONCEPTUELLES D'UN PROJET
+  // ============================================
+
+  Broadcast::channel('ministeres.{ministereId}.projets.{projetId}.notes-con
+  ceptuelles.{noteId}',
+      function (User $user, $ministereId, $projetId, $noteId) {
+          $note = NoteConceptuelle::with('projet')->find($noteId);
+
+          if (!$note || $note->projet_id != $projetId ||
+  $note->projet->ministere_id != $ministereId) {
+              return false;
+          }
+
+          // Rédacteur OU Équipe projet OU DGPD OU DPAF du ministère
+          return $user->id === $note->redacteur_id
+              || ($user->profilable_type === 'App\Models\Organisation' &&
+  $user->profilable_id === $note->projet->organisation_id)
+              || $user->profilable_type === Dgpd::class
+              || ($user->profilable_type === Dpaf::class &&
+  $user->profilable->ministere_id == $ministereId)
+              || $user->hasPermission('voir-les-notes-conceptuelles');
+      }
+  );
+
+  // ============================================
+  // NIVEAU 4 : ÉVALUATIONS D'UNE NOTE CONCEPTUELLE
+  // ============================================
+
+  Broadcast::channel('ministeres.{ministereId}.projets.{projetId}.notes-con
+  ceptuelles.{noteId}.evaluations.{evaluationId}',
+      function (User $user, $ministereId, $projetId, $noteId,
+  $evaluationId) {
+          $evaluation =
+  Evaluation::with('evaluable.projet')->find($evaluationId);
+
+          if (!$evaluation
+              || $evaluation->evaluable_id != $noteId
+              || $evaluation->evaluable->projet_id != $projetId
+              || $evaluation->evaluable->projet->ministere_id !=
+  $ministereId) {
+              return false;
+          }
+
+          // Évaluateur OU Rédacteur de la note OU DGPD (collégial) OU DPAF
+          $note = $evaluation->evaluable;
+          return $user->id === $evaluation->evaluateur_id
+              || $user->id === $note->redacteur_id
+              || $user->profilable_type === Dgpd::class
+              || ($user->profilable_type === Dpaf::class &&
+  $user->profilable->ministere_id == $ministereId)
+              || $user->hasPermission('voir-toutes-les-evaluations');
+      }
+  );
+
+  // ============================================
+  // NIVEAU 3 : TDR D'UN PROJET
+  // ============================================
+
+  Broadcast::channel('ministeres.{ministereId}.projets.{projetId}.tdrs.{tdr
+  Id}',
+      function (User $user, $ministereId, $projetId, $tdrId) {
+          $tdr = Tdr::with('projet')->find($tdrId);
+
+          if (!$tdr || $tdr->projet_id != $projetId ||
+  $tdr->projet->ministere_id != $ministereId) {
+              return false;
+          }
+
+          return ($user->profilable_type === 'App\Models\Organisation' &&
+  $user->profilable_id === $tdr->projet->organisation_id)
+              || $user->profilable_type === Dgpd::class
+              || ($user->profilable_type === Dpaf::class &&
+  $user->profilable->ministere_id == $ministereId)
+              || $user->hasPermission('voir-les-tdrs');
+      }
+  );
+
+  // ============================================
+  // NIVEAU 4 : ÉVALUATIONS D'UN TDR
+  // ============================================
+
+  Broadcast::channel('ministeres.{ministereId}.projets.{projetId}.tdrs.{tdr
+  Id}.evaluations.{evaluationId}',
+      function (User $user, $ministereId, $projetId, $tdrId, $evaluationId)
+   {
+          $evaluation =
+  Evaluation::with('evaluable.projet')->find($evaluationId);
+
+          if (!$evaluation
+              || $evaluation->evaluable_id != $tdrId
+              || $evaluation->evaluable->projet_id != $projetId
+              || $evaluation->evaluable->projet->ministere_id !=
+  $ministereId) {
+              return false;
+          }
+
+          return $user->id === $evaluation->evaluateur_id
+              || $user->profilable_type === Dgpd::class
+              || ($user->profilable_type === Dpaf::class &&
+  $user->profilable->ministere_id == $ministereId)
+              || $user->hasPermission('voir-toutes-les-evaluations');
+      }
+  );
+
+  // ============================================
+  // CANAUX GLOBAUX PAR RÔLE
+  // ============================================
+
+  // Canal global DGPD pour nouvelles évaluations
+  Broadcast::channel('dgpd.evaluations', function (User $user) {
+      return $user->profilable_type === Dgpd::class
+          && $user->hasPermission('evaluer-une-note-conceptuelle');
+  });
+
+  // Canal global DPAF pour validations
+  Broadcast::channel('dpaf.validations', function (User $user) {
+      return $user->profilable_type === Dpaf::class;
+  });
+
+  // ============================================
+  // CANAUX PERSONNELS
+  // ============================================
+
+  // Canal personnel de l'utilisateur
+  Broadcast::channel('users.{userId}', function (User $user, $userId) {
+      return (int) $user->id === (int) $userId;
+  });
+
+  // ============================================
+  // CANAUX PAR ORGANISATION
+  // ============================================
+
+  Broadcast::channel('organisations.{organisationId}', function (User
+  $user, $organisationId) {
+      return $user->profilable_type === 'App\Models\Organisation'
+          && $user->profilable_id == $organisationId;
+  });
+
+  ---
+  📋 TABLEAU RÉCAPITULATIF
+
+  | Niveau | Pattern
+           | Exemple
+     | Qui écoute ?              |
+  |--------|---------------------------------------------------------------
+  ---------|---------------------------------------------------------------
+  ---|---------------------------|
+  | 1      | ministeres.{id}
+           | ministeres.5
+     | DPAF, DGPD                |
+  | 2      | ministeres.{id}.projets.{id}
+           | ministeres.5.projets.123
+     | Équipe projet, DPAF, DGPD |
+  | 3a     | ministeres.{id}.projets.{id}.notes-conceptuelles.{id}
+           | ministeres.5.projets.123.notes-conceptuelles.456
+     | Rédacteur, DGPD, équipe   |
+  | 3b     | ministeres.{id}.projets.{id}.tdrs.{id}
+           | ministeres.5.projets.123.tdrs.789
+     | Équipe, DGPD, DPAF        |
+  | 4a     |
+  ministeres.{id}.projets.{id}.notes-conceptuelles.{id}.evaluations.{id} |
+  ministeres.5.projets.123.notes-conceptuelles.456.evaluations.101 |
+  Évaluateur, DGPD          |
+  | 4b     | ministeres.{id}.projets.{id}.tdrs.{id}.evaluations.{id}
+           | ministeres.5.projets.123.tdrs.789.evaluations.202
+     | Évaluateur, DGPD          |
+  | Global | dgpd.evaluations
+           | dgpd.evaluations
+     | Tous DGPD                 |
+  | Global | dpaf.validations
+           | dpaf.validations
+     | Tous DPAF                 |
+  | Perso  | users.{id}
+           | users.42
+     | Utilisateur spécifique    |
+  | Org    | organisations.{id}
+           | organisations.12
+     | Membres organisation      |
+
+  ---
+  🎯 MISE À JOUR DES EVENTS
+
+  Veux-tu que je mette à jour les deux Events (NoteConceptuelleSoumise et
+  AppreciationNoteConceptuelleCreee) avec cette nouvelle structure
+  hiérarchique ?
+
+> comment par exemple la dgpd pourra ecouter sur un canal
+ministeres.{id}.projets.{id}.notes-conceptuelles.{id} si la note
+conceptuelle n'existe pas encore ou vient d'etre creer ???
+
+● Excellente question ! C'est le problème classique de la découverte de
+  canaux dynamiques dans les systèmes de broadcast temps réel. Tu as mis le
+   doigt sur une limitation majeure de l'approche purement hiérarchique.
+
+  🚨 LE PROBLÈME
+
+  Scénario problématique :
+
+  1. DGPD se connecte au système
+  2. Il veut être notifié de toutes les nouvelles notes conceptuelles
+  soumises
+  3. Mais il ne connaît pas encore les IDs des notes qui n'existent pas
+  encore !
+
+  // ❌ IMPOSSIBLE - L'ID n'existe pas encore
+  Echo.private('ministeres.5.projets.123.notes-conceptuelles.???')
+
+  Pourquoi c'est un problème ?
+
+  - Les canaux sont créés dynamiquement lors de la création d'entités
+  - Le client doit connaître l'ID pour s'abonner au canal
+  - On ne peut pas s'abonner à un wildcard comme
+  ministeres.*.projets.*.notes-conceptuelles.*
+
+  ---
+  💡 SOLUTIONS POSSIBLES
+
+  Solution 1 : Canaux Globaux + Canaux Spécifiques (RECOMMANDÉ)
+
+  Combiner deux types de canaux :
+  - Canaux globaux pour la découverte et les alertes
+  - Canaux hiérarchiques pour le suivi détaillé
+
+  Architecture hybride :
+
+  // Event: NoteConceptuelleSoumise
+
+  public function broadcastOn(): array
+  {
+      return [
+          // 1. CANAUX GLOBAUX (découverte)
+          new PrivateChannel('dgpd.evaluations'),  // ✅ DGPD s'abonne ici
+          new PrivateChannel('ministeres.' . $this->projet->ministere_id .
+  '.nouvelles-notes'),
+
+          // 2. CANAUX HIÉRARCHIQUES (suivi détaillé)
+          new PrivateChannel('ministeres.' . $this->projet->ministere_id .
+  '.projets.' . $this->projet->id . '.notes-conceptuelles.' .
+  $this->noteConceptuelle->id),
+          new PrivateChannel('ministeres.' . $this->projet->ministere_id .
+  '.projets.' . $this->projet->id),
+          new PrivateChannel('ministeres.' . $this->projet->ministere_id),
+
+          // 3. CANAUX PERSONNELS
+          new PrivateChannel('users.' .
+  $this->noteConceptuelle->redacteur_id),
+      ];
+  }
+
+  Workflow côté client (DGPD) :
+
+  // 1. DGPD s'abonne au canal global
+  Echo.private('dgpd.evaluations')
+      .listen('note-conceptuelle.soumise', (event) => {
+          console.log('Nouvelle note soumise:',
+  event.note_conceptuelle_id);
+
+          // 2. Maintenant qu'on a l'ID, s'abonner au canal spécifique pour
+   le suivi
+          const noteId = event.note_conceptuelle_id;
+          const projetId = event.projet_id;
+          const ministereId = event.ministere_id;
+
+          Echo.private(`ministeres.${ministereId}.projets.${projetId}.notes
+  -conceptuelles.${noteId}`)
+              .listen('.appreciation.created', (e) => {
+                  console.log('Appréciation créée sur cette note');
+              })
+              .listen('.validation', (e) => {
+                  console.log('Note validée/rejetée');
+              });
+      });
+
+  ---
+  Solution 2 : Canaux avec Wildcards au niveau métier
+
+  Créer des canaux intermédiaires pour chaque "type d'événement" :
+
+  // Canaux par type d'événement
+  [
+      // Pour découverte
+      new PrivateChannel('ministeres.' . $ministereId .
+  '.notes-conceptuelles.nouvelles'),
+      new PrivateChannel('ministeres.' . $ministereId . '.tdrs.nouveaux'),
+
+      // Pour suivi spécifique
+      new PrivateChannel('ministeres.' . $ministereId . '.projets.' .
+  $projetId . '.notes-conceptuelles.' . $noteId),
+  ]
+
+  Côté client :
+  // DGPD écoute toutes les nouvelles notes du ministère
+  Echo.private('ministeres.5.notes-conceptuelles.nouvelles')
+      .listen('note-conceptuelle.soumise', (event) => {
+          // Traiter la notification
+      });
+
+  ---
+  Solution 3 : Présence Channels + Notification Push
+
+  Utiliser les Presence Channels pour savoir qui est connecté :
+
+  // routes/channels.php
+  Broadcast::channel('dgpd-online', function ($user) {
+      if ($user->profilable_type === Dgpd::class) {
+          return ['id' => $user->id, 'name' => $user->nom];
+      }
+  });
+
+  Côté listener :
+  // Listener: NotifierNoteConceptuelleSoumise
+
+  public function handle(NoteConceptuelleSoumise $event): void
+  {
+      // Récupérer tous les DGPD connectés
+      $dgpdConnectes = $this->getOnlineDgpd();
+
+      foreach ($dgpdConnectes as $dgpd) {
+          // Envoyer notification personnelle
+          $dgpd->notify(new NoteConceptuelleSoumiseNotification(...));
+      }
+  }
+
+  ---
+  🎯 STRATÉGIE RECOMMANDÉE : APPROCHE HYBRIDE
+
+  Voici l'architecture complète que je recommande :
+
+  Niveaux de canaux
+
+  1. Canaux GLOBAUX (découverte)
+     ├── dgpd.evaluations (toutes nouvelles évaluations)
+     ├── dpaf.validations (toutes validations)
+     └── organisations.{id}.alertes (alertes organisation)
+
+  2. Canaux PAR MINISTÈRE (vue d'ensemble)
+     ├── ministeres.{id}.nouvelles-notes
+     ├── ministeres.{id}.nouveaux-tdrs
+     └── ministeres.{id}.validations
+
+  3. Canaux HIÉRARCHIQUES (suivi détaillé)
+     └── ministeres.{id}.projets.{id}.notes-conceptuelles.{id}
+         └──
+  ministeres.{id}.projets.{id}.notes-conceptuelles.{id}.evaluations.{id}
+
+  4. Canaux PERSONNELS (notifications ciblées)
+     └── users.{id}
+
+  Mapping par événement
+
+  NoteConceptuelleSoumise
+
+  public function broadcastOn(): array
+  {
+      $ministereId = $this->projet->ministere_id;
+      $projetId = $this->projet->id;
+      $noteId = $this->noteConceptuelle->id;
+
+      return [
+          // NIVEAU 1 - Découverte globale
+          new PrivateChannel('dgpd.evaluations'),
+
+          // NIVEAU 2 - Vue ministère
+          new PrivateChannel("ministeres.{$ministereId}.nouvelles-notes"),
+
+          // NIVEAU 3 - Hiérarchie complète pour suivi
+          new PrivateChannel("ministeres.{$ministereId}.projets.{$projetId}
+  .notes-conceptuelles.{$noteId}"),
+          new
+  PrivateChannel("ministeres.{$ministereId}.projets.{$projetId}"),
+          new PrivateChannel("ministeres.{$ministereId}"),
+
+          // NIVEAU 4 - Personnel
+          new PrivateChannel('users.' .
+  $this->noteConceptuelle->redacteur_id),
+      ];
+  }
+
+  AppreciationNoteConceptuelleCreee
+
+  public function broadcastOn(): array
+  {
+      $ministereId = $this->projet->ministere_id;
+      $projetId = $this->projet->id;
+      $noteId = $this->noteConceptuelle->id;
+      $evaluationId = $this->evaluation->id;
+
+      return [
+          // PAS de canal global (l'évaluation est déjà connue)
+
+          // Hiérarchie complète
+          new PrivateChannel("ministeres.{$ministereId}.projets.{$projetId}
+  .notes-conceptuelles.{$noteId}.evaluations.{$evaluationId}"),
+          new PrivateChannel("ministeres.{$ministereId}.projets.{$projetId}
+  .notes-conceptuelles.{$noteId}"),
+          new
+  PrivateChannel("ministeres.{$ministereId}.projets.{$projetId}"),
+          new PrivateChannel("ministeres.{$ministereId}"),
+
+          // Personnel
+          new PrivateChannel('users.' .
+  $this->noteConceptuelle->redacteur_id),
+          new PrivateChannel('users.' . $this->evaluateur->id),
+      ];
+  }
+
+  ---
+  📋 TABLEAU DÉCISIONNEL
+
+  | Situation                        | Canal à utiliser
+                           | Raison                                |
+  |----------------------------------|-------------------------------------
+  -------------------------|---------------------------------------|
+  | 🆕 Nouvelle entité créée         | Canal global (dgpd.evaluations)
+                           | Découverte - personne ne connaît l'ID |
+  | 👁️ Suivi d'une entité existante | Canal hiérarchique
+  (ministeres.{id}.projets.{id}.notes.{id}) | Suivi détaillé - ID connu
+           |
+  | 📊 Vue d'ensemble ministère      | Canal ministère (ministeres.{id})
+                           | Tous les projets du ministère         |
+  | 👤 Notification personnelle      | Canal utilisateur (users.{id})
+                           | Message ciblé                         |
+  | 🏢 Alerte organisation           | Canal organisation
+  (organisations.{id}.alertes)              | Toute l'équipe
+           |
+
+  ---
+  🔧 IMPLÉMENTATION PRATIQUE
+
+  Configuration dans channels.php :
+
+  // ============================================
+  // CANAUX GLOBAUX DE DÉCOUVERTE
+  // ============================================
+
+  // Toutes nouvelles évaluations pour DGPD
+  Broadcast::channel('dgpd.evaluations', function (User $user) {
+      return $user->profilable_type === Dgpd::class
+          && $user->hasPermission('evaluer-une-note-conceptuelle');
+  });
+
+  // ============================================
+  // CANAUX PAR MINISTÈRE (DÉCOUVERTE)
+  // ============================================
+
+  // Nouvelles notes conceptuelles d'un ministère
+  Broadcast::channel('ministeres.{ministereId}.nouvelles-notes', function
+  (User $user, $ministereId) {
+      return ($user->profilable_type === Dpaf::class &&
+  $user->profilable->ministere_id == $ministereId)
+          || $user->profilable_type === Dgpd::class;
+  });
+
+  // Nouveaux TDR d'un ministère
+  Broadcast::channel('ministeres.{ministereId}.nouveaux-tdrs', function
+  (User $user, $ministereId) {
+      return ($user->profilable_type === Dpaf::class &&
+  $user->profilable->ministere_id == $ministereId)
+          || $user->profilable_type === Dgpd::class;
+  });
+
+  // ============================================
+  // CANAUX HIÉRARCHIQUES (SUIVI DÉTAILLÉ)
+  // ============================================
+
+  // Note conceptuelle spécifique
+  Broadcast::channel('ministeres.{ministereId}.projets.{projetId}.notes-con
+  ceptuelles.{noteId}',
+      function (User $user, $ministereId, $projetId, $noteId) {
+          $note = NoteConceptuelle::with('projet')->find($noteId);
+
+          if (!$note || $note->projet_id != $projetId ||
+  $note->projet->ministere_id != $ministereId) {
+              return false;
+          }
+
+          return $user->id === $note->redacteur_id
+              || ($user->profilable_type === 'App\Models\Organisation' &&
+  $user->profilable_id === $note->projet->organisation_id)
+              || $user->profilable_type === Dgpd::class
+              || ($user->profilable_type === Dpaf::class &&
+  $user->profilable->ministere_id == $ministereId);
+      }
+  );
+
+  ---
+  🎯 RÉPONSE À TA QUESTION
+
+  Comment DGPD écoute sur un canal de note qui n'existe pas encore ?
+
+  Réponse : Il ne le fait pas ! À la place :
+
+  1. DGPD s'abonne au canal global dgpd.evaluations
+  2. Quand une note est soumise, elle est broadcastée sur ce canal global
+  3. DGPD reçoit la notification avec les IDs (note, projet, ministère)
+  4. DGPD peut alors s'abonner au canal spécifique s'il veut suivre cette
+  note
+
+  C'est une approche en 2 temps :
+  - Découverte → Canaux globaux
+  - Suivi → Canaux hiérarchiques
+
+  Veux-tu que je mette à jour les Events avec cette approche hybride ?
+
+> bon on va revenir sur les canaux pour l'instant continuons sur la la
+gestion des notifications pour finir avec la noteconceptuelle il manque
+pour etude de profil valider et pour rapport de faisabilite preliminaire
+quand soumis
+
+● Parfait ! Concentrons-nous sur la complétion des notifications pour les
+  Notes Conceptuelles. Il manque 2 événements importants :
+
+  1. Validation de l'étude de profil (après les appréciations)
+  2. Soumission du rapport de faisabilité préliminaire
+
+● Commençons par vérifier le workflow complet dans le service pour
+  comprendre ces deux événements :
+
+● Bash(grep -n "validerEtudeProfilNoteConceptuelle\|ValiderEtudeProfil\|rapport
+      .*preliminaire" app/Services/NoteConceptuelleService.php | head -20)
+  ⎿ 272:                if (isset($documentsData["rapport_faisabilite_prel
+    iminaire"])) {
+    273:                    $this->gererFichierRapportFaisabilite($rapport
+    … +38 lines (ctrl+o to expand)
+
+
+
+● Bash(grep -n "public function.*[Vv]alid.*[Pp]rofil\|public
+      function.*[Ss]oumettre.*[Rr]apport"
+      app/Services/NoteConceptuelleService.php)
+  ⎿ 2518:    public function validerEtudeDeProfil($projetId, array $data):
+     JsonResponse
+    2885:    public function confirmerValidationEtudeProfilNonAcceptee($pr
+    … +3 lines (ctrl+o to expand)
+
+
+
+● Parfait ! Analysons ces deux méthodes :
+
+● Read(app/Services/NoteConceptuelleService.php)
+  ⎿  Read 100 lines
+
+● Read(app/Services/NoteConceptuelleService.php)
+  ⎿  Read 80 lines
+
+● Parfait ! Maintenant je comprends le workflow. Créons les deux événements
+   :
+
+  1️⃣ EtudeProfilValidee - Validation de l'étude de profil
+
+● Bash(php artisan make:event EtudeProfilValidee)
+  ⎿    INFO  Event [app/Events/EtudeProfilValidee.php] created successfull
+    y.
+
+
+● Write(app/Events/EtudeProfilValidee.php)
+  ⎿  Updated app/Events/EtudeProfilValidee.php with 70 additions and 9
+     removals
+        2
+        3    namespace App\Events;
+        4
+        5 -  use Illuminate\Broadcasting\Channel;
+        5 +  use App\Models\NoteConceptuelle;
+        6 +  use App\Models\Projet;
+        7 +  use App\Models\Evaluation;
+        8 +  use App\Models\User;
+        9    use Illuminate\Broadcasting\InteractsWithSockets;
+       10 -  use Illuminate\Broadcasting\PresenceChannel;
+       10    use Illuminate\Broadcasting\PrivateChannel;
+       11    use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+       12    use Illuminate\Foundation\Events\Dispatchable;
+       13    use Illuminate\Queue\SerializesModels;
+       14
+       15 -  class EtudeProfilValidee
+       15 +  class EtudeProfilValidee implements ShouldBroadcast
+       16    {
+       17        use Dispatchable, InteractsWithSockets,
+            SerializesModels;
+       18
+       19 +      public NoteConceptuelle $noteConceptuelle;
+       20 +      public Projet $projet;
+       21 +      public Evaluation $evaluation;
+       22 +      public User $validateur;
+       23 +      public string $decision; //
+          + 'faire_etude_faisabilite_preliminaire', 'rejeter', etc.
+       24 +      public ?string $commentaire;
+       25 +
+       26        /**
+       27         * Create a new event instance.
+       28         */
+       29 -      public function __construct()
+       30 -      {
+       31 -          //
+       29 +      public function __construct(
+       30 +          NoteConceptuelle $noteConceptuelle,
+       31 +          Projet $projet,
+       32 +          Evaluation $evaluation,
+       33 +          User $validateur,
+       34 +          string $decision,
+       35 +          ?string $commentaire = null
+       36 +      ) {
+       37 +          $this->noteConceptuelle =
+          + $noteConceptuelle->load(['redacteur', 'champs']);
+       38 +          $this->projet = $projet->load(['ministere',
+          + 'organisation']);
+       39 +          $this->evaluation = $evaluation;
+       40 +          $this->validateur = $validateur;
+       41 +          $this->decision = $decision;
+       42 +          $this->commentaire = $commentaire;
+       43        }
+       44
+       45        /**
+       46         * Get the channels the event should broadcast on.
+       47 -       *
+       48 -       * @return array<int, \Illuminate\Broadcasting\Channel>
+       47         */
+       48        public function broadcastOn(): array
+       49        {
+       50            return [
+       51 -              new PrivateChannel('channel-name'),
+       51 +              // Canal global DPAF pour validations
+       52 +              new PrivateChannel('dpaf.validations'),
+       53 +
+       54 +              // Canaux hiérarchiques
+       55 +              new PrivateChannel('ministeres.' .
+          + $this->projet->ministere_id . '.notes-conceptuelles.' .
+          + $this->noteConceptuelle->id),
+       56 +              new PrivateChannel('ministeres.' .
+          + $this->projet->ministere_id . '.projets.' .
+          + $this->projet->id),
+       57 +              new PrivateChannel('ministeres.' .
+          + $this->projet->ministere_id),
+       58 +
+       59 +              // Canal organisation
+       60 +              new PrivateChannel('organisations.' .
+          + $this->projet->organisation_id),
+       61 +
+       62 +              // Canaux personnels
+       63 +              new PrivateChannel('users.' .
+          + $this->noteConceptuelle->redacteur_id),
+       64            ];
+       65        }
+       66 +
+       67 +      /**
+       68 +       * The event's broadcast name.
+       69 +       */
+       70 +      public function broadcastAs(): string
+       71 +      {
+       72 +          return 'etude-profil.validee';
+       73 +      }
+       74 +
+       75 +      /**
+       76 +       * Get the data to broadcast.
+       77 +       */
+       78 +      public function broadcastWith(): array
+       79 +      {
+       80 +          return [
+       81 +              'note_conceptuelle_id' =>
+          + $this->noteConceptuelle->id,
+       82 +              'projet_id' => $this->projet->id,
+       83 +              'evaluation_id' => $this->evaluation->id,
+       84 +              'decision' => $this->decision,
+       85 +              'commentaire' => $this->commentaire,
+       86 +              'validateur' => [
+       87 +                  'id' => $this->validateur->id,
+       88 +                  'nom' => $this->validateur->nom,
+       89 +                  'prenom' => $this->validateur->prenom,
+       90 +              ],
+       91 +              'note_intitule' =>
+          + $this->noteConceptuelle->intitule,
+       92 +              'projet_titre' => $this->projet->titre_projet,
+       93 +              'ministere_nom' =>
+          + $this->projet->ministere->nom ?? '',
+       94 +              'timestamp' => now()->toIso8601String(),
+       95 +          ];
+       96 +      }
+       97    }
+
+● Bash(php artisan make:listener NotifierEtudeProfilValidee
+      --event=EtudeProfilValidee)
+  ⎿    INFO  Listener [app/Listeners/NotifierEtudeProfilValidee.php] creat
+    ed successfully.
+
+
+● Write(app/Listeners/NotifierEtudeProfilValidee.php)
+  ⎿  Updated app/Listeners/NotifierEtudeProfilValidee.php with 133
+     additions and 5 removals
+        3    namespace App\Listeners;
+        4
+        5    use App\Events\EtudeProfilValidee;
+        6 +  use App\Notifications\EtudeProfilValideeNotification;
+        7 +  use App\Models\User;
+        8 +  use App\Models\Dpaf;
+        9 +  use App\Models\Dgpd;
+       10    use Illuminate\Contracts\Queue\ShouldQueue;
+       11    use Illuminate\Queue\InteractsWithQueue;
+       12 +  use Illuminate\Support\Facades\Notification;
+       13 +  use Illuminate\Support\Facades\Log;
+       14
+       15 -  class NotifierEtudeProfilValidee
+       15 +  class NotifierEtudeProfilValidee implements ShouldQueue
+       16    {
+       17 -      /**
+       18 -       * Create the event listener.
+       19 -       */
+       17 +      use InteractsWithQueue;
+       18 +
+       19 +      public $tries = 3;
+       20 +      public $backoff = [10, 30, 60];
+       21 +
+       22        public function __construct()
+       23        {
+       24            //
+     ...
+        21         */
+        22        public function handle(EtudeProfilValidee $event):
+             void
+        23        {
+        24 -          //
+        24 +          $noteConceptuelle = $event->noteConceptuelle;
+        25 +          $projet = $event->projet;
+        26 +          $evaluation = $event->evaluation;
+        27 +          $validateur = $event->validateur;
+        28 +          $decision = $event->decision;
+        29 +
+        30 +          Log::info('Envoi de notifications pour validation
+           + d\'étude de profil', [
+        31 +              'note_conceptuelle_id' =>
+           + $noteConceptuelle->id,
+        32 +              'projet_id' => $projet->id,
+        33 +              'decision' => $decision,
+        34 +          ]);
+        35 +
+        36 +          // 1. Notifier le rédacteur de la note (résultat
+           + de la validation)
+        37 +          if ($noteConceptuelle->redacteur) {
+        38 +              $noteConceptuelle->redacteur->notify(
+        39 +                  new EtudeProfilValideeNotification(
+        40 +                      $noteConceptuelle,
+        41 +                      $projet,
+        42 +                      $evaluation,
+        43 +                      $validateur,
+        44 +                      $decision,
+        45 +                      'redacteur_resultat'
+        46 +                  )
+        47 +              );
+        48 +          }
+        49 +
+        50 +          // 2. Notifier toute l'équipe de l'organisation
+           + (changement important)
+        51 +          if ($projet->organisation_id) {
+        52 +              $membresOrganisation =
+           + User::where('profilable_type', 'App\Models\Organisation')
+        53 +                  ->where('profilable_id',
+           + $projet->organisation_id)
+        54 +                  ->get();
+        55 +
+        56 +              if ($membresOrganisation->isNotEmpty()) {
+        57 +                  Notification::send(
+        58 +                      $membresOrganisation,
+        59 +                      new EtudeProfilValideeNotification(
+        60 +                          $noteConceptuelle,
+        61 +                          $projet,
+        62 +                          $evaluation,
+        63 +                          $validateur,
+        64 +                          $decision,
+        65 +                          'equipe_organisation'
+        66 +                      )
+        67 +                  );
+        68 +              }
+        69 +          }
+        70 +
+        71 +          // 3. Notifier le DPAF du ministère (supervision)
+        72 +          if ($projet->ministere_id) {
+        73 +              $dpafMinistere =
+           + User::where('profilable_type', Dpaf::class)
+        74 +                  ->whereHas('profilable', function($query)
+           + use ($projet) {
+        75 +                      $query->where('ministere_id',
+           + $projet->ministere_id);
+        76 +                  })
+        77 +                  ->first();
+        78 +
+        79 +              if ($dpafMinistere) {
+        80 +                  $dpafMinistere->notify(
+        81 +                      new EtudeProfilValideeNotification(
+        82 +                          $noteConceptuelle,
+        83 +                          $projet,
+        84 +                          $evaluation,
+        85 +                          $validateur,
+        86 +                          $decision,
+        87 +                          'dpaf_supervision'
+        88 +                      )
+        89 +                  );
+        90 +              }
+        91 +          }
+        92 +
+        93 +          // 4. Notifier le validateur DGPD (confirmation)
+        94 +          $validateur->notify(
+        95 +              new EtudeProfilValideeNotification(
+        96 +                  $noteConceptuelle,
+        97 +                  $projet,
+        98 +                  $evaluation,
+        99 +                  $validateur,
+       100 +                  $decision,
+       101 +                  'validateur_confirmation'
+       102 +              )
+       103 +          );
+       104 +
+       105 +          // 5. Si décision = faire étude faisabilité
+           + préliminaire, notifier les chargés d'études
+       106 +          if ($decision ===
+           + 'faire_etude_faisabilite_preliminaire') {
+       107 +              $chargesEtudes =
+           + User::where('profilable_type', 'App\Models\Organisation')
+       108 +                  ->where('profilable_id',
+           + $projet->organisation_id)
+       109 +                  ->whereHas('roles', function($query) {
+       110 +                      $query->where('slug',
+           + 'charge-etudes');
+       111 +                  })
+       112 +                  ->get();
+       113 +
+       114 +              if ($chargesEtudes->isNotEmpty()) {
+       115 +                  Notification::send(
+       116 +                      $chargesEtudes,
+       117 +                      new EtudeProfilValideeNotification(
+       118 +                          $noteConceptuelle,
+       119 +                          $projet,
+       120 +                          $evaluation,
+       121 +                          $validateur,
+       122 +                          $decision,
+       123 +                          'charge_etudes_action'
+       124 +                      )
+       125 +                  );
+       126 +              }
+       127 +          }
+       128 +
+       129 +          Log::info('Notifications envoyées avec succès pour
+           +  validation d\'étude de profil', [
+       130 +              'note_conceptuelle_id' =>
+           + $noteConceptuelle->id,
+       131 +          ]);
+       132        }
+       133 +
+       134 +      /**
+       135 +       * Handle a job failure.
+       136 +       */
+       137 +      public function failed(EtudeProfilValidee $event,
+           + \Throwable $exception): void
+       138 +      {
+       139 +          Log::error('Échec de notification
+           + EtudeProfilValidee', [
+       140 +              'note_conceptuelle_id' =>
+           + $event->noteConceptuelle->id,
+       141 +              'projet_id' => $event->projet->id,
+       142 +              'error' => $exception->getMessage(),
+       143 +              'trace' => $exception->getTraceAsString()
+       144 +          ]);
+       145 +      }
+       146    }
+
+● Bash(php artisan make:notification EtudeProfilValideeNotification)
+  ⎿    INFO  Notification [app/Notifications/EtudeProfilValideeNotificatio
+    n.php] created successfully.
+
+
+● Write(app/Notifications/EtudeProfilValideeNotification.php)
+  ⎿  User rejected update toapp/Notifications/EtudeProfilValideeNotification.ph
+                            p
+         2
+         3    namespace App\Notifications;
+         4
+         5 +  use App\Models\NoteConceptuelle;
+         6 +  use App\Models\Projet;
+         7 +  use App\Models\Evaluation;
+         8 +  use App\Models\User;
+         9    use Illuminate\Bus\Queueable;
+        10    use Illuminate\Contracts\Queue\ShouldQueue;
+        11    use Illuminate\Notifications\Messages\MailMessage;
+        12 +  use Illuminate\Notifications\Messages\BroadcastMessage;
+        13    use Illuminate\Notifications\Notification;
+        14
+        15 -  class EtudeProfilValideeNotification extends Notification
+        15 +  class EtudeProfilValideeNotification extends Notification
+           + implements ShouldQueue
+        16    {
+        17        use Queueable;
+        18
+        19 +      protected NoteConceptuelle $noteConceptuelle;
+        20 +      protected Projet $projet;
+        21 +      protected Evaluation $evaluation;
+        22 +      protected User $validateur;
+        23 +      protected string $decision;
+        24 +      protected string $typeDestinataire;
+        25 +
+        26        /**
+        27 -       * Create a new notification instance.
+        27 +       * Types de destinataires possibles :
+        28 +       * - redacteur_resultat : Rédacteur (résultat de la
+           + validation)
+        29 +       * - equipe_organisation : Équipe de l'organisation
+        30 +       * - dpaf_supervision : DPAF (supervision)
+        31 +       * - validateur_confirmation : Validateur DGPD
+           + (confirmation)
+        32 +       * - charge_etudes_action : Chargé d'études (action
+           + requise si étude préliminaire)
+        33         */
+        34 -      public function __construct()
+        35 -      {
+        36 -          //
+        34 +      public function __construct(
+        35 +          NoteConceptuelle $noteConceptuelle,
+        36 +          Projet $projet,
+        37 +          Evaluation $evaluation,
+        38 +          User $validateur,
+        39 +          string $decision,
+        40 +          string $typeDestinataire = 'redacteur_resultat'
+        41 +      ) {
+        42 +          $this->noteConceptuelle = $noteConceptuelle;
+        43 +          $this->projet = $projet;
+        44 +          $this->evaluation = $evaluation;
+        45 +          $this->validateur = $validateur;
+        46 +          $this->decision = $decision;
+        47 +          $this->typeDestinataire = $typeDestinataire;
+        48        }
+        49
+        50        /**
+        51         * Get the notification's delivery channels.
+        52 -       *
+        53 -       * @return array<int, string>
+        52         */
+        53 -      public function via(object $notifiable): array
+        53 +      public function via($notifiable): array
+        54        {
+        55 -          return ['mail'];
+        55 +          return ['database', 'broadcast', 'mail'];
+        56        }
+        57
+        58        /**
+        59         * Get the mail representation of the notification.
+        60         */
+        61 -      public function toMail(object $notifiable):
+           - MailMessage
+        61 +      public function toMail($notifiable): MailMessage
+        62        {
+        63 -          return (new MailMessage)
+        64 -              ->line('The introduction to the
+           - notification.')
+        65 -              ->action('Notification Action', url('/'))
+        66 -              ->line('Thank you for using our
+           - application!');
+        63 +          $mailMessage = new MailMessage();
+        64 +          $validateurNom = $this->validateur->prenom . ' ' .
+           +  $this->validateur->nom;
+        65 +          $decisionLabel = $this->getDecisionLabel();
+        66 +
+        67 +          switch ($this->typeDestinataire) {
+        68 +              case 'redacteur_resultat':
+        69 +                  return $mailMessage
+        70 +                      ->subject('Étude de Profil Validée - '
+           +  . $decisionLabel)
+        71 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+        72 +                      ->line('L\'étude de profil de votre
+           + note conceptuelle a été validée.')
+        73 +                      ->line('**Projet :** ' .
+           + $this->projet->titre_projet)
+        74 +                      ->line('**Note :** ' .
+           + $this->noteConceptuelle->intitule)
+        75 +                      ->line('**Décision :** ' .
+           + $decisionLabel)
+        76 +                      ->line('**Validé par :** ' .
+           + $validateurNom . ' (DGPD)')
+        77 +                      ->line('**Commentaire :** ' .
+           + ($this->evaluation->commentaire ?? 'Aucun'))
+        78 +                      ->action('Voir les détails',
+           + url('/projets/' . $this->projet->id))
+        79 +                      ->line($this->getActionMessage());
+        80 +
+        81 +              case 'equipe_organisation':
+        82 +                  return $mailMessage
+        83 +                      ->subject('Étude de Profil Validée - '
+           +  . $this->projet->titre_projet)
+        84 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+        85 +                      ->line('L\'étude de profil d\'un
+           + projet de votre organisation a été validée.')
+        86 +                      ->line('**Projet :** ' .
+           + $this->projet->titre_projet)
+        87 +                      ->line('**Décision :** ' .
+           + $decisionLabel)
+        88 +                      ->line('**Validé par :** ' .
+           + $validateurNom . ' (DGPD)')
+        89 +                      ->action('Voir le projet',
+           + url('/projets/' . $this->projet->id))
+        90 +                      ->line($this->getActionMessage());
+        91 +
+        92 +              case 'dpaf_supervision':
+        93 +                  return $mailMessage
+        94 +                      ->subject('Validation Étude de Profil
+           + - ' . $this->projet->titre_projet)
+        95 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+        96 +                      ->line('Une étude de profil a été
+           + validée pour un projet de votre ministère.')
+        97 +                      ->line('**Projet :** ' .
+           + $this->projet->titre_projet)
+        98 +                      ->line('**Organisation :** ' .
+           + ($this->projet->organisation->nom ?? 'N/A'))
+        99 +                      ->line('**Décision :** ' .
+           + $decisionLabel)
+       100 +                      ->line('**Validé par :** ' .
+           + $validateurNom . ' (DGPD)')
+       101 +                      ->action('Consulter le projet',
+           + url('/projets/' . $this->projet->id))
+       102 +                      ->line('Notification de
+           + supervision.');
+       103 +
+       104 +              case 'validateur_confirmation':
+       105 +                  return $mailMessage
+       106 +                      ->subject('Confirmation - Validation
+           + Étude de Profil')
+       107 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+       108 +                      ->line('Votre validation d\'étude de
+           + profil a été enregistrée avec succès.')
+       109 +                      ->line('**Projet :** ' .
+           + $this->projet->titre_projet)
+       110 +                      ->line('**Décision :** ' .
+           + $decisionLabel)
+       111 +                      ->action('Voir la validation',
+           + url('/projets/' . $this->projet->id . '/evaluations'))
+       112 +                      ->line('Merci pour votre
+           + contribution.');
+       113 +
+       114 +              case 'charge_etudes_action':
+       115 +                  return $mailMessage
+       116 +                      ->subject('Action Requise - Rapport de
+           +  Faisabilité Préliminaire')
+       117 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+       118 +                      ->line('Une étude de faisabilité
+           + préliminaire doit être réalisée.')
+       119 +                      ->line('**Projet :** ' .
+           + $this->projet->titre_projet)
+       120 +                      ->line('**Note conceptuelle :** ' .
+           + $this->noteConceptuelle->intitule)
+       121 +                      ->line('Le projet a été validé pour
+           + passer à l\'étape de faisabilité préliminaire.')
+       122 +                      ->action('Commencer l\'étude',
+           + url('/projets/' . $this->projet->id .
+           + '/faisabilite-preliminaire'))
+       123 +                      ->line('Veuillez préparer et soumettre
+           +  le rapport de faisabilité préliminaire.');
+       124 +
+       125 +              default:
+       126 +                  return $mailMessage
+       127 +                      ->subject('Étude de Profil Validée')
+       128 +                      ->greeting('Bonjour ' .
+           + $notifiable->prenom . ',')
+       129 +                      ->line('Une étude de profil a été
+           + validée.')
+       130 +                      ->action('Voir les détails',
+           + url('/projets/' . $this->projet->id));
+       131 +          }
+       132        }
+       133
+       134        /**
+       135 -       * Get the array representation of the notification.
+       136 -       *
+       137 -       * @return array<string, mixed>
+       135 +       * Get the array representation of the notification
+           + (Database).
+       136         */
+       137 -      public function toArray(object $notifiable): array
+       137 +      public function toArray($notifiable): array
+       138        {
+       139            return [
+       140 -              //
+       140 +              'type' => 'etude_profil_validee',
+       141 +              'type_destinataire' =>
+           + $this->typeDestinataire,
+       142 +              'note_conceptuelle_id' =>
+           + $this->noteConceptuelle->id,
+       143 +              'projet_id' => $this->projet->id,
+       144 +              'evaluation_id' => $this->evaluation->id,
+       145 +              'projet_titre' => $this->projet->titre_projet,
+       146 +              'note_intitule' =>
+           + $this->noteConceptuelle->intitule,
+       147 +              'decision' => $this->decision,
+       148 +              'decision_label' => $this->getDecisionLabel(),
+       149 +              'validateur' => [
+       150 +                  'id' => $this->validateur->id,
+       151 +                  'nom' => $this->validateur->nom,
+       152 +                  'prenom' => $this->validateur->prenom,
+       153 +                  'nom_complet' => $this->validateur->prenom
+           +  . ' ' . $this->validateur->nom,
+       154 +              ],
+       155 +              'commentaire' =>
+           + $this->evaluation->commentaire ?? '',
+       156 +              'ministere_nom' =>
+           + $this->projet->ministere->nom ?? '',
+       157 +              'organisation_nom' =>
+           + $this->projet->organisation->nom ?? '',
+       158 +              'message' => $this->getMessage(),
+       159 +              'action_url' => $this->getActionUrl(),
+       160 +              'action_text' => $this->getActionText(),
+       161 +              'date_validation' =>
+           + $this->evaluation->date_fin_evaluation?->format('d/m/Y
+           + H:i') ?? now()->format('d/m/Y H:i'),
+       162 +              'priorite' => $this->getPriorite(),
+       163            ];
+       164        }
+       165 +
+       166 +      /**
+       167 +       * Get the broadcastable representation of the
+           + notification.
+       168 +       */
+       169 +      public function toBroadcast($notifiable):
+           + BroadcastMessage
+       170 +      {
+       171 +          return new BroadcastMessage([
+       172 +              'type' => 'etude_profil_validee',
+       173 +              'message' => $this->getMessage(),
+       174 +              'priorite' => $this->getPriorite(),
+       175 +              'data' => $this->toArray($notifiable),
+       176 +          ]);
+       177 +      }
+       178 +
+       179 +      /**
+       180 +       * Get personalized message based on recipient type.
+       181 +       */
+       182 +      protected function getMessage(): string
+       183 +      {
+       184 +          $decisionLabel = $this->getDecisionLabel();
+       185 +
+       186 +          switch ($this->typeDestinataire) {
+       187 +              case 'redacteur_resultat':
+       188 +                  return 'Votre étude de profil pour "' .
+           + $this->projet->titre_projet . '" a été validée. Décision :
+           + ' . $decisionLabel . '.';
+       189 +
+       190 +              case 'equipe_organisation':
+       191 +                  return 'L\'étude de profil du projet "' .
+           + $this->projet->titre_projet . '" a été validée. Décision :
+           + ' . $decisionLabel . '.';
+       192 +
+       193 +              case 'dpaf_supervision':
+       194 +                  return 'Validation d\'étude de profil pour
+           +  "' . $this->projet->titre_projet . '". Décision : ' .
+           + $decisionLabel . '.';
+       195 +
+       196 +              case 'validateur_confirmation':
+       197 +                  return 'Votre validation d\'étude de
+           + profil pour "' . $this->projet->titre_projet . '" a été
+           + enregistrée.';
+       198 +
+       199 +              case 'charge_etudes_action':
+       200 +                  return 'Action requise : Préparer le
+           + rapport de faisabilité préliminaire pour "' .
+           + $this->projet->titre_projet . '".';
+       201 +
+       202 +              default:
+       203 +                  return 'Étude de profil validée pour "' .
+           + $this->projet->titre_projet . '".';
+       204 +          }
+       205 +      }
+       206 +
+       207 +      /**
+       208 +       * Get action URL based on recipient type.
+       209 +       */
+       210 +      protected function getActionUrl(): string
+       211 +      {
+       212 +          switch ($this->typeDestinataire) {
+       213 +              case 'charge_etudes_action':
+       214 +                  return '/projets/' . $this->projet->id .
+           + '/faisabilite-preliminaire';
+       215 +
+       216 +              case 'validateur_confirmation':
+       217 +                  return '/projets/' . $this->projet->id .
+           + '/evaluations';
+       218 +
+       219 +              default:
+       220 +                  return '/projets/' . $this->projet->id;
+       221 +          }
+       222 +      }
+       223 +
+       224 +      /**
+       225 +       * Get action text based on recipient type.
+       226 +       */
+       227 +      protected function getActionText(): string
+       228 +      {
+       229 +          switch ($this->typeDestinataire) {
+       230 +              case 'charge_etudes_action':
+       231 +                  return 'Commencer l\'étude';
+       232 +
+       233 +              case 'validateur_confirmation':
+       234 +                  return 'Voir la validation';
+       235 +
+       236 +              default:
+       237 +                  return 'Voir le projet';
+       238 +          }
+       239 +      }
+       240 +
+       241 +      /**
+       242 +       * Get the label for the decision.
+       243 +       */
+       244 +      protected function getDecisionLabel(): string
+       245 +      {
+       246 +          return match($this->decision) {
+       247 +              'faire_etude_faisabilite_preliminaire' =>
+           + 'Faire une étude de faisabilité préliminaire',
+       248 +              'rejeter' => 'Projet rejeté',
+       249 +              'ameliorer' => 'À améliorer',
+       250 +              'transformer_en_projet' => 'Transformer en
+           + projet mature',
+       251 +              default => ucfirst(str_replace('_', ' ',
+           + $this->decision)),
+       252 +          };
+       253 +      }
+       254 +
+       255 +      /**
+       256 +       * Get action message based on decision.
+       257 +       */
+       258 +      protected function getActionMessage(): string
+       259 +      {
+       260 +          return match($this->decision) {
+       261 +              'faire_etude_faisabilite_preliminaire' =>
+           + 'Prochaine étape : Préparer le rapport de faisabilité
+           + préliminaire.',
+       262 +              'rejeter' => 'Le projet a été rejeté et ne
+           + poursuivra pas.',
+       263 +              'ameliorer' => 'Des améliorations sont
+           + nécessaires avant de poursuivre.',
+       264 +              'transformer_en_projet' => 'Le projet peut
+           + passer directement en phase de maturité.',
+       265 +              default => 'Veuillez consulter les détails
+           + pour les prochaines étapes.',
+       266 +          };
+       267 +      }
+       268 +
+       269 +      /**
+       270 +       * Get priority level for the notification.
+       271 +       */
+       272 +      protected function getPriorite(): string
+       273 +      {
+       274 +          return match($this->typeDestinataire) {
+       275 +              'redacteur_resultat', 'charge_etudes_action'
+           + => 'haute',
+       276 +              'equipe_organisation' => 'moyenne',
+       277 +              default => 'normale',
+       278 +          };
+       279 +      }
+       280    }
+
+> le nom devrait etre NotificationEtudeProfilValidee
+
+● Bash(rm app/Notifications/EtudeProfilValideeNotification.php)
+  ⎿  (No content)
+  ⎿  Session limit reached ∙ resets 3pm
+     /upgrade to increase your usage limit.
+
+
+

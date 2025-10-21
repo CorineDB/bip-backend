@@ -2,6 +2,10 @@
 
 namespace App\Http\Requests\groupes_utilisateur;
 
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\User;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +13,7 @@ class StoreGroupeUtilisateurRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return auth()->check();
     }
 
     public function rules(): array
@@ -36,18 +40,21 @@ class StoreGroupeUtilisateurRequest extends FormRequest
             'permissions.*' => [
                 'required',
                 'distinct',
-                Rule::exists('permissions', 'id')->whereNull('deleted_at')
+                new HashedExists(Permission::class, 'id', function($query) {
+                    $query->whereNull('deleted_at');
+                })
             ],
 
             // Rôles
             'roles' => 'nullable|array|min:0',
             'roles.*' => [
-                Rule::exists('roles', 'id')
-                    ->when($profilable, function($query) use($profilable) {
+                new HashedExists(Role::class, 'id', function($query) use($profilable) {
+                    if ($profilable) {
                         $query->where('roleable_type', get_class($profilable))
                               ->where('roleable_id', $profilable->id);
-                    })
-                    ->whereNull('deleted_at')
+                    }
+                    $query->whereNull('deleted_at');
+                })
             ],
 
             // Utilisateurs (au moins 1)
@@ -55,50 +62,27 @@ class StoreGroupeUtilisateurRequest extends FormRequest
 
             // Cas 1 : utilisateur existant
             'users.*.id' => [
-                'required_without:users.*.email',   // obligatoire si pas d'email
-                Rule::exists('users', 'id')->whereNull('deleted_at')
+                'required_without:users.*.email',
+                new HashedExists(User::class, 'id', function($query) {
+                    $query->whereNull('deleted_at');
+                })
             ],
 
             // Cas 2 : nouvel utilisateur
             'users.*.email' => [
-                'required_without:users.*.id',      // obligatoire si pas d'id
+                'required_without:users.*.id',
                 'email',
                 'max:255',
                 Rule::unique('users', 'email')->whereNull('deleted_at')
             ],
 
             'users.*.personne' => [
-                'required_with:users.*.email',      // requis si on crée un user
+                'required_with:users.*.email',
                 'array'
             ],
             'users.*.personne.nom' => 'required_with:users.*.email|string|max:255',
             'users.*.personne.prenom' => 'required_with:users.*.email|string|max:255',
             'users.*.personne.poste' => 'nullable|string|max:255'
-        ];
-
-
-        return [
-            // Champs obligatoires du groupe
-            'permissions' => ['required', 'array', 'min:1'],
-            'permissions.*' => ['required', 'distinct', Rule::exists('permissions', 'id')->whereNull('deleted_at')],
-
-            // Utilisateurs (optionnels à la création)
-            'users' => 'required|array|min:1',
-            'users.*.id' => [
-                'nullable',
-                Rule::exists('users', 'id')
-                    ->whereNull("roleId")
-                    ->whereNull('deleted_at')
-            ],
-
-            // Email utilisateur
-            'users.*.email' => [
-                'required', // à ajuster si tu veux le rendre conditionnel
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->whereNull('deleted_at')
-            ],
-
         ];
     }
 
