@@ -137,7 +137,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             if ($noteConceptuelle) {
 
-                if ($noteConceptuelle->statut) {
+                if ($noteConceptuelle->statut === 1) {
                     throw new Exception("Vous avez deja soumis la note conceptuelle", 403);
                 }
 
@@ -3178,9 +3178,9 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Récupérer l'évaluation de validation la plus récente
             $evaluation = $projet->evaluations()
                 ->where('type_evaluation', 'validation-etude-profil')
-                ->whereNotNull('valider_par')
+                /*->whereNotNull('valider_par')
                 ->whereNotNull('valider_le')
-                ->where('statut', 1)
+                ->where('statut', 1) */
                 ->orderBy('created_at', 'desc')
                 ->first();
 
@@ -3193,7 +3193,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'validation' => $evaluation ? [
                         'id' => $evaluation->hashed_id,
                         'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:i:s") : null,
-                        'valider_par' => new UserResource($evaluation->validator),
+                        'valider_par' => $evaluation->validator ? new UserResource($evaluation->validator) : null,
                         'decision' => $evaluation->evaluation,
                         'statut' => $evaluation->statut,
                         'commentaire' => $evaluation->commentaire,
@@ -3556,6 +3556,60 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
     }
 
     /**
+     * Créer une évaluation pour la validation de l'étude de profil lors de la soumission du rapport de faisabilité préliminaire
+     * en dupliquant l'ancienne évaluation terminée
+     *
+     * @param Projet $projet Le projet concerné
+     * @param array $data Les données de la soumission
+     * @param Rapport $rapport Le rapport de faisabilité préliminaire soumis
+     * @return void
+     */
+    private function creerEvaluationValidationEtudeProfil(Projet $projet): void
+    {
+        // Récupérer l'évaluation terminée de validation de l'étude de profil
+        $evaluationTerminee = $projet->evaluations()
+            ->where('type_evaluation', 'validation-etude-profil')
+            ->where('statut', 1)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$evaluationTerminee) {
+            // Si aucune évaluation terminée n'existe, créer une nouvelle évaluation simple
+            $projet->evaluations()->create([
+                'type_evaluation' => 'validation-etude-profil',
+                'projetable_type' => get_class($projet),
+                'projetable_id' => $projet->id,
+                'date_debut_evaluation' => now(),
+                'date_fin_evaluation' => null,
+                'evaluateur_id' => null,
+                'commentaire' => "",
+                'statut' => -1,
+                'valider_le' => null,
+                'valider_par' => -1,
+                'evaluation' => [],
+                'resultats_evaluation' => []
+            ]);
+            return;
+        }
+
+        // Dupliquer l'évaluation terminée
+        $newEvaluation = $evaluationTerminee->replicate();
+        $newEvaluation->id_evaluation = $evaluationTerminee->id; // Lien vers l'évaluation parent
+        $newEvaluation->statut = -1; // En cours
+        $newEvaluation->date_debut_evaluation = now();
+        $newEvaluation->date_fin_evaluation = null;
+        $newEvaluation->valider_le = null;
+        $newEvaluation->valider_par = null;
+        $newEvaluation->evaluateur_id = null;
+        $newEvaluation->commentaire = "";
+        $newEvaluation->evaluation = [];
+        $newEvaluation->resultats_evaluation = [];
+        $newEvaluation->created_at = now();
+        $newEvaluation->updated_at = null;
+        $newEvaluation->save();
+    }
+
+    /**
      * Soumettre ou resoumettre un rapport de faisabilité préliminaire (SFD-009)
      */
     public function soumettreRapportFaisabilitePreliminaire($projetId, array $data): JsonResponse
@@ -3714,6 +3768,9 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                         $this->creerEvaluationPourRapportResoumis($rapport, $ancienRapport);
                     }
                 }
+
+                // Créer une évaluation pour la validation de l'étude de profil
+                $this->creerEvaluationValidationEtudeProfil($projet, $data, $rapport);
 
                 // Changer le statut du projet vers VALIDATION_PROFIL
                 $projet->update([

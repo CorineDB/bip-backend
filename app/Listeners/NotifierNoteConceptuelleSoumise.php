@@ -61,7 +61,7 @@ class NotifierNoteConceptuelleSoumise implements ShouldQueue
         }
 
         // 2. Notifier tous les utilisateurs DGPD (évaluation requise)
-        $utilisateursDgpd = User::where('profilable_type', Dgpd::class)
+        $utilisateursDgpd = User::where('profilable_type', "App\Models\Dgpd")
             ->whereHas('permissions', function($query) {
                 $query->where('slug', 'evaluer-une-note-conceptuelle');
             })
@@ -79,7 +79,7 @@ class NotifierNoteConceptuelleSoumise implements ShouldQueue
         }
 
         // 3. Notifier le DPAF du ministère (information)
-        if ($projet->ministere_id) {
+        /*if ($projet->ministere_id) {
             $dpafMinistere = User::where('profilable_type', Dpaf::class)
                 ->whereHas('profilable', function($query) use ($projet) {
                     $query->where('ministere_id', $projet->ministere_id);
@@ -91,14 +91,14 @@ class NotifierNoteConceptuelleSoumise implements ShouldQueue
                     new NoteConceptuelleSoumiseNotification(
                         $noteConceptuelle,
                         $projet,
-                        'information'
+                        'confirmation'
                     )
                 );
             }
-        }
+        }*/
 
         // 4. Notifier le chef de projet du ministère
-        if ($projet->organisation_id) {
+        /*if ($projet->organisation_id) {
             $chefProjetMinistere = User::where('profilable_type', 'App\Models\Organisation')
                 ->where('profilable_id', $projet->organisation_id)
                 ->whereHas('roles', function($query) {
@@ -115,6 +115,16 @@ class NotifierNoteConceptuelleSoumise implements ShouldQueue
                     )
                 );
             }
+        }*/
+
+        if ($projet->ideeProjet->responsable) {
+            $projet->ideeProjet->responsable->notify(
+                new NoteConceptuelleSoumiseNotification(
+                    $noteConceptuelle,
+                    $projet,
+                    'information'
+                )
+            );
         }
 
         Log::info('Notifications envoyées avec succès pour soumission de note conceptuelle', [

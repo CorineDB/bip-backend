@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\categories_critere;
 
+use App\Models\CategorieCritere;
 use App\Models\Critere;
 use App\Models\Notation;
 use App\Repositories\CategorieCritereRepository;
@@ -27,6 +28,8 @@ class UpdateGrilleEvaluationPertinenceRequest extends FormRequest
 
         // Récupérer le projet avec ses relations
         $this->categorie = app(CategorieCritereRepository::class)->findByAttribute('slug', 'grille-evaluation-pertinence-idee-projet');
+        //throw new \Exception("document referentiel : " . $this->categorie->documentsReferentiel->count(), 403);
+
     }
 
     public function rules(): array
@@ -75,28 +78,75 @@ class UpdateGrilleEvaluationPertinenceRequest extends FormRequest
             'criteres.*.notations.*.commentaire' => 'nullable|string',
 
             // Documents référentiels
-            'documents_referentiel' => $this->categorie->documentsReferentiel->count() ? 'nullable|array' : 'required|array|min:0',
-            'documents_referentiel.*' => 'distinct|file|mimes:pdf,doc,docx,xls,xlsx,png,jpg,txt|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,image/png,image/jpeg,text/plain|max:10240'
+            'documents_referentiel' => $this->categorie->documentsReferentiel->count() > 0 ? 'nullable|array' : 'required|array|min:1',
+            'documents_referentiel.*' => 'sometimes|distinct|file|mimes:pdf,doc,docx,xls,xlsx,png,jpg,txt|mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,image/png,image/jpeg,text/plain|max:10240'
         ];
     }
 
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            $criteres = $this->input('criteres', []);
+            $allData = $this->all();
+
+            // Déhasher les IDs des notations racine
+            if (isset($allData['notations']) && is_array($allData['notations'])) {
+                foreach ($allData['notations'] as $index => &$notation) {
+                    if (isset($notation['id']) && !is_int($notation['id'])) {
+                        $notation['id'] = Notation::unhashId($notation['id']);
+                    }
+                    if (isset($notation['critere_id']) && !is_int($notation['critere_id'])) {
+                        $notation['critere_id'] = Critere::unhashId($notation['critere_id']);
+                    }
+                    if (isset($notation['critere_id']) && !is_int($notation['critere_id'])) {
+                        $notation['categorie_critere_id'] = CategorieCritere::unhashId($notation['categorie_critere_id']);
+                    }
+                }
+                unset($notation);
+            }
+
+            $criteres = $allData['criteres'] ?? [];
             // Si on a bien des critères
             if (is_array($criteres)) {
                 $totalPonderation = 0;
 
-                foreach ($criteres as $critere) {
+                foreach ($criteres as $index => &$critere) {
                     $ponderation = $critere['ponderation'] ?? 0;
                     $totalPonderation += floatval($ponderation);
+
+                    // Déhasher l'ID du critère
+                    if (isset($critere['id']) && !is_int($critere['id'])) {
+                        $critere['id'] = Critere::unhashId($critere['id']);
+                    }
+                    if (isset($critere['critere_id']) && !is_int($critere['critere_id'])) {
+                        $critere['categorie_critere_id'] = CategorieCritere::unhashId($critere['categorie_critere_id']);
+                    }
+
+                    // Déhasher les IDs des notations dans le critère
+                    if (isset($critere['notations']) && is_array($critere['notations'])) {
+                        foreach ($critere['notations'] as $notationIndex => &$notation) {
+                            if (isset($notation['id']) && !is_int($notation['id'])) {
+                                $notation['id'] = Notation::unhashId($notation['id']);
+                            }
+                            if (isset($notation['critere_id']) && !is_int($notation['critere_id'])) {
+                                $notation['critere_id'] = Critere::unhashId($notation['critere_id']);
+                            }
+                            if (isset($notation['categorie_critere_id']) && !is_int($notation['categorie_critere_id'])) {
+                                $notation['categorie_critere_id'] = CategorieCritere::unhashId($notation['categorie_critere_id']);
+                            }
+                        }
+                        unset($notation);
+                    }
                 }
+                unset($critere);
+
+                $allData['criteres'] = $criteres;
 
                 if ($totalPonderation !== 100.0) {
                     $validator->errors()->add('criteres', 'La somme des pondérations doit être exactement égale à 100%. Actuellement: ' . $totalPonderation . '%.');
                 }
             }
+
+            $this->replace($allData);
         });
     }
 }

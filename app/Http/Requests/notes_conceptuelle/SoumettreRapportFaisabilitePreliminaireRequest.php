@@ -30,7 +30,7 @@ class SoumettreRapportFaisabilitePreliminaireRequest extends FormRequest
         return [
             'est_soumise' => 'required|boolean',
             'rapportId' => ['sometimes', new HashedExists(Rapport::class) /* Rule::exists('rapports', 'id')->whereNull('deleted_at') */],
-            'intitule' => $estSoumise ? 'required|string|max:500' : 'nullable|string|max:500',
+            'intitule' => $estSoumise ? 'sometimes|string|max:500' : 'nullable|string|max:500',
 
             // Documents
             'documents' => $estSoumise ? 'required|array' : 'nullable|array',

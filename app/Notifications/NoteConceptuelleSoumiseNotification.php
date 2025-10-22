@@ -53,35 +53,37 @@ class NoteConceptuelleSoumiseNotification extends Notification implements Should
             case 'confirmation':
                 return $mailMessage
                     ->subject('Note Conceptuelle Soumise avec Succès')
-                    ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                    ->greeting('Bonjour ' .$notifiable->personne->prenom . ',')
                     ->line('Votre note conceptuelle a été soumise avec succès.')
                     ->line('**Projet :** ' . $this->projet->titre_projet)
                     ->line('**Note :** ' . $this->noteConceptuelle->intitule)
                     ->line('Elle sera évaluée par la DGPD dans les prochains jours.')
-                    ->action('Voir la note', url('/projets/' . $this->projet->id . '/notes/' . $this->noteConceptuelle->id))
+                    ->action('Voir la note', url('/projet/' . $this->projet->id . '/detail-note-conceptuelle'))// . $this->noteConceptuelle->id))
                     ->line('Merci pour votre soumission.');
 
             case 'evaluation_requise':
                 return $mailMessage
                     ->subject('Nouvelle Note Conceptuelle à Évaluer')
-                    ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                    ->greeting('Bonjour ' . $notifiable->personne->prenom . ',')
                     ->line('Une nouvelle note conceptuelle nécessite votre évaluation.')
                     ->line('**Projet :** ' . $this->projet->titre_projet)
                     ->line('**Ministère :** ' . ($this->projet->ministere->nom ?? 'N/A'))
-                    ->line('**Soumise par :** ' . ($this->noteConceptuelle->redacteur->nom ?? 'N/A') . ' ' . ($this->noteConceptuelle->redacteur->prenom ?? ''))
-                    ->action('Évaluer maintenant', url('/evaluations/notes/' . $this->noteConceptuelle->id))
+                    ->line('**Soumise par :** ' . ($this->noteConceptuelle->redacteur->personne->nom ?? 'N/A') . ' ' . ($this->noteConceptuelle->redacteur->personne->prenom ?? ''))
+
+                    ->action('Voir la note', url('/projet/' . $this->projet->id . '/detail-note-conceptuelle'))
+                    ->action('Évaluer maintenant', url('/projet/' . $this->projet->id . '/resultat-evaluation-note-conceptuelle' . $this->noteConceptuelle->id))
                     ->line('Veuillez procéder à l\'évaluation dans les meilleurs délais.');
 
             case 'information':
             default:
                 return $mailMessage
                     ->subject('Note Conceptuelle Soumise')
-                    ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                    ->greeting('Bonjour ' .$notifiable->personne->prenom . ',')
                     ->line('Une note conceptuelle a été soumise pour évaluation.')
                     ->line('**Projet :** ' . $this->projet->titre_projet)
                     ->line('**Ministère :** ' . ($this->projet->ministere->nom ?? 'N/A'))
-                    ->line('**Soumise par :** ' . ($this->noteConceptuelle->redacteur->nom ?? 'N/A'))
-                    ->action('Voir les détails', url('/projets/' . $this->projet->id))
+                    ->line('**Soumise par :** ' . ($this->noteConceptuelle->redacteur->personne->nom ?? 'N/A'))
+                    ->action('Voir les détails', url('/dashboard/projet/' . $this->projet->id))
                     ->line('Notification d\'information.');
         }
     }
@@ -98,8 +100,8 @@ class NoteConceptuelleSoumiseNotification extends Notification implements Should
             'projet_id' => $this->projet->id,
             'projet_titre' => $this->projet->titre_projet,
             'note_intitule' => $this->noteConceptuelle->intitule,
-            'redacteur_nom' => $this->noteConceptuelle->redacteur->nom ?? '',
-            'redacteur_prenom' => $this->noteConceptuelle->redacteur->prenom ?? '',
+            'redacteur_nom' => $this->noteConceptuelle->redacteur->personne->nom ?? '',
+            'redacteur_prenom' => $this->noteConceptuelle->redacteur->personne->prenom ?? '',
             'ministere_nom' => $this->projet->ministere->nom ?? '',
             'message' => $this->getMessage(),
             'action_url' => $this->getActionUrl(),

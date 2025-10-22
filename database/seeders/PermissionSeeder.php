@@ -76,9 +76,14 @@ class PermissionSeeder extends Seeder
             // Cadres stratégiques
             "voir-la-liste-des-axes-du-pag", "voir-la-liste-des-piliers-du-pag", "voir-la-liste-des-actions-du-pag", "voir-la-liste-des-orientations-strategique-du-pnd", "voir-la-liste-des-objectifs-strategique-du-pnd", "voir-la-liste-des-resultats-strategique-du-pnd",
 
-            // Projets et idées
+            // Projets et idées - Catégories
             "voir-la-liste-des-categories-de-projet", "gerer-les-categories-de-projet", "creer-une-categorie-de-projet", "modifier-une-categorie-de-projet", "supprimer-une-categorie-de-projet",
-            "voir-la-liste-des-idees-de-projet", "gerer-les-idees-projet", "creer-une-idee-de-projet", "modifier-une-idee-de-projet", "supprimer-une-idee-de-projet", "effectuer-evaluation-climatique-idee-projet", "obtenir-score-climatique", "obtenir-score-climatique-une-projet", "valider-le-score-climatique-une-idee-de-projet", "relancer-l-evaluation-climatique-une-idee-de-projet",
+
+            // Gestion des idées de projet
+            "voir-la-liste-des-idees-de-projet", "gerer-les-idees-projet", "creer-une-idee-de-projet", "modifier-une-idee-de-projet", "supprimer-une-idee-de-projet", "consulter-une-idee-de-projet", "exporter-une-idee-de-projet", "imprimer-une-idee-de-projet", "effectuer-evaluation-climatique-idee-projet", "obtenir-score-climatique", "obtenir-score-climatique-une-projet", "valider-le-score-climatique-une-idee-de-projet", "relancer-l-evaluation-climatique-une-idee-de-projet", "commenter-une-idee-de-projet", "voir-les-commentaires-d-une-idee-de-projet", "attacher-des-documents-a-une-idee-de-projet", "voir-les-documents-d-une-idee-de-projet", "telecharger-les-documents-d-une-idee-de-projet",
+
+            // Gestion des projets
+            "voir-la-liste-des-projets", "consulter-un-projet", "exporter-un-projet", "imprimer-un-projet", "commenter-un-projet", "voir-les-commentaires-d-un-projet", "attacher-des-documents-a-un-projet", "voir-les-documents-d-un-projet", "telecharger-les-documents-d-un-projet", "suivre-avancement-projet", "mettre-a-jour-statut-projet", "generer-rapport-projet", "voir-historique-projet",
 
             "creer-le-canevas-de-la-fiche-idee-de-projet", "modifier-le-canevas-de-la-fiche-idee-de-projet", "consulter-le-canevas-de-la-fiche-idee-de-projet", "remplir-le-canevas-de-la-fiche-idee-de-projet", "telecharger-la-fiche-synthese-une-idee-de-projet",
 
@@ -103,10 +108,11 @@ class PermissionSeeder extends Seeder
             "soumettre-un-tdr-de-prefaisabilite", "voir-la-liste-des-tdrs-de-prefaisabilite", "attacher-un-fichier-a-un-tdr-de-prefaisabilite", "supprimer-un-tdr-de-prefaisabilite", "apprecier-un-tdr-de-prefaisabilite", "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-prefaisabilite", "telecharger-un-fichier-complementaire-d-un-tdr-de-prefaisabilite", "voir-details-de-l-appreciation-un-tdr-de-prefaisabilite", "exporter-l-appreciation-d-un-tdr-de-prefaisabilite", "commenter-l-appreciation-d-un-tdr-de-prefaisabilite",
             "soumettre-un-rapport-de-prefaisabilite","modifier-un-rapport-de-prefaisabilite", "supprimer-un-rapport-de-prefaisabilite", "telecharger-un-rapport-de-prefaisabilite", "valider-une-etude-de-prefaisabilite", "gerer-les-rapports-de-prefaisabilite", "voir-la-liste-des-rapports-de-prefaisabilite",
 
-            "soumettre-un-tdr-de-faisabilite", "voir-la-liste-des-tdrs-de-faisabilite", "attacher-un-fichier-a-un-tdr-de-faisabilite", "supprimer-un-tdr-de-faisabilite", "apprecier-un-tdr-de-faisabilite", "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite", "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite",
+            "soumettre-un-tdr-de-faisabilite", "voir-la-liste-des-tdrs-de-faisabilite", "attacher-un-fichier-a-un-tdr-de-faisabilite", "supprimer-un-tdr-de-faisabilite", "apprecier-un-tdr-de-faisabilite", "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite", "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite", "voir-details-de-l-appreciation-un-tdr-de-faisabilite", "exporter-l-appreciation-d-un-tdr-de-faisabilite", "commenter-l-appreciation-d-un-tdr-de-faisabilite",
             "soumettre-un-rapport-de-faisabilite","modifier-un-rapport-de-faisabilite", "supprimer-un-rapport-de-faisabilite", "telecharger-un-rapport-de-faisabilite", "valider-une-etude-de-faisabilite", "gerer-les-rapports-de-faisabilite", "voir-la-liste-des-rapports-de-faisabilite",
 
-            "soumettre-un-rapport-d-evaluation-ex-ante","modifier-un-rapport-d-evaluation-ex-ante", "supprimer-un-rapport-d-evaluation-ex-ante", "telecharger-un-rapport-d-evaluation-ex-ante", "valider-un-rapport-evaluation-ex-ante", "gerer-les-rapports-d-evaluation-ex-ante", "voir-la-liste-des-rapports-d-evaluation-ex-ante", "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante",
+            // Évaluation Ex-Ante
+            "soumettre-un-rapport-d-evaluation-ex-ante", "modifier-un-rapport-d-evaluation-ex-ante", "supprimer-un-rapport-d-evaluation-ex-ante", "consulter-un-rapport-d-evaluation-ex-ante", "telecharger-un-rapport-d-evaluation-ex-ante", "imprimer-un-rapport-d-evaluation-ex-ante", "exporter-un-rapport-d-evaluation-ex-ante", "valider-un-rapport-evaluation-ex-ante", "rejeter-un-rapport-evaluation-ex-ante", "gerer-les-rapports-d-evaluation-ex-ante", "voir-la-liste-des-rapports-d-evaluation-ex-ante", "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante", "voir-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante", "telecharger-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante", "supprimer-un-document-annexe-d-un-rapport-d-evaluation-ex-ante", "commenter-un-rapport-d-evaluation-ex-ante", "voir-les-commentaires-d-un-rapport-d-evaluation-ex-ante", "voir-historique-rapport-d-evaluation-ex-ante",
 
             "creer-le-canevas-d-appreciation-d-un-tdr", "modifier-le-canevas-d-appreciation-d-un-tdr", "consulter-le-canevas-d-appreciation-d-un-tdr", "imprimer-le-canevas-d-appreciation-d-un-tdr",
 
@@ -120,10 +126,162 @@ class PermissionSeeder extends Seeder
 
             // Évaluations et validations
 
+            "televerser-un-fichier", "partager-un-fichier", "supprimer-un-fichier", "telecharger-un-fichier", 'consulter-un-fichier',
 
             // Commentaires et fichiers
             "ajouter-commentaire", "voir-commentaires", "modifier-commentaire", "supprimer-commentaire",
             "telecharger-fichier", "upload-fichier", "supprimer-fichier",
+
+            // === CANEVAS DE RÉDACTION - Note Conceptuelle (instance unique) ===
+            "creer-le-canevas-de-redaction-note-conceptuelle",
+            "modifier-le-canevas-de-redaction-note-conceptuelle",
+            "consulter-le-canevas-de-redaction-note-conceptuelle",
+            "remplir-le-canevas-de-redaction-note-conceptuelle",
+            "imprimer-le-canevas-de-redaction-note-conceptuelle",
+            "exporter-le-canevas-de-redaction-note-conceptuelle",
+            "telecharger-le-canevas-de-redaction-note-conceptuelle",
+            "restaurer-version-anterieure-canevas-note-conceptuelle",
+            "voir-historique-canevas-note-conceptuelle",
+
+            // === CHECKLIST D'APPRÉCIATION - TDR Préfaisabilité (instance unique) ===
+            "creer-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+            "modifier-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+            "consulter-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+            "remplir-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+            "imprimer-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+            "exporter-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+            "telecharger-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+            "restaurer-version-anterieure-checklist-appreciation-tdr-prefaisabilite",
+
+            // === CHECKLIST D'APPRÉCIATION - TDR Faisabilité (instance unique) ===
+            "creer-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+            "modifier-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+            "consulter-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+            "remplir-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+            "imprimer-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+            "exporter-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+            "telecharger-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+            "restaurer-version-anterieure-checklist-appreciation-tdr-faisabilite",
+
+            // === CHECKLIST DE SUIVI - Rapport Préfaisabilité (instance unique) ===
+            "creer-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+            "modifier-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+            "consulter-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+            "remplir-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+            "imprimer-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+            "exporter-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+            "telecharger-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+            "restaurer-version-anterieure-checklist-suivi-rapport-prefaisabilite",
+
+            // === CHECKLIST DE SUIVI - Étude Faisabilité Technique ===
+            "creer-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+            "modifier-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+            "consulter-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+            "remplir-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+            "imprimer-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+            "exporter-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+            "telecharger-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+
+            // === CHECKLIST DE SUIVI - Étude Faisabilité Économique ===
+            "creer-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+            "modifier-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+            "consulter-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+            "remplir-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+            "imprimer-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+            "exporter-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+            "telecharger-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+
+            // === CHECKLIST DE SUIVI - Étude Faisabilité Marché ===
+            "creer-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+            "modifier-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+            "consulter-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+            "remplir-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+            "imprimer-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+            "exporter-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+            "telecharger-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+
+            // === CHECKLIST DE SUIVI - Étude Faisabilité Organisationnelle et Juridique ===
+            "creer-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+            "modifier-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+            "consulter-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+            "remplir-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+            "imprimer-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+            "exporter-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+            "telecharger-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+
+            // === CHECKLIST DE SUIVI - Étude Impact Environnemental et Social ===
+            "creer-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+            "modifier-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+            "consulter-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+            "remplir-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+            "imprimer-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+            "exporter-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+            "telecharger-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+
+            // === CHECKLIST DE SUIVI - Analyse Faisabilité Financière ===
+            "creer-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+            "modifier-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+            "consulter-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+            "remplir-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+            "imprimer-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+            "exporter-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+            "telecharger-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+
+            // === CHECKLIST - Assurance Qualité Rapport Faisabilité ===
+            "creer-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+            "modifier-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+            "consulter-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+            "remplir-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+            "imprimer-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+            "exporter-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+            "telecharger-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+
+            // === CHECKLIST - Contrôle Qualité Rapport Faisabilité Préliminaire ===
+            "creer-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+            "modifier-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+            "consulter-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+            "remplir-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+            "imprimer-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+            "exporter-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+            "telecharger-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+
+            // === GRILLE D'ÉVALUATION - Pertinence (instance unique) ===
+            "creer-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+            "modifier-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+            "consulter-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+            "imprimer-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+            "exporter-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+            "telecharger-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+            "restaurer-version-anterieure-de-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+            "voir-historique-grille-evaluation-de-la-pertinence-des-idees-de-projet",
+
+            // === GRILLE D'ÉVALUATION - Climatique (instance unique) ===
+            "creer-l-outil-d-evaluation-climatique-des-idees-de-projet",
+            "modifier-l-outil-d-evaluation-climatique-des-idees-de-projet",
+            "consulter-l-outil-d-evaluation-climatique-des-idees-de-projet",
+            "imprimer-l-outil-d-evaluation-climatique-des-idees-de-projet",
+            "exporter-l-outil-d-evaluation-climatique-des-idees-de-projet",
+            "telecharger-l-outil-d-evaluation-climatique-des-idees-de-projet",
+            "voir-historique-de-l-outil-d-evaluation-climatique-des-idees-de-projet",
+
+            // === GRILLE D'ÉVALUATION - Analyse Multi-Critères (AMC) (instance unique) ===
+            "creer-l-outil-d-analyse-multicritere-des-idees-de-projet",
+            "modifier-l-outil-d-analyse-multicritere-des-idees-de-projet",
+            "consulter-l-outil-d-analyse-multicritere-des-idees-de-projet",
+            "imprimer-l-outil-d-analyse-multicritere-des-idees-de-projet",
+            "exporter-l-outil-d-analyse-multicritere-des-idees-de-projet",
+            "telecharger--l-outil-d-analyse-multicritere-des-idees-de-projet",
+            "voir-historique-outil-d-analyse-multicritere-des-idees-de-projet",
+
+            // === OUTIL D'ANALYSE - Note Conceptuelle (instance unique) ===
+            "creer-le-check-liste-d-appreciation-des-notes-conceptuelle",
+            "modifier-le-check-liste-d-appreciation-des-notes-conceptuelle",
+            "consulter-le-check-liste-d-appreciation-des-notes-conceptuelle",
+            "remplir-le-check-liste-d-appreciation-des-notes-conceptuelle",
+            "imprimer-le-check-liste-d-appreciation-des-notes-conceptuelle",
+            "exporter-le-check-liste-d-appreciation-des-notes-conceptuelle",
+            "telecharger-le-check-liste-d-appreciation-des-notes-conceptuelle",
+            "restaurer-version-anterieure-checklist-des-notes-conceptuelle",
         ];
 
         $permissions_par_role = [
@@ -276,7 +434,8 @@ class PermissionSeeder extends Seeder
                 "soumettre-un-tdr-de-faisabilite", "voir-la-liste-des-tdrs-de-faisabilite", "attacher-un-fichier-a-un-tdr-de-faisabilite", "supprimer-un-tdr-de-faisabilite", "apprecier-un-tdr-de-faisabilite", "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite", "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite",
                 "soumettre-un-rapport-de-faisabilite","modifier-un-rapport-de-faisabilite", "supprimer-un-rapport-de-faisabilite", "telecharger-un-rapport-de-faisabilite", "valider-une-etude-de-faisabilite", "gerer-les-rapports-de-faisabilite", "voir-la-liste-des-rapports-de-faisabilite",
 
-                "telecharger-un-rapport-d-evaluation-ex-ante", "valider-un-rapport-evaluation-ex-ante", "gerer-les-rapports-d-evaluation-ex-ante", "voir-la-liste-des-rapports-d-evaluation-ex-ante", "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante",
+                // Évaluation Ex-Ante
+                "consulter-un-rapport-d-evaluation-ex-ante", "telecharger-un-rapport-d-evaluation-ex-ante", "imprimer-un-rapport-d-evaluation-ex-ante", "exporter-un-rapport-d-evaluation-ex-ante", "valider-un-rapport-evaluation-ex-ante", "rejeter-un-rapport-evaluation-ex-ante", "gerer-les-rapports-d-evaluation-ex-ante", "voir-la-liste-des-rapports-d-evaluation-ex-ante", "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante", "voir-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante", "telecharger-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante", "supprimer-un-document-annexe-d-un-rapport-d-evaluation-ex-ante", "commenter-un-rapport-d-evaluation-ex-ante", "voir-les-commentaires-d-un-rapport-d-evaluation-ex-ante", "voir-historique-rapport-d-evaluation-ex-ante",
 
                 "consulter-le-canevas-d-appreciation-d-un-tdr", "imprimer-le-canevas-d-appreciation-d-un-tdr",
 
@@ -287,7 +446,146 @@ class PermissionSeeder extends Seeder
                 "voir-idees-projet", "voir-grille-evaluation-amc",
                 "remplir-grille-amc", "enregistrer-fiche-synthese-amc", "modifier-fiche-synthese-amc", "emettre-commentaire", "rejeter-idee-idee", "recevoir-notification-validation-idee", "voir-historique-amc", "telecharger-fiche-synthese-amc",
                 "voir-types-financement", "voir-sources-financement", "apprecier-tdr-faisabilite",
-                "soumettre-rapport-faisabilite", "voir-rapports-etude"
+                "soumettre-rapport-faisabilite", "voir-rapports-etude",
+
+                // === NOUVELLES PERMISSIONS - CANEVAS DE RÉDACTION ===
+                "creer-le-canevas-de-redaction-note-conceptuelle",
+                "modifier-le-canevas-de-redaction-note-conceptuelle",
+                "consulter-le-canevas-de-redaction-note-conceptuelle",
+                "remplir-le-canevas-de-redaction-note-conceptuelle",
+                "imprimer-le-canevas-de-redaction-note-conceptuelle",
+                "exporter-le-canevas-de-redaction-note-conceptuelle",
+                "telecharger-le-canevas-de-redaction-note-conceptuelle",
+                "restaurer-version-anterieure-canevas-note-conceptuelle",
+                "voir-historique-canevas-note-conceptuelle",
+
+                // === NOUVELLES PERMISSIONS - CHECKLISTS D'APPRÉCIATION ===
+                "creer-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+                "modifier-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+                "consulter-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+                "remplir-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+                "imprimer-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+                "exporter-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+                "telecharger-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+                "restaurer-version-anterieure-checklist-appreciation-tdr-prefaisabilite",
+
+                "creer-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+                "modifier-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+                "consulter-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+                "remplir-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+                "imprimer-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+                "exporter-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+                "telecharger-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+                "restaurer-version-anterieure-checklist-appreciation-tdr-faisabilite",
+
+                "creer-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+                "modifier-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+                "consulter-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+                "remplir-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+                "imprimer-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+                "exporter-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+                "telecharger-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+                "restaurer-version-anterieure-checklist-suivi-rapport-prefaisabilite",
+
+                // === NOUVELLES PERMISSIONS - CHECKLISTS DE SUIVI ÉTUDES ===
+                "creer-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+                "modifier-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+                "consulter-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+                "remplir-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+                "imprimer-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+                "exporter-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+                "telecharger-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+
+                "creer-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+                "modifier-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+                "consulter-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+                "remplir-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+                "imprimer-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+                "exporter-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+                "telecharger-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+
+                "creer-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+                "modifier-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+                "consulter-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+                "remplir-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+                "imprimer-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+                "exporter-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+                "telecharger-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+
+                "creer-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+                "modifier-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+                "consulter-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+                "remplir-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+                "imprimer-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+                "exporter-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+                "telecharger-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+
+                "creer-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+                "modifier-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+                "consulter-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+                "remplir-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+                "imprimer-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+                "exporter-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+                "telecharger-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+
+                "creer-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+                "modifier-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+                "consulter-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+                "remplir-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+                "imprimer-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+                "exporter-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+                "telecharger-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+
+                "creer-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+                "modifier-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+                "consulter-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+                "remplir-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+                "imprimer-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+                "exporter-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+                "telecharger-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+
+                "creer-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+                "modifier-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+                "consulter-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+                "remplir-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+                "imprimer-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+                "exporter-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+                "telecharger-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+
+                // === NOUVELLES PERMISSIONS - OUTILS D'ÉVALUATION ===
+                "creer-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+                "modifier-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+                "consulter-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+                "imprimer-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+                "exporter-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+                "telecharger-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+                "restaurer-version-anterieure-de-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+                "voir-historique-grille-evaluation-de-la-pertinence-des-idees-de-projet",
+
+                "creer-l-outil-d-evaluation-climatique-des-idees-de-projet",
+                "modifier-l-outil-d-evaluation-climatique-des-idees-de-projet",
+                "consulter-l-outil-d-evaluation-climatique-des-idees-de-projet",
+                "imprimer-l-outil-d-evaluation-climatique-des-idees-de-projet",
+                "exporter-l-outil-d-evaluation-climatique-des-idees-de-projet",
+                "telecharger-l-outil-d-evaluation-climatique-des-idees-de-projet",
+                "voir-historique-de-l-outil-d-evaluation-climatique-des-idees-de-projet",
+
+                "creer-l-outil-d-analyse-multicritere-des-idees-de-projet",
+                "modifier-l-outil-d-analyse-multicritere-des-idees-de-projet",
+                "consulter-l-outil-d-analyse-multicritere-des-idees-de-projet",
+                "imprimer-l-outil-d-analyse-multicritere-des-idees-de-projet",
+                "exporter-l-outil-d-analyse-multicritere-des-idees-de-projet",
+                "telecharger--l-outil-d-analyse-multicritere-des-idees-de-projet",
+                "voir-historique-outil-d-analyse-multicritere-des-idees-de-projet",
+
+                "creer-le-check-liste-d-appreciation-des-notes-conceptuelle",
+                "modifier-le-check-liste-d-appreciation-des-notes-conceptuelle",
+                "consulter-le-check-liste-d-appreciation-des-notes-conceptuelle",
+                "remplir-le-check-liste-d-appreciation-des-notes-conceptuelle",
+                "imprimer-le-check-liste-d-appreciation-des-notes-conceptuelle",
+                "exporter-le-check-liste-d-appreciation-des-notes-conceptuelle",
+                "telecharger-le-check-liste-d-appreciation-des-notes-conceptuelle",
+                "restaurer-version-anterieure-checklist-des-notes-conceptuelle"
             ],
 
             // DPAF
@@ -348,7 +646,8 @@ class PermissionSeeder extends Seeder
                 "soumettre-un-tdr-de-faisabilite", "voir-la-liste-des-tdrs-de-faisabilite", "attacher-un-fichier-a-un-tdr-de-faisabilite", "supprimer-un-tdr-de-faisabilite", "apprecier-un-tdr-de-faisabilite", "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite", "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite",
                 "soumettre-un-rapport-de-faisabilite","modifier-un-rapport-de-faisabilite", "supprimer-un-rapport-de-faisabilite", "telecharger-un-rapport-de-faisabilite", "valider-une-etude-de-faisabilite", "gerer-les-rapports-de-faisabilite", "voir-la-liste-des-rapports-de-faisabilite",
 
-                "soumettre-un-rapport-d-evaluation-ex-ante","modifier-un-rapport-d-evaluation-ex-ante", "supprimer-un-rapport-d-evaluation-ex-ante", "telecharger-un-rapport-d-evaluation-ex-ante", "gerer-les-rapports-d-evaluation-ex-ante", "voir-la-liste-des-rapports-d-evaluation-ex-ante", "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante",
+                // Évaluation Ex-Ante
+                "soumettre-un-rapport-d-evaluation-ex-ante", "modifier-un-rapport-d-evaluation-ex-ante", "supprimer-un-rapport-d-evaluation-ex-ante", "consulter-un-rapport-d-evaluation-ex-ante", "telecharger-un-rapport-d-evaluation-ex-ante", "imprimer-un-rapport-d-evaluation-ex-ante", "exporter-un-rapport-d-evaluation-ex-ante", "gerer-les-rapports-d-evaluation-ex-ante", "voir-la-liste-des-rapports-d-evaluation-ex-ante", "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante", "voir-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante", "telecharger-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante", "supprimer-un-document-annexe-d-un-rapport-d-evaluation-ex-ante", "commenter-un-rapport-d-evaluation-ex-ante", "voir-les-commentaires-d-un-rapport-d-evaluation-ex-ante", "voir-historique-rapport-d-evaluation-ex-ante",
 
                 "consulter-le-canevas-d-appreciation-d-un-tdr", "imprimer-le-canevas-d-appreciation-d-un-tdr",
 

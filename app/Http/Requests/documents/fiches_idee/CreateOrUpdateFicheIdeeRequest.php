@@ -3,7 +3,10 @@
 namespace App\Http\Requests\documents\fiches_idee;
 
 use App\Enums\EnumTypeChamp;
+use App\Models\Champ;
+use App\Models\ChampSection;
 use App\Models\Document;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -47,15 +50,31 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
         $foundAttributs = [];
 
         // Champs racines
-        foreach ($this->input('champs', []) as $champ) {
+        foreach ($this->input('champs', []) as $index => $champ) {
             if (isset($champ['attribut'])) {
                 $foundAttributs[] = $champ['attribut'];
+            }
+
+            // Valider l'ID hashé du champ
+            if (isset($champ['id'])) {
+                $idValidator = new HashedExists(Champ::class);
+                if (!$idValidator->passes("champs.{$index}.id", $champ['id'])) {
+                    $validator->errors()->add("champs.{$index}.id", $idValidator->message());
+                }
             }
         }
 
         // Champs dans sections (récursif pour gérer les sous-sections)
-        foreach ($this->input('sections', []) as $section) {
-            $this->extractAttributsFromSection($section, $foundAttributs);
+        foreach ($this->input('sections', []) as $index => $section) {
+            // Valider l'ID hashé de la section
+            if (isset($section['id'])) {
+                $idValidator = new HashedExists(ChampSection::class);
+                if (!$idValidator->passes("sections.{$index}.id", $section['id'])) {
+                    $validator->errors()->add("sections.{$index}.id", $idValidator->message());
+                }
+            }
+
+            $this->extractAttributsFromSection($section, $foundAttributs, $validator, "sections.{$index}");
         }
 
         $foundAttributs = array_unique($foundAttributs);
@@ -63,7 +82,7 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
         // Vérifie que tous les attributs requis sont présents
         foreach ($requiredAttributes as $required) {
             if (!in_array($required, $foundAttributs)) {
-                $validator->errors()->add('attributs_manquants', "Le champ avec l’attribut '$required' est obligatoire.");
+                $validator->errors()->add('attributs_manquants', "Le champ avec l'attribut '$required' est obligatoire.");
             }
         }
     }
@@ -71,19 +90,35 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
     /**
      * Extrait récursivement les attributs des champs d'une section et de ses sous-sections
      */
-    private function extractAttributsFromSection(array $section, array &$foundAttributs): void
+    private function extractAttributsFromSection(array $section, array &$foundAttributs, $validator, string $path): void
     {
         // Champs directs de la section
-        foreach ($section['champs'] ?? [] as $champ) {
+        foreach ($section['champs'] ?? [] as $index => $champ) {
             if (isset($champ['attribut'])) {
                 $foundAttributs[] = $champ['attribut'];
+            }
+
+            // Valider l'ID hashé du champ
+            if (isset($champ['id'])) {
+                $idValidator = new HashedExists(Champ::class);
+                if (!$idValidator->passes("{$path}.champs.{$index}.id", $champ['id'])) {
+                    $validator->errors()->add("{$path}.champs.{$index}.id", $idValidator->message());
+                }
             }
         }
 
         // Champs dans les sous-sections (récursif)
         if (isset($section['sous_sections']) && is_array($section['sous_sections'])) {
-            foreach ($section['sous_sections'] as $sousSection) {
-                $this->extractAttributsFromSection($sousSection, $foundAttributs);
+            foreach ($section['sous_sections'] as $index => $sousSection) {
+                // Valider l'ID hashé de la sous-section
+                if (isset($sousSection['id'])) {
+                    $idValidator = new HashedExists(ChampSection::class);
+                    if (!$idValidator->passes("{$path}.sous_sections.{$index}.id", $sousSection['id'])) {
+                        $validator->errors()->add("{$path}.sous_sections.{$index}.id", $idValidator->message());
+                    }
+                }
+
+                $this->extractAttributsFromSection($sousSection, $foundAttributs, $validator, "{$path}.sous_sections.{$index}");
             }
         }
     }
@@ -182,7 +217,7 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
             'sections.*.champs.*.id' => ["sometimes"/* Rule::requiredIf($this->fiche) */, Rule::exists('champs', 'id')->whereNull('deleted_at')],
             'sections.*.champs.*.label' => 'required|string|max:255',
             'sections.*.champs.*.info' => 'nullable|string|max:65535',
-            'sections.*.champs.*.attribut' => 'required|string|max:255',
+            'sections.*.champs.*.attribut' => 'sometimes|nullable|string|max:255',
             'sections.*.champs.*.placeholder' => 'nullable|string|max:255',
             'sections.*.champs.*.is_required' => 'boolean',
             'sections.*.champs.*.champ_standard' => 'boolean',
@@ -209,7 +244,7 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
             'champs.*.id' => ["sometimes"/* Rule::requiredIf($this->fiche) */, Rule::exists('champs', 'id')->whereNull('deleted_at')],
             'champs.*.label' => 'required|string|max:255',
             'champs.*.info' => 'nullable|string|max:65535',
-            'champs.*.attribut' => 'required|string|max:255',
+            'champs.*.attribut' => 'sometimes|nullable|string|max:255',
             'champs.*.placeholder' => 'nullable|string|max:255',
             'champs.*.is_required' => 'boolean',
             'champs.*.champ_standard' => 'boolean',

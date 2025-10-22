@@ -32,7 +32,7 @@ class NoteConceptuelleSoumise implements ShouldBroadcast
         string $nouveauStatut = 'soumise'
     ) {
         $this->noteConceptuelle = $noteConceptuelle->load(['redacteur', 'champs']);
-        $this->projet = $projet->load(['ministere', 'organisation']);
+        $this->projet = $projet->load(['ministere']);
         $this->acteur = $acteur;
         $this->ancienStatut = $ancienStatut;
         $this->nouveauStatut = $nouveauStatut;
@@ -46,8 +46,8 @@ class NoteConceptuelleSoumise implements ShouldBroadcast
         return [
             new PrivateChannel('notes-conceptuelles.' . $this->noteConceptuelle->id),
             new PrivateChannel('projets.' . $this->projet->id),
-            new PrivateChannel('ministeres.' . ($this->projet->ministere->id ?? 'unknown')),
-            new PrivateChannel('users.' . $this->noteConceptuelle->redacteur_id),
+            /*new PrivateChannel('ministeres.' . ($this->projet->ministere->id ?? 'unknown')),
+            new PrivateChannel('users.' . $this->noteConceptuelle->redacteur_id),*/
         ];
     }
 

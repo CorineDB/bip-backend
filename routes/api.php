@@ -758,6 +758,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         // Rediriger le navigateur du SSO vers ton front Vue
         $frontendUrl = env('FRONTEND_URL', 'http://192.168.1.5:3001');
+        \Illuminate\Support\Facades\Log::info($frontendUrl);
         return redirect("{$frontendUrl}/auth/success?token={$encryptedToken}");
     });
 

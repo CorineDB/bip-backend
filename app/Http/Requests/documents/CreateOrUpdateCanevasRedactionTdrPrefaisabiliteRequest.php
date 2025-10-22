@@ -199,15 +199,15 @@ class CreateOrUpdateCanevasRedactionTdrPrefaisabiliteRequest extends FormRequest
             // Validation de la clé selon le type d'élément
             if ($element['element_type'] === 'field') {
                 // Pour les fields, on utilise 'attribut'
-                if (!isset($element['attribut']) || !is_string($element['attribut']) || strlen($element['attribut']) > 255) {
+                if (isset($element['attribut']) && (!is_string($element['attribut']) || strlen($element['attribut']) > 255)) {
                     $validator->errors()->add("{$currentPath}.attribut",
-                        'L\'attribut est obligatoire pour les champs et ne doit pas dépasser 255 caractères.');
+                        'L\'attribut doit être une chaîne de caractères et ne doit pas dépasser 255 caractères.');
                 }
             } elseif ($element['element_type'] === 'section') {
                 // Pour les sections, on utilise 'key'
-                if (!isset($element['key']) || !is_string($element['key']) || strlen($element['key']) > 255) {
+                if (isset($element['key']) && (!is_string($element['key']) || strlen($element['key']) > 255)) {
                     $validator->errors()->add("{$currentPath}.key",
-                        'La clé est obligatoire pour les sections et ne doit pas dépasser 255 caractères.');
+                        'La clé doit être une chaîne de caractères et ne doit pas dépasser 255 caractères.');
                 }
             }
 

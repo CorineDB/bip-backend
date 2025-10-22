@@ -46,6 +46,15 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             // Nettoyer les données du document principal
             $documentData = collect($data)->except(['sections', 'champs'])->toArray();
 
+            // Générer ou valider l'unicité du slug
+            if (!isset($documentData['slug']) || empty($documentData['slug'])) {
+                // Si aucun slug fourni, en générer un à partir du nom
+                $documentData['slug'] = $this->generateUniqueDocumentSlug($documentData['nom']);
+            } else {
+                // Si un slug est fourni, valider son unicité et le rendre unique si nécessaire
+                $documentData['slug'] = $this->ensureUniqueDocumentSlug($documentData['slug']);
+            }
+
             // Créer le document principal
             $document = $this->repository->create($documentData);
 
@@ -83,8 +92,18 @@ class DocumentService extends BaseService implements DocumentServiceInterface
     private function createSectionsWithChamps($document, array $sectionsData, $sectionParent = null): void
     {
         foreach ($sectionsData as $sectionData) {
+            // Générer ou valider l'unicité de la key
+            if (!isset($sectionData['key']) || empty($sectionData['key'])) {
+                // Si aucune key fournie, en générer une à partir de l'intitulé
+                $key = $this->generateUniqueSectionKey($sectionData['intitule'], $document, $sectionParent);
+            } else {
+                // Si une key est fournie, valider son unicité et la rendre unique si nécessaire
+                $key = $this->ensureUniqueSectionKey($sectionData['key'], $document, $sectionParent);
+            }
+
             $section = $document->sections()->create([
                 'intitule' => $sectionData['intitule'],
+                'key' => $key,
                 'description' => $sectionData['description'],
                 'ordre_affichage' => $sectionData['ordre_affichage'],
                 'type' => $sectionData['type'] ?? null,
@@ -131,10 +150,19 @@ class DocumentService extends BaseService implements DocumentServiceInterface
      */
     private function createChamp(array $champData, $document, $section = null): void
     {
+        // Générer ou valider l'unicité de l'attribut
+        if (!isset($champData['attribut']) || empty($champData['attribut'])) {
+            // Si aucun attribut fourni, en générer un à partir du label
+            $attribut = $this->generateUniqueAttribut($champData['label'], $document, $section);
+        } else {
+            // Si un attribut est fourni, valider son unicité et le rendre unique si nécessaire
+            $attribut = $this->ensureUniqueAttribut($champData['attribut'], $document, $section);
+        }
+
         $champAttributes = [
             'label' => $champData['label'],
             'info' => $champData['info'] ?? null,
-            'attribut' => $champData['attribut'] ?? null,
+            'attribut' => $attribut,
             'placeholder' => $champData['placeholder'] ?? null,
             'is_required' => $champData['is_required'] ?? false,
             'champ_standard' => $champData['champ_standard'] ?? false,
@@ -149,6 +177,348 @@ class DocumentService extends BaseService implements DocumentServiceInterface
         ];
 
         $this->createOrUpdateChamp($champAttributes, $document, $section);
+    }
+
+    /**
+     * Génère un attribut unique basé sur le label du champ, le slug du document et la key de la section
+     *
+     * Format: {document_slug}_{section_key}_{label_slug} ou {document_slug}_{label_slug} si pas de section
+     * Longueur maximale: 255 caractères
+     *
+     * @param string $label Le label du champ
+     * @param object $document Le document parent
+     * @param object|null $section La section parent (optionnel)
+     * @return string L'attribut unique généré
+     */
+    private function generateUniqueAttribut(string $label, $document, $section = null): string
+    {
+        $maxLength = 255;
+        $parts = [];
+
+        // Récupérer le slug du document depuis sa catégorie
+        $documentSlug = $document->categorie->slug ?? 'document';
+        $parts[] = \Illuminate\Support\Str::slug($documentSlug, '_');
+
+        // Ajouter la key de la section si elle existe
+        if ($section && isset($section->key)) {
+            $sectionKey = \Illuminate\Support\Str::slug($section->key, '_');
+            $parts[] = $sectionKey;
+        }
+
+        // Ajouter le label du champ
+        $labelSlug = \Illuminate\Support\Str::slug($label, '_');
+        $parts[] = $labelSlug;
+
+        // Construire l'attribut de base
+        $baseAttribut = implode('_', $parts);
+
+        // Nettoyer pour avoir un format snake_case valide
+        $baseAttribut = strtolower(preg_replace('/[^a-z0-9_]/', '', str_replace('-', '_', $baseAttribut)));
+
+        // Tronquer si nécessaire (en gardant de la place pour un éventuel suffixe _999)
+        if (strlen($baseAttribut) > ($maxLength - 4)) {
+            $baseAttribut = substr($baseAttribut, 0, $maxLength - 4);
+        }
+
+        // Vérifier l'unicité et ajouter un suffixe numérique si nécessaire
+        $attribut = $baseAttribut;
+        $counter = 1;
+
+        while ($this->attributExists($attribut, $document, $section)) {
+            $suffix = '_' . $counter;
+            // S'assurer que l'attribut avec suffixe ne dépasse pas la longueur max
+            if (strlen($baseAttribut) + strlen($suffix) > $maxLength) {
+                $baseAttribut = substr($baseAttribut, 0, $maxLength - strlen($suffix));
+            }
+            $attribut = $baseAttribut . $suffix;
+            $counter++;
+        }
+
+        return $attribut;
+    }
+
+    /**
+     * Vérifie si un attribut existe déjà pour le document/section donné
+     *
+     * @param string $attribut L'attribut à vérifier
+     * @param object $document Le document parent
+     * @param object|null $section La section parent (optionnel)
+     * @return bool True si l'attribut existe, False sinon
+     */
+    private function attributExists(string $attribut, $document, $section = null): bool
+    {
+        $query = \App\Models\Champ::where('attribut', $attribut)
+            ->where('documentId', $document->id);
+
+        if ($section) {
+            $query->where('sectionId', $section->id);
+        } else {
+            $query->whereNull('sectionId');
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * Valide et assure l'unicité d'un attribut de champ fourni
+     * Si l'attribut existe déjà, génère une version unique en ajoutant un suffixe numérique
+     *
+     * @param string $attribut L'attribut fourni
+     * @param object $document Le document parent
+     * @param object|null $section La section parent (optionnel)
+     * @return string L'attribut unique (identique ou avec suffixe si conflit)
+     */
+    private function ensureUniqueAttribut(string $attribut, $document, $section = null): string
+    {
+        $maxLength = 255;
+
+        // Nettoyer l'attribut fourni pour avoir un format snake_case valide
+        $baseAttribut = \Illuminate\Support\Str::slug($attribut, '_');
+        $baseAttribut = strtolower(preg_replace('/[^a-z0-9_]/', '', str_replace('-', '_', $baseAttribut)));
+
+        // Tronquer si nécessaire (en gardant de la place pour un éventuel suffixe _999)
+        if (strlen($baseAttribut) > ($maxLength - 4)) {
+            $baseAttribut = substr($baseAttribut, 0, $maxLength - 4);
+        }
+
+        // Si l'attribut n'existe pas, le retourner tel quel
+        if (!$this->attributExists($baseAttribut, $document, $section)) {
+            return $baseAttribut;
+        }
+
+        // Sinon, ajouter un suffixe numérique pour le rendre unique
+        $attribut = $baseAttribut;
+        $counter = 1;
+
+        while ($this->attributExists($attribut, $document, $section)) {
+            $suffix = '_' . $counter;
+            // S'assurer que l'attribut avec suffixe ne dépasse pas la longueur max
+            if (strlen($baseAttribut) + strlen($suffix) > $maxLength) {
+                $baseAttribut = substr($baseAttribut, 0, $maxLength - strlen($suffix));
+            }
+            $attribut = $baseAttribut . $suffix;
+            $counter++;
+        }
+
+        return $attribut;
+    }
+
+    /**
+     * Génère une key unique pour une section basée sur l'intitulé, le slug du document et la key de la section parente
+     *
+     * Format: {document_slug}_{parent_key}_{intitule_slug} ou {document_slug}_{intitule_slug} si pas de section parente
+     * Longueur maximale: 255 caractères
+     *
+     * @param string $intitule L'intitulé de la section
+     * @param object $document Le document parent
+     * @param object|null $sectionParent La section parente (optionnel)
+     * @return string La key unique générée
+     */
+    private function generateUniqueSectionKey(string $intitule, $document, $sectionParent = null): string
+    {
+        $maxLength = 255;
+        $parts = [];
+
+        // Récupérer le slug du document depuis sa catégorie
+        $documentSlug = $document->categorie->slug ?? 'document';
+        $parts[] = \Illuminate\Support\Str::slug($documentSlug, '_');
+
+        // Ajouter la key de la section parente si elle existe
+        if ($sectionParent && isset($sectionParent->key)) {
+            $parentKey = \Illuminate\Support\Str::slug($sectionParent->key, '_');
+            $parts[] = $parentKey;
+        }
+
+        // Ajouter l'intitulé de la section
+        $intituleSlug = \Illuminate\Support\Str::slug($intitule, '_');
+        $parts[] = $intituleSlug;
+
+        // Construire la key de base
+        $baseKey = implode('_', $parts);
+
+        // Nettoyer pour avoir un format snake_case valide
+        $baseKey = strtolower(preg_replace('/[^a-z0-9_]/', '', str_replace('-', '_', $baseKey)));
+
+        // Tronquer si nécessaire (en gardant de la place pour un éventuel suffixe _999)
+        if (strlen($baseKey) > ($maxLength - 4)) {
+            $baseKey = substr($baseKey, 0, $maxLength - 4);
+        }
+
+        // Vérifier l'unicité et ajouter un suffixe numérique si nécessaire
+        $key = $baseKey;
+        $counter = 1;
+
+        while ($this->sectionKeyExists($key, $document, $sectionParent)) {
+            $suffix = '_' . $counter;
+            // S'assurer que la key avec suffixe ne dépasse pas la longueur max
+            if (strlen($baseKey) + strlen($suffix) > $maxLength) {
+                $baseKey = substr($baseKey, 0, $maxLength - strlen($suffix));
+            }
+            $key = $baseKey . $suffix;
+            $counter++;
+        }
+
+        return $key;
+    }
+
+    /**
+     * Vérifie si une key de section existe déjà pour le document/section parente donné
+     *
+     * @param string $key La key à vérifier
+     * @param object $document Le document parent
+     * @param object|null $sectionParent La section parente (optionnel)
+     * @return bool True si la key existe, False sinon
+     */
+    private function sectionKeyExists(string $key, $document, $sectionParent = null): bool
+    {
+        $query = \App\Models\ChampSection::where('key', $key)
+            ->where('documentId', $document->id);
+
+        if ($sectionParent) {
+            $query->where('parentSectionId', $sectionParent->id);
+        } else {
+            $query->whereNull('parentSectionId');
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * Valide et assure l'unicité d'une key de section fournie
+     * Si la key existe déjà, génère une version unique en ajoutant un suffixe numérique
+     *
+     * @param string $key La key fournie
+     * @param object $document Le document parent
+     * @param object|null $sectionParent La section parente (optionnel)
+     * @return string La key unique (identique ou avec suffixe si conflit)
+     */
+    private function ensureUniqueSectionKey(string $key, $document, $sectionParent = null): string
+    {
+        $maxLength = 255;
+
+        // Nettoyer la key fournie pour avoir un format snake_case valide
+        $baseKey = \Illuminate\Support\Str::slug($key, '_');
+        $baseKey = strtolower(preg_replace('/[^a-z0-9_]/', '', str_replace('-', '_', $baseKey)));
+
+        // Tronquer si nécessaire (en gardant de la place pour un éventuel suffixe _999)
+        if (strlen($baseKey) > ($maxLength - 4)) {
+            $baseKey = substr($baseKey, 0, $maxLength - 4);
+        }
+
+        // Si la key n'existe pas, la retourner telle quelle
+        if (!$this->sectionKeyExists($baseKey, $document, $sectionParent)) {
+            return $baseKey;
+        }
+
+        // Sinon, ajouter un suffixe numérique pour la rendre unique
+        $key = $baseKey;
+        $counter = 1;
+
+        while ($this->sectionKeyExists($key, $document, $sectionParent)) {
+            $suffix = '_' . $counter;
+            // S'assurer que la key avec suffixe ne dépasse pas la longueur max
+            if (strlen($baseKey) + strlen($suffix) > $maxLength) {
+                $baseKey = substr($baseKey, 0, $maxLength - strlen($suffix));
+            }
+            $key = $baseKey . $suffix;
+            $counter++;
+        }
+
+        return $key;
+    }
+
+    /**
+     * Génère un slug unique pour un document basé sur son nom
+     *
+     * Format: {nom_slug}
+     * Longueur maximale: 255 caractères
+     *
+     * @param string $nom Le nom du document
+     * @return string Le slug unique généré
+     */
+    private function generateUniqueDocumentSlug(string $nom): string
+    {
+        $maxLength = 255;
+
+        // Convertir le nom en slug
+        $baseSlug = \Illuminate\Support\Str::slug($nom, '-');
+
+        // Nettoyer pour avoir un format kebab-case valide
+        $baseSlug = strtolower(preg_replace('/[^a-z0-9\-]/', '', $baseSlug));
+
+        // Tronquer si nécessaire (en gardant de la place pour un éventuel suffixe -999)
+        if (strlen($baseSlug) > ($maxLength - 4)) {
+            $baseSlug = substr($baseSlug, 0, $maxLength - 4);
+        }
+
+        // Vérifier l'unicité et ajouter un suffixe numérique si nécessaire
+        $slug = $baseSlug;
+        $counter = 1;
+
+        while ($this->documentSlugExists($slug)) {
+            $suffix = '-' . $counter;
+            // S'assurer que le slug avec suffixe ne dépasse pas la longueur max
+            if (strlen($baseSlug) + strlen($suffix) > $maxLength) {
+                $baseSlug = substr($baseSlug, 0, $maxLength - strlen($suffix));
+            }
+            $slug = $baseSlug . $suffix;
+            $counter++;
+        }
+
+        return $slug;
+    }
+
+    /**
+     * Vérifie si un slug de document existe déjà
+     *
+     * @param string $slug Le slug à vérifier
+     * @return bool True si le slug existe, False sinon
+     */
+    private function documentSlugExists(string $slug): bool
+    {
+        return \App\Models\Document::where('slug', $slug)->exists();
+    }
+
+    /**
+     * Valide et assure l'unicité d'un slug de document fourni
+     * Si le slug existe déjà, génère une version unique en ajoutant un suffixe numérique
+     *
+     * @param string $slug Le slug fourni
+     * @return string Le slug unique (identique ou avec suffixe si conflit)
+     */
+    private function ensureUniqueDocumentSlug(string $slug): string
+    {
+        $maxLength = 255;
+
+        // Nettoyer le slug fourni pour avoir un format kebab-case valide
+        $baseSlug = \Illuminate\Support\Str::slug($slug, '-');
+        $baseSlug = strtolower(preg_replace('/[^a-z0-9\-]/', '', $baseSlug));
+
+        // Tronquer si nécessaire (en gardant de la place pour un éventuel suffixe -999)
+        if (strlen($baseSlug) > ($maxLength - 4)) {
+            $baseSlug = substr($baseSlug, 0, $maxLength - 4);
+        }
+
+        // Si le slug n'existe pas, le retourner tel quel
+        if (!$this->documentSlugExists($baseSlug)) {
+            return $baseSlug;
+        }
+
+        // Sinon, ajouter un suffixe numérique pour le rendre unique
+        $slug = $baseSlug;
+        $counter = 1;
+
+        while ($this->documentSlugExists($slug)) {
+            $suffix = '-' . $counter;
+            // S'assurer que le slug avec suffixe ne dépasse pas la longueur max
+            if (strlen($baseSlug) + strlen($suffix) > $maxLength) {
+                $baseSlug = substr($baseSlug, 0, $maxLength - strlen($suffix));
+            }
+            $slug = $baseSlug . $suffix;
+            $counter++;
+        }
+
+        return $slug;
     }
 
     /**
