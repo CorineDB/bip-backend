@@ -788,8 +788,12 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             'cache_key' => "oauth_state:{$state}"
         ]);
 
-        // Récupérer les données du state depuis le cache
-        $stateData = Cache::pull("oauth_state:{$state}");
+        // Récupérer les données du state depuis le cache avec valeur par défaut
+        $stateData = Cache::pull("oauth_state:{$state}", [
+            'frontend_origin' => env('FRONTEND_URL', 'http://192.168.8.105:3000'),
+            'activation_mode' => false,
+            'email' => null
+        ]);
 
         // Log pour voir ce qui est récupéré du cache
         \Illuminate\Support\Facades\Log::info('Données récupérées du cache', [
@@ -799,14 +803,12 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             'has_code' => !empty($code)
         ]);
 
-        if (!$stateData || !$code) {
-            \Illuminate\Support\Facades\Log::error('Session expirée ou invalide', [
-                'stateData_is_null' => is_null($stateData),
-                'stateData_is_empty' => empty($stateData),
+        if (!$code) {
+            \Illuminate\Support\Facades\Log::error('Code manquant', [
                 'code_is_null' => is_null($code),
                 'code_is_empty' => empty($code)
             ]);
-            return response()->json(['error' => 'Session expirée ou invalide'], 400);
+            return response()->json(['error' => 'Code manquant'], 400);
         }
 
         $frontendUrl = $stateData['frontend_origin'] ?? env('FRONTEND_URL', 'http://192.168.8.105:3000');
