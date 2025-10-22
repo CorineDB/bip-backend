@@ -688,18 +688,28 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
     //
 
-    // Étape 1 : Le front demande l’URL SSO
+    // Étape 1 : Le front demande l'URL SSO
     Route::get('/ad-auth/redirect', function () {
 
         $state = Str::uuid()->toString();
         $callbackUrl = config('services.gov.redirect');
 
         // Stocker les données du state pour 5 minutes
-        Cache::put("oauth_state:{$state}", [
+        $stateData = [
             'frontend_origin' => request('frontend_origin', env('FRONTEND_URL')),
             'activation_mode' => request('activation_mode', false),
             'email' => request('email'),
-        ], 300);
+        ];
+
+        Cache::put("oauth_state:{$state}", $stateData, 300);
+
+        // Log pour vérifier que les données sont bien stockées
+        \Illuminate\Support\Facades\Log::info('OAuth State stocké', [
+            'state' => $state,
+            'data' => $stateData,
+            'cache_key' => "oauth_state:{$state}",
+            'verification' => Cache::get("oauth_state:{$state}")
+        ]);
 
         $params = http_build_query([
             'client_id' => config('services.gov.client_id'),
@@ -771,10 +781,31 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         $code = $request->query('code');
         $state = $request->query('state');
 
+        // Log pour déboguer
+        \Illuminate\Support\Facades\Log::info('Callback reçu', [
+            'code' => $code ? 'présent' : 'absent',
+            'state' => $state,
+            'cache_key' => "oauth_state:{$state}"
+        ]);
+
         // Récupérer les données du state depuis le cache
         $stateData = Cache::pull("oauth_state:{$state}");
 
+        // Log pour voir ce qui est récupéré du cache
+        \Illuminate\Support\Facades\Log::info('Données récupérées du cache', [
+            'stateData' => $stateData,
+            'type' => gettype($stateData),
+            'is_array' => is_array($stateData),
+            'has_code' => !empty($code)
+        ]);
+
         if (!$stateData || !$code) {
+            \Illuminate\Support\Facades\Log::error('Session expirée ou invalide', [
+                'stateData_is_null' => is_null($stateData),
+                'stateData_is_empty' => empty($stateData),
+                'code_is_null' => is_null($code),
+                'code_is_empty' => empty($code)
+            ]);
             return response()->json(['error' => 'Session expirée ou invalide'], 400);
         }
 
