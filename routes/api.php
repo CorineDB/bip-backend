@@ -835,11 +835,37 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         }
 
         // Décodage du JWT pour obtenir les infos utilisateur
-        $payload = json_decode(base64_decode(explode('.', $idToken)[1]), true);
-        \Illuminate\Support\Facades\Log::info($payload);
+        \Illuminate\Support\Facades\Log::info('ID Token brut', ['id_token' => $idToken]);
+
+        $jwtParts = explode('.', $idToken);
+        \Illuminate\Support\Facades\Log::info('JWT Parts', [
+            'parts_count' => count($jwtParts),
+            'has_header' => isset($jwtParts[0]),
+            'has_payload' => isset($jwtParts[1]),
+            'has_signature' => isset($jwtParts[2])
+        ]);
+
+        if (count($jwtParts) < 2) {
+            \Illuminate\Support\Facades\Log::error('JWT invalide - pas assez de parties');
+            return response()->json(['error' => 'Token JWT invalide'], 400);
+        }
+
+        $payloadEncoded = $jwtParts[1];
+        \Illuminate\Support\Facades\Log::info('Payload encodé', ['payload_encoded' => $payloadEncoded]);
+
+        $payloadDecoded = base64_decode($payloadEncoded);
+        \Illuminate\Support\Facades\Log::info('Payload décodé (base64)', ['payload_decoded' => $payloadDecoded]);
+
+        $payload = json_decode($payloadDecoded, true);
+        \Illuminate\Support\Facades\Log::info('Payload JSON parsé', ['payload' => $payload, 'type' => gettype($payload)]);
 
         // Récupérer l'email depuis le payload
-        $email = $payload['email'] ?? $stateData['email'] ?? null;
+        $email = $payload['email'] ?? $payload['upn'] ?? $payload['preferred_username'] ?? $payload['sub'] ?? $stateData['email'] ?? null;
+
+        \Illuminate\Support\Facades\Log::info('Email extrait', [
+            'email' => $email,
+            'available_fields' => $payload ? array_keys($payload) : []
+        ]);
 
         if (!$email) {
             return response()->json(['error' => 'Email manquant dans le token'], 400);
