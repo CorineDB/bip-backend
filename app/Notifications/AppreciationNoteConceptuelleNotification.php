@@ -158,7 +158,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
                 'prenom' => $this->noteConceptuelle->redacteur->prenom ?? '',
             ],
             'ministere_nom' => $this->projet->ministere->nom ?? '',
-            'type_appreciation' => $this->evaluation->type ?? 'appreciation_climatique',
+            'type_appreciation' => $this->evaluation->type ?? 'note-conceptuelle',
             'type_appreciation_label' => $this->getTypeAppreciationLabel(),
             'statut_evaluation' => $this->evaluation->statut ?? 'en_cours',
             'score' => $this->evaluation->score ?? null,
@@ -262,10 +262,10 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
      */
     protected function getTypeAppreciationLabel(): string
     {
-        $type = $this->evaluation->type ?? 'appreciation_climatique';
+        $type = $this->evaluation->type ?? 'note-conceptuelle';
 
         return match($type) {
-            'appreciation_climatique' => 'Appréciation Climatique',
+            'note-conceptuelle' => 'Appréciation Climatique',
             'appreciation_pertinence' => 'Appréciation de Pertinence',
             'appreciation_faisabilite' => 'Appréciation de Faisabilité',
             default => ucfirst(str_replace('_', ' ', $type)),

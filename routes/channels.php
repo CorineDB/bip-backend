@@ -7,7 +7,24 @@ use App\Models\Projet;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
-    return (int) $user->id === (int) $id;
+    // Accepter soit l'ID numérique soit le hashed_id
+    if (is_numeric($id)) {
+        return (int) $user->id === (int) $id;
+    }
+
+    // Vérifier avec le hashed_id
+    return isset($user->hashed_id) && $user->hashed_id === $id;
+});
+
+// Canal privé pour les notifications utilisateur
+Broadcast::channel('users.{userId}', function ($user, $userId) {
+    return (string) $user->id === (string) $userId;
+});
+
+// Ou si vous utilisez un hash pour l'ID
+Broadcast::channel('users.{userHash}', function ($user, $userHash) {
+    // Vérifier que le hash correspond à l'utilisateur
+    return hash('sha256', $user->id) === $userHash;
 });
 
 Broadcast::channel('idee.de.projet.creer.{idee}', IdeeProjetChannel::class);

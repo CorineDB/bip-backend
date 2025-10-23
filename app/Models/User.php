@@ -420,4 +420,13 @@ class User extends Authenticatable implements OAuthenticatable
 
         return "super-admin";
     }
+
+    /**
+     * Définit le canal de broadcast pour les notifications.
+     * Utilise le hashed_id au lieu de l'ID numérique.
+     */
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'App.Models.User.' . $this->hashed_id;
+    }
 }

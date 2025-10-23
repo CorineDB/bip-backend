@@ -74,6 +74,8 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
     //Route::group(['middleware' => []], function () {
 
+    // Route d'authentification pour le broadcasting (WebSocket)
+    Broadcast::routes(['middleware' => ['auth:api']]);
 
     Route::group(['prefix' => 'passport-auths', 'as' => 'auths.'], function () {
 
@@ -980,5 +982,41 @@ Route::get('/test-auth', function() {
     return response()->json([
         'success' => true,
         'user' => auth()->user()->email
+    ]);
+})->middleware('auth:api');
+
+// Route de test pour le broadcasting des notifications
+Route::post('/test-notification', function () {
+    $user = auth()->user();
+
+    $user->notify(new \App\Notifications\NotificationCreated(
+        title: 'Test Notification',
+        message: 'Ceci est un test de notification en temps réel',
+        type: 'test',
+        data: ['test' => true]
+    ));
+
+    return response()->json([
+        'message' => 'Notification envoyée',
+        'user' => $user->email
+    ]);
+})->middleware('auth:api');
+
+// Route de test SYNCHRONE (sans queue) pour le broadcasting
+Route::post('/test-notification-sync', function () {
+    $user = auth()->user();
+
+    $user->notify(new \App\Notifications\NotificationCreatedSync(
+        title: 'Test Notification SYNC',
+        message: 'Ceci est un test de notification SYNCHRONE en temps réel',
+        type: 'test',
+        data: ['test' => true, 'sync' => true]
+    ));
+
+    return response()->json([
+        'message' => 'Notification SYNCHRONE envoyée',
+        'user' => $user->email,
+        'user_id' => $user->id,
+        'user_hashed_id' => $user->hashed_id ?? 'N/A'
     ]);
 })->middleware('auth:api');

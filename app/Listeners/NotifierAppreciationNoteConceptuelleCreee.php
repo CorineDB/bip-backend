@@ -67,7 +67,7 @@ class NotifierAppreciationNoteConceptuelleCreee implements ShouldQueue
 
         // 2. Notifier le DPAF du ministère (supervision)
         if ($projet->ministere_id) {
-            $dpafMinistere = User::where('profilable_type', Dpaf::class)
+            $dpafMinistere = User::where('profilable_type', 'App\Models\Dpaf')
                 ->whereHas('profilable', function($query) use ($projet) {
                     $query->where('ministere_id', $projet->ministere_id);
                 })
@@ -87,7 +87,7 @@ class NotifierAppreciationNoteConceptuelleCreee implements ShouldQueue
         }
 
         // 3. Notifier les autres membres du DGPD (information collégiale)
-        $autresDgpd = User::where('profilable_type', Dgpd::class)
+        $autresDgpd = User::where('profilable_type', 'App\Models\Dgpd')
             ->where('id', '!=', $evaluateur->id)
             ->whereHas('permissions', function($query) {
                 $query->where('slug', 'evaluer-une-note-conceptuelle');
@@ -112,8 +112,9 @@ class NotifierAppreciationNoteConceptuelleCreee implements ShouldQueue
             if ($projet->organisation_id) {
                 $chefProjet = User::where('profilable_type', 'App\Models\Organisation')
                     ->where('profilable_id', $projet->organisation_id)
-                    ->whereHas('roles', function($query) {
+                    ->whereHas('roles', function($query) use($projet) {
                         $query->where('slug', 'responsable-projet');
+                        $query->where('id', $projet->ideeProjet->responsableId);
                     })
                     ->first();
 

@@ -1,0 +1,28 @@
+{
+  "debug": true,
+  "port": 6001,
+  "appManager.array.apps": [
+    {
+      "id": "bip_app",
+      "key": "reverb_key_bip",
+      "secret": "reverb_secret_67859",
+      "maxConnections": -1,
+      "enableClientMessages": true,
+      "enabled": true,
+      "maxBackendEventsPerSecond": -1,
+      "maxClientEventsPerSecond": -1,
+      "maxReadRequestsPerSecond": -1,
+      "webhooks": []
+    }
+  ],
+  "adapter.driver": "redis",
+  "adapter.redis.host": "127.0.0.1",
+  "adapter.redis.port": 6379,
+  "adapter.redis.db": 0,
+  "adapter.redis.keyPrefix": "bip-",
+  "queue.redis.concurrency": 1,
+  "queue.redis.host": "127.0.0.1",
+  "queue.redis.port": 6379,
+  "queue.redis.db": 0,
+  "queue.redis.keyPrefix": "bip-"
+}

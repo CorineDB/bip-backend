@@ -9,6 +9,7 @@ use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 
 class CommentaireCreatedNotification extends Notification implements ShouldQueue
+
 {
     use Queueable;
 

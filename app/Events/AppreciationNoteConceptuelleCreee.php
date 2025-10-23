@@ -31,12 +31,12 @@ class AppreciationNoteConceptuelleCreee implements ShouldBroadcast
         NoteConceptuelle $noteConceptuelle,
         Projet $projet,
         User $evaluateur,
-        string $typeAppreciation = 'appreciation_climatique',
+        string $typeAppreciation = 'note-conceptuelle',
         ?string $statut = null
     ) {
         $this->evaluation = $evaluation->load(['evaluationCriteres', 'evaluateur']);
         $this->noteConceptuelle = $noteConceptuelle->load(['redacteur', 'champs']);
-        $this->projet = $projet->load(['ministere', 'organisation']);
+        $this->projet = $projet->load(['ministere']);
         $this->evaluateur = $evaluateur;
         $this->typeAppreciation = $typeAppreciation;
         $this->statut = $statut ?? $evaluation->statut;

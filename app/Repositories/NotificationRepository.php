@@ -31,9 +31,17 @@ class NotificationRepository extends BaseRepository implements NotificationRepos
             ->count();
     }
 
-    public function markAsRead(string $notificationId): bool
+    public function markAsRead(string $notificationId, ?int $userId = null): bool
     {
-        $notification = $this->model->find($notificationId);
+        $query = $this->model->where('id', $notificationId);
+
+        if ($userId !== null) {
+            $query->where('notifiable_id', $userId)
+                  ->where('notifiable_type', 'App\Models\User');
+        }
+
+        $notification = $query->first();
+
         if ($notification && is_null($notification->read_at)) {
             $notification->markAsRead();
             return true;
@@ -50,9 +58,17 @@ class NotificationRepository extends BaseRepository implements NotificationRepos
             ->update(['read_at' => now()]);
     }
 
-    public function deleteNotification(string $notificationId): bool
+    public function deleteNotification(string $notificationId, ?int $userId = null): bool
     {
-        $notification = $this->model->find($notificationId);
+        $query = $this->model->where('id', $notificationId);
+
+        if ($userId !== null) {
+            $query->where('notifiable_id', $userId)
+                  ->where('notifiable_type', 'App\Models\User');
+        }
+
+        $notification = $query->first();
+
         if ($notification) {
             return $notification->delete();
         }

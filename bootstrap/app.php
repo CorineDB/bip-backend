@@ -37,8 +37,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         // Configuration des exceptions API en utilisant ExceptionTrait
         $exceptions->render(function (Throwable $exception, $request) {
-            // Exclure broadcasting/auth pour permettre à Laravel de gérer l'authentification
-            if ($request->is('broadcasting/auth')) {
+            // Exclure api/broadcasting/auth pour permettre à Laravel de gérer l'authentification
+            if ($request->is('api/broadcasting/auth') || $request->is('broadcasting/auth')) {
                 return null;
             }
 

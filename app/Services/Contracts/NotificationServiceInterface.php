@@ -7,7 +7,7 @@ use Illuminate\Http\JsonResponse;
 interface NotificationServiceInterface extends AbstractServiceInterface
 {
     public function getUserNotifications(int $userId): JsonResponse;
-    public function markAsRead(string $notificationId): JsonResponse;
+    public function markAsRead(string $notificationId, ?int $userId = null): JsonResponse;
     public function markAllAsRead(int $userId): JsonResponse;
     public function getUnreadCount(int $userId): JsonResponse;
     public function sendNotification(
@@ -15,7 +15,7 @@ interface NotificationServiceInterface extends AbstractServiceInterface
         $notification,
         array $channels = ['database']
     ): JsonResponse;
-    public function deleteNotification(string $notificationId): JsonResponse;
+    public function deleteNotification(string $notificationId, ?int $userId = null): JsonResponse;
     public function getUnreadNotifications(int $userId): JsonResponse;
     public function getReadNotifications(int $userId): JsonResponse;
     public function getNotificationsByType(int $userId, string $type): JsonResponse;
