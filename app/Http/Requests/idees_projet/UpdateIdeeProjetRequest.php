@@ -9,8 +9,10 @@ use App\Models\Commune;
 use App\Models\ComposantProgramme;
 use App\Models\Departement;
 use App\Models\Document;
+use App\Models\Dpaf;
 use App\Models\Financement;
 use App\Models\Odd;
+use App\Models\Organisation;
 use App\Models\Secteur;
 use App\Models\Village;
 use App\Rules\HashedExists;
@@ -26,7 +28,8 @@ class UpdateIdeeProjetRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && ($user->hasPermissionTo('modifier-une-idee-de-projet') && $user->type === 'responsable-projet' && in_array($user->profilable_type, [Dpaf::class, Organisation::class]) && $user->profilable->ministere);
     }
 
     /**

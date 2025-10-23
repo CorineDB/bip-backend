@@ -3,6 +3,7 @@
 namespace App\Http\Requests\secteurs;
 
 use App\Enums\EnumTypeSecteur;
+use App\Models\Dgpd;
 use App\Models\Secteur;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -11,7 +12,8 @@ class UpdateSecteurRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (in_array(auth()->user()->type, ['super-admin', 'dgpd']) || (in_array($user->profilable_type, [Dgpd::class]) && ($user->hasPermissionTo('modifier-un-secteur') || $user->hasPermissionTo('gerer-les-secteurs')) ));
     }
 
     protected function prepareForValidation(): void

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\types_intervention;
 
+use App\Models\Dgpd;
 use App\Models\TypeIntervention;
 use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
@@ -11,7 +12,8 @@ class UpdateTypeInterventionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (in_array(auth()->user()->type, ['super-admin', 'dgpd']) || (in_array($user->profilable_type, [Dgpd::class]) && ($user->hasPermissionTo('modifier-un-type-intervention') || $user->hasPermissionTo('gerer-les-types-intervention')) ));
     }
 
     public function rules(): array

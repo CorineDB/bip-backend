@@ -23,4 +23,6 @@ interface CategorieCritereRepositoryInterface extends BaseRepositoryInterface
      * Get the unique canevas d'évaluation de pertinence
      */
     public function getCanevasEvaluationDePertinence(): CategorieCritere|null;
+
+    public function getChecklistMesuresAdaptationSecteur($idSecteur): CategorieCritere|null;
 }

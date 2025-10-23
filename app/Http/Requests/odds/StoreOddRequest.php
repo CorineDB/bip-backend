@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\odds;
 
+use App\Models\Dgpd;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +10,8 @@ class StoreOddRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (in_array(auth()->user()->type, ['super-admin', 'dgpd']) || (in_array($user->profilable_type, [Dgpd::class]) && ($user->hasPermissionTo('creer-un-odd') || $user->hasPermissionTo('gerer-les-odds')) ));
     }
 
     public function rules(): array

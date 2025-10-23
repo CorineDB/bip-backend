@@ -9,6 +9,8 @@ use App\Models\Notation;
 use App\Models\Champ;
 use App\Models\Critere;
 use App\Models\CategorieCritere;
+use App\Models\Dpaf;
+use App\Models\Organisation;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Rules\HashedExists;
 use Illuminate\Support\Str;
@@ -31,7 +33,8 @@ class SoumettreRapportFaisabiliteRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; //auth()->check() && in_array(auth()->user()->type, ['responsable_projet', 'dpaf', 'admin']);
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('soumettre-un-rapport-de-faisabilite')) && in_array($user->profilable_type, [Dpaf::class, Organisation::class]) && $user->profilable->ministere);
     }
 
     /**

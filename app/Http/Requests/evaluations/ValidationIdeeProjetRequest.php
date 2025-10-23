@@ -4,9 +4,11 @@ namespace App\Http\Requests\evaluations;
 
 use App\Enums\StatutIdee;
 use App\Models\CategorieCritere;
+use App\Models\Dpaf;
 use App\Models\Evaluation;
 use App\Models\EvaluationCritere;
 use App\Models\IdeeProjet;
+use App\Models\Organisation;
 use Exception;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -20,7 +22,8 @@ class ValidationIdeeProjetRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && ($user->hasPermissionTo('valider-une-idee-de-projet-en-interne') && in_array($user->profilable_type, [Dpaf::class]) && $user->profilable->ministere);
     }
 
     /**

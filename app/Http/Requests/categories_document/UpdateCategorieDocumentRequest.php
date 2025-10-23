@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\categories_document;
 
+use App\Models\Dgpd;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +10,8 @@ class UpdateCategorieDocumentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (in_array(auth()->user()->type, ['super-admin']) || ($user->hasPermissionTo('modifier-un-canevas') || $user->hasPermissionTo('gerer-les-canevas')));
     }
 
     public function rules(): array

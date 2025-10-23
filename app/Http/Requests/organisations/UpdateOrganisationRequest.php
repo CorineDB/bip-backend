@@ -3,6 +3,7 @@
 namespace App\Http\Requests\organisations;
 
 use App\Enums\EnumTypeOrganisation;
+use App\Models\Dgpd;
 use App\Models\Organisation;
 use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
@@ -12,7 +13,8 @@ class UpdateOrganisationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (in_array(auth()->user()->type, ['super-admin', 'dgpd']) || (in_array($user->profilable_type, [Dgpd::class]) && ($user->hasPermissionTo('modifier-une-organisation') || $user->hasPermissionTo('gerer-les-organisations')) ));
     }
 
     protected function prepareForValidation(): void

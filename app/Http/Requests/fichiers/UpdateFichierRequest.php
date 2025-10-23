@@ -8,7 +8,8 @@ class UpdateFichierRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && ($user->hasPermissionTo('televerser-un-fichier'));
     }
 
     public function rules(): array

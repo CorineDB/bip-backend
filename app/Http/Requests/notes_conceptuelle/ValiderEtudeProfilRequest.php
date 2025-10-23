@@ -3,6 +3,7 @@
 namespace App\Http\Requests\notes_conceptuelle;
 
 use App\Models\Champ;
+use App\Models\Dgpd;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
@@ -18,7 +19,8 @@ class ValiderEtudeProfilRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->check(); /*&& in_array(auth()->user()->type, ['comite_ministeriel', 'dpaf', 'admin']);*/
+        $user = auth()->user();
+        return auth()->check() && ($user->hasPermissionTo('valider-l-etude-de-profil') && in_array($user->profilable_type, [Dgpd::class]));
     }
 
     /**

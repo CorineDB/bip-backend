@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\notes_conceptuelle;
 
+use App\Models\Dpaf;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use Illuminate\Support\Str;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\RequiredIf;
 use App\Repositories\Contracts\FichierRepositoryInterface;
 use App\Models\NoteConceptuelle;
+use App\Models\Organisation;
 use App\Models\Rapport;
 use App\Rules\HashedExists;
 use Illuminate\Validation\ValidationException;
@@ -21,7 +23,8 @@ class StoreNoteConceptuelleRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('creer-une-note-conceptuelle') || $user->hasPermissionTo('rediger-une-note-conceptuelle')) && in_array($user->profilable_type, [Dpaf::class, Organisation::class]) && $user->profilable->ministere);
     }
 
     public function rules(): array

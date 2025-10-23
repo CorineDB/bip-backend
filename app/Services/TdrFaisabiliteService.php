@@ -12,9 +12,12 @@ use App\Models\Decision;
 use App\Models\Workflow;
 use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
+use App\Events\TdrFaisabiliteEvalue;
+use App\Events\TdrFaisabiliteSoumis;
 use App\Http\Resources\TdrResource;
 use App\Http\Resources\projets\ProjetResource;
 use App\Http\Resources\UserResource;
+use App\Http\Resources\CanevasAppreciationTdrResource;
 use App\Repositories\Contracts\CategorieCritereRepositoryInterface;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Repositories\Contracts\TdrRepositoryInterface;
@@ -309,6 +312,19 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             DB::commit();
 
+            // Dispatcher l'événement si le TDR est soumis
+            if ($estSoumise) {
+                $estResoumission = in_array($projet->statut->value, [StatutIdee::R_TDR_FAISABILITE->value])
+                    || ($tdrExistant && $tdrExistant->statut === 'retour_travail_supplementaire');
+
+                event(new TdrFaisabiliteSoumis(
+                    $tdr,
+                    $projet,
+                    auth()->user(),
+                    $estResoumission
+                ));
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => $message,
@@ -460,8 +476,16 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             DB::commit();
 
-
             if ($evaluer) {
+                // Dispatcher l'événement après évaluation finalisée
+                event(new TdrFaisabiliteEvalue(
+                    $tdr,
+                    $projet,
+                    $evaluation,
+                    auth()->user(),
+                    $resultatsEvaluation
+                ));
+
                 // Envoyer une notification
                 $this->envoyerNotificationEvaluation($projet, $resultatsEvaluation);
             }
@@ -685,7 +709,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             DB::beginTransaction();
 
             // Vérifier les autorisations (DGPD uniquement)
-            if (!auth()->user()->hasPermissionTo('apprecier-un-tdr-de-faisabilite') && auth()->user()->type !== 'dgpd' && auth()->user()->profilable_type !== Dgpd::class) {
+            if (!auth()->user()->hasPermissionTo('apprecier-un-tdr-de-faisabilite') && !auth()->user()->hasPermissionTo('valider-un-tdr-de-faisabilite') && auth()->user()->type !== 'dgpd' && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n\'avez pas les droits pour effectuer cette évaluation.", 403);
             }
 
@@ -1173,7 +1197,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 $message = $estBrouillon ? 'Rapport sauvegardé en brouillon.' : 'Rapport soumis avec succès.';
             }
 
-            $this->traiterChampsChecklistsSuiviFaisabilite($rapport, $checklistData);
+            $this->traiterChampsChecklistsSuiviFaisabilite($rapport, $checklistData, $estBrouillon);
 
             // Dupliquer l'évaluation si c'est une resoumission (parent_id existe) et ce n'est pas un brouillon
             if ($rapport->parent_id && !$estBrouillon) {
@@ -1435,7 +1459,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         try {
             DB::beginTransaction();
 
-            if (!auth()->user()->hasPermissionTo('valider-etude-faisabilite')) {
+            if (!auth()->user()->hasPermissionTo('valider-etude-faisabilite') && !auth()->user()->hasPermissionTo('valider-une-etude-de-faisabilite')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour effectuer cette validation.'
@@ -2393,6 +2417,11 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $evaluationEnCours->champs_evalue()->syncWithoutDetaching($syncData);
         }
 
+        if ($data["evaluer"]) {
+            $tdr->canevas_appreciation_tdr = (new CanevasAppreciationTdrResource($this->documentRepository->getCanevasAppreciationTdrFaisabilite()))->toArray(request());
+            $tdr->save();
+        }
+
         return $evaluationEnCours;
     }
 
@@ -2716,88 +2745,6 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         $newEvaluation->save();
     }
 
-    /**
-     * Sauvegarder le fichier rapport de faisabilité
-     */
-    private function sauvegarderFichierRapport(Projet $projet, $fichier, array $data, bool $estBrouillon = false): Fichier
-    {
-        // Générer les informations du fichier
-        $nomOriginal = $fichier->getClientOriginalName();
-        $extension = $fichier->getClientOriginalExtension();
-        $nomStockage = 'rapport_' . $projet->id . '_' . time() . '.' . $extension;
-        $chemin = $fichier->storeAs('rapports/faisabilite', $nomStockage, 'public');
-
-        // Créer l'enregistrement Fichier
-        return Fichier::create([
-            'nom_original' => $nomOriginal,
-            'nom_stockage' => $nomStockage,
-            'chemin' => $chemin,
-            'extension' => $extension,
-            'mime_type' => $fichier->getMimeType(),
-            'taille' => $fichier->getSize(),
-            'hash_md5' => md5_file($fichier->getRealPath()),
-            'description' => 'Rapport d\'étude de faisabilité - Cabinet: ' . ($data['cabinet_etude']['nom_cabinet'] ?? 'N/A'),
-            'commentaire' => $data['recommandation'] ?? null,
-            'metadata' => [
-                'type_document' => 'rapport-faisabilite',
-                'projet_id' => $projet->id,
-                'cabinet' => [
-                    'nom' => $data['cabinet_etude']['nom_cabinet'] ?? null,
-                    'contact' => $data['cabinet_etude']['contact_cabinet'] ?? null,
-                    'email' => $data['cabinet_etude']['email_cabinet'] ?? null,
-                    'adresse' => $data['cabinet_etude']['adresse_cabinet'] ?? null
-                ],
-                'recommandation_adaptation' => $data['recommandation'] ?? null,
-                'soumis_par' => auth()->id(),
-                'soumis_le' => now()
-            ],
-            'fichier_attachable_id' => $projet->id,
-            'fichier_attachable_type' => Projet::class,
-            'categorie' => 'rapport-faisabilite',
-            'ordre' => 1,
-            'uploaded_by' => auth()->id(),
-            'is_public' => false,
-            'is_active' => true
-        ]);
-    }
-
-    /**
-     * Enregistrer les informations du cabinet dans les métadonnées du projet
-     */
-    private function enregistrerInformationsCabinet(Projet $projet, array $data, bool $estBrouillon = false): void
-    {
-        // Récupérer les métadonnées existantes ou créer un nouveau tableau
-        $metadata = $projet->metadata ?? [];
-
-        // Ajouter les informations de faisabilité
-        $metadata['faisabilite'] = [
-            'cabinet' => [
-                'nom' => $data['cabinet_etude']['nom_cabinet'] ?? null,
-                'contact' => $data['cabinet_etude']['contact_cabinet'] ?? null,
-                'email' => $data['cabinet_etude']['email_cabinet'] ?? null,
-                'adresse_cabinet' => $data['cabinet_etude']['adresse_cabinet'] ?? null
-            ],
-            'recommandation_adaptation' => $data['recommandation_adaptation'] ?? null,
-            'date_soumission_rapport' => now(),
-            'soumis_par' => auth()->id(),
-            'est_brouillon' => $estBrouillon,
-            'statut' => $estBrouillon ? 'brouillon' : 'soumis',
-            // Inclure les références à toutes les checklists si elles existent
-            'checklists' => [
-                'etude_faisabilite_marche_traitee' => isset($data['checklist_etude_faisabilite_marche']) && !empty($data['checklist_etude_faisabilite_marche']),
-                'etude_faisabilite_economique_traitee' => isset($data['checklist_etude_faisabilite_economique']) && !empty($data['checklist_etude_faisabilite_economique']),
-                'etude_faisabilite_technique_traitee' => isset($data['checklist_etude_faisabilite_technique']) && !empty($data['checklist_etude_faisabilite_technique']),
-                'etude_faisabilite_organisationnelle_et_juridique_traitee' => isset($data['checklist_etude_faisabilite_organisationnelle_et_juridique']) && !empty($data['checklist_etude_faisabilite_organisationnelle_et_juridique']),
-                'suivi_analyse_faisabilite_financiere_traitee' => isset($data['checklist_suivi_analyse_faisabilite_financiere']) && !empty($data['checklist_suivi_analyse_faisabilite_financiere']),
-                'suivi_etude_analyse_impact_environnementale_et_sociale_traitee' => isset($data['checklist_suivi_etude_analyse_impact_environnementale_et_sociale']) && !empty($data['checklist_suivi_etude_analyse_impact_environnementale_et_sociale']),
-                'suivi_assurance_qualite_traitee' => isset($data['checklist_suivi_assurance_qualite_rapport_etude_faisabilite']) && !empty($data['checklist_suivi_assurance_qualite_rapport_etude_faisabilite'])
-            ]
-        ];
-
-        // Mettre à jour le projet
-        $projet->update(['metadata' => $metadata]);
-    }
-
     private function getMessageSuccesEvaluation(string $resultat): string
     {
         return match ($resultat) {
@@ -3091,7 +3038,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
     /**
      * Traiter les champs des checklists de faisabilité et les stocker dans rapport->champs()
      */
-    private function traiterChampsChecklistsSuiviFaisabilite($rapport, array $checklistsData)
+    private function traiterChampsChecklistsSuiviFaisabilite($rapport, array $checklistsData, bool $estBrouillon = true)
     {
         // Liste des 7 checklists de faisabilité
         // Mapping checklist ↔ canevasMethod
@@ -3113,6 +3060,21 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         }
 
         $rapport->save();
+
+        $rapport->refresh();
+
+        if ($estBrouillon == false) {
+
+            // Sauvegarder le canevas de checklist de suivi utilisé
+            $rapport->checklist_etude_faisabilite_marche = (new CanevasAppreciationTdrResource($this->documentRepository->getCanevasChecklisteEtudeFaisabiliteMarche()))->toArray(request());
+            $rapport->checklist_etude_faisabilite_economique = (new CanevasAppreciationTdrResource($this->documentRepository->getCanevasChecklisteEtudeFaisabiliteEconomique()))->toArray(request());
+            $rapport->checklist_etude_faisabilite_technique = (new CanevasAppreciationTdrResource($this->documentRepository->getCanevasChecklisteEtudeFaisabiliteTechnique()))->toArray(request());
+            $rapport->checklist_etude_faisabilite_organisationnelle_et_juridique = (new CanevasAppreciationTdrResource($this->documentRepository->getCanevasChecklisteEtudeFaisabiliteOrganisationnelleEtJuridique()))->toArray(request());
+            $rapport->checklist_suivi_analyse_faisabilite_financiere = (new CanevasAppreciationTdrResource($this->documentRepository->getCanevasChecklisteSuiviAnalyseDeFaisabiliteFinanciere()))->toArray(request());
+            $rapport->checklist_suivi_etude_analyse_impact_environnementale_et_sociale = (new CanevasAppreciationTdrResource($this->documentRepository->getCanevasChecklisteSuiviEtudeImpactEnvironnementaleEtSociale()))->toArray(request());
+            $rapport->checklist_suivi_assurance_qualite_rapport_etude_faisabilite = (new CanevasAppreciationTdrResource($this->documentRepository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite()))->toArray(request());
+            $rapport->save();
+        }
         /*
         // Traiter chaque checklist
         foreach ($checklists as $checklistKey) {

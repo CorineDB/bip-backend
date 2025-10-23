@@ -13,6 +13,8 @@ class UpdateCommentaireRequest extends FormRequest
 {
     public function authorize(): bool
     {
+        $user = auth()->user();
+        return auth()->check() && ($user->hasPermissionTo('modifier-commentaire'));
         // Optionnel : vérifier que l'utilisateur est le commentateur
         return auth()->check() /*&& $this->commentaire->commentateurId === auth()->id()*/;
     }

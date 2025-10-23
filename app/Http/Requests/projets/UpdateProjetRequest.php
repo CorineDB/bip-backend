@@ -8,7 +8,7 @@ class UpdateProjetRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        return false
     }
 
     public function rules(): array

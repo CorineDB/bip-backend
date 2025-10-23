@@ -3,6 +3,7 @@
 namespace App\Http\Requests\financements;
 
 use App\Enums\EnumTypeFinancement;
+use App\Models\Dgpd;
 use App\Models\Financement;
 use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
@@ -12,7 +13,8 @@ class UpdateFinancementRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (in_array(auth()->user()->type, ['super-admin', 'dgpd']) || (in_array($user->profilable_type, [Dgpd::class]) && ($user->hasPermissionTo('modifier-un-financement') || $user->hasPermissionTo('gerer-les-financements')) ));
     }
 
     protected function prepareForValidation(): void

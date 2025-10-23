@@ -4,9 +4,11 @@ namespace App\Http\Requests\evaluations;
 
 use App\Models\CategorieCritere;
 use App\Models\Critere;
+use App\Models\Dpaf;
 use App\Models\Evaluation;
 use App\Models\EvaluationCritere;
 use App\Models\Notation;
+use App\Models\Organisation;
 use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -18,7 +20,8 @@ class SoumettreEvaluationClimatiqueIdeeRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && ($user->hasPermissionTo('effectuer-evaluation-climatique-idee-projet') && in_array($user->profilable_type, [Dpaf::class, Organisation::class]) && $user->profilable->ministere);
     }
 
     /**

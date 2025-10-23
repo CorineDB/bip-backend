@@ -3,6 +3,7 @@
 namespace App\Http\Requests\notes_conceptuelle;
 
 use App\Models\Champ;
+use App\Models\Dgpd;
 use App\Repositories\DocumentRepository;
 use App\Repositories\Contracts\NoteConceptuelleRepositoryInterface;
 use App\Rules\HashedExists;
@@ -27,6 +28,8 @@ class AppreciationNoteConceptuelleRequest extends FormRequest
      */
     public function authorize(): bool
     {
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('evaluer-une-note-conceptulle')) && in_array($user->profilable_type, [Dgpd::class]));
         return true; //auth()->check() && in_array(auth()->user()->type, ['dgpd', 'admin']);
     }
 

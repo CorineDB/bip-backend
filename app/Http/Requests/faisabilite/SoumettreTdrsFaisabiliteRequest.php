@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\faisabilite;
 
+use App\Models\Dpaf;
+use App\Models\Organisation;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SoumettreTdrsFaisabiliteRequest extends FormRequest
@@ -11,7 +13,8 @@ class SoumettreTdrsFaisabiliteRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; //auth()->check() && in_array(auth()->user()->type, ['dpaf', 'admin']);
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('soumettre-tdr-faisabilite')) && in_array($user->profilable_type, [Dpaf::class, Organisation::class]) && $user->profilable->ministere);
     }
 
     /**

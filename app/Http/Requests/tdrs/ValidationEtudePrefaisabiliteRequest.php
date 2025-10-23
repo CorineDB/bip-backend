@@ -9,6 +9,7 @@ use App\Models\Notation;
 use App\Models\Champ;
 use App\Models\Critere;
 use App\Models\CategorieCritere;
+use App\Models\Dgpd;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Rules\HashedExists;
 use Illuminate\Support\Str;
@@ -25,7 +26,8 @@ class ValidationEtudePrefaisabiliteRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->check();// && in_array(auth()->user()->type, ['dpaf', 'admin']);
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('valider-une-etude-de-prefaisabilite')) && in_array($user->profilable_type, [Dgpd::class]));
     }
 
     /**

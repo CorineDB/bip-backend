@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\tdrs_faisabilite;
 
+use App\Models\Dgpd;
 use App\Repositories\DocumentRepository;
 use App\Repositories\TdrRepository;
 use Illuminate\Foundation\Http\FormRequest;
@@ -18,7 +19,8 @@ class ApprecierTdrFaisabiliteRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('apprecier-un-tdr-de-faisabilite')) && in_array($user->profilable_type, [Dgpd::class]));
         /*return auth()->check()  && auth()->user()->type === 'dpaf' */;
     }
 

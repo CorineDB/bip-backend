@@ -14,6 +14,8 @@ use App\Models\Workflow;
 use App\Models\Dossier;
 use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
+use App\Events\TdrPrefaisabiliteEvalue;
+use App\Events\TdrPrefaisabiliteSoumis;
 use App\Http\Resources\FichierResource;
 use App\Http\Resources\projets\ProjetResource;
 use App\Http\Resources\TdrResource;
@@ -33,8 +35,11 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use App\Helpers\SlugHelper;
 use App\Http\Resources\CanevasAppreciationTdrResource;
+use App\Http\Resources\CanevasNoteConceptuelleResource;
+use App\Http\Resources\ChecklistMesuresAdaptationSecteurResource;
 use App\Http\Resources\EvaluationResource;
 use App\Http\Resources\projets\integration\ProjetsResource;
+use App\Repositories\CategorieCritereRepository;
 
 class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteServiceInterface
 {
@@ -555,6 +560,19 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             DB::commit();
 
+            // Dispatcher l'événement si le TDR est soumis
+            if ($estSoumise) {
+                $estResoumission = in_array($projet->statut->value, [StatutIdee::R_TDR_PREFAISABILITE->value])
+                    || ($tdrExistant && $tdrExistant->statut === 'retour_travail_supplementaire');
+
+                event(new TdrPrefaisabiliteSoumis(
+                    $tdr,
+                    $projet,
+                    auth()->user(),
+                    $estResoumission
+                ));
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => $message,
@@ -588,7 +606,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             DB::beginTransaction();
 
             // Vérifier les autorisations (DGPD uniquement)
-            if (!auth()->user()->hasPermissionTo('apprecier-un-tdr-de-prefaisabilite') && auth()->user()->type !== 'dgpd' && auth()->user()->profilable_type !== Dgpd::class) {
+            if (!auth()->user()->hasPermissionTo('apprecier-un-tdr-de-prefaisabilite') && auth()->user()->hasPermissionTo('valider-un-tdr-de-prefaisabilite') && auth()->user()->type !== 'dgpd' && auth()->user()->profilable_type !== Dgpd::class) {
                 throw new Exception("Vous n\'avez pas les droits pour effectuer cette évaluation.", 403);
             }
 
@@ -722,6 +740,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             DB::commit();
 
             if ($data["evaluer"]) {
+                // Dispatcher l'événement après évaluation finalisée
+                event(new TdrPrefaisabiliteEvalue(
+                    $tdr,
+                    $projet,
+                    $evaluation,
+                    auth()->user(),
+                    $resultatsEvaluation
+                ));
+
                 // Envoyer une notification
                 $this->envoyerNotificationEvaluation($projet, $resultatsEvaluation);
             }
@@ -2213,7 +2240,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
 
             // Traiter la checklist de contrôle d'adaptation si projet à haut risque
-            /* if ($projet->est_a_haut_risque) {
+            if ($projet->est_a_haut_risque) {
                 if (!$estBrouillon && (!isset($data['checklist_controle_adaptation_haut_risque']) || $data['checklist_controle_adaptation_haut_risque'] == null)) {
                     throw new Exception("Il faut faire le suivi des mesures d'adaptation", 1);
                 }
@@ -2232,6 +2259,12 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         $data['checklist_controle_adaptation_haut_risque'],
                         $estBrouillon
                     );
+
+                    if ($estBrouillon == false && $projet->secteurId) {
+                        // Sauvegarder le canevas de checklist de suivi utilisé
+                        $rapport->checklists_mesures_adaptation_haut_risque = (new ChecklistMesuresAdaptationSecteurResource(app(CategorieCritereRepository::class)->getChecklistMesuresAdaptationSecteur($projet->secteurId)))->toArray(request());
+                        $rapport->save();
+                    }
                 } else {
                     // Log pour debug quand la checklist n'est pas traitée
                     \Log::warning('Checklist adaptation non traitée', [
@@ -2242,7 +2275,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'data_keys' => array_keys($data)
                     ]);
                 }
-            } */
+            }
 
             // Traiter la checklist de suivi pour la soumission finale
             if (isset($data['checklist_suivi_rapport_prefaisabilite'])) {
@@ -2257,7 +2290,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $resultChecklistSuivi = $this->traiterChecklistSuiviRapportPrefaisabilite(
                     $rapport,
                     $data['checklist_suivi_rapport_prefaisabilite'],
-                    false,
+                    $estBrouillon,
                     $fichiersData
                 );
 
@@ -3243,7 +3276,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Traiter la checklist de contrôle des adaptations pour projets à haut risque
      */
-    private function traiterChecklistControleAdaptation($projet, array $checklistData, bool $estBrouillon = false): array
+    private function traiterChecklistControleAdaptation($projet, array $checklistData, bool $estBrouillon = true): array
     {
         try {
             // La validation des critères et mesures est déjà faite dans le FormRequest
@@ -3361,7 +3394,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Traiter la checklist de suivi du rapport de préfaisabilité
      */
-    private function traiterChecklistSuiviRapportPrefaisabilite($rapport, array $checklistData, bool $estBrouillon = false, array $fichiers = []): array
+    private function traiterChecklistSuiviRapportPrefaisabilite($rapport, array $checklistData, bool $estBrouillon = true, array $fichiers = []): array
     {
         try {
             DB::beginTransaction();
@@ -3380,7 +3413,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
 
             // Traiter les données de checklist via la relation champs() si nécessaire
-            $this->traiterChampsChecklistSuivi($rapport, $checklistData);
+            $this->traiterChampsChecklistSuivi($rapport, $checklistData, $estBrouillon);
 
             DB::commit();
 
@@ -3435,7 +3468,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     /**
      * Traiter les champs de checklist via la relation champs()
      */
-    private function traiterChampsChecklistSuivi($rapport, array $checklistData)
+    private function traiterChampsChecklistSuivi($rapport, array $checklistData, bool $estBrouillon = true) : void
     {
         foreach ($checklistData as $evaluation) {
             $checkpointId   = $evaluation['checkpoint_id'];
@@ -3472,7 +3505,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 */
 
 
-
                 'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
                 'champ_id' => $champ?->hashed_id,
                 'label' => $champ?->label,
@@ -3486,6 +3518,17 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         })->toArray();
 
         $rapport->checklist_suivi = $checklist_suivi;
+
+        $rapport->save();
+
+        $rapport->refresh();
+
+        if ($estBrouillon == false) {
+            // Sauvegarder le canevas de checklist de suivi utilisé
+            $rapport->checklist_suivi_rapport_prefaisabilite = (new CanevasAppreciationTdrResource($this->documentRepository->getCanevasChecklistSuiviRapportPrefaisabilite()))->toArray(request());
+            $rapport->save();
+        }
+
         /*$rapport->champs->map(function ($champ) {
             return [
                 'id' => $champ->id,
@@ -3498,8 +3541,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'updated_at' => Carbon::parse($champ->pivot->updated_at)->format("Y-m-d H:i:s")
             ];
         });*/
-
-        $rapport->save();
     }
 
     /**

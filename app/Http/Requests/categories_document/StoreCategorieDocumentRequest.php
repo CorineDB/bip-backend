@@ -9,7 +9,8 @@ class StoreCategorieDocumentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (in_array(auth()->user()->type, ['super-admin']) || ($user->hasPermissionTo('creer-un-canevas') || $user->hasPermissionTo('gerer-les-canevas')));
     }
 
     public function rules(): array

@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\tdrs;
 
+use App\Models\Dpaf;
+use App\Models\Organisation;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SoumettreTdrsRequest extends FormRequest
@@ -11,7 +13,8 @@ class SoumettreTdrsRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; //auth()->check() && in_array(auth()->user()->type, ['dpaf', 'admin']);
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('soumettre-tdr-prefaisabilite')) && in_array($user->profilable_type, [Dpaf::class, Organisation::class]) && $user->profilable->ministere);
     }
 
     /**
