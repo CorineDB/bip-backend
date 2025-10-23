@@ -43,11 +43,11 @@ class RapportResource extends BaseApiResource
             'tri' => $this->when($this->type === "faisabilite", fn() => $this->tri),
             'checklist_suivi_rapport_prefaisabilite' => $this->when($this->type === "prefaisabilite", fn() => $this->checklist_suivi_rapport_prefaisabilite),
             'checklists_suivi_rapport_faisabilite' => $this->when($this->type === "faisabilite", fn() => [
-                'checklist_suivi_assurance_qualite'                        => $this->checklist_suivi_assurance_qualite,
+                'checklist_suivi_assurance_qualite'                        => $this->checklist_suivi_assurance_qualite_rapport_etude_faisabilite,
                 'checklist_etude_faisabilite_technique'                    => $this->checklist_etude_faisabilite_technique,
                 'checklist_etude_faisabilite_economique'                   => $this->checklist_etude_faisabilite_economique,
                 'checklist_etude_faisabilite_marche'                       => $this->checklist_etude_faisabilite_marche,
-                'checklist_etude_faisabilite_organisationnelle_juridique'  => $this->checklist_etude_faisabilite_organisationnelle_juridique,
+                'checklist_etude_faisabilite_organisationnelle_juridique'  => $this->checklist_etude_faisabilite_organisationnelle_et_juridique,
                 'checklist_suivi_analyse_faisabilite_financiere'           => $this->checklist_suivi_analyse_faisabilite_financiere,
                 'checklist_suivi_etude_analyse_impact_environnementale_et_sociale' => $this->checklist_suivi_etude_analyse_impact_environnementale_et_sociale,
             ]),
