@@ -1,0 +1,17 @@
+SFD-008 : Evaluation de la note conceptuelle - Appréciation d'une note conceptuelle
+  - Corriger les regles de validation d'une appréciation d'une note conceptuelle qui fait l'objet d'une réédition, en rendant optionnel la validation des checkpoints deja validé dans l'appréciation passée
+  - Corriger les regles de validation d'une appréciation d'une note conceptuelle en rendant optionnel la validation des commentaires des checkpoints validé
+  - Gestion des cas de retour :
+    - Creer une copie des notes conceptuelle rejetée ou renvoyée sans les fichiers
+    - Constituer l'historique des notes conceptuelle rejetée et renvoyée
+
+  - Tests des reappreciations des notes conceptuelle rééditions :
+    - Tester la création de la copie de la note conceptuelle rejetée quand le resultats de l'appreciation est Rejetée (1 non-accepté)
+    - Tester la création de la copie de la note conceptuelle rejetée quand le resultats de l'appreciation est Rejetée (10 + retour(s))
+    - Tester la création de la copie de la note conceptuelle renvoyée quand le resultats de l'appreciation est Renvoyée (1 - 9 retour(s))
+
+  - Tests de la validation appreciations des notes conceptuelle :
+    - Tester l'appréciation d'une note conceptuelle qui fait l'objet d'une réédition, sans apprecier les points deja validé dans l'appréciation passée
+    - Tester l'appréciation d'une note conceptuelle qui fait l'objet d'une réédition, sans apprecier les points non validé dans l'appréciation passée
+    - Tester l'appréciation d'une note conceptuelle sans faire un commentaire sur les points validé
+    - Tester l'appréciation d'une note conceptuelle sans faire un commentaire sur les points renvoyé ou non-accepté
