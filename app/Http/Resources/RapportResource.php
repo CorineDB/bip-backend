@@ -47,9 +47,9 @@ class RapportResource extends BaseApiResource
                 'checklist_etude_faisabilite_technique'                    => $this->checklist_etude_faisabilite_technique,
                 'checklist_etude_faisabilite_economique'                   => $this->checklist_etude_faisabilite_economique,
                 'checklist_etude_faisabilite_marche'                       => $this->checklist_etude_faisabilite_marche,
-                'checklist_etude_faisabilite_organisationnelle_juridique'  => $this->checklist_etude_faisabilite_marche,
+                'checklist_etude_faisabilite_organisationnelle_juridique'  => $this->checklist_etude_faisabilite_organisationnelle_juridique,
                 'checklist_suivi_analyse_faisabilite_financiere'           => $this->checklist_suivi_analyse_faisabilite_financiere,
-                'checklist_suivi_etude_analyse_impact_environnemental_social' => $this->checklist_suivi_etude_analyse_impact_environnemental_social,
+                'checklist_suivi_etude_analyse_impact_environnementale_et_sociale' => $this->checklist_suivi_etude_analyse_impact_environnementale_et_sociale,
             ]),
             'projet' => $this->whenLoaded('projet', function () {
                 return new ProjetsResource($this->projet);
