@@ -3,6 +3,7 @@
 namespace App\Http\Requests\tdrs;
 
 use App\Models\Champ;
+use App\Models\Dgpd;
 use App\Repositories\DocumentRepository;
 use App\Repositories\Contracts\TdrRepositoryInterface;
 use App\Rules\HashedExists;
@@ -29,6 +30,8 @@ class EvaluerTdrsRequest extends FormRequest
      */
     public function authorize(): bool
     {
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('apprecier-un-tdr-de-prefaisabilite')) && in_array($user->profilable_type, [Dgpd::class]));
         return true; //auth()->check() && in_array(auth()->user()->type, ['dgpd', 'admin']);
     }
 

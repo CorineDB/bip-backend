@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\types_programme;
 
+use App\Models\Dgpd;
 use App\Models\TypeProgramme;
 use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
@@ -11,7 +12,8 @@ class StoreTypeProgrammeRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (in_array(auth()->user()->type, ['super-admin', 'dgpd']) || (in_array($user->profilable_type, [Dgpd::class]) && ($user->hasPermissionTo('creer-un-programme') || $user->hasPermissionTo('gerer-un-programme')) ));
     }
 
     public function rules(): array

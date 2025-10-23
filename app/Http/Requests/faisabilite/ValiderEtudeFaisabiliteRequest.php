@@ -3,6 +3,7 @@
 namespace App\Http\Requests\faisabilite;
 
 use App\Models\Champ;
+use App\Models\Dgpd;
 use App\Models\Projet;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Rules\HashedExists;
@@ -20,7 +21,8 @@ class ValiderEtudeFaisabiliteRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->check(); //&& in_array(auth()->user()->type, ['comite_ministeriel', 'dgpd', 'admin']);
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('valider-etude-faisabilite') || $user->hasPermissionTo('valider-une-etude-de-faisabilite')) && in_array($user->profilable_type, [Dgpd::class]));
     }
 
     /**

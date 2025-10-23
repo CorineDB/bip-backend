@@ -29,13 +29,28 @@ class RapportResource extends BaseApiResource
             'date_soumission' => $this->date_soumission,
             'date_validation' => $this->date_validation,
             'commentaire_validation' => $this->commentaire_validation,
-            'decision' => $this->decision,
+            'decision' => $this->decision,/*
             'duree_vie' => $this->duree_vie,
             'investissement_initial' => $this->investissement_initial,
             'tri' => $this->tri,
             'van' => $this->van,
-            'flux_tresorerie' => $this->flux_tresorerie,
-            'taux_actualisation' => $this->taux_actualisation,
+            'flux_tresorerie' => $this->flux_tresorerie,*/
+            'duree_vie' => $this->when($this->type === "faisabilite", fn() => $this->duree_vie),
+            'investissement_initial' => $this->when($this->type === "faisabilite", fn() => $this->investissement_initial),
+            'taux_actualisation' => $this->when($this->type === "faisabilite", fn() => $this->taux_actualisation),
+            'flux_tresorerie' => $this->when($this->type === "faisabilite", fn() => $this->flux_tresorerie),
+            'van' => $this->when($this->type === "faisabilite", fn() => $this->van),
+            'tri' => $this->when($this->type === "faisabilite", fn() => $this->tri),
+            'checklist_suivi_rapport_prefaisabilite' => $this->when($this->type === "prefaisabilite", fn() => $this->checklist_suivi_rapport_prefaisabilite),
+            'checklists_suivi_rapport_faisabilite' => $this->when($this->type === "faisabilite", fn() => [
+                'checklist_suivi_assurance_qualite'                        => $this->checklist_suivi_assurance_qualite,
+                'checklist_etude_faisabilite_technique'                    => $this->checklist_etude_faisabilite_technique,
+                'checklist_etude_faisabilite_economique'                   => $this->checklist_etude_faisabilite_economique,
+                'checklist_etude_faisabilite_marche'                       => $this->checklist_etude_faisabilite_marche,
+                'checklist_etude_faisabilite_organisationnelle_juridique'  => $this->checklist_etude_faisabilite_marche,
+                'checklist_suivi_analyse_faisabilite_financiere'           => $this->checklist_suivi_analyse_faisabilite_financiere,
+                'checklist_suivi_etude_analyse_impact_environnemental_social' => $this->checklist_suivi_etude_analyse_impact_environnemental_social,
+            ]),
             'projet' => $this->whenLoaded('projet', function () {
                 return new ProjetsResource($this->projet);
             }),
@@ -57,7 +72,7 @@ class RapportResource extends BaseApiResource
                         'date_debut_evaluation' => $evaluation->date_debut_evaluation ? \Carbon\Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
                         'date_fin_evaluation' => $evaluation->date_fin_evaluation ? \Carbon\Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
                         'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
-                        'valider_par' => $evaluation->validator?->hashed_id,//$evaluation->valider_par,
+                        'valider_par' => $evaluation->validator?->hashed_id, //$evaluation->valider_par,
                         'commentaire' => $evaluation->commentaire,
                         'evaluation' => $evaluation->evaluation,
                         'resultats_evaluation' => $evaluation->resultats_evaluation,
@@ -67,11 +82,17 @@ class RapportResource extends BaseApiResource
             }),
 
             // Checklists de mesures d'adaptation (si projet à haut risque)
-            'checklist_mesures_adaptation' => $this->type == "prefaisabilite" ? $this->whenLoaded('projet', function () {
+            'checklist_mesures_adaptation' => $this->when($this->type === "prefaisabilite", function () {
                 return $this->projet->est_a_haut_risque ?
                     ($this->projet->mesures_adaptation ?? null) :
                     null;
-            }) : [],
+            }),
+
+            /*$this->type == "prefaisabilite" ? $this->whenLoaded('projet', function () {
+                return $this->projet->est_a_haut_risque ?
+                    ($this->projet->mesures_adaptation ?? null) :
+                    null;
+            }) : [],*/
 
             // Fichiers par type
             'fichiers_rapport' => $this->whenLoaded('fichiersRapport', function () {

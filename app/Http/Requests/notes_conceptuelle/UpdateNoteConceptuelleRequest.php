@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\notes_conceptuelle;
 
+use App\Models\Dpaf;
+use App\Models\Organisation;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use Illuminate\Support\Str;
@@ -14,7 +16,8 @@ class UpdateNoteConceptuelleRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('modifier-une-note-conceptuelle') || $user->hasPermissionTo('rediger-une-note-conceptuelle')) && in_array($user->profilable_type, [Dpaf::class, Organisation::class]) && $user->profilable->ministere);
     }
 
     public function rules(): array

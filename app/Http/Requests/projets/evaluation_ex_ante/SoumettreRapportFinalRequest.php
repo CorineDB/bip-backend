@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\projets\evaluation_ex_ante;
 
+use App\Models\Dpaf;
+use App\Models\Organisation;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SoumettreRapportFinalRequest extends FormRequest
@@ -11,7 +13,8 @@ class SoumettreRapportFinalRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; //auth()->check() && in_array(auth()->user()->type, ['responsable_projet', 'dpaf', 'admin']);
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('soumettre-un-rapport-d-evaluation-ex-ante')) && in_array($user->profilable_type, [Dpaf::class, Organisation::class]) && $user->profilable->ministere);
     }
 
     /**

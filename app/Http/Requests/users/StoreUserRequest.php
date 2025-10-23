@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\users;
 
+use App\Models\Dgpd;
+use App\Models\Dpaf;
+use App\Models\Organisation;
 use App\Models\Role;
 use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
@@ -11,7 +14,8 @@ class StoreUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (in_array(auth()->user()->type, ['super-admin', 'dgpd', 'dpaf', 'organisation']) || (in_array($user->profilable_type, [Dgpd::class, Dpaf::class, Organisation::class]) && ($user->hasPermission('creer-un-utilisateur') || $user->hasPermission('gerer-les-utilisateurs'))));
     }
 
     public function rules(): array

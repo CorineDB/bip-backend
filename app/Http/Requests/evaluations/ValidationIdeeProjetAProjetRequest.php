@@ -3,6 +3,7 @@
 namespace App\Http\Requests\evaluations;
 
 use App\Enums\StatutIdee;
+use App\Models\Dgpd;
 use App\Models\IdeeProjet;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\ValidationException;
@@ -15,7 +16,8 @@ class ValidationIdeeProjetAProjetRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && ($user->hasPermissionTo('valider-une-idee-de-projet-a-projet') && $user->type === 'analyste-dgpd' && in_array($user->profilable_type, [Dgpd::class]));
     }
 
     /**

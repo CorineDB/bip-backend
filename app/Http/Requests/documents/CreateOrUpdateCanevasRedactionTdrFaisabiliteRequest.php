@@ -13,7 +13,7 @@ class CreateOrUpdateCanevasRedactionTdrFaisabiliteRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return auth()->check();
+        return auth()->check() && in_array(auth()->user()->type, ['super-admin', 'dgpd']);
     }
 
     public function prepareForValidation()

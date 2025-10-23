@@ -9,6 +9,8 @@ use App\Models\Notation;
 use App\Models\CategorieCritere;
 use App\Models\Champ;
 use App\Models\Critere;
+use App\Models\Dpaf;
+use App\Models\Organisation;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Rules\HashedExists;
 use Illuminate\Support\Str;
@@ -26,7 +28,8 @@ class SoumettreRapportPrefaisabiliteRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->check(); //auth()->check() && in_array(auth()->user()->type, ['dpaf', 'admin']);
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('soumettre-un-rapport-de-prefaisabilite')) && in_array($user->profilable_type, [Dpaf::class, Organisation::class]) && $user->profilable->ministere);
     }
 
     /**

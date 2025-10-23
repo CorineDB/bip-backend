@@ -35,7 +35,7 @@ class EtudeProfilValidee implements ShouldBroadcast
         ?string $commentaire = null
     ) {
         $this->noteConceptuelle = $noteConceptuelle->load(['redacteur', 'champs']);
-        $this->projet = $projet->load(['ministere', 'organisation']);
+        $this->projet = $projet->load(['ministere']);
         $this->evaluation = $evaluation;
         $this->validateur = $validateur;
         $this->decision = $decision;

@@ -4,8 +4,11 @@ namespace App\Http\Requests\evaluations;
 
 use App\Models\CategorieCritere;
 use App\Models\Critere;
+use App\Models\Dgpd;
+use App\Models\Dpaf;
 use App\Models\Evaluation;
 use App\Models\Notation;
+use App\Models\Organisation;
 use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -17,7 +20,8 @@ class AMCRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && ($user->hasPermissionTo('effectuer-l-amc-d-une-idee-de-projet') && $user->type === 'analyste-dgpd' && in_array($user->profilable_type, [Dgpd::class]));
     }
 
     /**

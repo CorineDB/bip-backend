@@ -14,7 +14,7 @@ class CreateOrUpdateChecklistRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        return auth()->check() && in_array(auth()->user()->type, ['super-admin', 'dgpd']);
     }
 
     public function rules(): array

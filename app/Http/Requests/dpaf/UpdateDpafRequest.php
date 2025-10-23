@@ -11,7 +11,8 @@ class UpdateDpafRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (in_array(auth()->user()->type, ['organisation']) || (in_array($user->profilable_type, [Organisation::class]) && ($user->hasPermissionTo('modifier-la-dpaf') || $user->hasPermissionTo('gerer-la-dpaf')) ));
     }
 
     public function rules(): array

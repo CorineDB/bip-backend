@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\roles;
 
+use App\Models\Dgpd;
+use App\Models\Dpaf;
+use App\Models\Organisation;
 use App\Models\Role;
 use App\Models\Permission;
 use App\Rules\HashedExistsMultiple;
@@ -12,7 +15,8 @@ class UpdateRoleRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (in_array($user->type, ['super-admin', 'dgpd', 'dpaf', 'organisation']) || (in_array($user->profilable_type, [Dgpd::class, Dpaf::class, Organisation::class]) && ($user->hasPermission('modifier-un-role') || $user->hasPermission('gerer-les-roles'))));
     }
 
     protected function prepareForValidation(): void

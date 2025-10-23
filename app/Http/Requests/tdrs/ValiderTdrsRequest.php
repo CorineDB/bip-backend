@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\tdrs;
 
+use App\Models\Dgpd;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ValiderTdrsRequest extends FormRequest
@@ -11,7 +12,8 @@ class ValiderTdrsRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; //auth()->check() && in_array(auth()->user()->type, ['dgpd', 'admin']);
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('apprecier-un-tdr-de-prefaisabilite') || $user->hasPermissionTo('valider-un-tdr-de-prefaisabilite')) && in_array($user->profilable_type, [Dgpd::class]));
     }
 
     /**

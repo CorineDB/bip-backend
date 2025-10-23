@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\groupes_utilisateur;
 
+use App\Models\Dgpd;
+use App\Models\Dpaf;
+use App\Models\Organisation;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -13,7 +16,8 @@ class StoreGroupeUtilisateurRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (in_array($user->type, ['super-admin', 'dgpd', 'dpaf', 'organisation']) || (in_array($user->profilable_type, [Dgpd::class, Dpaf::class, Organisation::class]) && ($user->hasPermission('creer-un-groupe-utilisateur') || $user->hasPermission('gerer-les-groupes-utilisateur'))));
     }
 
     public function rules(): array

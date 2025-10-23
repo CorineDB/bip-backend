@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\projets\evaluation_ex_ante;
 
+use App\Models\Dgpd;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ValiderRapportFinalRequest extends FormRequest
@@ -11,6 +12,8 @@ class ValiderRapportFinalRequest extends FormRequest
      */
     public function authorize(): bool
     {
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('valider-un-rapport-evaluation-ex-ante')) && in_array($user->profilable_type, [Dgpd::class]));
         return true; //auth()->check() && in_array(auth()->user()->type, ['comite_ministeriel', 'dgpd', 'admin']);
     }
 

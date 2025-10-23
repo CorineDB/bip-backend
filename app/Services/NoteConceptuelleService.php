@@ -15,6 +15,10 @@ use App\Repositories\Contracts\FichierRepositoryInterface;
 use App\Enums\StatutEvaluationNoteConceptuelle;
 use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
+use App\Events\AppreciationNoteConceptuelleCreee;
+use App\Events\EtudeProfilValidee;
+use App\Events\NoteConceptuelleSoumise;
+use App\Events\RapportFaisabilitePrelimSoumis;
 use App\Http\Resources\CanevasAppreciationTdrResource;
 use App\Http\Resources\CanevasNoteConceptuelleResource;
 use App\Http\Resources\ChampResource;
@@ -267,8 +271,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     $message = $estSoumise ? 'Rapport sauvegardé en brouillon.' : 'Rapport soumis avec succès.';
                 }
 
-                $rapport->fill($data["analyse_financiere"]);
-
                 if (isset($documentsData["rapport_faisabilite_preliminaire"])) {
                     $this->gererFichierRapportFaisabilite($rapport, $documentsData['rapport_faisabilite_preliminaire'], 'rapport_faisabilite_preliminaire');
                 }
@@ -376,6 +378,17 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $noteConceptuelle->projet->refresh();
 
             DB::commit();
+
+            // Dispatcher l'événement si la note conceptuelle est soumise
+            if ($estSoumise && $noteConceptuelle->statut == 1) {
+                event(new NoteConceptuelleSoumise(
+                    $noteConceptuelle,
+                    $noteConceptuelle->projet,
+                    auth()->user(),
+                    $statusCode === 200 ? 'brouillon' : null,
+                    'soumise'
+                ));
+            }
 
             return (new $this->resourceClass($noteConceptuelle->load("fichiers")))
                 ->additional(['message' => $message])
@@ -656,6 +669,17 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             $noteConceptuelle->projet->save();
             $noteConceptuelle->projet->refresh();
+
+            // Dispatcher l'événement si la note conceptuelle est soumise
+            if ($estSoumise && $noteConceptuelle->statut == 1) {
+                event(new NoteConceptuelleSoumise(
+                    $noteConceptuelle,
+                    $noteConceptuelle->projet,
+                    auth()->user(),
+                    'brouillon',
+                    'soumise'
+                ));
+            }
 
             return (new $this->resourceClass($noteConceptuelle))
                 ->additional(['message' => $message])
@@ -1069,6 +1093,18 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $noteConceptuelle->save();
 
             DB::commit();
+
+            // Dispatcher l'événement si une appréciation est créée ou finalisée
+            if (isset($data['evaluations_champs']) && count($data['evaluations_champs']) > 0) {
+                event(new AppreciationNoteConceptuelleCreee(
+                    $evaluationEnCours,
+                    $noteConceptuelle,
+                    $noteConceptuelle->projet,
+                    auth()->user(),
+                    'note-conceptuelle',
+                    $evaluationEnCours->statut == 1 ? 'finalisee' : 'en_cours'
+                ));
+            }
 
             $isNewEvaluation = !$noteConceptuelle->evaluationEnCours();
             $message = $data['evaluer'] ?
@@ -2858,6 +2894,18 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             DB::commit();
 
+            // Dispatcher l'événement si la validation n'est pas un brouillon
+            if ($data['decision'] !== 'sauvegarder') {
+                event(new EtudeProfilValidee(
+                    $noteConceptuelle,
+                    $projet,
+                    $evaluation,
+                    auth()->user(),
+                    $data['decision'],
+                    $data['commentaire'] ?? null
+                ));
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => $this->getMessageSuccesValidation($data['decision']),
@@ -3129,6 +3177,16 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             );
 
             DB::commit();
+
+            // Dispatcher l'événement pour la confirmation de validation d'étude de profil
+            event(new EtudeProfilValidee(
+                $noteConceptuelle,
+                $projet,
+                $evaluation,
+                auth()->user(),
+                $data['action'],
+                $data['commentaire'] ?? 'Action confirmée suite à évaluation non acceptée'
+            ));
 
             return response()->json([
                 'success' => true,
@@ -3790,6 +3848,19 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             }
 
             DB::commit();
+
+            // Dispatcher l'événement si le rapport est soumis
+            if ($estSoumise) {
+                $estResoumission = $projet->statut->value === StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER->value
+                    || ($rapportExistant && in_array($rapportExistant->statut, ['renvoye', 'non_accepte']));
+
+                event(new RapportFaisabilitePrelimSoumis(
+                    $rapport,
+                    $projet,
+                    auth()->user(),
+                    $estResoumission
+                ));
+            }
 
             return response()->json([
                 'success' => true,

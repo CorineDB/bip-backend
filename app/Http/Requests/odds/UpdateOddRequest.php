@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\odds;
 
+use App\Models\Dgpd;
 use App\Models\Odd;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -10,7 +11,8 @@ class UpdateOddRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (in_array(auth()->user()->type, ['super-admin', 'dgpd']) || (in_array($user->profilable_type, [Dgpd::class]) && ($user->hasPermissionTo('modifier-un-odd') || $user->hasPermissionTo('gerer-les-odds')) ));
     }
 
     protected function prepareForValidation(): void

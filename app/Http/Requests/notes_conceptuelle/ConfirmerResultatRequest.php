@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\notes_conceptuelle;
 
+use App\Models\Dgpd;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ConfirmerResultatRequest extends FormRequest
@@ -11,8 +12,8 @@ class ConfirmerResultatRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
-        return auth()->check() && in_array(auth()->user()->type, ['dpaf', 'admin']);
+        $user = auth()->user();
+        return auth()->check() && (($user->hasPermissionTo('evaluer-une-note-conceptulle')) && in_array($user->profilable_type, [Dgpd::class]));
     }
 
     /**

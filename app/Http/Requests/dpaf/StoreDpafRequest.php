@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\dpaf;
 
+use App\Models\Dgpd;
 use App\Models\Organisation;
 use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
@@ -11,7 +12,8 @@ class StoreDpafRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = auth()->user();
+        return auth()->check() && (in_array(auth()->user()->type, ['organisation']) || (in_array($user->profilable_type, [Organisation::class]) && ($user->hasPermissionTo('creer-la-dpaf') || $user->hasPermissionTo('gerer-la-dpaf')) ));
     }
 
     public function rules(): array

@@ -34,17 +34,17 @@ class NotificationService extends BaseService implements NotificationServiceInte
         }
     }
 
-    public function markAsRead(string $notificationId): JsonResponse
+    public function markAsRead(string $notificationId, ?int $userId = null): JsonResponse
     {
         try {
-            $success = $this->repository->markAsRead($notificationId);
+            $success = $this->repository->markAsRead($notificationId, $userId);
             if (!$success) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Notification not found or already read.',
                 ], 404);
             }
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Notification marked as read successfully.',
@@ -104,17 +104,17 @@ class NotificationService extends BaseService implements NotificationServiceInte
         }
     }
 
-    public function deleteNotification(string $notificationId): JsonResponse
+    public function deleteNotification(string $notificationId, ?int $userId = null): JsonResponse
     {
         try {
-            $success = $this->repository->deleteNotification($notificationId);
+            $success = $this->repository->deleteNotification($notificationId, $userId);
             if (!$success) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Notification not found.',
                 ], 404);
             }
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Notification deleted successfully.',
