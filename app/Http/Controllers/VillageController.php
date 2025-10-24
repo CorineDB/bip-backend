@@ -24,7 +24,7 @@ class VillageController extends Controller
 
     public function filter(FilterVillageRequest $request): JsonResponse
     {
-        return $this->service->filter($request->validated());
+        return $this->service->filter($request->all());
     }
 
     public function show($id): JsonResponse
