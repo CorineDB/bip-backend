@@ -882,7 +882,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         // Vérifier si c'est un mode d'activation
         $isActivationMode = $stateData['activation_mode'] ?? false;
-        $compteDejaActive = $utilisateur->email_verified_at !== null && $utilisateur->statut === 1;
+        $compteDejaActive = $utilisateur->email_verified_at !== null && in_array($utilisateur->statut, ["actif", "invité"]);
 
         // Activer le compte si pas encore activé et en mode activation
         if ($isActivationMode && !$compteDejaActive) {
@@ -891,8 +891,8 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
                 $utilisateur->email_verified_at = now();
             }
 
-            if ($utilisateur->statut === 0) {
-                $utilisateur->statut = 1;
+            if ($utilisateur->statut === "invité") {
+                $utilisateur->statut = "actif";
             }
 
             $utilisateur->first_connexion = now();
