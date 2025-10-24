@@ -877,7 +877,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         $utilisateur = \App\Models\User::where('email', $email)->first();
 
         if (!$utilisateur) {
-            return redirect("{$frontendUrl}/auth/error?message=" . urlencode('Utilisateur non trouvé dans le système BIP'));
+            return redirect("{$frontendUrl}/auth/error?message=" . urlencode('Utilisateur non trouvé dans le système BIP '.$email));
         }
 
         // Vérifier si c'est un mode d'activation
