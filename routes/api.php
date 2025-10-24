@@ -924,8 +924,8 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         // 🔐 Chiffrer les données à renvoyer
         $dataToEncrypt = json_encode([
-            'id_token' => $idToken,
-            'bip_token' => $bipToken,
+            //'id_token' => $idToken,
+            ...$bipToken,
             'compte_nouvellement_active' => !$compteDejaActive
         ]);
         $encryptedToken = Crypt::encryptString($dataToEncrypt);
