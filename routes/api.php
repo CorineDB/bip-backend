@@ -41,6 +41,7 @@ use App\Http\Controllers\PassportClientController;
 use App\Http\Resources\auth\LoginResource;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
@@ -939,7 +940,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             $token = Crypt::decryptString($request->input('token'));
 
             // Retourner le token
-            //return response()->json(['statut' => 'success', 'message' => 'Authentification réussi', 'data' => new LoginResource($token[""]), 'statutCode' => Response::HTTP_OK], Response::HTTP_OK)/*->withCookie('XSRF-TOKEN', $data['access_token'], 60*3)*/;
+            return response()->json(['statut' => 'success', 'message' => 'Authentification réussi', 'data' => new LoginResource($token[""]), 'statutCode' => Response::HTTP_OK], Response::HTTP_OK)/*->withCookie('XSRF-TOKEN', $data['access_token'], 60*3)*/;
 
             return response()->json(['api_token' => $token]);
         } catch (Exception $e) {
