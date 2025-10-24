@@ -14,7 +14,7 @@ return new class extends Migration
         if (Schema::hasTable('users')) {
             Schema::table('users', function (Blueprint $table) {
                 if (Schema::hasColumn('users', 'status')) {
-                    $table->enum('status', ['actif', 'suspendu', 'invité'])->default('invité');
+                    $table->enum('status', ['actif', 'suspendu', 'invité'])->default('invité')->change();
                 }
             });
         }
