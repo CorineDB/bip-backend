@@ -940,7 +940,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             $token = Crypt::decryptString($request->input('token'));
 
             // Retourner le token
-            return response()->json(['statut' => 'success', 'message' => 'Authentification réussi', 'data' => new LoginResource($token[""]), 'statutCode' => Response::HTTP_OK], Response::HTTP_OK)/*->withCookie('XSRF-TOKEN', $data['access_token'], 60*3)*/;
+            return response()->json(['statut' => 'success', 'message' => 'Authentification réussi', 'data' => new LoginResource($token), 'statutCode' => Response::HTTP_OK], Response::HTTP_OK)/*->withCookie('XSRF-TOKEN', $data['access_token'], 60*3)*/;
 
             return response()->json(['api_token' => $token]);
         } catch (Exception $e) {
