@@ -895,7 +895,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
                 $utilisateur->statut = "actif";
             }
 
-            $utilisateur->first_connexion = now();
+            //$utilisateur->first_connexion = now();
 
             // Nettoyer les données de vérification
             $utilisateur->account_verification_request_sent_at = null;

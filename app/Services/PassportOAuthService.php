@@ -508,7 +508,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
             } elseif ($utilisateur->statut === 0) {
                 $utilisateur->statut = 1;
 
-                if ($utilisateur->first_connexion === null) $utilisateur->first_connexion = now();
+                //if ($utilisateur->first_connexion === null) $utilisateur->first_connexion = now();
             } else;
 
             $utilisateur->account_verification_request_sent_at = null;
@@ -2180,7 +2180,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
             if (!$compteDejaActive) {
                 $utilisateur->email_verified_at = now();
                 $utilisateur->statut = 1;
-                $utilisateur->first_connexion = now();
+                //$utilisateur->first_connexion = now();
 
                 // Nettoyer les données de vérification
                 if ($stateData && isset($stateData['activation_token'])) {
@@ -2317,7 +2317,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
             if (!$compteDejaActive) {
                 $utilisateur->email_verified_at = now();
                 $utilisateur->statut = 1;
-                $utilisateur->first_connexion = now();
+                //$utilisateur->first_connexion = now();
 
                 // Nettoyer les données de vérification
                 if (isset($stateData['activation_token'])) {
