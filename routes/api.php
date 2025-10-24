@@ -38,6 +38,7 @@ use App\Http\Controllers\NoteConceptuelleController;
 use App\Http\Controllers\TdrPrefaisabiliteController;
 use App\Http\Controllers\TdrFaisabiliteController;
 use App\Http\Controllers\PassportClientController;
+use App\Http\Resources\auth\LoginResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -907,7 +908,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         $utilisateur->save();
 
         // Générer le token d'authentification BIP (Passport)
-        $bipToken = $utilisateur->createToken('Bip-Token')->accessToken;
+        $bipToken = $utilisateur->createToken('Bip-Token')->toArray();
 
         // Log de l'activation
         $acteur = $utilisateur->personne ? $utilisateur->personne->nom . " " . $utilisateur->personne->prenom : "Inconnu";
@@ -936,6 +937,10 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
     Route::post('/auth/decrypt', function (Request $request) {
         try {
             $token = Crypt::decryptString($request->input('token'));
+
+            // Retourner le token
+            //return response()->json(['statut' => 'success', 'message' => 'Authentification réussi', 'data' => new LoginResource($token[""]), 'statutCode' => Response::HTTP_OK], Response::HTTP_OK)/*->withCookie('XSRF-TOKEN', $data['access_token'], 60*3)*/;
+
             return response()->json(['api_token' => $token]);
         } catch (Exception $e) {
             return response()->json(['error' => 'Token invalide'], 400);
