@@ -40,6 +40,9 @@ enum StatutIdee: string
     case EN_ATTENTE_DE_VALIDATION_FINALE = '03_En_attente_de_validation_finale';
     case R_REJETE = '03_Rejete';
     case PRIORISE = '04_Priorise';
+    case EN_COURS_DE_MATURATION = '05_En_cours_de_maturation';
+    case EN_ATTENTE_DE_PROGRAMMATION = '06_En_attente_de_programmation';
+    case EN_COURS_EXECUTION = '07_En_cours_execution';
     case CLOTURE = 'Cloture';
 
     /**
