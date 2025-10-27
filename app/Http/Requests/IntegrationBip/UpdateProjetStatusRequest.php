@@ -29,7 +29,7 @@ class UpdateProjetStatusRequest extends FormRequest
                 'string',
                 Rule::in(StatutIdee::values())
             ],
-            'ancien' => [
+            'est_ancien' => [
                 'sometimes',
                 'boolean'
             ],

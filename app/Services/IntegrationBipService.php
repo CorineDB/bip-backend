@@ -78,7 +78,7 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
     {
         try {
             $nouveauStatut = $data['statut'];
-            $ancien = $data['ancien'] ?? false;
+            $est_ancien = $data['est_ancien'] ?? false;
 
             // Vérifier que le statut est valide
             $statutsValides = StatutIdee::values();
@@ -117,8 +117,8 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
             $projet->statut = $nouveauStatut;
 
             // Mettre à jour le flag "ancien" si fourni
-            if (isset($data['ancien'])) {
-                $projet->ancien = $ancien;
+            if (isset($data['est_ancien'])) {
+                $projet->est_ancien = $est_ancien;
             }
 
             $projet->save();
