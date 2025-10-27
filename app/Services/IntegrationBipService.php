@@ -103,7 +103,7 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
             }
 
             // Vérifier que le projet est bien arrivé à maturité (PRET)
-            if ($projet->statut !== StatutIdee::PRET) {
+            if (!in_array($projet->statut, [StatutIdee::PRET, StatutIdee::SELECTION, StatutIdee::IDEE_DE_PROJET, StatutIdee::REJETE, StatutIdee::CLOTURE, StatutIdee::EN_COURS_EXECUTION, StatutIdee::EN_ATTENTE_DE_PROGRAMMATION, StatutIdee::EN_COURS_DE_MATURATION])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Seuls les projets arrivés à maturité peuvent avoir leur statut modifié via cette API.',

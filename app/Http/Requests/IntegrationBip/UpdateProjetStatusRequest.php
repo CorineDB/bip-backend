@@ -33,6 +33,7 @@ class UpdateProjetStatusRequest extends FormRequest
                 'sometimes',
                 'boolean'
             ],
+            "commentaire" => ["require_unless:est_ancien|true"]
         ];
     }
 
