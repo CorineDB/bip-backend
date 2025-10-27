@@ -49,8 +49,30 @@ class OAuthAuditMiddleware
      */
     private function captureRequestData(Request $request): array
     {
-        $user = Auth::user();
-        $token = $request->user() ? $request->user()->token() : null;
+        // Safely get user and token, handling client_credentials tokens without user_id
+        $user = null;
+        $token = null;
+
+        try {
+            // Try to get authenticated user (will be null for client_credentials tokens)
+            $user = Auth::guard('api')->user();
+
+            if ($user) {
+                // For user tokens, get token from user
+                $token = $user->token();
+            } else {
+                // For client_credentials tokens, get token directly from bearer
+                $bearerToken = $request->bearerToken();
+                if ($bearerToken) {
+                    $token = Token::find($bearerToken);
+                }
+            }
+        } catch (\Exception $e) {
+            // Log but don't fail if we can't get user/token info
+            Log::warning('Failed to get user/token in OAuthAuditMiddleware', [
+                'error' => $e->getMessage()
+            ]);
+        }
 
         return [
             'timestamp' => now()->toISOString(),

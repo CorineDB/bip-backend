@@ -21,8 +21,13 @@ class IntegrationController extends Controller
         return $this->service->getProjetsArrivesAMaturite();
     }
 
+    public function show(int $idProjet): JsonResponse
+    {
+        return $this->service->getProjet($idProjet);
+    }
+
     public function update(UpdateProjetStatusRequest $request, int $idProjet): JsonResponse
     {
-        return $this->service->updateProjetStatus($idProjet, $request->validated('statut'));
+        return $this->service->updateProjetStatus($idProjet, $request->validated());
     }
 }

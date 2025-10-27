@@ -18,16 +18,14 @@ class PassportClientResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'secret' => $this->when(
-                !$this->revoked && $this->secret,
-                $this->secret
-            ),
+            // Le secret hashé n'est jamais retourné (pour sécurité)
+            // Le secret en clair est retourné séparément lors de la création/régénération
             'provider' => $this->provider,
             'redirect_uris' => $this->redirect_uris,
             'grant_types' => $this->grant_types[0],
             'revoked' => (bool) $this->revoked,
-            'owner_type' => $this->owner_type,
-            'owner_id' => $this->owner_id,
+            'owner_type' => $this->when($this->owner_type !== null, $this->owner_type),
+            'owner_id' => $this->when($this->owner_id !== null && $this->owner_type !== null, $this->owner_id),
             'is_confidential' => $this->isConfidential(),
             'is_personal_access_client' => $this->isPersonalAccessClient(),
             'is_password_client' => $this->isPasswordClient(),

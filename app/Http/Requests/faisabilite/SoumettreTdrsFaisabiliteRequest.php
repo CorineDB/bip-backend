@@ -14,7 +14,7 @@ class SoumettreTdrsFaisabiliteRequest extends FormRequest
     public function authorize(): bool
     {
         $user = auth()->user();
-        return auth()->check() && (($user->hasPermissionTo('soumettre-tdr-faisabilite')) && in_array($user->profilable_type, [Dpaf::class, Organisation::class]) && $user->profilable->ministere);
+        return auth()->check() && (($user->hasPermissionTo('soumettre-tdr-faisabilite') || $user->hasPermissionTo('soumettre-un-tdr-de-faisabilite')) && in_array($user->profilable_type, [Dpaf::class, Organisation::class]) && $user->profilable->ministere);
     }
 
     /**

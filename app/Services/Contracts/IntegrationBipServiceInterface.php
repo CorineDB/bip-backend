@@ -13,7 +13,12 @@ interface IntegrationBipServiceInterface extends AbstractServiceInterface
     public function getProjetsArrivesAMaturite(): JsonResponse;
 
     /**
+     * Récupérer un projet spécifique par son ID
+     */
+    public function getProjet(int $projetId): JsonResponse;
+
+    /**
      * Mettre à jour le statut d'un projet
      */
-    public function updateProjetStatus(int $projetId, string $nouveauStatut): JsonResponse;
+    public function updateProjetStatus(int $projetId, array $data): JsonResponse;
 }

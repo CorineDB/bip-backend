@@ -21,7 +21,7 @@ class ProjetsResource extends BaseApiResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->hashed_id,
             // Identifiants et métadonnées
             'identifiant_bip' => $this->identifiant_bip,
             'identifiant_sigfp' => $this->identifiant_sigfp,

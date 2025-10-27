@@ -20,7 +20,7 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
 
     protected function getResourceClass(): string
     {
-        return ProjetResource::class;
+        return ProjetsResource::class;
     }
 
     /**
@@ -46,11 +46,40 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
     }
 
     /**
-     * Mettre à jour le statut d'un projet
+     * Récupérer un projet spécifique par son ID
      */
-    public function updateProjetStatus(int $projetId, string $nouveauStatut): JsonResponse
+    public function getProjet(int $projetId): JsonResponse
     {
         try {
+            $projet = $this->repository->find($projetId);
+
+            if (!$projet) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Projet non trouvé.',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Projet récupéré avec succès.',
+                'data' => new ProjetResource($projet)
+            ], 200);
+
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Mettre à jour le statut d'un projet
+     */
+    public function updateProjetStatus(int $projetId, array $data): JsonResponse
+    {
+        try {
+            $nouveauStatut = $data['statut'];
+            $ancien = $data['ancien'] ?? false;
+
             // Vérifier que le statut est valide
             $statutsValides = StatutIdee::values();
             if (!in_array($nouveauStatut, $statutsValides)) {
@@ -86,6 +115,12 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
 
             // Mettre à jour le statut
             $projet->statut = $nouveauStatut;
+
+            // Mettre à jour le flag "ancien" si fourni
+            if (isset($data['ancien'])) {
+                $projet->ancien = $ancien;
+            }
+
             $projet->save();
 
             return response()->json([

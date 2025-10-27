@@ -42,6 +42,7 @@ use App\Http\Resources\auth\LoginResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
@@ -72,7 +73,7 @@ Route::prefix("auths")->group(['middleware' => ['auth:sanctum']], function () {
 */
 
 
-Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], function () {
+Route::group(['middleware' => [/* 'cors', 'json.response' */], 'as' => 'api.'], function () {
 
     //Route::group(['middleware' => []], function () {
 

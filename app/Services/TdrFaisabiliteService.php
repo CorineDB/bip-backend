@@ -12,6 +12,8 @@ use App\Models\Decision;
 use App\Models\Workflow;
 use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
+use App\Events\EtudeFaisabiliteValidee;
+use App\Events\RapportFaisabiliteSoumis;
 use App\Events\TdrFaisabiliteEvalue;
 use App\Events\TdrFaisabiliteSoumis;
 use App\Http\Resources\TdrResource;
@@ -1382,6 +1384,17 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
             DB::commit();
 
+            // Déclencher l'événement de soumission du rapport si ce n'est pas un brouillon
+            if (!$estBrouillon) {
+                $estResoumission = (bool) $rapport->parent_id;
+                event(new RapportFaisabiliteSoumis(
+                    $rapport,
+                    $projet,
+                    auth()->user(),
+                    $estResoumission
+                ));
+            }
+
             // Charger les relations nécessaires pour le resource
             $rapport->load(['fichiers', 'soumisPar', 'projet']);
 
@@ -1903,6 +1916,17 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             );
 
             DB::commit();
+
+            // Déclencher l'événement de validation si ce n'est pas une sauvegarde
+            if ($data['action'] !== 'sauvegarder' && isset($rapportActuel) && $rapportActuel) {
+                event(new EtudeFaisabiliteValidee(
+                    $rapportActuel,
+                    $projet,
+                    $evaluationValidation,
+                    auth()->user(),
+                    $data['action']
+                ));
+            }
 
             // Envoyer une notification
             $this->envoyerNotificationValidationFaisabilite($projet, $data['action'], $data);

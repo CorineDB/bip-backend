@@ -61,6 +61,7 @@ class UnhashRouteParameters
         'fichier_id' => \App\Models\Fichier::class,
         'dossier_id' => \App\Models\Dossier::class,
         'projet_id' => \App\Models\Projet::class,
+        'idProjet' => \App\Models\Projet::class,
         // Ajouter d'autres paramètres selon les besoins
     ];
 

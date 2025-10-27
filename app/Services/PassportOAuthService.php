@@ -597,7 +597,8 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
     public function getClients(array $filters = [], int $perPage = 15): JsonResponse
     {
         try {
-            $query = Client::query();
+            // Don't load the owner relationship to avoid UUID/bigint mismatch issues
+            $query = Client::query()->without(['owner']);
 
             // Appliquer les filtres
             if (isset($filters['personal_access_client'])) {
@@ -645,7 +646,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
     public function getClient(string $clientId): JsonResponse
     {
         try {
-            $client = Client::find($clientId);
+            $client = Client::without(['owner'])->find($clientId);
 
             if (!$client) {
                 return response()->json([
@@ -683,6 +684,9 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
             $passwordClient = $data['password_client'] ?? false;
             $confidential = $data['confidential'] ?? true;
 
+            // Générer le secret en clair AVANT de le sauvegarder
+            $plainSecret = null;
+
             $client = new Client();
             $client->name = $data['name'];
             $client->redirect_uris = $data['redirect_uris'] ?? [];
@@ -692,10 +696,12 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
                 $client->secret = null;
                 $client->grant_types = ['personal_access'];
             } elseif ($passwordClient) {
-                $client->secret = Str::random(40);
+                $plainSecret = Str::random(40);
+                $client->secret = $plainSecret;  // Sera hashé automatiquement par Passport
                 $client->grant_types = ['password'];
             } else {
-                $client->secret = $confidential ? Str::random(40) : null;
+                $plainSecret = $confidential ? Str::random(40) : null;
+                $client->secret = $plainSecret;  // Sera hashé automatiquement par Passport si non-null
                 $client->grant_types = ['authorization_code'];
                 if ($confidential) {
                     $client->grant_types = ['authorization_code', 'client_credentials'];
@@ -707,7 +713,10 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
             return response()->json([
                 'statut' => 'success',
                 'message' => 'Client OAuth créé avec succès',
-                'data' => new PassportClientResource($client),
+                'data' => [
+                    'client' => new PassportClientResource($client),
+                    'secret' => $plainSecret  // Retourner le secret EN CLAIR (ou null)
+                ],
                 'statutCode' => 201
             ], 201);
 
@@ -727,9 +736,12 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
     public function createClientCredentials(array $data): JsonResponse
     {
         try {
+            // Générer le secret en clair AVANT de le sauvegarder
+            $plainSecret = Str::random(40);
+
             $client = new Client();
             $client->name = $data['name'];
-            $client->secret = Str::random(40);
+            $client->secret = $plainSecret;  // Sera hashé automatiquement par Passport
             $client->redirect_uris = $data['redirect_uris'] ?? [];
             $client->grant_types = ['client_credentials'];
             $client->revoked = false;
@@ -738,7 +750,10 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
             return response()->json([
                 'statut' => 'success',
                 'message' => 'Client credentials créé avec succès',
-                'data' => new PassportClientResource($client),
+                'data' => [
+                    'client' => new PassportClientResource($client),
+                    'secret' => $plainSecret  // Retourner le secret EN CLAIR
+                ],
                 'statutCode' => 201
             ], 201);
 
@@ -789,9 +804,12 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
     public function createPasswordClient(array $data): JsonResponse
     {
         try {
+            // Générer le secret en clair AVANT de le sauvegarder
+            $plainSecret = Str::random(40);
+
             $client = new Client();
             $client->name = $data['name'];
-            $client->secret = Str::random(40);
+            $client->secret = $plainSecret;  // Sera hashé automatiquement par Passport
             $client->redirect_uris = [];
             $client->grant_types = ['password'];
             $client->revoked = false;
@@ -800,7 +818,10 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
             return response()->json([
                 'statut' => 'success',
                 'message' => 'Client password grant créé avec succès',
-                'data' => new PassportClientResource($client),
+                'data' => [
+                    'client' => new PassportClientResource($client),
+                    'secret' => $plainSecret  // Retourner le secret EN CLAIR
+                ],
                 'statutCode' => 201
             ], 201);
 
@@ -820,9 +841,12 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
     public function createAuthorizationCodeClient(array $data): JsonResponse
     {
         try {
+            // Générer le secret en clair AVANT de le sauvegarder (si confidentiel)
+            $plainSecret = ($data['confidential'] ?? true) ? Str::random(40) : null;
+
             $client = new Client();
             $client->name = $data['name'];
-            $client->secret = ($data['confidential'] ?? true) ? Str::random(40) : null;
+            $client->secret = $plainSecret;  // Sera hashé automatiquement par Passport si non-null
             $client->redirect_uris = $data['redirect_uris'] ?? [];
             $client->grant_types = ['authorization_code'];
             $client->revoked = false;
@@ -831,7 +855,10 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
             return response()->json([
                 'statut' => 'success',
                 'message' => 'Client authorization code créé avec succès',
-                'data' => new PassportClientResource($client),
+                'data' => [
+                    'client' => new PassportClientResource($client),
+                    'secret' => $plainSecret  // Retourner le secret EN CLAIR (ou null)
+                ],
                 'statutCode' => 201
             ], 201);
 
@@ -851,7 +878,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
     public function getClientCredentials(array $filters = [], int $perPage = 15): JsonResponse
     {
         try {
-            $query = Client::whereJsonContains('grant_types', 'client_credentials');
+            $query = Client::without(['owner'])->whereJsonContains('grant_types', 'client_credentials');
 
             // Appliquer les filtres
             if (isset($filters['revoked'])) {
@@ -891,7 +918,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
     public function getPersonalAccessClients(array $filters = [], int $perPage = 15): JsonResponse
     {
         try {
-            $query = Client::where(function($q) {
+            $query = Client::without(['owner'])->where(function($q) {
                 $q->whereJsonContains('grant_types', 'personal_access')
                   ->orWhereJsonContains('grant_types', 'personal_access_token');
             });
@@ -934,7 +961,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
     public function getPasswordClients(array $filters = [], int $perPage = 15): JsonResponse
     {
         try {
-            $query = Client::whereJsonContains('grant_types', 'password');
+            $query = Client::without(['owner'])->whereJsonContains('grant_types', 'password');
 
             // Appliquer les filtres
             if (isset($filters['revoked'])) {
@@ -974,7 +1001,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
     public function getAuthorizationCodeClients(array $filters = [], int $perPage = 15): JsonResponse
     {
         try {
-            $query = Client::whereJsonContains('grant_types', 'authorization_code');
+            $query = Client::without(['owner'])->whereJsonContains('grant_types', 'authorization_code');
 
             // Appliquer les filtres
             if (isset($filters['revoked'])) {
@@ -1465,7 +1492,7 @@ class PassportOAuthService extends BaseService implements PassportOAuthServiceIn
     public function searchClients(string $search, int $perPage = 15): JsonResponse
     {
         try {
-            $clients = Client::where('name', 'like', '%' . $search . '%')
+            $clients = Client::without(['owner'])->where('name', 'like', '%' . $search . '%')
                            ->orderBy('created_at', 'desc')
                            ->paginate($perPage);
 

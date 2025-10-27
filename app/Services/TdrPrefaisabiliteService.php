@@ -14,6 +14,10 @@ use App\Models\Workflow;
 use App\Models\Dossier;
 use App\Enums\StatutIdee;
 use App\Enums\TypesProjet;
+use App\Events\EtudePrefaisabiliteValidee;
+use App\Events\RapportEvaluationExAnteSoumis;
+use App\Events\RapportEvaluationExAnteValide;
+use App\Events\RapportPrefaisabiliteSoumis;
 use App\Events\TdrPrefaisabiliteEvalue;
 use App\Events\TdrPrefaisabiliteSoumis;
 use App\Http\Resources\FichierResource;
@@ -1917,6 +1921,17 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             DB::commit();
 
+            // Déclencher l'événement de validation si ce n'est pas une sauvegarde
+            if ($data['action'] !== 'sauvegarder' && isset($rapportActuel) && $rapportActuel) {
+                event(new EtudePrefaisabiliteValidee(
+                    $rapportActuel,
+                    $projet,
+                    $evaluationValidation,
+                    auth()->user(),
+                    $data['action']
+                ));
+            }
+
             // Envoyer une notification
             $this->envoyerNotificationValidationPrefaisabilite($projet, $data['action'], $data);
 
@@ -2401,6 +2416,17 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
 
             DB::commit();
+
+            // Déclencher l'événement de soumission du rapport si ce n'est pas un brouillon
+            if (!$estBrouillon) {
+                $estResoumission = (bool) $rapport->parent_id;
+                event(new RapportPrefaisabiliteSoumis(
+                    $rapport,
+                    $projet,
+                    auth()->user(),
+                    $estResoumission
+                ));
+            }
 
             return response()->json([
                 'success' => true,
@@ -3656,6 +3682,17 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             DB::commit();
 
+            // Déclencher l'événement de soumission du rapport
+            if ($rapport) {
+                $estResoumission = (bool) $rapport->parent_id;
+                event(new RapportEvaluationExAnteSoumis(
+                    $rapport,
+                    $projet,
+                    auth()->user(),
+                    $estResoumission
+                ));
+            }
+
             // Envoyer une notification
             $this->envoyerNotificationSoumissionRapportExAnte($projet, $rapport, $fichiersAnnexes);
 
@@ -3838,6 +3875,15 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             );
 
             DB::commit();
+
+            // Déclencher l'événement de validation
+            event(new RapportEvaluationExAnteValide(
+                $rapportExistant,
+                $projet,
+                $evaluationValidation,
+                auth()->user(),
+                $data['action']
+            ));
 
             // Envoyer une notification
             $this->envoyerNotificationValidationFinale($projet, $data['action'], $data);

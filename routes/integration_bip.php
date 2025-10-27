@@ -8,6 +8,8 @@ Route::prefix('integration-bip')->middleware(['auth.client', 'scope:integration-
     Route::middleware([/* 'scopes:sync-sigfp' */])->group(function () {
         Route::get('/projets-mature', [IntegrationController::class, 'index'])
             ->name('projets.mature');
+        Route::get('/projets-mature/{idProjet}', [IntegrationController::class, 'show'])
+            ->name('projet.show');
         Route::put('/projets/{idProjet}', [IntegrationController::class, 'update'])
             ->name('projet.update');
     });
