@@ -116,10 +116,15 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
             // Mettre à jour le statut
             $projet->statut = $nouveauStatut;
 
-            // Mettre à jour le flag "ancien" si fourni
-            if (isset($data['est_ancien'])) {
-                $projet->est_ancien = $est_ancien;
-            }
+            // Mettre à jour le flag "est_ancien"
+            $projet->est_ancien = $est_ancien;
+
+            /*$projet->commentaires()->attach(["commentaire" => $data['commentaire']]);
+
+            // Mettre à jour le commentaire si fourni
+            if (isset($data['commentaire'])) {
+                $projet->commentaire = $data['commentaire'];
+            }*/
 
             $projet->save();
 
