@@ -13,7 +13,6 @@ use App\Jobs\SendEmailJob;
 use App\Jobs\CreateDefaultOrganisationRoles;
 use App\Models\Dpaf;
 use App\Models\Organisation;
-use App\Observers\OrganisationObserver;
 use App\Repositories\Contracts\OrganisationRepositoryInterface;
 use App\Repositories\Contracts\PersonneRepositoryInterface;
 use App\Repositories\Contracts\RoleRepositoryInterface;
