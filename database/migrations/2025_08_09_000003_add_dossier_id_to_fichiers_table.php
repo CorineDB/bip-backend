@@ -13,6 +13,7 @@ return new class extends Migration
             Schema::table('fichiers', function (Blueprint $table) {
                 // Ajouter la colonne seulement si elle n'existe pas
                 if (!Schema::hasColumn('fichiers', 'dossier_id')) {
+                    $table->unsignedBigInteger('secteur_id')->nullable(true)->index();
                     $table->foreignId('dossier_id')->nullable()->after('commentaire')->constrained('dossiers')->onDelete('set null');
                 }
 
