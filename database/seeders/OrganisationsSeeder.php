@@ -653,7 +653,7 @@ class OrganisationsSeeder extends Seeder
                         'type' => 'etatique',
                     ]
                 ]
-            ],
+            ]
             // Ajoute autant que nécessaire...
         ];
 
