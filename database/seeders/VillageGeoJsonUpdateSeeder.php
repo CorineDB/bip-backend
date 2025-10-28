@@ -104,6 +104,7 @@ class VillageGeoJsonUpdateSeeder extends Seeder
         // La clé ici est le nom normalisé (sans accents/caractères spéciaux)
 
         $codesToKeep = [];
+        $villagesData = []; // Tableau pour stocker les nouveaux villages à créer
 
         // 3. PARSING DU GEOJSON et PRÉPARATION du tableau d'upsert
         foreach ($features as $index => $feature) {
@@ -165,6 +166,16 @@ class VillageGeoJsonUpdateSeeder extends Seeder
                 }
             }
         }
+
+        // 4. INSERTION des nouveaux villages en batch
+        if (!empty($villagesData)) {
+            DB::table('villages')->insert($villagesData);
+            $this->command->info('✅ ' . count($villagesData) . ' nouveaux villages créés à partir du GeoJSON.');
+        } else {
+            $this->command->info('ℹ️ Aucun nouveau village à créer.');
+        }
+
+        $this->command->info('✅ Mise à jour terminée. Total villages : ' . Village::count());
 
         /*{
         // 1. CHARGEMENT et PRÉPARATION des données GeoJSON
