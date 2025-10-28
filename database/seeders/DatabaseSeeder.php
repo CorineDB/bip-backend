@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             CanevasRedactionFicheIdeeProjet::class,
             GrilleEvaluationPreliminaireSeeder::class,
             GrilleAMCSeeder::class,
+            GrilleEvaluationPertinenceSeeder::class,
             CanvasRedactionNoteConceptuelleSeeder::class,
             ChecklistMesuresAdaptationSeeder::class,
 
