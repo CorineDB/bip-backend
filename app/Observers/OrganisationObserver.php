@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Jobs\CreateDefaultOrganisationRoles;
 use App\Models\Organisation;
 use App\Models\Role;
+use Illuminate\Support\Facades\Log;
 
 class OrganisationObserver
 {
@@ -23,9 +24,21 @@ class OrganisationObserver
      */
     public function saved(Organisation $organisation): void
     {
+        Log::info("OrganisationObserver::saved() déclenché", [
+            'organisation_id' => $organisation->id,
+            'nom' => $organisation->nom,
+            'type' => $organisation->type,
+            'wasRecentlyCreated' => $organisation->wasRecentlyCreated
+        ]);
+
         // Créer les rôles par défaut uniquement si le ministère vient d'être créé
         if ($organisation->type === 'ministere' && $organisation->wasRecentlyCreated) {
+            Log::info("Dispatch du job CreateDefaultOrganisationRoles pour {$organisation->nom}");
             CreateDefaultOrganisationRoles::dispatch($organisation);
+        } else {
+            Log::info("Job CreateDefaultOrganisationRoles NON dispatché", [
+                'raison' => !($organisation->type === 'ministere') ? 'Type n\'est pas ministere' : 'Organisation n\'est pas wasRecentlyCreated'
+            ]);
         }
     }
 
