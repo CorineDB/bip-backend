@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\CategorieDocument;
 use App\Models\Document;
-use App\Models\Section;
+use App\Models\ChampSection;
 use App\Models\Champ;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -4488,7 +4488,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
             'ordre_affichage' => $sectionData['ordre_affichage'],
         ];
 
-        $section = Section::updateOrCreate([
+        $section = ChampSection::updateOrCreate([
             'intitule' => $sectionData['intitule'],
             'documentId' => $document->id,
             'parentSectionId' => $parentSection ? $parentSection->id : null
