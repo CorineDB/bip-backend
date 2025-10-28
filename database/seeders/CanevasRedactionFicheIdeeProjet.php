@@ -2,1595 +2,4514 @@
 
 namespace Database\Seeders;
 
-use App\Models\CategorieProjet;
+use App\Models\CategorieDocument;
 use App\Models\Document;
+use App\Models\Section;
+use App\Models\Champ;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class CanevasRedactionFicheIdeeProjet extends Seeder
 {
-
     protected $documentData = [
-
-        "nom" => "Fiche de remplissage d'une idée de projet",
-        "slug" => "fiche-idee",
-        "description" => "Formulaire de rédaction d'une idée de projet",
-        "type" => "formulaire",
-        "sections" => [
+        'nom' => 'Fiche de remplissage d\'une idée de projet',
+        'slug' => 'fiche-idee',
+        'description' => 'Formulaire de rédaction d\'une idée de projet',
+        'type' => 'formulaire',
+        'sections' => [
             [
-                "key" => "informations-générales",
-                "intitule" => "Informations Générales",
-                "description" => "Informations Générales",
-                "ordre_affichage" => 1,
-                "type" => "formulaire",
-                "champs" => [
+                'key' => 'informations-générales',
+                'intitule' => 'Origine du projet',
+                'description' => 'Informations Générales',
+                'ordre_affichage' => 1,
+                'type' => 'formulaire',
+                'champs' => [
                     [
-                        "label" => "Titre du projet",
-                        "info" => "",
-                        "key" => "titre_projet",
-                        "attribut" => "titre_projet",
-                        "placeholder" => "Saisissez le titre de votre projet",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 1,
-                        "type_champ" => "text",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 255,
-                                "min_length" => 1
+                        'label' => 'Titre du projet',
+                        'info' => '',
+                        'key' => 'titre_projet',
+                        'attribut' => 'titre_projet',
+                        'placeholder' => 'Saisissez le titre de votre projet',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 1,
+                        'type_champ' => 'text',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 255,
+                                'min_length' => 1,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => true
-                            ]
+                            'validations_rules' => [
+                                'required' => true,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => true,
                     ],
                     [
-                        "label" => "Sigle du projet",
-                        "info" => "",
-                        "key" => "sigle",
-                        "attribut" => "sigle",
-                        "placeholder" => "Acronyme du projet",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 2,
-                        "type_champ" => "text",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 50,
-                                "min_length" => 1
+                        'label' => 'Sigle du projet',
+                        'info' => '',
+                        'key' => 'sigle',
+                        'attribut' => 'sigle',
+                        'placeholder' => 'Acronyme du projet',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 2,
+                        'type_champ' => 'text',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 50,
+                                'min_length' => 1,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "min" => 0
-                            ]
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
                     ],
                     [
-                        "label" => "Categorie de projet",
-                        "info" => "",
-                        "key" => "categorieId",
-                        "attribut" => "categorieId",
-                        "placeholder" => "Selectionnez la categorie de l'idée de projet",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 3,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => null,
-                                "min_length" => 1
+                        'label' => 'Categorie de projet',
+                        'info' => '',
+                        'key' => 'categorieId',
+                        'attribut' => 'categorieId',
+                        'placeholder' => 'Selectionnez la categorie de l\'idée de projet',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 3,
+                        'type_champ' => 'select',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => NULL,
+                                'min_length' => 1,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false
-                            ]
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => true,
                     ],
                     [
-                        "label" => "Durée du projet",
-                        "info" => "En Mois",
-                        "key" => "duree",
-                        "attribut" => "duree",
-                        "placeholder" => "Ex: 24 mois",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 4,
-                        "type_champ" => "number",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => null,
-                                "min_length" => 1
+                        'label' => 'Origine du projet',
+                        'info' => '',
+                        'key' => 'origine',
+                        'attribut' => 'origine',
+                        'placeholder' => 'D\'où vient l\'idée de ce projet ?',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 4,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 1500,
+                                'min_length' => 20,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "min" => 0,
-                                "array" => true
-                            ]
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                ],
+                'sous_sections' => [
+                    [
+                        'key' => 'Fondement',
+                        'intitule' => 'Fondement',
+                        'description' => 'Action de la stratégie/Plan/Programme',
+                        'ordre_affichage' => 10,
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Objectifs de developpement durable',
+                                'info' => '',
+                                'key' => 'odds',
+                                'attribut' => 'odds',
+                                'placeholder' => 'Sélectionnez un ODD',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Cibles des odds',
+                                'info' => '',
+                                'key' => 'cibles',
+                                'attribut' => 'cibles',
+                                'placeholder' => 'Sélectionnez les cibles',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Objectifs de developpement durable',
+                                'info' => '',
+                                'key' => 'odds',
+                                'attribut' => 'odds',
+                                'placeholder' => 'Sélectionnez un ODD',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Cibles des odds',
+                                'info' => '',
+                                'key' => 'cibles',
+                                'attribut' => 'cibles',
+                                'placeholder' => 'Sélectionnez les cibles',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
                     ],
                     [
-                        "label" => "Coût en euro",
-                        "info" => "",
-                        "key" => "cout_euro",
-                        "attribut" => "cout_euro",
-                        "placeholder" => "0",
-                        "is_required" => true,
-                        "default_value" => "0",
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 5,
-                        "type_champ" => "number",
-                        "meta_options" => [
-                            "configs" => [
-                                "max" => null,
-                                "min" => 0,
-                                "step" => 1
+                        'key' => 'Plan National de Developpement',
+                        'intitule' => 'Plan National de Developpement',
+                        'description' => 'Coherence avec Plan National de developpement',
+                        'ordre_affichage' => 11,
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Orientations stratégique du PND',
+                                'info' => '',
+                                'key' => 'orientations_strategiques',
+                                'attribut' => 'orientations_strategiques',
+                                'placeholder' => 'Choisissez une orientation',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            [
+                                'label' => 'Objectifs stratégique du PND',
+                                'info' => '',
+                                'key' => 'objectifs_strategiques',
+                                'attribut' => 'objectifs_strategiques',
+                                'placeholder' => 'Choisissez un objectif',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "min" => 0,
-                                "numeric" => 0,
-                            ]
+                            [
+                                'label' => 'Résultats stratégique du PND',
+                                'info' => '',
+                                'key' => 'resultats_strategiques',
+                                'attribut' => 'resultats_strategiques',
+                                'placeholder' => 'Choisissez un résultat',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 3,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Orientations stratégique du PND',
+                                'info' => '',
+                                'key' => 'orientations_strategiques',
+                                'attribut' => 'orientations_strategiques',
+                                'placeholder' => 'Choisissez une orientation',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Objectifs stratégique du PND',
+                                'info' => '',
+                                'key' => 'objectifs_strategiques',
+                                'attribut' => 'objectifs_strategiques',
+                                'placeholder' => 'Choisissez un objectif',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 3,
+                                'label' => 'Résultats stratégique du PND',
+                                'info' => '',
+                                'key' => 'resultats_strategiques',
+                                'attribut' => 'resultats_strategiques',
+                                'placeholder' => 'Choisissez un résultat',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
                     ],
                     [
-                        "label" => "Coût en dollar canadien",
-                        "info" => "",
-                        "key" => "cout_dollar_canadien",
-                        "attribut" => "cout_dollar_canadien",
-                        "placeholder" => "0",
-                        "is_required" => true,
-                        "default_value" => "0",
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 5,
-                        "type_champ" => "number",
-                        "meta_options" => [
-                            "configs" => [
-                                "max" => null,
-                                "min" => 0,
-                                "step" => 1
+                        'key' => 'Programme d\'Action du Gouvernement',
+                        'intitule' => 'Programme d\'Action du Gouvernement',
+                        'description' => 'Alignement au programme d\'action du Gouvernement',
+                        'ordre_affichage' => 12,
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Piliers du PAG',
+                                'info' => '',
+                                'key' => 'piliers_pag',
+                                'attribut' => 'piliers_pag',
+                                'placeholder' => 'Choisissez les piliers',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            [
+                                'label' => 'Axes du PAG',
+                                'info' => '',
+                                'key' => 'axes_pag',
+                                'attribut' => 'axes_pag',
+                                'placeholder' => 'Choisissez les axes du pags',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "min" => 0,
-                                "numeric" => 0
-                            ]
+                            [
+                                'label' => 'Actions du PAG',
+                                'info' => '',
+                                'key' => 'actions_pag',
+                                'attribut' => 'actions_pag',
+                                'placeholder' => 'Choisissez une action',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 3,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Piliers du PAG',
+                                'info' => '',
+                                'key' => 'piliers_pag',
+                                'attribut' => 'piliers_pag',
+                                'placeholder' => 'Choisissez les piliers',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Axes du PAG',
+                                'info' => '',
+                                'key' => 'axes_pag',
+                                'attribut' => 'axes_pag',
+                                'placeholder' => 'Choisissez les axes du pags',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 3,
+                                'label' => 'Actions du PAG',
+                                'info' => '',
+                                'key' => 'actions_pag',
+                                'attribut' => 'actions_pag',
+                                'placeholder' => 'Choisissez une action',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
                     ],
                     [
-                        "label" => "Coût estimatif du projet",
-                        "info" => "",
-                        "key" => "cout_estimatif_projet",
-                        "attribut" => "cout_estimatif_projet",
-                        "placeholder" => "0",
-                        "is_required" => true,
-                        "default_value" => "0",
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 5,
-                        "type_champ" => "number",
-                        "meta_options" => [
-                            "configs" => [
-                                "max" => null,
-                                "min" => 0,
-                                "step" => 1
+                        'key' => '',
+                        'intitule' => 'Autres',
+                        'description' => ' ',
+                        'ordre_affichage' => 13,
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Situation actuelle',
+                                'info' => 'Problématique et/ou besoins',
+                                'key' => 'situation_actuelle',
+                                'attribut' => 'situation_actuelle',
+                                'placeholder' => 'Décrivez la situation actuelle',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 2000,
+                                        'min_length' => 20,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            [
+                                'label' => 'Situation désirée',
+                                'info' => 'Finalité, Buts',
+                                'key' => 'situation_desiree',
+                                'attribut' => 'situation_desiree',
+                                'placeholder' => 'Décrivez la situation visée',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 2000,
+                                        'min_length' => 20,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "min" => 2,
-                                "array" => true
-                            ]
+                            [
+                                'label' => 'Contraintes à respecter et gérer',
+                                'info' => '',
+                                'key' => 'contraintes',
+                                'attribut' => 'contraintes',
+                                'placeholder' => 'Identifiez les principales contraintes',
+                                'is_required' => false,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 3,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Situation actuelle',
+                                'info' => 'Problématique et/ou besoins',
+                                'key' => 'situation_actuelle',
+                                'attribut' => 'situation_actuelle',
+                                'placeholder' => 'Décrivez la situation actuelle',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 2000,
+                                        'min_length' => 20,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Situation désirée',
+                                'info' => 'Finalité, Buts',
+                                'key' => 'situation_desiree',
+                                'attribut' => 'situation_desiree',
+                                'placeholder' => 'Décrivez la situation visée',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 2000,
+                                        'min_length' => 20,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 3,
+                                'label' => 'Contraintes à respecter et gérer',
+                                'info' => '',
+                                'key' => 'contraintes',
+                                'attribut' => 'contraintes',
+                                'placeholder' => 'Identifiez les principales contraintes',
+                                'is_required' => false,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                    ],
+                ],
+                'elements' => [
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 1,
+                        'label' => 'Titre du projet',
+                        'info' => '',
+                        'key' => 'titre_projet',
+                        'attribut' => 'titre_projet',
+                        'placeholder' => 'Saisissez le titre de votre projet',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'text',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 255,
+                                'min_length' => 1,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'required' => true,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => true,
                     ],
                     [
-                        "label" => "Coût en dollar americain",
-                        "info" => "",
-                        "key" => "cout_dollar_americain",
-                        "attribut" => "cout_dollar_americain",
-                        "placeholder" => "0",
-                        "is_required" => true,
-                        "default_value" => "0",
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 5,
-                        "type_champ" => "number",
-                        "meta_options" => [
-                            "configs" => [
-                                "max" => null,
-                                "min" => 0,
-                                "step" => 1
+                        'element_type' => 'field',
+                        'ordre_affichage' => 2,
+                        'label' => 'Sigle du projet',
+                        'info' => '',
+                        'key' => 'sigle',
+                        'attribut' => 'sigle',
+                        'placeholder' => 'Acronyme du projet',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'text',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 50,
+                                'min_length' => 1,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "min" => 0,
-                                "numeric" => 0
-                            ]
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ]
-                ]
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 3,
+                        'label' => 'Categorie de projet',
+                        'info' => '',
+                        'key' => 'categorieId',
+                        'attribut' => 'categorieId',
+                        'placeholder' => 'Selectionnez la categorie de l\'idée de projet',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'select',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => NULL,
+                                'min_length' => 1,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => true,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 4,
+                        'label' => 'Origine du projet',
+                        'info' => '',
+                        'key' => 'origine',
+                        'attribut' => 'origine',
+                        'placeholder' => 'D\'où vient l\'idée de ce projet ?',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 1500,
+                                'min_length' => 20,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'section',
+                        'ordre_affichage' => 10,
+                        'key' => 'Fondement',
+                        'intitule' => 'Fondement',
+                        'description' => 'Action de la stratégie/Plan/Programme',
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Objectifs de developpement durable',
+                                'info' => '',
+                                'key' => 'odds',
+                                'attribut' => 'odds',
+                                'placeholder' => 'Sélectionnez un ODD',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Cibles des odds',
+                                'info' => '',
+                                'key' => 'cibles',
+                                'attribut' => 'cibles',
+                                'placeholder' => 'Sélectionnez les cibles',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                        'sous_sections' => [],
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Objectifs de developpement durable',
+                                'info' => '',
+                                'key' => 'odds',
+                                'attribut' => 'odds',
+                                'placeholder' => 'Sélectionnez un ODD',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Cibles des odds',
+                                'info' => '',
+                                'key' => 'cibles',
+                                'attribut' => 'cibles',
+                                'placeholder' => 'Sélectionnez les cibles',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                    ],
+                    [
+                        'element_type' => 'section',
+                        'ordre_affichage' => 11,
+                        'key' => 'Plan National de Developpement',
+                        'intitule' => 'Plan National de Developpement',
+                        'description' => 'Coherence avec Plan National de developpement',
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Orientations stratégique du PND',
+                                'info' => '',
+                                'key' => 'orientations_strategiques',
+                                'attribut' => 'orientations_strategiques',
+                                'placeholder' => 'Choisissez une orientation',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Objectifs stratégique du PND',
+                                'info' => '',
+                                'key' => 'objectifs_strategiques',
+                                'attribut' => 'objectifs_strategiques',
+                                'placeholder' => 'Choisissez un objectif',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Résultats stratégique du PND',
+                                'info' => '',
+                                'key' => 'resultats_strategiques',
+                                'attribut' => 'resultats_strategiques',
+                                'placeholder' => 'Choisissez un résultat',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 3,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                        'sous_sections' => [],
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Orientations stratégique du PND',
+                                'info' => '',
+                                'key' => 'orientations_strategiques',
+                                'attribut' => 'orientations_strategiques',
+                                'placeholder' => 'Choisissez une orientation',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Objectifs stratégique du PND',
+                                'info' => '',
+                                'key' => 'objectifs_strategiques',
+                                'attribut' => 'objectifs_strategiques',
+                                'placeholder' => 'Choisissez un objectif',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 3,
+                                'label' => 'Résultats stratégique du PND',
+                                'info' => '',
+                                'key' => 'resultats_strategiques',
+                                'attribut' => 'resultats_strategiques',
+                                'placeholder' => 'Choisissez un résultat',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                    ],
+                    [
+                        'element_type' => 'section',
+                        'ordre_affichage' => 12,
+                        'key' => 'Programme d\'Action du Gouvernement',
+                        'intitule' => 'Programme d\'Action du Gouvernement',
+                        'description' => 'Alignement au programme d\'action du Gouvernement',
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Piliers du PAG',
+                                'info' => '',
+                                'key' => 'piliers_pag',
+                                'attribut' => 'piliers_pag',
+                                'placeholder' => 'Choisissez les piliers',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Axes du PAG',
+                                'info' => '',
+                                'key' => 'axes_pag',
+                                'attribut' => 'axes_pag',
+                                'placeholder' => 'Choisissez les axes du pags',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Actions du PAG',
+                                'info' => '',
+                                'key' => 'actions_pag',
+                                'attribut' => 'actions_pag',
+                                'placeholder' => 'Choisissez une action',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 3,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                        'sous_sections' => [],
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Piliers du PAG',
+                                'info' => '',
+                                'key' => 'piliers_pag',
+                                'attribut' => 'piliers_pag',
+                                'placeholder' => 'Choisissez les piliers',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Axes du PAG',
+                                'info' => '',
+                                'key' => 'axes_pag',
+                                'attribut' => 'axes_pag',
+                                'placeholder' => 'Choisissez les axes du pags',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 3,
+                                'label' => 'Actions du PAG',
+                                'info' => '',
+                                'key' => 'actions_pag',
+                                'attribut' => 'actions_pag',
+                                'placeholder' => 'Choisissez une action',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                    ],
+                    [
+                        'element_type' => 'section',
+                        'ordre_affichage' => 13,
+                        'key' => '',
+                        'intitule' => 'Autres',
+                        'description' => ' ',
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Situation actuelle',
+                                'info' => 'Problématique et/ou besoins',
+                                'key' => 'situation_actuelle',
+                                'attribut' => 'situation_actuelle',
+                                'placeholder' => 'Décrivez la situation actuelle',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 2000,
+                                        'min_length' => 20,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Situation désirée',
+                                'info' => 'Finalité, Buts',
+                                'key' => 'situation_desiree',
+                                'attribut' => 'situation_desiree',
+                                'placeholder' => 'Décrivez la situation visée',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 2000,
+                                        'min_length' => 20,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Contraintes à respecter et gérer',
+                                'info' => '',
+                                'key' => 'contraintes',
+                                'attribut' => 'contraintes',
+                                'placeholder' => 'Identifiez les principales contraintes',
+                                'is_required' => false,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 3,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                        'sous_sections' => [],
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Situation actuelle',
+                                'info' => 'Problématique et/ou besoins',
+                                'key' => 'situation_actuelle',
+                                'attribut' => 'situation_actuelle',
+                                'placeholder' => 'Décrivez la situation actuelle',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 2000,
+                                        'min_length' => 20,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Situation désirée',
+                                'info' => 'Finalité, Buts',
+                                'key' => 'situation_desiree',
+                                'attribut' => 'situation_desiree',
+                                'placeholder' => 'Décrivez la situation visée',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 2000,
+                                        'min_length' => 20,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 3,
+                                'label' => 'Contraintes à respecter et gérer',
+                                'info' => '',
+                                'key' => 'contraintes',
+                                'attribut' => 'contraintes',
+                                'placeholder' => 'Identifiez les principales contraintes',
+                                'is_required' => false,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                    ],
+                ],
             ],
             [
-                "key" => "secteur-d-activite-et-localisation",
-                "intitule" => "Secteur d'activité et Localisation",
-                "description" => "Secteur d'activité et Localisation",
-                "ordre_affichage" => 2,
-                "type" => "formulaire",
-                "champs" => [
+                'key' => 'secteur-d\'activité-et-localisation',
+                'intitule' => 'Description sommaire de l’idée de projet',
+                'description' => 'Description sommaire de l’idée de projet',
+                'ordre_affichage' => 2,
+                'type' => 'formulaire',
+                'champs' => [
                     [
-                        "label" => "Grand Secteur",
-                        "info" => "",
-                        "key" => "grand_secteur",
-                        "attribut" => "grand_secteur",
-                        "placeholder" => "Choisissez un grand secteur",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 1,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => []
+                        'label' => 'Description générale du projet',
+                        'info' => '(Contexte & objectifs]',
+                        'key' => 'description_projet',
+                        'attribut' => 'description_projet',
+                        'placeholder' => 'Description détaillée du projet',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 1,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 3000,
+                                'min_length' => 50,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false
-                            ]
+                            'validations_rules' => [
+                                'max' => 3000,
+                                'min' => 50,
+                                'required' => true,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
                     ],
                     [
-                        "label" => "Secteur",
-                        "info" => "",
-                        "key" => "secteur",
-                        "attribut" => "secteur",
-                        "placeholder" => "Choisissez un secteur",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 2,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => []
+                        'label' => 'Objectif Specifiques',
+                        'info' => '',
+                        'key' => 'objectifs_specifiques',
+                        'attribut' => 'objectifs_specifiques',
+                        'placeholder' => 'Décrivez l\'objectif principal du projet',
+                        'is_required' => false,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 2,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 5000,
+                                'min_length' => 20,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false
-                            ]
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
                     ],
                     [
-                        "label" => "Sous Secteur",
-                        "info" => "",
-                        "key" => "secteurId",
-                        "attribut" => "secteurId",
-                        "placeholder" => "Choisissez un sous secteur",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 3,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => []
+                        'label' => 'Durée du projet',
+                        'info' => 'En Mois',
+                        'key' => 'duree',
+                        'attribut' => 'duree',
+                        'placeholder' => 'Ex: 24 mois',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 3,
+                        'type_champ' => 'number',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => NULL,
+                                'min_length' => 1,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false
-                            ]
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
                     ],
                     [
-                        "label" => "Départements",
-                        "info" => "",
-                        "key" => "departements",
-                        "attribut" => "departements",
-                        "placeholder" => "Choisissez un département",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 4,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [],
-                                "multiple" => true
+                        'label' => 'Echéancier des principaux extrants',
+                        'info' => '(Indicateurs de réalisations physiques]',
+                        'key' => 'echeancier',
+                        'attribut' => 'echeancier',
+                        'placeholder' => '',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 4,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 3000,
+                                'min_length' => 50,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "min" => 0,
-                                "array" => true
-                            ]
+                            'validations_rules' => [
+                                'max' => 3000,
+                                'min' => 50,
+                                'required' => true,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
                     ],
                     [
-                        "label" => "Communes",
-                        "info" => "",
-                        "key" => "communes",
-                        "attribut" => "communes",
-                        "placeholder" => "Choisissez une commune",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 5,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [],
-                                "multiple" => true
+                        'label' => 'Description des principaux extrants',
+                        'info' => '(spécifications techniques]',
+                        'key' => 'description_extrants',
+                        'attribut' => 'description_extrants',
+                        'placeholder' => 'Description détaillée des principaux extrants du projet',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 5,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 3000,
+                                'min_length' => 50,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "min" => 0,
-                                "array" => true
-                            ]
+                            'validations_rules' => [
+                                'max' => 3000,
+                                'min' => 50,
+                                'required' => true,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
                     ],
                     [
-                        "label" => "Arrondissements",
-                        "info" => "",
-                        "key" => "arrondissements",
-                        "attribut" => "arrondissements",
-                        "placeholder" => "Choisissez un arrondissement",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 6,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [],
-                                "multiple" => true
+                        'label' => 'Caractéristiques techniques',
+                        'info' => '',
+                        'key' => 'caracteristiques_techniques',
+                        'attribut' => 'caracteristiques_techniques',
+                        'placeholder' => 'Caractéristiques techniques',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 6,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 2000,
+                                'min_length' => 10,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "min" => 0,
-                                "array" => true
-                            ]
+                            'validations_rules' => [
+                                'max' => 2000,
+                                'min' => 10,
+                                'required' => true,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
                     ],
                     [
-                        "label" => "Villages",
-                        "info" => "",
-                        "key" => "villages",
-                        "attribut" => "villages",
-                        "placeholder" => "Selectionnez les villages",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 7,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "multiple" => true,
-                                "min_length" => 1
+                        'label' => 'Résultats attendus',
+                        'info' => '',
+                        'key' => 'resultats_attendus',
+                        'attribut' => 'resultats_attendus',
+                        'placeholder' => 'Décrivez les résultats attendus',
+                        'is_required' => false,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 7,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 2,
+                                'max_length' => 2000,
+                                'min_length' => 20,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "min" => 0,
-                                "array" => true
-                            ]
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ]
-                ]
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'label' => 'Impact environnemental',
+                        'info' => '',
+                        'key' => 'impact_environnement',
+                        'attribut' => 'impact_environnement',
+                        'placeholder' => 'Impact sur l\'environnement',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 8,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'max' => 1500,
+                                'min' => 10,
+                                'required' => true,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'label' => 'Aspects organisationnels',
+                        'info' => '',
+                        'key' => 'aspect_organisationnel',
+                        'attribut' => 'aspect_organisationnel',
+                        'placeholder' => '',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 9,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'max' => 1500,
+                                'min' => 10,
+                                'required' => true,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'label' => 'Estimation des coûts et benefices',
+                        'info' => '',
+                        'key' => 'estimation_couts',
+                        'attribut' => 'estimation_couts',
+                        'placeholder' => '',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 10,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'max' => 1500,
+                                'min' => 10,
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'label' => 'Risques immédiats',
+                        'info' => '',
+                        'key' => 'risques_immediats',
+                        'attribut' => 'risques_immediats',
+                        'placeholder' => 'Risques identifiés',
+                        'is_required' => false,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 11,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 2,
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'max' => 1500,
+                                'min' => 10,
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'label' => 'Autre solutions alternatives considere et non retenues',
+                        'info' => '',
+                        'key' => 'description',
+                        'attribut' => 'description',
+                        'placeholder' => 'Autre solutions alternatives',
+                        'is_required' => false,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 12,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'label' => 'Conclusions',
+                        'info' => '',
+                        'key' => 'conclusions',
+                        'attribut' => 'conclusions',
+                        'placeholder' => 'Conclusions générales',
+                        'is_required' => false,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 13,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'label' => 'Description sommaire',
+                        'info' => '',
+                        'key' => 'sommaire',
+                        'attribut' => 'sommaire',
+                        'placeholder' => 'Description sommaire',
+                        'is_required' => false,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 14,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'label' => 'Demandeur',
+                        'info' => 'Porteur de projet',
+                        'key' => 'demandeur',
+                        'attribut' => 'demandeur',
+                        'placeholder' => 'Porteur de projet',
+                        'is_required' => false,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 15,
+                        'type_champ' => 'text',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'min' => 0,
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                ],
+                'sous_sections' => [
+                    [
+                        'key' => 'Secteur',
+                        'intitule' => 'Secteur d\'intervention',
+                        'description' => 'Entites Thematique',
+                        'ordre_affichage' => 1,
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Grand Secteur',
+                                'info' => '',
+                                'key' => 'grand_secteur',
+                                'attribut' => 'grand_secteur',
+                                'placeholder' => 'Choisissez un grand secteur',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Secteur',
+                                'info' => '',
+                                'key' => 'secteur',
+                                'attribut' => 'secteur',
+                                'placeholder' => 'Choisissez un secteur',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Sous Secteur',
+                                'info' => '',
+                                'key' => 'secteurId',
+                                'attribut' => 'secteurId',
+                                'placeholder' => 'Choisissez un sous secteur',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 3,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Grand Secteur',
+                                'info' => '',
+                                'key' => 'grand_secteur',
+                                'attribut' => 'grand_secteur',
+                                'placeholder' => 'Choisissez un grand secteur',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Secteur',
+                                'info' => '',
+                                'key' => 'secteur',
+                                'attribut' => 'secteur',
+                                'placeholder' => 'Choisissez un secteur',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 3,
+                                'label' => 'Sous Secteur',
+                                'info' => '',
+                                'key' => 'secteurId',
+                                'attribut' => 'secteurId',
+                                'placeholder' => 'Choisissez un sous secteur',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                    ],
+                    [
+                        'key' => 'Localisation',
+                        'intitule' => 'Zone d\'intervention',
+                        'description' => 'Localisation',
+                        'ordre_affichage' => 2,
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Départements',
+                                'info' => '',
+                                'key' => 'departements',
+                                'attribut' => 'departements',
+                                'placeholder' => 'Choisissez un département',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Communes',
+                                'info' => '',
+                                'key' => 'communes',
+                                'attribut' => 'communes',
+                                'placeholder' => 'Choisissez une commune',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Arrondissements',
+                                'info' => '',
+                                'key' => 'arrondissements',
+                                'attribut' => 'arrondissements',
+                                'placeholder' => 'Choisissez un arrondissement',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 3,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Villages',
+                                'info' => '',
+                                'key' => 'villages',
+                                'attribut' => 'villages',
+                                'placeholder' => 'Selectionnez les villages',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 4,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'multiple' => true,
+                                        'min_length' => 1,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Départements',
+                                'info' => '',
+                                'key' => 'departements',
+                                'attribut' => 'departements',
+                                'placeholder' => 'Choisissez un département',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Communes',
+                                'info' => '',
+                                'key' => 'communes',
+                                'attribut' => 'communes',
+                                'placeholder' => 'Choisissez une commune',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 3,
+                                'label' => 'Arrondissements',
+                                'info' => '',
+                                'key' => 'arrondissements',
+                                'attribut' => 'arrondissements',
+                                'placeholder' => 'Choisissez un arrondissement',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 4,
+                                'label' => 'Villages',
+                                'info' => '',
+                                'key' => 'villages',
+                                'attribut' => 'villages',
+                                'placeholder' => 'Selectionnez les villages',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'multiple' => true,
+                                        'min_length' => 1,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                    ],
+                ],
+                'elements' => [
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 1,
+                        'label' => 'Description générale du projet',
+                        'info' => '(Contexte & objectifs]',
+                        'key' => 'description_projet',
+                        'attribut' => 'description_projet',
+                        'placeholder' => 'Description détaillée du projet',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 3000,
+                                'min_length' => 50,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'max' => 3000,
+                                'min' => 50,
+                                'required' => true,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'section',
+                        'ordre_affichage' => 1,
+                        'key' => 'Secteur',
+                        'intitule' => 'Secteur d\'intervention',
+                        'description' => 'Entites Thematique',
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Grand Secteur',
+                                'info' => '',
+                                'key' => 'grand_secteur',
+                                'attribut' => 'grand_secteur',
+                                'placeholder' => 'Choisissez un grand secteur',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Secteur',
+                                'info' => '',
+                                'key' => 'secteur',
+                                'attribut' => 'secteur',
+                                'placeholder' => 'Choisissez un secteur',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Sous Secteur',
+                                'info' => '',
+                                'key' => 'secteurId',
+                                'attribut' => 'secteurId',
+                                'placeholder' => 'Choisissez un sous secteur',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 3,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                        'sous_sections' => [],
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Grand Secteur',
+                                'info' => '',
+                                'key' => 'grand_secteur',
+                                'attribut' => 'grand_secteur',
+                                'placeholder' => 'Choisissez un grand secteur',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Secteur',
+                                'info' => '',
+                                'key' => 'secteur',
+                                'attribut' => 'secteur',
+                                'placeholder' => 'Choisissez un secteur',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 3,
+                                'label' => 'Sous Secteur',
+                                'info' => '',
+                                'key' => 'secteurId',
+                                'attribut' => 'secteurId',
+                                'placeholder' => 'Choisissez un sous secteur',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 2,
+                        'label' => 'Objectif Specifiques',
+                        'info' => '',
+                        'key' => 'objectifs_specifiques',
+                        'attribut' => 'objectifs_specifiques',
+                        'placeholder' => 'Décrivez l\'objectif principal du projet',
+                        'is_required' => false,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 5000,
+                                'min_length' => 20,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'section',
+                        'ordre_affichage' => 2,
+                        'key' => 'Localisation',
+                        'intitule' => 'Zone d\'intervention',
+                        'description' => 'Localisation',
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Départements',
+                                'info' => '',
+                                'key' => 'departements',
+                                'attribut' => 'departements',
+                                'placeholder' => 'Choisissez un département',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Communes',
+                                'info' => '',
+                                'key' => 'communes',
+                                'attribut' => 'communes',
+                                'placeholder' => 'Choisissez une commune',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Arrondissements',
+                                'info' => '',
+                                'key' => 'arrondissements',
+                                'attribut' => 'arrondissements',
+                                'placeholder' => 'Choisissez un arrondissement',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 3,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Villages',
+                                'info' => '',
+                                'key' => 'villages',
+                                'attribut' => 'villages',
+                                'placeholder' => 'Selectionnez les villages',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 4,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'multiple' => true,
+                                        'min_length' => 1,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                        'sous_sections' => [],
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Départements',
+                                'info' => '',
+                                'key' => 'departements',
+                                'attribut' => 'departements',
+                                'placeholder' => 'Choisissez un département',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Communes',
+                                'info' => '',
+                                'key' => 'communes',
+                                'attribut' => 'communes',
+                                'placeholder' => 'Choisissez une commune',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 3,
+                                'label' => 'Arrondissements',
+                                'info' => '',
+                                'key' => 'arrondissements',
+                                'attribut' => 'arrondissements',
+                                'placeholder' => 'Choisissez un arrondissement',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 4,
+                                'label' => 'Villages',
+                                'info' => '',
+                                'key' => 'villages',
+                                'attribut' => 'villages',
+                                'placeholder' => 'Selectionnez les villages',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'multiple' => true,
+                                        'min_length' => 1,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 3,
+                        'label' => 'Durée du projet',
+                        'info' => 'En Mois',
+                        'key' => 'duree',
+                        'attribut' => 'duree',
+                        'placeholder' => 'Ex: 24 mois',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'number',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => NULL,
+                                'min_length' => 1,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 4,
+                        'label' => 'Echéancier des principaux extrants',
+                        'info' => '(Indicateurs de réalisations physiques]',
+                        'key' => 'echeancier',
+                        'attribut' => 'echeancier',
+                        'placeholder' => '',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 3000,
+                                'min_length' => 50,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'max' => 3000,
+                                'min' => 50,
+                                'required' => true,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 5,
+                        'label' => 'Description des principaux extrants',
+                        'info' => '(spécifications techniques]',
+                        'key' => 'description_extrants',
+                        'attribut' => 'description_extrants',
+                        'placeholder' => 'Description détaillée des principaux extrants du projet',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 3000,
+                                'min_length' => 50,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'max' => 3000,
+                                'min' => 50,
+                                'required' => true,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 6,
+                        'label' => 'Caractéristiques techniques',
+                        'info' => '',
+                        'key' => 'caracteristiques_techniques',
+                        'attribut' => 'caracteristiques_techniques',
+                        'placeholder' => 'Caractéristiques techniques',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 2000,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'max' => 2000,
+                                'min' => 10,
+                                'required' => true,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 7,
+                        'label' => 'Résultats attendus',
+                        'info' => '',
+                        'key' => 'resultats_attendus',
+                        'attribut' => 'resultats_attendus',
+                        'placeholder' => 'Décrivez les résultats attendus',
+                        'is_required' => false,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 2,
+                                'max_length' => 2000,
+                                'min_length' => 20,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 8,
+                        'label' => 'Impact environnemental',
+                        'info' => '',
+                        'key' => 'impact_environnement',
+                        'attribut' => 'impact_environnement',
+                        'placeholder' => 'Impact sur l\'environnement',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'max' => 1500,
+                                'min' => 10,
+                                'required' => true,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 9,
+                        'label' => 'Aspects organisationnels',
+                        'info' => '',
+                        'key' => 'aspect_organisationnel',
+                        'attribut' => 'aspect_organisationnel',
+                        'placeholder' => '',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'max' => 1500,
+                                'min' => 10,
+                                'required' => true,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 10,
+                        'label' => 'Estimation des coûts et benefices',
+                        'info' => '',
+                        'key' => 'estimation_couts',
+                        'attribut' => 'estimation_couts',
+                        'placeholder' => '',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 3,
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'max' => 1500,
+                                'min' => 10,
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 11,
+                        'label' => 'Risques immédiats',
+                        'info' => '',
+                        'key' => 'risques_immediats',
+                        'attribut' => 'risques_immediats',
+                        'placeholder' => 'Risques identifiés',
+                        'is_required' => false,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'rows' => 2,
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'max' => 1500,
+                                'min' => 10,
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 12,
+                        'label' => 'Autre solutions alternatives considere et non retenues',
+                        'info' => '',
+                        'key' => 'description',
+                        'attribut' => 'description',
+                        'placeholder' => 'Autre solutions alternatives',
+                        'is_required' => false,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 13,
+                        'label' => 'Conclusions',
+                        'info' => '',
+                        'key' => 'conclusions',
+                        'attribut' => 'conclusions',
+                        'placeholder' => 'Conclusions générales',
+                        'is_required' => false,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 14,
+                        'label' => 'Description sommaire',
+                        'info' => '',
+                        'key' => 'sommaire',
+                        'attribut' => 'sommaire',
+                        'placeholder' => 'Description sommaire',
+                        'is_required' => false,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'textarea',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 15,
+                        'label' => 'Demandeur',
+                        'info' => 'Porteur de projet',
+                        'key' => 'demandeur',
+                        'attribut' => 'demandeur',
+                        'placeholder' => 'Porteur de projet',
+                        'is_required' => false,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'type_champ' => 'text',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 1500,
+                                'min_length' => 10,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'min' => 0,
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                ],
             ],
             [
-                "key" => "cadres-stratégiques",
-                "intitule" => "Cadres stratégiques",
-                "description" => "Cadres stratégiques",
-                "ordre_affichage" => 3,
-                "type" => "formulaire",
-                "champs" => [
+                'key' => 'financement-et-bénéficiaires',
+                'intitule' => 'Financement et Bénéficiaires',
+                'description' => 'Financement et Bénéficiaires',
+                'ordre_affichage' => 3,
+                'type' => 'formulaire',
+                'champs' => [
                     [
-                        "label" => "Objectifs de developpement durable",
-                        "info" => "",
-                        "key" => "odds",
-                        "attribut" => "odds",
-                        "placeholder" => "Sélectionnez un ODD",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 1,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [],
-                                "multiple" => true
+                        'label' => 'Coût estimatif du projet',
+                        'info' => '',
+                        'key' => 'cout_estimatif_projet',
+                        'attribut' => 'cout_estimatif_projet',
+                        'placeholder' => '0',
+                        'is_required' => true,
+                        'default_value' => 0,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 1,
+                        'type_champ' => 'number',
+                        'meta_options' => [
+                            'configs' => [
+                                'max' => NULL,
+                                'min' => 0,
+                                'step' => 1,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "array" => true,
-                                "min" => 0
-                            ]
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
                     ],
                     [
-                        "label" => "Cibles des odds",
-                        "info" => "",
-                        "key" => "cibles",
-                        "attribut" => "cibles",
-                        "placeholder" => "Sélectionnez les cibles",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 2,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [],
-                                "multiple" => true
+                        'label' => 'Coût en dollar canadien',
+                        'info' => '',
+                        'key' => 'cout_dollar_canadien',
+                        'attribut' => 'cout_dollar_canadien',
+                        'placeholder' => '0',
+                        'is_required' => true,
+                        'default_value' => 0,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 2,
+                        'type_champ' => 'number',
+                        'meta_options' => [
+                            'configs' => [
+                                'max' => NULL,
+                                'min' => 0,
+                                'step' => 1,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "array" => true,
-                                "min" => 0
-                            ]
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
                     ],
                     [
-                        "label" => "Orientations stratégique du PND",
-                        "info" => "",
-                        "key" => "orientations_strategiques",
-                        "attribut" => "orientations_strategiques",
-                        "placeholder" => "Choisissez une orientation",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 3,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [],
-                                "multiple" => true
+                        'label' => 'Coût en dollar americain',
+                        'info' => '',
+                        'key' => 'cout_dollar_americain',
+                        'attribut' => 'cout_dollar_americain',
+                        'placeholder' => '0',
+                        'is_required' => true,
+                        'default_value' => 0,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 3,
+                        'type_champ' => 'number',
+                        'meta_options' => [
+                            'configs' => [
+                                'max' => NULL,
+                                'min' => 0,
+                                'step' => 1,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "array" => true,
-                                "min" => 0
-                            ]
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
                     ],
                     [
-                        "label" => "Objectifs stratégique du PND",
-                        "info" => "",
-                        "key" => "objectifs_strategiques",
-                        "attribut" => "objectifs_strategiques",
-                        "placeholder" => "Choisissez un objectif",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 4,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [],
-                                "multiple" => true
+                        'label' => 'Coût en euro',
+                        'info' => '',
+                        'key' => 'cout_euro',
+                        'attribut' => 'cout_euro',
+                        'placeholder' => '0',
+                        'is_required' => true,
+                        'default_value' => 0,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 4,
+                        'type_champ' => 'number',
+                        'meta_options' => [
+                            'configs' => [
+                                'max' => NULL,
+                                'min' => 0,
+                                'step' => 1,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "array" => true,
-                                "min" => 0
-                            ]
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                ],
+                'sous_sections' => [
+                    [
+                        'key' => 'Financements',
+                        'intitule' => 'Financements',
+                        'description' => 'Financements',
+                        'ordre_affichage' => 1,
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Types de financement',
+                                'info' => '',
+                                'key' => 'types_financement',
+                                'attribut' => 'types_financement',
+                                'placeholder' => 'Choisissez un type',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Natures du financement',
+                                'info' => '',
+                                'key' => 'natures_financement',
+                                'attribut' => 'natures_financement',
+                                'placeholder' => 'Choisissez une nature',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'label' => 'Sources de financement',
+                                'info' => '',
+                                'key' => 'sources_financement',
+                                'attribut' => 'sources_financement',
+                                'placeholder' => 'Choisissez une source',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 3,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Types de financement',
+                                'info' => '',
+                                'key' => 'types_financement',
+                                'attribut' => 'types_financement',
+                                'placeholder' => 'Choisissez un type',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Natures du financement',
+                                'info' => '',
+                                'key' => 'natures_financement',
+                                'attribut' => 'natures_financement',
+                                'placeholder' => 'Choisissez une nature',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 3,
+                                'label' => 'Sources de financement',
+                                'info' => '',
+                                'key' => 'sources_financement',
+                                'attribut' => 'sources_financement',
+                                'placeholder' => 'Choisissez une source',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
                     ],
                     [
-                        "label" => "Résultats stratégique du PND",
-                        "info" => "",
-                        "key" => "resultats_strategiques",
-                        "attribut" => "resultats_strategiques",
-                        "placeholder" => "Choisissez un résultat",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 5,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [],
-                                "multiple" => true
+                        'key' => 'Beneficiaires',
+                        'intitule' => 'Beneficiaires',
+                        'description' => 'Beneficiaires',
+                        'ordre_affichage' => 2,
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Public cible',
+                                'info' => '',
+                                'key' => 'public_cible',
+                                'attribut' => 'public_cible',
+                                'placeholder' => 'Décrivez le public cible du projet',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'max' => 1000,
+                                        'min' => 10,
+                                        'string' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            [
+                                'label' => 'Constats majeurs',
+                                'info' => '',
+                                'key' => 'constats_majeurs',
+                                'attribut' => 'constats_majeurs',
+                                'placeholder' => '',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'max' => 1000,
+                                        'min' => 10,
+                                        'string' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "array" => true,
-                                "min" => 0
-                            ]
+                            [
+                                'label' => 'Parties prenantes',
+                                'info' => '',
+                                'key' => 'parties_prenantes',
+                                'attribut' => 'parties_prenantes',
+                                'placeholder' => 'Identifiez les parties prenantes impliquées',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 3,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Public cible',
+                                'info' => '',
+                                'key' => 'public_cible',
+                                'attribut' => 'public_cible',
+                                'placeholder' => 'Décrivez le public cible du projet',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'max' => 1000,
+                                        'min' => 10,
+                                        'string' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Constats majeurs',
+                                'info' => '',
+                                'key' => 'constats_majeurs',
+                                'attribut' => 'constats_majeurs',
+                                'placeholder' => '',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'max' => 1000,
+                                        'min' => 10,
+                                        'string' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 3,
+                                'label' => 'Parties prenantes',
+                                'info' => '',
+                                'key' => 'parties_prenantes',
+                                'attribut' => 'parties_prenantes',
+                                'placeholder' => 'Identifiez les parties prenantes impliquées',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
+                    ],
+                ],
+                'elements' => [
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 1,
+                        'label' => 'Coût estimatif du projet',
+                        'info' => '',
+                        'key' => 'cout_estimatif_projet',
+                        'attribut' => 'cout_estimatif_projet',
+                        'placeholder' => '0',
+                        'is_required' => true,
+                        'default_value' => 0,
+                        'isEvaluated' => false,
+                        'type_champ' => 'number',
+                        'meta_options' => [
+                            'configs' => [
+                                'max' => NULL,
+                                'min' => 0,
+                                'step' => 1,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
                     ],
                     [
-                        "label" => "Piliers du PAG",
-                        "info" => "",
-                        "key" => "piliers_pag",
-                        "attribut" => "piliers_pag",
-                        "placeholder" => "Choisissez les piliers",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 7,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [],
-                                "multiple" => true
+                        'element_type' => 'section',
+                        'ordre_affichage' => 1,
+                        'key' => 'Financements',
+                        'intitule' => 'Financements',
+                        'description' => 'Financements',
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Types de financement',
+                                'info' => '',
+                                'key' => 'types_financement',
+                                'attribut' => 'types_financement',
+                                'placeholder' => 'Choisissez un type',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            [
+                                'label' => 'Natures du financement',
+                                'info' => '',
+                                'key' => 'natures_financement',
+                                'attribut' => 'natures_financement',
+                                'placeholder' => 'Choisissez une nature',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "array" => true,
-                                "min" => 0
-                            ]
+                            [
+                                'label' => 'Sources de financement',
+                                'info' => '',
+                                'key' => 'sources_financement',
+                                'attribut' => 'sources_financement',
+                                'placeholder' => 'Choisissez une source',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 3,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'sous_sections' => [],
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Types de financement',
+                                'info' => '',
+                                'key' => 'types_financement',
+                                'attribut' => 'types_financement',
+                                'placeholder' => 'Choisissez un type',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Natures du financement',
+                                'info' => '',
+                                'key' => 'natures_financement',
+                                'attribut' => 'natures_financement',
+                                'placeholder' => 'Choisissez une nature',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 3,
+                                'label' => 'Sources de financement',
+                                'info' => '',
+                                'key' => 'sources_financement',
+                                'attribut' => 'sources_financement',
+                                'placeholder' => 'Choisissez une source',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'select',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'options' => [],
+                                        'multiple' => true,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
+                        ],
                     ],
                     [
-                        "label" => "Axes du PAG",
-                        "info" => "",
-                        "key" => "axes_pag",
-                        "attribut" => "axes_pag",
-                        "placeholder" => "Choisissez les axes du pags",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 8,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [],
-                                "multiple" => true
+                        'element_type' => 'field',
+                        'ordre_affichage' => 2,
+                        'label' => 'Coût en dollar canadien',
+                        'info' => '',
+                        'key' => 'cout_dollar_canadien',
+                        'attribut' => 'cout_dollar_canadien',
+                        'placeholder' => '0',
+                        'is_required' => true,
+                        'default_value' => 0,
+                        'isEvaluated' => false,
+                        'type_champ' => 'number',
+                        'meta_options' => [
+                            'configs' => [
+                                'max' => NULL,
+                                'min' => 0,
+                                'step' => 1,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "array" => true,
-                                "min" => 0
-                            ]
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
                     ],
                     [
-                        "label" => "Actions du PAG",
-                        "info" => "",
-                        "key" => "actions_pag",
-                        "attribut" => "actions_pag",
-                        "placeholder" => "Choisissez une action",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 9,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [],
-                                "multiple" => true
+                        'element_type' => 'section',
+                        'ordre_affichage' => 2,
+                        'key' => 'Beneficiaires',
+                        'intitule' => 'Beneficiaires',
+                        'description' => 'Beneficiaires',
+                        'type' => 'formulaire',
+                        'champs' => [
+                            [
+                                'label' => 'Public cible',
+                                'info' => '',
+                                'key' => 'public_cible',
+                                'attribut' => 'public_cible',
+                                'placeholder' => 'Décrivez le public cible du projet',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 1,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'max' => 1000,
+                                        'min' => 10,
+                                        'string' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            [
+                                'label' => 'Constats majeurs',
+                                'info' => '',
+                                'key' => 'constats_majeurs',
+                                'attribut' => 'constats_majeurs',
+                                'placeholder' => '',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 2,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'max' => 1000,
+                                        'min' => 10,
+                                        'string' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "array" => true,
-                                "min" => 0
-                            ]
+                            [
+                                'label' => 'Parties prenantes',
+                                'info' => '',
+                                'key' => 'parties_prenantes',
+                                'attribut' => 'parties_prenantes',
+                                'placeholder' => 'Identifiez les parties prenantes impliquées',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'ordre_affichage' => 3,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ]
-                ]
-            ],
-            [
-                "key" => "financement-et-bénéficiaires",
-                "intitule" => "Financement et Bénéficiaires",
-                "description" => "Financement et Bénéficiaires",
-                "ordre_affichage" => 4,
-                "type" => "formulaire",
-                "champs" => [
-                    [
-                        "label" => "Types de financement",
-                        "info" => "",
-                        "key" => "types_financement",
-                        "attribut" => "types_financement",
-                        "placeholder" => "Choisissez un type",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 1,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [],
-                                "multiple" => true
+                        'sous_sections' => [],
+                        'elements' => [
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 1,
+                                'label' => 'Public cible',
+                                'info' => '',
+                                'key' => 'public_cible',
+                                'attribut' => 'public_cible',
+                                'placeholder' => 'Décrivez le public cible du projet',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'max' => 1000,
+                                        'min' => 10,
+                                        'string' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 2,
+                                'label' => 'Constats majeurs',
+                                'info' => '',
+                                'key' => 'constats_majeurs',
+                                'attribut' => 'constats_majeurs',
+                                'placeholder' => '',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'max' => 1000,
+                                        'min' => 10,
+                                        'string' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "array" => true,
-                                "min" => 0
-                            ]
+                            [
+                                'element_type' => 'field',
+                                'ordre_affichage' => 3,
+                                'label' => 'Parties prenantes',
+                                'info' => '',
+                                'key' => 'parties_prenantes',
+                                'attribut' => 'parties_prenantes',
+                                'placeholder' => 'Identifiez les parties prenantes impliquées',
+                                'is_required' => true,
+                                'default_value' => NULL,
+                                'isEvaluated' => false,
+                                'type_champ' => 'textarea',
+                                'meta_options' => [
+                                    'configs' => [
+                                        'max_length' => 1000,
+                                        'min_length' => 10,
+                                    ],
+                                    'conditions' => [
+                                        'disable' => false,
+                                        'visible' => true,
+                                        'conditions' => [],
+                                    ],
+                                    'validations_rules' => [
+                                        'min' => 0,
+                                        'array' => true,
+                                        'required' => false,
+                                    ],
+                                ],
+                                'champ_standard' => true,
+                                'startWithNewLine' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
                     ],
                     [
-                        "label" => "Natures du financement",
-                        "info" => "",
-                        "key" => "natures_financement",
-                        "attribut" => "natures_financement",
-                        "placeholder" => "Choisissez une nature",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 2,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [],
-                                "multiple" => true
+                        'element_type' => 'field',
+                        'ordre_affichage' => 3,
+                        'label' => 'Coût en dollar americain',
+                        'info' => '',
+                        'key' => 'cout_dollar_americain',
+                        'attribut' => 'cout_dollar_americain',
+                        'placeholder' => '0',
+                        'is_required' => true,
+                        'default_value' => 0,
+                        'isEvaluated' => false,
+                        'type_champ' => 'number',
+                        'meta_options' => [
+                            'configs' => [
+                                'max' => NULL,
+                                'min' => 0,
+                                'step' => 1,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "array" => true,
-                                "min" => 0
-                            ]
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
                     ],
                     [
-                        "label" => "Sources de financement",
-                        "info" => "",
-                        "key" => "sources_financement",
-                        "attribut" => "sources_financement",
-                        "placeholder" => "Choisissez une source",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 3,
-                        "type_champ" => "select",
-                        "meta_options" => [
-                            "configs" => [
-                                "options" => [],
-                                "multiple" => true
+                        'element_type' => 'field',
+                        'ordre_affichage' => 4,
+                        'label' => 'Coût en euro',
+                        'info' => '',
+                        'key' => 'cout_euro',
+                        'attribut' => 'cout_euro',
+                        'placeholder' => '0',
+                        'is_required' => true,
+                        'default_value' => 0,
+                        'isEvaluated' => false,
+                        'type_champ' => 'number',
+                        'meta_options' => [
+                            'configs' => [
+                                'max' => NULL,
+                                'min' => 0,
+                                'step' => 1,
                             ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
                             ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "array" => true,
-                                "min" => 0
-                            ]
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
                         ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
                     ],
-                    [
-                        "label" => "Public cible",
-                        "info" => "",
-                        "key" => "public_cible",
-                        "attribut" => "public_cible",
-                        "placeholder" => "Décrivez le public cible du projet",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 4,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 1000,
-                                "min_length" => 10
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 1000,
-                                "min" => 10
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Constats majeurs",
-                        "info" => "",
-                        "key" => "constats_majeurs",
-                        "attribut" => "constats_majeurs",
-                        "placeholder" => "",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 5,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 1000,
-                                "min_length" => 10
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 1000,
-                                "min" => 10
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Parties prenantes",
-                        "info" => "",
-                        "key" => "parties_prenantes",
-                        "attribut" => "parties_prenantes",
-                        "placeholder" => "Identifiez les parties prenantes impliquées",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 6,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 1000,
-                                "min_length" => 10
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "array" => true,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ]
-                ]
-            ],
-            [
-                "key" => "contexte-et-analyse",
-                "intitule" => "Contexte et Analyse",
-                "description" => "Contexte et Analyse",
-                "ordre_affichage" => 5,
-                "type" => "formulaire",
-                "champs" => [
-                    [
-                        "label" => "Objectif du projet",
-                        "info" => "",
-                        "key" => "objectif_general",
-                        "attribut" => "objectif_general",
-                        "placeholder" => "Décrivez l'objectif principal du projet",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 1,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 2000,
-                                "min_length" => 20
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 2000,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Objectif Specifiques",
-                        "info" => "",
-                        "key" => "objectifs_specifiques",
-                        "attribut" => "objectifs_specifiques",
-                        "placeholder" => "Décrivez l'objectif principal du projet",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 1,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 2000,
-                                "min_length" => 20
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "array" => true,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Résultats attendus",
-                        "info" => "",
-                        "key" => "resultats_attendus",
-                        "attribut" => "resultats_attendus",
-                        "placeholder" => "Décrivez les résultats attendus",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 2,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 2000,
-                                "min_length" => 20
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "array" => true,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Origine du projet",
-                        "info" => "",
-                        "key" => "origine",
-                        "attribut" => "origine",
-                        "placeholder" => "D'où vient l'idée de ce projet ?",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 3,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 1500,
-                                "min_length" => 20
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 1500,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Fondement du projet",
-                        "info" => "",
-                        "key" => "fondement",
-                        "attribut" => "fondement",
-                        "placeholder" => "Sur quoi se base ce projet ?",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 4,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 1500,
-                                "min_length" => 20
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 1500,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Situation actuelle",
-                        "info" => "",
-                        "key" => "situation_actuelle",
-                        "attribut" => "situation_actuelle",
-                        "placeholder" => "Décrivez la situation actuelle",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 5,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 2000,
-                                "min_length" => 20
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 2000,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Situation désirée",
-                        "info" => "",
-                        "key" => "situation_desiree",
-                        "attribut" => "situation_desiree",
-                        "placeholder" => "Décrivez la situation visée",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 6,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 2000,
-                                "min_length" => 20
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 2000,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Contraintes",
-                        "info" => "",
-                        "key" => "contraintes",
-                        "attribut" => "contraintes",
-                        "placeholder" => "Identifiez les principales contraintes",
-                        "is_required" => false,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 7,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 1000,
-                                "min_length" => 10
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 2000,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ]
-                ]
-            ],
-            [
-                "key" => "description-technique-et-impacts",
-                "intitule" => "Description technique et Impacts",
-                "description" => "Description technique et Impacts",
-                "ordre_affichage" => 6,
-                "type" => "formulaire",
-                "champs" => [
-                    [
-                        "label" => "Description du projet",
-                        "info" => "",
-                        "key" => "description_projet",
-                        "attribut" => "description_projet",
-                        "placeholder" => "Description détaillée du projet",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 1,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 3000,
-                                "min_length" => 50
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 3000,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Description du projet",
-                        "info" => "",
-                        "key" => "description_extrants",
-                        "attribut" => "description_extrants",
-                        "placeholder" => "Description détaillée du projet",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 1,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 3000,
-                                "min_length" => 50
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 3000,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Echéancier des principaux extrants",
-                        "info" => "",
-                        "key" => "echeancier",
-                        "attribut" => "echeancier",
-                        "placeholder" => "Description détaillée du projet",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 1,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 3000,
-                                "min_length" => 50
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 3000,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Caractéristiques techniques",
-                        "info" => "",
-                        "key" => "caracteristiques_techniques",
-                        "attribut" => "caracteristiques_techniques",
-                        "placeholder" => "Caractéristiques techniques",
-                        "is_required" => false,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 2,
-                        "type_champ" => "textarea",
-                        "sectionId" => 43,
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 2000,
-                                "min_length" => 10
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 2000,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Impact environnemental",
-                        "info" => "",
-                        "key" => "impact_environnement",
-                        "attribut" => "impact_environnement",
-                        "placeholder" => "Impact sur l'environnement",
-                        "is_required" => false,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 3,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 1500,
-                                "min_length" => 10
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 1500,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Estimation des coûts et benefices",
-                        "info" => "",
-                        "key" => "estimation_couts",
-                        "attribut" => "estimation_couts",
-                        "placeholder" => "",
-                        "is_required" => true,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 4,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 1500,
-                                "min_length" => 10
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 1500,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Aspects organisationnels",
-                        "info" => "",
-                        "key" => "aspect_organisationnel",
-                        "attribut" => "aspect_organisationnel",
-                        "placeholder" => "",
-                        "is_required" => false,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 4,
-                        "type_champ" => "textarea",
-                        "sectionId" => 43,
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 1500,
-                                "min_length" => 10
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 1500,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Risques immédiats",
-                        "info" => "",
-                        "key" => "risques_immediats",
-                        "attribut" => "risques_immediats",
-                        "placeholder" => "Risques identifiés",
-                        "is_required" => false,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 5,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 1500,
-                                "min_length" => 10
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 1500,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Description sommaire",
-                        "info" => "",
-                        "key" => "sommaire",
-                        "attribut" => "sommaire",
-                        "placeholder" => "Description sommaire",
-                        "is_required" => false,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 6,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 1500,
-                                "min_length" => 10
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 1500,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Autre solutions alternatives considere et non retenues",
-                        "info" => "",
-                        "key" => "description",
-                        "attribut" => "description",
-                        "placeholder" => "Autre solutions alternatives",
-                        "is_required" => false,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 6,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 1500,
-                                "min_length" => 10
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 1500,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ],
-                    [
-                        "label" => "Conclusions",
-                        "info" => "",
-                        "key" => "conclusions",
-                        "attribut" => "conclusions",
-                        "placeholder" => "Conclusions générales",
-                        "is_required" => false,
-                        "default_value" => null,
-                        "isEvaluated" => false,
-                        "ordre_affichage" => 6,
-                        "type_champ" => "textarea",
-                        "meta_options" => [
-                            "configs" => [
-                                "max_length" => 1500,
-                                "min_length" => 10
-                            ],
-                            "conditions" => [
-                                "disable" => false,
-                                "visible" => true,
-                                "conditions" => []
-                            ],
-                            "validations_rules" => [
-                                "required" => false,
-                                "string" => true,
-                                "max" => 1500,
-                                "min" => 0
-                            ]
-                        ],
-                        "champ_standard" => true,
-                        "startWithNewLine" => null
-                    ]
                 ]
             ]
         ]
     ];
 
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        /* DB::table('champs')->truncate();
-        DB::table('champs_sections')->truncate();
-        DB::table('documents')->truncate();
-        DB::table('categories_document')->truncate(); */
-        $categorieDocument = \App\Models\CategorieDocument::firstOrCreate([
-            'slug' => "fiche-idee",
-        ], [
-            'nom' => "Canevas standardise d'ideation de projet",
-            'slug' => "fiche-idee",
-            "description" => "Formulaire standard d'ideation de projet",
-            "format" => "document"
-        ]);
+        DB::beginTransaction();
 
-        // Mode création
-        // Extraire les données relationnelles avant création
-        $sectionsData = $this->documentData['sections'] ?? [];
+        try {
+            $categorieDocument = CategorieDocument::updateOrCreate([
+                'slug' => 'fiche-idee'
+            ], [
+                'nom' => "Fiche idee",
+                'slug' => 'fiche-idee',
+                'format' => 'formulaire'
+            ]);
 
-        // Nettoyer les données du document principal
-        $documentData = collect($this->documentData)->except(['sections', 'champs', 'id'])->toArray();
+            $sectionsData = $this->documentData['sections'] ?? [];
+            $champsData = $this->documentData['champs'] ?? [];
+            $documentData = collect($this->documentData)->except(['sections', 'champs', 'id', 'categorie'])->toArray();
+            $documentData = array_merge($documentData, ["categorieId" => $categorieDocument->id]);
 
-        $documentData = array_merge($documentData, [
-            "categorieId" => $categorieDocument->id
-        ]);
+            $document = Document::updateOrCreate(['nom' => $documentData['nom']], $documentData);
 
-        // Créer le document principal
-        $document = Document::updateOrCreate(['slug' => "fiche-idee"], $documentData);
+            // Créer les sections
+            if (!empty($sectionsData)) {
+                foreach ($sectionsData as $sectionData) {
+                    $this->createSection($sectionData, $document, null);
+                }
+            }
 
-        // Traiter les sections avec leurs champs
-        if (!empty($sectionsData)) {
-            $this->createSectionsWithChamps($document, $sectionsData);
+            // Créer les champs directs (sans section)
+            if (!empty($champsData)) {
+                foreach ($champsData as $champData) {
+                    $this->createChamp($champData, $document, null);
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw $e;
         }
     }
 
-
-
-    /**
-     * Créer les sections avec leurs champs associés
-     */
-    private function createSectionsWithChamps($document, array $sectionsData): void
+    private function createSection(array $sectionData, $document, $parentSection = null): void
     {
-        foreach ($sectionsData as $sectionData) {
-            $section = $document->sections()->create([
-                'intitule' => $sectionData['intitule'],
-                'description' => $sectionData['description'],
-                'ordre_affichage' => $sectionData['ordre_affichage'],
-                'type' => $sectionData['type'] ?? null
-            ]);
+        $sectionAttributes = [
+            'intitule' => $sectionData['intitule'],
+            'slug' => $sectionData['slug'] ?? null,
+            'description' => $sectionData['description'] ?? null,
+            'documentId' => $document->id,
+            'parentSectionId' => $parentSection ? $parentSection->id : null,
+            'ordre_affichage' => $sectionData['ordre_affichage'],
+        ];
 
-            // Créer les champs de cette section si fournis
-            if (isset($sectionData['champs']) && is_array($sectionData['champs'])) {
-                foreach ($sectionData['champs'] as $champData) {
-                    $this->createChamp($champData, $document, $section);
-                }
+        $section = Section::updateOrCreate([
+            'intitule' => $sectionData['intitule'],
+            'documentId' => $document->id,
+            'parentSectionId' => $parentSection ? $parentSection->id : null
+        ], $sectionAttributes);
+
+        // Créer les sous-sections
+        if (isset($sectionData['childSections']) && !empty($sectionData['childSections'])) {
+            foreach ($sectionData['childSections'] as $childSection) {
+                $this->createSection($childSection, $document, $section);
+            }
+        }
+
+        // Créer les champs de la section
+        if (isset($sectionData['champs']) && !empty($sectionData['champs'])) {
+            foreach ($sectionData['champs'] as $champData) {
+                $this->createChamp($champData, $document, $section);
             }
         }
     }
 
-    /**
-     * Créer un champ avec validation des données
-     */
-    private function createChamp(array $champData, $document, $section = null): void
+    private function createChamp(array $champData, $document, $parentSection = null): void
     {
         $champAttributes = [
             'label' => $champData['label'],
@@ -1601,19 +4520,18 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
             'champ_standard' => $champData['champ_standard'] ?? false,
             'isEvaluated' => $champData['isEvaluated'] ?? false,
             'default_value' => $champData['default_value'] ?? null,
-            //'commentaire' => isset($champData['commentaire']) ? $champData['commentaire'] : null,
             'ordre_affichage' => $champData['ordre_affichage'],
             'type_champ' => $champData['type_champ'],
             'meta_options' => $champData['meta_options'] ?? [],
+            'startWithNewLine' => $champData['startWithNewLine'] ?? false,
             'documentId' => $document->id,
-            'sectionId' => $section ? $section->id : null
+            'sectionId' => $parentSection ? $parentSection->id : null
         ];
 
-        // Créer le champ via la relation appropriée
-        if ($section) {
-            $section->champs()->create($champAttributes);
-        } else {
-            $document->champs()->create($champAttributes);
-        }
+        Champ::updateOrCreate([
+            'attribut' => $champData['attribut'],
+            'sectionId' => $parentSection ? $parentSection->id : null,
+            'documentId' => $document->id
+        ], $champAttributes);
     }
 }

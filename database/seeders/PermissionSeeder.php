@@ -292,13 +292,31 @@ class PermissionSeeder extends Seeder
             "Super Admin" => [],
 
             // DPAF
-            "Responsable Projet" => [
+            "Responsable Projet" => [],
+            "Organisation" => [
+                // === A. GESTION ADMINISTRATIVE ===
+                // Gestion des utilisateurs
+                "gerer-les-utilisateurs", "voir-la-liste-des-utilisateurs", "creer-un-utilisateur",
+                "modifier-un-utilisateur", "supprimer-un-utilisateur",
+
+                // Gestion des groupes-utilisateur
+                "gerer-les-groupes-utilisateur", "voir-la-liste-des-groupes-utilisateur",
+                "creer-un-groupe-utilisateur", "modifier-un-groupe-utilisateur",
+                "supprimer-un-groupe-utilisateur", "assigner-un-role-a-un-groupe-utilisateur",
+                "retirer-un-role-a-un-groupe-utilisateur", "ajouter-un-utilisateur-a-un-groupe-utilisateur",
+                "ajouter-nouvel-utilisateur-a-un-groupe-utilisateur",
+
+                // Gestion des rôles et permissions
+                "gerer-les-roles", "voir-la-liste-des-roles", "creer-un-role",
+                "modifier-un-role", "supprimer-un-role", "assigner-des-permissions-a-un-role",
+                "retirer-des-permissions-a-un-role",
+
                 // === CONSULTATION ADMINISTRATIVE ===
-                "voir-la-liste-des-utilisateurs",
-                "voir-la-liste-des-groupes-utilisateur",
-                "voir-la-liste-des-roles",
-                "voir-la-dpaf",
+                "gerer-la-dpaf", "voir-la-dpaf", "creer-la-dpaf", "modifier-la-dpaf", "supprimer-la-dpaf",
                 "voir-la-liste-des-departements",
+
+                // Gestion des organisations
+                "gerer-les-organisations", "voir-la-liste-des-organisations", "creer-une-organisation", "modifier-une-organisation", "supprimer-une-organisation",
 
                 // === CONSULTATION DES DONNÉES DE RÉFÉRENCE ===
                 "voir-la-liste-des-odds",
@@ -324,12 +342,8 @@ class PermissionSeeder extends Seeder
                 "voir-la-liste-des-resultats-strategique-du-pnd",
                 "voir-la-liste-des-categories-de-projet",
 
-                // === GESTION DES IDÉES DE PROJET ===
+                // === CONSULTATION DES IDÉES DE PROJET ===
                 "voir-la-liste-des-idees-de-projet",
-                "gerer-les-idees-projet",
-                "creer-une-idee-de-projet",
-                "modifier-une-idee-de-projet",
-                "supprimer-une-idee-de-projet",
                 "consulter-une-idee-de-projet",
                 "exporter-une-idee-de-projet",
                 "imprimer-une-idee-de-projet",
@@ -338,39 +352,20 @@ class PermissionSeeder extends Seeder
                 "voir-les-documents-d-une-idee-de-projet",
                 "telecharger-les-documents-d-une-idee-de-projet",
 
-                // Commentaires sur les idées
-                "commenter-une-idee-de-projet",
-
-
-
-                // Gestion des projets
-                "suivre-avancement-projet",
-                "generer-rapport-projet",
-
-
-                "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
-                "commenter-le-resultats-de-l-amc-d-une-idee-de-projet",
-
-                // Évaluation climatique
-                "effectuer-evaluation-climatique-idee-projet",
-                "obtenir-score-climatique",
-                "obtenir-score-climatique-une-projet",
-                "valider-le-score-climatique-une-idee-de-projet",
-                "relancer-l-evaluation-climatique-une-idee-de-projet",
-
+                // Consultation des résultats d'évaluations (sans pouvoir effectuer/valider/obtenir scores/relancer)
                 "exporter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
                 "commenter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
-
-                // Évaluation pertinence
-                "effectuer-evaluation-pertinence-idee-projet",
-                "acceder-au-tableau-de-bord-de-pertinence",
                 "exporter-le-resultats-de-l-analyse-d-une-idee-de-projet",
                 "commenter-le-resultats-de-l-analyse-d-une-idee-de-projet",
 
-                // AMC
+                // AMC - Consultation uniquement
                 "acceder-au-tableau-d-amc",
                 "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
                 "commenter-le-resultats-de-l-amc-d-une-idee-de-projet",
+
+                // Tableaux de bord - Consultation uniquement
+                "acceder-au-tableau-de-bord-de-pertinence",
+                "acceder-au-tableau-de-bord-climatique",
 
                 // Canevas fiche idée
                 "consulter-le-canevas-de-la-fiche-idee-de-projet",
@@ -382,7 +377,6 @@ class PermissionSeeder extends Seeder
                 "imprimer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
                 "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet",
                 "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet",
-                "acceder-au-tableau-de-bord-climatique",
                 "consulter-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
                 "imprimer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
 
@@ -453,8 +447,6 @@ class PermissionSeeder extends Seeder
                 "consulter-les-details-de-la-validation-de-l-etude-de-faisabilite",
                 "commenter-la-decision-de-validation-de-l-etude-de-faisabilite",
 
-                // === G. GESTION ET SOUMISSION DES RAPPORTS PRÉFAISABILITÉ ===
-
                 // === CONSULTATION DES RAPPORTS ÉVALUATION EX-ANTE ===
                 "voir-la-liste-des-rapports-d-evaluation-ex-ante",
                 "consulter-un-rapport-d-evaluation-ex-ante",
@@ -486,9 +478,8 @@ class PermissionSeeder extends Seeder
                 "supprimer-fichier",
                 "consulter-un-fichier",
                 "telecharger-un-fichier",
-                "telecharger-documents"
+                "telecharger-documents",
             ],
-            "Organisation" => [],
             "Analyste DGPD" => [],
 
             "DGPD" => [],

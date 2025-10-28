@@ -74,6 +74,9 @@
                 "acceder-au-tableau-de-bord-de-pertinence",
                 "exporter-le-resultats-de-l-analyse-d-une-idee-de-projet",
                 "commenter-le-resultats-de-l-analyse-d-une-idee-de-projet",
+                "valider-le-score-de-pertinence-d-une-idee-de-projet",
+                "relancer-l-evaluation-de-pertinence-d-une-idee-de-projet",
+
 
                 // AMC
                 "acceder-au-tableau-d-amc",

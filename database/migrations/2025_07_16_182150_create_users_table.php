@@ -18,7 +18,7 @@ return new class extends Migration
                 $table->string('provider_user_id');
                 $table->string('username')->unique();
                 $table->string('email')->unique();
-                $table->enum('status', ['actif', 'suspendu', 'invité'])->default('actif');
+                $table->enum('status', ['actif', 'suspendu', 'invité'])->default('invité');
                 $table->boolean('is_email_verified')->default(false);
                 $table->timestamp('email_verified_at')->nullable();
                 $table->string('password');
