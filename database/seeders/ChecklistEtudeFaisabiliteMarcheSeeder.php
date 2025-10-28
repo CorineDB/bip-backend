@@ -10,474 +10,467 @@ use Illuminate\Support\Facades\DB;
 class ChecklistEtudeFaisabiliteMarcheSeeder extends Seeder
 {
     protected $documentData = [
-  'nom' => 'Check liste d\'étude de faisabilité marché',
-  'slug' => 'canevas-check-liste-etude-faisabilite-marche',
-  'description' => 'Check liste d\'étude de faisabilité des  marchés',
-  'type' => 'checklist',
-  'evaluation_configs' => [
-    'guide_suivi' => [
-      [
-        'option' => 'disponible',
-        'libelle' => 'Disponible',
-        'description' => 'Répond aux critères d\'acceptation',
-      ],
-      [
-        'option' => 'pas-encore-disponibles',
-        'libelle' => 'Pas encore disponibles',
-        'description' => 'Nécessite des améliorations ou éclaircissements',
-      ],
-      [
-        'option' => 'pertinent',
-        'libelle' => 'Pertinent',
-        'description' => 'Nécessite des améliorations ou éclaircissements',
-      ],
-      [
-        'option' => 'non-pertinent',
-        'libelle' => 'Non Pertinent',
-        'description' => 'Nécessite des améliorations ou éclaircissements',
-      ],
-    ],
-  ],
-  'forms' => [
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 1,
-      'label' => 'Présentation du contexte, analyse situationnelle et définition des objectifs de l\'étude-jf',
-      'info' => '',
-      'key' => 'contexte_analyse',
-      'attribut' => 'contexte_analyse',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => true,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 2,
-      'label' => 'Méthodologie (données et approches d’analyse]',
-      'info' => '',
-      'key' => 'methodologie',
-      'attribut' => 'methodologie',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => true,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'section',
-      'ordre_affichage' => 3,
-      'key' => 'section-analyse-marche',
-      'intitule' => 'Analyse du marché',
-      'description' => '',
-      'type' => 'formulaire',
-      'elements' => [
-      [
-          'element_type' => 'field',
-          'ordre_affichage' => 1,
-          'label' => 'Analyse de la demande',
-          'info' => '',
-          'key' => 'analyse_demande',
-          'attribut' => 'analyse_demande',
-          'placeholder' => '',
-          'is_required' => true,
-          'default_value' => NULL,
-          'isEvaluated' => true,
-          'type_champ' => 'radio',
-          'meta_options' => [
-            'configs' => [
-              'options' => [
-      [
-                  'label' => 'Disponible',
-                  'value' => 'disponible',
+        'nom' => 'Check liste d\'étude de faisabilité marché',
+        'slug' => 'canevas-check-liste-etude-faisabilite-marche',
+        'description' => 'Check liste d\'étude de faisabilité des  marchés',
+        'type' => 'checklist',
+        'evaluation_configs' => [
+            'guide_suivi' => [
+                [
+                    'option' => 'disponible',
+                    'libelle' => 'Disponible',
+                    'description' => 'Répond aux critères d\'acceptation',
                 ],
-      [
-                  'label' => 'Pas encore disponibles',
-                  'value' => 'pas-encore-disponibles',
+                [
+                    'option' => 'pas-encore-disponibles',
+                    'libelle' => 'Pas encore disponibles',
+                    'description' => 'Nécessite des améliorations ou éclaircissements',
                 ],
-      [
-                  'label' => 'Pertinent',
-                  'value' => 'pertinent',
+                [
+                    'option' => 'pertinent',
+                    'libelle' => 'Pertinent',
+                    'description' => 'Nécessite des améliorations ou éclaircissements',
                 ],
-      [
-                  'label' => 'Non Pertinent',
-                  'value' => 'non-pertinent',
+                [
+                    'option' => 'non-pertinent',
+                    'libelle' => 'Non Pertinent',
+                    'description' => 'Nécessite des améliorations ou éclaircissements',
                 ],
-              ],
-              'show_explanation' => true,
-              'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
             ],
-            'conditions' => [
-              'disable' => false,
-              'visible' => true,
-              'conditions' => [
-              ],
-            ],
-            'validations_rules' => [
-              'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-              ],
-              'string' => true,
-              'required' => true,
-              'explanation_validation' => [
-                'min' => 50,
-                'string' => true,
-                'required' => false,
-              ],
-            ],
-          ],
-          'champ_standard' => true,
-          'startWithNewLine' => false,
         ],
-      [
-          'element_type' => 'field',
-          'ordre_affichage' => 2,
-          'label' => 'Analyse de l’offre',
-          'info' => '',
-          'key' => 'analyse_offre',
-          'attribut' => 'analyse_offre',
-          'placeholder' => '',
-          'is_required' => true,
-          'default_value' => NULL,
-          'isEvaluated' => true,
-          'type_champ' => 'radio',
-          'meta_options' => [
-            'configs' => [
-              'options' => [
-      [
-                  'label' => 'Disponible',
-                  'value' => 'disponible',
+        'forms' => [
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 1,
+                'label' => 'Présentation du contexte, analyse situationnelle et définition des objectifs de l\'étude-jf',
+                'info' => '',
+                'key' => 'contexte_analyse',
+                'attribut' => 'contexte_analyse',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => true,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
                 ],
-      [
-                  'label' => 'Pas encore disponibles',
-                  'value' => 'pas-encore-disponibles',
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 2,
+                'label' => 'Méthodologie (données et approches d’analyse]',
+                'info' => '',
+                'key' => 'methodologie',
+                'attribut' => 'methodologie',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => true,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
                 ],
-      [
-                  'label' => 'Pertinent',
-                  'value' => 'pertinent',
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'section',
+                'ordre_affichage' => 3,
+                'key' => 'section-analyse-marche',
+                'intitule' => 'Analyse du marché',
+                'description' => '',
+                'type' => 'formulaire',
+                'elements' => [
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 1,
+                        'label' => 'Analyse de la demande',
+                        'info' => '',
+                        'key' => 'analyse_demande',
+                        'attribut' => 'analyse_demande',
+                        'placeholder' => '',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => true,
+                        'type_champ' => 'radio',
+                        'meta_options' => [
+                            'configs' => [
+                                'options' => [
+                                    [
+                                        'label' => 'Disponible',
+                                        'value' => 'disponible',
+                                    ],
+                                    [
+                                        'label' => 'Pas encore disponibles',
+                                        'value' => 'pas-encore-disponibles',
+                                    ],
+                                    [
+                                        'label' => 'Pertinent',
+                                        'value' => 'pertinent',
+                                    ],
+                                    [
+                                        'label' => 'Non Pertinent',
+                                        'value' => 'non-pertinent',
+                                    ],
+                                ],
+                                'show_explanation' => true,
+                                'explanation_min_length' => 50,
+                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'in' => [
+                                    'disponible',
+                                    'pas-encore-disponibles',
+                                    'pertinent',
+                                    'non-pertinent',
+                                ],
+                                'string' => true,
+                                'required' => true,
+                                'explanation_validation' => [
+                                    'min' => 50,
+                                    'string' => true,
+                                    'required' => false,
+                                ],
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 2,
+                        'label' => 'Analyse de l’offre',
+                        'info' => '',
+                        'key' => 'analyse_offre',
+                        'attribut' => 'analyse_offre',
+                        'placeholder' => '',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => true,
+                        'type_champ' => 'radio',
+                        'meta_options' => [
+                            'configs' => [
+                                'options' => [
+                                    [
+                                        'label' => 'Disponible',
+                                        'value' => 'disponible',
+                                    ],
+                                    [
+                                        'label' => 'Pas encore disponibles',
+                                        'value' => 'pas-encore-disponibles',
+                                    ],
+                                    [
+                                        'label' => 'Pertinent',
+                                        'value' => 'pertinent',
+                                    ],
+                                    [
+                                        'label' => 'Non Pertinent',
+                                        'value' => 'non-pertinent',
+                                    ],
+                                ],
+                                'show_explanation' => true,
+                                'explanation_min_length' => 50,
+                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'in' => [
+                                    'disponible',
+                                    'pas-encore-disponibles',
+                                    'pertinent',
+                                    'non-pertinent',
+                                ],
+                                'string' => true,
+                                'required' => true,
+                                'explanation_validation' => [
+                                    'min' => 50,
+                                    'string' => true,
+                                    'required' => false,
+                                ],
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 3,
+                        'label' => 'Analyse concurrentielle',
+                        'info' => '',
+                        'key' => 'analyse_concurrentielle',
+                        'attribut' => 'analyse_concurrentielle',
+                        'placeholder' => '',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => true,
+                        'type_champ' => 'radio',
+                        'meta_options' => [
+                            'configs' => [
+                                'options' => [
+                                    [
+                                        'label' => 'Disponible',
+                                        'value' => 'disponible',
+                                    ],
+                                    [
+                                        'label' => 'Pas encore disponibles',
+                                        'value' => 'pas-encore-disponibles',
+                                    ],
+                                    [
+                                        'label' => 'Pertinent',
+                                        'value' => 'pertinent',
+                                    ],
+                                    [
+                                        'label' => 'Non Pertinent',
+                                        'value' => 'non-pertinent',
+                                    ],
+                                ],
+                                'show_explanation' => true,
+                                'explanation_min_length' => 50,
+                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'in' => [
+                                    'disponible',
+                                    'pas-encore-disponibles',
+                                    'pertinent',
+                                    'non-pertinent',
+                                ],
+                                'string' => true,
+                                'required' => true,
+                                'explanation_validation' => [
+                                    'min' => 50,
+                                    'string' => true,
+                                    'required' => false,
+                                ],
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
                 ],
-      [
-                  'label' => 'Non Pertinent',
-                  'value' => 'non-pertinent',
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 4,
+                'label' => 'Estimation du potentiel de vente (quantité et consentement à payer]',
+                'info' => '',
+                'key' => 'estimation_potentiel_vente',
+                'attribut' => 'estimation_potentiel_vente',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => true,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
                 ],
-              ],
-              'show_explanation' => true,
-              'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                'champ_standard' => true,
+                'startWithNewLine' => false,
             ],
-            'conditions' => [
-              'disable' => false,
-              'visible' => true,
-              'conditions' => [
-              ],
-            ],
-            'validations_rules' => [
-              'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-              ],
-              'string' => true,
-              'required' => true,
-              'explanation_validation' => [
-                'min' => 50,
-                'string' => true,
-                'required' => false,
-              ],
-            ],
-          ],
-          'champ_standard' => true,
-          'startWithNewLine' => false,
-        ],
-      [
-          'element_type' => 'field',
-          'ordre_affichage' => 3,
-          'label' => 'Analyse concurrentielle',
-          'info' => '',
-          'key' => 'analyse_concurrentielle',
-          'attribut' => 'analyse_concurrentielle',
-          'placeholder' => '',
-          'is_required' => true,
-          'default_value' => NULL,
-          'isEvaluated' => true,
-          'type_champ' => 'radio',
-          'meta_options' => [
-            'configs' => [
-              'options' => [
-      [
-                  'label' => 'Disponible',
-                  'value' => 'disponible',
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 5,
+                'label' => 'Mix-marketings',
+                'info' => '',
+                'key' => 'mix_marketing',
+                'attribut' => 'mix_marketing',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => true,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
                 ],
-      [
-                  'label' => 'Pas encore disponibles',
-                  'value' => 'pas-encore-disponibles',
-                ],
-      [
-                  'label' => 'Pertinent',
-                  'value' => 'pertinent',
-                ],
-      [
-                  'label' => 'Non Pertinent',
-                  'value' => 'non-pertinent',
-                ],
-              ],
-              'show_explanation' => true,
-              'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                'champ_standard' => true,
+                'startWithNewLine' => false,
             ],
-            'conditions' => [
-              'disable' => false,
-              'visible' => true,
-              'conditions' => [
-              ],
-            ],
-            'validations_rules' => [
-              'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-              ],
-              'string' => true,
-              'required' => true,
-              'explanation_validation' => [
-                'min' => 50,
-                'string' => true,
-                'required' => false,
-              ],
-            ],
-          ],
-          'champ_standard' => true,
-          'startWithNewLine' => false,
         ],
-      ],
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 4,
-      'label' => 'Estimation du potentiel de vente (quantité et consentement à payer]',
-      'info' => '',
-      'key' => 'estimation_potentiel_vente',
-      'attribut' => 'estimation_potentiel_vente',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => true,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 5,
-      'label' => 'Mix-marketings',
-      'info' => '',
-      'key' => 'mix_marketing',
-      'attribut' => 'mix_marketing',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => true,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-  ],
-];
+    ];
 
     public function run(): void
     {
@@ -523,8 +516,8 @@ class ChecklistEtudeFaisabiliteMarcheSeeder extends Seeder
     private function createSection(array $sectionData, $document, $parentSection = null): void
     {
         $sectionAttributes = [
-            'intitule' => $sectionData['label'],
-            'slug' => $sectionData['attribut'] ?? null,
+            'intitule' => $sectionData['label'] ?? $sectionData['intitule'] ?? 'Section sans titre',
+            'slug' => $sectionData['attribut'] ?? $sectionData['key'] ?? null,
             'description' => $sectionData['description'] ?? null,
             'documentId' => $document->id,
             'parentSectionId' => $parentSection ? $parentSection->id : null,
@@ -532,7 +525,7 @@ class ChecklistEtudeFaisabiliteMarcheSeeder extends Seeder
         ];
 
         $section = $document->sections()->updateOrCreate([
-            'intitule' => $sectionData['label'],
+            'intitule' => $sectionData['label'] ?? $sectionData['intitule'] ?? 'Section sans titre',
             'documentId' => $document->id
         ], $sectionAttributes);
 
