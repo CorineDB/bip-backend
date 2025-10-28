@@ -10,586 +10,577 @@ use Illuminate\Support\Facades\DB;
 class ChecklistEtudeFaisabiliteTechniqueSeeder extends Seeder
 {
     protected $documentData = [
-  'nom' => 'Check liste de suivi de l\'étude de faisabilité technique',
-  'slug' => 'check-liste-suivi-etude-faisabilite-technique',
-  'description' => 'Check liste de suivi - Etude de faisabilité techniques',
-  'type' => 'checklist',
-  'evaluation_configs' => [
-    'guide_suivi' => [
-      [
-        'option' => 'disponible',
-        'libelle' => 'Disponible',
-        'description' => 'Répond aux critères d\'acceptation',
-      ],
-      [
-        'option' => 'pas-encore-disponibles',
-        'libelle' => 'Pas encore disponibles',
-        'description' => 'Nécessite des améliorations ou éclaircissements',
-      ],
-      [
-        'option' => 'pertinent',
-        'libelle' => 'Pertinent',
-        'description' => 'Nécessite des améliorations ou éclaircissements',
-      ],
-      [
-        'option' => 'non-pertinent',
-        'libelle' => 'Non Pertinent',
-        'description' => 'Nécessite des améliorations ou éclaircissements',
-      ],
-    ],
-  ],
-  'forms' => [
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 1,
-      'label' => 'Collecte et compilation d’informations préalables',
-      'info' => '',
-      'key' => 'collecte_compilation',
-      'attribut' => 'collecte_compilation',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
+        'nom' => 'Check liste de suivi de l\'étude de faisabilité technique',
+        'slug' => 'check-liste-suivi-etude-faisabilite-technique',
+        'description' => 'Check liste de suivi - Etude de faisabilité techniques',
+        'type' => 'checklist',
+        'evaluation_configs' => [
+            'guide_suivi' => [
+                [
+                    'option' => 'disponible',
+                    'libelle' => 'Disponible',
+                    'description' => 'Répond aux critères d\'acceptation',
+                ],
+                [
+                    'option' => 'pas-encore-disponibles',
+                    'libelle' => 'Pas encore disponibles',
+                    'description' => 'Nécessite des améliorations ou éclaircissements',
+                ],
+                [
+                    'option' => 'pertinent',
+                    'libelle' => 'Pertinent',
+                    'description' => 'Nécessite des améliorations ou éclaircissements',
+                ],
+                [
+                    'option' => 'non-pertinent',
+                    'libelle' => 'Non Pertinent',
+                    'description' => 'Nécessite des améliorations ou éclaircissements',
+                ],
             ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
         ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
+        'forms' => [
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 1,
+                'label' => 'Collecte et compilation d’informations préalables',
+                'info' => '',
+                'key' => 'collecte_compilation',
+                'attribut' => 'collecte_compilation',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 2,
+                'label' => 'Fixation/détermination de la capacité de production',
+                'info' => '',
+                'key' => 'fixation',
+                'attribut' => 'fixation',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 3,
+                'label' => 'Description des caractéristiques des matériaux et des intrants',
+                'info' => '',
+                'key' => 'description_caractéristiques',
+                'attribut' => 'description_caractéristiques',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 4,
+                'label' => 'Choix d’une technologie ou des du processus de fabrication ou de production des biens et services',
+                'info' => '',
+                'key' => 'choix_technologique',
+                'attribut' => 'choix_technologique',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 5,
+                'label' => 'Description de la machinerie et de l’équipement',
+                'info' => '',
+                'key' => 'description_machinerie_equipement',
+                'attribut' => 'description_machinerie_equipement',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 6,
+                'label' => 'Définition des aspects organisationnels et de la phase de mise en œuvre du projet',
+                'info' => '',
+                'key' => 'definition_aspects_organisationnels_phase',
+                'attribut' => 'definition_aspects_organisationnels_phase',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 7,
+                'label' => 'Description des bâtiments et infrastructures',
+                'info' => '',
+                'key' => 'description_batiments_infrastructures',
+                'attribut' => 'description_batiments_infrastructures',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 8,
+                'label' => 'Choix d’un site et localisation',
+                'info' => '',
+                'key' => 'choix_site_localisation',
+                'attribut' => 'choix_site_localisation',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 9,
+                'label' => 'Estimation des coûts d’investissement et des coûts de mise en exploitation du projet',
+                'info' => '',
+                'key' => 'estimation_couts_investissement_mise_exploitation',
+                'attribut' => 'estimation_couts_investissement_mise_exploitation',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
         ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 2,
-      'label' => 'Fixation/détermination de la capacité de production',
-      'info' => '',
-      'key' => 'fixation',
-      'attribut' => 'fixation',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 3,
-      'label' => 'Description des caractéristiques des matériaux et des intrants',
-      'info' => '',
-      'key' => 'description_caractéristiques',
-      'attribut' => 'description_caractéristiques',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 4,
-      'label' => 'Choix d’une technologie ou des du processus de fabrication ou de production des biens et services',
-      'info' => '',
-      'key' => 'choix_technologique',
-      'attribut' => 'choix_technologique',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 5,
-      'label' => 'Description de la machinerie et de l’équipement',
-      'info' => '',
-      'key' => 'description_machinerie_equipement',
-      'attribut' => 'description_machinerie_equipement',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 6,
-      'label' => 'Définition des aspects organisationnels et de la phase de mise en œuvre du projet',
-      'info' => '',
-      'key' => 'definition_aspects_organisationnels_phase',
-      'attribut' => 'definition_aspects_organisationnels_phase',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 7,
-      'label' => 'Description des bâtiments et infrastructures',
-      'info' => '',
-      'key' => 'description_batiments_infrastructures',
-      'attribut' => 'description_batiments_infrastructures',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 8,
-      'label' => 'Choix d’un site et localisation',
-      'info' => '',
-      'key' => 'choix_site_localisation',
-      'attribut' => 'choix_site_localisation',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 9,
-      'label' => 'Estimation des coûts d’investissement et des coûts de mise en exploitation du projet',
-      'info' => '',
-      'key' => 'estimation_couts_investissement_mise_exploitation',
-      'attribut' => 'estimation_couts_investissement_mise_exploitation',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-  ],
-];
+    ];
 
     public function run(): void
     {

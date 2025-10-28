@@ -10,525 +10,517 @@ use Illuminate\Support\Facades\DB;
 class ChecklistSuiviAnalyseFaisabiliteFinanciereSeeder extends Seeder
 {
     protected $documentData = [
-  'nom' => 'Check liste de suivi d\'analyse de la faisabilité financières',
-  'slug' => 'check-liste-de-suivi-analyse-de-faisabilite-financiere',
-  'description' => 'Check liste de suivi d\'analyse de la faisabilité financière',
-  'type' => 'checklist',
-  'evaluation_configs' => [
-    'guide_suivi' => [
-      [
-        'option' => 'disponible',
-        'libelle' => 'Disponible',
-        'description' => 'Répond aux critères d\'acceptation',
-      ],
-      [
-        'option' => 'pas-encore-disponibles',
-        'libelle' => 'Pas encore disponibles',
-        'description' => 'Nécessite des améliorations ou éclaircissements',
-      ],
-      [
-        'option' => 'pertinent',
-        'libelle' => 'Pertinent',
-        'description' => 'Nécessite des améliorations ou éclaircissements',
-      ],
-      [
-        'option' => 'non-pertinent',
-        'libelle' => 'Non Pertinent',
-        'description' => 'Nécessite des améliorations ou éclaircissements',
-      ],
-    ],
-  ],
-  'forms' => [
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 1,
-      'label' => 'Evaluer le coût du projet',
-      'info' => '',
-      'key' => 'evaluer_cout',
-      'attribut' => 'evaluer_cout',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
+        'nom' => 'Check liste de suivi d\'analyse de la faisabilité financières',
+        'slug' => 'check-liste-de-suivi-analyse-de-faisabilite-financiere',
+        'description' => 'Check liste de suivi d\'analyse de la faisabilité financière',
+        'type' => 'checklist',
+        'evaluation_configs' => [
+            'guide_suivi' => [
+                [
+                    'option' => 'disponible',
+                    'libelle' => 'Disponible',
+                    'description' => 'Répond aux critères d\'acceptation',
+                ],
+                [
+                    'option' => 'pas-encore-disponibles',
+                    'libelle' => 'Pas encore disponibles',
+                    'description' => 'Nécessite des améliorations ou éclaircissements',
+                ],
+                [
+                    'option' => 'pertinent',
+                    'libelle' => 'Pertinent',
+                    'description' => 'Nécessite des améliorations ou éclaircissements',
+                ],
+                [
+                    'option' => 'non-pertinent',
+                    'libelle' => 'Non Pertinent',
+                    'description' => 'Nécessite des améliorations ou éclaircissements',
+                ],
             ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
         ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
+        'forms' => [
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 1,
+                'label' => 'Evaluer le coût du projet',
+                'info' => '',
+                'key' => 'evaluer_cout',
+                'attribut' => 'evaluer_cout',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 2,
+                'label' => 'Établir les Comptes de résultats prévisionnels',
+                'info' => '',
+                'key' => 'etablir_comptes_resultats_previsionnels',
+                'attribut' => 'etablir_comptes_resultats_previsionnels',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 3,
+                'label' => 'Élaborer le plan de financement',
+                'info' => '',
+                'key' => 'elaborer_plan_financement',
+                'attribut' => 'elaborer_plan_financement',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 4,
+                'label' => 'Élaborer le plan de trésorerie',
+                'info' => '',
+                'key' => 'elaborer_plan_tresorerie',
+                'attribut' => 'elaborer_plan_tresorerie',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 5,
+                'label' => 'Déterminer la VAN et le TRI',
+                'info' => '',
+                'key' => 'determiner_van_tri',
+                'attribut' => 'determiner_van_tri',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 6,
+                'label' => 'Calculer le délai de récupération',
+                'info' => '',
+                'key' => 'calculer_delai_recuperation',
+                'attribut' => 'calculer_delai_recuperation',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 7,
+                'label' => 'Procéder au test de sensibilité',
+                'info' => '',
+                'key' => 'proceder_test_sensibilite',
+                'attribut' => 'proceder_test_sensibilite',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
+            [
+                'element_type' => 'field',
+                'ordre_affichage' => 8,
+                'label' => 'Déterminers le seuil de rentabilité',
+                'info' => '',
+                'key' => 'determiner_seuil_rentabilite',
+                'attribut' => 'determiner_seuil_rentabilite',
+                'placeholder' => '',
+                'is_required' => true,
+                'default_value' => NULL,
+                'isEvaluated' => true,
+                'type_champ' => 'radio',
+                'meta_options' => [
+                    'configs' => [
+                        'options' => [
+                            [
+                                'label' => 'Disponible',
+                                'value' => 'disponible',
+                            ],
+                            [
+                                'label' => 'Pas encore disponibles',
+                                'value' => 'pas-encore-disponibles',
+                            ],
+                            [
+                                'label' => 'Pertinent',
+                                'value' => 'pertinent',
+                            ],
+                            [
+                                'label' => 'Non Pertinent',
+                                'value' => 'non-pertinent',
+                            ],
+                        ],
+                        'show_explanation' => false,
+                        'explanation_min_length' => 50,
+                        'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                    ],
+                    'conditions' => [
+                        'disable' => false,
+                        'visible' => true,
+                        'conditions' => [],
+                    ],
+                    'validations_rules' => [
+                        'in' => [
+                            'disponible',
+                            'pas-encore-disponibles',
+                            'pertinent',
+                            'non-pertinent',
+                        ],
+                        'string' => true,
+                        'required' => true,
+                        'explanation_validation' => [
+                            'min' => 50,
+                            'string' => true,
+                            'required' => false,
+                        ],
+                    ],
+                ],
+                'champ_standard' => true,
+                'startWithNewLine' => false,
+            ],
         ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 2,
-      'label' => 'Établir les Comptes de résultats prévisionnels',
-      'info' => '',
-      'key' => 'etablir_comptes_resultats_previsionnels',
-      'attribut' => 'etablir_comptes_resultats_previsionnels',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 3,
-      'label' => 'Élaborer le plan de financement',
-      'info' => '',
-      'key' => 'elaborer_plan_financement',
-      'attribut' => 'elaborer_plan_financement',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 4,
-      'label' => 'Élaborer le plan de trésorerie',
-      'info' => '',
-      'key' => 'elaborer_plan_tresorerie',
-      'attribut' => 'elaborer_plan_tresorerie',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 5,
-      'label' => 'Déterminer la VAN et le TRI',
-      'info' => '',
-      'key' => 'determiner_van_tri',
-      'attribut' => 'determiner_van_tri',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 6,
-      'label' => 'Calculer le délai de récupération',
-      'info' => '',
-      'key' => 'calculer_delai_recuperation',
-      'attribut' => 'calculer_delai_recuperation',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 7,
-      'label' => 'Procéder au test de sensibilité',
-      'info' => '',
-      'key' => 'proceder_test_sensibilite',
-      'attribut' => 'proceder_test_sensibilite',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-      [
-      'element_type' => 'field',
-      'ordre_affichage' => 8,
-      'label' => 'Déterminers le seuil de rentabilité',
-      'info' => '',
-      'key' => 'determiner_seuil_rentabilite',
-      'attribut' => 'determiner_seuil_rentabilite',
-      'placeholder' => '',
-      'is_required' => true,
-      'default_value' => NULL,
-      'isEvaluated' => true,
-      'type_champ' => 'radio',
-      'meta_options' => [
-        'configs' => [
-          'options' => [
-      [
-              'label' => 'Disponible',
-              'value' => 'disponible',
-            ],
-      [
-              'label' => 'Pas encore disponibles',
-              'value' => 'pas-encore-disponibles',
-            ],
-      [
-              'label' => 'Pertinent',
-              'value' => 'pertinent',
-            ],
-      [
-              'label' => 'Non Pertinent',
-              'value' => 'non-pertinent',
-            ],
-          ],
-          'show_explanation' => false,
-          'explanation_min_length' => 50,
-          'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-        ],
-        'conditions' => [
-          'disable' => false,
-          'visible' => true,
-          'conditions' => [
-          ],
-        ],
-        'validations_rules' => [
-          'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-      'pertinent',
-      'non-pertinent',
-          ],
-          'string' => true,
-          'required' => true,
-          'explanation_validation' => [
-            'min' => 50,
-            'string' => true,
-            'required' => false,
-          ],
-        ],
-      ],
-      'champ_standard' => true,
-      'startWithNewLine' => false,
-    ],
-  ],
-];
+    ];
 
     public function run(): void
     {

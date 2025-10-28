@@ -2730,8 +2730,9 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabilitePreliminaireSeeder extends
     private function createSection(array $sectionData, $document, $parentSection = null): void
     {
         $sectionAttributes = [
-            'intitule' => $sectionData['label'],
-            'slug' => $sectionData['attribut'] ?? null,
+            'intitule' => $sectionData['label'] ?? $sectionData['intitule'] ?? 'Section sans titre',
+            'slug' => $sectionData['attribut'] ?? $sectionData['key'] ?? null,
+
             'description' => $sectionData['description'] ?? null,
             'documentId' => $document->id,
             'parentSectionId' => $parentSection ? $parentSection->id : null,
@@ -2740,7 +2741,7 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabilitePreliminaireSeeder extends
 
         // Créer la section en utilisant intitule et documentId pour l'unicité
         $section = $document->sections()->updateOrCreate([
-            'intitule' => $sectionData['label'],
+            'intitule' => $sectionData['label'] ?? $sectionData['intitule'] ?? 'Section sans titre',
             'documentId' => $document->id
         ], $sectionAttributes);
 

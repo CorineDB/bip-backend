@@ -10,506 +10,497 @@ use Illuminate\Support\Facades\DB;
 class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
 {
     protected $documentData = [
-  'nom' => 'Check liste de suivi pour l\'assurance qualité du rapport d\'étude de faisabilité.',
-  'slug' => 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite',
-  'description' => 'Check liste de suivi pour l\'assurance qualité du rapport d\'étude de faisabilités',
-  'type' => 'checklist',
-  'evaluation_configs' => [
-    'guide_suivi' => [
-      [
-        'option' => 'disponible',
-        'libelle' => 'Disponible',
-        'description' => 'Répond aux critères d\'acceptation',
-      ],
-      [
-        'option' => 'pas-encore-disponibles',
-        'libelle' => 'Pas encore disponibles',
-        'description' => 'Nécessite des améliorations ou éclaircissements',
-      ],
-    ],
-  ],
-  'forms' => [
-      [
-      'element_type' => 'section',
-      'ordre_affichage' => 1,
-      'key' => 'section-cadre-physique',
-      'intitule' => 'Cadre Physique du projet',
-      'description' => 'Cette section décrit les fondements physiques du projet, ses éléments géographiques, son origine et son secteur d’activités.',
-      'type' => 'formulaire',
-      'elements' => [
-      [
-          'element_type' => 'field',
-          'ordre_affichage' => 1,
-          'label' => 'Définition du projet.',
-          'info' => '',
-          'key' => 'definition_projet',
-          'attribut' => 'definition_projet',
-          'placeholder' => 'La définition du projet est-elle disponible ?',
-          'is_required' => true,
-          'default_value' => NULL,
-          'isEvaluated' => true,
-          'type_champ' => 'radio',
-          'meta_options' => [
-            'configs' => [
-              'options' => [
-      [
-                  'label' => 'Disponible',
-                  'value' => 'disponible',
+        'nom' => 'Check liste de suivi pour l\'assurance qualité du rapport d\'étude de faisabilité.',
+        'slug' => 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite',
+        'description' => 'Check liste de suivi pour l\'assurance qualité du rapport d\'étude de faisabilités',
+        'type' => 'checklist',
+        'evaluation_configs' => [
+            'guide_suivi' => [
+                [
+                    'option' => 'disponible',
+                    'libelle' => 'Disponible',
+                    'description' => 'Répond aux critères d\'acceptation',
                 ],
-      [
-                  'label' => 'Pas encore disponibles',
-                  'value' => 'pas-encore-disponibles',
+                [
+                    'option' => 'pas-encore-disponibles',
+                    'libelle' => 'Pas encore disponibles',
+                    'description' => 'Nécessite des améliorations ou éclaircissements',
                 ],
-              ],
-              'show_explanation' => true,
-              'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
             ],
-            'conditions' => [
-              'disable' => false,
-              'visible' => true,
-              'conditions' => [
-              ],
-            ],
-            'validations_rules' => [
-              'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-              ],
-              'string' => true,
-              'required' => true,
-              'explanation_validation' => [
-                'min' => 50,
-                'string' => true,
-                'required' => false,
-              ],
-            ],
-          ],
-          'champ_standard' => true,
-          'startWithNewLine' => false,
         ],
-      [
-          'element_type' => 'field',
-          'ordre_affichage' => 2,
-          'label' => 'Genèse du projet',
-          'info' => '',
-          'key' => 'genese_projet',
-          'attribut' => 'genese_projet',
-          'placeholder' => 'La genèse du projet est-elle documentée ?',
-          'is_required' => true,
-          'default_value' => NULL,
-          'isEvaluated' => true,
-          'type_champ' => 'radio',
-          'meta_options' => [
-            'configs' => [
-              'options' => [
-      [
-                  'label' => 'Disponible',
-                  'value' => 'disponible',
+        'forms' => [
+            [
+                'element_type' => 'section',
+                'ordre_affichage' => 1,
+                'key' => 'section-cadre-physique',
+                'intitule' => 'Cadre Physique du projet',
+                'description' => 'Cette section décrit les fondements physiques du projet, ses éléments géographiques, son origine et son secteur d’activités.',
+                'type' => 'formulaire',
+                'elements' => [
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 1,
+                        'label' => 'Définition du projet.',
+                        'info' => '',
+                        'key' => 'definition_projet',
+                        'attribut' => 'definition_projet',
+                        'placeholder' => 'La définition du projet est-elle disponible ?',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => true,
+                        'type_champ' => 'radio',
+                        'meta_options' => [
+                            'configs' => [
+                                'options' => [
+                                    [
+                                        'label' => 'Disponible',
+                                        'value' => 'disponible',
+                                    ],
+                                    [
+                                        'label' => 'Pas encore disponibles',
+                                        'value' => 'pas-encore-disponibles',
+                                    ],
+                                ],
+                                'show_explanation' => true,
+                                'explanation_min_length' => 50,
+                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'in' => [
+                                    'disponible',
+                                    'pas-encore-disponibles',
+                                ],
+                                'string' => true,
+                                'required' => true,
+                                'explanation_validation' => [
+                                    'min' => 50,
+                                    'string' => true,
+                                    'required' => false,
+                                ],
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 2,
+                        'label' => 'Genèse du projet',
+                        'info' => '',
+                        'key' => 'genese_projet',
+                        'attribut' => 'genese_projet',
+                        'placeholder' => 'La genèse du projet est-elle documentée ?',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => true,
+                        'type_champ' => 'radio',
+                        'meta_options' => [
+                            'configs' => [
+                                'options' => [
+                                    [
+                                        'label' => 'Disponible',
+                                        'value' => 'disponible',
+                                    ],
+                                    [
+                                        'label' => 'Pas encore disponibles',
+                                        'value' => 'pas-encore-disponibles',
+                                    ],
+                                ],
+                                'show_explanation' => true,
+                                'explanation_min_length' => 50,
+                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'in' => [
+                                    'disponible',
+                                    'pas-encore-disponibles',
+                                ],
+                                'string' => true,
+                                'required' => true,
+                                'explanation_validation' => [
+                                    'min' => 50,
+                                    'string' => true,
+                                    'required' => false,
+                                ],
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 3,
+                        'label' => 'Dossier de Formulation',
+                        'info' => '',
+                        'key' => 'dossier_formulation',
+                        'attribut' => 'dossier_formulation',
+                        'placeholder' => 'Le dossier de formulation est-il disponible ?',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => true,
+                        'type_champ' => 'radio',
+                        'meta_options' => [
+                            'configs' => [
+                                'options' => [
+                                    [
+                                        'label' => 'Disponible',
+                                        'value' => 'disponible',
+                                    ],
+                                    [
+                                        'label' => 'Pas encore disponibles',
+                                        'value' => 'pas-encore-disponibles',
+                                    ],
+                                ],
+                                'show_explanation' => true,
+                                'explanation_min_length' => 50,
+                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'in' => [
+                                    'disponible',
+                                    'pas-encore-disponibles',
+                                ],
+                                'string' => true,
+                                'required' => true,
+                                'explanation_validation' => [
+                                    'min' => 50,
+                                    'string' => true,
+                                    'required' => false,
+                                ],
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 4,
+                        'label' => 'Éléments géographiques',
+                        'info' => '',
+                        'key' => 'elements_geographiques',
+                        'attribut' => 'elements_geographiques',
+                        'placeholder' => 'Les éléments géographiques sont-ils identifiés ?',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => true,
+                        'type_champ' => 'radio',
+                        'meta_options' => [
+                            'configs' => [
+                                'options' => [
+                                    [
+                                        'label' => 'Disponible',
+                                        'value' => 'disponible',
+                                    ],
+                                    [
+                                        'label' => 'Pas encore disponibles',
+                                        'value' => 'pas-encore-disponibles',
+                                    ],
+                                ],
+                                'show_explanation' => true,
+                                'explanation_min_length' => 50,
+                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'in' => [
+                                    'disponible',
+                                    'pas-encore-disponibles',
+                                ],
+                                'string' => true,
+                                'required' => true,
+                                'explanation_validation' => [
+                                    'min' => 50,
+                                    'string' => true,
+                                    'required' => false,
+                                ],
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 5,
+                        'label' => 'Éléments d’infrastructure (zones du projet]',
+                        'info' => '',
+                        'key' => 'elements_infrastructure',
+                        'attribut' => 'elements_infrastructure',
+                        'placeholder' => 'Les éléments d’infrastructure sont-ils disponibles ?',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => true,
+                        'type_champ' => 'radio',
+                        'meta_options' => [
+                            'configs' => [
+                                'options' => [
+                                    [
+                                        'label' => 'Disponible',
+                                        'value' => 'disponible',
+                                    ],
+                                    [
+                                        'label' => 'Pas encore disponibles',
+                                        'value' => 'pas-encore-disponibles',
+                                    ],
+                                ],
+                                'show_explanation' => true,
+                                'explanation_min_length' => 50,
+                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'in' => [
+                                    'disponible',
+                                    'pas-encore-disponibles',
+                                ],
+                                'string' => true,
+                                'required' => true,
+                                'explanation_validation' => [
+                                    'min' => 50,
+                                    'string' => true,
+                                    'required' => false,
+                                ],
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 6,
+                        'label' => 'Secteur d’activités du projet',
+                        'info' => '',
+                        'key' => 'secteur_activites',
+                        'attribut' => 'secteur_activites',
+                        'placeholder' => 'Le secteur d’activités du projet est-il défini ?',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => true,
+                        'type_champ' => 'radio',
+                        'meta_options' => [
+                            'configs' => [
+                                'options' => [
+                                    [
+                                        'label' => 'Disponible',
+                                        'value' => 'disponible',
+                                    ],
+                                    [
+                                        'label' => 'Pas encore disponibles',
+                                        'value' => 'pas-encore-disponibles',
+                                    ],
+                                ],
+                                'show_explanation' => true,
+                                'explanation_min_length' => 50,
+                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'in' => [
+                                    'disponible',
+                                    'pas-encore-disponibles',
+                                ],
+                                'string' => true,
+                                'required' => true,
+                                'explanation_validation' => [
+                                    'min' => 50,
+                                    'string' => true,
+                                    'required' => false,
+                                ],
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
                 ],
-      [
-                  'label' => 'Pas encore disponibles',
-                  'value' => 'pas-encore-disponibles',
+            ],
+            [
+                'element_type' => 'section',
+                'ordre_affichage' => 2,
+                'key' => 'section-description-technique-projet',
+                'intitule' => 'Description technique du projet',
+                'description' => 'Description technique du projet',
+                'type' => 'formulaire',
+                'elements' => [
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 1,
+                        'label' => 'Choix techniques et justification',
+                        'info' => '',
+                        'key' => 'choix_techniques_justification',
+                        'attribut' => 'choix_techniques_justification',
+                        'placeholder' => 'Les choix techniques sont-ils disponibles ?',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => true,
+                        'type_champ' => 'radio',
+                        'meta_options' => [
+                            'configs' => [
+                                'options' => [
+                                    [
+                                        'label' => 'Disponible',
+                                        'value' => 'disponible',
+                                    ],
+                                    [
+                                        'label' => 'Pas encore disponibles',
+                                        'value' => 'pas-encore-disponibles',
+                                    ],
+                                ],
+                                'show_explanation' => true,
+                                'explanation_min_length' => 50,
+                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'in' => [
+                                    'disponible',
+                                    'pas-encore-disponibles',
+                                ],
+                                'string' => true,
+                                'required' => true,
+                                'explanation_validation' => [
+                                    'min' => 50,
+                                    'string' => true,
+                                    'required' => false,
+                                ],
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 2,
+                        'label' => 'Échelonnement des réalisations',
+                        'info' => '',
+                        'key' => 'echelonnement_realisations',
+                        'attribut' => 'echelonnement_realisations',
+                        'placeholder' => 'Les informations sur l’échelonnement des réalisations sont-elles disponibles ?',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => true,
+                        'type_champ' => 'radio',
+                        'meta_options' => [
+                            'configs' => [
+                                'options' => [
+                                    [
+                                        'label' => 'Disponible',
+                                        'value' => 'disponible',
+                                    ],
+                                    [
+                                        'label' => 'Pas encore disponibles',
+                                        'value' => 'pas-encore-disponibles',
+                                    ],
+                                ],
+                                'show_explanation' => true,
+                                'explanation_min_length' => 50,
+                                'explanation_placeholder' => 'Explications détaillées (optionnel]',
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'in' => [
+                                    'disponible',
+                                    'pas-encore-disponibles',
+                                ],
+                                'string' => true,
+                                'required' => true,
+                                'explanation_validation' => [
+                                    'min' => 50,
+                                    'string' => true,
+                                    'required' => false,
+                                ],
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
+                        'element_type' => 'field',
+                        'ordre_affichage' => 3,
+                        'label' => 'Objectifs de production',
+                        'info' => '',
+                        'key' => 'objectifs_production',
+                        'attribut' => 'objectifs_production',
+                        'placeholder' => 'Disponible ou pas ?',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => true,
+                        'type_champ' => 'radio',
+                        'meta_options' => [
+                            'configs' => [
+                                'options' => [
+                                    [
+                                        'label' => 'Disponible',
+                                        'value' => 'disponible',
+                                    ],
+                                    [
+                                        'label' => 'Pas encore disponibles',
+                                        'value' => 'pas-encore-disponibles',
+                                    ],
+                                ],
+                                'show_explanation' => true,
+                                'explanation_min_length' => 50,
+                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'in' => [
+                                    'disponible',
+                                    'pas-encore-disponibles',
+                                ],
+                                'string' => true,
+                                'required' => true,
+                                'explanation_validation' => [
+                                    'min' => 50,
+                                    'string' => true,
+                                    'required' => false,
+                                ],
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
                 ],
-              ],
-              'show_explanation' => true,
-              'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
             ],
-            'conditions' => [
-              'disable' => false,
-              'visible' => true,
-              'conditions' => [
-              ],
-            ],
-            'validations_rules' => [
-              'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-              ],
-              'string' => true,
-              'required' => true,
-              'explanation_validation' => [
-                'min' => 50,
-                'string' => true,
-                'required' => false,
-              ],
-            ],
-          ],
-          'champ_standard' => true,
-          'startWithNewLine' => false,
         ],
-      [
-          'element_type' => 'field',
-          'ordre_affichage' => 3,
-          'label' => 'Dossier de Formulation',
-          'info' => '',
-          'key' => 'dossier_formulation',
-          'attribut' => 'dossier_formulation',
-          'placeholder' => 'Le dossier de formulation est-il disponible ?',
-          'is_required' => true,
-          'default_value' => NULL,
-          'isEvaluated' => true,
-          'type_champ' => 'radio',
-          'meta_options' => [
-            'configs' => [
-              'options' => [
-      [
-                  'label' => 'Disponible',
-                  'value' => 'disponible',
-                ],
-      [
-                  'label' => 'Pas encore disponibles',
-                  'value' => 'pas-encore-disponibles',
-                ],
-              ],
-              'show_explanation' => true,
-              'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-            ],
-            'conditions' => [
-              'disable' => false,
-              'visible' => true,
-              'conditions' => [
-              ],
-            ],
-            'validations_rules' => [
-              'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-              ],
-              'string' => true,
-              'required' => true,
-              'explanation_validation' => [
-                'min' => 50,
-                'string' => true,
-                'required' => false,
-              ],
-            ],
-          ],
-          'champ_standard' => true,
-          'startWithNewLine' => false,
-        ],
-      [
-          'element_type' => 'field',
-          'ordre_affichage' => 4,
-          'label' => 'Éléments géographiques',
-          'info' => '',
-          'key' => 'elements_geographiques',
-          'attribut' => 'elements_geographiques',
-          'placeholder' => 'Les éléments géographiques sont-ils identifiés ?',
-          'is_required' => true,
-          'default_value' => NULL,
-          'isEvaluated' => true,
-          'type_champ' => 'radio',
-          'meta_options' => [
-            'configs' => [
-              'options' => [
-      [
-                  'label' => 'Disponible',
-                  'value' => 'disponible',
-                ],
-      [
-                  'label' => 'Pas encore disponibles',
-                  'value' => 'pas-encore-disponibles',
-                ],
-              ],
-              'show_explanation' => true,
-              'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-            ],
-            'conditions' => [
-              'disable' => false,
-              'visible' => true,
-              'conditions' => [
-              ],
-            ],
-            'validations_rules' => [
-              'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-              ],
-              'string' => true,
-              'required' => true,
-              'explanation_validation' => [
-                'min' => 50,
-                'string' => true,
-                'required' => false,
-              ],
-            ],
-          ],
-          'champ_standard' => true,
-          'startWithNewLine' => false,
-        ],
-      [
-          'element_type' => 'field',
-          'ordre_affichage' => 5,
-          'label' => 'Éléments d’infrastructure (zones du projet]',
-          'info' => '',
-          'key' => 'elements_infrastructure',
-          'attribut' => 'elements_infrastructure',
-          'placeholder' => 'Les éléments d’infrastructure sont-ils disponibles ?',
-          'is_required' => true,
-          'default_value' => NULL,
-          'isEvaluated' => true,
-          'type_champ' => 'radio',
-          'meta_options' => [
-            'configs' => [
-              'options' => [
-      [
-                  'label' => 'Disponible',
-                  'value' => 'disponible',
-                ],
-      [
-                  'label' => 'Pas encore disponibles',
-                  'value' => 'pas-encore-disponibles',
-                ],
-              ],
-              'show_explanation' => true,
-              'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-            ],
-            'conditions' => [
-              'disable' => false,
-              'visible' => true,
-              'conditions' => [
-              ],
-            ],
-            'validations_rules' => [
-              'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-              ],
-              'string' => true,
-              'required' => true,
-              'explanation_validation' => [
-                'min' => 50,
-                'string' => true,
-                'required' => false,
-              ],
-            ],
-          ],
-          'champ_standard' => true,
-          'startWithNewLine' => false,
-        ],
-      [
-          'element_type' => 'field',
-          'ordre_affichage' => 6,
-          'label' => 'Secteur d’activités du projet',
-          'info' => '',
-          'key' => 'secteur_activites',
-          'attribut' => 'secteur_activites',
-          'placeholder' => 'Le secteur d’activités du projet est-il défini ?',
-          'is_required' => true,
-          'default_value' => NULL,
-          'isEvaluated' => true,
-          'type_champ' => 'radio',
-          'meta_options' => [
-            'configs' => [
-              'options' => [
-      [
-                  'label' => 'Disponible',
-                  'value' => 'disponible',
-                ],
-      [
-                  'label' => 'Pas encore disponibles',
-                  'value' => 'pas-encore-disponibles',
-                ],
-              ],
-              'show_explanation' => true,
-              'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-            ],
-            'conditions' => [
-              'disable' => false,
-              'visible' => true,
-              'conditions' => [
-              ],
-            ],
-            'validations_rules' => [
-              'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-              ],
-              'string' => true,
-              'required' => true,
-              'explanation_validation' => [
-                'min' => 50,
-                'string' => true,
-                'required' => false,
-              ],
-            ],
-          ],
-          'champ_standard' => true,
-          'startWithNewLine' => false,
-        ],
-      ],
-    ],
-      [
-      'element_type' => 'section',
-      'ordre_affichage' => 2,
-      'key' => 'section-description-technique-projet',
-      'intitule' => 'Description technique du projet',
-      'description' => 'Description technique du projet',
-      'type' => 'formulaire',
-      'elements' => [
-      [
-          'element_type' => 'field',
-          'ordre_affichage' => 1,
-          'label' => 'Choix techniques et justification',
-          'info' => '',
-          'key' => 'choix_techniques_justification',
-          'attribut' => 'choix_techniques_justification',
-          'placeholder' => 'Les choix techniques sont-ils disponibles ?',
-          'is_required' => true,
-          'default_value' => NULL,
-          'isEvaluated' => true,
-          'type_champ' => 'radio',
-          'meta_options' => [
-            'configs' => [
-              'options' => [
-      [
-                  'label' => 'Disponible',
-                  'value' => 'disponible',
-                ],
-      [
-                  'label' => 'Pas encore disponibles',
-                  'value' => 'pas-encore-disponibles',
-                ],
-              ],
-              'show_explanation' => true,
-              'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-            ],
-            'conditions' => [
-              'disable' => false,
-              'visible' => true,
-              'conditions' => [
-              ],
-            ],
-            'validations_rules' => [
-              'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-              ],
-              'string' => true,
-              'required' => true,
-              'explanation_validation' => [
-                'min' => 50,
-                'string' => true,
-                'required' => false,
-              ],
-            ],
-          ],
-          'champ_standard' => true,
-          'startWithNewLine' => false,
-        ],
-      [
-          'element_type' => 'field',
-          'ordre_affichage' => 2,
-          'label' => 'Échelonnement des réalisations',
-          'info' => '',
-          'key' => 'echelonnement_realisations',
-          'attribut' => 'echelonnement_realisations',
-          'placeholder' => 'Les informations sur l’échelonnement des réalisations sont-elles disponibles ?',
-          'is_required' => true,
-          'default_value' => NULL,
-          'isEvaluated' => true,
-          'type_champ' => 'radio',
-          'meta_options' => [
-            'configs' => [
-              'options' => [
-      [
-                  'label' => 'Disponible',
-                  'value' => 'disponible',
-                ],
-      [
-                  'label' => 'Pas encore disponibles',
-                  'value' => 'pas-encore-disponibles',
-                ],
-              ],
-              'show_explanation' => true,
-              'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Explications détaillées (optionnel]',
-            ],
-            'conditions' => [
-              'disable' => false,
-              'visible' => true,
-              'conditions' => [
-              ],
-            ],
-            'validations_rules' => [
-              'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-              ],
-              'string' => true,
-              'required' => true,
-              'explanation_validation' => [
-                'min' => 50,
-                'string' => true,
-                'required' => false,
-              ],
-            ],
-          ],
-          'champ_standard' => true,
-          'startWithNewLine' => false,
-        ],
-      [
-          'element_type' => 'field',
-          'ordre_affichage' => 3,
-          'label' => 'Objectifs de production',
-          'info' => '',
-          'key' => 'objectifs_production',
-          'attribut' => 'objectifs_production',
-          'placeholder' => 'Disponible ou pas ?',
-          'is_required' => true,
-          'default_value' => NULL,
-          'isEvaluated' => true,
-          'type_champ' => 'radio',
-          'meta_options' => [
-            'configs' => [
-              'options' => [
-      [
-                  'label' => 'Disponible',
-                  'value' => 'disponible',
-                ],
-      [
-                  'label' => 'Pas encore disponibles',
-                  'value' => 'pas-encore-disponibles',
-                ],
-              ],
-              'show_explanation' => true,
-              'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-            ],
-            'conditions' => [
-              'disable' => false,
-              'visible' => true,
-              'conditions' => [
-              ],
-            ],
-            'validations_rules' => [
-              'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-              ],
-              'string' => true,
-              'required' => true,
-              'explanation_validation' => [
-                'min' => 50,
-                'string' => true,
-                'required' => false,
-              ],
-            ],
-          ],
-          'champ_standard' => true,
-          'startWithNewLine' => false,
-        ],
-      ],
-    ],
-  ],
-];
+    ];
 
     public function run(): void
     {
@@ -555,8 +546,8 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
     private function createSection(array $sectionData, $document, $parentSection = null): void
     {
         $sectionAttributes = [
-            'intitule' => $sectionData['label'],
-            'slug' => $sectionData['attribut'] ?? null,
+            'intitule' => $sectionData['label'] ?? $sectionData['intitule'] ?? 'Section sans titre',
+            'slug' => $sectionData['attribut'] ?? $sectionData['key'] ?? null,
             'description' => $sectionData['description'] ?? null,
             'documentId' => $document->id,
             'parentSectionId' => $parentSection ? $parentSection->id : null,
