@@ -80,18 +80,6 @@ class DgpdSeeder extends Seeder
 
     public function run(): void
     {
-        // Créer l'organisation DGPD
-        $dgpdOrganisation = Organisation::updateOrCreate(
-            ['slug' => 'dgpd'],
-            [
-                'nom' => 'Direction Générale de la Programmation et du Développement',
-                'slug' => 'dgpd',
-                'description' => 'Direction centrale chargée de la programmation des investissements publics et du développement',
-                'type' => 'etatique',
-                'parentId' => null
-            ]
-        );
-
         // Créer l'entité DGPD
         $dgpd = Dgpd::firstOrCreate(
             ['slug' => 'dgpd'],
@@ -111,17 +99,17 @@ class DgpdSeeder extends Seeder
         $adminDgpd = User::where('email', $adminEmail)->first();
 
         if (!$adminDgpd) {
-            $adminPersonne = Personne::firstOrCreate(
+            $adminPersonne = Personne::updateOrCreate(
                 ['nom' => 'Admin', 'prenom' => 'DGPD'],
                 [
                     'poste' => 'Administrateur DGPD',
-                    'organismeId' => $dgpdOrganisation->id
+                    'organismeId' => null
                 ]
             );
 
             $passwordAdmin = 'AdminDGPD123!';
 
-            $adminDgpd = User::firstOrCreate(
+            $adminDgpd = User::updateOrCreate(
                 ['email' => $adminEmail],[
                 'provider' => 'local',
                 'provider_user_id' => $adminEmail,
@@ -180,17 +168,17 @@ class DgpdSeeder extends Seeder
         $analyste = User::where('email', $analysteEmail)->first();
 
         if (!$analyste) {
-            $analystePersonne = Personne::firstOrCreate(
+            $analystePersonne = Personne::updateOrCreate(
                 ['nom' => 'Analyste', 'prenom' => 'DGPD'],
                 [
                     'poste' => 'Analyste Programmation et Développement',
-                    'organismeId' => $dgpdOrganisation->id
+                    'organismeId' => null
                 ]
             );
 
             $passwordAnalyste = 'AnalysteDGPD123!';
 
-            $analyste = User::firstOrCreate(
+            $analyste = User::updateOrCreate(
                 ['email' => $analysteEmail],[
                 'provider' => 'local',
                 'provider_user_id' => $analysteEmail,
