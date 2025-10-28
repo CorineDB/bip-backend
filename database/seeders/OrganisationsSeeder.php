@@ -468,6 +468,7 @@ class OrganisationsSeeder extends Seeder
 
     public function run(): void
     {
+        DB::table('organisations')->truncate();
         /* $organisations = [
             // Ministères
             [
