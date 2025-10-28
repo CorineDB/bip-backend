@@ -675,6 +675,10 @@ class OrganisationsSeeder extends Seeder
 
         foreach ($ministeres as $ministereData) {
 
+            // Extraire les enfants avant l'insertion (ce n'est pas un champ de la table)
+            $enfants = $ministereData['enfants'] ?? [];
+            unset($ministereData['enfants']);
+
             $ministere = Organisation::updateOrCreate(
                 ['slug' => $ministereData['slug']],
                 $ministereData
