@@ -19,11 +19,11 @@ $canevas = [
     ],
     'CanevasAppreciationTdrFaisabiliteSeeder' => [
         'method' => 'getCanevasAppreciationTdrFaisabilite',
-        'categorie_slug' => 'canevas-appreciation-tdr-faisabilite',
+        'categorie_slug' => 'canevas-appreciation-tdrs-faisabilite',
     ],
     'CanevasAppreciationTdrPrefaisabiliteSeeder' => [
         'method' => 'getCanevasAppreciationTdrPrefaisabilite',
-        'categorie_slug' => 'canevas-appreciation-tdr-prefaisabilite',
+        'categorie_slug' => 'canevas-appreciation-tdrs-prefaisabilite',
     ],
 ];
 
