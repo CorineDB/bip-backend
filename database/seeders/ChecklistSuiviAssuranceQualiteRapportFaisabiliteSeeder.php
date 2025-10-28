@@ -555,7 +555,7 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
         ];
 
         $section = $document->sections()->updateOrCreate([
-            'intitule' => $sectionData['label'],
+            'intitule' => $sectionData['label'] ?? $sectionData['intitule'] ?? 'Section sans titre',
             'documentId' => $document->id
         ], $sectionAttributes);
 
