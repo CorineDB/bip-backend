@@ -468,7 +468,7 @@ class OrganisationsSeeder extends Seeder
 
     public function run(): void
     {
-        $organisations = [
+        /* $organisations = [
             // Ministères
             [
                 'nom' => 'Ministère du Plan',
@@ -484,7 +484,7 @@ class OrganisationsSeeder extends Seeder
                 'type' => 'ministere',
                 'parentId' => null
             ]
-        ];
+        ]; */
         $ministeres = [
             [
                 'nom' => 'Ministère du Plan et du Développement',
@@ -657,7 +657,7 @@ class OrganisationsSeeder extends Seeder
             // Ajoute autant que nécessaire...
         ];
 
-        foreach ($organisations as $organisation) {
+        /* foreach ($organisations as $organisation) {
             DB::table('organisations')->updateOrInsert(
                 ['slug' => $organisation['slug']],
                 [
@@ -668,15 +668,15 @@ class OrganisationsSeeder extends Seeder
                     'parentId' => $organisation['parentId'],
                 ]
             );
-        }
+        } */
 
         // Récupérer le rôle Organisation
-        $roleOrganisation = Role::firstOrCreate(['slug' => 'organisation'], ['nom' => 'Organisation']);
+        $roleOrganisation = Role::updateOrCreate(['slug' => 'organisation'], ['nom' => 'Organisation']);
 
         foreach ($ministeres as $ministereData) {
 
             // Extraire les enfants avant l'insertion (ce n'est pas un champ de la table)
-            $enfants = $ministereData['enfants'] ?? [];
+            //$enfants = $ministereData['enfants'] ?? [];
             unset($ministereData['enfants']);
 
             $ministere = Organisation::updateOrCreate(
@@ -691,7 +691,7 @@ class OrganisationsSeeder extends Seeder
             $adminMinistere = User::where('email', $adminEmail)->first();
 
             if (!$adminMinistere) {
-                $adminMinisterePersonne = Personne::firstOrCreate(
+                $adminMinisterePersonne = Personne::updateOrCreate(
                     [
                         'nom' => 'Admin',
                         'prenom' => ucfirst($ministere->slug),
@@ -705,7 +705,7 @@ class OrganisationsSeeder extends Seeder
 
                 $passwordMinistere = 'Ministere123!';
 
-                $adminMinistere = User::create([
+                $adminMinistere = User::updateOrCreate(['email' => $adminEmail],[
                     'provider' => 'local',
                     'provider_user_id' => $adminEmail,
                     'username' => $adminEmail,
