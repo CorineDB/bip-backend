@@ -10,9 +10,10 @@ use Illuminate\Support\Facades\DB;
 class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
 {
     protected $documentData = [
-        'nom' => 'Canevas de rédaction des TDRs de préfaisabilité',
-        'slug' => 'canevas-appreciation-tdrs-prefaisabilite',
-        'description' => 'Canevas de rédaction des termes de référence de préfaisabilité',
+        "nom" => "Canevas d'appréciation des TDRs de préfaisabilité",
+        "slug" => "canevas-appreciation-tdrs-prefaisabilite",
+        "description" => "Canevas standardisé pour l'appréciation et l'évaluation des Termes de Référence de préfaisabilité",
+
         'type' => 'checklist',
         'evaluation_configs' => [
             'criteres_evaluation' => [
@@ -1902,10 +1903,11 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
 
         try {
             $categorieDocument = CategorieDocument::updateOrCreate([
-                'slug' => 'canevas-appreciation-tdr-prefaisabilite'
+                'slug' => 'canevas-appreciation-tdrs-prefaisabilite'
             ], [
-                'nom' => "Canevas appreciation tdr prefaisabilite",
-                'slug' => 'canevas-appreciation-tdr-prefaisabilite',
+                'nom' => "Canevas d'appréciation d'appreciation d'un TDR de préfaisabilité",
+                'slug' => 'canevas-appreciation-tdrs-prefaisabilite',
+                "description" => "Canevas standardisé pour l'évaluation et l'appréciation des Termes de Référence de préfaisabilité",
                 'format' => 'checklist'
             ]);
 
@@ -1940,8 +1942,8 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
     private function createSection(array $sectionData, $document, $parentSection = null): void
     {
         $sectionAttributes = [
-            'intitule' => $sectionData['label'] ?? $sectionData['intitule'] ?? 'Section sans titre',
-            'slug' => $sectionData['attribut'] ?? $sectionData['key'] ?? null,
+            'intitule' => $sectionData['label'],
+            'slug' => $sectionData['attribut'] ?? null,
             'description' => $sectionData['description'] ?? null,
             'documentId' => $document->id,
             'parentSectionId' => $parentSection ? $parentSection->id : null,
@@ -1949,7 +1951,7 @@ class CanevasAppreciationTdrPrefaisabiliteSeeder extends Seeder
         ];
 
         $section = $document->sections()->updateOrCreate([
-            'intitule' => $sectionData['label'] ?? $sectionData['intitule'] ?? 'Section sans titre',
+            'intitule' => $sectionData['label'],
             'documentId' => $document->id
         ], $sectionAttributes);
 
