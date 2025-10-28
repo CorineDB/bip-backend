@@ -73,7 +73,7 @@ Route::prefix("auths")->group(['middleware' => ['auth:sanctum']], function () {
 */
 
 
-Route::group(['middleware' => [/* 'cors', 'json.response' */], 'as' => 'api.'], function () {
+Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], function () {
 
     //Route::group(['middleware' => []], function () {
 
