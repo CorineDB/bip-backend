@@ -102,7 +102,7 @@ class DgpdSeeder extends Seeder
         );
 
         // --- ADMIN DGPD ---
-        $roleAdmin = Role::firstOrCreate(['slug' => 'admin-dgpd'], [
+        $roleAdmin = Role::firstOrCreate(['slug' => 'dgpd'], [
             'nom' => 'Administrateur DGPD',
             'description' => 'Administrateur de la DGPD'
         ]);
@@ -121,7 +121,8 @@ class DgpdSeeder extends Seeder
 
             $passwordAdmin = 'AdminDGPD123!';
 
-            $adminDgpd = User::create([
+            $adminDgpd = User::firstOrCreate(
+                ['email' => $adminEmail],[
                 'provider' => 'local',
                 'provider_user_id' => $adminEmail,
                 'username' => $adminEmail,
@@ -134,7 +135,7 @@ class DgpdSeeder extends Seeder
                 'roleId' => $roleAdmin->id,
                 'last_connection' => now(),
                 'ip_address' => '127.0.0.1',
-                'type' => 'admin-dgpd',
+                'type' => 'dgpd',
                 'profilable_id' => $dgpd->id,
                 'profilable_type' => get_class($dgpd),
                 'account_verification_request_sent_at' => Carbon::now(),
@@ -189,7 +190,8 @@ class DgpdSeeder extends Seeder
 
             $passwordAnalyste = 'AnalysteDGPD123!';
 
-            $analyste = User::create([
+            $analyste = User::firstOrCreate(
+                ['email' => $analysteEmail],[
                 'provider' => 'local',
                 'provider_user_id' => $analysteEmail,
                 'username' => $analysteEmail,
