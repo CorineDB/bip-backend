@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
             DepartementSeeder::class,
             CommuneSeeder::class,
             ArrondissementSeeder::class,
-            VillageSeeder::class,
+            VillageGeoJsonUpdateSeeder::class,
             PermissionSeeder::class,
             OddSeeder::class,
             CibleSeeder::class,

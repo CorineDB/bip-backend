@@ -100,6 +100,7 @@ class CreateDefaultOrganisationRoles implements ShouldQueue
      */
     protected function getDefaultRoles(): array
     {
+
         return [
             [
                 'nom' => 'DPAF',
@@ -350,7 +351,6 @@ class CreateDefaultOrganisationRoles implements ShouldQueue
                     "commenter-l-appreciation-d-une-note-conceptuelle",
                     "consulter-les-details-de-la-validation-de-l-etude-de-profil",
                     "commenter-la-decision-de-validation-de-l-etude-de-profil",
-
                 ]
             ],
             [
@@ -431,6 +431,9 @@ class CreateDefaultOrganisationRoles implements ShouldQueue
                     "acceder-au-tableau-de-bord-de-pertinence",
                     "exporter-le-resultats-de-l-analyse-d-une-idee-de-projet",
                     "commenter-le-resultats-de-l-analyse-d-une-idee-de-projet",
+                    "valider-le-score-de-pertinence-d-une-idee-de-projet",
+                    "relancer-l-evaluation-de-pertinence-d-une-idee-de-projet",
+
 
                     // AMC
                     "acceder-au-tableau-d-amc",

@@ -26,114 +26,371 @@ class PermissionSeeder extends Seeder
         /*DB::table('roles')->truncate();
         DB::table('permissions')->truncate();*/
 
-        $espaces = ["administration-general", "dpaf", "dgpb", "organisation"];
+        $espaces = ["administration-general", "dgpb", "organisation"];
 
         $roles_par_espace = [
             "administration-general" => ["Super Admin"],
-            "dpaf" => ["DPAF"],
+            //"dpaf" => ["DPAF"],
             "dgpb" => ["DGPD", "Analyste DGPD"],
-            "organisation" => ["Organisation", "Responsable projet"]
+            "organisation" => ["Organisation"]
         ];
 
         $permissions_base = [
             // Gestion des utilisateurs
-            "gerer-les-utilisateurs", "voir-la-liste-des-utilisateurs", "creer-un-utilisateur", "modifier-un-utilisateur", "supprimer-un-utilisateur",
+            "gerer-les-utilisateurs",
+            "voir-la-liste-des-utilisateurs",
+            "creer-un-utilisateur",
+            "modifier-un-utilisateur",
+            "supprimer-un-utilisateur",
 
             // Gestion des groupes-utilisateur
-            "gerer-les-groupes-utilisateur", "voir-la-liste-des-groupes-utilisateur", "creer-un-groupe-utilisateur", "modifier-un-groupe-utilisateur", "supprimer-un-groupe-utilisateur", "assigner-un-role-a-un-groupe-utilisateur", "retirer-un-role-a-un-groupe-utilisateur", "ajouter-un-utilisateur-a-un-groupe-utilisateur", "ajouter-nouvel-utilisateur-a-un-groupe-utilisateur",
+            "gerer-les-groupes-utilisateur",
+            "voir-la-liste-des-groupes-utilisateur",
+            "creer-un-groupe-utilisateur",
+            "modifier-un-groupe-utilisateur",
+            "supprimer-un-groupe-utilisateur",
+            "assigner-un-role-a-un-groupe-utilisateur",
+            "retirer-un-role-a-un-groupe-utilisateur",
+            "ajouter-un-utilisateur-a-un-groupe-utilisateur",
+            "ajouter-nouvel-utilisateur-a-un-groupe-utilisateur",
 
             // Gestion des rôles et permissions
-            "gerer-les-roles", "voir-la-liste-des-roles", "creer-un-role", "modifier-un-role", "supprimer-un-role", "assigner-des-permissions-a-un-role", "retirer-des-permissions-a-un-role",
+            "gerer-les-roles",
+            "voir-la-liste-des-roles",
+            "creer-un-role",
+            "modifier-un-role",
+            "supprimer-un-role",
+            "assigner-des-permissions-a-un-role",
+            "retirer-des-permissions-a-un-role",
 
 
-            "gerer-la-dpaf", "voir-la-dpaf", "creer-la-dpaf", "modifier-la-dpaf", "supprimer-la-dpaf",
+            "gerer-la-dpaf",
+            "voir-la-dpaf",
+            "creer-la-dpaf",
+            "modifier-la-dpaf",
+            "supprimer-la-dpaf",
 
-            "gerer-les-departements", "voir-la-liste-des-departements", "creer-un-departement", "modifier-un-departement", "supprimer-un-departement",
+            "gerer-les-departements",
+            "voir-la-liste-des-departements",
+            "creer-un-departement",
+            "modifier-un-departement",
+            "supprimer-un-departement",
 
-            "gerer-la-dgpd", "voir-la-dgpd", "creer-la-dgpd", "modifier-la-dgpd", "supprimer-la-dgpd",
+            "gerer-la-dgpd",
+            "voir-la-dgpd",
+            "creer-la-dgpd",
+            "modifier-la-dgpd",
+            "supprimer-la-dgpd",
 
             // Gestion des organisations
-            "gerer-les-organisations", "voir-la-liste-des-organisations", "creer-une-organisation", "modifier-une-organisation", "supprimer-une-organisation",
+            "gerer-les-organisations",
+            "voir-la-liste-des-organisations",
+            "creer-une-organisation",
+            "modifier-une-organisation",
+            "supprimer-une-organisation",
 
             // Gestion les odds
-            "gerer-les-odds", "voir-la-liste-des-odds", "creer-un-odd", "modifier-un-odd", "supprimer-un-odd",
+            "gerer-les-odds",
+            "voir-la-liste-des-odds",
+            "creer-un-odd",
+            "modifier-un-odd",
+            "supprimer-un-odd",
 
             // Gestion les cibles
-            "gerer-les-cibles", "voir-la-liste-des-cibles", "creer-une-cible", "modifier-une-cible", "supprimer-une-cible",
+            "gerer-les-cibles",
+            "voir-la-liste-des-cibles",
+            "creer-une-cible",
+            "modifier-une-cible",
+            "supprimer-une-cible",
 
             // Entités géographiques
-            "voir-les-departements-geo", "gerer-les-departements-geo", "voir-la-liste-des-communes", "gerer-les-communes",
-            "voir-la-liste-des-arrondissements", "gerer-les-arrondissements", "voir-la-liste-des-villages", "gerer-les-villages",
+            "voir-les-departements-geo",
+            "gerer-les-departements-geo",
+            "voir-la-liste-des-communes",
+            "gerer-les-communes",
+            "voir-la-liste-des-arrondissements",
+            "gerer-les-arrondissements",
+            "voir-la-liste-des-villages",
+            "gerer-les-villages",
 
             // Secteurs d'intervention
-            "voir-la-liste-des-grands-secteurs", "voir-la-liste-des-secteurs", "voir-la-liste-des-sous-secteurs", "gerer-les-secteurs", "creer-un-secteur", "modifier-un-secteur", "supprimer-un-secteur",
+            "voir-la-liste-des-grands-secteurs",
+            "voir-la-liste-des-secteurs",
+            "voir-la-liste-des-sous-secteurs",
+            "gerer-les-secteurs",
+            "creer-un-secteur",
+            "modifier-un-secteur",
+            "supprimer-un-secteur",
 
-            "voir-la-liste-des-types-intervention", "gerer-les-types-intervention", "creer-un-type-intervention", "modifier-un-type-intervention", "supprimer-un-type-intervention",
+            "voir-la-liste-des-types-intervention",
+            "gerer-les-types-intervention",
+            "creer-un-type-intervention",
+            "modifier-un-type-intervention",
+            "supprimer-un-type-intervention",
 
             // Financements
-            "voir-la-liste-des-types-financement", "voir-la-liste-des-natures-financement", "voir-la-liste-des-sources-financement", "gerer-les-financements", "creer-un-financement", "modifier-un-financement", "supprimer-un-financement",
+            "voir-la-liste-des-types-financement",
+            "voir-la-liste-des-natures-financement",
+            "voir-la-liste-des-sources-financement",
+            "gerer-les-financements",
+            "creer-un-financement",
+            "modifier-un-financement",
+            "supprimer-un-financement",
 
             // Programmes
-            "voir-la-liste-des-programmes", "voir-la-liste-des-composants-programme", "gerer-un-programme", "creer-un-programme", "modifier-un-programme", "supprimer-un-programme", "gerer-les-composants-de-programme", "creer-un-composant-de-programme", "modifier-un-composant-de-programme", "supprimer-un-composant-de-programme",
+            "voir-la-liste-des-programmes",
+            "voir-la-liste-des-composants-programme",
+            "gerer-un-programme",
+            "creer-un-programme",
+            "modifier-un-programme",
+            "supprimer-un-programme",
+            "gerer-les-composants-de-programme",
+            "creer-un-composant-de-programme",
+            "modifier-un-composant-de-programme",
+            "supprimer-un-composant-de-programme",
 
             // Cadres stratégiques
-            "voir-la-liste-des-axes-du-pag", "voir-la-liste-des-piliers-du-pag", "voir-la-liste-des-actions-du-pag", "voir-la-liste-des-orientations-strategique-du-pnd", "voir-la-liste-des-objectifs-strategique-du-pnd", "voir-la-liste-des-resultats-strategique-du-pnd",
+            "voir-la-liste-des-axes-du-pag",
+            "voir-la-liste-des-piliers-du-pag",
+            "voir-la-liste-des-actions-du-pag",
+            "voir-la-liste-des-orientations-strategique-du-pnd",
+            "voir-la-liste-des-objectifs-strategique-du-pnd",
+            "voir-la-liste-des-resultats-strategique-du-pnd",
 
             // Projets et idées - Catégories
-            "voir-la-liste-des-categories-de-projet", "gerer-les-categories-de-projet", "creer-une-categorie-de-projet", "modifier-une-categorie-de-projet", "supprimer-une-categorie-de-projet",
+            "voir-la-liste-des-categories-de-projet",
+            "gerer-les-categories-de-projet",
+            "creer-une-categorie-de-projet",
+            "modifier-une-categorie-de-projet",
+            "supprimer-une-categorie-de-projet",
 
             // Gestion des idées de projet
-            "voir-la-liste-des-idees-de-projet", "gerer-les-idees-projet", "creer-une-idee-de-projet", "modifier-une-idee-de-projet", "supprimer-une-idee-de-projet", "consulter-une-idee-de-projet", "exporter-une-idee-de-projet", "imprimer-une-idee-de-projet", "effectuer-evaluation-climatique-idee-projet", "obtenir-score-climatique", "obtenir-score-climatique-une-projet", "valider-le-score-climatique-une-idee-de-projet", "relancer-l-evaluation-climatique-une-idee-de-projet", "commenter-une-idee-de-projet", "voir-les-commentaires-d-une-idee-de-projet", "attacher-des-documents-a-une-idee-de-projet", "voir-les-documents-d-une-idee-de-projet", "telecharger-les-documents-d-une-idee-de-projet",
+            "voir-la-liste-des-idees-de-projet",
+            "gerer-les-idees-projet",
+            "creer-une-idee-de-projet",
+            "modifier-une-idee-de-projet",
+            "supprimer-une-idee-de-projet",
+            "consulter-une-idee-de-projet",
+            "exporter-une-idee-de-projet",
+            "imprimer-une-idee-de-projet",
+            "effectuer-evaluation-climatique-idee-projet",
+            "obtenir-score-climatique",
+            "obtenir-score-climatique-une-projet",
+            "valider-le-score-climatique-une-idee-de-projet",
+            "relancer-l-evaluation-climatique-une-idee-de-projet",
+            "commenter-une-idee-de-projet",
+            "voir-les-commentaires-d-une-idee-de-projet",
+            "attacher-des-documents-a-une-idee-de-projet",
+            "voir-les-documents-d-une-idee-de-projet",
+            "telecharger-les-documents-d-une-idee-de-projet",
 
             // Gestion des projets
-            "voir-la-liste-des-projets", "consulter-un-projet", "exporter-un-projet", "imprimer-un-projet", "commenter-un-projet", "voir-les-commentaires-d-un-projet", "attacher-des-documents-a-un-projet", "voir-les-documents-d-un-projet", "telecharger-les-documents-d-un-projet", "suivre-avancement-projet", "mettre-a-jour-statut-projet", "generer-rapport-projet", "voir-historique-projet",
+            "voir-la-liste-des-projets",
+            "consulter-un-projet",
+            "exporter-un-projet",
+            "imprimer-un-projet",
+            "commenter-un-projet",
+            "voir-les-commentaires-d-un-projet",
+            "attacher-des-documents-a-un-projet",
+            "voir-les-documents-d-un-projet",
+            "telecharger-les-documents-d-un-projet",
+            "suivre-avancement-projet",
+            "mettre-a-jour-statut-projet",
+            "generer-rapport-projet",
+            "voir-historique-projet",
 
-            "creer-le-canevas-de-la-fiche-idee-de-projet", "modifier-le-canevas-de-la-fiche-idee-de-projet", "consulter-le-canevas-de-la-fiche-idee-de-projet", "remplir-le-canevas-de-la-fiche-idee-de-projet", "telecharger-la-fiche-synthese-une-idee-de-projet",
+            "creer-le-canevas-de-la-fiche-idee-de-projet",
+            "modifier-le-canevas-de-la-fiche-idee-de-projet",
+            "consulter-le-canevas-de-la-fiche-idee-de-projet",
+            "remplir-le-canevas-de-la-fiche-idee-de-projet",
+            "telecharger-la-fiche-synthese-une-idee-de-projet",
 
-            "creer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet", "modifier-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet", "consulter-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet", "imprimer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet", "effectuer-evaluation-pertinence-idee-projet", "valider-le-score-de-pertinence-d-une-idee-de-projet", "relancer-l-evaluation-de-pertinence-d-une-idee-de-projet", "acceder-au-tableau-de-bord-de-pertinence", "exporter-le-resultats-de-l-analyse-d-une-idee-de-projet", "commenter-le-resultats-de-l-analyse-d-une-idee-de-projet",
+            "creer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+            "modifier-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+            "consulter-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+            "imprimer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+            "effectuer-evaluation-pertinence-idee-projet",
+            "valider-le-score-de-pertinence-d-une-idee-de-projet",
+            "relancer-l-evaluation-de-pertinence-d-une-idee-de-projet",
+            "acceder-au-tableau-de-bord-de-pertinence",
+            "exporter-le-resultats-de-l-analyse-d-une-idee-de-projet",
+            "commenter-le-resultats-de-l-analyse-d-une-idee-de-projet",
 
-            "creer-la-grille-d-analyse-climatique-d-une-idee-de-projet", "modifier-la-grille-d-analyse-climatique-d-une-idee-de-projet", "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet", "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet", "effectuer-evaluation-climatique-idee-projet", "acceder-au-tableau-de-bord-climatique", "valider-le-score-d-analyse-climatique-interne-d-une-idee-de-projet", "valider-une-idee-de-projet-en-interne", "exporter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet", "commenter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
+            "creer-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+            "modifier-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+            "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+            "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+            "effectuer-evaluation-climatique-idee-projet",
+            "acceder-au-tableau-de-bord-climatique",
+            "valider-le-score-d-analyse-climatique-interne-d-une-idee-de-projet",
+            "valider-une-idee-de-projet-en-interne",
+            "exporter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
+            "commenter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
 
-            "creer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet", "modifier-la-grille-d-analyse-multi-critere-d-une-idee-de-projet", "consulter-la-grille-d-analyse-multi-critere-d-une-idee-de-projet", "imprimer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet", "effectuer-l-analyse-climatique-d-une-idee-de-projet", "acceder-au-tableau-d-amc", "effectuer-l-amc-d-une-idee-de-projet", "valider-une-idee-de-projet-a-projet", "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet", "commenter-le-resultats-de-l-amc-d-une-idee-de-projet",
+            "creer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+            "modifier-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+            "consulter-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+            "imprimer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+            "effectuer-l-analyse-climatique-d-une-idee-de-projet",
+            "acceder-au-tableau-d-amc",
+            "effectuer-l-amc-d-une-idee-de-projet",
+            "valider-une-idee-de-projet-a-projet",
+            "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+            "commenter-le-resultats-de-l-amc-d-une-idee-de-projet",
 
             // Gestion les notes conceptuelle
-            "gerer-les-notes-conceptuelle", "voir-la-liste-des-notes-conceptuelle", "creer-une-note-conceptuelle", "rediger-une-note-conceptuelle", "modifier-une-note-conceptuelle", "supprimer-une-note-conceptuelle", "commenter-une-note-conceptuelle", "voir-la-liste-des-commentaires-d-une-note-conceptuelle", "imprimer-une-note-conceptuelle", "televerser-une-note-conceptuelle", "attacher-des-documents-relatifs-a-une-note-conceptuelle", "voir-les-documents-relatifs-a-une-note-conceptuelle", "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
+            "gerer-les-notes-conceptuelle",
+            "voir-la-liste-des-notes-conceptuelle",
+            "creer-une-note-conceptuelle",
+            "rediger-une-note-conceptuelle",
+            "modifier-une-note-conceptuelle",
+            "supprimer-une-note-conceptuelle",
+            "commenter-une-note-conceptuelle",
+            "voir-la-liste-des-commentaires-d-une-note-conceptuelle",
+            "imprimer-une-note-conceptuelle",
+            "televerser-une-note-conceptuelle",
+            "attacher-des-documents-relatifs-a-une-note-conceptuelle",
+            "voir-les-documents-relatifs-a-une-note-conceptuelle",
+            "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
 
-            "creer-la-fiche-de-redaction-d-une-note-conceptuelle", "modifier-la-fiche-de-redaction-d-une-note-conceptuelle", "consulter-la-fiche-de-redaction-d-une-note-conceptuelle", "imprimer-la-fiche-de-redaction-d-une-note-conceptuelle", "evaluer-une-note-conceptulle", "voir-le-resultats-d-evaluation-d-une-note-conceptuelle", "imprimer-le-resultats-d-evaluation-d-une-note-conceptuelle", "valider-l-etude-de-profil", "commenter-l-appreciation-d-une-note-conceptuelle", "consulter-les-details-de-la-validation-de-l-etude-de-profil", "commenter-la-decision-de-validation-de-l-etude-de-profil",
+            "creer-la-fiche-de-redaction-d-une-note-conceptuelle",
+            "modifier-la-fiche-de-redaction-d-une-note-conceptuelle",
+            "consulter-la-fiche-de-redaction-d-une-note-conceptuelle",
+            "imprimer-la-fiche-de-redaction-d-une-note-conceptuelle",
+            "evaluer-une-note-conceptulle",
+            "voir-le-resultats-d-evaluation-d-une-note-conceptuelle",
+            "imprimer-le-resultats-d-evaluation-d-une-note-conceptuelle",
+            "valider-l-etude-de-profil",
+            "commenter-l-appreciation-d-une-note-conceptuelle",
+            "consulter-les-details-de-la-validation-de-l-etude-de-profil",
+            "commenter-la-decision-de-validation-de-l-etude-de-profil",
 
-            "creer-l-outil-d-analyse-d-une-note-conceptuelle", "modifier-l-outil-d-analyse-d-une-note-conceptuelle", "consulter-l-outil-d-analyse-d-une-note-conceptuelle", "imprimer-l-outil-d-analyse-d-une-note-conceptuelle",
+            "creer-l-outil-d-analyse-d-une-note-conceptuelle",
+            "modifier-l-outil-d-analyse-d-une-note-conceptuelle",
+            "consulter-l-outil-d-analyse-d-une-note-conceptuelle",
+            "imprimer-l-outil-d-analyse-d-une-note-conceptuelle",
 
             // FAISABILITE PRELIMINAIRE
-            "soumettre-un-rapport-de-faisabilite-preliminaire","modifier-un-rapport-de-faisabilite-preliminaire", "supprimer-un-rapport-de-faisabilite-preliminaire", "telecharger-un-rapport-de-faisabilite-preliminaire", "commenter-un-rapport-de-faisabilite-preliminaire", "gerer-les-rapports-de-faisabilite-preliminaire", "voir-la-liste-des-rapports-de-faisabilite-preliminaire",
+            "soumettre-un-rapport-de-faisabilite-preliminaire",
+            "modifier-un-rapport-de-faisabilite-preliminaire",
+            "supprimer-un-rapport-de-faisabilite-preliminaire",
+            "telecharger-un-rapport-de-faisabilite-preliminaire",
+            "commenter-un-rapport-de-faisabilite-preliminaire",
+            "gerer-les-rapports-de-faisabilite-preliminaire",
+            "voir-la-liste-des-rapports-de-faisabilite-preliminaire",
 
 
             // TDRs
-            "soumettre-un-tdr-de-prefaisabilite", "voir-la-liste-des-tdrs-de-prefaisabilite", "attacher-un-fichier-a-un-tdr-de-prefaisabilite", "supprimer-un-tdr-de-prefaisabilite", "apprecier-un-tdr-de-prefaisabilite", "consulter-le-details-d-appreciation-d-un-tdr-de-prefaisabilite", "valider-un-tdr-de-prefaisabilite", "voir-details-de-l-appreciation-un-tdr-de-prefaisabilite", "exporter-l-appreciation-d-un-tdr-de-prefaisabilite", "commenter-l-appreciation-d-un-tdr-de-prefaisabilite",
-            "soumettre-un-rapport-de-prefaisabilite","modifier-un-rapport-de-prefaisabilite", "supprimer-un-rapport-de-prefaisabilite", "telecharger-un-rapport-de-prefaisabilite", "valider-une-etude-de-prefaisabilite", "consulter-les-details-de-la-validation-de-l-etude-de-prefaisabilite", "commenter-la-decision-de-validation-de-l-etude-de-prefaisabilite", "gerer-les-rapports-de-prefaisabilite", "voir-la-liste-des-rapports-de-prefaisabilite",
+            "soumettre-un-tdr-de-prefaisabilite",
+            "voir-la-liste-des-tdrs-de-prefaisabilite",
+            "attacher-un-fichier-a-un-tdr-de-prefaisabilite",
+            "supprimer-un-tdr-de-prefaisabilite",
+            "apprecier-un-tdr-de-prefaisabilite",
+            "consulter-le-details-d-appreciation-d-un-tdr-de-prefaisabilite",
+            "valider-un-tdr-de-prefaisabilite",
+            "voir-details-de-l-appreciation-un-tdr-de-prefaisabilite",
+            "exporter-l-appreciation-d-un-tdr-de-prefaisabilite",
+            "commenter-l-appreciation-d-un-tdr-de-prefaisabilite",
+            "soumettre-un-rapport-de-prefaisabilite",
+            "modifier-un-rapport-de-prefaisabilite",
+            "supprimer-un-rapport-de-prefaisabilite",
+            "telecharger-un-rapport-de-prefaisabilite",
+            "valider-une-etude-de-prefaisabilite",
+            "consulter-les-details-de-la-validation-de-l-etude-de-prefaisabilite",
+            "commenter-la-decision-de-validation-de-l-etude-de-prefaisabilite",
+            "gerer-les-rapports-de-prefaisabilite",
+            "voir-la-liste-des-rapports-de-prefaisabilite",
 
-            "soumettre-un-tdr-de-faisabilite", "voir-la-liste-des-tdrs-de-faisabilite", "attacher-un-fichier-a-un-tdr-de-faisabilite", "supprimer-un-tdr-de-faisabilite", "apprecier-un-tdr-de-faisabilite", "valider-un-tdr-de-faisabilite", "voir-details-de-l-appreciation-un-tdr-de-faisabilite", "exporter-l-appreciation-d-un-tdr-de-faisabilite", "commenter-l-appreciation-d-un-tdr-de-faisabilite",
-            "soumettre-un-rapport-de-faisabilite","modifier-un-rapport-de-faisabilite", "supprimer-un-rapport-de-faisabilite", "telecharger-un-rapport-de-faisabilite", "valider-une-etude-de-faisabilite", "consulter-les-details-de-la-validation-de-l-etude-de-faisabilite", "commenter-la-decision-de-validation-de-l-etude-de-faisabilite", "gerer-les-rapports-de-faisabilite", "voir-la-liste-des-rapports-de-faisabilite",
+            "soumettre-un-tdr-de-faisabilite",
+            "voir-la-liste-des-tdrs-de-faisabilite",
+            "attacher-un-fichier-a-un-tdr-de-faisabilite",
+            "supprimer-un-tdr-de-faisabilite",
+            "apprecier-un-tdr-de-faisabilite",
+            "valider-un-tdr-de-faisabilite",
+            "voir-details-de-l-appreciation-un-tdr-de-faisabilite",
+            "exporter-l-appreciation-d-un-tdr-de-faisabilite",
+            "commenter-l-appreciation-d-un-tdr-de-faisabilite",
+            "soumettre-un-rapport-de-faisabilite",
+            "modifier-un-rapport-de-faisabilite",
+            "supprimer-un-rapport-de-faisabilite",
+            "telecharger-un-rapport-de-faisabilite",
+            "valider-une-etude-de-faisabilite",
+            "consulter-les-details-de-la-validation-de-l-etude-de-faisabilite",
+            "commenter-la-decision-de-validation-de-l-etude-de-faisabilite",
+            "gerer-les-rapports-de-faisabilite",
+            "voir-la-liste-des-rapports-de-faisabilite",
 
             // Évaluation Ex-Ante
-            "soumettre-un-rapport-d-evaluation-ex-ante", "modifier-un-rapport-d-evaluation-ex-ante", "supprimer-un-rapport-d-evaluation-ex-ante", "consulter-un-rapport-d-evaluation-ex-ante", "telecharger-un-rapport-d-evaluation-ex-ante", "imprimer-un-rapport-d-evaluation-ex-ante", "exporter-un-rapport-d-evaluation-ex-ante", "valider-un-rapport-evaluation-ex-ante", "consulter-les-details-de-la-validation-de-la-validation-finale", "commenter-la-decision-de-validation-finale", "rejeter-un-rapport-evaluation-ex-ante", "gerer-les-rapports-d-evaluation-ex-ante", "voir-la-liste-des-rapports-d-evaluation-ex-ante", "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante", "voir-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante", "telecharger-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante", "supprimer-un-document-annexe-d-un-rapport-d-evaluation-ex-ante", "commenter-un-rapport-d-evaluation-ex-ante", "voir-les-commentaires-d-un-rapport-d-evaluation-ex-ante", "voir-historique-rapport-d-evaluation-ex-ante",
+            "soumettre-un-rapport-d-evaluation-ex-ante",
+            "modifier-un-rapport-d-evaluation-ex-ante",
+            "supprimer-un-rapport-d-evaluation-ex-ante",
+            "consulter-un-rapport-d-evaluation-ex-ante",
+            "telecharger-un-rapport-d-evaluation-ex-ante",
+            "imprimer-un-rapport-d-evaluation-ex-ante",
+            "exporter-un-rapport-d-evaluation-ex-ante",
+            "valider-un-rapport-evaluation-ex-ante",
+            "consulter-les-details-de-la-validation-de-la-validation-finale",
+            "commenter-la-decision-de-validation-finale",
+            "rejeter-un-rapport-evaluation-ex-ante",
+            "gerer-les-rapports-d-evaluation-ex-ante",
+            "voir-la-liste-des-rapports-d-evaluation-ex-ante",
+            "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante",
+            "voir-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante",
+            "telecharger-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante",
+            "supprimer-un-document-annexe-d-un-rapport-d-evaluation-ex-ante",
+            "commenter-un-rapport-d-evaluation-ex-ante",
+            "voir-les-commentaires-d-un-rapport-d-evaluation-ex-ante",
+            "voir-historique-rapport-d-evaluation-ex-ante",
 
-            "creer-le-canevas-d-appreciation-d-un-tdr", "modifier-le-canevas-d-appreciation-d-un-tdr", "consulter-le-canevas-d-appreciation-d-un-tdr", "imprimer-le-canevas-d-appreciation-d-un-tdr",
+            "creer-le-canevas-d-appreciation-d-un-tdr",
+            "modifier-le-canevas-d-appreciation-d-un-tdr",
+            "consulter-le-canevas-d-appreciation-d-un-tdr",
+            "imprimer-le-canevas-d-appreciation-d-un-tdr",
 
             // Documents et TDR
-            "voir-la-liste-des-canevas", "gerer-les-canevas", "creer-un-canevas", "modifier-un-canevas", "supprimer-un-canevas", "imprimer-un-canevas",
+            "voir-la-liste-des-canevas",
+            "gerer-les-canevas",
+            "creer-un-canevas",
+            "modifier-un-canevas",
+            "supprimer-un-canevas",
+            "imprimer-un-canevas",
 
-            "voir-la-liste-des-canevas", "telecharger-un-canevas-analyse-idee", "modifier-canevas-analyse-idee", "voir-le-canevas-de-la-fiche-idee", "modifier-le-canevas-de-la-fiche-idee", "telecharger-canevas-fiche-idee", "modifier-canevas-grille-evaluation-climatique", "modifier-canevas-grille-evaluation-amc", "modifier-canevas-note-idee", "gerer-documents", "telecharger-documents",
-            "creer-un-tdr", "modifier-un-tdr",
-            "voir-tdr-prefaisabilite", "voir-tdr-faisabilite", "telecharger-tdr-prefaisabilite",
-            "telecharger-tdr-faisabilite", "soumettre-tdr-faisabilite", "soumettre-tdr-prefaisabilite",
+            "voir-la-liste-des-canevas",
+            "telecharger-un-canevas-analyse-idee",
+            "modifier-canevas-analyse-idee",
+            "voir-le-canevas-de-la-fiche-idee",
+            "modifier-le-canevas-de-la-fiche-idee",
+            "telecharger-canevas-fiche-idee",
+            "modifier-canevas-grille-evaluation-climatique",
+            "modifier-canevas-grille-evaluation-amc",
+            "modifier-canevas-note-idee",
+            "gerer-documents",
+            "telecharger-documents",
+            "creer-un-tdr",
+            "modifier-un-tdr",
+            "voir-tdr-prefaisabilite",
+            "voir-tdr-faisabilite",
+            "telecharger-tdr-prefaisabilite",
+            "telecharger-tdr-faisabilite",
+            "soumettre-tdr-faisabilite",
+            "soumettre-tdr-prefaisabilite",
 
             // Évaluations et validations
 
-            "televerser-un-fichier", "partager-un-fichier", "supprimer-un-fichier", "telecharger-un-fichier", 'consulter-un-fichier',
+            "televerser-un-fichier",
+            "partager-un-fichier",
+            "supprimer-un-fichier",
+            "telecharger-un-fichier",
+            'consulter-un-fichier',
 
             // Commentaires et fichiers
-            "ajouter-commentaire", "voir-commentaires", "modifier-commentaire", "supprimer-commentaire",
-            "telecharger-fichier", "upload-fichier", "supprimer-fichier",
+            "ajouter-commentaire",
+            "voir-commentaires",
+            "modifier-commentaire",
+            "supprimer-commentaire",
+            "telecharger-fichier",
+            "upload-fichier",
+            "supprimer-fichier",
 
             // === CANEVAS DE RÉDACTION - Note Conceptuelle (instance unique) ===
             "creer-le-canevas-de-redaction-note-conceptuelle",
@@ -289,34 +546,654 @@ class PermissionSeeder extends Seeder
 
         $permissions_par_role = [
             // Administration Générale
-            "Super Admin" => [],
-
-            // DPAF
-            "Responsable Projet" => [],
-            "Organisation" => [
+            "Super Admin" => [
                 // === A. GESTION ADMINISTRATIVE ===
                 // Gestion des utilisateurs
-                "gerer-les-utilisateurs", "voir-la-liste-des-utilisateurs", "creer-un-utilisateur",
-                "modifier-un-utilisateur", "supprimer-un-utilisateur",
+                "gerer-les-utilisateurs",
+                "voir-la-liste-des-utilisateurs",
+                "creer-un-utilisateur",
+                "modifier-un-utilisateur",
+                "supprimer-un-utilisateur",
 
                 // Gestion des groupes-utilisateur
-                "gerer-les-groupes-utilisateur", "voir-la-liste-des-groupes-utilisateur",
-                "creer-un-groupe-utilisateur", "modifier-un-groupe-utilisateur",
-                "supprimer-un-groupe-utilisateur", "assigner-un-role-a-un-groupe-utilisateur",
-                "retirer-un-role-a-un-groupe-utilisateur", "ajouter-un-utilisateur-a-un-groupe-utilisateur",
+                "gerer-les-groupes-utilisateur",
+                "voir-la-liste-des-groupes-utilisateur",
+                "creer-un-groupe-utilisateur",
+                "modifier-un-groupe-utilisateur",
+                "supprimer-un-groupe-utilisateur",
+                "assigner-un-role-a-un-groupe-utilisateur",
+                "retirer-un-role-a-un-groupe-utilisateur",
+                "ajouter-un-utilisateur-a-un-groupe-utilisateur",
                 "ajouter-nouvel-utilisateur-a-un-groupe-utilisateur",
 
                 // Gestion des rôles et permissions
-                "gerer-les-roles", "voir-la-liste-des-roles", "creer-un-role",
-                "modifier-un-role", "supprimer-un-role", "assigner-des-permissions-a-un-role",
+                "gerer-les-roles",
+                "voir-la-liste-des-roles",
+                "creer-un-role",
+                "modifier-un-role",
+                "supprimer-un-role",
+                "assigner-des-permissions-a-un-role",
+                "retirer-des-permissions-a-un-role",
+
+                // === B. CONFIGURATION ORGANISATIONNELLE ===
+
+                // Gestion départements
+                "gerer-les-departements",
+                "voir-la-liste-des-departements",
+                "creer-un-departement",
+                "modifier-un-departement",
+                "supprimer-un-departement",
+
+                // Gestion DGPD
+                "gerer-la-dgpd",
+                "voir-la-dgpd",
+                "creer-la-dgpd",
+                "modifier-la-dgpd",
+                "supprimer-la-dgpd",
+
+                // Gestion des organisations
+                "gerer-les-organisations",
+                "voir-la-liste-des-organisations",
+                "creer-une-organisation",
+                "modifier-une-organisation",
+                "supprimer-une-organisation",
+
+                // Gestion DPAF
+                "voir-la-dpaf",
+
+                // === C. DONNÉES DE RÉFÉRENCE SYSTÈME ===
+                // ODDs
+                "gerer-les-odds",
+                "voir-la-liste-des-odds",
+                "creer-un-odd",
+                "modifier-un-odd",
+                "supprimer-un-odd",
+
+                // Cibles
+                "gerer-les-cibles",
+                "voir-la-liste-des-cibles",
+                "creer-une-cible",
+                "modifier-une-cible",
+                "supprimer-une-cible",
+
+                // Entités géographiques
+                "voir-les-departements-geo",
+                "gerer-les-departements-geo",
+                "voir-la-liste-des-communes",
+                "gerer-les-communes",
+                "voir-la-liste-des-arrondissements",
+                "gerer-les-arrondissements",
+                "voir-la-liste-des-villages",
+                "gerer-les-villages",
+
+                // Secteurs d'intervention
+                "voir-la-liste-des-grands-secteurs",
+                "voir-la-liste-des-secteurs",
+                "voir-la-liste-des-sous-secteurs",
+                "gerer-les-secteurs",
+                "creer-un-secteur",
+                "modifier-un-secteur",
+                "supprimer-un-secteur",
+
+                // Types d'intervention
+                "voir-la-liste-des-types-intervention",
+                "gerer-les-types-intervention",
+                "creer-un-type-intervention",
+                "modifier-un-type-intervention",
+                "supprimer-un-type-intervention",
+
+                // Financements
+                "voir-la-liste-des-types-financement",
+                "voir-la-liste-des-natures-financement",
+                "voir-la-liste-des-sources-financement",
+                "gerer-les-financements",
+                "creer-un-financement",
+                "modifier-un-financement",
+                "supprimer-un-financement",
+
+                // Programmes
+                "voir-la-liste-des-programmes",
+                "voir-la-liste-des-composants-programme",
+                "gerer-un-programme",
+                "creer-un-programme",
+                "modifier-un-programme",
+                "supprimer-un-programme",
+                "gerer-les-composants-de-programme",
+                "creer-un-composant-de-programme",
+                "modifier-un-composant-de-programme",
+                "supprimer-un-composant-de-programme",
+
+                // Cadres stratégiques (consultation)
+                "voir-la-liste-des-axes-du-pag",
+                "voir-la-liste-des-piliers-du-pag",
+                "voir-la-liste-des-actions-du-pag",
+                "voir-la-liste-des-orientations-strategique-du-pnd",
+                "voir-la-liste-des-objectifs-strategique-du-pnd",
+                "voir-la-liste-des-resultats-strategique-du-pnd",
+
+                // Catégories de projet
+                "voir-la-liste-des-categories-de-projet",
+                "gerer-les-categories-de-projet",
+                "creer-une-categorie-de-projet",
+                "modifier-une-categorie-de-projet",
+                "supprimer-une-categorie-de-projet",
+
+                // === D. GESTION DES CANEVAS ET OUTILS SYSTÈME ===
+                // Canevas généraux
+                "voir-la-liste-des-canevas",
+                "gerer-les-canevas",
+                "creer-un-canevas",
+                "modifier-un-canevas",
+                "supprimer-un-canevas",
+                "imprimer-un-canevas",
+
+                // Canevas fiche idée de projet
+                "creer-le-canevas-de-la-fiche-idee-de-projet",
+                "modifier-le-canevas-de-la-fiche-idee-de-projet",
+                "consulter-le-canevas-de-la-fiche-idee-de-projet",
+
+                // Canevas rédaction note conceptuelle
+                "creer-la-fiche-de-redaction-d-une-note-conceptuelle",
+                "modifier-la-fiche-de-redaction-d-une-note-conceptuelle",
+                "creer-le-canevas-de-redaction-note-conceptuelle",
+                "modifier-le-canevas-de-redaction-note-conceptuelle",
+                "consulter-le-canevas-de-redaction-note-conceptuelle",
+                "imprimer-le-canevas-de-redaction-note-conceptuelle",
+                "exporter-le-canevas-de-redaction-note-conceptuelle",
+                "telecharger-le-canevas-de-redaction-note-conceptuelle",
+                "restaurer-version-anterieure-canevas-note-conceptuelle",
+                "voir-historique-canevas-note-conceptuelle",
+
+                // Canevas d'appréciation TDR
+                "creer-le-canevas-d-appreciation-d-un-tdr",
+                "modifier-le-canevas-d-appreciation-d-un-tdr",
+                "consulter-le-canevas-d-appreciation-d-un-tdr",
+                "imprimer-le-canevas-d-appreciation-d-un-tdr",
+
+                // Grilles d'analyse - Pertinence
+                "creer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+                "modifier-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+                "consulter-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+                "imprimer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+
+                // Grilles d'analyse - Climatique
+                "creer-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+                "modifier-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+                "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+                "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+
+                // Grilles d'analyse - AMC
+                "creer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+                "modifier-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+                "consulter-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+                "imprimer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+
+                // Outil d'analyse note conceptuelle
+                "creer-l-outil-d-analyse-d-une-note-conceptuelle",
+                "modifier-l-outil-d-analyse-d-une-note-conceptuelle",
+                "consulter-l-outil-d-analyse-d-une-note-conceptuelle",
+                "imprimer-l-outil-d-analyse-d-une-note-conceptuelle",
+                "creer-l-outil-d-analyse-d-une-note-conceptuelle",
+                "modifier-l-outil-d-analyse-d-une-note-conceptuelle",
+
+                // Outils d'évaluation - Pertinence (instances uniques)
+                "creer-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+                "modifier-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+                "consulter-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+                "imprimer-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+                "exporter-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+                "telecharger-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+                "restaurer-version-anterieure-de-l-outil-d-evaluation-de-la-pertinence-des-idees-de-projet",
+                "voir-historique-grille-evaluation-de-la-pertinence-des-idees-de-projet",
+
+                // Outils d'évaluation - Climatique
+                "creer-l-outil-d-evaluation-climatique-des-idees-de-projet",
+                "modifier-l-outil-d-evaluation-climatique-des-idees-de-projet",
+                "consulter-l-outil-d-evaluation-climatique-des-idees-de-projet",
+                "imprimer-l-outil-d-evaluation-climatique-des-idees-de-projet",
+                "exporter-l-outil-d-evaluation-climatique-des-idees-de-projet",
+                "telecharger-l-outil-d-evaluation-climatique-des-idees-de-projet",
+                "voir-historique-de-l-outil-d-evaluation-climatique-des-idees-de-projet",
+
+                // Outils d'évaluation - AMC
+                "creer-l-outil-d-analyse-multicritere-des-idees-de-projet",
+                "modifier-l-outil-d-analyse-multicritere-des-idees-de-projet",
+                "consulter-l-outil-d-analyse-multicritere-des-idees-de-projet",
+                "imprimer-l-outil-d-analyse-multicritere-des-idees-de-projet",
+                "exporter-l-outil-d-analyse-multicritere-des-idees-de-projet",
+                "telecharger--l-outil-d-analyse-multicritere-des-idees-de-projet",
+                "voir-historique-outil-d-analyse-multicritere-des-idees-de-projet",
+
+                // Checklists d'appréciation - TDR Préfaisabilité
+                "creer-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+                "modifier-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+                "consulter-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+                "imprimer-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+                "exporter-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+                "telecharger-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+                "restaurer-version-anterieure-checklist-appreciation-tdr-prefaisabilite",
+
+                // Checklists d'appréciation - TDR Faisabilité
+                "creer-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+                "modifier-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+                "consulter-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+                "imprimer-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+                "exporter-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+                "telecharger-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+                "restaurer-version-anterieure-checklist-appreciation-tdr-faisabilite",
+
+                // Checklists d'appréciation - Notes Conceptuelles
+                "creer-le-check-liste-d-appreciation-des-notes-conceptuelle",
+                "modifier-le-check-liste-d-appreciation-des-notes-conceptuelle",
+                "consulter-le-check-liste-d-appreciation-des-notes-conceptuelle",
+                "imprimer-le-check-liste-d-appreciation-des-notes-conceptuelle",
+                "exporter-le-check-liste-d-appreciation-des-notes-conceptuelle",
+                "telecharger-le-check-liste-d-appreciation-des-notes-conceptuelle",
+                "restaurer-version-anterieure-checklist-des-notes-conceptuelle",
+
+                // Checklists de suivi - Rapports Préfaisabilité
+                "creer-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+                "modifier-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+                "consulter-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+                "imprimer-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+                "exporter-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+                "telecharger-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+                "restaurer-version-anterieure-checklist-suivi-rapport-prefaisabilite",
+
+                // Checklists de suivi - Faisabilité Technique
+                "creer-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+                "modifier-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+                "consulter-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+                "imprimer-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+                "exporter-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+                "telecharger-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+
+                // Checklists de suivi - Faisabilité Économique
+                "creer-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+                "modifier-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+                "consulter-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+                "imprimer-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+                "exporter-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+                "telecharger-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+
+                // Checklists de suivi - Faisabilité Marché
+                "creer-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+                "modifier-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+                "consulter-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+                "imprimer-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+                "exporter-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+                "telecharger-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+
+                // Checklists de suivi - Faisabilité Organisationnelle et Juridique
+                "creer-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+                "modifier-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+                "consulter-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+                "imprimer-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+                "exporter-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+                "telecharger-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+
+                // Checklists de suivi - Impact Environnemental et Social
+                "creer-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+                "modifier-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+                "consulter-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+                "imprimer-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+                "exporter-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+                "telecharger-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+
+                // Checklists de suivi - Faisabilité Financière
+                "creer-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+                "modifier-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+                "consulter-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+                "imprimer-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+                "exporter-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+                "telecharger-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+
+                // Checklists - Assurance Qualité
+                "creer-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+                "modifier-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+                "consulter-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+                "imprimer-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+                "exporter-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+                "telecharger-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+
+                // Checklists - Contrôle Qualité
+                "creer-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+                "modifier-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+                "consulter-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+                "imprimer-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+                "exporter-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+                "telecharger-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+
+                // === E. VISUALISATION DES PROJETS OPÉRATIONNELS (Consultation uniquement) ===
+                // Idées de projet - Consultation
+                "voir-la-liste-des-idees-de-projet",
+                "consulter-une-idee-de-projet",
+                "voir-les-commentaires-d-une-idee-de-projet",
+                "voir-les-documents-d-une-idee-de-projet",
+                "telecharger-les-documents-d-une-idee-de-projet",
+                "exporter-une-idee-de-projet",
+                "imprimer-une-idee-de-projet",
+
+                // Canevas fiche idée (consultation et remplissage en lecture seule)
+                "consulter-le-canevas-de-la-fiche-idee-de-projet",
+                "telecharger-la-fiche-synthese-une-idee-de-projet",
+
+                // Grilles d'analyse - Consultation des résultats
+                "acceder-au-tableau-de-bord-de-pertinence",
+                "acceder-au-tableau-de-bord-climatique",
+                "acceder-au-tableau-d-amc",
+                "exporter-le-resultats-de-l-analyse-d-une-idee-de-projet",
+                "exporter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
+                "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+
+                // Projets - Consultation
+                "voir-la-liste-des-projets",
+                "consulter-un-projet",
+                "exporter-un-projet",
+                "imprimer-un-projet",
+                "voir-les-commentaires-d-un-projet",
+                "voir-les-documents-d-un-projet",
+                "telecharger-les-documents-d-un-projet",
+                "voir-historique-projet",
+                "generer-rapport-projet",
+
+                // Notes conceptuelles - Consultation
+                "voir-la-liste-des-notes-conceptuelle",
+                "voir-la-liste-des-commentaires-d-une-note-conceptuelle",
+                "imprimer-une-note-conceptuelle",
+                "voir-les-documents-relatifs-a-une-note-conceptuelle",
+                "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
+                "consulter-la-fiche-de-redaction-d-une-note-conceptuelle",
+                "imprimer-la-fiche-de-redaction-d-une-note-conceptuelle",
+                "voir-le-resultats-d-evaluation-d-une-note-conceptuelle",
+                "imprimer-le-resultats-d-evaluation-d-une-note-conceptuelle",
+                "consulter-les-details-de-la-validation-de-l-etude-de-profil",
+
+                // TDRs - Consultation
+                "voir-la-liste-des-tdrs-de-prefaisabilite",
+                "consulter-le-details-d-appreciation-d-un-tdr-de-prefaisabilite",
+                "voir-details-de-l-appreciation-un-tdr-de-prefaisabilite",
+
+                "voir-la-liste-des-tdrs-de-faisabilite",
+                "consulter-le-details-d-appreciation-d-un-tdr-de-faisabilite",
+                "voir-details-de-l-appreciation-un-tdr-de-faisabilite",
+
+                "voir-tdr-prefaisabilite",
+                "voir-tdr-faisabilite",
+                "telecharger-tdr-prefaisabilite",
+                "telecharger-tdr-faisabilite",
+
+                // Rapports - Consultation
+                "voir-la-liste-des-rapports-de-faisabilite-preliminaire",
+
+                "voir-la-liste-des-rapports-de-prefaisabilite",
+                "consulter-les-details-de-la-validation-de-l-etude-de-prefaisabilite",
+
+                "voir-la-liste-des-rapports-de-faisabilite",
+                "consulter-les-details-de-la-validation-de-l-etude-de-faisabilite",
+
+                // Évaluation Ex-Ante - Consultation
+                "voir-la-liste-des-rapports-d-evaluation-ex-ante",
+                "consulter-un-rapport-d-evaluation-ex-ante",
+                "consulter-les-details-de-la-validation-de-la-validation-finale",
+                "voir-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante",
+                "voir-historique-rapport-d-evaluation-ex-ante",
+
+                // Documents et fichiers - Consultation
+                "voir-commentaires",
+                "telecharger-fichier",
+                "consulter-un-fichier",
+                "telecharger-un-fichier",
+                "telecharger-documents",
+                "voir-la-liste-des-canevas",
+                "telecharger-un-canevas-analyse-idee",
+                "voir-le-canevas-de-la-fiche-idee",
+                "telecharger-canevas-fiche-idee",
+            ],
+
+            // DPAF
+            "Responsable Projet" => [
+                // === CONSULTATION ADMINISTRATIVE ===
+                "voir-la-liste-des-utilisateurs",
+                "voir-la-liste-des-groupes-utilisateur",
+                "voir-la-liste-des-roles",
+                "voir-la-dpaf",
+                "voir-la-liste-des-departements",
+
+                // === CONSULTATION DES DONNÉES DE RÉFÉRENCE ===
+                "voir-la-liste-des-odds",
+                "voir-la-liste-des-cibles",
+                "voir-les-departements-geo",
+                "voir-la-liste-des-communes",
+                "voir-la-liste-des-arrondissements",
+                "voir-la-liste-des-villages",
+                "voir-la-liste-des-grands-secteurs",
+                "voir-la-liste-des-secteurs",
+                "voir-la-liste-des-sous-secteurs",
+                "voir-la-liste-des-types-intervention",
+                "voir-la-liste-des-types-financement",
+                "voir-la-liste-des-natures-financement",
+                "voir-la-liste-des-sources-financement",
+                "voir-la-liste-des-programmes",
+                "voir-la-liste-des-composants-programme",
+                "voir-la-liste-des-axes-du-pag",
+                "voir-la-liste-des-piliers-du-pag",
+                "voir-la-liste-des-actions-du-pag",
+                "voir-la-liste-des-orientations-strategique-du-pnd",
+                "voir-la-liste-des-objectifs-strategique-du-pnd",
+                "voir-la-liste-des-resultats-strategique-du-pnd",
+                "voir-la-liste-des-categories-de-projet",
+
+                // === GESTION DES IDÉES DE PROJET ===
+                "voir-la-liste-des-idees-de-projet",
+                "gerer-les-idees-projet",
+                "creer-une-idee-de-projet",
+                "modifier-une-idee-de-projet",
+                "supprimer-une-idee-de-projet",
+                "consulter-une-idee-de-projet",
+                "exporter-une-idee-de-projet",
+                "imprimer-une-idee-de-projet",
+                "commenter-une-idee-de-projet",
+                "voir-les-commentaires-d-une-idee-de-projet",
+                "voir-les-documents-d-une-idee-de-projet",
+                "telecharger-les-documents-d-une-idee-de-projet",
+
+                // Commentaires sur les idées
+                "commenter-une-idee-de-projet",
+
+
+
+                // Gestion des projets
+                "suivre-avancement-projet",
+                "generer-rapport-projet",
+
+
+                "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+                "commenter-le-resultats-de-l-amc-d-une-idee-de-projet",
+
+                // Évaluation climatique
+                "effectuer-evaluation-climatique-idee-projet",
+                "obtenir-score-climatique",
+                "obtenir-score-climatique-une-projet",
+                "valider-le-score-climatique-une-idee-de-projet",
+                "relancer-l-evaluation-climatique-une-idee-de-projet",
+
+                "exporter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
+                "commenter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
+
+                // Évaluation pertinence
+                "effectuer-evaluation-pertinence-idee-projet",
+                "acceder-au-tableau-de-bord-de-pertinence",
+                "exporter-le-resultats-de-l-analyse-d-une-idee-de-projet",
+                "commenter-le-resultats-de-l-analyse-d-une-idee-de-projet",
+                "valider-le-score-de-pertinence-d-une-idee-de-projet",
+                "relancer-l-evaluation-de-pertinence-d-une-idee-de-projet",
+
+
+                // AMC
+                "acceder-au-tableau-d-amc",
+                "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+                "commenter-le-resultats-de-l-amc-d-une-idee-de-projet",
+
+                // Canevas fiche idée
+                "consulter-le-canevas-de-la-fiche-idee-de-projet",
+                "remplir-le-canevas-de-la-fiche-idee-de-projet",
+                "telecharger-la-fiche-synthese-une-idee-de-projet",
+
+                // Grilles d'analyse - Consultation
+                "consulter-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+                "imprimer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+                "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+                "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+                "acceder-au-tableau-de-bord-climatique",
+                "consulter-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+                "imprimer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+
+                // === CONSULTATION DES PROJETS ===
+                "voir-la-liste-des-projets",
+                "consulter-un-projet",
+                "exporter-un-projet",
+                "imprimer-un-projet",
+                "commenter-un-projet",
+                "voir-les-commentaires-d-un-projet",
+                "voir-les-documents-d-un-projet",
+                "telecharger-les-documents-d-un-projet",
+                "suivre-avancement-projet",
+                "generer-rapport-projet",
+                "voir-historique-projet",
+
+                // === CONSULTATION DES NOTES CONCEPTUELLES ===
+                "voir-la-liste-des-notes-conceptuelle",
+                "commenter-une-note-conceptuelle",
+                "voir-la-liste-des-commentaires-d-une-note-conceptuelle",
+                "imprimer-une-note-conceptuelle",
+                "voir-les-documents-relatifs-a-une-note-conceptuelle",
+                "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
+                "consulter-la-fiche-de-redaction-d-une-note-conceptuelle",
+                "imprimer-la-fiche-de-redaction-d-une-note-conceptuelle",
+                "voir-le-resultats-d-evaluation-d-une-note-conceptuelle",
+                "imprimer-le-resultats-d-evaluation-d-une-note-conceptuelle",
+                "consulter-l-outil-d-analyse-d-une-note-conceptuelle",
+                "imprimer-l-outil-d-analyse-d-une-note-conceptuelle",
+                "commenter-l-appreciation-d-une-note-conceptuelle",
+                "consulter-les-details-de-la-validation-de-l-etude-de-profil",
+                "commenter-la-decision-de-validation-de-l-etude-de-profil",
+
+                // === CONSULTATION DES TDRs PRÉFAISABILITÉ ===
+                "voir-la-liste-des-tdrs-de-prefaisabilite",
+                "voir-tdr-prefaisabilite",
+                "telecharger-tdr-prefaisabilite",
+                "attacher-un-fichier-a-un-tdr-de-prefaisabilite",
+                "consulter-le-details-d-appreciation-d-un-tdr-de-prefaisabilite",
+                "voir-details-de-l-appreciation-un-tdr-de-prefaisabilite",
+                "exporter-l-appreciation-d-un-tdr-de-prefaisabilite",
+                "commenter-l-appreciation-d-un-tdr-de-prefaisabilite",
+
+                // === CONSULTATION ET GESTION DES RAPPORTS PRÉFAISABILITÉ ===
+                "voir-la-liste-des-rapports-de-prefaisabilite",
+                "telecharger-un-rapport-de-prefaisabilite",
+                "consulter-les-details-de-la-validation-de-l-etude-de-prefaisabilite",
+                "commenter-la-decision-de-validation-de-l-etude-de-prefaisabilite",
+
+                // === CONSULTATION DES RAPPORTS FAISABILITÉ PRÉLIMINAIRE ===
+                "voir-la-liste-des-rapports-de-faisabilite-preliminaire",
+                "telecharger-un-rapport-de-faisabilite-preliminaire",
+                "commenter-un-rapport-de-faisabilite-preliminaire",
+
+                // === CONSULTATION DES TDRs FAISABILITÉ ===
+                "voir-la-liste-des-tdrs-de-faisabilite",
+                "voir-tdr-faisabilite",
+                "telecharger-tdr-faisabilite",
+                "attacher-un-fichier-a-un-tdr-de-faisabilite",
+                "consulter-le-details-d-appreciation-d-un-tdr-de-faisabilite",
+                "voir-details-de-l-appreciation-un-tdr-de-faisabilite",
+                "exporter-l-appreciation-d-un-tdr-de-faisabilite",
+                "commenter-l-appreciation-d-un-tdr-de-faisabilite",
+
+                // === GESTION DES RAPPORTS FAISABILITÉ ===
+                "voir-la-liste-des-rapports-de-faisabilite",
+                "telecharger-un-rapport-de-faisabilite",
+                "consulter-les-details-de-la-validation-de-l-etude-de-faisabilite",
+                "commenter-la-decision-de-validation-de-l-etude-de-faisabilite",
+
+                // === G. GESTION ET SOUMISSION DES RAPPORTS PRÉFAISABILITÉ ===
+
+                // === CONSULTATION DES RAPPORTS ÉVALUATION EX-ANTE ===
+                "voir-la-liste-des-rapports-d-evaluation-ex-ante",
+                "consulter-un-rapport-d-evaluation-ex-ante",
+                "telecharger-un-rapport-d-evaluation-ex-ante",
+                "imprimer-un-rapport-d-evaluation-ex-ante",
+                "exporter-un-rapport-d-evaluation-ex-ante",
+                "consulter-les-details-de-la-validation-de-la-validation-finale",
+                "commenter-la-decision-de-validation-finale",
+                "voir-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante",
+                "telecharger-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante",
+                "commenter-un-rapport-d-evaluation-ex-ante",
+                "voir-les-commentaires-d-un-rapport-d-evaluation-ex-ante",
+                "voir-historique-rapport-d-evaluation-ex-ante",
+
+                // === CANEVAS ET OUTILS - Consultation ===
+                "voir-la-liste-des-canevas",
+                "consulter-le-canevas-d-appreciation-d-un-tdr",
+                "imprimer-le-canevas-d-appreciation-d-un-tdr",
+                "voir-le-canevas-de-la-fiche-idee",
+                "telecharger-canevas-fiche-idee",
+
+                // === COMMENTAIRES ET FICHIERS GÉNÉRAUX ===
+                "ajouter-commentaire",
+                "voir-commentaires",
+                "modifier-commentaire",
+                "supprimer-commentaire",
+                "telecharger-fichier",
+                "upload-fichier",
+                "supprimer-fichier",
+                "consulter-un-fichier",
+                "telecharger-un-fichier",
+                "telecharger-documents"
+            ],
+            "Organisation" => [
+                // === A. GESTION ADMINISTRATIVE ===
+                // Gestion des utilisateurs
+                "gerer-les-utilisateurs",
+                "voir-la-liste-des-utilisateurs",
+                "creer-un-utilisateur",
+                "modifier-un-utilisateur",
+                "supprimer-un-utilisateur",
+
+                // Gestion des groupes-utilisateur
+                "gerer-les-groupes-utilisateur",
+                "voir-la-liste-des-groupes-utilisateur",
+                "creer-un-groupe-utilisateur",
+                "modifier-un-groupe-utilisateur",
+                "supprimer-un-groupe-utilisateur",
+                "assigner-un-role-a-un-groupe-utilisateur",
+                "retirer-un-role-a-un-groupe-utilisateur",
+                "ajouter-un-utilisateur-a-un-groupe-utilisateur",
+                "ajouter-nouvel-utilisateur-a-un-groupe-utilisateur",
+
+                // Gestion des rôles et permissions
+                "gerer-les-roles",
+                "voir-la-liste-des-roles",
+                "creer-un-role",
+                "modifier-un-role",
+                "supprimer-un-role",
+                "assigner-des-permissions-a-un-role",
                 "retirer-des-permissions-a-un-role",
 
                 // === CONSULTATION ADMINISTRATIVE ===
-                "gerer-la-dpaf", "voir-la-dpaf", "creer-la-dpaf", "modifier-la-dpaf", "supprimer-la-dpaf",
+                "gerer-la-dpaf",
+                "voir-la-dpaf",
+                "creer-la-dpaf",
+                "modifier-la-dpaf",
+                "supprimer-la-dpaf",
                 "voir-la-liste-des-departements",
 
                 // Gestion des organisations
-                "gerer-les-organisations", "voir-la-liste-des-organisations", "creer-une-organisation", "modifier-une-organisation", "supprimer-une-organisation",
+                "gerer-les-organisations",
+                "voir-la-liste-des-organisations",
+                "creer-une-organisation",
+                "modifier-une-organisation",
+                "supprimer-une-organisation",
 
                 // === CONSULTATION DES DONNÉES DE RÉFÉRENCE ===
                 "voir-la-liste-des-odds",
@@ -482,10 +1359,574 @@ class PermissionSeeder extends Seeder
             ],
             "Analyste DGPD" => [],
 
-            "DGPD" => [],
+            "DGPD" => [
+                // === A. GESTION ADMINISTRATIVE ===
+                "gerer-les-utilisateurs",
+                "voir-la-liste-des-utilisateurs",
+                "creer-un-utilisateur",
+                "modifier-un-utilisateur",
+                "supprimer-un-utilisateur",
+                "gerer-les-groupes-utilisateur",
+                "voir-la-liste-des-groupes-utilisateur",
+                "creer-un-groupe-utilisateur",
+                "modifier-un-groupe-utilisateur",
+                "supprimer-un-groupe-utilisateur",
+                "assigner-un-role-a-un-groupe-utilisateur",
+                "retirer-un-role-a-un-groupe-utilisateur",
+                "ajouter-un-utilisateur-a-un-groupe-utilisateur",
+                "ajouter-nouvel-utilisateur-a-un-groupe-utilisateur",
+                "gerer-les-roles",
+                "voir-la-liste-des-roles",
+                "creer-un-role",
+                "modifier-un-role",
+                "supprimer-un-role",
+                "assigner-des-permissions-a-un-role",
+                "retirer-des-permissions-a-un-role",
+                // Gestion DPAF
+                "voir-la-dpaf",
+
+                // === B. GESTION ORGANISATIONNELLE ===
+                // Gestion départements
+                "gerer-les-departements",
+                "voir-la-liste-des-departements",
+                "creer-un-departement",
+                "modifier-un-departement",
+                "supprimer-un-departement",
+
+                // === C. GESTION DES DONNÉES DE RÉFÉRENCE SYSTÈME ===
+                // ODDs - Gestion complète
+                "gerer-les-odds",
+                "voir-la-liste-des-odds",
+                "creer-un-odd",
+                "modifier-un-odd",
+                "supprimer-un-odd",
+
+                // Cibles - Gestion complète
+                "gerer-les-cibles",
+                "voir-la-liste-des-cibles",
+                "creer-une-cible",
+                "modifier-une-cible",
+                "supprimer-une-cible",
+
+                // Entités géographiques - Gestion complète
+                "voir-les-departements-geo",
+                "gerer-les-departements-geo",
+                "voir-la-liste-des-communes",
+                "gerer-les-communes",
+                "voir-la-liste-des-arrondissements",
+                "gerer-les-arrondissements",
+                "voir-la-liste-des-villages",
+                "gerer-les-villages",
+
+                // Secteurs d'intervention - Gestion complète
+                "voir-la-liste-des-grands-secteurs",
+                "voir-la-liste-des-secteurs",
+                "voir-la-liste-des-sous-secteurs",
+                "gerer-les-secteurs",
+                "creer-un-secteur",
+                "modifier-un-secteur",
+                "supprimer-un-secteur",
+
+                // Types d'intervention - Gestion complète
+                "voir-la-liste-des-types-intervention",
+                "gerer-les-types-intervention",
+                "creer-un-type-intervention",
+                "modifier-un-type-intervention",
+                "supprimer-un-type-intervention",
+
+                // Financements - Gestion complète
+                "voir-la-liste-des-types-financement",
+                "voir-la-liste-des-natures-financement",
+                "voir-la-liste-des-sources-financement",
+                "gerer-les-financements",
+                "creer-un-financement",
+                "modifier-un-financement",
+                "supprimer-un-financement",
+
+                // Gestion des organisations
+                "gerer-les-organisations",
+                "voir-la-liste-des-organisations",
+                "creer-une-organisation",
+                "modifier-une-organisation",
+                "supprimer-une-organisation",
+
+                // Programmes - Gestion complète
+                "voir-la-liste-des-programmes",
+                "voir-la-liste-des-composants-programme",
+                "gerer-un-programme",
+                "creer-un-programme",
+                "modifier-un-programme",
+                "supprimer-un-programme",
+                "gerer-les-composants-de-programme",
+                "creer-un-composant-de-programme",
+                "modifier-un-composant-de-programme",
+                "supprimer-un-composant-de-programme",
+
+                // Cadres stratégiques (consultation)
+                "voir-la-liste-des-axes-du-pag",
+                "voir-la-liste-des-piliers-du-pag",
+                "voir-la-liste-des-actions-du-pag",
+                "voir-la-liste-des-orientations-strategique-du-pnd",
+                "voir-la-liste-des-objectifs-strategique-du-pnd",
+                "voir-la-liste-des-resultats-strategique-du-pnd",
+
+                // Catégories de projet - Gestion complète
+                "voir-la-liste-des-categories-de-projet",
+                "gerer-les-categories-de-projet",
+                "creer-une-categorie-de-projet",
+                "modifier-une-categorie-de-projet",
+                "supprimer-une-categorie-de-projet",
+
+                // === D. CONSULTATION DES IDÉES DE PROJET (pas de création/modification) ===
+                "voir-la-liste-des-idees-de-projet",
+                "consulter-une-idee-de-projet",
+                "exporter-une-idee-de-projet",
+                "imprimer-une-idee-de-projet",
+
+                // Commentaires et documents sur les idées
+                "commenter-une-idee-de-projet",
+                "voir-les-commentaires-d-une-idee-de-projet",
+                "voir-les-documents-d-une-idee-de-projet",
+                "telecharger-les-documents-d-une-idee-de-projet",
+
+                // Canevas et fiches idées
+                "creer-le-canevas-de-la-fiche-idee-de-projet",
+                "modifier-le-canevas-de-la-fiche-idee-de-projet",
+                "consulter-le-canevas-de-la-fiche-idee-de-projet",
+                "telecharger-la-fiche-synthese-une-idee-de-projet",
+
+                // Grilles d'analyse
+                "creer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+                "modifier-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+                "consulter-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+                "imprimer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+
+                "creer-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+                "modifier-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+                "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+                "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+
+                "creer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+                "modifier-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+                "consulter-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+                "imprimer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+
+
+                // Tableaux de bord et résultats
+                "acceder-au-tableau-d-amc",
+                "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+                "commenter-le-resultats-de-l-amc-d-une-idee-de-projet",
+
+                // Évaluations climatiques et scores
+                "valider-une-idee-de-projet-a-projet",
+
+                // Projets
+                "voir-la-liste-des-projets",
+                "consulter-un-projet",
+                "exporter-un-projet",
+                "imprimer-un-projet",
+                "voir-les-commentaires-d-un-projet",
+                "voir-les-documents-d-un-projet",
+                "telecharger-les-documents-d-un-projet",
+                "voir-historique-projet",
+                "generer-rapport-projet",
+
+                // === E. CONSULTATION ET ÉVALUATION DES NOTES CONCEPTUELLES ===
+                "creer-la-fiche-de-redaction-d-une-note-conceptuelle",
+                "modifier-la-fiche-de-redaction-d-une-note-conceptuelle",
+                "voir-la-liste-des-notes-conceptuelle",
+                "voir-la-liste-des-commentaires-d-une-note-conceptuelle",
+                "imprimer-une-note-conceptuelle",
+                "voir-les-documents-relatifs-a-une-note-conceptuelle",
+                "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
+                "consulter-la-fiche-de-redaction-d-une-note-conceptuelle",
+                "imprimer-la-fiche-de-redaction-d-une-note-conceptuelle",
+                "voir-le-resultats-d-evaluation-d-une-note-conceptuelle",
+                "imprimer-le-resultats-d-evaluation-d-une-note-conceptuelle",
+                "consulter-l-outil-d-analyse-d-une-note-conceptuelle",
+                "imprimer-l-outil-d-analyse-d-une-note-conceptuelle",
+                "creer-l-outil-d-analyse-d-une-note-conceptuelle",
+                "modifier-l-outil-d-analyse-d-une-note-conceptuelle",
+
+                // Évaluation et validation (action spécifique DGPD)
+                "evaluer-une-note-conceptulle",
+                "valider-l-etude-de-profil",
+                "consulter-les-details-de-la-validation-de-l-etude-de-profil",
+                "commenter-une-note-conceptuelle",
+                "commenter-l-appreciation-d-une-note-conceptuelle",
+                "commenter-la-decision-de-validation-de-l-etude-de-profil",
+
+                // === F. TDRs PRÉFAISABILITÉ - Appréciation et consultation ===
+                "voir-la-liste-des-tdrs-de-prefaisabilite",
+                "apprecier-un-tdr-de-prefaisabilite",
+                "consulter-le-details-d-appreciation-d-un-tdr-de-prefaisabilite",
+                "voir-details-de-l-appreciation-un-tdr-de-prefaisabilite",
+                "exporter-l-appreciation-d-un-tdr-de-prefaisabilite",
+                "commenter-l-appreciation-d-un-tdr-de-prefaisabilite",
+                "voir-tdr-prefaisabilite",
+                "telecharger-tdr-prefaisabilite",
+
+                // === G. RAPPORTS PRÉFAISABILITÉ - Validation et consultation ===
+                "voir-la-liste-des-rapports-de-prefaisabilite",
+                "telecharger-un-rapport-de-prefaisabilite",
+                "valider-une-etude-de-prefaisabilite",
+                "consulter-les-details-de-la-validation-de-l-etude-de-prefaisabilite",
+                "commenter-la-decision-de-validation-de-l-etude-de-prefaisabilite",
+                "gerer-les-rapports-de-prefaisabilite",
+                "voir-la-liste-des-rapports-de-faisabilite-preliminaire",
+                "telecharger-un-rapport-de-faisabilite-preliminaire",
+                "commenter-un-rapport-de-faisabilite-preliminaire",
+
+                // === H. TDRs FAISABILITÉ - Appréciation et consultation ===
+                "voir-la-liste-des-tdrs-de-faisabilite",
+                "apprecier-un-tdr-de-faisabilite",
+                "consulter-le-details-d-appreciation-d-un-tdr-de-faisabilite",
+                "voir-details-de-l-appreciation-un-tdr-de-faisabilite",
+                "exporter-l-appreciation-d-un-tdr-de-faisabilite",
+                "commenter-l-appreciation-d-un-tdr-de-faisabilite",
+                "valider-un-tdr-de-faisabilite",
+                "voir-tdr-faisabilite",
+                "telecharger-tdr-faisabilite",
+
+                // === I. RAPPORTS FAISABILITÉ - Validation et consultation ===
+                "voir-la-liste-des-rapports-de-faisabilite",
+                "telecharger-un-rapport-de-faisabilite",
+                "valider-une-etude-de-faisabilite",
+                "consulter-les-details-de-la-validation-de-l-etude-de-faisabilite",
+                "commenter-la-decision-de-validation-de-l-etude-de-faisabilite",
+                "gerer-les-rapports-de-faisabilite",
+
+                // === J. ÉVALUATION EX-ANTE - Validation et consultation complète ===
+                "voir-la-liste-des-rapports-d-evaluation-ex-ante",
+                "consulter-un-rapport-d-evaluation-ex-ante",
+                "telecharger-un-rapport-d-evaluation-ex-ante",
+                "imprimer-un-rapport-d-evaluation-ex-ante",
+                "exporter-un-rapport-d-evaluation-ex-ante",
+                "valider-un-rapport-evaluation-ex-ante",
+                "rejeter-un-rapport-evaluation-ex-ante",
+                "consulter-les-details-de-la-validation-de-la-validation-finale",
+                "commenter-la-decision-de-validation-finale",
+                "gerer-les-rapports-d-evaluation-ex-ante",
+                "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante",
+                "voir-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante",
+                "telecharger-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante",
+                "supprimer-un-document-annexe-d-un-rapport-d-evaluation-ex-ante",
+                "commenter-un-rapport-d-evaluation-ex-ante",
+                "voir-les-commentaires-d-un-rapport-d-evaluation-ex-ante",
+                "voir-historique-rapport-d-evaluation-ex-ante",
+
+                // === K. GESTION DES CANEVAS ET OUTILS SYSTÈME ===
+                // Canevas généraux - Gestion complète
+                "voir-la-liste-des-canevas",
+                "gerer-les-canevas",
+                "creer-un-canevas",
+                "modifier-un-canevas",
+                "supprimer-un-canevas",
+                "imprimer-un-canevas",
+
+                // Canevas d'appréciation TDR - Gestion
+                "creer-le-canevas-d-appreciation-d-un-tdr",
+                "modifier-le-canevas-d-appreciation-d-un-tdr",
+                "consulter-le-canevas-d-appreciation-d-un-tdr",
+                "imprimer-le-canevas-d-appreciation-d-un-tdr",
+
+                // Canevas divers
+                "voir-le-canevas-de-la-fiche-idee",
+                "telecharger-canevas-fiche-idee",
+                "telecharger-un-canevas-analyse-idee",
+                "modifier-canevas-analyse-idee",
+                "modifier-le-canevas-de-la-fiche-idee",
+                "modifier-canevas-grille-evaluation-climatique",
+                "modifier-canevas-grille-evaluation-amc",
+                "modifier-canevas-note-idee",
+
+                // TDRs
+                "creer-un-tdr",
+                "modifier-un-tdr",
+                "soumettre-tdr-faisabilite",
+                "soumettre-tdr-prefaisabilite",
+
+                // Checklists - Remplissage
+                "remplir-le-check-liste-d-appreciation-des-tdrs-de-prefaisabilite",
+                "remplir-le-check-liste-d-appreciation-des-tdrs-de-faisabilite",
+                "remplir-le-check-liste-d-appreciation-des-notes-conceptuelle",
+                "remplir-le-check-liste-de-suivi-des-rapports-de-prefaisabilite",
+                "remplir-le-check-liste-de-suivi-des-etudes-de-faisabilite-technique",
+                "remplir-le-check-liste-de-suivi-des-etudes-de-faisabilite-economique",
+                "remplir-le-check-liste-de-suivi-des-etudes-de-faisabilite-marche",
+                "remplir-le-check-liste-de-suivi-des-etudes-de-faisabilite-organisationnelle-juridique",
+                "remplir-le-check-liste-de-suivi-des-etudes-d-analyse-d-impact-environnemental-sociale",
+                "remplir-le-check-liste-de-suivi-des-etudes-d-analyse-de-la-faisabilite-financiere",
+                "remplir-le-check-liste-de-suivi-pour-l-assurance-qualite-des-rapports-d-etude-de-faisabilite",
+                "remplir-le-check-liste-de-suivi-du-controle-qualite-des-rapports-d-etude-de-faisabilite-preliminaire",
+
+                // === L. COMMENTAIRES ET FICHIERS ===
+                "ajouter-commentaire",
+                "voir-commentaires",
+                "modifier-commentaire",
+                "supprimer-commentaire",
+                "telecharger-fichier",
+                "upload-fichier",
+                "supprimer-fichier",
+                "consulter-un-fichier",
+                "telecharger-un-fichier",
+                "televerser-un-fichier",
+                "partager-un-fichier",
+                "telecharger-documents",
+                "gerer-documents",
+
+                // === M. ÉVALUATIONS ET ANALYSES (Actions DGPD) ===
+                "effectuer-l-analyse-climatique-d-une-idee-de-projet",
+                "effectuer-l-amc-d-une-idee-de-projet"
+            ],
 
             // DPAF
-            "DPAF" => [],
+            "DPAF" => [
+                // === A. GESTION ADMINISTRATIVE ===
+                "gerer-les-utilisateurs",
+                "voir-la-liste-des-utilisateurs",
+                "creer-un-utilisateur",
+                "modifier-un-utilisateur",
+                "supprimer-un-utilisateur",
+                "gerer-les-groupes-utilisateur",
+                "voir-la-liste-des-groupes-utilisateur",
+                "creer-un-groupe-utilisateur",
+                "modifier-un-groupe-utilisateur",
+                "supprimer-un-groupe-utilisateur",
+                "assigner-un-role-a-un-groupe-utilisateur",
+                "retirer-un-role-a-un-groupe-utilisateur",
+                "ajouter-un-utilisateur-a-un-groupe-utilisateur",
+                "ajouter-nouvel-utilisateur-a-un-groupe-utilisateur",
+                "gerer-les-roles",
+                "voir-la-liste-des-roles",
+                "creer-un-role",
+                "modifier-un-role",
+                "supprimer-un-role",
+                "assigner-des-permissions-a-un-role",
+                "retirer-des-permissions-a-un-role",
+
+                // === A. CONSULTATION ADMINISTRATIVE ===
+
+                // Consultation DGPD et départements
+                "voir-la-liste-des-departements",
+
+                // === B. GESTION DES ORGANISATIONS ===
+                "voir-la-liste-des-organisations",
+
+                // === C. CONSULTATION DES DONNÉES DE RÉFÉRENCE ===
+                "voir-la-liste-des-odds",
+                "voir-la-liste-des-cibles",
+                "voir-les-departements-geo",
+                "voir-la-liste-des-communes",
+                "voir-la-liste-des-arrondissements",
+                "voir-la-liste-des-villages",
+                "voir-la-liste-des-grands-secteurs",
+                "voir-la-liste-des-secteurs",
+                "voir-la-liste-des-sous-secteurs",
+                "voir-la-liste-des-types-intervention",
+                "voir-la-liste-des-categories-de-projet",
+
+                // Financements - Gestion complète (rôle DPAF)
+                "voir-la-liste-des-types-financement",
+                "voir-la-liste-des-natures-financement",
+                "voir-la-liste-des-sources-financement",
+                "gerer-les-financements",
+
+                // Programmes - Consultation
+                "voir-la-liste-des-programmes",
+                "voir-la-liste-des-composants-programme",
+
+                // Cadres stratégiques
+                "voir-la-liste-des-axes-du-pag",
+                "voir-la-liste-des-piliers-du-pag",
+                "voir-la-liste-des-actions-du-pag",
+                "voir-la-liste-des-orientations-strategique-du-pnd",
+                "voir-la-liste-des-objectifs-strategique-du-pnd",
+                "voir-la-liste-des-resultats-strategique-du-pnd",
+
+                // === D. CONSULTATION DES IDÉES DE PROJET ===
+                "voir-la-liste-des-idees-de-projet",
+                "consulter-une-idee-de-projet",
+                "exporter-une-idee-de-projet",
+                "imprimer-une-idee-de-projet",
+                "voir-les-commentaires-d-une-idee-de-projet",
+                "voir-les-documents-d-une-idee-de-projet",
+                "telecharger-les-documents-d-une-idee-de-projet",
+
+                // Commentaires sur les idées
+                "commenter-une-idee-de-projet",
+
+                // Gestion des projets
+                "suivre-avancement-projet",
+                "generer-rapport-projet",
+
+                "exporter-le-resultats-de-l-analyse-d-une-idee-de-projet",
+                "commenter-le-resultats-de-l-analyse-d-une-idee-de-projet",
+
+                "valider-une-idee-de-projet-en-interne",
+                "exporter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
+                "commenter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
+
+                "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+                "commenter-le-resultats-de-l-amc-d-une-idee-de-projet",
+
+
+                // Canevas et fiches
+                "consulter-le-canevas-de-la-fiche-idee-de-projet",
+                "telecharger-la-fiche-synthese-une-idee-de-projet",
+
+                // Grilles d'analyse - Consultation
+                "consulter-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+                "imprimer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+                "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+                "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet",
+                "consulter-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+                "imprimer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+
+                // Tableaux de bord
+                "acceder-au-tableau-de-bord-de-pertinence",
+                "acceder-au-tableau-de-bord-climatique",
+                "acceder-au-tableau-d-amc",
+
+                // Projets - Consultation
+                "voir-la-liste-des-projets",
+                "consulter-un-projet",
+                "exporter-un-projet",
+                "imprimer-un-projet",
+                "voir-les-commentaires-d-un-projet",
+                "voir-les-documents-d-un-projet",
+                "telecharger-les-documents-d-un-projet",
+                "voir-historique-projet",
+
+                // === E. GESTION DES NOTES CONCEPTUELLES ===
+                "voir-la-liste-des-notes-conceptuelle",
+                "gerer-les-notes-conceptuelle",
+                "creer-une-note-conceptuelle",
+                "modifier-une-note-conceptuelle",
+                "supprimer-une-note-conceptuelle",
+                "voir-la-liste-des-commentaires-d-une-note-conceptuelle",
+                "imprimer-une-note-conceptuelle",
+                "voir-les-documents-relatifs-a-une-note-conceptuelle",
+                "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
+                "consulter-la-fiche-de-redaction-d-une-note-conceptuelle",
+                "imprimer-la-fiche-de-redaction-d-une-note-conceptuelle",
+                "voir-le-resultats-d-evaluation-d-une-note-conceptuelle",
+                "imprimer-le-resultats-d-evaluation-d-une-note-conceptuelle",
+                "consulter-l-outil-d-analyse-d-une-note-conceptuelle",
+                "imprimer-l-outil-d-analyse-d-une-note-conceptuelle",
+
+                "rediger-une-note-conceptuelle",
+                "commenter-une-note-conceptuelle",
+                "televerser-une-note-conceptuelle",
+                "attacher-des-documents-relatifs-a-une-note-conceptuelle",
+
+                // === F. GESTION DES TDRs PRÉFAISABILITÉ ===
+                "voir-la-liste-des-tdrs-de-prefaisabilite",
+                "gerer-les-tdrs-de-prefaisabilite",
+                "creer-un-tdr-de-prefaisabilite",
+                "modifier-un-tdr-de-prefaisabilite",
+                "supprimer-un-tdr-de-prefaisabilite",
+                "soumettre-tdr-prefaisabilite",
+                "soumettre-un-tdr-de-prefaisabilite",
+                "consulter-le-details-d-appreciation-d-un-tdr-de-prefaisabilite",
+                "voir-details-de-l-appreciation-un-tdr-de-prefaisabilite",
+                "exporter-l-appreciation-d-un-tdr-de-prefaisabilite",
+                "commenter-l-appreciation-d-un-tdr-de-prefaisabilite",
+                "attacher-un-fichier-a-un-tdr-de-prefaisabilite",
+                "voir-tdr-prefaisabilite",
+                "telecharger-tdr-prefaisabilite",
+
+
+                // === G. GESTION ET SOUMISSION DES RAPPORTS PRÉFAISABILITÉ ===
+                "voir-la-liste-des-rapports-de-prefaisabilite",
+                "creer-un-rapport-de-prefaisabilite",
+                "modifier-un-rapport-de-prefaisabilite",
+                "supprimer-un-rapport-de-prefaisabilite",
+                "telecharger-un-rapport-de-prefaisabilite",
+                "soumettre-un-rapport-de-prefaisabilite",
+                "consulter-les-details-de-la-validation-de-l-etude-de-prefaisabilite",
+                "commenter-la-decision-de-validation-de-l-etude-de-prefaisabilite",
+                "gerer-les-rapports-de-prefaisabilite",
+                "voir-la-liste-des-rapports-de-faisabilite-preliminaire",
+                "gerer-les-rapports-de-faisabilite-preliminaire",
+                "creer-un-rapport-de-faisabilite-preliminaire",
+                "modifier-un-rapport-de-faisabilite-preliminaire",
+                "supprimer-un-rapport-de-faisabilite-preliminaire",
+                "telecharger-un-rapport-de-faisabilite-preliminaire",
+                "soumettre-un-rapport-de-faisabilite-preliminaire",
+                "commenter-un-rapport-de-faisabilite-preliminaire",
+
+                // === H. GESTION DES TDRs FAISABILITÉ ===
+                "voir-la-liste-des-tdrs-de-faisabilite",
+                "gerer-les-tdrs-de-faisabilite",
+                "creer-un-tdr-de-faisabilite",
+                "modifier-un-tdr-de-faisabilite",
+                "supprimer-un-tdr-de-faisabilite",
+                "soumettre-tdr-faisabilite",
+                "consulter-le-details-d-appreciation-d-un-tdr-de-faisabilite",
+                "voir-details-de-l-appreciation-un-tdr-de-faisabilite",
+                "exporter-l-appreciation-d-un-tdr-de-faisabilite",
+                "commenter-l-appreciation-d-un-tdr-de-faisabilite",
+                "attacher-un-fichier-a-un-tdr-de-faisabilite",
+                "voir-tdr-faisabilite",
+                "telecharger-tdr-faisabilite",
+
+                // === I. GESTION ET SOUMISSION DES RAPPORTS FAISABILITÉ ===
+                "voir-la-liste-des-rapports-de-faisabilite",
+                "creer-un-rapport-de-faisabilite",
+                "modifier-un-rapport-de-faisabilite",
+                "supprimer-un-rapport-de-faisabilite",
+                "telecharger-un-rapport-de-faisabilite",
+                "soumettre-un-rapport-de-faisabilite",
+                "consulter-les-details-de-la-validation-de-l-etude-de-faisabilite",
+                "commenter-la-decision-de-validation-de-l-etude-de-faisabilite",
+                "gerer-les-rapports-de-faisabilite",
+                "soumettre-un-tdr-de-faisabilite",
+
+
+                // === J. ÉVALUATION EX-ANTE - Validation financière ===
+                "voir-la-liste-des-rapports-d-evaluation-ex-ante",
+                "consulter-un-rapport-d-evaluation-ex-ante",
+                "telecharger-un-rapport-d-evaluation-ex-ante",
+                "imprimer-un-rapport-d-evaluation-ex-ante",
+                "exporter-un-rapport-d-evaluation-ex-ante",
+                "consulter-les-details-de-la-validation-de-la-validation-finale",
+                "commenter-la-decision-de-validation-finale",
+                "voir-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante",
+                "telecharger-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante",
+                "commenter-un-rapport-d-evaluation-ex-ante",
+                "voir-les-commentaires-d-un-rapport-d-evaluation-ex-ante",
+                "voir-historique-rapport-d-evaluation-ex-ante",
+                "soumettre-un-rapport-d-evaluation-ex-ante",
+                "modifier-un-rapport-d-evaluation-ex-ante",
+                "supprimer-un-rapport-d-evaluation-ex-ante",
+                "gerer-les-rapports-d-evaluation-ex-ante",
+                "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante",
+                "supprimer-un-document-annexe-d-un-rapport-d-evaluation-ex-ante",
+
+                // === K. CANEVAS ET OUTILS ===
+                "voir-la-liste-des-canevas",
+                "consulter-le-canevas-d-appreciation-d-un-tdr",
+                "imprimer-le-canevas-d-appreciation-d-un-tdr",
+                "voir-le-canevas-de-la-fiche-idee",
+                "telecharger-canevas-fiche-idee",
+
+                // === L. COMMENTAIRES ET FICHIERS ===
+                "ajouter-commentaire",
+                "voir-commentaires",
+                "modifier-commentaire",
+                "supprimer-commentaire",
+                "telecharger-fichier",
+                "consulter-un-fichier",
+                "telecharger-un-fichier",
+                "telecharger-documents",
+
+
+                // Gestion les notes conceptuelle
+                "commenter-l-appreciation-d-une-note-conceptuelle",
+                "consulter-les-details-de-la-validation-de-l-etude-de-profil",
+                "commenter-la-decision-de-validation-de-l-etude-de-profil",
+            ],
 
         ];
 

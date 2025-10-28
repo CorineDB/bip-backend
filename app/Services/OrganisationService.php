@@ -240,7 +240,7 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
 
             //LogActivity::addToLog("Modification", $message, get_class($uniteeDeGestion), $uniteeDeGestion->id);
 
-            return response()->json(['statut' => 'success', 'message' => "Compte organisation modifié", 'data' => new OrganisationObserver($organisation), 'statutCode' => Response::HTTP_OK], Response::HTTP_OK);
+            return response()->json(['statut' => 'success', 'message' => "Compte organisation modifié", 'data' => new OrganisationResource($organisation), 'statutCode' => Response::HTTP_OK], Response::HTTP_OK);
         } catch (\Throwable $th) {
 
             DB::rollBack();

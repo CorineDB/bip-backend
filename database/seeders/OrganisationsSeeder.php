@@ -19,13 +19,16 @@ class OrganisationsSeeder extends Seeder
 {
     // Liste des slugs de permissions à attacher
     protected $permissionSlugsRP = [
+        // === CONSULTATION ADMINISTRATIVE ===
         "voir-la-liste-des-utilisateurs",
         "voir-la-liste-des-groupes-utilisateur",
         "voir-la-liste-des-roles",
         "voir-la-dpaf",
+        "voir-la-liste-des-departements",
+
+        // === CONSULTATION DES DONNÉES DE RÉFÉRENCE ===
         "voir-la-liste-des-odds",
         "voir-la-liste-des-cibles",
-        "voir-la-liste-des-departements",
         "voir-les-departements-geo",
         "voir-la-liste-des-communes",
         "voir-la-liste-des-arrondissements",
@@ -46,115 +49,163 @@ class OrganisationsSeeder extends Seeder
         "voir-la-liste-des-objectifs-strategique-du-pnd",
         "voir-la-liste-des-resultats-strategique-du-pnd",
         "voir-la-liste-des-categories-de-projet",
+
+        // === GESTION DES IDÉES DE PROJET ===
         "voir-la-liste-des-idees-de-projet",
         "gerer-les-idees-projet",
         "creer-une-idee-de-projet",
         "modifier-une-idee-de-projet",
         "supprimer-une-idee-de-projet",
+        "consulter-une-idee-de-projet",
+        "exporter-une-idee-de-projet",
+        "imprimer-une-idee-de-projet",
+        "commenter-une-idee-de-projet",
+        "voir-les-commentaires-d-une-idee-de-projet",
+        "voir-les-documents-d-une-idee-de-projet",
+        "telecharger-les-documents-d-une-idee-de-projet",
+
+        // Commentaires sur les idées
+        "commenter-une-idee-de-projet",
+
+
+
+        // Gestion des projets
+        "suivre-avancement-projet",
+        "generer-rapport-projet",
+
+
+        "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+        "commenter-le-resultats-de-l-amc-d-une-idee-de-projet",
+
+        // Évaluation climatique
         "effectuer-evaluation-climatique-idee-projet",
         "obtenir-score-climatique",
         "obtenir-score-climatique-une-projet",
         "valider-le-score-climatique-une-idee-de-projet",
         "relancer-l-evaluation-climatique-une-idee-de-projet",
+
+        "exporter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
+        "commenter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
+
+        // Évaluation pertinence
+        "effectuer-evaluation-pertinence-idee-projet",
+        "acceder-au-tableau-de-bord-de-pertinence",
+        "exporter-le-resultats-de-l-analyse-d-une-idee-de-projet",
+        "commenter-le-resultats-de-l-analyse-d-une-idee-de-projet",
+        "valider-le-score-de-pertinence-d-une-idee-de-projet",
+        "relancer-l-evaluation-de-pertinence-d-une-idee-de-projet",
+
+
+        // AMC
+        "acceder-au-tableau-d-amc",
+        "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+        "commenter-le-resultats-de-l-amc-d-une-idee-de-projet",
+
+        // Canevas fiche idée
         "consulter-le-canevas-de-la-fiche-idee-de-projet",
         "remplir-le-canevas-de-la-fiche-idee-de-projet",
         "telecharger-la-fiche-synthese-une-idee-de-projet",
-        "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet",
-        "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet",
-        "effectuer-evaluation-climatique-idee-projet",
-        "acceder-au-tableau-de-bord-climatique",
-        "valider-le-score-d-analyse-climatique-interne-d-une-idee-de-projet",
-        "acceder-au-tableau-d-amc",
-        "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
-        "voir-la-liste-des-notes-conceptuelle",
-        "commenter-une-note-conceptuelle",
-        "voir-la-liste-des-commentaires-d-une-note-conceptuelle",
-        "imprimer-une-note-conceptuelle",
-        "voir-les-documents-relatifs-a-une-note-conceptuelle",
-        "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
-        "voir-le-resultats-d-evaluation-d-une-note-conceptuelle",
-        "imprimer-le-resultats-d-evaluation-d-une-note-conceptuelle",
-        "voir-la-liste-des-tdrs-de-prefaisabilite",
-        "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-prefaisabilite",
-        "telecharger-un-fichier-complementaire-d-un-tdr-de-prefaisabilite",
-        "telecharger-un-rapport-de-prefaisabilite",
-        "voir-la-liste-des-rapports-de-prefaisabilite",
-        "voir-la-liste-des-tdrs-de-faisabilite",
-        "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite",
-        "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite",
-        "soumettre-un-rapport-de-faisabilite",
-        "modifier-un-rapport-de-faisabilite",
-        "supprimer-un-rapport-de-faisabilite",
-        "telecharger-un-rapport-de-faisabilite",
-        "voir-la-liste-des-rapports-de-faisabilite",
-        "telecharger-un-rapport-d-evaluation-ex-ante",
-        "voir-la-liste-des-rapports-d-evaluation-ex-ante",
-        "ajouter-commentaire",
-        "voir-commentaires",
-        "modifier-commentaire",
-        "supprimer-commentaire",
-        "telecharger-fichier",
-        "upload-fichier",
-        "supprimer-fichier",
-    ];
 
-    protected $responsableHierarchiquePermissionsSlugs = [
-        // permissions (idem, voir ton exemple)
-        "voir-la-liste-des-utilisateurs",
-        "voir-la-liste-des-groupes-utilisateur",
-        "voir-la-liste-des-roles",
-        "voir-la-dpaf",
-        "voir-la-liste-des-odds",
-        "voir-la-liste-des-cibles",
-        "voir-la-liste-des-departements",
-        "voir-les-departements-geo",
-        "voir-la-liste-des-communes",
-        "voir-la-liste-des-arrondissements",
-        "voir-la-liste-des-villages",
-        "voir-la-liste-des-grands-secteurs",
-        "voir-la-liste-des-secteurs",
-        "voir-la-liste-des-sous-secteurs",
-        "voir-la-liste-des-types-intervention",
-        "voir-la-liste-des-types-financement",
-        "voir-la-liste-des-natures-financement",
-        "voir-la-liste-des-sources-financement",
-        "voir-la-liste-des-programmes",
-        "voir-la-liste-des-composants-programme",
-        "voir-la-liste-des-axes-du-pag",
-        "voir-la-liste-des-piliers-du-pag",
-        "voir-la-liste-des-actions-du-pag",
-        "voir-la-liste-des-orientations-strategique-du-pnd",
-        "voir-la-liste-des-objectifs-strategique-du-pnd",
-        "voir-la-liste-des-resultats-strategique-du-pnd",
-        "voir-la-liste-des-categories-de-projet",
-        "voir-la-liste-des-idees-de-projet",
-        "valider-une-idee-de-projet-en-interne",
-        "telecharger-la-fiche-synthese-une-idee-de-projet",
+        // Grilles d'analyse - Consultation
+        "consulter-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+        "imprimer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
         "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet",
         "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet",
         "acceder-au-tableau-de-bord-climatique",
-        "acceder-au-tableau-d-amc",
-        "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+        "consulter-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+        "imprimer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+
+        // === CONSULTATION DES PROJETS ===
+        "voir-la-liste-des-projets",
+        "consulter-un-projet",
+        "exporter-un-projet",
+        "imprimer-un-projet",
+        "commenter-un-projet",
+        "voir-les-commentaires-d-un-projet",
+        "voir-les-documents-d-un-projet",
+        "telecharger-les-documents-d-un-projet",
+        "suivre-avancement-projet",
+        "generer-rapport-projet",
+        "voir-historique-projet",
+
+        // === CONSULTATION DES NOTES CONCEPTUELLES ===
         "voir-la-liste-des-notes-conceptuelle",
         "commenter-une-note-conceptuelle",
         "voir-la-liste-des-commentaires-d-une-note-conceptuelle",
         "imprimer-une-note-conceptuelle",
         "voir-les-documents-relatifs-a-une-note-conceptuelle",
         "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
+        "consulter-la-fiche-de-redaction-d-une-note-conceptuelle",
+        "imprimer-la-fiche-de-redaction-d-une-note-conceptuelle",
         "voir-le-resultats-d-evaluation-d-une-note-conceptuelle",
         "imprimer-le-resultats-d-evaluation-d-une-note-conceptuelle",
+        "consulter-l-outil-d-analyse-d-une-note-conceptuelle",
+        "imprimer-l-outil-d-analyse-d-une-note-conceptuelle",
+        "commenter-l-appreciation-d-une-note-conceptuelle",
+        "consulter-les-details-de-la-validation-de-l-etude-de-profil",
+        "commenter-la-decision-de-validation-de-l-etude-de-profil",
+
+        // === CONSULTATION DES TDRs PRÉFAISABILITÉ ===
         "voir-la-liste-des-tdrs-de-prefaisabilite",
-        "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-prefaisabilite",
-        "telecharger-un-fichier-complementaire-d-un-tdr-de-prefaisabilite",
-        "telecharger-un-rapport-de-prefaisabilite",
+        "voir-tdr-prefaisabilite",
+        "telecharger-tdr-prefaisabilite",
+        "attacher-un-fichier-a-un-tdr-de-prefaisabilite",
+        "consulter-le-details-d-appreciation-d-un-tdr-de-prefaisabilite",
+        "voir-details-de-l-appreciation-un-tdr-de-prefaisabilite",
+        "exporter-l-appreciation-d-un-tdr-de-prefaisabilite",
+        "commenter-l-appreciation-d-un-tdr-de-prefaisabilite",
+
+        // === CONSULTATION ET GESTION DES RAPPORTS PRÉFAISABILITÉ ===
         "voir-la-liste-des-rapports-de-prefaisabilite",
+        "telecharger-un-rapport-de-prefaisabilite",
+        "consulter-les-details-de-la-validation-de-l-etude-de-prefaisabilite",
+        "commenter-la-decision-de-validation-de-l-etude-de-prefaisabilite",
+
+        // === CONSULTATION DES RAPPORTS FAISABILITÉ PRÉLIMINAIRE ===
+        "voir-la-liste-des-rapports-de-faisabilite-preliminaire",
+        "telecharger-un-rapport-de-faisabilite-preliminaire",
+        "commenter-un-rapport-de-faisabilite-preliminaire",
+
+        // === CONSULTATION DES TDRs FAISABILITÉ ===
         "voir-la-liste-des-tdrs-de-faisabilite",
-        "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite",
-        "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite",
-        "telecharger-un-rapport-de-faisabilite",
+        "voir-tdr-faisabilite",
+        "telecharger-tdr-faisabilite",
+        "attacher-un-fichier-a-un-tdr-de-faisabilite",
+        "consulter-le-details-d-appreciation-d-un-tdr-de-faisabilite",
+        "voir-details-de-l-appreciation-un-tdr-de-faisabilite",
+        "exporter-l-appreciation-d-un-tdr-de-faisabilite",
+        "commenter-l-appreciation-d-un-tdr-de-faisabilite",
+
+        // === GESTION DES RAPPORTS FAISABILITÉ ===
         "voir-la-liste-des-rapports-de-faisabilite",
-        "telecharger-un-rapport-d-evaluation-ex-ante",
+        "telecharger-un-rapport-de-faisabilite",
+        "consulter-les-details-de-la-validation-de-l-etude-de-faisabilite",
+        "commenter-la-decision-de-validation-de-l-etude-de-faisabilite",
+
+        // === G. GESTION ET SOUMISSION DES RAPPORTS PRÉFAISABILITÉ ===
+
+        // === CONSULTATION DES RAPPORTS ÉVALUATION EX-ANTE ===
         "voir-la-liste-des-rapports-d-evaluation-ex-ante",
+        "consulter-un-rapport-d-evaluation-ex-ante",
+        "telecharger-un-rapport-d-evaluation-ex-ante",
+        "imprimer-un-rapport-d-evaluation-ex-ante",
+        "exporter-un-rapport-d-evaluation-ex-ante",
+        "consulter-les-details-de-la-validation-de-la-validation-finale",
+        "commenter-la-decision-de-validation-finale",
+        "voir-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante",
+        "telecharger-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante",
+        "commenter-un-rapport-d-evaluation-ex-ante",
+        "voir-les-commentaires-d-un-rapport-d-evaluation-ex-ante",
+        "voir-historique-rapport-d-evaluation-ex-ante",
+
+        // === CANEVAS ET OUTILS - Consultation ===
+        "voir-la-liste-des-canevas",
+        "consulter-le-canevas-d-appreciation-d-un-tdr",
+        "imprimer-le-canevas-d-appreciation-d-un-tdr",
+        "voir-le-canevas-de-la-fiche-idee",
+        "telecharger-canevas-fiche-idee",
+
+        // === COMMENTAIRES ET FICHIERS GÉNÉRAUX ===
         "ajouter-commentaire",
         "voir-commentaires",
         "modifier-commentaire",
@@ -162,18 +213,19 @@ class OrganisationsSeeder extends Seeder
         "telecharger-fichier",
         "upload-fichier",
         "supprimer-fichier",
+        "consulter-un-fichier",
+        "telecharger-un-fichier",
+        "telecharger-documents"
     ];
 
     // DPAF
     protected $dpafPermissionsSlugs = [
-        // Gestion des utilisateurs
+        // === A. GESTION ADMINISTRATIVE ===
         "gerer-les-utilisateurs",
         "voir-la-liste-des-utilisateurs",
         "creer-un-utilisateur",
         "modifier-un-utilisateur",
         "supprimer-un-utilisateur",
-
-        // Gestion des groupes-utilisateur
         "gerer-les-groupes-utilisateur",
         "voir-la-liste-des-groupes-utilisateur",
         "creer-un-groupe-utilisateur",
@@ -183,8 +235,6 @@ class OrganisationsSeeder extends Seeder
         "retirer-un-role-a-un-groupe-utilisateur",
         "ajouter-un-utilisateur-a-un-groupe-utilisateur",
         "ajouter-nouvel-utilisateur-a-un-groupe-utilisateur",
-
-        // Gestion des rôles et permissions
         "gerer-les-roles",
         "voir-la-liste-des-roles",
         "creer-un-role",
@@ -193,31 +243,34 @@ class OrganisationsSeeder extends Seeder
         "assigner-des-permissions-a-un-role",
         "retirer-des-permissions-a-un-role",
 
-        // Gestion les odds
-        "gerer-les-odds",
+        // === A. CONSULTATION ADMINISTRATIVE ===
 
-        // Gestion les cibles
-        "gerer-les-cibles",
+        // Consultation DGPD et départements
+        "voir-la-liste-des-departements",
 
-        // Entités géographiques
+        // === B. GESTION DES ORGANISATIONS ===
+        "voir-la-liste-des-organisations",
+
+        // === C. CONSULTATION DES DONNÉES DE RÉFÉRENCE ===
+        "voir-la-liste-des-odds",
+        "voir-la-liste-des-cibles",
         "voir-les-departements-geo",
         "voir-la-liste-des-communes",
         "voir-la-liste-des-arrondissements",
         "voir-la-liste-des-villages",
-
-        // Secteurs d'intervention
         "voir-la-liste-des-grands-secteurs",
         "voir-la-liste-des-secteurs",
         "voir-la-liste-des-sous-secteurs",
-
         "voir-la-liste-des-types-intervention",
+        "voir-la-liste-des-categories-de-projet",
 
-        // Financements
+        // Financements - Gestion complète (rôle DPAF)
         "voir-la-liste-des-types-financement",
         "voir-la-liste-des-natures-financement",
         "voir-la-liste-des-sources-financement",
+        "gerer-les-financements",
 
-        // Programmes
+        // Programmes - Consultation
         "voir-la-liste-des-programmes",
         "voir-la-liste-des-composants-programme",
 
@@ -229,141 +282,188 @@ class OrganisationsSeeder extends Seeder
         "voir-la-liste-des-objectifs-strategique-du-pnd",
         "voir-la-liste-des-resultats-strategique-du-pnd",
 
-        // Projets et idées
-        "voir-la-liste-des-categories-de-projet",
+        // === D. CONSULTATION DES IDÉES DE PROJET ===
         "voir-la-liste-des-idees-de-projet",
-        "gerer-les-idees-projet",
-        "creer-une-idee-de-projet",
-        "modifier-une-idee-de-projet",
-        "supprimer-une-idee-de-projet",
-        "effectuer-evaluation-climatique-idee-projet",
-        "obtenir-score-climatique",
-        "obtenir-score-climatique-une-projet",
-        "valider-le-score-climatique-une-idee-de-projet",
-        "relancer-l-evaluation-climatique-une-idee-de-projet",
+        "consulter-une-idee-de-projet",
+        "exporter-une-idee-de-projet",
+        "imprimer-une-idee-de-projet",
+        "voir-les-commentaires-d-une-idee-de-projet",
+        "voir-les-documents-d-une-idee-de-projet",
+        "telecharger-les-documents-d-une-idee-de-projet",
 
+        // Commentaires sur les idées
+        "commenter-une-idee-de-projet",
+
+        // Gestion des projets
+        "suivre-avancement-projet",
+        "generer-rapport-projet",
+
+        "exporter-le-resultats-de-l-analyse-d-une-idee-de-projet",
+        "commenter-le-resultats-de-l-analyse-d-une-idee-de-projet",
+
+        "valider-une-idee-de-projet-en-interne",
+        "exporter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
+        "commenter-le-resultats-de-l-evaluation-climatique-d-une-idee-de-projet",
+
+        "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
+        "commenter-le-resultats-de-l-amc-d-une-idee-de-projet",
+
+
+        // Canevas et fiches
         "consulter-le-canevas-de-la-fiche-idee-de-projet",
-        "remplir-le-canevas-de-la-fiche-idee-de-projet",
         "telecharger-la-fiche-synthese-une-idee-de-projet",
 
+        // Grilles d'analyse - Consultation
+        "consulter-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
+        "imprimer-la-grille-d-analyse-de-pertinence-d-une-idee-de-projet",
         "consulter-la-grille-d-analyse-climatique-d-une-idee-de-projet",
         "imprimer-la-grille-d-analyse-climatique-d-une-idee-de-projet",
-        "effectuer-evaluation-climatique-idee-projet",
+        "consulter-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+        "imprimer-la-grille-d-analyse-multi-critere-d-une-idee-de-projet",
+
+        // Tableaux de bord
+        "acceder-au-tableau-de-bord-de-pertinence",
         "acceder-au-tableau-de-bord-climatique",
-        "valider-le-score-d-analyse-climatique-interne-d-une-idee-de-projet",
-        "valider-une-idee-de-projet-en-interne",
-
         "acceder-au-tableau-d-amc",
-        "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
 
-        // Gestion les notes conceptuelle
-        "gerer-les-notes-conceptuelle",
+        // Projets - Consultation
+        "voir-la-liste-des-projets",
+        "consulter-un-projet",
+        "exporter-un-projet",
+        "imprimer-un-projet",
+        "voir-les-commentaires-d-un-projet",
+        "voir-les-documents-d-un-projet",
+        "telecharger-les-documents-d-un-projet",
+        "voir-historique-projet",
+
+        // === E. GESTION DES NOTES CONCEPTUELLES ===
         "voir-la-liste-des-notes-conceptuelle",
+        "gerer-les-notes-conceptuelle",
         "creer-une-note-conceptuelle",
-        "rediger-une-note-conceptuelle",
         "modifier-une-note-conceptuelle",
         "supprimer-une-note-conceptuelle",
-        "commenter-une-note-conceptuelle",
         "voir-la-liste-des-commentaires-d-une-note-conceptuelle",
         "imprimer-une-note-conceptuelle",
-        "televerser-une-note-conceptuelle",
-        "attacher-des-documents-relatifs-a-une-note-conceptuelle",
         "voir-les-documents-relatifs-a-une-note-conceptuelle",
         "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
-
         "consulter-la-fiche-de-redaction-d-une-note-conceptuelle",
         "imprimer-la-fiche-de-redaction-d-une-note-conceptuelle",
-        "evaluer-une-note-conceptulle",
         "voir-le-resultats-d-evaluation-d-une-note-conceptuelle",
         "imprimer-le-resultats-d-evaluation-d-une-note-conceptuelle",
-        "valider-l-etude-de-profil",
-
         "consulter-l-outil-d-analyse-d-une-note-conceptuelle",
         "imprimer-l-outil-d-analyse-d-une-note-conceptuelle",
 
-        // TDRs
-        "soumettre-un-tdr-de-prefaisabilite",
+        "rediger-une-note-conceptuelle",
+        "commenter-une-note-conceptuelle",
+        "televerser-une-note-conceptuelle",
+        "attacher-des-documents-relatifs-a-une-note-conceptuelle",
+
+        // === F. GESTION DES TDRs PRÉFAISABILITÉ ===
         "voir-la-liste-des-tdrs-de-prefaisabilite",
-        "attacher-un-fichier-a-un-tdr-de-prefaisabilite",
+        "gerer-les-tdrs-de-prefaisabilite",
+        "creer-un-tdr-de-prefaisabilite",
+        "modifier-un-tdr-de-prefaisabilite",
         "supprimer-un-tdr-de-prefaisabilite",
-        "apprecier-un-tdr-de-prefaisabilite",
-        "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-prefaisabilite",
-        "telecharger-un-fichier-complementaire-d-un-tdr-de-prefaisabilite",
-        "soumettre-un-rapport-de-prefaisabilite",
+        "soumettre-tdr-prefaisabilite",
+        "soumettre-un-tdr-de-prefaisabilite",
+        "consulter-le-details-d-appreciation-d-un-tdr-de-prefaisabilite",
+        "voir-details-de-l-appreciation-un-tdr-de-prefaisabilite",
+        "exporter-l-appreciation-d-un-tdr-de-prefaisabilite",
+        "commenter-l-appreciation-d-un-tdr-de-prefaisabilite",
+        "attacher-un-fichier-a-un-tdr-de-prefaisabilite",
+        "voir-tdr-prefaisabilite",
+        "telecharger-tdr-prefaisabilite",
+
+
+        // === G. GESTION ET SOUMISSION DES RAPPORTS PRÉFAISABILITÉ ===
+        "voir-la-liste-des-rapports-de-prefaisabilite",
+        "creer-un-rapport-de-prefaisabilite",
         "modifier-un-rapport-de-prefaisabilite",
         "supprimer-un-rapport-de-prefaisabilite",
         "telecharger-un-rapport-de-prefaisabilite",
-        "valider-une-etude-de-prefaisabilite",
+        "soumettre-un-rapport-de-prefaisabilite",
+        "consulter-les-details-de-la-validation-de-l-etude-de-prefaisabilite",
+        "commenter-la-decision-de-validation-de-l-etude-de-prefaisabilite",
         "gerer-les-rapports-de-prefaisabilite",
-        "voir-la-liste-des-rapports-de-prefaisabilite",
+        "voir-la-liste-des-rapports-de-faisabilite-preliminaire",
+        "gerer-les-rapports-de-faisabilite-preliminaire",
+        "creer-un-rapport-de-faisabilite-preliminaire",
+        "modifier-un-rapport-de-faisabilite-preliminaire",
+        "supprimer-un-rapport-de-faisabilite-preliminaire",
+        "telecharger-un-rapport-de-faisabilite-preliminaire",
+        "soumettre-un-rapport-de-faisabilite-preliminaire",
+        "commenter-un-rapport-de-faisabilite-preliminaire",
 
-        "soumettre-un-tdr-de-faisabilite",
+        // === H. GESTION DES TDRs FAISABILITÉ ===
         "voir-la-liste-des-tdrs-de-faisabilite",
-        "attacher-un-fichier-a-un-tdr-de-faisabilite",
+        "gerer-les-tdrs-de-faisabilite",
+        "creer-un-tdr-de-faisabilite",
+        "modifier-un-tdr-de-faisabilite",
         "supprimer-un-tdr-de-faisabilite",
-        "apprecier-un-tdr-de-faisabilite",
-        "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite",
-        "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite",
-        "soumettre-un-rapport-de-faisabilite",
+        "soumettre-tdr-faisabilite",
+        "consulter-le-details-d-appreciation-d-un-tdr-de-faisabilite",
+        "voir-details-de-l-appreciation-un-tdr-de-faisabilite",
+        "exporter-l-appreciation-d-un-tdr-de-faisabilite",
+        "commenter-l-appreciation-d-un-tdr-de-faisabilite",
+        "attacher-un-fichier-a-un-tdr-de-faisabilite",
+        "voir-tdr-faisabilite",
+        "telecharger-tdr-faisabilite",
+
+        // === I. GESTION ET SOUMISSION DES RAPPORTS FAISABILITÉ ===
+        "voir-la-liste-des-rapports-de-faisabilite",
+        "creer-un-rapport-de-faisabilite",
         "modifier-un-rapport-de-faisabilite",
         "supprimer-un-rapport-de-faisabilite",
         "telecharger-un-rapport-de-faisabilite",
-        "valider-une-etude-de-faisabilite",
+        "soumettre-un-rapport-de-faisabilite",
+        "consulter-les-details-de-la-validation-de-l-etude-de-faisabilite",
+        "commenter-la-decision-de-validation-de-l-etude-de-faisabilite",
         "gerer-les-rapports-de-faisabilite",
-        "voir-la-liste-des-rapports-de-faisabilite",
+        "soumettre-un-tdr-de-faisabilite",
 
+
+        // === J. ÉVALUATION EX-ANTE - Validation financière ===
+        "voir-la-liste-des-rapports-d-evaluation-ex-ante",
+        "consulter-un-rapport-d-evaluation-ex-ante",
+        "telecharger-un-rapport-d-evaluation-ex-ante",
+        "imprimer-un-rapport-d-evaluation-ex-ante",
+        "exporter-un-rapport-d-evaluation-ex-ante",
+        "consulter-les-details-de-la-validation-de-la-validation-finale",
+        "commenter-la-decision-de-validation-finale",
+        "voir-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante",
+        "telecharger-les-documents-annexes-d-un-rapport-d-evaluation-ex-ante",
+        "commenter-un-rapport-d-evaluation-ex-ante",
+        "voir-les-commentaires-d-un-rapport-d-evaluation-ex-ante",
+        "voir-historique-rapport-d-evaluation-ex-ante",
         "soumettre-un-rapport-d-evaluation-ex-ante",
         "modifier-un-rapport-d-evaluation-ex-ante",
         "supprimer-un-rapport-d-evaluation-ex-ante",
-        "telecharger-un-rapport-d-evaluation-ex-ante",
-        "valider-un-rapport-evaluation-ex-ante",
         "gerer-les-rapports-d-evaluation-ex-ante",
-        "voir-la-liste-des-rapports-d-evaluation-ex-ante",
         "attacher-un-document-annexe-a-un-rapport-d-evaluation-ex-ante",
+        "supprimer-un-document-annexe-d-un-rapport-d-evaluation-ex-ante",
 
+        // === K. CANEVAS ET OUTILS ===
+        "voir-la-liste-des-canevas",
         "consulter-le-canevas-d-appreciation-d-un-tdr",
         "imprimer-le-canevas-d-appreciation-d-un-tdr",
+        "voir-le-canevas-de-la-fiche-idee",
+        "telecharger-canevas-fiche-idee",
 
-        // Commentaires et fichiers
+        // === L. COMMENTAIRES ET FICHIERS ===
         "ajouter-commentaire",
         "voir-commentaires",
         "modifier-commentaire",
         "supprimer-commentaire",
         "telecharger-fichier",
-        "upload-fichier",
-        "supprimer-fichier",
-    ];
+        "consulter-un-fichier",
+        "telecharger-un-fichier",
+        "telecharger-documents",
 
-    protected $comiteMinisterielPermissionsSlugs = [
-        "telecharger-la-fiche-synthese-une-idee-de-projet",
-        "acceder-au-tableau-de-bord-climatique",
-        "acceder-au-tableau-d-amc",
-        "imprimer-le-resultats-de-l-amc-d-une-idee-de-projet",
-        "voir-la-liste-des-idees-de-projet",
-        "voir-la-liste-des-projet",
-        "voir-le-resultats-d-evaluation-d-une-note-conceptuelle",
-        "imprimer-le-resultats-d-evaluation-d-une-note-conceptuelle",
-        "voir-les-documents-relatifs-a-une-note-conceptuelle",
-        "imprimer-une-note-conceptuelle",
-        "commenter-une-note-conceptuelle",
-        "voir-la-liste-des-notes-conceptuelle",
-        "voir-la-liste-des-commentaires-d-une-note-conceptuelle",
-        "telecharger-les-documents-relatifs-a-une-note-conceptuelle",
-        "voir-la-liste-des-tdrs-de-prefaisabilite",
-        "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-prefaisabilite",
-        "telecharger-un-fichier-complementaire-d-un-tdr-de-prefaisabilite",
-        "telecharger-un-rapport-de-prefaisabilite",
-        "voir-la-liste-des-rapports-de-prefaisabilite",
-        "valider-une-etude-de-prefaisabilite",
-        "voir-la-liste-des-rapports-de-faisabilite",
-        "telecharger-un-rapport-de-faisabilite",
-        "valider-une-etude-de-faisabilite",
-        "telecharger-un-fichier-complementaire-d-un-tdr-de-faisabilite",
-        "voir-la-liste-des-fichiers-complementaires-d-un-tdr-de-faisabilite",
-        "voir-la-liste-des-tdrs-de-faisabilite",
-        "valider-un-rapport-evaluation-ex-ante",
-        "telecharger-un-rapport-d-evaluation-ex-ante",
-        "voir-la-liste-des-rapports-d-evaluation-ex-ante"
+
+        // Gestion les notes conceptuelle
+        "commenter-l-appreciation-d-une-note-conceptuelle",
+        "consulter-les-details-de-la-validation-de-l-etude-de-profil",
+        "commenter-la-decision-de-validation-de-l-etude-de-profil",
     ];
 
     public function run(): void
@@ -574,16 +674,15 @@ class OrganisationsSeeder extends Seeder
         $roleOrganisation = Role::firstOrCreate(['slug' => 'organisation'], ['nom' => 'Organisation']);
 
         foreach ($ministeres as $ministereData) {
-            $enfants = $ministereData['enfants'] ?? [];
-            unset($ministereData['enfants']);
 
             $ministere = Organisation::updateOrCreate(
                 ['slug' => $ministereData['slug']],
                 $ministereData
             );
 
-            // Créer un email admin unique par ministère, ex: admin.ministere-numerique@bj
-            $adminEmail = 'admin.' . $ministere->slug . '@bj';
+            // Créer un email admin unique par ministère, ex: admin.MPD@bj
+            $initiales = $this->genererInitiales($ministere->nom);
+            $adminEmail = 'admin.' . strtolower($initiales) . '@bj';
 
             $adminMinistere = User::where('email', $adminEmail)->first();
 
@@ -634,103 +733,7 @@ class OrganisationsSeeder extends Seeder
                 $this->command->info("ℹ️ Le compte admin existe déjà pour le ministère {$ministere->nom}");
             }
 
-            // --- Groupe Comité de validation Ministériel ---
-            $groupeComiteValidation = GroupeUtilisateur::firstOrCreate(
-                [
-                    'slug' => 'comite-validation-ministeriel',
-                    'profilable_type' => get_class($ministere),
-                    'profilable_id' => $ministere->id
-                ],
-                [
-                    'nom' => 'Comité de validation Ministériel',
-                    'description' => 'Comité de validation ministériel chargé de l\'examen et de la validation des projets'
-                ]
-            );
-
-            // 1. Créer le rôle spécifique au groupe ministériel
-            $roleMembreComite = Role::firstOrCreate(
-                [
-                    'slug' => 'membre-comite-ministeriel',
-                    'roleable_type' => get_class($ministere),
-                    'roleable_id' => $ministere->id,
-                ],
-                [
-                    'nom' => 'Membre Comité Ministériel',
-                    'description' => 'Membre du Comité de validation Ministériel pour ' . $ministere->nom,
-                    'roleable_type' => get_class($ministere),
-                    'roleable_id' => $ministere->id,
-                ]
-            );
-
-            $this->command->info("✅ Rôle Membre Comité Ministériel créé pour {$ministere->nom}");
-
-            // 2. Lier ce rôle au groupe "Comité de validation Ministériel"
-            // (Supposons que GroupeUtilisateur a une relation roles(), sinon il faut la créer)
-            $groupeComiteValidation->roles()->syncWithoutDetaching([$roleMembreComite->id]);
-
-            $this->command->info("✅ Rôle associé au groupe Comité de validation Ministériel pour {$ministere->nom}");
-
-            // 3. Créer un ou plusieurs utilisateurs "membre comité" rattachés au ministère et au groupe
-
-            $emailMembre = "membre-comite.{$ministere->slug}@ministere.bj";
-            $membre = User::where('email', $emailMembre)->first();
-
-            if (!$membre) {
-                $membrePersonne = Personne::firstOrCreate(
-                    [
-                        'nom' => 'Membre',
-                        'prenom' => 'Comité',
-                        'organismeId' => $ministere->id
-                    ],
-                    [
-                        'poste' => 'Membre Comité Validation',
-                        'organismeId' => $ministere->id
-                    ]
-                );
-
-                $passwordMembre = 'MembreComite123!';
-
-                $membre = User::create([
-                    'provider' => 'local',
-                    'provider_user_id' => $emailMembre,
-                    'username' => $emailMembre,
-                    'email' => $emailMembre,
-                    'status' => 'actif',
-                    'is_email_verified' => true,
-                    'email_verified_at' => now(),
-                    'password' => Hash::make($passwordMembre),
-                    'personneId' => $membrePersonne->id,
-                    'roleId' => null,
-                    'last_connection' => now(),
-                    'ip_address' => '127.0.0.1',
-                    'type' => 'membre-comite',
-                    'profilable_id' => $ministere->id,
-                    'profilable_type' => get_class($ministere),
-                    'account_verification_request_sent_at' => Carbon::now(),
-                    'token' => str_replace(['/', '\\', '.'], '', Hash::make($ministere->id . Hash::make($emailMembre) . Hash::make(Hash::make(strtotime(Carbon::now()))))),
-                    'link_is_valide' => true,
-                    'created_at' => now(),
-                    'lastRequest' => now()
-                ]);
-
-                $groupeComiteValidation->users()->attach([$membre->id]);
-
-                // Attacher le rôle (relation many-to-many)
-                //$membre->roles()->attach([$roleMembreComite->id]);
-
-                // Attacher le groupe (relation many-to-many ou autre)
-                //$membre->groupes()->attach([$groupeComiteValidation->id]);
-
-                $this->command->info("✅ Compte membre Comité Validation créé pour {$ministere->nom}");
-                $this->command->info("📧 Email : {$emailMembre}");
-                $this->command->info("🔑 Mot de passe : {$passwordMembre}");
-            } else {
-                $this->command->info("ℹ️ Le compte membre Comité Validation existe déjà pour {$ministere->nom}");
-            }
-
-            $this->command->info("✅ Groupe Comité de validation Ministériel créé pour {$ministere->nom}");
-
-            $roleDpaf = Role::firstOrCreate([
+            /*$roleDpaf = Role::firstOrCreate([
                 'slug' => 'dpaf',
                 'roleable_type' => get_class($ministere),
                 'roleable_id' => $ministere->id
@@ -896,95 +899,37 @@ class OrganisationsSeeder extends Seeder
                 $this->command->info("ℹ️ Le compte Responsable projet existe déjà pour {$ministere->nom}");
             }
 
-            /**
-             * Rôle Responsable hiérachique
-             */
-            $roleResponsableHierarchique = Role::firstOrCreate(
-                [
-                    'slug' => 'responsable-hierachique',
-                    'roleable_type' => get_class($ministere),
-                    'roleable_id' => $ministere->id,
-                ],
-                [
-                    'nom' => 'Responsable hiérachique',
-                    'slug' => 'responsable-hierachique',
-                    'roleable_type' => get_class($ministere),
-                    'roleable_id' => $ministere->id,
-                    'description' => 'Responsable hiérachique du ' . $ministere->nom,
-                ]
-            );
+            $this->command->info("✅ Espaces de travail créés avec succès pour {$ministere->nom} !");*/
+        }
+    }
 
-            // Récupérer les IDs des permissions correspondantes aux slugs
-            $permissionIds = Permission::whereIn('slug', $this->responsableHierarchiquePermissionsSlugs)->pluck('id')->toArray();
+    /**
+     * Génère les initiales d'un nom d'organisation en excluant les mots communs
+     *
+     * Exemple: "Ministère du Plan et du Développement" → "MPD"
+     *
+     * @param string $nom Le nom de l'organisation
+     * @return string Les initiales en majuscules
+     */
+    private function genererInitiales(string $nom): string
+    {
+        // Mots à exclure des initiales
+        $motsExclus = ['du', 'de', 'la', 'le', 'des', 'et', 'en', 'l\'', 'd\''];
 
-            // Synchroniser les permissions au rôle
-            $roleResponsableHierarchique->permissions()->sync($permissionIds);
+        // Nettoyer et découper le nom
+        $mots = explode(' ', $nom);
+        $initiales = '';
 
-            $this->command->info("✅ Rôle Responsable hiérachique créé pour {$ministere->nom}");
+        foreach ($mots as $mot) {
+            // Nettoyer le mot des apostrophes
+            $motNettoye = str_replace(['\'', '\''], '', $mot);
 
-            /**
-             * Utilisateur Responsable hiérachique
-             */
-            $emailResponsableHier = "responsable-hierachique.{$slugMin}@ministere.bj";
-            $responsableHierarchique = User::where('email', $emailResponsableHier)->first();
-
-            if (!$responsableHierarchique) {
-                $responsableHierarchiquePersonne = Personne::firstOrCreate(
-                    [
-                        'nom' => 'Responsable',
-                        'prenom' => 'Hiérarchique',
-                        'organismeId' => $ministere->id
-                    ],
-                    [
-                        'poste' => 'Responsable hiérachique',
-                        'organismeId' => $ministere->id
-                    ]
-                );
-
-                $passwordResponsableHier = 'ResponsableHier123!';
-
-                $responsableHierarchique = User::create([
-                    'provider' => 'local',
-                    'provider_user_id' => $emailResponsableHier,
-                    'username' => $emailResponsableHier,
-                    'email' => $emailResponsableHier,
-                    'status' => 'actif',
-                    'is_email_verified' => true,
-                    'email_verified_at' => now(),
-                    'password' => Hash::make($passwordResponsableHier),
-                    'personneId' => $responsableHierarchiquePersonne->id,
-                    'roleId' => $roleResponsableHierarchique->id,
-                    'last_connection' => now(),
-                    'ip_address' => '127.0.0.1',
-                    'type' => 'responsable-hierachique',
-                    'profilable_id' => $ministere->id,
-                    'profilable_type' => get_class($ministere),
-                    'account_verification_request_sent_at' => Carbon::now(),
-                    'token' => str_replace(['/', '\\', '.'], '', Hash::make($ministere->id . Hash::make($emailResponsableHier) . Hash::make(Hash::make(strtotime(Carbon::now()))))),
-                    'link_is_valide' => true,
-                    'created_at' => now(),
-                    'lastRequest' => now()
-                ]);
-
-                $responsableHierarchique->roles()->attach([$roleResponsableHierarchique->id]);
-
-                $this->command->info("✅ Compte Responsable hiérachique créé avec succès pour {$ministere->nom}");
-                $this->command->info("📧 Email: {$emailResponsableHier}");
-                $this->command->info("🔑 Mot de passe: {$passwordResponsableHier}");
-            } else {
-                $this->command->info("ℹ️ Le compte Responsable hiérachique existe déjà pour {$ministere->nom}");
-            }
-
-            $this->command->info("✅ Espaces de travail créés avec succès pour {$ministere->nom} !");
-
-
-            foreach ($enfants as $enfantData) {
-                $enfantData['parentId'] = $ministere->id;
-                Organisation::updateOrCreate(
-                    ['slug' => $enfantData['slug']],
-                    $enfantData
-                );
+            // Vérifier si le mot n'est pas dans la liste d'exclusion et n'est pas vide
+            if (!in_array(strtolower($mot), $motsExclus) && !empty($motNettoye)) {
+                $initiales .= strtoupper($motNettoye[0]);
             }
         }
+
+        return $initiales;
     }
 }

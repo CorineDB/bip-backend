@@ -428,5 +428,4 @@
 
                 // Gestion les notes conceptuelle
                 "commenter-l-appreciation-d-une-note-conceptuelle", "consulter-les-details-de-la-validation-de-l-etude-de-profil", "commenter-la-decision-de-validation-de-l-etude-de-profil",
-
             ]
