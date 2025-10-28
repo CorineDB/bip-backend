@@ -821,9 +821,9 @@ class OrganisationsSeeder extends Seeder
 
             $slugMin = $ministere->slug;
 
-            /**
+            /*
              * Rôle Responsable projet du ministère
-             */
+             /
             $roleResponsableProjet = Role::firstOrCreate(
                 [
                     'slug' => 'responsable-projet',
@@ -846,9 +846,9 @@ class OrganisationsSeeder extends Seeder
 
             $this->command->info("✅ Rôle Responsable projet créé pour {$ministere->nom}");
 
-            /**
+            /*
              * Utilisateur Responsable projet
-             */
+             /
             $emailResponsableProjet = "responsable-projet.{$slugMin}@ministere.bj";
             $responsableProjet = User::where('email', $emailResponsableProjet)->first();
 
