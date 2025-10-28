@@ -18,7 +18,7 @@ class OrganisationObserver
      * Handle the Organisation "created" event.
      */
     public function saved(Organisation $organisation): void
-    {
+    {/*
         if ($organisation->type === "ministere") {
             $roles = [
                 ['slug' => 'dpaf', 'nom' => 'DPAF', 'description' => "Departement de la planification des administrations et des finances du ministere '{$organisation->nom}'."],
@@ -37,7 +37,7 @@ class OrganisationObserver
                     'description' => $roleData['description']
                 ]);
             }
-        }
+        } */
     }
 
     /**

@@ -65,10 +65,10 @@ class SendEmailJob implements ShouldQueue
 
                 // Stocker des informations supplémentaires dans le state pour l'activation
                 \Illuminate\Support\Facades\Cache::put("oauth_state:{$state}", [
-                    'frontend_origin' => config('mail.client_app.url') ?? config('app.url'),
+                    'frontend_origin' => env('FRONTEND_URL'),
                     'email' => $this->user->email,
                     'activation_mode' => true,
-                    'user_id' => $this->user->id
+                    'user_id' => $this->user->hashed_id
                 ], 300); // 5 minutes
 
                 $params = http_build_query([
@@ -103,11 +103,11 @@ class SendEmailJob implements ShouldQueue
 
                 // Stocker des informations pour l'activation
                 \Illuminate\Support\Facades\Cache::put("oauth_state:{$state}", [
-                    'frontend_origin' => config('mail.client_app.url') ?? config('app.url'),
+                    'frontend_origin' => env('FRONTEND_URL'),
                     'email' => $this->user->email,
                     'activation_token' => $this->user->token,
                     'activation_mode' => true,
-                    'user_id' => $this->user->hashe_id
+                    'user_id' => $this->user->hashed_id
                 ], 300); // 5 minutes
 
                 $params = http_build_query([

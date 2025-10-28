@@ -7,12 +7,12 @@ use App\Models\Document;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
+class ChecklistSuiviEtudeImpactEnvironnementaleSocialeSeeder extends Seeder
 {
     protected $documentData = [
-  'nom' => 'Check liste de suivi pour l\'assurance qualité du rapport d\'étude de faisabilité.',
-  'slug' => 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite',
-  'description' => 'Check liste de suivi pour l\'assurance qualité du rapport d\'étude de faisabilités',
+  'nom' => 'Check liste de suivi de l\'étude d\'analyse d’impact environnementale et sociale',
+  'slug' => 'canevas-appreciation-tdr-1',
+  'description' => 'Check liste de suivi de l\'étude d\'analyse d’impact environnementale et sociales',
   'type' => 'checklist',
   'evaluation_configs' => [
     'guide_suivi' => [
@@ -26,25 +26,35 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
         'libelle' => 'Pas encore disponibles',
         'description' => 'Nécessite des améliorations ou éclaircissements',
       ],
+      [
+        'option' => 'pertinent',
+        'libelle' => 'Pertinent',
+        'description' => 'Nécessite des améliorations ou éclaircissements',
+      ],
+      [
+        'option' => 'non-pertinent',
+        'libelle' => 'Non Pertinent',
+        'description' => 'Nécessite des améliorations ou éclaircissements',
+      ],
     ],
   ],
   'forms' => [
       [
       'element_type' => 'section',
       'ordre_affichage' => 1,
-      'key' => 'section-cadre-physique',
-      'intitule' => 'Cadre Physique du projet',
-      'description' => 'Cette section décrit les fondements physiques du projet, ses éléments géographiques, son origine et son secteur d’activités.',
+      'key' => 'section-prise-connaissance-environnement',
+      'intitule' => 'PRISE DE CONNAISSANCE DE L’ENVIRONNEMENT DU PROJET',
+      'description' => '',
       'type' => 'formulaire',
       'elements' => [
       [
           'element_type' => 'field',
           'ordre_affichage' => 1,
-          'label' => 'Définition du projet.',
+          'label' => 'Comprendre l’environnement comme cible de l’étude',
           'info' => '',
-          'key' => 'definition_projet',
-          'attribut' => 'definition_projet',
-          'placeholder' => 'La définition du projet est-elle disponible ?',
+          'key' => 'comprendre_environnement',
+          'attribut' => 'comprendre_environnement',
+          'placeholder' => '',
           'is_required' => true,
           'default_value' => NULL,
           'isEvaluated' => true,
@@ -60,8 +70,16 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                   'label' => 'Pas encore disponibles',
                   'value' => 'pas-encore-disponibles',
                 ],
+      [
+                  'label' => 'Pertinent',
+                  'value' => 'pertinent',
+                ],
+      [
+                  'label' => 'Non Pertinent',
+                  'value' => 'non-pertinent',
+                ],
               ],
-              'show_explanation' => true,
+              'show_explanation' => false,
               'explanation_min_length' => 50,
               'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
             ],
@@ -75,6 +93,8 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
               'in' => [
       'disponible',
       'pas-encore-disponibles',
+      'pertinent',
+      'non-pertinent',
               ],
               'string' => true,
               'required' => true,
@@ -91,11 +111,11 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
       [
           'element_type' => 'field',
           'ordre_affichage' => 2,
-          'label' => 'Genèse du projet',
+          'label' => 'Préciser les changements prévus dans l’environnement du projet',
           'info' => '',
-          'key' => 'genese_projet',
-          'attribut' => 'genese_projet',
-          'placeholder' => 'La genèse du projet est-elle documentée ?',
+          'key' => 'changement_prevus_environnement',
+          'attribut' => 'changement_prevus_environnement',
+          'placeholder' => '',
           'is_required' => true,
           'default_value' => NULL,
           'isEvaluated' => true,
@@ -111,8 +131,16 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                   'label' => 'Pas encore disponibles',
                   'value' => 'pas-encore-disponibles',
                 ],
+      [
+                  'label' => 'Pertinent',
+                  'value' => 'pertinent',
+                ],
+      [
+                  'label' => 'Non Pertinent',
+                  'value' => 'non-pertinent',
+                ],
               ],
-              'show_explanation' => true,
+              'show_explanation' => false,
               'explanation_min_length' => 50,
               'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
             ],
@@ -126,6 +154,8 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
               'in' => [
       'disponible',
       'pas-encore-disponibles',
+      'pertinent',
+      'non-pertinent',
               ],
               'string' => true,
               'required' => true,
@@ -142,11 +172,11 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
       [
           'element_type' => 'field',
           'ordre_affichage' => 3,
-          'label' => 'Dossier de Formulation',
+          'label' => 'Décrire l’environnement du projet',
           'info' => '',
-          'key' => 'dossier_formulation',
-          'attribut' => 'dossier_formulation',
-          'placeholder' => 'Le dossier de formulation est-il disponible ?',
+          'key' => 'decrire_environnement',
+          'attribut' => 'decrire_environnement',
+          'placeholder' => '',
           'is_required' => true,
           'default_value' => NULL,
           'isEvaluated' => true,
@@ -162,8 +192,16 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                   'label' => 'Pas encore disponibles',
                   'value' => 'pas-encore-disponibles',
                 ],
+      [
+                  'label' => 'Pertinent',
+                  'value' => 'pertinent',
+                ],
+      [
+                  'label' => 'Non Pertinent',
+                  'value' => 'non-pertinent',
+                ],
               ],
-              'show_explanation' => true,
+              'show_explanation' => false,
               'explanation_min_length' => 50,
               'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
             ],
@@ -177,6 +215,8 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
               'in' => [
       'disponible',
       'pas-encore-disponibles',
+      'pertinent',
+      'non-pertinent',
               ],
               'string' => true,
               'required' => true,
@@ -193,11 +233,11 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
       [
           'element_type' => 'field',
           'ordre_affichage' => 4,
-          'label' => 'Éléments géographiques',
+          'label' => 'Examiner l’état actuel de l’environnement du projet',
           'info' => '',
-          'key' => 'elements_geographiques',
-          'attribut' => 'elements_geographiques',
-          'placeholder' => 'Les éléments géographiques sont-ils identifiés ?',
+          'key' => 'examiner_etat_actuel_environnement',
+          'attribut' => 'examiner_etat_actuel_environnement',
+          'placeholder' => '',
           'is_required' => true,
           'default_value' => NULL,
           'isEvaluated' => true,
@@ -213,8 +253,16 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                   'label' => 'Pas encore disponibles',
                   'value' => 'pas-encore-disponibles',
                 ],
+      [
+                  'label' => 'Pertinent',
+                  'value' => 'pertinent',
+                ],
+      [
+                  'label' => 'Non Pertinent',
+                  'value' => 'non-pertinent',
+                ],
               ],
-              'show_explanation' => true,
+              'show_explanation' => false,
               'explanation_min_length' => 50,
               'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
             ],
@@ -228,108 +276,8 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
               'in' => [
       'disponible',
       'pas-encore-disponibles',
-              ],
-              'string' => true,
-              'required' => true,
-              'explanation_validation' => [
-                'min' => 50,
-                'string' => true,
-                'required' => false,
-              ],
-            ],
-          ],
-          'champ_standard' => true,
-          'startWithNewLine' => false,
-        ],
-      [
-          'element_type' => 'field',
-          'ordre_affichage' => 5,
-          'label' => 'Éléments d’infrastructure (zones du projet]',
-          'info' => '',
-          'key' => 'elements_infrastructure',
-          'attribut' => 'elements_infrastructure',
-          'placeholder' => 'Les éléments d’infrastructure sont-ils disponibles ?',
-          'is_required' => true,
-          'default_value' => NULL,
-          'isEvaluated' => true,
-          'type_champ' => 'radio',
-          'meta_options' => [
-            'configs' => [
-              'options' => [
-      [
-                  'label' => 'Disponible',
-                  'value' => 'disponible',
-                ],
-      [
-                  'label' => 'Pas encore disponibles',
-                  'value' => 'pas-encore-disponibles',
-                ],
-              ],
-              'show_explanation' => true,
-              'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-            ],
-            'conditions' => [
-              'disable' => false,
-              'visible' => true,
-              'conditions' => [
-              ],
-            ],
-            'validations_rules' => [
-              'in' => [
-      'disponible',
-      'pas-encore-disponibles',
-              ],
-              'string' => true,
-              'required' => true,
-              'explanation_validation' => [
-                'min' => 50,
-                'string' => true,
-                'required' => false,
-              ],
-            ],
-          ],
-          'champ_standard' => true,
-          'startWithNewLine' => false,
-        ],
-      [
-          'element_type' => 'field',
-          'ordre_affichage' => 6,
-          'label' => 'Secteur d’activités du projet',
-          'info' => '',
-          'key' => 'secteur_activites',
-          'attribut' => 'secteur_activites',
-          'placeholder' => 'Le secteur d’activités du projet est-il défini ?',
-          'is_required' => true,
-          'default_value' => NULL,
-          'isEvaluated' => true,
-          'type_champ' => 'radio',
-          'meta_options' => [
-            'configs' => [
-              'options' => [
-      [
-                  'label' => 'Disponible',
-                  'value' => 'disponible',
-                ],
-      [
-                  'label' => 'Pas encore disponibles',
-                  'value' => 'pas-encore-disponibles',
-                ],
-              ],
-              'show_explanation' => true,
-              'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
-            ],
-            'conditions' => [
-              'disable' => false,
-              'visible' => true,
-              'conditions' => [
-              ],
-            ],
-            'validations_rules' => [
-              'in' => [
-      'disponible',
-      'pas-encore-disponibles',
+      'pertinent',
+      'non-pertinent',
               ],
               'string' => true,
               'required' => true,
@@ -348,19 +296,19 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
       [
       'element_type' => 'section',
       'ordre_affichage' => 2,
-      'key' => 'section-description-technique-projet',
-      'intitule' => 'Description technique du projet',
-      'description' => 'Description technique du projet',
+      'key' => 'section-analyse-impact-environnementaux-sociaux',
+      'intitule' => 'ANALYSE DES IMPACTS ENVIRONNEMENTAUX ET SOCIAUX DU PROJET',
+      'description' => '',
       'type' => 'formulaire',
       'elements' => [
       [
           'element_type' => 'field',
           'ordre_affichage' => 1,
-          'label' => 'Choix techniques et justification',
+          'label' => 'Décrire les impacts connus ou probables du projet',
           'info' => '',
-          'key' => 'choix_techniques_justification',
-          'attribut' => 'choix_techniques_justification',
-          'placeholder' => 'Les choix techniques sont-ils disponibles ?',
+          'key' => 'decrire_impact',
+          'attribut' => 'decrire_impact',
+          'placeholder' => '',
           'is_required' => true,
           'default_value' => NULL,
           'isEvaluated' => true,
@@ -376,8 +324,16 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                   'label' => 'Pas encore disponibles',
                   'value' => 'pas-encore-disponibles',
                 ],
+      [
+                  'label' => 'Pertinent',
+                  'value' => 'pertinent',
+                ],
+      [
+                  'label' => 'Non Pertinent',
+                  'value' => 'non-pertinent',
+                ],
               ],
-              'show_explanation' => true,
+              'show_explanation' => false,
               'explanation_min_length' => 50,
               'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
             ],
@@ -391,6 +347,8 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
               'in' => [
       'disponible',
       'pas-encore-disponibles',
+      'pertinent',
+      'non-pertinent',
               ],
               'string' => true,
               'required' => true,
@@ -407,11 +365,11 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
       [
           'element_type' => 'field',
           'ordre_affichage' => 2,
-          'label' => 'Échelonnement des réalisations',
+          'label' => 'Évaluer les impacts du projet',
           'info' => '',
-          'key' => 'echelonnement_realisations',
-          'attribut' => 'echelonnement_realisations',
-          'placeholder' => 'Les informations sur l’échelonnement des réalisations sont-elles disponibles ?',
+          'key' => 'evaluer_impact_projet',
+          'attribut' => 'evaluer_impact_projet',
+          'placeholder' => '',
           'is_required' => true,
           'default_value' => NULL,
           'isEvaluated' => true,
@@ -427,10 +385,18 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                   'label' => 'Pas encore disponibles',
                   'value' => 'pas-encore-disponibles',
                 ],
+      [
+                  'label' => 'Pertinent',
+                  'value' => 'pertinent',
+                ],
+      [
+                  'label' => 'Non Pertinent',
+                  'value' => 'non-pertinent',
+                ],
               ],
-              'show_explanation' => true,
+              'show_explanation' => false,
               'explanation_min_length' => 50,
-              'explanation_placeholder' => 'Explications détaillées (optionnel]',
+              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
             ],
             'conditions' => [
               'disable' => false,
@@ -442,6 +408,140 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
               'in' => [
       'disponible',
       'pas-encore-disponibles',
+      'pertinent',
+      'non-pertinent',
+              ],
+              'string' => true,
+              'required' => true,
+              'explanation_validation' => [
+                'min' => 50,
+                'string' => true,
+                'required' => false,
+              ],
+            ],
+          ],
+          'champ_standard' => true,
+          'startWithNewLine' => false,
+        ],
+      ],
+    ],
+      [
+      'element_type' => 'section',
+      'ordre_affichage' => 3,
+      'key' => 'section-definition-strategie-gestion-impact',
+      'intitule' => 'DÉFINITION DES STRATÉGIES DE GESTION DES IMPACTS',
+      'description' => '',
+      'type' => 'formulaire',
+      'elements' => [
+      [
+          'element_type' => 'field',
+          'ordre_affichage' => 1,
+          'label' => 'Identifier les stratégies pour gérer adéquatement les impacts du projet',
+          'info' => '',
+          'key' => 'identifier_strategies',
+          'attribut' => 'identifier_strategies',
+          'placeholder' => '',
+          'is_required' => true,
+          'default_value' => NULL,
+          'isEvaluated' => true,
+          'type_champ' => 'radio',
+          'meta_options' => [
+            'configs' => [
+              'options' => [
+      [
+                  'label' => 'Disponible',
+                  'value' => 'disponible',
+                ],
+      [
+                  'label' => 'Pas encore disponibles',
+                  'value' => 'pas-encore-disponibles',
+                ],
+      [
+                  'label' => 'Pertinent',
+                  'value' => 'pertinent',
+                ],
+      [
+                  'label' => 'Non Pertinent',
+                  'value' => 'non-pertinent',
+                ],
+              ],
+              'show_explanation' => false,
+              'explanation_min_length' => 50,
+              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+            ],
+            'conditions' => [
+              'disable' => false,
+              'visible' => true,
+              'conditions' => [
+              ],
+            ],
+            'validations_rules' => [
+              'in' => [
+      'disponible',
+      'pas-encore-disponibles',
+      'pertinent',
+      'non-pertinent',
+              ],
+              'string' => true,
+              'required' => true,
+              'explanation_validation' => [
+                'min' => 50,
+                'string' => true,
+                'required' => false,
+              ],
+            ],
+          ],
+          'champ_standard' => true,
+          'startWithNewLine' => false,
+        ],
+      [
+          'element_type' => 'field',
+          'ordre_affichage' => 2,
+          'label' => 'Piloter la gestion d’impacts du projet',
+          'info' => '',
+          'key' => 'piloter_gestion_impact',
+          'attribut' => 'piloter_gestion_impact',
+          'placeholder' => '',
+          'is_required' => true,
+          'default_value' => NULL,
+          'isEvaluated' => true,
+          'type_champ' => 'radio',
+          'meta_options' => [
+            'configs' => [
+              'options' => [
+      [
+                  'label' => 'Disponible',
+                  'value' => 'disponible',
+                ],
+      [
+                  'label' => 'Pas encore disponibles',
+                  'value' => 'pas-encore-disponibles',
+                ],
+      [
+                  'label' => 'Pertinent',
+                  'value' => 'pertinent',
+                ],
+      [
+                  'label' => 'Non Pertinent',
+                  'value' => 'non-pertinent',
+                ],
+              ],
+              'show_explanation' => false,
+              'explanation_min_length' => 50,
+              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+            ],
+            'conditions' => [
+              'disable' => false,
+              'visible' => true,
+              'conditions' => [
+              ],
+            ],
+            'validations_rules' => [
+              'in' => [
+      'disponible',
+      'pas-encore-disponibles',
+      'pertinent',
+      'non-pertinent',
               ],
               'string' => true,
               'required' => true,
@@ -458,11 +558,11 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
       [
           'element_type' => 'field',
           'ordre_affichage' => 3,
-          'label' => 'Objectifs de production',
+          'label' => 'Élaborer et déployer une stratégie de communication avec la méthode du QQOQCCP',
           'info' => '',
-          'key' => 'objectifs_production',
-          'attribut' => 'objectifs_production',
-          'placeholder' => 'Disponible ou pas ?',
+          'key' => 'elaborer_deployer_strategie_com',
+          'attribut' => 'elaborer_deployer_strategie_com',
+          'placeholder' => '',
           'is_required' => true,
           'default_value' => NULL,
           'isEvaluated' => true,
@@ -478,8 +578,16 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
                   'label' => 'Pas encore disponibles',
                   'value' => 'pas-encore-disponibles',
                 ],
+      [
+                  'label' => 'Pertinent',
+                  'value' => 'pertinent',
+                ],
+      [
+                  'label' => 'Non Pertinent',
+                  'value' => 'non-pertinent',
+                ],
               ],
-              'show_explanation' => true,
+              'show_explanation' => false,
               'explanation_min_length' => 50,
               'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
             ],
@@ -493,6 +601,140 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
               'in' => [
       'disponible',
       'pas-encore-disponibles',
+      'pertinent',
+      'non-pertinent',
+              ],
+              'string' => true,
+              'required' => true,
+              'explanation_validation' => [
+                'min' => 50,
+                'string' => true,
+                'required' => false,
+              ],
+            ],
+          ],
+          'champ_standard' => true,
+          'startWithNewLine' => false,
+        ],
+      ],
+    ],
+      [
+      'element_type' => 'section',
+      'ordre_affichage' => 4,
+      'key' => 'section-evaluer-cout-etude-faisabilite-environnementale-sociale',
+      'intitule' => 'EVALUER LES COÛTS DE L’ÉTUDE DE FAISABILITÉ ENVIRONNEMENTALE ET SOCIALE',
+      'description' => '',
+      'type' => 'formulaire',
+      'elements' => [
+      [
+          'element_type' => 'field',
+          'ordre_affichage' => 1,
+          'label' => 'Atténuation des impacts, Subvention, Exonérations',
+          'info' => '',
+          'key' => 'attenuation_impacts_subvention_exoneration',
+          'attribut' => 'attenuation_impacts_subvention_exoneration',
+          'placeholder' => '',
+          'is_required' => true,
+          'default_value' => NULL,
+          'isEvaluated' => true,
+          'type_champ' => 'radio',
+          'meta_options' => [
+            'configs' => [
+              'options' => [
+      [
+                  'label' => 'Disponible',
+                  'value' => 'disponible',
+                ],
+      [
+                  'label' => 'Pas encore disponibles',
+                  'value' => 'pas-encore-disponibles',
+                ],
+      [
+                  'label' => 'Pertinent',
+                  'value' => 'pertinent',
+                ],
+      [
+                  'label' => 'Non Pertinent',
+                  'value' => 'non-pertinent',
+                ],
+              ],
+              'show_explanation' => false,
+              'explanation_min_length' => 50,
+              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+            ],
+            'conditions' => [
+              'disable' => false,
+              'visible' => true,
+              'conditions' => [
+              ],
+            ],
+            'validations_rules' => [
+              'in' => [
+      'disponible',
+      'pas-encore-disponibles',
+      'pertinent',
+      'non-pertinent',
+              ],
+              'string' => true,
+              'required' => true,
+              'explanation_validation' => [
+                'min' => 50,
+                'string' => true,
+                'required' => false,
+              ],
+            ],
+          ],
+          'champ_standard' => true,
+          'startWithNewLine' => false,
+        ],
+      [
+          'element_type' => 'field',
+          'ordre_affichage' => 2,
+          'label' => 'Évaluer la somme des dépenses liées aux aspects sociaux et environnementaux et à leur gestion',
+          'info' => '',
+          'key' => 'evaluer_somme_depenses',
+          'attribut' => 'evaluer_somme_depenses',
+          'placeholder' => '',
+          'is_required' => true,
+          'default_value' => NULL,
+          'isEvaluated' => true,
+          'type_champ' => 'radio',
+          'meta_options' => [
+            'configs' => [
+              'options' => [
+      [
+                  'label' => 'Disponible',
+                  'value' => 'disponible',
+                ],
+      [
+                  'label' => 'Pas encore disponibles',
+                  'value' => 'pas-encore-disponibles',
+                ],
+      [
+                  'label' => 'Pertinent',
+                  'value' => 'pertinent',
+                ],
+      [
+                  'label' => 'Non Pertinent',
+                  'value' => 'non-pertinent',
+                ],
+              ],
+              'show_explanation' => false,
+              'explanation_min_length' => 50,
+              'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+            ],
+            'conditions' => [
+              'disable' => false,
+              'visible' => true,
+              'conditions' => [
+              ],
+            ],
+            'validations_rules' => [
+              'in' => [
+      'disponible',
+      'pas-encore-disponibles',
+      'pertinent',
+      'non-pertinent',
               ],
               'string' => true,
               'required' => true,
@@ -517,10 +759,10 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder extends Seeder
 
         try {
             $categorieDocument = CategorieDocument::updateOrCreate([
-                'slug' => 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite'
+                'slug' => 'canevas-check-liste-de-suivi-etude-analyse-impact-environnementale-sociale'
             ], [
-                'nom' => "Canevas check liste suivi assurance qualite rapport etude faisabilite",
-                'slug' => 'canevas-check-liste-suivi-assurance-qualite-rapport-etude-faisabilite',
+                'nom' => "Canevas check liste de suivi etude analyse impact environnementale sociale",
+                'slug' => 'canevas-check-liste-de-suivi-etude-analyse-impact-environnementale-sociale',
                 'format' => 'checklist'
             ]);
 

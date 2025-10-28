@@ -2,9 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Arrondissement;
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -34,16 +31,22 @@ class DatabaseSeeder extends Seeder
             GrilleEvaluationPreliminaireSeeder::class,
             GrilleAMCSeeder::class,
             CanvasRedactionNoteConceptuelleSeeder::class,
-            CanevasAppreciationTDRSeeder::class,
-            ChecklistMesuresAdaptationSeeder::class
+            ChecklistMesuresAdaptationSeeder::class,
 
-            /*
-            OrganisationsSeeder::class,
-            PersonnesSeeder::class,
+            CanevasAppreciationTdrPrefaisabiliteSeeder::class,
+            CanevasAppreciationTdrFaisabiliteSeeder::class,
+            CanevasAppreciationNoteConceptuelleSeeder::class,
+            ChecklistSuiviAssuranceQualiteRapportFaisabilitePreliminaireSeeder::class,
+            CanevasChecklistRapportPrefaisabiliteSeeder::class,
 
-            // Then, seed the new categorized users system
-            CategoriesUtilisateursSeeder::class,
-            UpdateUsersWithCategoriesSeeder::class,*/
+            // Checklists de faisabilité
+            ChecklistEtudeFaisabiliteEconomiqueSeeder::class,
+            ChecklistEtudeFaisabiliteTechniqueSeeder::class,
+            ChecklistEtudeFaisabiliteMarcheSeeder::class,
+            ChecklistSuiviAnalyseFaisabiliteFinanciereSeeder::class,
+            ChecklistEtudeFaisabiliteOrganisationnelleJuridiqueSeeder::class,
+            ChecklistSuiviEtudeImpactEnvironnementaleSocialeSeeder::class,
+            ChecklistSuiviAssuranceQualiteRapportFaisabiliteSeeder::class,
         ]);
     }
 }

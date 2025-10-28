@@ -33,7 +33,12 @@ class UpdateProjetStatusRequest extends FormRequest
                 'sometimes',
                 'boolean'
             ],
-            "commentaire" => ["require_unless:est_ancien|true"]
+            'commentaire' => [
+                'required_if:est_ancien,true',
+                'nullable',
+                'string',
+                'max:1000'
+            ]
         ];
     }
 
@@ -48,6 +53,10 @@ class UpdateProjetStatusRequest extends FormRequest
             'statut.required' => 'Le statut est obligatoire.',
             'statut.string' => 'Le statut doit être une chaîne de caractères.',
             'statut.in' => 'Le statut fourni n\'est pas valide.',
+            'est_ancien.boolean' => 'Le champ est_ancien doit être un booléen.',
+            'commentaire.required_if' => 'Le commentaire est obligatoire pour les projets anciens.',
+            'commentaire.string' => 'Le commentaire doit être une chaîne de caractères.',
+            'commentaire.max' => 'Le commentaire ne peut pas dépasser 1000 caractères.',
         ];
     }
 }

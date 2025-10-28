@@ -18,6 +18,7 @@ class CanevasAppreciationTdrResource extends BaseApiResource
         return [
             'id'                    => $this->hashed_id,
             'nom'                   => $this->nom,
+            'slug'                   => $this->slug,
             'description'           => $this->description,
             'type'                  => $this->type,
             'categorie'             => new CategorieDocumentResource($this->categorie),

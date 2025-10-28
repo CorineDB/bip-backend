@@ -116,17 +116,24 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
             // Mettre à jour le statut
             $projet->statut = $nouveauStatut;
 
-            // Mettre à jour le flag "est_ancien"
-            $projet->est_ancien = $est_ancien;
-
-            /*$projet->commentaires()->attach(["commentaire" => $data['commentaire']]);
-
-            // Mettre à jour le commentaire si fourni
-            if (isset($data['commentaire'])) {
-                $projet->commentaire = $data['commentaire'];
-            }*/
+            // Mettre à jour le flag "est_ancien" si fourni
+            if (isset($data['est_ancien'])) {
+                $projet->est_ancien = $est_ancien;
+            }
 
             $projet->save();
+
+            // Créer un commentaire avec tag d'identification SIGFP si fourni
+            if (isset($data['commentaire']) && !empty($data['commentaire'])) {
+                $tagIntegration = "[SIGFP-INTEGRATION] ";
+                $commentaireAvecTag = $tagIntegration . $data['commentaire'];
+
+                $projet->commentaires()->create([
+                    'commentaire' => $commentaireAvecTag,
+                    'commentateurId' => null, // Commentaire système (intégration SIGFP)
+                    'date' => now()
+                ]);
+            }
 
             return response()->json([
                 'success' => true,
