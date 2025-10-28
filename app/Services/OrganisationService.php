@@ -155,7 +155,7 @@ class OrganisationService extends BaseService implements OrganisationServiceInte
 
                 //dispatch(new SendEmailJob($organisation->user, "confirmation-de-compte"))->delay(now()->addSeconds(15));
 
-                dispatch(new SendEmailJob($organisation->user, "confirmation-compte", $password))->delay(now()->addMinutes(1));
+                dispatch(new SendEmailJob($organisation->user, "confirmation-compte", $password))->delay(now()->addSeconds(30));
             }
 
             $organisation->refresh();

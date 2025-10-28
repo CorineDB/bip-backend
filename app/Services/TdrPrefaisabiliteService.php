@@ -599,8 +599,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             return $this->errorResponse($e);
         }
     }
-
-
+    
     /**
      * Apprécier et évaluer les TDRs de préfaisabilité (SFD-011)
      */
