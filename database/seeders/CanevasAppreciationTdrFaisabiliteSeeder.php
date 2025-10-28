@@ -1938,8 +1938,8 @@ class CanevasAppreciationTdrFaisabiliteSeeder extends Seeder
     private function createSection(array $sectionData, $document, $parentSection = null): void
     {
         $sectionAttributes = [
-            'intitule' => $sectionData['label'],
-            'slug' => $sectionData['attribut'] ?? null,
+            'intitule' => $sectionData['label'] ?? $sectionData['intitule'] ?? 'Section sans titre',
+            'slug' => $sectionData['attribut'] ?? $sectionData['key'] ?? null,
             'description' => $sectionData['description'] ?? null,
             'documentId' => $document->id,
             'parentSectionId' => $parentSection ? $parentSection->id : null,
@@ -1947,7 +1947,7 @@ class CanevasAppreciationTdrFaisabiliteSeeder extends Seeder
         ];
 
         $section = $document->sections()->updateOrCreate([
-            'intitule' => $sectionData['label'],
+            'intitule' => $sectionData['label'] ?? $sectionData['intitule'] ?? 'Section sans titre',
             'documentId' => $document->id
         ], $sectionAttributes);
 
