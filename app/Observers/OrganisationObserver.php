@@ -13,17 +13,20 @@ class OrganisationObserver
      */
     public function created(Organisation $organisation): void
     {
-        // Dispatcher le job pour créer les rôles par défaut uniquement pour les ministères
-        if ($organisation->type === 'ministere') {
-            CreateDefaultOrganisationRoles::dispatch($organisation);
-        }
+        //
     }
+
     /**
      * Handle the Organisation "saved" event.
+     *
+     * Déclenché après create() et update()
      */
     public function saved(Organisation $organisation): void
     {
-        //
+        // Créer les rôles par défaut uniquement si le ministère vient d'être créé
+        if ($organisation->type === 'ministere' && $organisation->wasRecentlyCreated) {
+            CreateDefaultOrganisationRoles::dispatch($organisation);
+        }
     }
 
     /**
