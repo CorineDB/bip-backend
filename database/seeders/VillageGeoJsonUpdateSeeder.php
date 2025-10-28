@@ -103,6 +103,13 @@ class VillageGeoJsonUpdateSeeder extends Seeder
 
         // La clé ici est le nom normalisé (sans accents/caractères spéciaux)
 
+        // Compteur de villages par arrondissement pour générer des codes séquentiels
+        $villageCountByArrond = DB::table('villages')
+            ->select('arrondissementId', DB::raw('COUNT(*) as count'))
+            ->groupBy('arrondissementId')
+            ->pluck('count', 'arrondissementId')
+            ->toArray();
+
         $codesToKeep = [];
         $villagesData = []; // Tableau pour stocker les nouveaux villages à créer
 
@@ -149,8 +156,14 @@ class VillageGeoJsonUpdateSeeder extends Seeder
 
                 }
                 else{
+                    // Incrémenter le compteur pour cet arrondissement
+                    if (!isset($villageCountByArrond[$arrondRecord->id])) {
+                        $villageCountByArrond[$arrondRecord->id] = 0;
+                    }
+                    $villageCountByArrond[$arrondRecord->id]++;
 
-                    $code = $arrondRecord->code . '-' . str_pad($index + 1, 2, '0', STR_PAD_LEFT);
+                    // Générer un code séquentiel basé sur le nombre de villages dans cet arrondissement
+                    $code = $arrondRecord->code . '-' . str_pad($villageCountByArrond[$arrondRecord->id], 2, '0', STR_PAD_LEFT);
                     $slug = Str::slug(SlugHelper::generateUnique($villageName, Village::class));
 
                     $villagesData[] = [
@@ -163,6 +176,8 @@ class VillageGeoJsonUpdateSeeder extends Seeder
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];
+
+                    $this->command->info("➕ Nouveau village à créer : {$villageName} (Code: {$code})");
                 }
             }
         }
