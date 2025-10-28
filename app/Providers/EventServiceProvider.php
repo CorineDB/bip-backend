@@ -108,6 +108,7 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        parent::boot(); // 👈 à ajouter si absent
         Organisation::observe(OrganisationObserver::class);
     }
 
