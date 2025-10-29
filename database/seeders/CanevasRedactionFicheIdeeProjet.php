@@ -4495,8 +4495,14 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
         ], $sectionAttributes);
 
         // Créer les sous-sections
-        if (isset($sectionData['childSections']) && !empty($sectionData['childSections'])) {
+        /* if (isset($sectionData['childSections']) && !empty($sectionData['childSections'])) {
             foreach ($sectionData['childSections'] as $childSection) {
+                $this->createSection($childSection, $document, $section);
+            }
+        } */
+
+        if (isset($sectionData['sous_sections']) && !empty($sectionData['sous_sections'])) {
+            foreach ($sectionData['sous_sections'] as $childSection) {
                 $this->createSection($childSection, $document, $section);
             }
         }

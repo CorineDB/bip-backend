@@ -795,7 +795,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
 
         // Récupérer les données du state depuis le cache avec valeur par défaut
         $stateData = Cache::pull("oauth_state:{$state}", [
-            'frontend_origin' => env('FRONTEND_URL', 'http://192.168.8.105:3000'),
+            'frontend_origin' => env('FRONTEND_URL', 'http://192.168.1.105:3000'),
             'activation_mode' => false,
             'email' => null
         ]);
