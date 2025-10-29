@@ -706,7 +706,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet->update([
                 'score_climatique' => $finalResults['score_final_pondere'],
-                'identifiant_bip' => $this->generateIdentifiantBip(),
+                //'identifiant_bip' => $this->generateIdentifiantBip(),
                 'statut' => StatutIdee::IDEE_DE_PROJET,  // Marquer comme terminée
 
                 'phase' => $this->getPhaseFromStatut(StatutIdee::IDEE_DE_PROJET),
