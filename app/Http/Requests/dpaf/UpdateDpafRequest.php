@@ -19,12 +19,26 @@ class UpdateDpafRequest extends FormRequest
     {
         $dpafId = $this->route('dpaf') ? ((is_string($this->route('dpaf'))  || is_numeric($this->route('dpaf'))) ? $this->route('dpaf') : ($this->route('dpaf')->id)) : $this->route('id');
 
+        $user = $this->user();
+        $isOrganisationItself = $user && $user->profilable_type === Organisation::class;
+
+        $idMinistereRules = [];
+
+        // Si ce n'est pas l'organisation elle-même, id_ministere est requis
+        if (!$isOrganisationItself) {
+            $idMinistereRules[] = 'required';
+        }
+
+        $idMinistereRules[] = new HashedExists(Organisation::class, 'id', function ($query) {
+            $query->where('type', 'ministere')->whereNull('deleted_at');
+        });
+
+        $idMinistereRules[] = Rule::unique('dpaf', 'id_ministere')->ignore($dpafId)->whereNull('deleted_at');
+
         return [
             'nom' => ['required', 'string'],
             'description' => 'nullable|string',
-            'id_ministere' => ['required', new HashedExists(Organisation::class, 'id', function ($query) {
-                $query->where('type', 'ministere')->whereNull('deleted_at');
-            }), Rule::unique('dpaf', 'id_ministere')->ignore($dpafId)->whereNull('deleted_at')],
+            'id_ministere' => $idMinistereRules,
 
             "admin" => ["required"],
             // Attributs de personne
