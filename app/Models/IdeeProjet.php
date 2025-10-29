@@ -556,15 +556,18 @@ class IdeeProjet extends Model
 
                             // $value contient un tableau d'IDs, convertir en hashed_ids
                             if (is_array($value)) {
-                                $value = collect($value)->map(function ($id) use ($related) {
+                                // Déterminer la classe du modèle lié
+                                $modelClass = null;
+                                if ($related->isNotEmpty()) {
+                                    $modelClass = get_class($related->first());
+                                }
+
+                                $value = collect($value)->map(function ($id) use ($related, $modelClass) {
                                     $entity = $related->firstWhere('id', $id);
 
                                     // Si l'entité n'est pas trouvée dans la collection chargée, la chercher en base
-                                    if (!$entity) {
-                                        $modelClass = get_class($related->first());
-                                        if ($modelClass) {
-                                            $entity = $modelClass::find($id);
-                                        }
+                                    if (!$entity && $modelClass) {
+                                        $entity = $modelClass::find($id);
                                     }
 
                                     return $entity ? $entity->hashed_id : $id;
