@@ -17,7 +17,7 @@ class UpdateDpafRequest extends FormRequest
 
     public function rules(): array
     {
-        $dpafId = $this->route('dpaf') ? (is_string($this->route('dpaf')) ? $this->route('dpaf') : ($this->route('dpaf')->id)) : $this->route('id');
+        $dpafId = $this->route('dpaf') ? ((is_string($this->route('dpaf'))  || is_numeric($this->route('dpaf'))) ? $this->route('dpaf') : ($this->route('dpaf')->id)) : $this->route('id');
 
         return [
             'nom' => ['required', 'string'],
