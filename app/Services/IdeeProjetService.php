@@ -79,7 +79,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             // NOUVEAU CODE (simplifié et clarifié)
             $item = $this->repository->getModel()->whereIn("statut", [StatutIdee::BROUILLON, StatutIdee::IDEE_DE_PROJET, StatutIdee::ANALYSE, StatutIdee::AMC, StatutIdee::VALIDATION])->when(auth()->user()->profilable_type == Dpaf::class, function ($query) {
-                $query->where("ministereId", Auth::user()->profilable->ministere->id)->whereNot("statut", StatutIdee::BROUILLON);
+                $query->where("ministereId", Auth::user()->profilable->ministere->id)->where("est_soumise", true)->whereNot("statut", StatutIdee::BROUILLON);
             })->when(auth()->user()->profilable_type == Organisation::class, function ($query) {
                 $ministereId = Auth::user()->profilable->ministere->id;
 
@@ -92,21 +92,21 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                 }
                 // Responsable hiérarchique : toutes les idées du ministère sauf brouillon
                 elseif (auth()->user()->type == "responsable-hierachique") {
-                    $query->where("statut", "!=", StatutIdee::BROUILLON);
+                    $query->where("est_soumise", true)->where("statut", "!=", StatutIdee::BROUILLON);
                 }
                 // Organisation : toutes les idées du ministère
                 elseif (auth()->user()->type == "organisation") {
                     // Pas de filtre supplémentaire, accès complet au ministère
-                    $query->where("statut", "!=", StatutIdee::BROUILLON);
+                    $query->where("est_soumise", true)->where("statut", "!=", StatutIdee::BROUILLON);
                 }
                 // Autres types d'utilisateurs organisation
                 else {
                     $minStatut = null;
-                    if (!auth()->user()->hasPermissionTo('effectuer-evaluation-climatique-idee-projet')) {
+                    if (auth()->user()->hasPermissionTo('effectuer-evaluation-climatique-idee-projet')) {
                         $minStatut = StatutIdee::BROUILLON;
                     }
                     if ($minStatut) {
-                        $query->whereNot("statut", $minStatut);
+                        $query->where("est_soumise", true)->whereNot("statut", $minStatut);
                     }
                 }
             })->when(auth()->user()->profilable_type == Dgpd::class, function ($query) {
