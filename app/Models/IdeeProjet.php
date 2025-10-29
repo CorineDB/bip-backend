@@ -558,6 +558,15 @@ class IdeeProjet extends Model
                             if (is_array($value)) {
                                 $value = collect($value)->map(function ($id) use ($related) {
                                     $entity = $related->firstWhere('id', $id);
+
+                                    // Si l'entité n'est pas trouvée dans la collection chargée, la chercher en base
+                                    if (!$entity) {
+                                        $modelClass = get_class($related->first());
+                                        if ($modelClass) {
+                                            $entity = $modelClass::find($id);
+                                        }
+                                    }
+
                                     return $entity ? $entity->hashed_id : $id;
                                 })->toArray();
                             }
