@@ -1962,7 +1962,8 @@ class PermissionSeeder extends Seeder
 
         $adminPerson = Personne::firstOrCreate([
             "nom" => "Admin",
-            "prenom" => "Admin",
+            "prenom" => "Admin"
+        ],[
             "poste" => "Administrateur general"
 
         ]);
@@ -1970,7 +1971,7 @@ class PermissionSeeder extends Seeder
         // Supprimer les anciens utilisateurs et créer les nouveaux
         //DB::table('users')->truncate();
 
-        User::updateOrCreate([
+        User::updateOrCreate(['email' => "jsognon8@gmail.com"],[
             'is_email_verified' => true,
             'email_verified_at' => now(),
             'password' => Hash::make("SuperAdmin123!"),
