@@ -23,15 +23,14 @@ class OrganisationObserver
      */
     public function saved(Organisation $organisation): void
     {
-        Log::info("OrganisationObserver::saved() déclenché", [
-            'organisation_id' => $organisation->id,
-            'nom' => $organisation->nom,
-            'type' => $organisation->type,
-            'wasRecentlyCreated' => $organisation->wasRecentlyCreated
-        ]);
-
         // Créer les rôles par défaut pour les ministères
         if ($organisation->type === 'ministere' && $organisation->wasRecentlyCreated) {
+            Log::info("OrganisationObserver::saved() déclenché", [
+                'organisation_id' => $organisation->id,
+                'nom' => $organisation->nom,
+                'type' => $organisation->type,
+                'wasRecentlyCreated' => $organisation->wasRecentlyCreated
+            ]);
             CreateDefaultOrganisationRoles::dispatch($organisation);
         }
     }

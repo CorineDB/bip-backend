@@ -78,7 +78,6 @@ class CreateDefaultOrganisationRoles implements ShouldQueue
 
             app(DpafRepository::class)->getModel()->firstOrCreate(['id_ministere' => $attributs['id_ministere']], $attributs);
 
-
             DB::commit();
 
             Log::info("Default roles created successfully for organisation {$this->organisation->nom} (ID: {$this->organisation->id})");
