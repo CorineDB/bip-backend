@@ -452,8 +452,8 @@ class IdeeProjet extends Model
     {
         return [
             'secteurId' => 'secteur',
-            'grand_secteur' =>  Secteur::class,
-            'secteur' =>  Secteur::class,
+            /*'grand_secteur' =>  Secteur::class,
+            'secteur' =>  Secteur::class,*/
             'categorieId' => 'categorie',
 
 
@@ -467,8 +467,8 @@ class IdeeProjet extends Model
             'cibles' => 'cibles',
             'odds' => 'odds',
             'sources_financement' => 'sources_financement',
-            'natures_financement' => Financement::class,
-            'types_financement' => Financement::class,
+            /*'natures_financement' => Financement::class,
+            'types_financement' => Financement::class,*/
 
             // dans lieuxIntervention
             'departements'=> 'lieuxIntervention', // dans lieuxIntervention est disponible via la cle departementId
