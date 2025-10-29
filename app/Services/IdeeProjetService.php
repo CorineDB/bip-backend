@@ -1135,7 +1135,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                 $ancienEtatSoumise !== $nouvelEtatSoumise &&
                 $nouvelEtatSoumise === true
             ) {
-                event(new IdeeProjetCree($idee));
+                //event(new IdeeProjetCree($idee));
 
                 // Ne pas créer l'évaluation si est_coherent est false
                 if ($idee->est_coherent === false) {
@@ -1151,6 +1151,13 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
 
             DB::commit();
+
+            if (
+                $ancienEtatSoumise !== $nouvelEtatSoumise &&
+                $nouvelEtatSoumise === true
+            ) {
+                event(new IdeeProjetCree($idee));
+            }
 
             return (new $this->resourceClass($idee))
                 ->additional(['message' => 'Idée de projet sauvegardée avec succès.'])
