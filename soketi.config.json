@@ -1,0 +1,58 @@
+{
+  "debug": true,
+  "host": "0.0.0.0",
+  "port": 6001,
+  "adapter": {
+    "driver": "local"
+  },
+  "appManager": {
+    "driver": "array",
+    "array": {
+      "apps": [
+        {
+          "id": "bip_app",
+          "key": "soketi_key_12345",
+          "secret": "soketi_secret_67890",
+          "maxConnections": 100,
+          "enableClientMessages": true,
+          "enabled": true,
+          "maxBackendEventsPerSecond": 100,
+          "maxClientEventsPerSecond": 100,
+          "maxReadRequestsPerSecond": 100
+        }
+      ]
+    }
+  },
+  "cors": {
+    "credentials": true,
+    "origin": ["http://localhost:3000", "http://localhost:8000", "http://192.168.8.105:3000"],
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "allowedHeaders": ["Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With", "X-CSRF-Token", "X-Socket-Id"]
+  },
+  "httpApi": {
+    "requestLimitInMb": 100,
+    "acceptTraffic": {
+      "memoryThreshold": 85
+    }
+  },
+  "queue": {
+    "driver": "sync"
+  },
+  "webhooks": {
+    "batching": {
+      "enabled": false,
+      "duration": 50
+    }
+  },
+  "metrics": {
+    "enabled": true,
+    "driver": "prometheus",
+    "port": 9601
+  },
+  "ssl": {
+    "certPath": "",
+    "keyPath": "",
+    "passphrase": "",
+    "caPath": ""
+  }
+}
