@@ -108,6 +108,7 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
             'aspect_organisationnel' => $ideeProjet->aspect_organisationnel,
             'description_extrants' => $ideeProjet->description_extrants,
             'caracteristiques' => $ideeProjet->caracteristiques,
+            'score_pertinence' => $ideeProjet->score_pertinence,
             'score_climatique' => $ideeProjet->score_climatique,
             'score_amc' => $ideeProjet->score_amc,
             'duree' => $ideeProjet->duree,
@@ -125,6 +126,9 @@ class DupliquerIdeeProjetVersProjet implements ShouldQueue
             'demandeurId' => $ideeProjet->demandeurId ?: $ideeProjet->responsableId,
             // 'demandeur_type' => $ideeProjet->demandeur ? get_class($ideeProjet->demandeur) : 'App\\Models\\User',
             'titre_projet' => $ideeProjet->titre_projet,
+            'canevas_appreciation_pertinence' => $ideeProjet->canevas_appreciation_pertinence,
+            'canevas_climatique' => $ideeProjet->canevas_climatique,
+            'canevas_amc' => $ideeProjet->canevas_amc
         ];
     }
 
