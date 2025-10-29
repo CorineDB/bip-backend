@@ -284,7 +284,6 @@ class UpdateIdeeProjetRequest extends FormRequest
 
             'identifiant_bip' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'string', 'max:50', Rule::unique('idees_projet', 'identifiant_bip')->ignore($idee_projet)->whereNull('deleted_at')],
 
-            //'identifiant_bip' => ["nullable", 'string', 'max:50', Rule::unique('idees_projet', 'identifiant_bip')->whereNull('deleted_at')],
             'duree' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'array', 'min:0'],
             'duree.*' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'integer', 'min:1'],/*
             'duree.duree' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'integer', 'min:1'],

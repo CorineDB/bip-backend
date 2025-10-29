@@ -97,6 +97,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                 // Organisation : toutes les idées du ministère
                 elseif (auth()->user()->type == "organisation") {
                     // Pas de filtre supplémentaire, accès complet au ministère
+                    $query->where("statut", "!=", StatutIdee::BROUILLON);
                 }
                 // Autres types d'utilisateurs organisation
                 else {
