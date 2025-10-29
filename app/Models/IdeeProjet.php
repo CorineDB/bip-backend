@@ -414,12 +414,41 @@ class IdeeProjet extends Model
      * Relation pour charger l'historique de toutes les évaluations terminées
      * (pertinence, climatique, amc)
      */
-    public function historiqueEvaluations(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function historiqueEvaluations(string $type = 'climatique'): \Illuminate\Database\Eloquent\Relations\MorphMany
     {
         return $this->morphMany(Evaluation::class, 'projetable')
+            ->where('type_evaluation', $type)
             ->where('statut', 1)
             ->whereNotNull('date_fin_evaluation')
-            ->orderByDesc('created_at');
+            ->whereHas("childEvaluations")
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Relation pour charger l'historique de toutes les évaluations terminées
+     * (climatique)
+     */
+    public function historiqueEvaluationsClimatique(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->historiqueEvaluations("climatique");
+    }
+
+    /**
+     * Relation pour charger l'historique de toutes les évaluations terminées
+     * (pertinence)
+     */
+    public function historiqueEvaluationsPertinence(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->historiqueEvaluations("pertinence");
+    }
+
+    /**
+     * Relation pour charger l'historique de toutes les évaluations terminées
+     * (pertinence)
+     */
+    public function historiqueEvaluationsAMC(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->historiqueEvaluations("amc");
     }
 
     public function fichiers()

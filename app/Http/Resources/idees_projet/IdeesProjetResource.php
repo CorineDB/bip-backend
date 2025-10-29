@@ -53,6 +53,57 @@ class IdeesProjetResource extends BaseApiResource
             'cout_estimatif_projet' => $this->cout_estimatif_projet ?? [],
             'created_at' => Carbon::parse($this->created_at)->format("Y-m-d H:i:s"),
             'updated_at' => Carbon::parse($this->updated_at)->format("Y-m-d H:i:s"),
+
+            'historique_des_evaluations_de_pertinence' => $this->whenLoaded('historiqueEvaluationsPertinence', function () {
+                return $this->historiqueEvaluationsPertinence->map(function ($evaluation) {
+                    return [
+                        'id' => $evaluation->hashed_id,
+                        'type_evaluation' => $evaluation->type_evaluation,
+                        'date_debut_evaluation' => $evaluation->date_debut_evaluation ? \Carbon\Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
+                        'date_fin_evaluation' => $evaluation->date_fin_evaluation ? \Carbon\Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
+                        'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
+                        'valider_par' => $evaluation->validator?->hashed_id, //$evaluation->valider_par,
+                        'commentaire' => $evaluation->commentaire,
+                        'evaluation' => $evaluation->evaluation,
+                        'resultats_evaluation' => $evaluation->resultats_evaluation,
+                        'statut' => $evaluation->statut
+                    ];
+                });
+            }),
+
+            'historique_des_evaluations_climatique' => $this->whenLoaded('historiqueEvaluationsClimatique', function () {
+                return $this->historiqueEvaluationsClimatique->map(function ($evaluation) {
+                    return [
+                        'id' => $evaluation->hashed_id,
+                        'type_evaluation' => $evaluation->type_evaluation,
+                        'date_debut_evaluation' => $evaluation->date_debut_evaluation ? \Carbon\Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
+                        'date_fin_evaluation' => $evaluation->date_fin_evaluation ? \Carbon\Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
+                        'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
+                        'valider_par' => $evaluation->validator?->hashed_id, //$evaluation->valider_par,
+                        'commentaire' => $evaluation->commentaire,
+                        'evaluation' => $evaluation->evaluation,
+                        'resultats_evaluation' => $evaluation->resultats_evaluation,
+                        'statut' => $evaluation->statut
+                    ];
+                });
+            }),
+
+            'historique_des_analyse_multi_critere' => $this->whenLoaded('historiqueEvaluationsAMC', function () {
+                return $this->historiqueEvaluationsAMC->map(function ($evaluation) {
+                    return [
+                        'id' => $evaluation->hashed_id,
+                        'type_evaluation' => $evaluation->type_evaluation,
+                        'date_debut_evaluation' => $evaluation->date_debut_evaluation ? \Carbon\Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
+                        'date_fin_evaluation' => $evaluation->date_fin_evaluation ? \Carbon\Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
+                        'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
+                        'valider_par' => $evaluation->validator?->hashed_id, //$evaluation->valider_par,
+                        'commentaire' => $evaluation->commentaire,
+                        'evaluation' => $evaluation->evaluation,
+                        'resultats_evaluation' => $evaluation->resultats_evaluation,
+                        'statut' => $evaluation->statut
+                    ];
+                });
+            }),
         ];
     }
 

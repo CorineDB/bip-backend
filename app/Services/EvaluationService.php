@@ -1625,8 +1625,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'success' => true,
                 'data' => [
                     "statut_idee" => $ideeProjet->statut,
-                    "idee_projet" => new IdeesProjetResource($ideeProjet),
-                    'evaluation' => new EvaluationResource($evaluation->load("historique_evaluations")),
+                    "idee_projet" => new IdeesProjetResource($ideeProjet->load('historiqueEvaluationsClimatique')),
+                    'evaluation' => new EvaluationResource($evaluation),
 
                     //'score_climatique' => $scoreClimatique,
 
@@ -2515,7 +2515,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             return response()->json([
                 'success' => true,
                 'data' => [
-                    "idee_projet" => new IdeesProjetResource($ideeProjet),
+                    "idee_projet" => new IdeesProjetResource($ideeProjet->load('historiqueEvaluationsAMC')),
                     "evaluation" => $evaluation,
                     'evaluation_climatique' => [
                         "score_climatique" => ($score_pondere_par_critere->sum('score_pondere') / $categorie->criteres->count()),
@@ -3541,8 +3541,8 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'success' => true,
                 'data' => [
                     "statut_idee" => $ideeProjet->statut,
-                    "idee_projet" => new IdeesProjetResource($ideeProjet),
-                    'evaluation' => new EvaluationResource($evaluation->load("historique_evaluations")),
+                    "idee_projet" => new IdeesProjetResource($ideeProjet->load('historiqueEvaluationsPertinence')),
+                    'evaluation' => new EvaluationResource($evaluation),
                     // Taux de progression global
                     'taux_progression_global' => [
                         'pourcentage' => $completionPercentage,
