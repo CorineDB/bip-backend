@@ -462,7 +462,7 @@ class IdeeProjet extends Model
             'objectifs_strategiques' => 'objectifs_strategique_png',
             'axes_pag'=>'axes_pag',
             'actions_pag'=>'actions_pag',
-            'piliers_pag'=>'piliers_pag',
+            'piliers_pag'=>'pilliers_pag',
 
             'cibles' => 'cibles',
             'odds' => 'odds',
