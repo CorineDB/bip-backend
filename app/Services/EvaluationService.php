@@ -92,21 +92,34 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 throw new Exception("Vous le statut de l'idee de projet est a brouillon");
             }
 
-            // Validation idee de projet
-            $evaluation = Evaluation::create([
-                'type_evaluation' => 'validation-idee-projet',
-                'projetable_type' => get_class($ideeProjet),
-                'projetable_id' => $ideeProjet->id,
-                'date_debut_evaluation' => now(),
-                'date_fin_evaluation' => now(),
-                'valider_le' =>  now(),
-                'evaluateur_id' => auth()->user()->id,
-                'valider_par' => auth()->user()->id,
-                'commentaire' => $attributs["commentaire"],
-                'evaluation' => $attributs,
-                'resultats_evaluation' => $attributs["decision"],
-                'statut' => 1
-            ]);
+            // Vérifier s'il existe une évaluation précédente validée
+            $evaluationPrecedente = Evaluation::where('projetable_type', get_class($ideeProjet))
+                ->where('projetable_id', $ideeProjet->id)
+                ->where('type_evaluation', 'validation-idee-projet')
+                ->where('statut', 1)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // Validation idee de projet - utiliser updateOrCreate pour gérer l'historique
+            $evaluation = Evaluation::updateOrCreate(
+                [
+                    'type_evaluation' => 'validation-idee-projet',
+                    'projetable_type' => get_class($ideeProjet),
+                    'projetable_id' => $ideeProjet->id,
+                ],
+                [
+                    'date_debut_evaluation' => now(),
+                    'date_fin_evaluation' => now(),
+                    'valider_le' =>  now(),
+                    'evaluateur_id' => auth()->user()->id,
+                    'valider_par' => auth()->user()->id,
+                    'commentaire' => $attributs["commentaire"],
+                    'evaluation' => $attributs,
+                    'resultats_evaluation' => $attributs["decision"],
+                    'statut' => 1,
+                    'id_evaluation' => $evaluationPrecedente ? $evaluationPrecedente->id : null
+                ]
+            );
 
             // CODE EXISTANT COMMENTÉ - Conservé pour référence
             /*
@@ -278,14 +291,40 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->orderBy('created_at', 'desc')
                 ->first();
 
+            // Si le statut est IDEE_DE_PROJET et qu'une évaluation validée existe, créer une nouvelle évaluation en attente
+            if ($ideeProjet->statut == StatutIdee::IDEE_DE_PROJET && $evaluation) {
+                // Vérifier si une évaluation en attente n'existe pas déjà pour l'évaluation dont le statut est 1
+                $evaluationEnAttente = Evaluation::where('projetable_type', get_class($ideeProjet))
+                    ->where('projetable_id', $ideeProjet->id)
+                    ->where('type_evaluation', 'validation-idee-projet')
+                    ->where('statut', -1)
+                    ->where('id_evaluation', $evaluation->id)
+                    ->first();
+
+                if (!$evaluationEnAttente) {
+                    $evaluationEnAttente = Evaluation::create([
+                        'type_evaluation' => 'validation-idee-projet',
+                        'projetable_type' => get_class($ideeProjet),
+                        'projetable_id' => $ideeProjet->id,
+                        'statut' => -1,
+                        'id_evaluation' => $evaluation->id,
+                        'evaluation' => [],
+                        'resultats_evaluation' => []
+                    ]);
+                }
+
+                // Retourner l'évaluation en attente au lieu de l'évaluation validée
+                $evaluation = $evaluationEnAttente;
+            }
+
             return response()->json([
                 'success' => true,
                 'data' => [
                     "idee_projet" => new IdeesProjetResource($ideeProjet->load('historiqueValidationsPreliminaire')),
                     'evaluation' => $evaluation ? [
                         'id' => $evaluation->hashed_id,
-                        'valider_le' => Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i"),
-                        'valider_par' => new UserResource($evaluation->validator),
+                        'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
+                        'valider_par' => $evaluation->validator ? new UserResource($evaluation->validator) : null,
                         'decision' => $evaluation->evaluation,
                         'statut' => $evaluation->statut
                     ] : null
@@ -299,6 +338,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
         }
     }
+    
     /**
      * Finalize evaluation and calculate final results.
      */
@@ -313,9 +353,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             $ideeProjet = $this->ideeProjetRepository->findOrFail($ideeProjetId);
 
-            /* if ($ideeProjet->statut->value != StatutIdee::VALIDATION->value) {
+            if ($ideeProjet->statut->value != StatutIdee::VALIDATION->value) {
                 throw new Exception("L'idee de projet n'est pas a l'etape de validation");
-            } */
+            }
 
             // Vérifier s'il existe une évaluation précédente validée
             $evaluationPrecedente = Evaluation::where('projetable_type', get_class($ideeProjet))
@@ -325,22 +365,26 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            // Validation idee de projet
-            $evaluation = Evaluation::create([
-                'type_evaluation' => 'validation-idee-projet-a-projet',
-                'projetable_type' => get_class($ideeProjet),
-                'projetable_id' => $ideeProjet->id,
-                'date_debut_evaluation' => now(),
-                'date_fin_evaluation' => now(),
-                'valider_le' =>  now(),
-                'evaluateur_id' => auth()->user()->id,
-                'valider_par' => auth()->user()->id,
-                'commentaire' => $attributs["commentaire"],
-                'evaluation' => $attributs,
-                'resultats_evaluation' => $attributs["decision"],
-                'statut' => 1,
-                'id_evaluation' => $evaluationPrecedente ? $evaluationPrecedente->id : null
-            ]);
+            // Validation idee de projet - utiliser updateOrCreate pour gérer l'historique
+            $evaluation = Evaluation::updateOrCreate(
+                [
+                    'type_evaluation' => 'validation-idee-projet-a-projet',
+                    'projetable_type' => get_class($ideeProjet),
+                    'projetable_id' => $ideeProjet->id,
+                ],
+                [
+                    'date_debut_evaluation' => now(),
+                    'date_fin_evaluation' => now(),
+                    'valider_le' =>  now(),
+                    'evaluateur_id' => auth()->user()->id,
+                    'valider_par' => auth()->user()->id,
+                    'commentaire' => $attributs["commentaire"],
+                    'evaluation' => $attributs,
+                    'resultats_evaluation' => $attributs["decision"],
+                    'statut' => 1,
+                    'id_evaluation' => $evaluationPrecedente ? $evaluationPrecedente->id : null
+                ]
+            );
 
             if ($attributs["decision"] == "valider") {
                 $ideeProjet->update([
@@ -589,14 +633,40 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->orderBy('created_at', 'desc')
                 ->first();
 
+            // Si le statut est VALIDATION et qu'une évaluation validée existe, créer une nouvelle évaluation en attente
+            if ($ideeProjet->statut == StatutIdee::VALIDATION && $evaluation) {
+                // Vérifier si une évaluation en attente n'existe pas déjà pour l'évaluation dont le statut est 1
+                $evaluationEnAttente = Evaluation::where('projetable_type', get_class($ideeProjet))
+                    ->where('projetable_id', $ideeProjet->id)
+                    ->where('type_evaluation', 'validation-idee-projet-a-projet')
+                    ->where('statut', -1)
+                    ->where('id_evaluation', $evaluation->id)
+                    ->first();
+
+                if (!$evaluationEnAttente) {
+                    $evaluationEnAttente = Evaluation::create([
+                        'type_evaluation' => 'validation-idee-projet-a-projet',
+                        'projetable_type' => get_class($ideeProjet),
+                        'projetable_id' => $ideeProjet->id,
+                        'statut' => -1,
+                        'id_evaluation' => $evaluation->id,
+                        'evaluation' => [],
+                        'resultats_evaluation' => []
+                    ]);
+                }
+
+                // Retourner l'évaluation en attente au lieu de l'évaluation validée
+                $evaluation = $evaluationEnAttente;
+            }
+
             return response()->json([
                 'success' => true,
                 'data' => [
                     "idee_projet" => new IdeesProjetResource($ideeProjet->load('historiqueValidations')),
                     'evaluation' => $evaluation ? [
                         'id' => $evaluation->hashed_id,
-                        'valider_le' => Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i"),
-                        'valider_par' => new UserResource($evaluation->validator),
+                        'valider_le' => $evaluation->valider_le ? Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
+                        'valider_par' => $evaluation->validator ? new UserResource($evaluation->validator) : null,
                         'decision' => $evaluation->evaluation,
                         'statut' => $evaluation->statut
                     ] : null
