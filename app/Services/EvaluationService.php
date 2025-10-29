@@ -306,6 +306,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                         'type_evaluation' => 'validation-idee-projet',
                         'projetable_type' => get_class($ideeProjet),
                         'projetable_id' => $ideeProjet->id,
+                        'date_debut_evaluation' => now(),
                         'statut' => -1,
                         'id_evaluation' => $evaluation->id,
                         'evaluation' => [],
@@ -338,7 +339,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             ], $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500);
         }
     }
-    
+
     /**
      * Finalize evaluation and calculate final results.
      */
