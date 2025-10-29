@@ -457,9 +457,9 @@ class IdeeProjet extends Model
             'categorieId' => 'categorie',
 
 
-            'orientations_strategiques' => 'orientations_strategiques',
-            'resultats_strategiques' => 'resultats_strategiques',
-            'objectifs_strategiques' => 'objectifs_strategiques',
+            'orientations_strategiques' => 'orientations_strategique_png',
+            'resultats_strategiques' => 'resultats_strategique_png',
+            'objectifs_strategiques' => 'objectifs_strategique_png',
             'axes_pag'=>'axes_pag',
             'actions_pag'=>'actions_pag',
             'piliers_pag'=>'piliers_pag',
