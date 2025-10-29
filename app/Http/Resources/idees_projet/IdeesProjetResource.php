@@ -104,6 +104,42 @@ class IdeesProjetResource extends BaseApiResource
                     ];
                 });
             }),
+
+            'historique_des_validation_idee' => $this->whenLoaded('historiqueValidationsPreliminaire', function () {
+                return $this->historiqueValidationsPreliminaire->map(function ($evaluation) {
+                    return [
+                        'id' => $evaluation->hashed_id,
+                        'type_evaluation' => $evaluation->type_evaluation,
+                        'date_debut_evaluation' => $evaluation->date_debut_evaluation ? \Carbon\Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
+                        'date_fin_evaluation' => $evaluation->date_fin_evaluation ? \Carbon\Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
+                        'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
+                        'valider_par' => $evaluation->validator?->hashed_id, //$evaluation->valider_par,
+                        'commentaire' => $evaluation->commentaire,
+                        'evaluation' => $evaluation->evaluation,
+                        'resultats_evaluation' => $evaluation->resultats_evaluation,
+                        'statut' => $evaluation->statut
+                    ];
+                });
+            }),
+
+            'historique_des_validation_amc' => $this->whenLoaded('historiqueValidations', function () {
+                return $this->historiqueValidations->map(function ($evaluation) {
+                    return [
+                        'id' => $evaluation->hashed_id,
+                        'type_evaluation' => $evaluation->type_evaluation,
+                        'date_debut_evaluation' => $evaluation->date_debut_evaluation ? \Carbon\Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
+                        'date_fin_evaluation' => $evaluation->date_fin_evaluation ? \Carbon\Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
+                        'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
+                        'valider_par' => $evaluation->validator?->hashed_id, //$evaluation->valider_par,
+                        'commentaire' => $evaluation->commentaire,
+                        'evaluation' => $evaluation->evaluation,
+                        'resultats_evaluation' => $evaluation->resultats_evaluation,
+                        'statut' => $evaluation->statut
+                    ];
+                });
+            }),
+
+
         ];
     }
 

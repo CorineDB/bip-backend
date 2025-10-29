@@ -281,7 +281,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'idee_projet' => new IdeesProjetResource($ideeProjet),
+                    "idee_projet" => new IdeesProjetResource($ideeProjet->load('historiqueValidationsPreliminaire')),
                     'evaluation' => $evaluation ? [
                         'id' => $evaluation->hashed_id,
                         'valider_le' => Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i"),
@@ -592,7 +592,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'idee_projet' => new IdeesProjetResource($ideeProjet),
+                    "idee_projet" => new IdeesProjetResource($ideeProjet->load('historiqueValidations')),
                     'evaluation' => $evaluation ? [
                         'id' => $evaluation->hashed_id,
                         'valider_le' => Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i"),

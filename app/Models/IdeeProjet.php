@@ -451,6 +451,24 @@ class IdeeProjet extends Model
         return $this->historiqueEvaluations("amc");
     }
 
+    /**
+     * Relation pour charger l'historique de toutes les évaluations terminées
+     * (pertinence)
+     */
+    public function historiqueValidationsPreliminaire(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->historiqueEvaluations("validation-idee-projet");
+    }
+
+    /**
+     * Relation pour charger l'historique des validations par la dgpd
+     * (pertinence)
+     */
+    public function historiqueValidations(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->historiqueEvaluations("validation-idee-projet-a-projet");
+    }
+
     public function fichiers()
     {
         return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id')

@@ -961,6 +961,94 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
     }
 
     /**
+     * Vérifier si des modifications ont été apportées avant de permettre la resoumission
+     *
+     * @param IdeeProjet $idee L'idée de projet actuelle
+     * @param array $data Les nouvelles données
+     * @return bool true si des modifications existent, false sinon
+     */
+    private function verifierModificationsAvantResoumission(IdeeProjet $idee, array $data): bool
+    {
+        // Vérifier si l'idée a des évaluations selon est_coherent
+        $hasEvaluations = false;
+
+        if ($idee->est_coherent === true) {
+            // Vérifier s'il existe des évaluations climatiques terminées
+            $hasEvaluations = Evaluation::where('projetable_id', $idee->id)
+                ->where('projetable_type', get_class($idee))
+                ->where('type_evaluation', 'climatique')
+                ->whereNotNull('date_fin_evaluation')
+                ->exists();
+        } elseif ($idee->est_coherent === false) {
+            // Vérifier s'il existe des évaluations de pertinence terminées
+            $hasEvaluations = Evaluation::where('projetable_id', $idee->id)
+                ->where('projetable_type', get_class($idee))
+                ->where('type_evaluation', 'pertinence')
+                ->whereNotNull('date_fin_evaluation')
+                ->exists();
+        }
+
+        // Si aucune évaluation n'existe, autoriser la resoumission sans vérification
+        if (!$hasEvaluations) {
+            return true;
+        }
+
+        // Vérifier si au moins un champ a été modifié
+        $champsData = $data['champs'] ?? [];
+
+        foreach ($champsData as $attribut => $nouvelleValeur) {
+            // Trouver le champ correspondant dans $idee->champs
+            $champActuel = $idee->champs->firstWhere('attribut', $attribut);
+
+            if ($champActuel) {
+                $ancienneValeur = $champActuel->pivot->valeur;
+
+                // Normaliser les valeurs pour la comparaison
+                $ancienneValeurNormalisee = $this->normalizeValue($ancienneValeur);
+                $nouvelleValeurNormalisee = $this->normalizeValue($nouvelleValeur);
+
+                // Si une différence est détectée, il y a eu modification
+                if ($ancienneValeurNormalisee !== $nouvelleValeurNormalisee) {
+                    return true;
+                }
+            } else {
+                // Si le champ n'existe pas encore et qu'on essaie d'ajouter une valeur, c'est une modification
+                if (!empty($nouvelleValeur)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Normaliser une valeur pour la comparaison
+     */
+    private function normalizeValue($value)
+    {
+        // Si c'est null ou vide
+        if ($value === null || $value === '' || $value === []) {
+            return null;
+        }
+
+        // Si c'est un array
+        if (is_array($value)) {
+            // Trier l'array pour éviter les faux positifs dus à l'ordre
+            $sorted = $value;
+            sort($sorted);
+            return json_encode($sorted);
+        }
+
+        // Si c'est une chaîne, la trimmer
+        if (is_string($value)) {
+            return trim($value);
+        }
+
+        return $value;
+    }
+
+    /**
      * Méthode de mise à jour améliorée
      */
     public function update($id, array $data): JsonResponse
@@ -984,6 +1072,19 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             // Sauvegarder l'état précédent de est_soumise
             $ancienEtatSoumise = $idee->est_soumise;
+
+            // Vérifier si c'est une resoumission avec des évaluations existantes
+            if ($ancienEtatSoumise === false && isset($data['est_soumise']) && $data['est_soumise'] === true) {
+                $hasModifications = $this->verifierModificationsAvantResoumission($idee, $data);
+
+                if (!$hasModifications) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Aucune modification détectée. Vous devez apporter des modifications avant de resoumettre l\'idée de projet.',
+                    ], 422);
+                }
+            }
 
             if ($idee->est_soumise != true) {
                 if (isset($data['est_soumise'])) {
