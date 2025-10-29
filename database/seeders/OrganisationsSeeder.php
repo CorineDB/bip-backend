@@ -468,6 +468,7 @@ class OrganisationsSeeder extends Seeder
 
     public function run(): void
     {
+        DB::table('organisations')->truncate();
         /* $organisations = [
             // Ministères
             [
@@ -680,7 +681,7 @@ class OrganisationsSeeder extends Seeder
             unset($ministereData['enfants']);
 
             $ministere = Organisation::updateOrCreate(
-                ['slug' => $ministereData['slug']],
+                ['nom' => $ministereData['nom']/* , 'slug' => $ministereData['slug'] */],
                 $ministereData
             );
 
@@ -705,7 +706,7 @@ class OrganisationsSeeder extends Seeder
 
                 $passwordMinistere = 'Ministere123!';
 
-                $adminMinistere = User::updateOrCreate(['email' => $adminEmail],[
+                $adminMinistere = User::updateOrCreate(['email' => $adminEmail], [
                     'provider' => 'local',
                     'provider_user_id' => $adminEmail,
                     'username' => $adminEmail,
@@ -728,7 +729,7 @@ class OrganisationsSeeder extends Seeder
                     'lastRequest' => now()
                 ]);
 
-                $adminMinistere->roles()->attach([$roleOrganisation->id]);
+                $adminMinistere->roles()->sync([$roleOrganisation->id]);
 
                 $this->command->info("✅ Admin créé pour le ministère {$ministere->nom}");
                 $this->command->info("📧 Email : {$adminEmail}");
