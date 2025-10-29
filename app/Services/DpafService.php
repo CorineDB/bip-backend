@@ -158,7 +158,40 @@ class DpafService extends BaseService implements DpafServiceInterface
 
             $dpaf->fill($attributs)->save();
 
-            $dpaf->user->personne->fill($attributs["admin"]["personne"])->save();
+            // Mettre à jour ou créer l'utilisateur si les données admin sont fournies
+            if (isset($attributs["admin"]["personne"])) {
+                if ($dpaf->user && $dpaf->user->personne) {
+                    // Mettre à jour la personne existante
+                    $dpaf->user->personne->fill($attributs["admin"]["personne"])->save();
+                } else {
+                    // Créer l'utilisateur et la personne
+                    $personneData = $attributs["admin"]['personne'] ?? [];
+                    $personne = $this->personneRepository->create(array_merge($personneData, ["organismeId" => $dpaf->ministere->id]));
+
+                    $role = $this->roleRepository->findByAttribute('slug', 'dpaf');
+
+                    $password = $this->generateSimpleTemporaryPassword();
+
+                    $dpaf->user()->create(array_merge($attributs["admin"], ['password' => Hash::make($password), "username" => $attributs["admin"]['email'], "provider_user_id" => $attributs["admin"]['email'], "personneId" => $personne->id, "roleId" => $role->id, 'type' => $role->slug, 'profilable_type' => get_class($dpaf), 'profilable_id' => $dpaf->id]));
+
+                    $dpaf->refresh();
+
+                    $dpaf->user->roles()->attach([$role->id]);
+
+                    $utilisateur = $dpaf->user;
+
+                    $utilisateur->account_verification_request_sent_at = Carbon::now();
+
+                    $utilisateur->token = str_replace(['/', '\\', '.'], '', Hash::make($utilisateur->id . Hash::make($utilisateur->email) . Hash::make(Hash::make(strtotime($utilisateur->account_verification_request_sent_at)))));
+
+                    $utilisateur->link_is_valide = true;
+
+                    $utilisateur->save();
+
+                    // Envoyer les identifiants de connexion à l'utilisateur via son email
+                    dispatch(new SendEmailJob($dpaf->user, "confirmation-compte", $password))->delay(now()->addMinutes(1));
+                }
+            }
 
             $dpaf->refresh();
 
