@@ -237,7 +237,7 @@ class StoreIdeeProjetRequest extends FormRequest
 
         $baseRules = [
             'sigle' => ["nullable", 'string', 'max:50', Rule::unique('idees_projet', 'sigle')->whereNull('deleted_at')],
-
+            'identifiant_bip' => ["nullable", 'string', 'max:50', Rule::unique('idees_projet', 'identifiant_bip')->whereNull('deleted_at')],
             'duree' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'array', 'min:0'],
             'duree.*' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'integer', 'min:1'],/*
             'duree.duree' => [$isSubmissionMode ? Rule::requiredIf($isSubmissionMode) : "nullable", 'integer', 'min:1'],

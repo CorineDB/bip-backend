@@ -129,6 +129,7 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
     private function getValidAttributs(): array
     {
         return [
+            "identifiant_bip",
             "cout_estimatif_projet",
             "sigle",
             "parties_prenantes",
