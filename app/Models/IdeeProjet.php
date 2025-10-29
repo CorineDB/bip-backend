@@ -500,7 +500,12 @@ class IdeeProjet extends Model
                     $value = $entity ? $entity->hashed_id : $value;
                 }
                 // Cas 2: Cas spécial pour lieuxIntervention
-                elseif ($mapping === 'lieuxIntervention' && $this->relationLoaded('lieuxIntervention')) {
+                elseif ($mapping === 'lieuxIntervention') {
+                    // Charger la relation si nécessaire
+                    if (!$this->relationLoaded('lieuxIntervention')) {
+                        $this->load('lieuxIntervention');
+                    }
+
                     $lieuxIntervention = $this->lieuxIntervention->first();
 
                     if ($lieuxIntervention) {
@@ -524,7 +529,12 @@ class IdeeProjet extends Model
                     }
                 }
                 // Cas 3: Relations standard (belongsTo ou many-to-many)
-                elseif ($this->relationLoaded($mapping)) {
+                else {
+                    // Charger la relation si nécessaire
+                    if (!$this->relationLoaded($mapping)) {
+                        $this->load($mapping);
+                    }
+
                     $related = $this->$mapping;
 
                     // Si c'est une Collection (many-to-many), convertir le tableau d'IDs en tableau de hashed_ids
