@@ -24,16 +24,14 @@ class UpdateDpafRequest extends FormRequest
 
         $idMinistereRules = [];
 
-        // Si ce n'est pas l'organisation elle-même, id_ministere est requis
+        // Si ce n'est pas l'organisation elle-même, id_ministere est requis avec validations
         if (!$isOrganisationItself) {
             $idMinistereRules[] = 'required';
+            $idMinistereRules[] = new HashedExists(Organisation::class, 'id', function ($query) {
+                $query->where('type', 'ministere')->whereNull('deleted_at');
+            });
+            $idMinistereRules[] = Rule::unique('dpaf', 'id_ministere')->ignore($dpafId)->whereNull('deleted_at');
         }
-
-        $idMinistereRules[] = new HashedExists(Organisation::class, 'id', function ($query) {
-            $query->where('type', 'ministere')->whereNull('deleted_at');
-        });
-
-        $idMinistereRules[] = Rule::unique('dpaf', 'id_ministere')->ignore($dpafId)->whereNull('deleted_at');
 
         return [
             'nom' => ['required', 'string'],
