@@ -137,12 +137,12 @@ class DpafService extends BaseService implements DpafServiceInterface
 
     }
 
-    public function update($dpafId, array $attributs) : JsonResponse
+    public function update(int|string $dpafId, array $attributs) : JsonResponse
     {
         DB::beginTransaction();
         try {
 
-            if(is_string($dpafId))
+            if(!is_object($dpafId))
             {
                 $dpaf = $this->repository->findById($dpafId);
             }
