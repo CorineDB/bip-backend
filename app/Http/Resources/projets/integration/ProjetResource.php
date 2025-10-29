@@ -196,7 +196,7 @@ class ProjetResource extends BaseApiResource
             'orientations_strategique_png' => $this->orientations_strategique_png,
             'objectifs_strategique_png' => $this->objectifs_strategique_png,
             'resultats_strategique_png' => $this->resultats_strategique_png,
-            'piliers_pag' => $this->pilliers_pag,
+            'piliers_pag' => $this->piliers_pag,
             'axes_pag' => $this->axes_pag,
             'actions_pag' => $this->actions_pag,
             'composants' => $this->composants->map(function ($composant) {

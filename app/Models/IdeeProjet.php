@@ -367,7 +367,7 @@ class IdeeProjet extends Model
         });
     }
 
-    public function pilliers_pag()
+    public function piliers_pag()
     {
         return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
             $query->where('slug', 'pillier-pag');
@@ -462,7 +462,7 @@ class IdeeProjet extends Model
             'objectifs_strategiques' => 'objectifs_strategique_png',
             'axes_pag'=>'axes_pag',
             'actions_pag'=>'actions_pag',
-            'piliers_pag'=>'pilliers_pag',
+            'piliers_pag'=>'piliers_pag',
 
             'cibles' => 'cibles',
             'odds' => 'odds',

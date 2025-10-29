@@ -130,7 +130,7 @@ class ProjetService extends BaseService implements ProjetServiceInterface
                     'resultats_strategique_png',
                     'axes_pag',
                     'actions_pag',
-                    'pilliers_pag',
+                    'piliers_pag',
 
                     // Fichiers attachés
                     'fichiers' => function($query) {
