@@ -453,6 +453,8 @@ class CanvasRedactionNoteConceptuelleSeeder extends Seeder
                 'format' => 'formulaire'
             ]);
 
+            $categorieDocument->documents()->first()->forceDelete();
+
             $formsData = $this->documentData['forms'] ?? [];
             $documentData = collect($this->documentData)->except(['forms', 'champs', 'id'])->toArray();
             $documentData = array_merge($documentData, ["categorieId" => $categorieDocument->id]);
