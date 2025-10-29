@@ -556,10 +556,18 @@ class IdeeProjet extends Model
 
                             // $value contient un tableau d'IDs, convertir en hashed_ids
                             if (is_array($value)) {
-                                // Déterminer la classe du modèle lié
+                                // Déterminer la classe du modèle lié à partir de la relation
                                 $modelClass = null;
-                                if ($related->isNotEmpty()) {
-                                    $modelClass = get_class($related->first());
+                                try {
+                                    $relation = $this->$mapping();
+                                    if (method_exists($relation, 'getRelated')) {
+                                        $modelClass = get_class($relation->getRelated());
+                                    }
+                                } catch (\Exception $e) {
+                                    // Si on ne peut pas obtenir le modèle depuis la relation, essayer depuis la collection
+                                    if ($related->isNotEmpty()) {
+                                        $modelClass = get_class($related->first());
+                                    }
                                 }
 
                                 $value = collect($value)->map(function ($id) use ($related, $modelClass) {
