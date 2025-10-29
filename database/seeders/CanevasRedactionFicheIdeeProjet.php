@@ -81,6 +81,34 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
                         'startWithNewLine' => false,
                     ],
                     [
+                        'label' => 'Code du projet',
+                        'info' => '',
+                        'key' => 'identifiant_bip',
+                        'attribut' => 'identifiant_bip',
+                        'placeholder' => 'Identifiant du projet dans BIP',
+                        'is_required' => true,
+                        'default_value' => NULL,
+                        'isEvaluated' => false,
+                        'ordre_affichage' => 2,
+                        'type_champ' => 'text',
+                        'meta_options' => [
+                            'configs' => [
+                                'max_length' => 50,
+                                'min_length' => 1,
+                            ],
+                            'conditions' => [
+                                'disable' => false,
+                                'visible' => true,
+                                'conditions' => [],
+                            ],
+                            'validations_rules' => [
+                                'required' => false,
+                            ],
+                        ],
+                        'champ_standard' => true,
+                        'startWithNewLine' => false,
+                    ],
+                    [
                         'label' => 'Categorie de projet',
                         'info' => '',
                         'key' => 'categorieId',
