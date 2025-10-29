@@ -499,33 +499,37 @@ class IdeeProjet extends Model
                     $entity = $mapping::find($value);
                     $value = $entity ? $entity->hashed_id : $value;
                 }
-                // Cas 2: Cas spécial pour lieuxIntervention
+                // Cas 2: Cas spécial pour lieuxIntervention (retourne un tableau)
                 elseif ($mapping === 'lieuxIntervention') {
                     // Charger la relation si nécessaire
                     if (!$this->relationLoaded('lieuxIntervention')) {
                         $this->load('lieuxIntervention');
                     }
 
-                    $lieuxIntervention = $this->lieuxIntervention->first();
+                    $lieuMapping = [
+                        'departements' => ['column' => 'departementId', 'model' => Departement::class],
+                        'communes' => ['column' => 'communeId', 'model' => Commune::class],
+                        'arrondissements' => ['column' => 'arrondissementId', 'model' => Arrondissement::class],
+                        'villages' => ['column' => 'villageId', 'model' => Village::class],
+                    ];
 
-                    if ($lieuxIntervention) {
-                        $lieuMapping = [
-                            'departements' => ['column' => 'departementId', 'model' => Departement::class],
-                            'communes' => ['column' => 'communeId', 'model' => Commune::class],
-                            'arrondissements' => ['column' => 'arrondissementId', 'model' => Arrondissement::class],
-                            'villages' => ['column' => 'villageId', 'model' => Village::class],
-                        ];
+                    if (isset($lieuMapping[$attribut])) {
+                        $columnName = $lieuMapping[$attribut]['column'];
+                        $modelClass = $lieuMapping[$attribut]['model'];
 
-                        if (isset($lieuMapping[$attribut])) {
-                            $columnName = $lieuMapping[$attribut]['column'];
-                            $modelClass = $lieuMapping[$attribut]['model'];
-                            $relatedId = $lieuxIntervention->$columnName;
-
-                            if ($relatedId) {
+                        // Récupérer tous les IDs de tous les lieuxIntervention
+                        $hashedIds = $this->lieuxIntervention
+                            ->pluck($columnName)
+                            ->filter() // Enlever les valeurs nulles
+                            ->unique()
+                            ->map(function ($relatedId) use ($modelClass) {
                                 $entity = $modelClass::find($relatedId);
-                                $value = $entity ? $entity->hashed_id : $relatedId;
-                            }
-                        }
+                                return $entity ? $entity->hashed_id : $relatedId;
+                            })
+                            ->values()
+                            ->toArray();
+
+                        $value = $hashedIds;
                     }
                 }
                 // Cas 3: Relations standard (belongsTo ou many-to-many)
