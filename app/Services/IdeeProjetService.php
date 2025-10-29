@@ -150,7 +150,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             $ficheIdee["formData"] = $idee->champs->map(function ($champ) {
                 return [
-                    'id' => $champ->id,
+                    'id' => $champ->hashed_id,
                     'attribut' => $champ->attribut,
                     'value' => $champ->pivot->valeur
                 ];
@@ -268,6 +268,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
         $attributes = [];
 
         $fillableKeys = [
+            "identifiant_bip",
             "cout_estimatif_projet",
             "sigle",
             "parties_prenantes",
