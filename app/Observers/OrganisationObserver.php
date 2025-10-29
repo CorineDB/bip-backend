@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\EnumTypeOrganisation;
 use App\Jobs\CreateDefaultOrganisationRoles;
 use App\Models\Organisation;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +25,7 @@ class OrganisationObserver
     public function saved(Organisation $organisation): void
     {
         // Créer les rôles par défaut pour les ministères
-        if ($organisation->type === 'ministere' && $organisation->wasRecentlyCreated) {
+        if ($organisation->type === EnumTypeOrganisation::MINISTERE /* && $organisation->wasRecentlyCreated */) {
             Log::info("OrganisationObserver::saved() déclenché", [
                 'organisation_id' => $organisation->id,
                 'nom' => $organisation->nom,
