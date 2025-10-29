@@ -4,7 +4,6 @@ namespace App\Http\Resources\idees_projet;
 
 use App\Http\Resources\BaseApiResource;
 use App\Http\Resources\CibleResource;
-use App\Http\Resources\EvaluationResource;
 use App\Http\Resources\FinancementResource;
 use App\Http\Resources\LieuInterventionResource;
 use App\Http\Resources\OddResource;
@@ -98,14 +97,7 @@ class IdeeProjetResource extends BaseApiResource
             'body_projet' => $this->body_projet ?? [],
             'description_decision' => $this->description_decision,
 
-            'champs' => $this->champs->map(function ($champ) {
-                return [
-                    'id' => $champ->hashed_id,
-                    'attribut' => $champ->attribut,
-                    'value' => $champ->pivot->valeur,
-                    'pivot_id' => $champ->pivot->hashed_id
-                ];
-            }),
+            'champs' => $this->getFormattedChamps(),
             // Relations principales (loaded when needed)
             'secteur' => $this->whenLoaded('secteur'),
             'ministere' => $this->whenLoaded('ministere'),

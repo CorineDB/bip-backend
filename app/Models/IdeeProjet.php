@@ -322,6 +322,11 @@ class IdeeProjet extends Model
         return $this->morphMany(LieuIntervention::class, 'projetable');
     }
 
+    public function departements()
+    {
+        return $this->morphMany(LieuIntervention::class, 'projetable');
+    }
+
     public function composants()
     {
         return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')
@@ -437,5 +442,114 @@ class IdeeProjet extends Model
     public function scopeEvaluateursClimatique()
     {
         return User::byMinistere($this->ministere->id);
+    }
+
+
+    /**
+     * Extraire toutes les relations des données de champs
+     */
+    protected function relationshipChamps(): array
+    {
+        return [
+            'secteurId' => 'secteur',
+            'grand_secteur' =>  Secteur::class,
+            'secteur' =>  Secteur::class,
+            'categorieId' => 'categorie',
+
+
+            'orientations_strategiques' => 'orientations_strategiques',
+            'resultats_strategiques' => 'resultats_strategiques',
+            'objectifs_strategiques' => 'objectifs_strategiques',
+            'axes_pag'=>'axes_pag',
+            'actions_pag'=>'actions_pag',
+            'piliers_pag'=>'piliers_pag',
+
+            'cibles' => 'cibles',
+            'odds' => 'odds',
+            'sources_financement' => 'sources_financement',
+            'natures_financement' => Financement::class,
+            'types_financement' => Financement::class,
+
+            // dans lieuxIntervention
+            'departements'=> 'lieuxIntervention', // dans lieuxIntervention est disponible via la cle departementId
+            'communes'=> 'lieuxIntervention',// dans lieuxIntervention est disponible via la cle communeId
+            'arrondissements' => 'lieuxIntervention',// dans lieuxIntervention est disponible via la cle arrondissementId
+            'villages' => 'lieuxIntervention',// dans lieuxIntervention est disponible via la cle villageId
+        ];
+    }
+
+    /**
+     * Retourner les champs formatés avec les hashed_ids pour les relations
+     */
+    public function getFormattedChamps()
+    {
+        return $this->champs->map(function ($champ) {
+            $value = $champ->pivot->valeur;
+            $attribut = $champ->attribut;
+
+            // Utiliser le mapping relationshipChamps()
+            $relationMappings = $this->relationshipChamps();
+
+            // Si c'est un champ relationnel, convertir l'ID en hashed_id
+            if (isset($relationMappings[$attribut]) && $value) {
+                $mapping = $relationMappings[$attribut];
+
+                // Cas 1: Si c'est une classe de modèle directe (ex: Secteur::class, Financement::class)
+                if (is_string($mapping) && class_exists($mapping)) {
+                    $entity = $mapping::find($value);
+                    $value = $entity ? $entity->hashed_id : $value;
+                }
+                // Cas 2: Cas spécial pour lieuxIntervention
+                elseif ($mapping === 'lieuxIntervention' && $this->relationLoaded('lieuxIntervention')) {
+                    $lieuxIntervention = $this->lieuxIntervention->first();
+
+                    if ($lieuxIntervention) {
+                        $lieuMapping = [
+                            'departements' => ['column' => 'departementId', 'model' => Departement::class],
+                            'communes' => ['column' => 'communeId', 'model' => Commune::class],
+                            'arrondissements' => ['column' => 'arrondissementId', 'model' => Arrondissement::class],
+                            'villages' => ['column' => 'villageId', 'model' => Village::class],
+                        ];
+
+                        if (isset($lieuMapping[$attribut])) {
+                            $columnName = $lieuMapping[$attribut]['column'];
+                            $modelClass = $lieuMapping[$attribut]['model'];
+                            $relatedId = $lieuxIntervention->$columnName;
+
+                            if ($relatedId) {
+                                $entity = $modelClass::find($relatedId);
+                                $value = $entity ? $entity->hashed_id : $relatedId;
+                            }
+                        }
+                    }
+                }
+                // Cas 3: Relations standard (belongsTo ou many-to-many)
+                elseif ($this->relationLoaded($mapping)) {
+                    $related = $this->$mapping;
+
+                    // Si c'est une Collection (many-to-many), convertir le tableau d'IDs en tableau de hashed_ids
+                    if (is_a($related, \Illuminate\Database\Eloquent\Collection::class)) {
+                        // $value contient un tableau d'IDs, convertir en hashed_ids
+                        if (is_array($value)) {
+                            $value = collect($value)->map(function ($id) use ($related) {
+                                $entity = $related->firstWhere('id', $id);
+                                return $entity ? $entity->hashed_id : $id;
+                            })->toArray();
+                        }
+                    }
+                    // Si c'est une relation belongsTo simple
+                    elseif ($related) {
+                        $value = $related->hashed_id;
+                    }
+                }
+            }
+
+            return [
+                'id' => $champ->hashed_id,
+                'attribut' => $attribut,
+                'value' => $value,
+                'pivot_id' => $champ->pivot->hashed_id
+            ];
+        });
     }
 }
