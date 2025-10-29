@@ -12,8 +12,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class SendEmailJob implements ShouldQueue
 {
@@ -35,6 +37,43 @@ class SendEmailJob implements ShouldQueue
         $this->user = $user;
         $this->type = $type;
         $this->password = $password;
+    }
+
+    /**
+     * Générer le lien OAuth AD comme dans /ad-auth/redirect
+     */
+    private function generateOAuthLink($email, $activationMode = false)
+    {
+        $state = Str::uuid()->toString();
+        $callbackUrl = config('services.gov.redirect');
+
+        // Stocker les données du state pour 5 minutes (même structure que la route API)
+        $stateData = [
+            'frontend_origin' => env('FRONTEND_URL'),
+            'activation_mode' => $activationMode,
+            'email' => $email,
+        ];
+
+        Cache::put("oauth_state:{$state}", $stateData, 300);
+
+        // Log pour vérifier que les données sont bien stockées
+        Log::info('OAuth State stocké (SendEmailJob)', [
+            'state' => $state,
+            'data' => $stateData,
+            'cache_key' => "oauth_state:{$state}",
+            'verification' => Cache::get("oauth_state:{$state}")
+        ]);
+
+        $params = http_build_query([
+            'client_id' => config('services.gov.client_id'),
+            'redirect_uri' => $callbackUrl,
+            'response_type' => 'code',
+            'scope' => 'openid',
+            'state' => $state,
+            'authError' => 'true',
+        ]);
+
+        return config('services.gov.url') . '/official/login?' . $params;
     }
 
     /**
@@ -60,27 +99,7 @@ class SendEmailJob implements ShouldQueue
                 $details['subject'] = "Activation de votre compte BIP - Bienvenue";
 
                 // Générer le lien de connexion AD en utilisant la même logique que /ad-auth/redirect
-                $state = \Illuminate\Support\Str::uuid()->toString();
-                $callbackUrl = config('services.gov.redirect');
-
-                // Stocker des informations supplémentaires dans le state pour l'activation
-                \Illuminate\Support\Facades\Cache::put("oauth_state:{$state}", [
-                    'frontend_origin' => env('FRONTEND_URL'),
-                    'email' => $this->user->email,
-                    'activation_mode' => true,
-                    'user_id' => $this->user->hashed_id
-                ], 300); // 5 minutes
-
-                $params = http_build_query([
-                    'client_id' => config('services.gov.client_id'),
-                    'redirect_uri' => $callbackUrl,
-                    'response_type' => 'code',
-                    'scope' => 'openid',
-                    'state' => $state,
-                    'authError' => 'true',
-                ]);
-
-                $loginLink = config('services.gov.url') . '/official/login?' . $params;
+                $loginLink = $this->generateOAuthLink($this->user->email, true);
 
                 $details['content'] = [
                     "greeting" => "Bienvenu Mr/Mme " . $this->user->personne->nom,
@@ -98,28 +117,7 @@ class SendEmailJob implements ShouldQueue
                 $details['subject'] = "Confirmez votre inscription sur BIP - Action requise";
 
                 // Générer le lien de connexion AD pour activation
-                $state = \Illuminate\Support\Str::uuid()->toString();
-                $callbackUrl = config('services.gov.redirect');
-
-                // Stocker des informations pour l'activation
-                \Illuminate\Support\Facades\Cache::put("oauth_state:{$state}", [
-                    'frontend_origin' => env('FRONTEND_URL'),
-                    'email' => $this->user->email,
-                    'activation_token' => $this->user->token,
-                    'activation_mode' => true,
-                    'user_id' => $this->user->hashed_id
-                ], 300); // 5 minutes
-
-                $params = http_build_query([
-                    'client_id' => config('services.gov.client_id'),
-                    'redirect_uri' => $callbackUrl,
-                    'response_type' => 'code',
-                    'scope' => 'openid',
-                    'state' => $state,
-                    'authError' => 'true',
-                ]);
-
-                $activationLink = config('services.gov.url') . '/official/login?' . $params;
+                $activationLink = $this->generateOAuthLink($this->user->email, true);
 
                 $details['content'] = [
                     "greeting" => "Bienvenu Mr/Mme " . $this->user->personne->nom,

@@ -894,8 +894,8 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
                 $utilisateur->email_verified_at = now();
             }
 
-            if ($utilisateur->statut === "invité") {
-                $utilisateur->statut = "actif";
+            if ($utilisateur->status === "invité") {
+                $utilisateur->status = "actif";
             }
 
             //$utilisateur->first_connexion = now();

@@ -28,6 +28,11 @@ function cleanData($data) {
             continue;
         }
 
+        // Ignorer elements (déjà inclus dans champs et sous_sections)
+        if ($key === 'elements') {
+            continue;
+        }
+
         // Nettoyer récursivement les valeurs
         if (is_array($value)) {
             $cleaned[$key] = cleanData($value);
@@ -64,7 +69,7 @@ namespace Database\Seeders;
 
 use App\Models\CategorieDocument;
 use App\Models\Document;
-use App\Models\Section;
+use App\Models\ChampSection;
 use App\Models\Champ;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -118,23 +123,23 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
     {
         \$sectionAttributes = [
             'intitule' => \$sectionData['intitule'],
-            'slug' => \$sectionData['slug'] ?? null,
+            'slug' => \$sectionData['key'] ?? \$sectionData['slug'] ?? null,
             'description' => \$sectionData['description'] ?? null,
             'documentId' => \$document->id,
             'parentSectionId' => \$parentSection ? \$parentSection->id : null,
             'ordre_affichage' => \$sectionData['ordre_affichage'],
         ];
 
-        \$section = Section::updateOrCreate([
+        \$section = ChampSection::updateOrCreate([
             'intitule' => \$sectionData['intitule'],
             'documentId' => \$document->id,
             'parentSectionId' => \$parentSection ? \$parentSection->id : null
         ], \$sectionAttributes);
 
         // Créer les sous-sections
-        if (isset(\$sectionData['childSections']) && !empty(\$sectionData['childSections'])) {
-            foreach (\$sectionData['childSections'] as \$childSection) {
-                \$this->createSection(\$childSection, \$document, \$section);
+        if (isset(\$sectionData['sous_sections']) && !empty(\$sectionData['sous_sections'])) {
+            foreach (\$sectionData['sous_sections'] as \$sousSection) {
+                \$this->createSection(\$sousSection, \$document, \$section);
             }
         }
 
