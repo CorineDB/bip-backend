@@ -370,7 +370,7 @@ class IdeeProjet extends Model
     public function piliers_pag()
     {
         return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
-            $query->where('slug', 'pillier-pag');
+            $query->where('slug', 'pilier-pag');
         });
     }
 
