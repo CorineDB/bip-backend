@@ -466,7 +466,7 @@ class IdeeProjet extends Model
 
             'cibles' => 'cibles',
             'odds' => 'odds',
-            'sources_financement' => 'sources_financement',
+            'sources_financement' => 'sources_de_financement',
             /*'natures_financement' => Financement::class,
             'types_financement' => Financement::class,*/
 
@@ -530,26 +530,38 @@ class IdeeProjet extends Model
                 }
                 // Cas 3: Relations standard (belongsTo ou many-to-many)
                 else {
-                    // Charger la relation si nécessaire
-                    if (!$this->relationLoaded($mapping)) {
-                        $this->load($mapping);
-                    }
-
-                    $related = $this->$mapping;
-
-                    // Si c'est une Collection (many-to-many), convertir le tableau d'IDs en tableau de hashed_ids
-                    if (is_a($related, \Illuminate\Database\Eloquent\Collection::class)) {
-                        // $value contient un tableau d'IDs, convertir en hashed_ids
-                        if (is_array($value)) {
-                            $value = collect($value)->map(function ($id) use ($related) {
-                                $entity = $related->firstWhere('id', $id);
-                                return $entity ? $entity->hashed_id : $id;
-                            })->toArray();
+                    // Vérifier que la méthode de relation existe
+                    if (method_exists($this, $mapping)) {
+                        // Charger la relation si nécessaire
+                        if (!$this->relationLoaded($mapping)) {
+                            $this->load($mapping);
                         }
-                    }
-                    // Si c'est une relation belongsTo simple
-                    elseif ($related) {
-                        $value = $related->hashed_id;
+
+                        $related = $this->$mapping;
+
+                        // Si c'est une Collection (many-to-many), convertir le tableau d'IDs en tableau de hashed_ids
+                        if (is_a($related, \Illuminate\Database\Eloquent\Collection::class)) {
+                            // $value peut être une string JSON, la décoder si nécessaire
+                            if (is_string($value)) {
+                                $decoded = json_decode($value, true);
+                                // Vérifier que c'est du JSON valide et que c'est un tableau
+                                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                                    $value = $decoded;
+                                }
+                            }
+
+                            // $value contient un tableau d'IDs, convertir en hashed_ids
+                            if (is_array($value)) {
+                                $value = collect($value)->map(function ($id) use ($related) {
+                                    $entity = $related->firstWhere('id', $id);
+                                    return $entity ? $entity->hashed_id : $id;
+                                })->toArray();
+                            }
+                        }
+                        // Si c'est une relation belongsTo simple
+                        elseif ($related) {
+                            $value = $related->hashed_id;
+                        }
                     }
                 }
             }
