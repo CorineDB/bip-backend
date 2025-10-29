@@ -100,14 +100,16 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            // Validation idee de projet - utiliser updateOrCreate pour gérer l'historique
-            $evaluation = Evaluation::updateOrCreate(
-                [
-                    'type_evaluation' => 'validation-idee-projet',
-                    'projetable_type' => get_class($ideeProjet),
-                    'projetable_id' => $ideeProjet->id,
-                ],
-                [
+            // Vérifier s'il existe une évaluation en attente (statut = -1)
+            $evaluationEnAttente = Evaluation::where('projetable_type', get_class($ideeProjet))
+                ->where('projetable_id', $ideeProjet->id)
+                ->where('type_evaluation', 'validation-idee-projet')
+                ->where('statut',"<>", 1)
+                ->first();
+
+            // Si une évaluation en attente existe, la mettre à jour, sinon créer une nouvelle
+            if ($evaluationEnAttente) {
+                $evaluationEnAttente->update([
                     'date_debut_evaluation' => now(),
                     'date_fin_evaluation' => now(),
                     'valider_le' =>  now(),
@@ -118,8 +120,25 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'resultats_evaluation' => $attributs["decision"],
                     'statut' => 1,
                     'id_evaluation' => $evaluationPrecedente ? $evaluationPrecedente->id : null
-                ]
-            );
+                ]);
+                $evaluation = $evaluationEnAttente;
+            } else {
+                $evaluation = Evaluation::create([
+                    'type_evaluation' => 'validation-idee-projet',
+                    'projetable_type' => get_class($ideeProjet),
+                    'projetable_id' => $ideeProjet->id,
+                    'date_debut_evaluation' => now(),
+                    'date_fin_evaluation' => now(),
+                    'valider_le' =>  now(),
+                    'evaluateur_id' => auth()->user()->id,
+                    'valider_par' => auth()->user()->id,
+                    'commentaire' => $attributs["commentaire"],
+                    'evaluation' => $attributs,
+                    'resultats_evaluation' => $attributs["decision"],
+                    'statut' => 1,
+                    'id_evaluation' => $evaluationPrecedente ? $evaluationPrecedente->id : null
+                ]);
+            }
 
             // CODE EXISTANT COMMENTÉ - Conservé pour référence
             /*
@@ -366,14 +385,16 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            // Validation idee de projet - utiliser updateOrCreate pour gérer l'historique
-            $evaluation = Evaluation::updateOrCreate(
-                [
-                    'type_evaluation' => 'validation-idee-projet-a-projet',
-                    'projetable_type' => get_class($ideeProjet),
-                    'projetable_id' => $ideeProjet->id,
-                ],
-                [
+            // Vérifier s'il existe une évaluation en attente (statut = -1)
+            $evaluationEnAttente = Evaluation::where('projetable_type', get_class($ideeProjet))
+                ->where('projetable_id', $ideeProjet->id)
+                ->where('type_evaluation', 'validation-idee-projet-a-projet')
+                ->where('statut', '<>', 1)
+                ->first();
+
+            // Si une évaluation en attente existe, la mettre à jour, sinon créer une nouvelle
+            if ($evaluationEnAttente) {
+                $evaluationEnAttente->update([
                     'date_debut_evaluation' => now(),
                     'date_fin_evaluation' => now(),
                     'valider_le' =>  now(),
@@ -384,8 +405,25 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'resultats_evaluation' => $attributs["decision"],
                     'statut' => 1,
                     'id_evaluation' => $evaluationPrecedente ? $evaluationPrecedente->id : null
-                ]
-            );
+                ]);
+                $evaluation = $evaluationEnAttente;
+            } else {
+                $evaluation = Evaluation::create([
+                    'type_evaluation' => 'validation-idee-projet-a-projet',
+                    'projetable_type' => get_class($ideeProjet),
+                    'projetable_id' => $ideeProjet->id,
+                    'date_debut_evaluation' => now(),
+                    'date_fin_evaluation' => now(),
+                    'valider_le' =>  now(),
+                    'evaluateur_id' => auth()->user()->id,
+                    'valider_par' => auth()->user()->id,
+                    'commentaire' => $attributs["commentaire"],
+                    'evaluation' => $attributs,
+                    'resultats_evaluation' => $attributs["decision"],
+                    'statut' => 1,
+                    'id_evaluation' => $evaluationPrecedente ? $evaluationPrecedente->id : null
+                ]);
+            }
 
             if ($attributs["decision"] == "valider") {
                 $ideeProjet->update([

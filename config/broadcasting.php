@@ -64,6 +64,23 @@ return [
             ],
         ],
 
+        'soketi' => [
+            'driver' => 'pusher',
+            'key' => env('SOKETI_APP_KEY', 'app-key'),
+            'secret' => env('SOKETI_APP_SECRET', 'app-secret'),
+            'app_id' => env('SOKETI_APP_ID', 'app-id'),
+            'options' => [
+                'host' => env('SOKETI_HOST', '127.0.0.1'),
+                'port' => env('SOKETI_PORT', 6001),
+                'scheme' => env('SOKETI_SCHEME', 'http'),
+                'encrypted' => false,
+                'useTLS' => env('SOKETI_SCHEME', 'http') === 'https',
+            ],
+            'client_options' => [
+                // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
+            ],
+        ],
+
         'ably' => [
             'driver' => 'ably',
             'key' => env('ABLY_KEY'),
