@@ -4,7 +4,6 @@ namespace App\Observers;
 
 use App\Jobs\CreateDefaultOrganisationRoles;
 use App\Models\Organisation;
-use App\Models\Role;
 use Illuminate\Support\Facades\Log;
 
 class OrganisationObserver
@@ -24,7 +23,14 @@ class OrganisationObserver
      */
     public function saved(Organisation $organisation): void
     {
-        // Créer les rôles par défaut uniquement si le ministère vient d'être créé
+        Log::info("OrganisationObserver::saved() déclenché", [
+            'organisation_id' => $organisation->id,
+            'nom' => $organisation->nom,
+            'type' => $organisation->type,
+            'wasRecentlyCreated' => $organisation->wasRecentlyCreated
+        ]);
+
+        // Créer les rôles par défaut pour les ministères
         if ($organisation->type === 'ministere' && $organisation->wasRecentlyCreated) {
             CreateDefaultOrganisationRoles::dispatch($organisation);
         }
@@ -35,10 +41,7 @@ class OrganisationObserver
      */
     public function updated(Organisation $organisation): void
     {
-        // Créer les rôles par défaut uniquement si le ministère vient d'être créé
-        if ($organisation->type === 'ministere' && $organisation->wasRecentlyCreated) {
-            CreateDefaultOrganisationRoles::dispatch($organisation);
-        }
+        //
     }
 
     /**

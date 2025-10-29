@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Traits\HashableId;
 use App\Enums\EnumTypeOrganisation;
-use App\Observers\OrganisationObserver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -129,9 +128,6 @@ class Organisation extends Model
                 'slug' => time() . '::' . $model->slug,
             ]);
         });
-
-        // Enregistrement direct de l’observer ici 👇
-        static::observe(OrganisationObserver::class);
     }
 
     /**
