@@ -4,7 +4,9 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "soketi": "npx @soketi/soketi start --config=soketi.config.json",
+        "soketi:debug": "npx @soketi/soketi start --config=soketi.config.json --debug"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
