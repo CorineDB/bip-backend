@@ -432,7 +432,7 @@ class GroupeUtilisateurService extends BaseService implements GroupeUtilisateurS
 
             //dispatch(new SendEmailJob($user, "confirmation-de-compte"))->delay(now()->addSeconds(15));
 
-            dispatch(new SendEmailJob($user, "confirmation-compte", $password))->delay(now()->addMinutes(1));
+            dispatch(new SendEmailJob($user, "confirmation-compte", $password))->delay(now()->addSeconds(30));
 
             $acteur = Auth::check() ? Auth::user()->nom . " " . Auth::user()->prenom : "Inconnu";
             $message = Str::ucfirst($acteur) . " a créé l'utilisateur {$user->username} dans le groupe {$groupe->nom}.";
