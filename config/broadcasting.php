@@ -61,6 +61,12 @@ return [
             ],
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
+                'verify' => env('PUSHER_VERIFY_SSL', false),
+                'curl' => [
+                    CURLOPT_SSL_VERIFYPEER => env('PUSHER_VERIFY_SSL', false),
+                    CURLOPT_SSL_VERIFYHOST => env('PUSHER_VERIFY_SSL', false) ? 2 : 0,
+                    CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1_2,
+                ],
             ],
         ],
 
