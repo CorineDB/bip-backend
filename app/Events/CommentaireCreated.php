@@ -22,7 +22,7 @@ class CommentaireCreated implements ShouldBroadcastNow
      */
     public function __construct(Commentaire $commentaire)
     {
-        $this->commentaire = $commentaire->load(['commentateur', 'fichiers']);
+        $this->commentaire = $commentaire->load(['commentateur', 'fichiers', 'commentaireable']);
     }
 
     /**
@@ -56,10 +56,14 @@ class CommentaireCreated implements ShouldBroadcastNow
 
     /**
      * Get the data to broadcast.
+     * Utilise le même format que CommentaireResource pour la cohérence
      */
     public function broadcastWith(): array
     {
-        return [
+        $resource = new \App\Http\Resources\CommentaireResource($this->commentaire);
+        return $resource->toArray(request());
+
+        /*return [
             'id' => $this->commentaire->id,//->hashed_id,
             'commentaire' => $this->commentaire->commentaire,
             'commentateur' => [
@@ -71,6 +75,6 @@ class CommentaireCreated implements ShouldBroadcastNow
             'commentaireable_type' => class_basename($this->commentaire->commentaireable_type),
             'commentaireable_id' => $this->commentaire->commentaireable->id ?? null,
             'nb_fichiers' => $this->commentaire->fichiers->count(),
-        ];
+        ];*/
     }
 }

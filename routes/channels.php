@@ -5,6 +5,7 @@ use App\Broadcasting\MinistereChannel;
 use App\Models\NoteConceptuelle;
 use App\Models\Projet;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Log;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     // Accepter soit l'ID numérique soit le hashed_id
@@ -31,10 +32,59 @@ Broadcast::channel('idee.de.projet.creer.{idee}', IdeeProjetChannel::class);
 Broadcast::channel('ministere.{ministere}', MinistereChannel::class);
 
 // Canal pour les commentaires d'une ressource
+/*
+    Broadcast::channel('commentaires.{type}.{id}', function ($user, $type, $id) {
+        info('🔍 Canal auth test', ['user' => $user, 'type' => $type, 'id' => $id]);
+        // Autoriser tous les utilisateurs authentifiés à écouter les commentaires
+        return $user !== null;
+    });
+*/
+
+// Canal pour les commentaires d'une ressource
 Broadcast::channel('commentaires.{type}.{id}', function ($user, $type, $id) {
-    info('🔍 Canal auth test', ['user' => $user, 'type' => $type, 'id' => $id]);
-    // Autoriser tous les utilisateurs authentifiés à écouter les commentaires
-    return $user !== null;
+    // Mapping des types vers les classes de modèles
+    $typeMap = [
+        'Fichier' => \App\Models\Fichier::class,
+        'IdeeProjet' => \App\Models\IdeeProjet::class,
+        'Projet' => \App\Models\Projet::class,
+        'NoteConceptuelle' => \App\Models\NoteConceptuelle::class,
+        'Tdr' => \App\Models\Tdr::class,
+        'Rapport' => \App\Models\Rapport::class,
+        'Evaluation' => \App\Models\Evaluation::class,
+        'EvaluationChamp' => \App\Models\EvaluationChamp::class,
+        'Decision' => \App\Models\Decision::class,
+        'ChampProjet' => \App\Models\ChampProjet::class,
+        'EvaluationCritere' => \App\Models\EvaluationCritere::class,
+    ];
+
+    // Vérifier que le type est valide
+    if (!isset($typeMap[$type])) {
+        Log::warning('Type de ressource invalide pour channel commentaires', ['type' => $type]);
+        return false;
+    }
+
+    $modelClass = $typeMap[$type];
+
+    // Charger la ressource (gérer ID hashé et numérique)
+    $ressource = null;
+    if (method_exists($modelClass, 'findByHashedId')) {
+        $ressource = $modelClass::findByHashedId($id);
+    }
+
+    if (!$ressource && is_numeric($id)) {
+        $ressource = $modelClass::find($id);
+    }
+
+    if (!$ressource) {
+        Log::warning('Ressource non trouvée pour channel commentaires', [
+            'type' => $type,
+            'id' => $id
+        ]);
+        return false;
+    }
+
+    // Vérifier les permissions selon le type de ressource
+    return \App\Broadcasting\CommentaireChannelAuthorization::canAccess($user, $ressource);
 });
 
 /**
