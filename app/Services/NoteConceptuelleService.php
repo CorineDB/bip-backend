@@ -829,6 +829,10 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             // Vérifier que le projet existe
             $projet = $this->projetRepository->findOrFail($projetId);
 
+            if (auth()->user()->profilable->ministere?->id !== $projet->ministere?->id && auth()->user()->profilable_type !== Dgpd::class) {
+                throw new Exception("Vous n'avez pas les droits d'acces pour effectuer cette action", 403);
+            }
+
             $noteConceptuelle = $this->repository->getModel()
                 ->where('projetId', $projet->id)
                 ->orderBy("created_at", "desc")
