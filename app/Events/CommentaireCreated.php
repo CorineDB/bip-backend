@@ -34,8 +34,15 @@ class CommentaireCreated implements ShouldBroadcastNow
     {
         // Broadcaster sur un channel privé de la ressource commentée
         $type = class_basename($this->commentaire->commentaireable_type);
+        $ressource = $this->commentaire->commentaireable;
+
+        // Utiliser l'ID hashé si la ressource existe et a le trait HashableId
+        $resourceId = $ressource && method_exists($ressource, 'getHashedIdAttribute')
+            ? $ressource->hashed_id
+            : $this->commentaire->commentaireable_id;
+
         return [
-            new PrivateChannel('commentaires.' . $type . '.' . $this->commentaire->commentaireable_id),
+            new PrivateChannel('commentaires.' . $type . '.' . $resourceId),
         ];
     }
 
