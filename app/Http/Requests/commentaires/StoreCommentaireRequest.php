@@ -131,9 +131,12 @@ class StoreCommentaireRequest extends FormRequest
                 $this->merge($unhashedValues);
             }
 
-            // S'assurer que commentaire_id est déhashé (pour les réponses à un commentaire)
-            if ($this->has('commentaire_id') && isset($unhashedValues['commentaire_id'])) {
-                $this->merge(["commentaire_id" => $unhashedValues['commentaire_id']]);
+            // Déhasher commentaire_id (pour les réponses à un commentaire)
+            if ($this->has('commentaire_id') && $this->input('commentaire_id')) {
+                $unhashedCommentaireId = Commentaire::unhashId($this->input('commentaire_id'));
+                if ($unhashedCommentaireId) {
+                    $this->merge(["commentaire_id" => $unhashedCommentaireId]);
+                }
             }
         });
     }
