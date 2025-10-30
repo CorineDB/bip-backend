@@ -72,12 +72,10 @@ class ProjetService extends BaseService implements ProjetServiceInterface
     public function getProjetsEnCoursMaturation(): JsonResponse
     {
         try {
-            $projets = $this->repository->getModel()
+            /*$projets = $this->repository->getModel()
                 ->whereNot('statut', StatutIdee::PRET)
                 ->latest()
-                ->get();
-
-
+                ->get();*/
 
             // NOUVEAU CODE (simplifié et clarifié)
             $projets = $this->repository->getModel()->whereNot('statut', StatutIdee::PRET)->when(auth()->user()->profilable_type == Dpaf::class, function ($query) {
