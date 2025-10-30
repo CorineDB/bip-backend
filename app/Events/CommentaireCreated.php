@@ -57,8 +57,8 @@ class CommentaireCreated implements ShouldBroadcastNow
             'commentaire' => $this->commentaire->commentaire,
             'commentateur' => [
                 'id' => $this->commentaire->commentateur->id ?? null,//->hashed_id ?? null,
-                'nom' => $this->commentaire->commentateur->nom ?? null,
-                'prenom' => $this->commentaire->commentateur->prenom ?? null,
+                'nom' => $this->commentaire->commentateur->personne->nom ?? null,
+                'prenom' => $this->commentaire->commentateur->personne->prenom ?? null,
             ],
             'date' => $this->commentaire->date?->format('Y-m-d H:i:s'),
             'commentaireable_type' => class_basename($this->commentaire->commentaireable_type),

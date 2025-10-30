@@ -5,12 +5,16 @@ namespace App\Services;
 use App\Enums\StatutIdee;
 use App\Http\Resources\projets\ProjetResource;
 use App\Http\Resources\projets\ProjetsResource;
+use App\Models\Dgpd;
+use App\Models\Dpaf;
+use App\Models\Organisation;
 use App\Services\BaseService;
 use App\Repositories\Contracts\BaseRepositoryInterface;
 use App\Repositories\Contracts\ProjetRepositoryInterface;
 use App\Services\Contracts\ProjetServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class ProjetService extends BaseService implements ProjetServiceInterface
 {
@@ -28,6 +32,40 @@ class ProjetService extends BaseService implements ProjetServiceInterface
         return ProjetsResource::class;
     }
 
+    public function all(): JsonResponse
+    {
+        try {
+
+            // NOUVEAU CODE (simplifié et clarifié)
+            $item = $this->repository->getModel()->when(auth()->user()->profilable_type == Dpaf::class, function ($query) {
+                $query->where("ministereId", Auth::user()->profilable->ministere->id);
+            })->when(auth()->user()->profilable_type == Organisation::class, function ($query) {
+                $ministereId = Auth::user()->profilable->ministere->id;
+
+                // Filtrer par ministère pour tous les utilisateurs d'organisation
+                $query->where("ministereId", $ministereId);
+
+                // Responsable de projet : uniquement ses propres idées de son ministère
+                if (auth()->user()->type == "responsable-projet") {
+                    $query->where("responsableId", Auth::user()->id);
+                }
+                // Responsable hiérarchique : toutes les idées du ministère sauf brouillon
+                elseif (auth()->user()->type == "responsable-hierachique") {
+                    // Action
+                }
+                // Organisation : toutes les idées du ministère
+                elseif (auth()->user()->type == "organisation") {
+                }
+            })->when(auth()->user()->profilable_type == Dgpd::class, function ($query) {
+                //$query->whereIn("statut", [StatutIdee::ANALYSE, StatutIdee::AMC, StatutIdee::VALIDATION]);
+            })->latest()->get();
+
+            return ($this->resourceClass::collection($item))->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
     /**
      * Récupérer les projets sélectionnables (en cours de maturation - statut différent de PRET)
      */
@@ -38,6 +76,32 @@ class ProjetService extends BaseService implements ProjetServiceInterface
                 ->whereNot('statut', StatutIdee::PRET)
                 ->latest()
                 ->get();
+
+
+
+            // NOUVEAU CODE (simplifié et clarifié)
+            $projets = $this->repository->getModel()->whereNot('statut', StatutIdee::PRET)->when(auth()->user()->profilable_type == Dpaf::class, function ($query) {
+                $query->where("ministereId", Auth::user()->profilable->ministere->id);
+            })->when(auth()->user()->profilable_type == Organisation::class, function ($query) {
+                $ministereId = Auth::user()->profilable->ministere->id;
+
+                // Filtrer par ministère pour tous les utilisateurs d'organisation
+                $query->where("ministereId", $ministereId);
+
+                // Responsable de projet : uniquement ses propres idées de son ministère
+                if (auth()->user()->type == "responsable-projet") {
+                    $query->where("responsableId", Auth::user()->id);
+                }
+                // Responsable hiérarchique : toutes les idées du ministère sauf brouillon
+                elseif (auth()->user()->type == "responsable-hierachique") {
+                    // Action
+                }
+                // Organisation : toutes les idées du ministère
+                elseif (auth()->user()->type == "organisation") {
+                }
+            })->when(auth()->user()->profilable_type == Dgpd::class, function ($query) {
+                //$query->whereIn("statut", [StatutIdee::ANALYSE, StatutIdee::AMC, StatutIdee::VALIDATION]);
+            })->latest()->get();
 
             return ($this->resourceClass::collection($projets))
                 ->additional([

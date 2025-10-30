@@ -42,8 +42,18 @@ class SendCommentaireNotifications implements ShouldQueue
                     $proprietaire = $ressource->user;
                 } elseif (isset($ressource->user_id)) {
                     $proprietaire = \App\Models\User::find($ressource->user_id);
+                } elseif (method_exists($ressource, 'responsable') && $ressource->responsable) {
+                    $proprietaire = $ressource->responsable;
                 } elseif (method_exists($ressource, 'createur') && $ressource->createur) {
                     $proprietaire = $ressource->createur;
+                } elseif (method_exists($ressource, 'evaluateur') && $ressource->evaluateur) {
+                    $proprietaire = $ressource->evaluateur;
+                } elseif (method_exists($ressource, 'validator') && $ressource->validator) {
+                    $proprietaire = $ressource->validator;
+                } elseif (method_exists($ressource, 'evaluation') && $ressource->evaluation) {
+                    if ($ressource->evaluation->evaluateur) {
+                        $proprietaire = $ressource->evaluation->evaluateur;
+                    }
                 } elseif (isset($ressource->created_by)) {
                     $proprietaire = \App\Models\User::find($ressource->created_by);
                 }
@@ -96,7 +106,6 @@ class SendCommentaireNotifications implements ShouldQueue
                 'commentaire_id' => $commentaire->id,
                 'nombre_utilisateurs' => $utilisateursUniques->count()
             ]);
-
         } catch (Exception $e) {
             // Ne pas faire échouer le job si les notifications échouent
             Log::error('Erreur dans le listener SendCommentaireNotifications', [
