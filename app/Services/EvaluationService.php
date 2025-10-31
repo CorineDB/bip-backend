@@ -149,16 +149,16 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             */
 
             // NOUVEAU CODE - Récupérer uniquement l'évaluation climatique terminée (statut = 1)
-            $evaluationClimatique = Evaluation::where('projetable_type', get_class($ideeProjet))
+            /*$evaluationClimatique = Evaluation::where('projetable_type', get_class($ideeProjet))
                 ->where('projetable_id', $ideeProjet->id)
                 ->where('type_evaluation', 'climatique')
                 ->where('statut', 1)
                 ->orderBy("created_at", "desc")
-                ->firstOrFail();
+                ->firstOrFail();*/
 
-            $criteresEvaluationClimatique = $evaluationClimatique->evaluationCriteres()
+            /*$criteresEvaluationClimatique = $evaluationClimatique->evaluationCriteres()
                 ->autoEvaluation()
-                ->active();
+                ->active();*/
 
             if ($attributs["decision"] == "valider") {
                 $ideeProjet->update([
@@ -171,7 +171,13 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $this->enregistrerWorkflow($ideeProjet, StatutIdee::ANALYSE);
                 $this->enregistrerDecision($ideeProjet, 'Validation par Responsable hiérarchique', $attributs["commentaire"] ?? 'Idée validée pour analyse multicritères');
 
-                $criteresEvaluationClimatique = $criteresEvaluationClimatique->byEvaluateur($evaluationClimatique->id)
+                // CODE COMMENTÉ - Redondant car l'évaluation climatique est déjà finalisée (statut = 1)
+                // et le champ evaluation est maintenant correctement rempli par soumettreEvaluationClimatique()
+                // et finalizeEvaluation(). Cette mise à jour n'est plus nécessaire.
+                /*
+                // Récupérer TOUTES les réponses de TOUS les évaluateurs
+                // Bug corrigé : ligne précédente utilisait byEvaluateur avec ID d'évaluation au lieu d'ID utilisateur
+                $criteresEvaluationClimatique = $criteresEvaluationClimatique
                     ->with(['critere', 'notation', 'categorieCritere', 'evaluateur'])
                     ->get();
 
@@ -181,6 +187,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     //'valider_le' => null,
                     'statut' => 1  // Marquer comme terminée
                 ]);
+                */
             } else {
 
                 $ideeProjet->update([
@@ -1488,17 +1495,17 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::AMC),
                 ]);
             } else {
-                // Récupérer les réponses de l'évaluateur connecté
-                $evaluationClimatiqueReponses = EvaluationCritere::forEvaluation($evaluation->id)
+                // Récupérer TOUTES les réponses de TOUS les évaluateurs pour le champ evaluation
+                // (pas seulement l'évaluateur connecté)
+                $toutesLesReponses = EvaluationCritere::forEvaluation($evaluation->id)
                     ->autoEvaluation()
                     ->active()
-                    ->byEvaluateur($evaluateurId)
-                    ->with(['critere', 'notation', 'categorieCritere'])
+                    ->with(['critere', 'notation', 'categorieCritere', 'evaluateur'])
                     ->get();
 
                 if ($evaluation->statut == 0) {
                     $evaluation->update([
-                        "evaluation" => EvaluationCritereResource::collection($evaluationClimatiqueReponses),
+                        "evaluation" => EvaluationCritereResource::collection($toutesLesReponses),
                         //"resultats_evaluation" => []
                     ]);
                 }
@@ -3112,17 +3119,17 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $evaluation->save();
             }
 
-            // Récupérer les réponses de l'évaluateur connecté
-            $evaluationPertinenceReponses = EvaluationCritere::forEvaluation($evaluation->id)
+            // Récupérer TOUTES les réponses de TOUS les évaluateurs pour le champ evaluation
+            // (pas seulement l'évaluateur connecté)
+            $toutesLesReponses = EvaluationCritere::forEvaluation($evaluation->id)
                 ->autoEvaluation()
                 ->active()
-                ->byEvaluateur($evaluateurId)
-                ->with(['critere', 'notation', 'categorieCritere'])
+                ->with(['critere', 'notation', 'categorieCritere', 'evaluateur'])
                 ->get();
 
             if ($evaluation->statut == 0) {
                 $evaluation->update([
-                    "evaluation" => EvaluationCritereResource::collection($evaluationPertinenceReponses),
+                    "evaluation" => EvaluationCritereResource::collection($toutesLesReponses),
                     //"resultats_evaluation" => []
                 ]);
             }
