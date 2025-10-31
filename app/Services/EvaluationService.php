@@ -1662,7 +1662,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
             // Si l'évaluation est finalisée, retourner les résultats stockés au lieu de recalculer
             // Finalisée = statut 1 ET (valider_le défini OU date_fin_evaluation définie)
-            if ($evaluation->statut == 1 && ($evaluation->valider_le != null || $evaluation->date_fin_evaluation != null)) {
+            /*if ($evaluation->statut == 1 && ($evaluation->valider_le != null || $evaluation->date_fin_evaluation != null)) {
                 // Récupérer les critères et évaluations finalisées pour les statistiques
                 $evaluationCriteres = $evaluation->evaluationCriteres()
                     ->autoEvaluation()
@@ -1672,7 +1672,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
 
                 /*$totalEvaluateurs = $evaluationCriteres->pluck('evaluateur_id')->unique()->count();
                 $totalCriteres = $evaluation->criteres->count();
-                $totalEvaluationsCompletes = $evaluationCriteres->filter->isCompleted()->count();*/
+                $totalEvaluationsCompletes = $evaluationCriteres->filter->isCompleted()->count();/
 
                 // Statistiques générales
                 $totalEvaluateurs = $evaluation->evaluateursClimatique()->get()->unique()->count();
@@ -1697,7 +1697,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                         'is_finalized' => true
                     ]
                 ]);
-            }
+            }*/
 
             // Pour les évaluations en cours : calcul dynamique
             if ($evaluation->statut != 1) {
