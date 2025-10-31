@@ -62,11 +62,18 @@ return [
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
                 'verify' => env('PUSHER_VERIFY_SSL', false),
+                'timeout' => 30, // Timeout de connexion augmenté
+                'connect_timeout' => 10, // Timeout de handshake augmenté
                 'curl' => [
                     CURLOPT_SSL_VERIFYPEER => env('PUSHER_VERIFY_SSL', false),
                     CURLOPT_SSL_VERIFYHOST => env('PUSHER_VERIFY_SSL', false) ? 2 : 0,
-                    // CURLOPT_SSLVERSION supprimé pour permettre la négociation automatique TLS
-                    // Cela évite les erreurs SSL handshake avec OpenSSL 3.x qui nécessite TLS 1.3
+                    // Forcer TLS 1.2 minimum mais permettre TLS 1.3
+                    CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1_2,
+                    // Spécifier les cipher suites compatibles OpenSSL 3.x
+                    CURLOPT_SSL_CIPHER_LIST => 'DEFAULT@SECLEVEL=1',
+                    // Timeouts pour éviter les blocages
+                    CURLOPT_TIMEOUT => 30,
+                    CURLOPT_CONNECTTIMEOUT => 10,
                 ],
             ],
         ],
