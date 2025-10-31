@@ -250,8 +250,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'date_soumission' =>  $estSoumise ? now() : null,
                 ];
 
-                $rapportExistant->fill($rapportData);
-
                 // Créer ou mettre à jour le rapport
                 if ($rapportExistant && $rapportExistant->statut === 'brouillon') {
                     // Mettre à jour le rapport existant s'il est en brouillon
