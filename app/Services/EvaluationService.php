@@ -1670,9 +1670,15 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ->with(['critere', 'notation', 'categorieCritere', 'evaluateur'])
                     ->get();
 
-                $totalEvaluateurs = $evaluationCriteres->pluck('evaluateur_id')->unique()->count();
+                /*$totalEvaluateurs = $evaluationCriteres->pluck('evaluateur_id')->unique()->count();
                 $totalCriteres = $evaluation->criteres->count();
+                $totalEvaluationsCompletes = $evaluationCriteres->filter->isCompleted()->count();*/
+
+                // Statistiques générales
+                $totalEvaluateurs = $evaluation->evaluateursClimatique()->get()->unique()->count();
+                $totalCriteres = $this->categorieCritereRepository->getCanevasEvaluationClimatique()->criteres->count();
                 $totalEvaluationsCompletes = $evaluationCriteres->filter->isCompleted()->count();
+                $totalEvaluationsAttendues = $totalEvaluateurs * $totalCriteres;
 
                 return response()->json([
                     'success' => true,
@@ -1683,7 +1689,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                         'taux_progression_global' => [
                             'pourcentage' => 100,
                             'evaluations_completes' => $totalEvaluationsCompletes,
-                            'evaluations_attendues' => $totalEvaluationsCompletes,
+                            'evaluations_attendues' => $totalEvaluationsAttendues,
                             'evaluateurs_total' => $totalEvaluateurs,
                             'criteres_total' => $totalCriteres
                         ],

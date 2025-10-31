@@ -54,7 +54,7 @@ class EvaluationResource extends BaseApiResource
                             'note' => $evaluation->note,
                             'commentaire' => $evaluation->commentaire,
                             'evaluation_evaluateur_id' => $evaluation->evaluation_evaluateur_id,
-                            'evaluateur_id' => $evaluation->evaluateur_id,
+                            'evaluateur_id' => $evaluation->evaluateur->hashed_id,
 
                             'notation_id' => $evaluation->notation?->hashed_id,
                             'critere_id' => $evaluation->critere?->hashed_id,
