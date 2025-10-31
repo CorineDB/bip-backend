@@ -1214,6 +1214,19 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
      */
     protected function creerEvaluationPertinence(IdeeProjet $ideeProjet): void
     {
+        // Vérifier d'abord s'il existe déjà une évaluation EN COURS (statut -1 ou 0)
+        $evaluationEnCours = Evaluation::where('projetable_id', $ideeProjet->id)
+            ->where('projetable_type', get_class($ideeProjet))
+            ->whereIn('statut', [-1, 0])
+            ->where('type_evaluation', 'pertinence')
+            ->lockForUpdate()
+            ->first();
+
+        // Si une évaluation en cours existe déjà, ne rien faire
+        if ($evaluationEnCours) {
+            return;
+        }
+
         // Réinitialiser le score de pertinence à 0
         $ideeProjet->score_pertinence = 0;
         $ideeProjet->save();
@@ -1243,7 +1256,16 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             $evaluationData['id_evaluation'] = $evaluationPrecedente->id;
         }
 
-        Evaluation::create($evaluationData);
+        // Créer avec gestion des erreurs de contrainte unique
+        try {
+            Evaluation::create($evaluationData);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Si erreur de contrainte unique (race condition), ignorer silencieusement
+            // car cela signifie qu'une autre transaction a déjà créé l'évaluation
+            if ($e->getCode() != 23000 && !str_contains($e->getMessage(), 'Duplicate')) {
+                throw $e;
+            }
+        }
     }
 
     /**
@@ -1252,6 +1274,19 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
      */
     protected function creerEvaluationClimatique(IdeeProjet $ideeProjet): void
     {
+        // Vérifier d'abord s'il existe déjà une évaluation EN COURS (statut -1 ou 0)
+        $evaluationEnCours = Evaluation::where('projetable_id', $ideeProjet->id)
+            ->where('projetable_type', get_class($ideeProjet))
+            ->whereIn('statut', [-1, 0])
+            ->where('type_evaluation', 'climatique')
+            ->lockForUpdate()
+            ->first();
+
+        // Si une évaluation en cours existe déjà, ne rien faire
+        if ($evaluationEnCours) {
+            return;
+        }
+
         // Réinitialiser le score climatique à 0
         $ideeProjet->score_climatique = 0;
         $ideeProjet->save();
@@ -1281,7 +1316,16 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             $evaluationData['id_evaluation'] = $evaluationPrecedente->id;
         }
 
-        Evaluation::create($evaluationData);
+        // Créer avec gestion des erreurs de contrainte unique
+        try {
+            Evaluation::create($evaluationData);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Si erreur de contrainte unique (race condition), ignorer silencieusement
+            // car cela signifie qu'une autre transaction a déjà créé l'évaluation
+            if ($e->getCode() != 23000 && !str_contains($e->getMessage(), 'Duplicate')) {
+                throw $e;
+            }
+        }
     }
 
 }

@@ -88,6 +88,21 @@ class CreerEvaluationClimatique implements ShouldQueue
 
             $ideeProjet = $event->ideeProjet;
 
+            // Vérifier si une évaluation climatique existe déjà (en cours ou terminée)
+            // Utiliser lockForUpdate pour éviter les race conditions avec les jobs asynchrones
+            $evaluation = Evaluation::where('projetable_id', $ideeProjet->id)
+                ->where('projetable_type', get_class($ideeProjet))
+                ->where('type_evaluation', 'climatique')
+                ->lockForUpdate()
+                ->first();
+
+            // Si une évaluation existe déjà, ne rien faire
+            if ($evaluation) {
+                DB::rollBack();
+                Log::info('Évaluation climatique déjà existante pour l\'idée de projet: ' . $ideeProjet->id);
+                return;
+            }
+
             // Créer l'évaluation climatique
             $evaluation = Evaluation::create([
                 'type_evaluation' => 'climatique',
@@ -100,6 +115,7 @@ class CreerEvaluationClimatique implements ShouldQueue
                 'commentaire' => " ",
                 'resultats_evaluation' => [],
                 'evaluation' => [],
+                'statut' => -1,  // Nouvelle évaluation
             ]);
 
             // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique

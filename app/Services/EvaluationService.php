@@ -247,14 +247,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $responsableProjet = $ideeProjet->responsable;
             if ($responsableProjet) {
                 $decision = $attributs["decision"];
-                Notification::send($responsableProjet, new ValidationResponsableHierarchiqueNotification($ideeProjet, $decision, $attributs["commentaire"] ?? null));
+                //Notification::send($responsableProjet, new ValidationResponsableHierarchiqueNotification($ideeProjet, $decision, $attributs["commentaire"] ?? null));
 
                 // Si validé, notifier l'analyste DGPD et les membres du Service technique
                 if ($decision === 'valider') {
                     $analystesDGPD = User::where('type', 'analyste-dgpd')->get();
-                    $servicesTechniques = User::whereHas('roles', function ($query) {
-                        $query->whereIn('slug', ['service-technique', 'service-etude']);
-                    })->get();
+                    $servicesTechniques = collect();
 
                     $destinataires = $analystesDGPD->merge($servicesTechniques);
                     if ($destinataires->count() > 0) {
@@ -1210,6 +1208,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $is_auto_evaluation = auth()->user()->type == "analyste-dgpd" ? false : true;
 
             // Charger l'évaluation selon le type de profil
+            // Utiliser lockForUpdate() pour éviter les race conditions lors de la création
             if ($is_auto_evaluation) {
                 // Responsable-projet: chercher évaluation avec statut -1 ou 0
                 $evaluation = Evaluation::where('projetable_id', $ideeProjet->id)
@@ -1217,6 +1216,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ->whereIn("statut", [-1, 0])
                     ->where('type_evaluation', 'climatique')
                     ->orderByDesc('created_at')
+                    ->lockForUpdate()  // Verrouiller pour éviter les créations concurrentes
                     ->first();
             } else {
                 // Analyste-dgpd: chercher évaluation avec statut 1 et date_fin_evaluation null
@@ -1226,6 +1226,7 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     ->whereNull('date_fin_evaluation')
                     ->where('type_evaluation', 'climatique')
                     ->orderByDesc('created_at')
+                    ->lockForUpdate()  // Verrouiller pour éviter les modifications concurrentes
                     ->first();
 
                 if (!$evaluation) {
@@ -1264,6 +1265,12 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                     "date_fin_evaluation" => $is_auto_evaluation ? null : now()
                 ]);
             } else {
+                // Ce bloc ne devrait s'exécuter que pour auto-évaluation (responsable-projet)
+                // car analyste-dgpd aurait déclenché l'exception ligne 1229
+                if (!$is_auto_evaluation) {
+                    throw new \LogicException("État incohérent: création d'évaluation pour analyste-dgpd ne devrait pas arriver ici");
+                }
+
                 // Vérifier s'il existe une évaluation climatique déjà effectuée (terminée)
                 $evaluationPrecedente = Evaluation::where('projetable_id', $ideeProjet->id)
                                 ->where('projetable_type', get_class($ideeProjet))
@@ -1273,16 +1280,16 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                                 ->orderByDesc('created_at')
                                 ->first();
 
-                // Créer une nouvelle évaluation
+                // Créer une nouvelle évaluation (toujours en auto-évaluation ici)
                 $evaluationData = [
                     'projetable_id' => $ideeProjet->id,
                     'projetable_type' => get_class($ideeProjet),
                     "type_evaluation" => "climatique",
                     "evaluation" => [],
                     "resultats_evaluation" => [],
-                    'statut' => $is_auto_evaluation ? 0 : 1,
+                    'statut' => 0,  // Toujours 0 (en cours) pour nouvelle auto-évaluation
                     'date_debut_evaluation' => now(),
-                    "date_fin_evaluation" => $is_auto_evaluation ? null : now()
+                    "date_fin_evaluation" => null  // Toujours null au début
                 ];
 
                 // Ajouter l'id de l'évaluation précédente si elle existe
@@ -1646,11 +1653,46 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $evaluation->save();
             }
 
+            // Si l'évaluation est finalisée, retourner les résultats stockés au lieu de recalculer
+            // Finalisée = statut 1 ET (valider_le défini OU date_fin_evaluation définie)
+            if ($evaluation->statut == 1 && ($evaluation->valider_le != null || $evaluation->date_fin_evaluation != null)) {
+                // Récupérer les critères et évaluations finalisées pour les statistiques
+                $evaluationCriteres = $evaluation->evaluationCriteres()
+                    ->autoEvaluation()
+                    ->active()
+                    ->with(['critere', 'notation', 'categorieCritere', 'evaluateur'])
+                    ->get();
+
+                $totalEvaluateurs = $evaluationCriteres->pluck('evaluateur_id')->unique()->count();
+                $totalCriteres = $evaluation->criteres->count();
+                $totalEvaluationsCompletes = $evaluationCriteres->filter->isCompleted()->count();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        "statut_idee" => $ideeProjet->statut,
+                        "idee_projet" => new IdeesProjetResource($ideeProjet->load('historiqueEvaluationsClimatique')),
+                        'evaluation' => new EvaluationResource($evaluation),
+                        'taux_progression_global' => [
+                            'pourcentage' => 100,
+                            'evaluations_completes' => $totalEvaluationsCompletes,
+                            'evaluations_attendues' => $totalEvaluationsCompletes,
+                            'evaluateurs_total' => $totalEvaluateurs,
+                            'criteres_total' => $totalCriteres
+                        ],
+                        'final_results' => $evaluation->resultats_evaluation ?? [],
+                        'is_finalized' => true
+                    ]
+                ]);
+            }
+
+            // Pour les évaluations en cours : calcul dynamique
             if ($evaluation->statut != 1) {
                 // Récupérer les utilisateurs ayant la permission d'effectuer l'évaluation climatique
                 $evaluateurs = $evaluation->evaluateursClimatique()->get();
             } else {
-
+                // Évaluation en cours de finalisation (statut = 1 mais date_fin = null)
+                // Ceci arrive quand analyste-dgpd est en train de finaliser
                 $evaluateurs = $evaluation->evaluateursDeEvalPreliminaireClimatique()
                     ->select('users.*')
                     ->distinct('users.id')
