@@ -2655,8 +2655,8 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $rapportExistant = $projet->rapportFaisabilitePreliminaire()->where("statut", "<>", "brouillon")->first();
 
                 if (!$rapportExistant) {
-                    throw new Exception("Le rapport de faisabilite preliminaire n'a pas ete soumis", 403);
-                }
+                    //throw new Exception("Le rapport de faisabilite preliminaire n'a pas ete soumis", 403);
+                }else{
 
                 // Traiter la checklist de suivi pour la soumission finale
                 if (isset($data['checklist_suivi_rapport_faisabilite_preliminaire'])) {
@@ -2752,7 +2752,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     ]);
 
                     $evaluationRapport->save();
-                }
+                }}
 
                 // Gérer l'analyse financière et calculer la VAN et le TRI
                 if (isset($data['analyse_financiere'])) {
