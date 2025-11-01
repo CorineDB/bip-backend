@@ -271,6 +271,8 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabilitePreliminaireSeeder extends
             $documentData = collect($this->documentData)->except(['forms', 'champs', 'id'])->toArray();
             $documentData = array_merge($documentData, ["categorieId" => $categorieDocument->id]);
 
+            $categorieDocument->documents()->delete();
+
             $document = Document::updateOrCreate(['nom' => $documentData['nom']], $documentData);
 
             if (!empty($formsData)) {
