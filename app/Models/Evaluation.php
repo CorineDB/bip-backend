@@ -150,9 +150,6 @@ class Evaluation extends Model
         $projetableType = $this->projetable_type;
         $typeEvaluation = $this->type_evaluation;
 
-        throw new \Exception("Error Processing Request : " . $projetableType . " DSFD " . $typeEvaluation, 1);
-
-
         return $this->hasMany(Evaluation::class, 'projetable_id', 'projetable_id')
             ->where('projetable_type', $projetableType)
             ->where('type_evaluation', $typeEvaluation)
