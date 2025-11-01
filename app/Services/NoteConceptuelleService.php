@@ -3524,7 +3524,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     ]);
                 }
 
-                return StatutIdee::VALIDATION_PROFIL;
+                return StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER;
 
             default:
                 return StatutIdee::VALIDATION_PROFIL;
