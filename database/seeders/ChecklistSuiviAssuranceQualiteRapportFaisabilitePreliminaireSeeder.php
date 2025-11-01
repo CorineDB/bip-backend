@@ -83,7 +83,7 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabilitePreliminaireSeeder extends
                                 ],
                                 'show_explanation' => true,
                                 'explanation_min_length' => 50,
-                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel)',
                             ],
                             'conditions' => [
                                 'disable' => false,
@@ -153,7 +153,7 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabilitePreliminaireSeeder extends
                                 ],
                                 'show_explanation' => true,
                                 'explanation_min_length' => 50,
-                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel)',
                             ],
                             'conditions' => [
                                 'disable' => false,
@@ -223,7 +223,7 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabilitePreliminaireSeeder extends
                                 ],
                                 'show_explanation' => true,
                                 'explanation_min_length' => 50,
-                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel]',
+                                'explanation_placeholder' => 'Fournissez des détails ou justifications (optionnel)',
                             ],
                             'conditions' => [
                                 'disable' => false,
@@ -270,8 +270,6 @@ class ChecklistSuiviAssuranceQualiteRapportFaisabilitePreliminaireSeeder extends
             $formsData = $this->documentData['forms'] ?? [];
             $documentData = collect($this->documentData)->except(['forms', 'champs', 'id'])->toArray();
             $documentData = array_merge($documentData, ["categorieId" => $categorieDocument->id]);
-
-            $categorieDocument->documents()->delete();
 
             $document = Document::updateOrCreate(['nom' => $documentData['nom']], $documentData);
 
