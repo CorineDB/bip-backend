@@ -2601,20 +2601,40 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             $rapportFaisabilitePrelim = null;
             $evaluationRapport = null;
 
-            // Créer une évaluation pour tracer la validation
-            $evaluation = $projet->evaluations()->updateOrCreate([
-                'type_evaluation' => 'validation-etude-profil',
-                'projetable_type' => get_class($projet),
-                'projetable_id' => $projet->id,
-            ], [
-                'date_debut_evaluation' => now(),
-                'date_fin_evaluation' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? now() : null,
-                'evaluateur_id' => auth()->id(),
-                'commentaire' => $data['commentaire'] ?? '',
-                'statut' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? 1 : 0,
-                'evaluation' => [],
-                'resultats_evaluation' => []
-            ]);
+            // Récupérer ou créer une évaluation pour tracer la validation
+            // Chercher d'abord une évaluation EN COURS (statut != 1) pour éviter d'écraser l'historique
+            $evaluation = $projet->evaluations()
+                ->where('type_evaluation', 'validation-etude-profil')
+                ->where('statut', '!=', 1)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if ($evaluation) {
+                // Mettre à jour l'évaluation en cours
+                $evaluation->update([
+                    'date_debut_evaluation' => $evaluation->date_debut_evaluation ?? now(),
+                    'date_fin_evaluation' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? now() : null,
+                    'evaluateur_id' => auth()->id(),
+                    'commentaire' => $data['commentaire'] ?? '',
+                    'statut' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? 1 : 0,
+                    'evaluation' => [],
+                    'resultats_evaluation' => []
+                ]);
+            } else {
+                // Créer une nouvelle évaluation si aucune n'est en cours
+                $evaluation = $projet->evaluations()->create([
+                    'type_evaluation' => 'validation-etude-profil',
+                    'projetable_type' => get_class($projet),
+                    'projetable_id' => $projet->id,
+                    'date_debut_evaluation' => now(),
+                    'date_fin_evaluation' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? now() : null,
+                    'evaluateur_id' => auth()->id(),
+                    'commentaire' => $data['commentaire'] ?? '',
+                    'statut' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? 1 : 0,
+                    'evaluation' => [],
+                    'resultats_evaluation' => []
+                ]);
+            }
 
             if ($data['decision'] === "faire_etude_faisabilite_preliminaire") {
 
@@ -3626,6 +3646,18 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
      */
     private function creerEvaluationValidationEtudeProfil(Projet $projet): void
     {
+        // Vérifier d'abord s'il existe déjà une évaluation EN COURS
+        $evaluationEnCours = $projet->evaluations()
+            ->where('type_evaluation', 'validation-etude-profil')
+            ->where('statut', '!=', 1)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        // Si une évaluation en cours existe déjà, ne rien faire
+        if ($evaluationEnCours) {
+            return;
+        }
+
         // Récupérer l'évaluation terminée de validation de l'étude de profil
         $evaluationTerminee = $projet->evaluations()
             ->where('type_evaluation', 'validation-etude-profil')
