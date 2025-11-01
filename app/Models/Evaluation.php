@@ -137,19 +137,27 @@ class Evaluation extends Model
     }
 
     /**
-     * Get all evaluations of the same type for the same project (excluding current).
-     * Returns a HasMany relationship for all evaluations with same projetable and type.
+     * Get all evaluations of the same type for the same project that have completed successors.
+     * Returns only completed evaluations (statut = 1) that have been followed by other COMPLETED evaluations
+     * of the same type and projetable.
+     * Excludes the last completed evaluation (the one without completed successors).
      * Ordered by: created_at DESC (most recent first)
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function historique_evaluations()
     {
+        $projetableType = $this->projetable_type;
+        $typeEvaluation = $this->type_evaluation;
+
+        throw new \Exception("Error Processing Request : " . $projetableType . " DSFD " . $typeEvaluation, 1);
+
+
         return $this->hasMany(Evaluation::class, 'projetable_id', 'projetable_id')
-            ->where('projetable_type', $this->projetable_type)
-            ->where('type_evaluation', $this->type_evaluation)
+            ->where('projetable_type', $projetableType)
+            ->where('type_evaluation', $typeEvaluation)
             ->where('statut', 1)
-            //->where('id', '!=', $this->id)
+            ->whereHas('childEvaluations')
             ->orderByDesc('created_at');
     }
 
