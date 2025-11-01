@@ -287,79 +287,79 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
 
             // Gérer l'analyse financière : enregistrer les valeurs et calculer VAN/TRI si soumis
             if ($estMouActuel && $rapport && isset($data['analyse_financiere'])) {
-                    $updateData = [];
-                    $analyseFinanciere = $data['analyse_financiere'];
+                $updateData = [];
+                $analyseFinanciere = $data['analyse_financiere'];
 
-                    $requiredFields = ['duree_vie', 'investissement_initial', 'flux_tresorerie', 'taux_actualisation'];
+                $requiredFields = ['duree_vie', 'investissement_initial', 'flux_tresorerie', 'taux_actualisation'];
 
-                    foreach ($requiredFields as $field) {
-                        // validation de présence de $analyseFinanciere[$field]
-                        if (!isset($analyseFinanciere[$field]) && !empty($analyseFinanciere[$field])) {
+                foreach ($requiredFields as $field) {
+                    // validation de présence de $analyseFinanciere[$field]
+                    if (!isset($analyseFinanciere[$field]) && !empty($analyseFinanciere[$field])) {
+                        throw ValidationException::withMessages([
+                            "analyse_financiere.$field" => "Le champ $field est obligatoire lorsque le projet est financé. " . $analyseFinanciere[$field]
+                        ]);
+                    }
+                    // validations supplémentaires pour les champs spécifiques
+                    // Il faut savoir que les donnees sont soumis dans un formdata donc tout est string
+
+                    if ($field === 'duree_vie') {
+
+                        $value = $analyseFinanciere[$field];
+
+                        // Vérifie que c'est bien un nombre ET un entier positif
+                        if (!ctype_digit((string)$value) || (int)$value <= 0) {
                             throw ValidationException::withMessages([
-                                "analyse_financiere.$field" => "Le champ $field est obligatoire lorsque le projet est financé. " . $analyseFinanciere[$field]
+                                "analyse_financiere.$field" => "Le champ $field doit être un nombre entier positif (sans virgule)."
                             ]);
                         }
-                        // validations supplémentaires pour les champs spécifiques
-                        // Il faut savoir que les donnees sont soumis dans un formdata donc tout est string
 
-                        if ($field === 'duree_vie') {
-
-                            $value = $analyseFinanciere[$field];
-
-                            // Vérifie que c'est bien un nombre ET un entier positif
-                            if (!ctype_digit((string)$value) || (int)$value <= 0) {
-                                throw ValidationException::withMessages([
-                                    "analyse_financiere.$field" => "Le champ $field doit être un nombre entier positif (sans virgule)."
-                                ]);
-                            }
-
-                            // Optionnel : convertir proprement en entier
-                            $analyseFinanciere[$field] = (int)$value;
-                        }
-
-                        // Ajouter d'autres validations spécifiques si nécessaire
-                        if (in_array($field, ['investissement_initial', 'taux_actualisation'])) {
-                            if (!is_numeric($analyseFinanciere[$field])) {
-                                throw ValidationException::withMessages([
-                                    "analyse_financiere.$field" => "Le champ $field doit être une date valide au format AAAA-MM-JJ."
-                                ]);
-                            }
-
-                            // Optionnel : forcer la conversion en float si tu veux l'utiliser ensuite
-                            $analyseFinanciere[$field] = (float) $analyseFinanciere[$field];
-                        }
+                        // Optionnel : convertir proprement en entier
+                        $analyseFinanciere[$field] = (int)$value;
                     }
 
-                    // Préparer les données pour le fill() et la mise à jour
-                    $financialData = [
-                        'duree_vie' => $analyseFinanciere['duree_vie'] ?? $projet->duree_vie,
-                        'investissement_initial' => $analyseFinanciere['investissement_initial'] ?? $projet->investissement_initial,
-                        'flux_tresorerie' => $analyseFinanciere['flux_tresorerie'] ?? $projet->flux_tresorerie,
-                        'taux_actualisation' => $analyseFinanciere['taux_actualisation'] ?? $projet->taux_actualisation,
-                    ];
-
-                    // Mettre à jour le modèle en mémoire avec les nouvelles données financières
-                    $rapport->fill($financialData);
-
-                    // Ajouter les données financières au tableau de mise à jour
-                    $updateData = array_merge($updateData, $financialData);
-
-                    // Calculer VAN/TRI uniquement si la note est soumise
-                    if ($estSoumise) {
-                        // Calculer la VAN et le TRI à partir des données mises à jour
-                        $van = $rapport->calculerVAN();
-                        $rapport->van = $van;
-                        $tri = $rapport->calculerTRI();
-
-                        if ($van !== null) {
-                            $updateData['van'] = $van;
+                    // Ajouter d'autres validations spécifiques si nécessaire
+                    if (in_array($field, ['investissement_initial', 'taux_actualisation'])) {
+                        if (!is_numeric($analyseFinanciere[$field])) {
+                            throw ValidationException::withMessages([
+                                "analyse_financiere.$field" => "Le champ $field doit être une date valide au format AAAA-MM-JJ."
+                            ]);
                         }
-                        if ($tri !== null) {
-                            $updateData['tri'] = $tri;
-                        }
+
+                        // Optionnel : forcer la conversion en float si tu veux l'utiliser ensuite
+                        $analyseFinanciere[$field] = (float) $analyseFinanciere[$field];
                     }
+                }
 
-                    $rapport->update($updateData);
+                // Préparer les données pour le fill() et la mise à jour
+                $financialData = [
+                    'duree_vie' => $analyseFinanciere['duree_vie'] ?? $projet->duree_vie,
+                    'investissement_initial' => $analyseFinanciere['investissement_initial'] ?? $projet->investissement_initial,
+                    'flux_tresorerie' => $analyseFinanciere['flux_tresorerie'] ?? $projet->flux_tresorerie,
+                    'taux_actualisation' => $analyseFinanciere['taux_actualisation'] ?? $projet->taux_actualisation,
+                ];
+
+                // Mettre à jour le modèle en mémoire avec les nouvelles données financières
+                $rapport->fill($financialData);
+
+                // Ajouter les données financières au tableau de mise à jour
+                $updateData = array_merge($updateData, $financialData);
+
+                // Calculer VAN/TRI uniquement si la note est soumise
+                if ($estSoumise) {
+                    // Calculer la VAN et le TRI à partir des données mises à jour
+                    $van = $rapport->calculerVAN();
+                    $rapport->van = $van;
+                    $tri = $rapport->calculerTRI();
+
+                    if ($van !== null) {
+                        $updateData['van'] = $van;
+                    }
+                    if ($tri !== null) {
+                        $updateData['tri'] = $tri;
+                    }
+                }
+
+                $rapport->update($updateData);
             }
 
             if ($projet->statut->value == StatutIdee::NOTE_CONCEPTUEL->value && $noteConceptuelle->statut == 1 && $estSoumise) {
@@ -2655,70 +2655,87 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 $rapportExistant = $projet->rapportFaisabilitePreliminaire()->where("statut", "<>", "brouillon")->first();
 
                 if (!$rapportExistant) {
+                    // Si le rapport n'existe pas, créer un résultat de contrôle qualité qui force le rejet
+                    $resultatsControleQualite = [
+                        'nombre_passable' => 0,
+                        'nombre_renvoyer' => 0,
+                        'nombre_non_accepte' => 1,
+                        'nombre_non_applicable' => 0,
+                        'nombre_non_evalues' => 0,
+                        'champs_non_completes' => 0,
+                        'total_champs' => 0,
+                        'champs_obligatoires_non_evalues' => 0,
+                        'resultat_global' => 'non_accepte',
+                        'message_resultat' => 'Le rapport de faisabilité préliminaire n\'a pas été soumis. Veuillez d\'abord soumettre le rapport avant de valider l\'étude de profil.',
+                        'raisons' => ['Rapport de faisabilité préliminaire non soumis'],
+                        'recommandations' => ['Soumettre le rapport de faisabilité préliminaire avant de continuer'],
+                        'resume' => 'RÉSUMÉ DE L\'ÉVALUATION\n\nRapport de faisabilité préliminaire non trouvé.\n\nRésultat global de l\'examen :\n\n( ) Pertinence climatique passable\n( ) Retour pour un travail supplémentaire\n(✓) Non accepté - Rapport manquant\n( ) Non applicable'
+                    ];
+                    $rapportFaisabilitePrelim = null;
                     //throw new Exception("Le rapport de faisabilite preliminaire n'a pas ete soumis", 403);
-                }else{
+                } else {
 
-                // Traiter la checklist de suivi pour la soumission finale
-                if (isset($data['checklist_suivi_rapport_faisabilite_preliminaire'])) {
-                    $this->traiterChampsChecklistSuivi(
-                        $rapportExistant,
-                        $data['checklist_suivi_rapport_faisabilite_preliminaire']
-                    );
+                    // Traiter la checklist de suivi pour la soumission finale
+                    if (isset($data['checklist_suivi_rapport_faisabilite_preliminaire'])) {
+                        $this->traiterChampsChecklistSuivi(
+                            $rapportExistant,
+                            $data['checklist_suivi_rapport_faisabilite_preliminaire']
+                        );
 
-                    $rapportExistant->fresh();
-                    $checklist_suivi = $rapportExistant->checklist_suivi;
+                        $rapportExistant->fresh();
+                        $checklist_suivi = $rapportExistant->checklist_suivi;
 
-                    // Créer une évaluation spécifique pour le contrôle qualité du rapport
-                    $evaluationRapport = $rapportExistant->evaluations()->updateOrCreate([
-                        'type_evaluation' => 'controle-qualite-rapport-faisabilite-preliminaire',
-                        'projetable_type' => get_class($rapportExistant),
-                        'projetable_id' => $rapportExistant->id,
-                    ], [
-                        'date_debut_evaluation' => now(),
-                        'date_fin_evaluation' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? now() : null,
-                        'evaluateur_id' => auth()->id(),
-                        'commentaire' => $data['commentaire'] ?? '',
-                        'statut' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? 1 : 0,
-                        'evaluation' => [],
-                        'resultats_evaluation' => []
-                    ]);
+                        // Créer une évaluation spécifique pour le contrôle qualité du rapport
+                        $evaluationRapport = $rapportExistant->evaluations()->updateOrCreate([
+                            'type_evaluation' => 'controle-qualite-rapport-faisabilite-preliminaire',
+                            'projetable_type' => get_class($rapportExistant),
+                            'projetable_id' => $rapportExistant->id,
+                        ], [
+                            'date_debut_evaluation' => now(),
+                            'date_fin_evaluation' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? now() : null,
+                            'evaluateur_id' => auth()->id(),
+                            'commentaire' => $data['commentaire'] ?? '',
+                            'statut' => ($action === 'submit' && $data['decision'] !== 'sauvegarder') ? 1 : 0,
+                            'evaluation' => [],
+                            'resultats_evaluation' => []
+                        ]);
 
-                    // Sauvegarder les valeurs de checklist_suivi dans les relations champs_evalue
-                    foreach ($rapportExistant->champs as $item) {
+                        // Sauvegarder les valeurs de checklist_suivi dans les relations champs_evalue
+                        foreach ($rapportExistant->champs as $item) {
 
-                        $evaluationRapport->champs_evalue()->syncWithoutDetaching([
-                            /* $item['champ_id'] => [
+                            $evaluationRapport->champs_evalue()->syncWithoutDetaching([
+                                /* $item['champ_id'] => [
                                 'note' => $item['valeur'],
                                 'date_note' => $item['updated_at'] ?? now(),
                                 'commentaires' => $item['commentaire'] ?? null,
                                 'created_at' => now(),
                                 'updated_at' => now()
                             ] */
-                            $item->pivot->champId => [
-                                'note' => $item->pivot->valeur,
-                                'date_note' => $item->pivot->created_at ?? now(),
-                                'commentaires' => $item->pivot->commentaire ?? null,
-                                'created_at' => now(),
-                                'updated_at' => now()
-                            ]
-                        ]);
-                    }
+                                $item->pivot->champId => [
+                                    'note' => $item->pivot->valeur,
+                                    'date_note' => $item->pivot->created_at ?? now(),
+                                    'commentaires' => $item->pivot->commentaire ?? null,
+                                    'created_at' => now(),
+                                    'updated_at' => now()
+                                ]
+                            ]);
+                        }
 
-                    $evaluationRapport->refresh();
+                        $evaluationRapport->refresh();
 
-                    // Calculer le résultat de l'évaluation selon les règles SFD-015
-                    $resultatsEvaluation = $this->calculerResultatsControleQualite($rapportExistant, $evaluationRapport);
+                        // Calculer le résultat de l'évaluation selon les règles SFD-015
+                        $resultatsEvaluation = $this->calculerResultatsControleQualite($rapportExistant, $evaluationRapport);
 
-                    // Stocker pour utilisation ultérieure
-                    $resultatsControleQualite = $resultatsEvaluation;
-                    $rapportFaisabilitePrelim = $rapportExistant;
+                        // Stocker pour utilisation ultérieure
+                        $resultatsControleQualite = $resultatsEvaluation;
+                        $rapportFaisabilitePrelim = $rapportExistant;
 
-                    // Préparer l'évaluation complète pour enregistrement dans l'évaluation du rapport
-                    $evaluationComplete = [
-                        'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire()->all_champs)->map(function ($champ) use ($evaluationRapport) {
-                            $champEvalue = collect($evaluationRapport->champs_evalue)->firstWhere('attribut', $champ['attribut']);
-                            return [
-                                /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                        // Préparer l'évaluation complète pour enregistrement dans l'évaluation du rapport
+                        $evaluationComplete = [
+                            'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilitePreliminaire()->all_champs)->map(function ($champ) use ($evaluationRapport) {
+                                $champEvalue = collect($evaluationRapport->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                                return [
+                                    /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                                 'champ_id' => $champ['id'],
                                 'label' => $champ['label'],
                                 'attribut' => $champ['attribut'],
@@ -2728,31 +2745,32 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                                 'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
                                 'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,*/
 
-                                'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
-                                'champ_id' => $champ?->hashed_id,
-                                'label' => $champ?->label,
-                                'attribut' => $champ?->attribut,
-                                'ordre_affichage' => $champ?->ordre_affichage,
-                                'type_champ' => $champ?->type_champ,
-                                'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
-                                'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
-                                'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
-                            ];
-                        })->toArray(),
-                        'statistiques' => $resultatsEvaluation,
-                        'date_evaluation' => now(),
-                        'confirme_par' => ($estBrouillon && $data['decision'] === "faire_etude_faisabilite_preliminaire") ? null : new UserResource(auth()->user())
-                    ];
+                                    'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                                    'champ_id' => $champ?->hashed_id,
+                                    'label' => $champ?->label,
+                                    'attribut' => $champ?->attribut,
+                                    'ordre_affichage' => $champ?->ordre_affichage,
+                                    'type_champ' => $champ?->type_champ,
+                                    'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                                    'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                                    'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
+                                ];
+                            })->toArray(),
+                            'statistiques' => $resultatsEvaluation,
+                            'date_evaluation' => now(),
+                            'confirme_par' => ($estBrouillon && $data['decision'] === "faire_etude_faisabilite_preliminaire") ? null : new UserResource(auth()->user())
+                        ];
 
-                    // Mettre à jour l'évaluation du rapport avec les données complètes
-                    $evaluationRapport->fill([
-                        'resultats_evaluation' => $resultatsEvaluation,
-                        'evaluation' => $evaluationComplete,
-                        'commentaire' => $resultatsEvaluation['message_resultat']
-                    ]);
+                        // Mettre à jour l'évaluation du rapport avec les données complètes
+                        $evaluationRapport->fill([
+                            'resultats_evaluation' => $resultatsEvaluation,
+                            'evaluation' => $evaluationComplete,
+                            'commentaire' => $resultatsEvaluation['message_resultat']
+                        ]);
 
-                    $evaluationRapport->save();
-                }}
+                        $evaluationRapport->save();
+                    }
+                }
 
                 // Gérer l'analyse financière et calculer la VAN et le TRI
                 if (isset($data['analyse_financiere'])) {
@@ -3432,21 +3450,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                  */
             case 'renvoyer':
             case 'retour':
-                // Créer un nouveau rapport en brouillon pour révision
-                $rapport->refresh();
-                $newRapport = $rapport->replicate();
-
-                $newRapport->statut = 'brouillon';
-                $newRapport->parent_id = $rapport->id;
-                $newRapport->commentaire_validation = null;
-                $newRapport->date_soumission = null;
-                $newRapport->created_at = now();
-                $newRapport->updated_at = null;
-                $newRapport->save();
-
-                // NOTE: L'évaluation du rapport sera créée automatiquement lors de la resoumission
-                // La logique de duplication de l'évaluation (champs passés, etc.) sera appliquée à ce moment
-
                 // Retour pour travail supplémentaire → R_VALIDATION_PROFIL_NOTE_AMELIORER
                 $projet->update([
                     'statut' => StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER,
@@ -3454,14 +3457,32 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER)
                 ]);
 
-                $rapport->update([
-                    'statut' => 'rejete',
-                    'decision' => 'rejete',
-                    'commentaire_validation' => $resultats["message_resultat"],
-                    'date_validation' => now(),
-                    'validateur_id' => auth()->id(),
-                    'valider_le' => now()
-                ]);
+                // Si un rapport existe, le marquer comme rejeté et créer un nouveau brouillon
+                if ($rapport) {
+                    // Créer un nouveau rapport en brouillon pour révision
+                    $rapport->refresh();
+                    $newRapport = $rapport->replicate();
+
+                    $newRapport->statut = 'brouillon';
+                    $newRapport->parent_id = $rapport->id;
+                    $newRapport->commentaire_validation = null;
+                    $newRapport->date_soumission = null;
+                    $newRapport->created_at = now();
+                    $newRapport->updated_at = null;
+                    $newRapport->save();
+
+                    // NOTE: L'évaluation du rapport sera créée automatiquement lors de la resoumission
+                    // La logique de duplication de l'évaluation (champs passés, etc.) sera appliquée à ce moment
+
+                    $rapport->update([
+                        'statut' => 'rejete',
+                        'decision' => 'rejete',
+                        'commentaire_validation' => $resultats["message_resultat"],
+                        'date_validation' => now(),
+                        'validateur_id' => auth()->id(),
+                        'valider_le' => now()
+                    ]);
+                }
 
                 return StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER;
 
@@ -3469,21 +3490,6 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
             case 'non-accepte':
             case 'non_completees':
             case 'non_accepte':
-                // Créer un nouveau rapport en brouillon pour refaire complètement
-                $rapport->refresh();
-                $newRapport = $rapport->replicate();
-
-                $newRapport->statut = 'brouillon';
-                $newRapport->parent_id = $rapport->id;
-                $newRapport->commentaire_validation = null;
-                $newRapport->date_soumission = null;
-                $newRapport->created_at = now();
-                $newRapport->updated_at = null;
-                $newRapport->save();
-
-                // NOTE: L'évaluation du rapport sera créée automatiquement lors de la resoumission
-                // La logique de duplication de l'évaluation (champs passés, etc.) sera appliquée à ce moment
-
                 // Non accepté → R_VALIDATION_PROFIL_NOTE_AMELIORER (révision directe)
                 $projet->update([
                     'statut' => StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER,
@@ -3491,14 +3497,32 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                     'sous_phase' => $this->getSousPhaseFromStatut(StatutIdee::R_VALIDATION_PROFIL_NOTE_AMELIORER)
                 ]);
 
-                $rapport->update([
-                    'statut' => 'rejete',
-                    'decision' => 'rejete',
-                    'commentaire_validation' => $resultats["message_resultat"],
-                    'date_validation' => now(),
-                    'validateur_id' => auth()->id(),
-                    'valider_le' => now()
-                ]);
+                // Si un rapport existe, le marquer comme rejeté et créer un nouveau brouillon
+                if ($rapport) {
+                    // Créer un nouveau rapport en brouillon pour refaire complètement
+                    $rapport->refresh();
+                    $newRapport = $rapport->replicate();
+
+                    $newRapport->statut = 'brouillon';
+                    $newRapport->parent_id = $rapport->id;
+                    $newRapport->commentaire_validation = null;
+                    $newRapport->date_soumission = null;
+                    $newRapport->created_at = now();
+                    $newRapport->updated_at = null;
+                    $newRapport->save();
+
+                    // NOTE: L'évaluation du rapport sera créée automatiquement lors de la resoumission
+                    // La logique de duplication de l'évaluation (champs passés, etc.) sera appliquée à ce moment
+
+                    $rapport->update([
+                        'statut' => 'rejete',
+                        'decision' => 'rejete',
+                        'commentaire_validation' => $resultats["message_resultat"],
+                        'date_validation' => now(),
+                        'validateur_id' => auth()->id(),
+                        'valider_le' => now()
+                    ]);
+                }
 
                 return StatutIdee::VALIDATION_PROFIL;
 
