@@ -1537,6 +1537,7 @@ class CanevasRedactionFicheIdeeProjet extends Seeder
             $documentData = collect($this->documentData)->except(['sections', 'champs', 'id', 'categorie'])->toArray();
             $documentData = array_merge($documentData, ["categorieId" => $categorieDocument->id]);
 
+            //$categorieDocument->documents->each->forceDelete();
             $document = Document::updateOrCreate(['nom' => $documentData['nom']], $documentData);
 
             // Créer les sections

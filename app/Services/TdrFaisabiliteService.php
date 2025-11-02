@@ -332,8 +332,8 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'message' => $message,
                 'data' => [
                     'tdr' => new TdrResource($tdr),
-                    'fichier_id' => $fichierTdr ? $fichierTdr->id : null,
-                    'projet_id' => $projet->id,
+                    'fichier_id' => $fichierTdr ? $fichierTdr->hashed_id : null,
+                    'projet_id' => $projet->hashed_id,
                     'ancien_statut' => in_array($projet->statut->value, [StatutIdee::TDR_FAISABILITE->value, StatutIdee::R_TDR_FAISABILITE->value]) ? $projet->statut->value : StatutIdee::TDR_FAISABILITE->value,
                     'nouveau_statut' => $estSoumise ? StatutIdee::EVALUATION_TDR_F->value : $projet->statut->value,
                     'fichier_url' => $fichierTdr ? $fichierTdr->url : null,
@@ -426,7 +426,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, $data);
 
             // Préparer l'évaluation complète pour enregistrement
-            $evaluationComplete = [
+            /*$evaluationComplete = [
                 'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationTdrFaisabilite()->all_champs)->map(function ($champ) use ($evaluation) {
                     $champEvalue = collect($evaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                     return [
@@ -444,6 +444,40 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'statistiques' => $resultatsEvaluation,
                 'date_evaluation' => now(),
                 'confirme_par' => $evaluer ? new UserResource(auth()->user()) : null
+            ];*/
+
+
+            // Préparer l'évaluation complète pour enregistrement
+            $evaluationComplete = [
+                'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationTdrFaisabilite()->all_champs)->map(function ($champ) use ($evaluation) {
+                    $champEvalue = collect($evaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                    return [
+                        /* 'id' => $champEvalue ? $champEvalue->pivot->id : null, //$champEvalue ? $champEvalue['pivot']['id'] : null,
+                        'champ_id' => $champ['id'],
+                        'label' => $champ['label'],
+                        'attribut' => $champ['attribut'],
+                        'ordre_affichage' => $champ['ordre_affichage'],
+                        'type_champ' => $champ['type_champ'],
+                        'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
+                        'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
+                        'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null, */
+
+
+                        'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                        'champ_id' => $champ?->hashed_id,
+                        'label' => $champ?->label,
+                        'attribut' => $champ?->attribut,
+                        'ordre_affichage' => $champ?->ordre_affichage,
+                        'type_champ' => $champ?->type_champ,
+                        'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                        'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                        'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
+                    ];
+                })->toArray(),
+
+                'statistiques' => $resultatsEvaluation,
+                'date_evaluation' => now(),
+                'confirme_par' => $data["evaluer"] ? new UserResource(auth()->user()) : null
             ];
 
             // Mettre à jour l'évaluation avec les données complètes
@@ -606,7 +640,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     ], 404);
                 }
 
-                foreach ($canevasAppreciation->all_champs as $champ) {
+                /*foreach ($canevasAppreciation->all_champs as $champ) {
                     $evaluationExistante = null;
                     $data = [
                         'id' => null,
@@ -671,6 +705,73 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     }
 
                     $grilleEvaluation[] = $data;
+                }*/
+
+                foreach ($canevasAppreciation->all_champs as $champ) {
+                    $evaluationExistante = null;
+                    $data = [];
+                    if ($evaluation) {
+
+                        // On commence par vérifier si la structure "evaluation['champs_evalues']" existe
+                        if (isset($evaluation->evaluation['champs_evalues'])) {
+                            $evaluationExistante = collect($evaluation->evaluation['champs_evalues'])
+                                ->firstWhere('champ_id', $champ->hashed_id);
+                            //->firstWhere('champ_id', $champ->id);
+
+                            if ($evaluationExistante) {
+                                $data = [
+                                    'id' => isset($evaluationExistante["id"]) ? $evaluationExistante["id"] : null,
+                                    'appreciation' => $evaluationExistante["appreciation"] ?? null,
+                                    'commentaire_evaluateur' => $evaluationExistante["commentaire_evaluateur"] ?? null,
+                                    'date_evaluation' => $evaluationExistante["date_appreciation"] ?? null
+                                ];
+                            }
+                        }
+                        // Sinon, on vérifie la relation directe "champs_evalues"
+                        elseif (isset($evaluation->champs_evalues)) {
+                            $evaluationExistante = $evaluation->champs_evalues
+                                ->firstWhere('id', $champ->id);
+
+                            if ($evaluationExistante) {
+                                $data = [
+                                    'id' => $evaluationExistante->pivot->id ?? null,
+                                    'appreciation' => $evaluationExistante->pivot->note ?? null,
+                                    'commentaire_evaluateur' => $evaluationExistante->pivot->commentaires ?? null,
+                                    'date_evaluation' => $evaluationExistante->pivot->date_note ?? null
+                                ];
+                            }
+                        }
+
+                        if ($evaluationExistante) {
+                            // Convertir en tableau si c'est un objet pour faciliter l'accès
+                            $evalArray = is_array($evaluationExistante) ? $evaluationExistante : (array)$evaluationExistante;
+
+                            // Vérifie et ajoute les champs "_passer" uniquement si les clés existent
+                            if (isset($evalArray['appreciation_passer'])) {
+                                $data['appreciation_passer'] = $evalArray['appreciation_passer'];
+                            }
+
+                            if (isset($evalArray['commentaire_passer_evaluateur'])) {
+                                $data['commentaire_passer_evaluateur'] = $evalArray['commentaire_passer_evaluateur'];
+                            }
+
+                            if (isset($evalArray['date_appreciation_passer'])) {
+                                $data['date_appreciation_passer'] = $evalArray['date_appreciation_passer'];
+                            }
+                        }
+                    }
+
+                    $grilleEvaluation[] = array_merge([
+                        "id" => null,
+                        'champ_id' => $champ->hashed_id,
+                        'label' => $champ->label,
+                        'attribut' => $champ->attribut,
+                        'type_champ' => $champ->type_champ,
+                        'ordre_affichage' => $champ->ordre_affichage,
+                        'appreciation' => $data['appreciation'] ?? null,
+                        'commentaire_evaluateur' => $data['commentaire_evaluateur'] ?? null,
+                        'date_evaluation' => $data['date_evaluation'] ?? null,
+                    ], $data);
                 }
                 $resultatsEvaluation = $this->calculerResultatEvaluationTdr($evaluation, ['evaluations_champs' => $grilleEvaluation]);
             }
@@ -684,7 +785,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'data' => [
                     'tdr' => new TdrResource($tdr->load(['fichiers', 'projet', "historique_des_evaluations_tdrs_faisabilite"])),
                     'evaluation_existante' => $evaluation ? [
-                        'id' => $evaluation->id,
+                        'id' => $evaluation->hashed_id,
                         'statut' => $evaluation->statut, // 0=en cours, 1=terminée
                         'evaluateur' => new UserResource($evaluation->evaluateur),
                         'date_debut' => Carbon::parse($evaluation->date_debut_evaluation)->format("Y-m-d h:i:s"),
@@ -754,7 +855,9 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $evaluationsChamps = [];
             foreach ($evaluation->champs_evalue as $champ) {
                 $evaluationsChamps[] = [
-                    'champ_id' => $champ->id,
+                    //'champ_id' => $champ->id,
+                    "id" => $champ->pivot->hashed_id,
+                    'champ_id' => $champ->hashed_id,
                     'appreciation' => $champ->pivot->note,
                     'commentaire' => $champ->pivot->commentaires
                 ];
@@ -888,7 +991,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                                 $ancienChampEvalue = $anciensChampsEvalues->firstWhere('attribut', $champ['attribut']);
 
                                 $result = [
-                                    'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                                    /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                                     'champ_id' => $champ['id'],
                                     'label' => $champ['label'],
                                     'attribut' => $champ['attribut'],
@@ -896,7 +999,18 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                                     'type_champ' => $champ['type_champ'],
                                     'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                                     'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,*/
+
+
+                                    'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                                    'champ_id' => $champ?->hashed_id,
+                                    'label' => $champ?->label,
+                                    'attribut' => $champ?->attribut,
+                                    'ordre_affichage' => $champ?->ordre_affichage,
+                                    'type_champ' => $champ?->type_champ,
+                                    'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                                    'commentaire' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                                    'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                                 ];
 
                                 // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
@@ -1741,7 +1855,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'champs_evalues' => collect($this->documentRepository->getCanevasChecklisteSuiviAssuranceQualiteRapportEtudeFaisabilite()->all_champs)->map(function ($champ) use ($evaluationValidation) {
                         $champEvalue = collect($evaluationValidation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                         return [
-                            'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                            /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                             'champ_id' => $champ['id'],
                             'label' => $champ['label'],
                             'attribut' => $champ['attribut'],
@@ -1749,7 +1863,17 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                             'type_champ' => $champ['type_champ'],
                             'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                             'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                            'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                            'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,*/
+
+                            'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                            'champ_id' => $champ?->hashed_id,
+                            'label' => $champ?->label,
+                            'attribut' => $champ?->attribut,
+                            'ordre_affichage' => $champ?->ordre_affichage,
+                            'type_champ' => $champ?->type_champ,
+                            'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                            'commentaire' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                            'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                         ];
                     })->toArray(),
                     'decision' => ['decision' => $data['action'], 'commentaire' => $data['commentaire']],
@@ -1935,7 +2059,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'success' => true,
                 'message' => $messageAction,
                 'data' => [
-                    'projet_id' => $projet->id,
+                    'projet_id' => $projet->hashed_id,
                     'action' => $data['action'],
                     'ancien_statut' => StatutIdee::VALIDATION_F->value,
                     'nouveau_statut' => $nouveauStatut ? $nouveauStatut->value : StatutIdee::VALIDATION_F->value,
@@ -1980,14 +2104,14 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'message' => 'Rapport récupéré avec succès.',
                 'data' => [
                     'projet' => [
-                        'id' => $projet->id,
+                        'id' => $projet->hashed_id,
                         'intitule' => $projet->intitule,
                         'statut' => $projet->statut,
                         'phase' => $projet->phase,
                         'sous_phase' => $projet->sous_phase
                     ],
                     'rapport' => [
-                        'id' => $fichierRapport->id,
+                        'id' => $fichierRapport->hashed_id,
                         'nom_original' => $fichierRapport->nom_original,
                         'nom_stockage' => $fichierRapport->nom_stockage,
                         'extension' => $fichierRapport->extension,
@@ -2737,7 +2861,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
 
                 //dump($ancienChampEvalue);
                 $result = [
-                    'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
+                    /*'id' => $champEvalue ? $champEvalue['pivot']['id'] : null,
                     'champ_id' => $champ['id'],
                     'label' => $champ['label'],
                     'attribut' => $champ['attribut'],
@@ -2745,7 +2869,17 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     'type_champ' => $champ['type_champ'],
                     'appreciation' => $champEvalue ? $champEvalue['pivot']['note'] : null,
                     'commentaire_evaluateur' => $champEvalue ? $champEvalue['pivot']['commentaires'] : null,
-                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,
+                    'date_appreciation' => $champEvalue ? $champEvalue['pivot']['date_note'] : null,*/
+
+                    'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                    'champ_id' => $champ?->hashed_id,
+                    'label' => $champ?->label,
+                    'attribut' => $champ?->attribut,
+                    'ordre_affichage' => $champ?->ordre_affichage,
+                    'type_champ' => $champ?->type_champ,
+                    'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                    'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                    'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
                 ];
 
                 // Si le champ n'est pas dans la nouvelle évaluation mais existe dans l'ancienne
@@ -3184,7 +3318,7 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
             $champRapport = $rapport->champs->firstWhere('id', $champ->id);
 
             return [
-                'id'                 => $champ->id,
+                /*'id'                 => $champ->id,
                 'label'              => $champ->label,
                 'attribut'           => $champ->attribut,
                 'ordre_affichage'    => $champ->ordre_affichage,
@@ -3193,7 +3327,19 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                 'valeur'             => optional($champRapport?->pivot)->valeur,
                 'commentaire'        => optional($champRapport?->pivot)->commentaire,
                 'created_at'         => optional($champRapport?->pivot)->created_at,
-                'updated_at'         => optional($champRapport?->pivot)->updated_at
+                'updated_at'         => optional($champRapport?->pivot)->updated_at*/
+
+
+                'pivot_id' => $champRapport ? $champRapport?->pivot?->hashed_id : null,
+                'id' => $champ?->hashed_id,
+                'label' => $champ?->label,
+                'attribut' => $champ?->attribut,
+                'ordre_affichage' => $champ?->ordre_affichage,
+                'type_champ' => $champ?->type_champ,
+                'valeur' => $champRapport ? $champRapport?->pivot?->valeur : null,
+                'commentaire' => $champRapport ? $champRapport?->pivot?->commentaire : null,
+                'created_at' => $champRapport ? $champRapport?->pivot?->created_at : null,
+                'updated_at' => $champRapport ? $champRapport?->pivot?->updated_at : null,
             ];
         });
 

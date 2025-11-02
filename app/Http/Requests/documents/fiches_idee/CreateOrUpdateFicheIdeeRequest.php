@@ -62,6 +62,22 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
                     $validator->errors()->add("champs.{$index}.id", $idValidator->message());
                 }
             }
+
+            // Valider l'ID hashé de la section du champ
+            if (isset($champ['sectionId']) && $champ['sectionId']) {
+                $idValidator = new HashedExists(ChampSection::class);
+                if (!$idValidator->passes("champs.{$index}.sectionId", $champ['sectionId'])) {
+                    $validator->errors()->add("champs.{$index}.sectionId", $idValidator->message());
+                }
+            }
+
+            // Valider l'ID hashé de la section du champ
+            if (isset($champ['documentId']) && $champ['documentId']) {
+                $idValidator = new HashedExists(Document::class);
+                if (!$idValidator->passes("champs.{$index}.documentId", $champ['documentId'])) {
+                    $validator->errors()->add("champs.{$index}.documentId", $idValidator->message());
+                }
+            }
         }
 
         // Champs dans sections (récursif pour gérer les sous-sections)
@@ -71,6 +87,14 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
                 $idValidator = new HashedExists(ChampSection::class);
                 if (!$idValidator->passes("sections.{$index}.id", $section['id'])) {
                     $validator->errors()->add("sections.{$index}.id", $idValidator->message());
+                }
+            }
+
+            // Valider l'ID hashé de la section du champ
+            if (isset($section['parentSectionId']) && $section['parentSectionId']) {
+                $idValidator = new HashedExists(ChampSection::class);
+                if (!$idValidator->passes("sections.{$index}.parentSectionId", $section['parentSectionId'])) {
+                    $validator->errors()->add("sections.{$index}.parentSectionId", $idValidator->message());
                 }
             }
 
@@ -105,6 +129,22 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
                     $validator->errors()->add("{$path}.champs.{$index}.id", $idValidator->message());
                 }
             }
+
+            // Valider l'ID hashé de la section du champ
+            if (isset($champ['sectionId']) && $champ['sectionId']) {
+                $idValidator = new HashedExists(ChampSection::class);
+                if (!$idValidator->passes("{$path}.champs.{$index}.sectionId", $champ['sectionId'])) {
+                    $validator->errors()->add("{$path}.champs.{$index}.sectionId", $idValidator->message());
+                }
+            }
+
+            // Valider l'ID hashé de la section du champ
+            if (isset($champ['documentId']) && $champ['documentId']) {
+                $idValidator = new HashedExists(Document::class);
+                if (!$idValidator->passes("{$path}.champs.{$index}.documentId", $champ['documentId'])) {
+                    $validator->errors()->add("{$path}.champs.{$index}.documentId", $idValidator->message());
+                }
+            }
         }
 
         // Champs dans les sous-sections (récursif)
@@ -115,6 +155,14 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
                     $idValidator = new HashedExists(ChampSection::class);
                     if (!$idValidator->passes("{$path}.sous_sections.{$index}.id", $sousSection['id'])) {
                         $validator->errors()->add("{$path}.sous_sections.{$index}.id", $idValidator->message());
+                    }
+                }
+
+                // Valider l'ID hashé de la section du champ
+                if (isset($sousSection['parentSectionId']) && $sousSection['parentSectionId']) {
+                    $idValidator = new HashedExists(ChampSection::class);
+                    if (!$idValidator->passes("{$path}.sous_sections.{$index}.parentSectionId", $sousSection['parentSectionId'])) {
+                        $validator->errors()->add("{$path}.sous_sections.{$index}.parentSectionId", $idValidator->message());
                     }
                 }
 

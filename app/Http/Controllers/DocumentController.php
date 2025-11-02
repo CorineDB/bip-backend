@@ -234,8 +234,6 @@ class DocumentController extends Controller
      */
     public function createOrUpdateFicheIdee(CreateOrUpdateFicheIdeeRequest $request): JsonResponse
     {
-        throw new \Exception("Form Request : ". ($request->all()), 403);
-
         return $this->service->createOrUpdateFicheIdee($request->all());
     }
 

@@ -599,7 +599,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             return $this->errorResponse($e);
         }
     }
-    
+
     /**
      * Apprécier et évaluer les TDRs de préfaisabilité (SFD-011)
      */
@@ -1140,8 +1140,10 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $evaluationsChamps = [];
             foreach ($evaluation->champs_evalue as $champ) {
                 $evaluationsChamps[] = [
-                    "id" => $champ->hashed_id,
-                    'champ_id' => $champ->pivot->champ_id,
+                    /*"id" => $champ->hashed_id,
+                    'champ_id' => $champ->pivot->champ_id,*/
+                    'id' => $champ->pivot->hashed_id,
+                    'champ_id' => $champ->hashed_id,
                     'appreciation' => $champ->pivot->note,
                     'commentaire' => $champ->pivot->commentaires
                 ];

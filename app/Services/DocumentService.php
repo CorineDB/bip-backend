@@ -10,6 +10,7 @@ use App\Services\BaseService;
 use App\Repositories\Contracts\BaseRepositoryInterface;
 use App\Http\Resources\DocumentResource;
 use App\Http\Resources\CanevasNoteConceptuelleResource;
+use App\Http\Resources\FicheIdeeResource;
 use App\Models\CategorieDocument;
 use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Services\Contracts\DocumentServiceInterface;
@@ -526,6 +527,9 @@ class DocumentService extends BaseService implements DocumentServiceInterface
      */
     private function createOrUpdateChamp(array $champAttributes, $document, $section = null): void
     {
+            // Affiche toutes les valeurs des attributs de champ
+        // Une de ces valeurs est un tableau alors que la colonne DB attend une string.
+        \Log::info('Attributs de champ en cours de traitement', $champAttributes);
         // Critères uniques pour identifier un champ existant
         $uniqueKeys = [
             'attribut' => $champAttributes['attribut'],
@@ -573,7 +577,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             $sousSectionsData = $sectionData['sous_sections'] ?? [];
 
             // Extraire les données de la section (sans les champs)
-            $sectionAttributes = collect($sectionData)->except(['id', 'champs'])->toArray();
+            $sectionAttributes = collect($sectionData)->except(['id', 'champs', 'sous_sections'])->toArray();
             $sectionAttributes["parentSectionId"] = $sectionParent ? $sectionParent->id : null;
 
             if ($sectionId) {
@@ -617,7 +621,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             $champAttribut = $champData['attribut'] ?? null;
 
             // Extraire les données du champ
-            $champAttributes = collect($champData)->except(['id', 'sectionId'])->toArray();
+            $champAttributes = collect($champData)->except(['id', 'sectionId', 'sectionGroup', 'key', 'type', 'champStandard'])->toArray();
             $champAttributes['sectionId'] = $section->id;
 
             $champ = null;
@@ -694,6 +698,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             */
         }
     }
+
     /**
      * Mettre à jour les champs directs (sans section) pour un document existant
      */
@@ -785,7 +790,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
                 DB::commit();
 
-                return (new $this->resourceClass($ficheIdee))
+                return (new FicheIdeeResource($ficheIdee))
                     ->additional(['message' => 'Fiche idée mise à jour avec succès.'])
                     ->response()
                     ->setStatusCode(200);
@@ -818,7 +823,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
                 DB::commit();
 
-                return (new $this->resourceClass($document->fresh(['sections.champs', 'champs'])))
+                return (new FicheIdeeResource($document->fresh(['sections.champs', 'champs'])))
                     ->additional(['message' => 'Fiche idée créée avec succès.'])
                     ->response()
                     ->setStatusCode(201);
