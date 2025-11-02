@@ -50,7 +50,7 @@ class ProgressionEvaluationClimatiqueNotification extends Notification implement
             ->when($this->scoreClimatique, function ($message) {
                 return $message->line('Score climatique actuel: ' . number_format($this->scoreClimatique, 2));
             })
-            ->action("Voir l'évaluation", url("{$path}/idees/" . $this->ideeProjet->id . "/details-evaluation-climatique"))
+            ->action("Voir l'évaluation", url("{$path}/idees/" . $this->ideeProjet->hashed_id . "/details-evaluation-climatique"))
             ->line('Vous serez notifié dès que l\'évaluation sera terminée.');
     }
 
@@ -61,14 +61,14 @@ class ProgressionEvaluationClimatiqueNotification extends Notification implement
             'title' => 'Progression de l\'évaluation climatique',
             'body' => 'L\'évaluation de "' . $this->ideeProjet->sigle . '" progresse (' . number_format($this->tauxProgression, 1) . '%).',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
-                'evaluation_id' => $this->evaluation->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
+                'evaluation_id' => $this->evaluation->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'taux_progression' => $this->tauxProgression,
                 'score_climatique_actuel' => $this->scoreClimatique,
                 'date_mise_a_jour' => now()->toISOString(),
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/details-evaluation-climatique',
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id . '/details-evaluation-climatique',
         ]);
     }
 
@@ -82,14 +82,14 @@ class ProgressionEvaluationClimatiqueNotification extends Notification implement
             'title' => 'Progression de l\'évaluation climatique',
             'message' => 'L\'évaluation climatique de "' . $this->ideeProjet->sigle . '" progresse (' . number_format($this->tauxProgression, 1) . '%).',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
-                'evaluation_id' => $this->evaluation->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
+                'evaluation_id' => $this->evaluation->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'taux_progression' => $this->tauxProgression,
                 'score_climatique_actuel' => $this->scoreClimatique,
                 'date_mise_a_jour' => now()->toISOString(),
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/details-evaluation-climatique',
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id . '/details-evaluation-climatique',
         ];
     }
 }

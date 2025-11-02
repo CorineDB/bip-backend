@@ -58,13 +58,13 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
     public function toMail($notifiable): MailMessage
     {
         $mailMessage = new MailMessage();
-        $evaluateurNomComplet = $this->evaluateur->prenom . ' ' . $this->evaluateur->nom;
+        $evaluateurNomComplet = $this->evaluateur->personne->prenom . ' ' . $this->evaluateur->personne->nom;
 
         switch ($this->typeDestinataire) {
             case 'redacteur_info':
                 return $mailMessage
                     ->subject('Appréciation de votre Note Conceptuelle en cours')
-                    ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                    ->greeting('Bonjour ' . $notifiable->personne->prenom . ',')
                     ->line('Votre note conceptuelle est en cours d\'évaluation.')
                     ->line('**Projet :** ' . $this->projet->titre_projet)
                     ->line('**Note :** ' . $this->noteConceptuelle->intitule)
@@ -76,7 +76,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
             case 'dpaf_supervision':
                 return $mailMessage
                     ->subject('Appréciation Note Conceptuelle - Supervision DPAF')
-                    ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                    ->greeting('Bonjour ' . $notifiable->personne->prenom . ',')
                     ->line('Une appréciation de note conceptuelle est en cours pour un projet de votre ministère.')
                     ->line('**Projet :** ' . $this->projet->titre_projet)
                     ->line('**Note :** ' . $this->noteConceptuelle->intitule)
@@ -88,7 +88,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
             case 'dgpd_collegial':
                 return $mailMessage
                     ->subject('Appréciation Note Conceptuelle par un collègue')
-                    ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                    ->greeting('Bonjour ' . $notifiable->personne->prenom . ',')
                     ->line('Un collègue a commencé l\'appréciation d\'une note conceptuelle.')
                     ->line('**Projet :** ' . $this->projet->titre_projet)
                     ->line('**Note :** ' . $this->noteConceptuelle->intitule)
@@ -103,7 +103,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
 
                 return $mailMessage
                     ->subject('Évaluation de Note Conceptuelle Terminée')
-                    ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                    ->greeting('Bonjour ' . $notifiable->personne->prenom . ',')
                     ->line('L\'évaluation de votre note conceptuelle est terminée.')
                     ->line('**Projet :** ' . $this->projet->titre_projet)
                     ->line('**Note :** ' . $this->noteConceptuelle->intitule)
@@ -116,7 +116,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
             case 'evaluateur_confirmation':
                 return $mailMessage
                     ->subject('Confirmation - Appréciation Note Conceptuelle créée')
-                    ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                    ->greeting('Bonjour ' . $notifiable->personne->prenom . ',')
                     ->line('Votre appréciation de note conceptuelle a été enregistrée avec succès.')
                     ->line('**Projet :** ' . $this->projet->titre_projet)
                     ->line('**Note :** ' . $this->noteConceptuelle->intitule)
@@ -128,7 +128,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
             default:
                 return $mailMessage
                     ->subject('Appréciation Note Conceptuelle')
-                    ->greeting('Bonjour ' . $notifiable->prenom . ',')
+                    ->greeting('Bonjour ' . $notifiable->personne->prenom . ',')
                     ->line('Une appréciation de note conceptuelle a été créée.')
                     ->action('Voir les détails', $this->getActionUrl());
         }
@@ -142,16 +142,16 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
         return [
             'type' => 'appreciation_note_conceptuelle',
             'type_destinataire' => $this->typeDestinataire,
-            'evaluation_id' => $this->evaluation->id,
-            'note_conceptuelle_id' => $this->noteConceptuelle->id,
-            'projet_id' => $this->projet->id,
+            'evaluation_id' => $this->evaluation->hashed_id,
+            'note_conceptuelle_id' => $this->noteConceptuelle->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
             'projet_titre' => $this->projet->titre_projet,
             'note_intitule' => $this->noteConceptuelle->intitule,
             'evaluateur' => [
-                'id' => $this->evaluateur->id,
-                'nom' => $this->evaluateur->nom,
-                'prenom' => $this->evaluateur->prenom,
-                'nom_complet' => $this->evaluateur->prenom . ' ' . $this->evaluateur->nom,
+                'id' => $this->evaluateur->hashed_id,
+                'nom' => $this->evaluateur->personne->nom,
+                'prenom' => $this->evaluateur->personne->prenom,
+                'nom_complet' => $this->evaluateur->personne->prenom . ' ' . $this->evaluateur->personne->nom,
             ],
             'redacteur' => [
                 'nom' => $this->noteConceptuelle->redacteur->nom ?? '',
@@ -189,7 +189,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
      */
     protected function getMessage(): string
     {
-        $evaluateurNom = $this->evaluateur->prenom . ' ' . $this->evaluateur->nom;
+        $evaluateurNom = $this->evaluateur->personne->prenom . ' ' . $this->evaluateur->personne->nom;
 
         switch ($this->typeDestinataire) {
             case 'redacteur_info':

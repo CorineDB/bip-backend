@@ -55,9 +55,9 @@ class DecisionFaibleScoreClimatiqueNotification extends Notification implements 
 
         if ($this->decision === 'reevaluer') {
             $message->line('Une nouvelle évaluation climatique est demandée.')
-                   ->action("Commencer la réévaluation", url("{$path}/idees/" . $this->ideeProjet->id . "/validation-evaluation-climatique"));
+                   ->action("Commencer la réévaluation", url("{$path}/idees/" . $this->ideeProjet->hashed_id . "/validation-evaluation-climatique"));
         } else {
-            $message->action("Voir les détails", url("{$path}/idees/" . $this->ideeProjet->id));
+            $message->action("Voir les détails", url("{$path}/idees/" . $this->ideeProjet->hashed_id));
         }
 
         return $message->line('Merci pour votre contribution à l\'évaluation climatique.');
@@ -70,14 +70,14 @@ class DecisionFaibleScoreClimatiqueNotification extends Notification implements 
             'title' => 'Décision suite au score climatique',
             'body' => 'Décision pour "' . $this->ideeProjet->sigle . '" (score: ' . number_format($this->scoreClimatique, 2) . '): ' . $this->decision,
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_climatique' => $this->scoreClimatique,
                 'decision' => $this->decision,
                 'commentaire' => $this->commentaire,
                 'date_decision' => now()->toISOString(),
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . ($this->decision === 'reevaluer' ? '/details-evaluation-climatique' : ''),
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id . ($this->decision === 'reevaluer' ? '/details-evaluation-climatique' : ''),
         ]);
     }
 
@@ -93,14 +93,14 @@ class DecisionFaibleScoreClimatiqueNotification extends Notification implements 
             'title' => 'Décision suite au score climatique',
             'message' => 'Le Responsable projet a ' . $decisionText . ' l\'idée "' . $this->ideeProjet->sigle . '" (score: ' . number_format($this->scoreClimatique, 2) . ').' . ($this->commentaire ? ' Commentaire: ' . $this->commentaire : ''),
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_climatique' => $this->scoreClimatique,
                 'decision' => $this->decision,
                 'commentaire' => $this->commentaire,
                 'date_decision' => now()->toISOString(),
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . ($this->decision === 'reevaluer' ? '/details-evaluation-climatique' : ''),
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id . ($this->decision === 'reevaluer' ? '/details-evaluation-climatique' : ''),
         ];
     }
 }

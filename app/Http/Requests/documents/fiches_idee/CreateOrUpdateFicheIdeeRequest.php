@@ -207,7 +207,7 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
 
             // Sections
             'sections' => 'sometimes|array|min:1',
-            'sections.*.id' => ["sometimes"/* Rule::requiredIf($this->fiche) */, Rule::exists('champs_sections', 'id')->whereNull('deleted_at')],
+            'sections.*.id' => ["sometimes"/* Rule::requiredIf($this->fiche) */, new HashedExists(ChampSection::class)/* Rule::exists('champs_sections', 'id')->whereNull('deleted_at') */],
             'sections.*.intitule' => 'required|string|max:255',
             'sections.*.description' => 'nullable|string',
             'sections.*.ordre_affichage' => 'required|integer|min:1',
@@ -215,7 +215,7 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
 
             // Champs dans les sections
             'sections.*.champs' => 'sometimes|array|min:1',
-            'sections.*.champs.*.id' => ["sometimes"/* Rule::requiredIf($this->fiche) */, Rule::exists('champs', 'id')->whereNull('deleted_at')],
+            'sections.*.champs.*.id' => ["sometimes"/* Rule::requiredIf($this->fiche) */, new HashedExists(Champ::class)/* Rule::exists('champs', 'id')->whereNull('deleted_at') */],
             'sections.*.champs.*.label' => 'required|string|max:255',
             'sections.*.champs.*.info' => 'nullable|string|max:65535',
             'sections.*.champs.*.attribut' => 'sometimes|nullable|string|max:255',
@@ -242,7 +242,7 @@ class CreateOrUpdateFicheIdeeRequest extends FormRequest
 
             // Champs racine (sans section)
             'champs' => 'sometimes|array|min:1',
-            'champs.*.id' => ["sometimes"/* Rule::requiredIf($this->fiche) */, Rule::exists('champs', 'id')->whereNull('deleted_at')],
+            'champs.*.id' => ["sometimes"/* Rule::requiredIf($this->fiche) */, new HashedExists(Champ::class)/* Rule::exists('champs', 'id')->whereNull('deleted_at') */],
             'champs.*.label' => 'required|string|max:255',
             'champs.*.info' => 'nullable|string|max:65535',
             'champs.*.attribut' => 'sometimes|nullable|string|max:255',

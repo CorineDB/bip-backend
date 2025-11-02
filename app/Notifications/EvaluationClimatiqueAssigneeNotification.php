@@ -42,7 +42,7 @@ class EvaluationClimatiqueAssigneeNotification extends Notification implements S
         return (new MailMessage)
             ->subject('Nouvelle idée de projet créée')
             ->line('Vous avez été assigné(e) pour effectuer l\'évaluation climatique de l\'idée de projet "' . $this->ideeProjet->sigle . '".')
-            ->action("Accedez a l'objet de l'evaluation", url("{$path}/idees/" . $this->ideeProjet->id));
+            ->action("Accedez a l'objet de l'evaluation", url("{$path}/idees/" . $this->ideeProjet->hashed_id));
     }
 
     public function toBroadcast($notifiable)
@@ -52,12 +52,12 @@ class EvaluationClimatiqueAssigneeNotification extends Notification implements S
             'title' => 'Évaluation climatique assignée',
             'body' => 'Vous avez été assigné(e) pour effectuer l\'évaluation climatique de l\'idée de projet "' . $this->ideeProjet->sigle . '".',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
-                'evaluation_id' => $this->evaluation->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
+                'evaluation_id' => $this->evaluation->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'date_debut_evaluation' => $this->evaluation->date_debut_evaluation->toISOString(),
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id
         ]);
     }
 
@@ -71,12 +71,12 @@ class EvaluationClimatiqueAssigneeNotification extends Notification implements S
             'title' => 'Évaluation climatique assignée',
             'message' => 'Vous avez été assigné(e) pour effectuer l\'évaluation climatique de l\'idée de projet "' . $this->ideeProjet->sigle . '".',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
-                'evaluation_id' => $this->evaluation->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
+                'evaluation_id' => $this->evaluation->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'date_debut_evaluation' => $this->evaluation->date_debut_evaluation->toISOString(),
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id
         ];
     }
 }

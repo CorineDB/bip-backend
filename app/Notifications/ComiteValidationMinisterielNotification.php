@@ -55,8 +55,8 @@ class ComiteValidationMinisterielNotification extends Notification implements Sh
             'title' => 'Amendement/Commentaire requis',
             'body' => 'L\'AMC de "' . $this->ideeProjet->sigle . '" attend vos amendements/commentaires en tant que membre du Comité.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
-                'evaluation_amc_id' => $this->evaluationAMC->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
+                'evaluation_amc_id' => $this->evaluationAMC->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_amc' => $this->ideeProjet->score_amc ?? 0,
                 'score_climatique' => $this->ideeProjet->score_climatique ?? 0,
@@ -77,8 +77,8 @@ class ComiteValidationMinisterielNotification extends Notification implements Sh
             'title' => 'Amendement/Commentaire requis - Comité de validation',
             'message' => 'L\'analyse multicritères de "' . $this->ideeProjet->sigle . '" est terminée (Score AMC: ' . number_format($this->ideeProjet->score_amc ?? 0, 2) . '). En tant que membre du Comité de validation ministériel, vos amendements/commentaires sont requis.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
-                'evaluation_amc_id' => $this->evaluationAMC->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
+                'evaluation_amc_id' => $this->evaluationAMC->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_amc' => $this->ideeProjet->score_amc ?? 0,
                 'score_climatique' => $this->ideeProjet->score_climatique ?? 0,

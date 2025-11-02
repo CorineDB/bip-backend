@@ -22,6 +22,7 @@ class NotificationTdrFaisabiliteEvalue extends Notification implements ShouldQue
     protected User $evaluateur;
     protected array $resultatsEvaluation;
     protected string $typeDestinataire;
+    protected string $evaluateurNomComplet;
 
     /**
      * Types de destinataires possibles :
@@ -44,6 +45,7 @@ class NotificationTdrFaisabiliteEvalue extends Notification implements ShouldQue
         $this->evaluateur = $evaluateur;
         $this->resultatsEvaluation = $resultatsEvaluation;
         $this->typeDestinataire = $typeDestinataire;
+        $this->evaluateurNomComplet = $this->evaluateur->personne->prenom . ' ' . $this->evaluateur->personne->nom;
     }
 
     /**
@@ -63,10 +65,10 @@ class NotificationTdrFaisabiliteEvalue extends Notification implements ShouldQue
     {
         return (new MailMessage)
             ->subject($this->getSubject())
-            ->greeting('Bonjour ' . $notifiable->name . ',')
+            ->greeting('Bonjour ' . $notifiable->personne->prenom . ' ' . $notifiable->personne->nom . ',')
             ->line($this->getMessage())
             ->line('**Projet :** ' . $this->projet->titre_projet)
-            ->line('**Évalué par :** ' . $this->evaluateur->name)
+            ->line('**Évalué par :** ' . $this->evaluateurNomComplet)
             ->line('**Résultat :** ' . $this->getResultatLabel())
             ->when(isset($this->resultatsEvaluation['message_resultat']), function ($mail) {
                 return $mail->line('**Observation :** ' . $this->resultatsEvaluation['message_resultat']);
@@ -87,11 +89,11 @@ class NotificationTdrFaisabiliteEvalue extends Notification implements ShouldQue
             'type' => 'tdr_faisabilite_evalue',
             'titre' => $this->getSubject(),
             'message' => $this->getMessage(),
-            'tdr_id' => $this->tdr->id,
-            'projet_id' => $this->projet->id,
-            'evaluation_id' => $this->evaluation->id,
-            'evaluateur_id' => $this->evaluateur->id,
-            'evaluateur_name' => $this->evaluateur->name,
+            'tdr_id' => $this->tdr->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
+            'evaluation_id' => $this->evaluation->hashed_id,
+            'evaluateur_id' => $this->evaluateur->hashed_id,
+            'evaluateur_name' => $this->evaluateurNomComplet,
             'resultat_global' => $this->resultatsEvaluation['resultat_global'] ?? null,
             'resultat_label' => $this->getResultatLabel(),
             'type_destinataire' => $this->typeDestinataire,
@@ -119,11 +121,11 @@ class NotificationTdrFaisabiliteEvalue extends Notification implements ShouldQue
             'type' => 'tdr_faisabilite_evalue',
             'titre' => $this->getSubject(),
             'message' => $this->getMessage(),
-            'tdr_id' => $this->tdr->id,
-            'projet_id' => $this->projet->id,
-            'evaluation_id' => $this->evaluation->id,
-            'evaluateur_id' => $this->evaluateur->id,
-            'evaluateur_name' => $this->evaluateur->name,
+            'tdr_id' => $this->tdr->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
+            'evaluation_id' => $this->evaluation->hashed_id,
+            'evaluateur_id' => $this->evaluateur->hashed_id,
+            'evaluateur_name' => $this->evaluateurNomComplet,
             'resultat_global' => $this->resultatsEvaluation['resultat_global'] ?? null,
             'resultat_label' => $this->getResultatLabel(),
             'type_destinataire' => $this->typeDestinataire,
@@ -166,7 +168,7 @@ class NotificationTdrFaisabiliteEvalue extends Notification implements ShouldQue
         return match($this->typeDestinataire) {
             'redacteur_resultat' =>
                 'L\'évaluation de votre TDR de faisabilité pour le projet "' . $this->projet->titre_projet .
-                '" a été effectuée par ' . $this->evaluateur->name . '. Résultat : ' . $resultat . '.',
+                '" a été effectuée par ' . $this->evaluateurNomComplet . '. Résultat : ' . $resultat . '.',
             'dpaf_supervision' =>
                 'Le TDR de faisabilité pour le projet "' . $this->projet->titre_projet .
                 '" a été évalué. Résultat : ' . $resultat . '.',
@@ -187,10 +189,10 @@ class NotificationTdrFaisabiliteEvalue extends Notification implements ShouldQue
     protected function getActionUrl(): string
     {
         return match($this->typeDestinataire) {
-            'redacteur_resultat', 'equipe_organisation' => '/projets/' . $this->projet->id . '/tdr/' . $this->tdr->id . '/evaluation',
-            'dpaf_supervision' => '/projets/' . $this->projet->id . '/supervision',
-            'evaluateur_confirmation' => '/projets/' . $this->projet->id . '/evaluations',
-            default => '/projets/' . $this->projet->id,
+            'redacteur_resultat', 'equipe_organisation' => '/projets/' . $this->projet->hashed_id . '/tdr/' . $this->tdr->hashed_id . '/evaluation',
+            'dpaf_supervision' => '/projets/' . $this->projet->hashed_id . '/supervision',
+            'evaluateur_confirmation' => '/projets/' . $this->projet->hashed_id . '/evaluations',
+            default => '/projets/' . $this->projet->hashed_id,
         };
     }
 

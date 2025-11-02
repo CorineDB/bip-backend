@@ -22,6 +22,7 @@ class NotificationEtudeFaisabiliteValidee extends Notification implements Should
     protected User $validateur;
     protected string $decision;
     protected string $typeDestinataire;
+    protected string $validateurNomComplet;
 
     /**
      * Types de destinataires possibles :
@@ -45,6 +46,8 @@ class NotificationEtudeFaisabiliteValidee extends Notification implements Should
         $this->validateur = $validateur;
         $this->decision = $decision;
         $this->typeDestinataire = $typeDestinataire;
+
+        $this->validateurNomComplet = $this->validateur->personne->prenom . ' ' . $this->validateur->personne->nom;
     }
 
     /**
@@ -64,11 +67,11 @@ class NotificationEtudeFaisabiliteValidee extends Notification implements Should
     {
         return (new MailMessage)
             ->subject($this->getSubject())
-            ->greeting('Bonjour ' . $notifiable->name . ',')
+            ->greeting('Bonjour ' . $notifiable->personne->prenom . ' ' . $notifiable->personne->nom . ',')
             ->line($this->getMessage())
             ->line('**Projet :** ' . $this->projet->titre_projet)
             ->line('**Décision :** ' . $this->getDecisionLabel())
-            ->line('**Validé par :** ' . $this->validateur->name)
+            ->line('**Validé par :** ' . $this->validateurNomComplet)
             ->when($this->evaluation->commentaire, function ($mail) {
                 return $mail->line('**Commentaire :** ' . $this->evaluation->commentaire);
             })
@@ -88,11 +91,11 @@ class NotificationEtudeFaisabiliteValidee extends Notification implements Should
             'type' => 'etude_faisabilite_validee',
             'titre' => $this->getSubject(),
             'message' => $this->getMessage(),
-            'rapport_id' => $this->rapport->id,
-            'projet_id' => $this->projet->id,
-            'evaluation_id' => $this->evaluation->id,
-            'validateur_id' => $this->validateur->id,
-            'validateur_name' => $this->validateur->name,
+            'rapport_id' => $this->rapport->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
+            'evaluation_id' => $this->evaluation->hashed_id,
+            'validateur_id' => $this->validateur->hashed_id,
+            'validateur_name' => $this->validateurNomComplet,
             'decision' => $this->decision,
             'decision_label' => $this->getDecisionLabel(),
             'commentaire' => $this->evaluation->commentaire,
@@ -120,11 +123,11 @@ class NotificationEtudeFaisabiliteValidee extends Notification implements Should
             'type' => 'etude_faisabilite_validee',
             'titre' => $this->getSubject(),
             'message' => $this->getMessage(),
-            'rapport_id' => $this->rapport->id,
-            'projet_id' => $this->projet->id,
-            'evaluation_id' => $this->evaluation->id,
-            'validateur_id' => $this->validateur->id,
-            'validateur_name' => $this->validateur->name,
+            'rapport_id' => $this->rapport->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
+            'evaluation_id' => $this->evaluation->hashed_id,
+            'validateur_id' => $this->validateur->hashed_id,
+            'validateur_name' => $this->validateurNomComplet,//$this->validateur->name,
             'decision' => $this->decision,
             'decision_label' => $this->getDecisionLabel(),
             'type_destinataire' => $this->typeDestinataire,
@@ -165,18 +168,18 @@ class NotificationEtudeFaisabiliteValidee extends Notification implements Should
             'redacteur_resultat' => match($this->decision) {
                 'maturite' =>
                     'Félicitations ! L\'étude de faisabilité pour le projet "' . $this->projet->titre_projet .
-                    '" a été validée par ' . $this->validateur->name . '. Le projet peut passer en phase de maturité.',
+                    '" a été validée par ' . $this->validateurNomComplet . '. Le projet peut passer en phase de maturité.',
                 'faisabilite' =>
                     'L\'étude de faisabilité pour le projet "' . $this->projet->titre_projet .
-                    '" a été validée par ' . $this->validateur->name . '. Une étude de faisabilité complète est nécessaire.',
+                    '" a été validée par ' . $this->validateurNomComplet . '. Une étude de faisabilité complète est nécessaire.',
                 'reprendre' =>
                     'L\'étude de faisabilité pour le projet "' . $this->projet->titre_projet .
-                    '" doit être reprise selon les commentaires de ' . $this->validateur->name . '.',
+                    '" doit être reprise selon les commentaires de ' . $this->validateurNomComplet . '.',
                 'abandonner' =>
                     'L\'étude de faisabilité pour le projet "' . $this->projet->titre_projet .
-                    '" a conduit à l\'abandon du projet selon la décision de ' . $this->validateur->name . '.',
+                    '" a conduit à l\'abandon du projet selon la décision de ' . $this->validateurNomComplet . '.',
                 default =>
-                    'L\'étude de faisabilité a été validée par ' . $this->validateur->name . '.',
+                    'L\'étude de faisabilité a été validée par ' . $this->validateurNomComplet . '.',
             },
             'charge_mise_en_oeuvre_action' =>
                 'Une nouvelle mission vous a été attribuée. L\'étude de faisabilité du projet "' .
@@ -186,7 +189,7 @@ class NotificationEtudeFaisabiliteValidee extends Notification implements Should
                 '" a été validée. Décision : ' . $this->getDecisionLabel() . '.',
             'equipe_organisation' =>
                 'L\'étude de faisabilité du projet "' . $this->projet->titre_projet .
-                '" a été validée par ' . $this->validateur->name . '. Décision : ' . $this->getDecisionLabel() . '.',
+                '" a été validée par ' . $this->validateurNomComplet . '. Décision : ' . $this->getDecisionLabel() . '.',
             'validateur_confirmation' =>
                 'Votre validation de l\'étude de faisabilité pour le projet "' . $this->projet->titre_projet .
                 '" a été enregistrée avec succès.',
@@ -201,9 +204,9 @@ class NotificationEtudeFaisabiliteValidee extends Notification implements Should
     protected function getActionUrl(): string
     {
         return match($this->typeDestinataire) {
-            'charge_mise_en_oeuvre_action' => '/projets/' . $this->projet->id . '/faisabilite',
-            'validateur_confirmation' => '/projets/' . $this->projet->id . '/evaluations',
-            default => '/projets/' . $this->projet->id,
+            'charge_mise_en_oeuvre_action' => '/projets/' . $this->projet->hashed_id . '/faisabilite',
+            'validateur_confirmation' => '/projets/' . $this->projet->hashed_id . '/evaluations',
+            default => '/projets/' . $this->projet->hashed_id,
         };
     }
 

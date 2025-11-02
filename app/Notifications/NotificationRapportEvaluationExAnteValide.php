@@ -22,6 +22,7 @@ class NotificationRapportEvaluationExAnteValide extends Notification implements 
     protected User $validateur;
     protected string $decision;
     protected string $typeDestinataire;
+    protected string $validateurNomComplet;
 
     /**
      * Types de destinataires possibles :
@@ -44,6 +45,8 @@ class NotificationRapportEvaluationExAnteValide extends Notification implements 
         $this->validateur = $validateur;
         $this->decision = $decision;
         $this->typeDestinataire = $typeDestinataire;
+
+        $this->validateurNomComplet = $this->validateur->personne->prenom . ' ' . $this->validateur->personne->nom;
     }
 
     /**
@@ -63,10 +66,10 @@ class NotificationRapportEvaluationExAnteValide extends Notification implements 
     {
         return (new MailMessage)
             ->subject($this->getSubject())
-            ->greeting('Bonjour ' . $notifiable->name . ',')
+            ->greeting('Bonjour ' . $notifiable->personne->prenom . ' ' . $notifiable->personne->nom . ',')
             ->line($this->getMessage())
             ->line('**Projet :** ' . $this->projet->titre_projet)
-            ->line('**Validé par :** ' . $this->validateur->name)
+            ->line('**Validé par :** ' . $this->validateurNomComplet)
             ->line('**Date de validation :** ' . $this->rapport->date_validation?->format('d/m/Y à H:i'))
             ->line('**Décision :** ' . $this->getDecisionLabel())
             ->line($this->getActionMessage())
@@ -85,11 +88,11 @@ class NotificationRapportEvaluationExAnteValide extends Notification implements 
             'type' => 'rapport_evaluation_ex_ante_valide',
             'titre' => $this->getSubject(),
             'message' => $this->getMessage(),
-            'rapport_id' => $this->rapport->id,
-            'projet_id' => $this->projet->id,
-            'evaluation_id' => $this->evaluation->id,
-            'validateur_id' => $this->validateur->id,
-            'validateur_name' => $this->validateur->name,
+            'rapport_id' => $this->rapport->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
+            'evaluation_id' => $this->evaluation->hashed_id,
+            'validateur_id' => $this->validateur->hashed_id,
+            'validateur_name' => $this->validateurNomComplet,
             'decision' => $this->decision,
             'type_destinataire' => $this->typeDestinataire,
             'action_url' => $this->getActionUrl(),
@@ -116,11 +119,11 @@ class NotificationRapportEvaluationExAnteValide extends Notification implements 
             'type' => 'rapport_evaluation_ex_ante_valide',
             'titre' => $this->getSubject(),
             'message' => $this->getMessage(),
-            'rapport_id' => $this->rapport->id,
-            'projet_id' => $this->projet->id,
-            'evaluation_id' => $this->evaluation->id,
-            'validateur_id' => $this->validateur->id,
-            'validateur_name' => $this->validateur->name,
+            'rapport_id' => $this->rapport->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
+            'evaluation_id' => $this->evaluation->hashed_id,
+            'validateur_id' => $this->validateur->hashed_id,
+            'validateur_name' => $this->validateurNomComplet,
             'decision' => $this->decision,
             'type_destinataire' => $this->typeDestinataire,
             'action_url' => $this->getActionUrl(),
@@ -160,9 +163,9 @@ class NotificationRapportEvaluationExAnteValide extends Notification implements 
         return match($this->typeDestinataire) {
             'dpaf_supervision' => $this->decision === 'valider'
                 ? 'Le rapport d\'évaluation ex-ante pour le projet "' . $this->projet->titre_projet .
-                  '" a été validé par ' . $this->validateur->name . '. Le projet est prêt pour la prochaine étape.'
+                  '" a été validé par ' . $this->validateurNomComplet . '. Le projet est prêt pour la prochaine étape.'
                 : 'Le rapport d\'évaluation ex-ante pour le projet "' . $this->projet->titre_projet .
-                  '" a été marqué à améliorer par ' . $this->validateur->name . '.',
+                  '" a été marqué à améliorer par ' . $this->validateurNomComplet . '.',
             'equipe_organisation' => $this->decision === 'valider'
                 ? 'Félicitations ! Le rapport d\'évaluation ex-ante pour votre projet "' . $this->projet->titre_projet .
                   '" a été validé par la DGPD. Vous pouvez passer à la prochaine étape.'
@@ -188,11 +191,11 @@ class NotificationRapportEvaluationExAnteValide extends Notification implements 
     protected function getActionUrl(): string
     {
         return match($this->typeDestinataire) {
-            'dpaf_supervision', 'dgpd_info' => '/projets/' . $this->projet->id . '/rapports/' . $this->rapport->id,
+            'dpaf_supervision', 'dgpd_info' => '/projets/' . $this->projet->hashed_id . '/rapports/' . $this->rapport->hashed_id,
             'equipe_organisation', 'soumetteur_confirmation' => $this->decision === 'valider'
-                ? '/projets/' . $this->projet->id
-                : '/projets/' . $this->projet->id . '/rapports/' . $this->rapport->id . '/ameliorer',
-            default => '/projets/' . $this->projet->id,
+                ? '/projets/' . $this->projet->hashed_id
+                : '/projets/' . $this->projet->hashed_id . '/rapports/' . $this->rapport->hashed_id . '/ameliorer',
+            default => '/projets/' . $this->projet->hashed_id,
         };
     }
 

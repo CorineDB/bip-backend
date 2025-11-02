@@ -20,6 +20,7 @@ class NotificationTdrPrefaisabiliteSoumis extends Notification implements Should
     protected User $soumetteur;
     protected bool $estResoumission;
     protected string $typeDestinataire;
+    protected string $soumetteurNomComplet;
 
     /**
      * Types de destinataires possibles :
@@ -40,6 +41,7 @@ class NotificationTdrPrefaisabiliteSoumis extends Notification implements Should
         $this->soumetteur = $soumetteur;
         $this->estResoumission = $estResoumission;
         $this->typeDestinataire = $typeDestinataire;
+        $this->soumetteurNomComplet = $this->soumetteur->personne->prenom . ' ' . $this->soumetteur->personne->nom;
     }
 
     /**
@@ -59,10 +61,10 @@ class NotificationTdrPrefaisabiliteSoumis extends Notification implements Should
     {
         return (new MailMessage)
             ->subject($this->getSubject())
-            ->greeting('Bonjour ' . $notifiable->name . ',')
+            ->greeting('Bonjour ' . $notifiable->personne->prenom . ' ' . $notifiable->personne->nom . ',')
             ->line($this->getMessage())
             ->line('**Projet :** ' . $this->projet->titre_projet)
-            ->line('**Soumis par :** ' . $this->soumetteur->name)
+            ->line('**Soumis par :** ' . $this->soumetteurNomComplet)
             ->line('**Date de soumission :** ' . $this->tdr->date_soumission?->format('d/m/Y à H:i'))
             ->when($this->estResoumission, function ($mail) {
                 return $mail->line('**Type :** Resoumission après révision');
@@ -83,10 +85,10 @@ class NotificationTdrPrefaisabiliteSoumis extends Notification implements Should
             'type' => 'tdr_prefaisabilite_soumis',
             'titre' => $this->getSubject(),
             'message' => $this->getMessage(),
-            'tdr_id' => $this->tdr->id,
-            'projet_id' => $this->projet->id,
-            'soumetteur_id' => $this->soumetteur->id,
-            'soumetteur_name' => $this->soumetteur->name,
+            'tdr_id' => $this->tdr->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
+            'soumetteur_id' => $this->soumetteur->hashed_id,
+            'soumetteur_name' => $this->soumetteurNomComplet,
             'est_resoumission' => $this->estResoumission,
             'type_destinataire' => $this->typeDestinataire,
             'action_url' => $this->getActionUrl(),
@@ -113,10 +115,10 @@ class NotificationTdrPrefaisabiliteSoumis extends Notification implements Should
             'type' => 'tdr_prefaisabilite_soumis',
             'titre' => $this->getSubject(),
             'message' => $this->getMessage(),
-            'tdr_id' => $this->tdr->id,
-            'projet_id' => $this->projet->id,
-            'soumetteur_id' => $this->soumetteur->id,
-            'soumetteur_name' => $this->soumetteur->name,
+            'tdr_id' => $this->tdr->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
+            'soumetteur_id' => $this->soumetteur->hashed_id,
+            'soumetteur_name' => $this->soumetteurNomComplet,
             'est_resoumission' => $this->estResoumission,
             'type_destinataire' => $this->typeDestinataire,
             'action_url' => $this->getActionUrl(),
@@ -156,10 +158,10 @@ class NotificationTdrPrefaisabiliteSoumis extends Notification implements Should
         return match($this->typeDestinataire) {
             'dgpd_evaluation' => $this->estResoumission
                 ? 'Le TDR de préfaisabilité pour le projet "' . $this->projet->titre_projet .
-                  '" a été resoumis après révision par ' . $this->soumetteur->name .
+                  '" a été resoumis après révision par ' . $this->soumetteurNomComplet .
                   '. Veuillez procéder à son évaluation.'
                 : 'Un nouveau TDR de préfaisabilité pour le projet "' . $this->projet->titre_projet .
-                  '" a été soumis par ' . $this->soumetteur->name . '. Veuillez procéder à son évaluation.',
+                  '" a été soumis par ' . $this->soumetteurNomComplet . '. Veuillez procéder à son évaluation.',
             'dpaf_supervision' => $this->estResoumission
                 ? 'Le TDR de préfaisabilité pour le projet "' . $this->projet->titre_projet .
                   '" a été resoumis après révision. Évaluation DGPD en attente.'
@@ -185,10 +187,10 @@ class NotificationTdrPrefaisabiliteSoumis extends Notification implements Should
     protected function getActionUrl(): string
     {
         return match($this->typeDestinataire) {
-            'dgpd_evaluation' => '/projets/' . $this->projet->id . '/evaluation-tdr-prefaisabilite',
-            'dpaf_supervision', 'equipe_organisation' => '/projets/' . $this->projet->id . '/tdr/' . $this->tdr->id,
-            'soumetteur_confirmation' => '/projets/' . $this->projet->id,
-            default => '/projets/' . $this->projet->id,
+            'dgpd_evaluation' => '/projets/' . $this->projet->hashed_id . '/evaluation-tdr-prefaisabilite',
+            'dpaf_supervision', 'equipe_organisation' => '/projets/' . $this->projet->hashed_id . '/tdr/' . $this->tdr->hashed_id,
+            'soumetteur_confirmation' => '/projets/' . $this->projet->hashed_id,
+            default => '/projets/' . $this->projet->hashed_id,
         };
     }
 

@@ -20,6 +20,7 @@ class NotificationRapportEvaluationExAnteSoumis extends Notification implements 
     protected User $soumetteur;
     protected bool $estResoumission;
     protected string $typeDestinataire;
+    protected string $soumetteurNomComplet;
 
     /**
      * Types de destinataires possibles :
@@ -40,6 +41,8 @@ class NotificationRapportEvaluationExAnteSoumis extends Notification implements 
         $this->soumetteur = $soumetteur;
         $this->estResoumission = $estResoumission;
         $this->typeDestinataire = $typeDestinataire;
+
+        $this->soumetteurNomComplet = $this->soumetteur->personne->prenom . ' ' . $this->soumetteur->personne->nom;
     }
 
     /**
@@ -59,10 +62,10 @@ class NotificationRapportEvaluationExAnteSoumis extends Notification implements 
     {
         return (new MailMessage)
             ->subject($this->getSubject())
-            ->greeting('Bonjour ' . $notifiable->name . ',')
+            ->greeting('Bonjour ' . $notifiable->personne->prenom . ' ' . $notifiable->personne->nom . ',')
             ->line($this->getMessage())
             ->line('**Projet :** ' . $this->projet->titre_projet)
-            ->line('**Soumis par :** ' . $this->soumetteur->name)
+            ->line('**Soumis par :** ' . $this->soumetteurNomComplet)
             ->line('**Date de soumission :** ' . $this->rapport->date_soumission?->format('d/m/Y à H:i'))
             ->when($this->estResoumission, function ($mail) {
                 return $mail->line('**Type :** Resoumission après révision');
@@ -83,10 +86,10 @@ class NotificationRapportEvaluationExAnteSoumis extends Notification implements 
             'type' => 'rapport_evaluation_ex_ante_soumis',
             'titre' => $this->getSubject(),
             'message' => $this->getMessage(),
-            'rapport_id' => $this->rapport->id,
-            'projet_id' => $this->projet->id,
-            'soumetteur_id' => $this->soumetteur->id,
-            'soumetteur_name' => $this->soumetteur->name,
+            'rapport_id' => $this->rapport->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
+            'soumetteur_id' => $this->soumetteur->hashed_id,
+            'soumetteur_name' => $this->soumetteurNomComplet,
             'est_resoumission' => $this->estResoumission,
             'type_destinataire' => $this->typeDestinataire,
             'action_url' => $this->getActionUrl(),
@@ -113,10 +116,10 @@ class NotificationRapportEvaluationExAnteSoumis extends Notification implements 
             'type' => 'rapport_evaluation_ex_ante_soumis',
             'titre' => $this->getSubject(),
             'message' => $this->getMessage(),
-            'rapport_id' => $this->rapport->id,
-            'projet_id' => $this->projet->id,
-            'soumetteur_id' => $this->soumetteur->id,
-            'soumetteur_name' => $this->soumetteur->name,
+            'rapport_id' => $this->rapport->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
+            'soumetteur_id' => $this->soumetteur->hashed_id,
+            'soumetteur_name' => $this->soumetteurNomComplet,
             'est_resoumission' => $this->estResoumission,
             'type_destinataire' => $this->typeDestinataire,
             'action_url' => $this->getActionUrl(),
@@ -156,10 +159,10 @@ class NotificationRapportEvaluationExAnteSoumis extends Notification implements 
         return match($this->typeDestinataire) {
             'dgpd_validation' => $this->estResoumission
                 ? 'Le rapport d\'évaluation ex-ante pour le projet "' . $this->projet->titre_projet .
-                  '" a été resoumis après révision par ' . $this->soumetteur->name .
+                  '" a été resoumis après révision par ' . $this->soumetteurNomComplet .
                   '. Veuillez procéder à son évaluation.'
                 : 'Un nouveau rapport d\'évaluation ex-ante pour le projet "' . $this->projet->titre_projet .
-                  '" a été soumis par ' . $this->soumetteur->name . '. Veuillez procéder à son évaluation.',
+                  '" a été soumis par ' . $this->soumetteurNomComplet . '. Veuillez procéder à son évaluation.',
             'dpaf_supervision' => $this->estResoumission
                 ? 'Le rapport d\'évaluation ex-ante pour le projet "' . $this->projet->titre_projet .
                   '" a été resoumis après révision. Décision DGPD en attente.'
@@ -185,10 +188,10 @@ class NotificationRapportEvaluationExAnteSoumis extends Notification implements 
     protected function getActionUrl(): string
     {
         return match($this->typeDestinataire) {
-            'dgpd_validation' => '/projets/' . $this->projet->id . '/validation-rapport-evaluation-ex-ante',
-            'dpaf_supervision', 'equipe_organisation' => '/projets/' . $this->projet->id . '/rapports/' . $this->rapport->id,
-            'soumetteur_confirmation' => '/projets/' . $this->projet->id,
-            default => '/projets/' . $this->projet->id,
+            'dgpd_validation' => '/projets/' . $this->projet->hashed_id . '/validation-rapport-evaluation-ex-ante',
+            'dpaf_supervision', 'equipe_organisation' => '/projets/' . $this->projet->hashed_id . '/rapports/' . $this->rapport->hashed_id,
+            'soumetteur_confirmation' => '/projets/' . $this->projet->hashed_id,
+            default => '/projets/' . $this->projet->hashed_id,
         };
     }
 

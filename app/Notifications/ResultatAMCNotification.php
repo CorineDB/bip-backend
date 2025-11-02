@@ -45,7 +45,7 @@ class ResultatAMCNotification extends Notification implements ShouldQueue
             ->line('Score AMC obtenu: ' . number_format($this->ideeProjet->score_amc ?? 0, 2))
             ->line('Score climatique: ' . number_format($this->ideeProjet->score_climatique ?? 0, 2))
             ->line('Vous pouvez maintenant examiner les résultats et apporter des amendements ou commentaires si nécessaire.')
-            ->action("Voir les résultats", url("{$path}/idees/" . $this->ideeProjet->id . "/details-analyse-multi-critere"))
+            ->action("Voir les résultats", url("{$path}/idees/" . $this->ideeProjet->hashed_id . "/details-analyse-multi-critere"))
             ->line('Les résultats sont disponibles pour consultation et amendement.');
     }
 
@@ -56,15 +56,15 @@ class ResultatAMCNotification extends Notification implements ShouldQueue
             'title' => 'Résultat de l\'analyse multicritères',
             'body' => 'L\'AMC de "' . $this->ideeProjet->sigle . '" est terminée. Score AMC: ' . number_format($this->ideeProjet->score_amc ?? 0, 2),
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
-                'evaluation_amc_id' => $this->evaluationAMC->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
+                'evaluation_amc_id' => $this->evaluationAMC->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_amc' => $this->ideeProjet->score_amc ?? 0,
                 'score_climatique' => $this->ideeProjet->score_climatique ?? 0,
                 'date_completion' => now()->toISOString(),
                 'action_possible' => 'amendement_commentaire',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/details-analyse-multi-critere',
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id . '/details-analyse-multi-critere',
         ]);
     }
 
@@ -78,15 +78,15 @@ class ResultatAMCNotification extends Notification implements ShouldQueue
             'title' => 'Résultat de l\'analyse multicritères',
             'message' => 'L\'analyse multicritères de "' . $this->ideeProjet->sigle . '" est terminée. Score AMC: ' . number_format($this->ideeProjet->score_amc ?? 0, 2) . ', Score climatique: ' . number_format($this->ideeProjet->score_climatique ?? 0, 2) . '. Vous pouvez examiner et amender les résultats.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
-                'evaluation_amc_id' => $this->evaluationAMC->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
+                'evaluation_amc_id' => $this->evaluationAMC->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_amc' => $this->ideeProjet->score_amc ?? 0,
                 'score_climatique' => $this->ideeProjet->score_climatique ?? 0,
                 'date_completion' => now()->toISOString(),
                 'action_possible' => 'amendement_commentaire',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/details-analyse-multi-critere',
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id . '/details-analyse-multi-critere',
         ];
     }
 }

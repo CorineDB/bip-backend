@@ -46,7 +46,7 @@ class FinAMCAnalysteNotification extends Notification implements ShouldQueue
             ->line('Score climatique: ' . number_format($this->ideeProjet->score_climatique ?? 0, 2))
             ->line('Vous devez maintenant effectuer la validation de l\'idée de projet à projet.')
             ->line('Le Comité de validation ministériel a également été notifié pour amendements ou commentaires.')
-            ->action("Procéder à la validation", url("{$path}/idees/" . $this->ideeProjet->id))
+            ->action("Procéder à la validation", url("{$path}/idees/" . $this->ideeProjet->hashed_id))
             ->line('Cette validation est nécessaire pour finaliser le processus d\'.');
     }
 
@@ -57,15 +57,15 @@ class FinAMCAnalysteNotification extends Notification implements ShouldQueue
             'title' => 'Validation idée projet à projet requise',
             'body' => 'L\'AMC de "' . $this->ideeProjet->sigle . '" est terminée. Validation idée projet à projet requise.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
-                'evaluation_amc_id' => $this->evaluationAMC->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
+                'evaluation_amc_id' => $this->evaluationAMC->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_amc' => $this->ideeProjet->score_amc ?? 0,
                 'score_climatique' => $this->ideeProjet->score_climatique ?? 0,
                 'date_fin_amc' => now()->toISOString(),
                 'action_requise' => 'validation_idee_projet_a_projet',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id,
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id,
         ]);
     }
 
@@ -79,15 +79,15 @@ class FinAMCAnalysteNotification extends Notification implements ShouldQueue
             'title' => 'Validation idée projet à projet requise',
             'message' => 'L\'analyse multicritères de "' . $this->ideeProjet->sigle . '" est terminée (Score AMC: ' . number_format($this->ideeProjet->score_amc ?? 0, 2) . '). Vous devez effectuer la validation de l\'idée de projet à projet.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
-                'evaluation_amc_id' => $this->evaluationAMC->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
+                'evaluation_amc_id' => $this->evaluationAMC->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_amc' => $this->ideeProjet->score_amc ?? 0,
                 'score_climatique' => $this->ideeProjet->score_climatique ?? 0,
                 'date_fin_amc' => now()->toISOString(),
                 'action_requise' => 'validation_idee_projet_a_projet',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id,
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id,
         ];
     }
 }

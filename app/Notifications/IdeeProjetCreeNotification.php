@@ -37,13 +37,13 @@ class IdeeProjetCreeNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject('Nouvelle idée de projet créée')
             ->line("Votre idée a été bien enregistrée.")
-            ->action('Lire le message', url("{$path}/idees/" . $this->ideeProjet->id));
+            ->action('Lire le message', url("{$path}/idees/" . $this->ideeProjet->hashed_id));
     }
 
     public function toBroadcast($notifiable)
     {
         return new BroadcastMessage([
-            'idee_id' => $this->ideeProjet->id,
+            'idee_id' => $this->ideeProjet->hashed_id,
             'titre' => $this->ideeProjet->titre_projet,
             'message' => "Une idée a été soumise : {$this->ideeProjet->titre_projet}",
         ]);
@@ -59,11 +59,11 @@ class IdeeProjetCreeNotification extends Notification implements ShouldQueue
             'title' => 'Nouvelle idée de projet créée',
             'message' => 'Une nouvelle idée de projet "' . $this->ideeProjet->titre_projet . '" a été créée et nécessite votre attention.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'created_at' => $this->ideeProjet->created_at->toISOString(),
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id,
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id,
         ];
     }
 }

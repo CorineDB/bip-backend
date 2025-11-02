@@ -46,7 +46,7 @@ class EvaluationClimatiqueTermineNotification extends Notification implements Sh
             ->line('L\'évaluation climatique de l\'idée de projet "' . $this->ideeProjet->sigle . '" est maintenant complétée.')
             ->line('Score climatique obtenu: ' . number_format($this->scoreClimatique, 2))
             ->line('Vous devez maintenant valider ce score et transmettre l\'idée au Responsable hiérarchique.')
-            ->action("Finaliser l'évaluation", url("{$path}/idees/" . $this->ideeProjet->id . "/details-evaluation-climatique"))
+            ->action("Finaliser l'évaluation", url("{$path}/idees/" . $this->ideeProjet->hashed_id . "/details-evaluation-climatique"))
             ->line('Cette action est nécessaire pour poursuivre le processus d\'évaluation.');
     }
 
@@ -57,14 +57,14 @@ class EvaluationClimatiqueTermineNotification extends Notification implements Sh
             'title' => 'Évaluation climatique complétée',
             'body' => 'Tous les évaluateurs ont terminé l\'évaluation de "' . $this->ideeProjet->sigle . '". Score: ' . number_format($this->scoreClimatique, 2) . '. Action requise.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
-                'evaluation_id' => $this->evaluation->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
+                'evaluation_id' => $this->evaluation->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_climatique' => $this->scoreClimatique,
                 'date_completion' => now()->toISOString(),
                 'action_requise' => 'finaliser_score_climatique',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/details-evaluation-climatique',
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id . '/details-evaluation-climatique',
         ]);
     }
 
@@ -78,14 +78,14 @@ class EvaluationClimatiqueTermineNotification extends Notification implements Sh
             'title' => 'Évaluation climatique complétée',
             'message' => 'Tous les évaluateurs ont terminé l\'évaluation climatique de "' . $this->ideeProjet->sigle . '". Score obtenu: ' . number_format($this->scoreClimatique, 2) . '. Veuillez finaliser et transmettre au Responsable hiérarchique.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
-                'evaluation_id' => $this->evaluation->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
+                'evaluation_id' => $this->evaluation->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_climatique' => $this->scoreClimatique,
                 'date_completion' => now()->toISOString(),
                 'action_requise' => 'finaliser_score_climatique',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id . '/details-evaluation-climatique',
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id . '/details-evaluation-climatique',
         ];
     }
 }

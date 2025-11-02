@@ -22,6 +22,7 @@ class NotificationEtudeProfilValidee extends Notification implements ShouldQueue
     protected User $validateur;
     protected string $decision;
     protected string $typeDestinataire;
+    protected string $validateurNomComplet;
 
     /**
      * Types de destinataires possibles :
@@ -45,6 +46,8 @@ class NotificationEtudeProfilValidee extends Notification implements ShouldQueue
         $this->validateur = $validateur;
         $this->decision = $decision;
         $this->typeDestinataire = $typeDestinataire;
+
+        $this->validateurNomComplet = $this->validateur->personne->prenom . ' ' . $this->validateur->personne->nom;
     }
 
     /**
@@ -64,7 +67,7 @@ class NotificationEtudeProfilValidee extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject($this->getSubject())
-            ->greeting('Bonjour ' . $notifiable->name . ',')
+            ->greeting('Bonjour ' . $notifiable->personne->prenom . ' ' . $notifiable->personne->nom . ',')
             ->line($this->getMessage())
             ->line('**Projet :** ' . $this->projet->titre_projet)
             ->line('**Décision :** ' . $this->getDecisionLabel())
@@ -87,11 +90,11 @@ class NotificationEtudeProfilValidee extends Notification implements ShouldQueue
             'type' => 'etude_profil_validee',
             'titre' => $this->getSubject(),
             'message' => $this->getMessage(),
-            'note_conceptuelle_id' => $this->noteConceptuelle->id,
-            'projet_id' => $this->projet->id,
-            'evaluation_id' => $this->evaluation->id,
-            'validateur_id' => $this->validateur->id,
-            'validateur_name' => $this->validateur->name,
+            'note_conceptuelle_id' => $this->noteConceptuelle->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
+            'evaluation_id' => $this->evaluation->hashed_id,
+            'validateur_id' => $this->validateur->hashed_id,
+            'validateur_name' => $this->validateurNomComplet,
             'decision' => $this->decision,
             'decision_label' => $this->getDecisionLabel(),
             'commentaire' => $this->evaluation->commentaire,
@@ -117,11 +120,11 @@ class NotificationEtudeProfilValidee extends Notification implements ShouldQueue
             'type' => 'etude_profil_validee',
             'titre' => $this->getSubject(),
             'message' => $this->getMessage(),
-            'note_conceptuelle_id' => $this->noteConceptuelle->id,
-            'projet_id' => $this->projet->id,
-            'evaluation_id' => $this->evaluation->id,
-            'validateur_id' => $this->validateur->id,
-            'validateur_name' => $this->validateur->name,
+            'note_conceptuelle_id' => $this->noteConceptuelle->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
+            'evaluation_id' => $this->evaluation->hashed_id,
+            'validateur_id' => $this->validateur->hashed_id,
+            'validateur_name' => $this->validateurNomComplet,
             'decision' => $this->decision,
             'decision_label' => $this->getDecisionLabel(),
             'commentaire' => $this->evaluation->commentaire,
@@ -163,27 +166,27 @@ class NotificationEtudeProfilValidee extends Notification implements ShouldQueue
             'redacteur_resultat' => match($this->decision) {
                 'faire_etude_faisabilite_preliminaire' =>
                     'Votre étude de profil pour le projet "' . $this->projet->titre_projet .
-                    '" a été validée par ' . $this->validateur->name .
+                    '" a été validée par ' . $this->validateurNomComplet .
                     '. Une étude de faisabilité préliminaire est nécessaire avant de poursuivre.',
                 'rejeter' =>
                     'Votre étude de profil pour le projet "' . $this->projet->titre_projet .
-                    '" a été rejetée par ' . $this->validateur->name . '.',
+                    '" a été rejetée par ' . $this->validateurNomComplet . '.',
                 'ameliorer' =>
                     'Votre étude de profil pour le projet "' . $this->projet->titre_projet .
-                    '" nécessite des améliorations selon ' . $this->validateur->name . '.',
+                    '" nécessite des améliorations selon ' . $this->validateurNomComplet . '.',
                 'transformer_en_projet' =>
                     'Félicitations ! Votre étude de profil pour le projet "' . $this->projet->titre_projet .
-                    '" a été validée par ' . $this->validateur->name .
+                    '" a été validée par ' . $this->validateurNomComplet .
                     ' et peut être transformée directement en projet mature.',
                 default =>
-                    'Votre étude de profil a été évaluée par ' . $this->validateur->name . '.',
+                    'Votre étude de profil a été évaluée par ' . $this->validateurNomComplet . '.',
             },
             'charge_etudes_action' =>
                 'Une nouvelle mission vous a été attribuée. L\'étude de profil du projet "' .
                 $this->projet->titre_projet . '" a été validée et nécessite une étude de faisabilité préliminaire.',
             'equipe_organisation' =>
                 'L\'étude de profil du projet "' . $this->projet->titre_projet .
-                '" a été validée par ' . $this->validateur->name . '. Décision : ' . $this->getDecisionLabel() . '.',
+                '" a été validée par ' . $this->validateurNomComplet . '. Décision : ' . $this->getDecisionLabel() . '.',
             'dpaf_supervision' =>
                 'L\'étude de profil du projet "' . $this->projet->titre_projet .
                 '" a été validée. Décision : ' . $this->getDecisionLabel() . '.',
@@ -201,9 +204,9 @@ class NotificationEtudeProfilValidee extends Notification implements ShouldQueue
     protected function getActionUrl(): string
     {
         return match($this->typeDestinataire) {
-            'charge_etudes_action' => '/projets/' . $this->projet->id . '/faisabilite-preliminaire',
-            'validateur_confirmation' => '/projets/' . $this->projet->id . '/evaluations',
-            default => '/projets/' . $this->projet->id,
+            'charge_etudes_action' => '/projets/' . $this->projet->hashed_id . '/faisabilite-preliminaire',
+            'validateur_confirmation' => '/projets/' . $this->projet->hashed_id . '/evaluations',
+            default => '/projets/' . $this->projet->hashed_id,
         };
     }
 

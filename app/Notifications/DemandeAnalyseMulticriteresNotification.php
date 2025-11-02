@@ -46,7 +46,7 @@ class DemandeAnalyseMulticriteresNotification extends Notification implements Sh
             ->line('Validée par: ' . ($this->responsableValidateur->personne->nom ?? 'Non défini') . ' ' . ($this->responsableValidateur->personne->prenom ?? ''))
             ->line('Email du validateur: ' . $this->responsableValidateur->email)
             ->line('Cette idée doit maintenant faire l\'objet d\'une analyse multicritères.')
-            ->action("Commencer l'analyse", url("{$path}/idees/" . $this->ideeProjet->id))
+            ->action("Commencer l'analyse", url("{$path}/idees/" . $this->ideeProjet->hashed_id))
             ->line('Veuillez procéder à l\'analyse multicritères de cette idée de projet.');
     }
 
@@ -57,7 +57,7 @@ class DemandeAnalyseMulticriteresNotification extends Notification implements Sh
             'title' => 'Nouvelle analyse multicritères',
             'body' => 'L\'idée "' . $this->ideeProjet->sigle . '" validée par ' . ($this->responsableValidateur->personne->nom ?? 'Responsable') . ' nécessite une analyse multicritères.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_climatique' => $this->ideeProjet->score_climatique ?? 0,
                 'validateur_nom' => $this->responsableValidateur->personne->nom ?? '',
@@ -66,7 +66,7 @@ class DemandeAnalyseMulticriteresNotification extends Notification implements Sh
                 'date_validation' => now()->toISOString(),
                 'action_requise' => 'analyse_multicriteres',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id
         ]);
     }
 
@@ -80,7 +80,7 @@ class DemandeAnalyseMulticriteresNotification extends Notification implements Sh
             'title' => 'Nouvelle analyse multicritères requise',
             'message' => 'L\'idée de projet "' . $this->ideeProjet->sigle . '" (score climatique: ' . number_format($this->ideeProjet->score_climatique ?? 0, 2) . ') a été validée par ' . ($this->responsableValidateur->personne->nom ?? '') . ' ' . ($this->responsableValidateur->personne->prenom ?? '') . ' et nécessite une analyse multicritères.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_climatique' => $this->ideeProjet->score_climatique ?? 0,
                 'validateur_nom' => $this->responsableValidateur->personne->nom ?? '',
@@ -89,7 +89,7 @@ class DemandeAnalyseMulticriteresNotification extends Notification implements Sh
                 'date_validation' => now()->toISOString(),
                 'action_requise' => 'analyse_multicriteres',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id
         ];
     }
 }

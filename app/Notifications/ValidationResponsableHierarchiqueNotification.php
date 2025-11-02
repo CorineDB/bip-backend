@@ -61,7 +61,7 @@ class ValidationResponsableHierarchiqueNotification extends Notification impleme
             $message->line('L\'analyste DGPD et les membres du Service technique/service étude ont été notifiés pour procéder à l\'analyse multicritères.');
         } else {
             $message->line('Veuillez réviser et reformuler votre idée en tenant compte des commentaires.')
-                   ->action("Modifier l'idée", url("{$path}/idees/creer" . ($this->decision === 'refuser' ? '?edit=' . $this->ideeProjet->id : '')));
+                   ->action("Modifier l'idée", url("{$path}/idees/creer" . ($this->decision === 'refuser' ? '?edit=' . $this->ideeProjet->hashed_id : '')));
         }
 
         return $message;
@@ -74,14 +74,14 @@ class ValidationResponsableHierarchiqueNotification extends Notification impleme
             'title' => 'Décision du Responsable hiérarchique',
             'body' => 'Votre idée "' . $this->ideeProjet->sigle . '" a été ' . ($this->decision === 'valider' ? 'validée' : 'refusée') . ' par le Responsable hiérarchique.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'decision' => $this->decision,
                 'commentaire' => $this->commentaire,
                 'date_decision' => now()->toISOString(),
                 'prochaine_etape' => $this->decision === 'valider' ? 'analyse_multicriteres' : 'retour_brouillon',
             ],
-            'action_url' => '/idees/creer' . ($this->decision === 'refuser' ? '?edit=' . $this->ideeProjet->id : ''),
+            'action_url' => '/idees/creer' . ($this->decision === 'refuser' ? '?edit=' . $this->ideeProjet->hashed_id : ''),
         ]);
     }
 
@@ -100,14 +100,14 @@ class ValidationResponsableHierarchiqueNotification extends Notification impleme
             'title' => 'Décision du Responsable hiérarchique',
             'message' => 'Votre idée de projet "' . $this->ideeProjet->sigle . '" a été ' . $decisionText . ' par le Responsable hiérarchique.' . $messageComplement . ($this->commentaire ? ' Commentaire: ' . $this->commentaire : ''),
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'decision' => $this->decision,
                 'commentaire' => $this->commentaire,
                 'date_decision' => now()->toISOString(),
                 'prochaine_etape' => $this->decision === 'valider' ? 'analyse_multicriteres' : 'retour_brouillon',
             ],
-            'action_url' => '/idees/creer' . ($this->decision === 'refuser' ? '?edit=' . $this->ideeProjet->id : ''),
+            'action_url' => '/idees/creer' . ($this->decision === 'refuser' ? '?edit=' . $this->ideeProjet->hashed_id : ''),
         ];
     }
 }

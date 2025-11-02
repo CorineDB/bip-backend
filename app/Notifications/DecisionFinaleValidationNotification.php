@@ -60,7 +60,7 @@ class DecisionFinaleValidationNotification extends Notification implements Shoul
             $message->line('La DPAF a été notifiée pour la rédaction de la note conceptuelle du projet.');
         }
 
-        return $message->action("Voir les détails", url("{$path}/idees/" . $this->ideeProjet->id));
+        return $message->action("Voir les détails", url("{$path}/idees/" . $this->ideeProjet->hashed_id));
     }
 
     public function toBroadcast($notifiable)
@@ -70,7 +70,7 @@ class DecisionFinaleValidationNotification extends Notification implements Shoul
             'title' => 'Décision finale de validation',
             'body' => 'L\'idée "' . $this->ideeProjet->sigle . '" a été ' . ($this->decision === 'valider' ? 'validée et transformée en projet' : 'refusée') . ' par l\'analyste DGPD.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'decision' => $this->decision,
                 'score_amc' => $this->ideeProjet->score_amc ?? 0,
@@ -81,7 +81,7 @@ class DecisionFinaleValidationNotification extends Notification implements Shoul
                 'date_decision' => now()->toISOString(),
                 'prochaine_etape' => $this->decision === 'valider' ? 'note_conceptuelle' : 'termine',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id,
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id,
         ]);
     }
 
@@ -100,7 +100,7 @@ class DecisionFinaleValidationNotification extends Notification implements Shoul
             'title' => 'Décision finale de validation',
             'message' => 'L\'idée de projet "' . $this->ideeProjet->sigle . '" a été ' . $decisionText . ' par l\'analyste DGPD (' . ($this->analysteValidateur->personne->nom ?? '') . ').' . $messageComplement . ($this->commentaire ? ' Commentaire: ' . $this->commentaire : ''),
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'decision' => $this->decision,
                 'score_amc' => $this->ideeProjet->score_amc ?? 0,
@@ -111,7 +111,7 @@ class DecisionFinaleValidationNotification extends Notification implements Shoul
                 'date_decision' => now()->toISOString(),
                 'prochaine_etape' => $this->decision === 'valider' ? 'note_conceptuelle' : 'termine',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id,
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id,
         ];
     }
 }

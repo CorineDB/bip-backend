@@ -45,7 +45,7 @@ class NouvelleIdeeProjetNotification extends Notification implements ShouldQueue
             ->line('Score climatique obtenu: ' . number_format($this->scoreClimatique, 2))
             ->line('Responsable du projet: ' . ($this->ideeProjet->responsable->personne->nom ?? 'Non défini') . ' ' . ($this->ideeProjet->responsable->personne->prenom ?? ''))
             ->line('Cette idée nécessite votre validation avant de passer à l\'étape suivante.')
-            ->action("Examiner l'idée", url("{$path}/idees/" . $this->ideeProjet->id))
+            ->action("Examiner l'idée", url("{$path}/idees/" . $this->ideeProjet->hashed_id))
             ->line('Veuillez examiner l\'idée et donner votre décision de validation.');
     }
 
@@ -56,7 +56,7 @@ class NouvelleIdeeProjetNotification extends Notification implements ShouldQueue
             'title' => 'Nouvelle idée de projet',
             'body' => 'L\'idée de projet "' . $this->ideeProjet->sigle . '" (score climatique: ' . number_format($this->scoreClimatique, 2) . ') attend votre validation.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_climatique' => $this->scoreClimatique,
                 'responsable_nom' => $this->ideeProjet->responsable->personne->nom ?? '',
@@ -64,14 +64,14 @@ class NouvelleIdeeProjetNotification extends Notification implements ShouldQueue
                 'date_soumission' => now()->toISOString(),
                 'action_requise' => 'validation_hierarchique',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id
         ]);
     }
 
     public function broadcastOn()
     {
         return [
-            new PrivateChannel('idee.de.projet.creer.' . $this->ideeProjet->id),
+            new PrivateChannel('idee.de.projet.creer.' . $this->ideeProjet->hashed_id),
             new PrivateChannel('App.Models.User.' . $this->ideeProjet->responsableId)
         ];
     }
@@ -86,7 +86,7 @@ class NouvelleIdeeProjetNotification extends Notification implements ShouldQueue
             'title' => 'Nouvelle idée de projet à valider',
             'message' => 'L\'idée de projet "' . $this->ideeProjet->sigle . '" a été soumise par ' . ($this->ideeProjet->responsable->personne->nom ?? '') . ' avec un score climatique de ' . number_format($this->scoreClimatique, 2) . '. Validation requise.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_climatique' => $this->scoreClimatique,
                 'responsable_nom' => $this->ideeProjet->responsable->personne->nom ?? '',
@@ -94,7 +94,7 @@ class NouvelleIdeeProjetNotification extends Notification implements ShouldQueue
                 'date_soumission' => now()->toISOString(),
                 'action_requise' => 'validation_hierarchique',
             ],
-            'action_url' => '/idees/' . $this->ideeProjet->id
+            'action_url' => '/idees/' . $this->ideeProjet->hashed_id
         ];
     }
 }

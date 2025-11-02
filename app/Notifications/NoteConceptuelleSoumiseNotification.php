@@ -58,7 +58,7 @@ class NoteConceptuelleSoumiseNotification extends Notification implements Should
                     ->line('**Projet :** ' . $this->projet->titre_projet)
                     ->line('**Note :** ' . $this->noteConceptuelle->intitule)
                     ->line('Elle sera évaluée par la DGPD dans les prochains jours.')
-                    ->action('Voir la note', url('/projet/' . $this->projet->id . '/detail-note-conceptuelle'))// . $this->noteConceptuelle->id))
+                    ->action('Voir la note', url('/projet/' . $this->projet->hashed_id . '/detail-note-conceptuelle'))// . $this->noteConceptuelle->hashed_id))
                     ->line('Merci pour votre soumission.');
 
             case 'evaluation_requise':
@@ -70,8 +70,8 @@ class NoteConceptuelleSoumiseNotification extends Notification implements Should
                     ->line('**Ministère :** ' . ($this->projet->ministere->nom ?? 'N/A'))
                     ->line('**Soumise par :** ' . ($this->noteConceptuelle->redacteur->personne->nom ?? 'N/A') . ' ' . ($this->noteConceptuelle->redacteur->personne->prenom ?? ''))
 
-                    ->action('Voir la note', url('/projet/' . $this->projet->id . '/detail-note-conceptuelle'))
-                    ->action('Évaluer maintenant', url('/projet/' . $this->projet->id . '/resultat-evaluation-note-conceptuelle' . $this->noteConceptuelle->id))
+                    ->action('Voir la note', url('/projet/' . $this->projet->hashed_id . '/detail-note-conceptuelle'))
+                    ->action('Évaluer maintenant', url('/projet/' . $this->projet->hashed_id . '/resultat-evaluation-note-conceptuelle' . $this->noteConceptuelle->hashed_id))
                     ->line('Veuillez procéder à l\'évaluation dans les meilleurs délais.');
 
             case 'information':
@@ -83,7 +83,7 @@ class NoteConceptuelleSoumiseNotification extends Notification implements Should
                     ->line('**Projet :** ' . $this->projet->titre_projet)
                     ->line('**Ministère :** ' . ($this->projet->ministere->nom ?? 'N/A'))
                     ->line('**Soumise par :** ' . ($this->noteConceptuelle->redacteur->personne->nom ?? 'N/A'))
-                    ->action('Voir les détails', url('/dashboard/projet/' . $this->projet->id))
+                    ->action('Voir les détails', url('/dashboard/projet/' . $this->projet->hashed_id))
                     ->line('Notification d\'information.');
         }
     }
@@ -96,8 +96,8 @@ class NoteConceptuelleSoumiseNotification extends Notification implements Should
         return [
             'type' => 'note_conceptuelle_soumise',
             'type_destinataire' => $this->typeDestinataire,
-            'note_conceptuelle_id' => $this->noteConceptuelle->id,
-            'projet_id' => $this->projet->id,
+            'note_conceptuelle_id' => $this->noteConceptuelle->hashed_id,
+            'projet_id' => $this->projet->hashed_id,
             'projet_titre' => $this->projet->titre_projet,
             'note_intitule' => $this->noteConceptuelle->intitule,
             'redacteur_nom' => $this->noteConceptuelle->redacteur->personne->nom ?? '',
@@ -149,14 +149,14 @@ class NoteConceptuelleSoumiseNotification extends Notification implements Should
     {
         switch ($this->typeDestinataire) {
             case 'evaluation_requise':
-                return '/evaluations/notes/' . $this->noteConceptuelle->id;
+                return '/evaluations/notes/' . $this->noteConceptuelle->hashed_id;
 
             case 'confirmation':
-                return '/projets/' . $this->projet->id . '/notes/' . $this->noteConceptuelle->id;
+                return '/projets/' . $this->projet->hashed_id . '/notes/' . $this->noteConceptuelle->hashed_id;
 
             case 'information':
             default:
-                return '/projets/' . $this->projet->id;
+                return '/projets/' . $this->projet->hashed_id;
         }
     }
 

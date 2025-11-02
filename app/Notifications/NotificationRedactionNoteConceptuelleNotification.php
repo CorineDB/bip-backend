@@ -46,9 +46,9 @@ class NotificationRedactionNoteConceptuelleNotification extends Notification imp
             ->line('Score climatique: ' . number_format($this->ideeProjet->score_climatique ?? 0, 2))
             ->line('Vous devez maintenant procéder à la rédaction de la note conceptuelle de ce projet.')
             ->when($this->projet, function ($message) {
-                return $message->line('ID du projet créé: ' . $this->projet->id);
+                return $message->line('ID du projet créé: ' . $this->projet->hashed_id);
             })
-            ->action("Rédiger la note conceptuelle", url("{$path}/projets/" . ($this->projet->id ?? $this->ideeProjet->id) . "/note-conceptuelle"))
+            ->action("Rédiger la note conceptuelle", url("{$path}/projets/" . ($this->projet->hashed_id ?? $this->ideeProjet->hashed_id) . "/note-conceptuelle"))
             ->line('Cette étape est cruciale pour la suite du développement du projet.');
     }
 
@@ -59,15 +59,15 @@ class NotificationRedactionNoteConceptuelleNotification extends Notification imp
             'title' => 'Rédaction de note conceptuelle',
             'body' => 'Le projet "' . $this->ideeProjet->sigle . '" nécessite la rédaction d\'une note conceptuelle.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
-                'projet_id' => $this->projet->id ?? null,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
+                'projet_id' => $this->projet->hashed_id ?? null,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_amc' => $this->ideeProjet->score_amc ?? 0,
                 'score_climatique' => $this->ideeProjet->score_climatique ?? 0,
                 'date_validation' => now()->toISOString(),
                 'action_requise' => 'redaction_note_conceptuelle',
             ],
-            'action_url' => '/projets/' . ($this->projet->id ?? $this->ideeProjet->id) . '/note-conceptuelle',
+            'action_url' => '/projets/' . ($this->projet->hashed_id ?? $this->ideeProjet->hashed_id) . '/note-conceptuelle',
         ]);
     }
 
@@ -81,15 +81,15 @@ class NotificationRedactionNoteConceptuelleNotification extends Notification imp
             'title' => 'Rédaction de note conceptuelle requise',
             'message' => 'L\'idée "' . $this->ideeProjet->sigle . '" a été validée et transformée en projet (Scores: AMC ' . number_format($this->ideeProjet->score_amc ?? 0, 2) . ', Climatique ' . number_format($this->ideeProjet->score_climatique ?? 0, 2) . '). Rédaction de la note conceptuelle requise.',
             'data' => [
-                'idee_projet_id' => $this->ideeProjet->id,
-                'projet_id' => $this->projet->id ?? null,
+                'idee_projet_id' => $this->ideeProjet->hashed_id,
+                'projet_id' => $this->projet->hashed_id ?? null,
                 'sigle' => $this->ideeProjet->sigle,
                 'score_amc' => $this->ideeProjet->score_amc ?? 0,
                 'score_climatique' => $this->ideeProjet->score_climatique ?? 0,
                 'date_validation' => now()->toISOString(),
                 'action_requise' => 'redaction_note_conceptuelle',
             ],
-            'action_url' => '/projets/' . ($this->projet->id ?? $this->ideeProjet->id) . '/note-conceptuelle',
+            'action_url' => '/projets/' . ($this->projet->hashed_id ?? $this->ideeProjet->hashed_id) . '/note-conceptuelle',
         ];
     }
 }
