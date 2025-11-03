@@ -1,0 +1,129 @@
+<?php
+
+namespace App\Http\Resources\projets;
+
+use App\Http\Resources\BaseApiResource;
+use App\Http\Resources\idees_projet\IdeesResource;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+
+class ProjetMatureResource extends BaseApiResource
+{
+
+    /**
+     * Transform the resource into an array.
+     *
+     * @param Request $request
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->hashed_id,
+            // Identifiants et métadonnées
+            'identifiant_bip' => $this->identifiant_bip,
+            'identifiant_sigfp' => $this->identifiant_sigfp,
+            'sigle' => $this->sigle,
+            'titre_projet' => $this->titre_projet,
+
+            'est_a_haut_risque' => $this->est_a_haut_risque,
+            'est_dur' => $this->est_dur,
+            "est_mou" => $this->est_mou,
+            'est_ancien' => $this->est_ancien,
+            'info_etude_prefaisabilite' => $this->info_etude_prefaisabilite,
+            'info_etude_faisabilite' => $this->info_etude_faisabilite,
+
+            // Statuts et phases
+            'statut' => $this->statut?->value ?? $this->statut,
+            'phase' => $this->phase?->value ?? $this->phase,
+            'sous_phase' => $this->sous_phase?->value ?? $this->sous_phase,
+            'type_projet' => $this->type_projet?->value ?? $this->type_projet,
+
+            // Descriptions et contenus principaux
+            'description' => $this->description,
+            'description_projet' => $this->description_projet,
+            'objectif_general' => $this->objectif_general,
+            'situation_actuelle' => $this->situation_actuelle,
+            'situation_desiree' => $this->situation_desiree,
+            'contraintes' => $this->contraintes,
+            'origine' => $this->origine,
+            'fondement' => $this->fondement,
+
+            // Détails techniques et organisationnels
+            'caracteristiques' => $this->caracteristiques,
+            'aspect_organisationnel' => $this->aspect_organisationnel,
+            'description_extrants' => $this->description_extrants,
+            'impact_environnement' => $this->impact_environnement,
+            'echeancier' => $this->echeancier,
+            'duree' => $this->duree,
+
+            // Risques et conclusions
+            'risques_immediats' => $this->risques_immediats,
+            'constats_majeurs' => $this->constats_majeurs,
+            'conclusions' => $this->conclusions,
+            'sommaire' => $this->sommaire,
+            'public_cible' => $this->public_cible,
+
+            // Estimation des coûts
+            'estimation_couts' => $this->estimation_couts,
+            'cout_dollar_americain' => $this->cout_dollar_americain,
+            'cout_dollar_canadien' => $this->cout_dollar_canadien,
+            'cout_euro' => $this->cout_euro,
+
+            // Scores d'évaluation
+            'score_climatique' => $this->score_climatique,
+            'score_amc' => $this->score_amc,
+            'score_pertinence' => $this->score_pertinence,
+
+            // Dates importantes
+            'date_debut_etude' => $this->date_debut_etude,
+            'date_fin_etude' => $this->date_fin_etude,
+            'date_prevue_demarrage' => $this->date_prevue_demarrage,
+            'date_effective_demarrage' => $this->date_effective_demarrage,
+
+            // Données JSON structurées
+            'decision' => $this->decision ?? [],
+            'cout_estimatif_projet' => $this->cout_estimatif_projet ?? [],
+
+            'parties_prenantes' => $this->parties_prenantes ?? [],
+            'objectifs_specifiques' => $this->objectifs_specifiques ?? [],
+            'resultats_attendus' => $this->resultats_attendus ?? [],
+            'body_projet' => $this->body_projet ?? [],
+            'description_decision' => $this->description_decision,
+            // Relations principales (loaded when needed)
+            'secteur' => $this->whenLoaded('secteur'),
+            'ministere' => $this->whenLoaded('ministere'),
+            'categorie' => $this->whenLoaded('categorie'),
+            'responsable' => $this->whenLoaded('responsable'),
+            'demandeur' => $this->whenLoaded('demandeur'),
+            'porteur_projet' => $this->porteur_projet,
+            'ideeProjet' => new IdeesResource($this->ideeProjet),
+            'duree_vie' => $this->duree_vie,
+            'investissement_initial' => $this->investissement_initial,
+            'tri' => $this->tri,
+            'van' => $this->van,
+            'flux_tresorerie' => $this->flux_tresorerie,
+            'taux_actualisation' => $this->taux_actualisation,
+
+            // Timestamps
+            'created_at' => Carbon::parse($this->created_at)->format("Y-m-d H:i:s"),
+            'updated_at' => Carbon::parse($this->updated_at)->format("Y-m-d H:i:s"),
+        ];
+    }
+
+    /**
+     * Get additional data that should be returned with the resource array.
+     *
+     * @param Request $request
+     * @return array
+     */
+    public function with(Request $request): array
+    {
+        return array_merge(parent::with($request), [
+            'meta' => [
+                'type' => 'ideeprojet',
+                'version' => '1.0',
+            ],
+        ]);
+    }
+}

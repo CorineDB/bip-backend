@@ -205,7 +205,8 @@ class ProjetResource extends BaseApiResource
             'rapports_evaluation_ex_ante' => [
                 "rapports_evaluation_ex_ante" => $this->rapports_evaluation_ex_ante,
                 "documents_annexe_rapports_evaluation_ex_ante" => $this->documents_annexe_rapports_evaluation_ex_ante
-            ],*/
+            ],
+            */
 
             // Timestamps
             'created_at' => Carbon::parse($this->created_at)->format("Y-m-d H:i:s"),
