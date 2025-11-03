@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Enums\StatutIdee;
+use App\Http\Resources\projets\ProjetMatureResource;
 use App\Http\Resources\projets\ProjetResource;
+use App\Http\Resources\projets\ProjetsMatureResource;
 use App\Http\Resources\projets\ProjetsResource;
 use App\Models\Dgpd;
 use App\Models\Dpaf;
@@ -77,7 +79,7 @@ class ProjetService extends BaseService implements ProjetServiceInterface
                 ->get();*/
 
             // NOUVEAU CODE (simplifié et clarifié)
-            $projets = $this->repository->getModel()->whereNotIn('statut', [StatutIdee::PRET/* , StatutIdee::IDEE_DE_PROJET, StatutIdee::EN_COURS_DE_MATURATION */])->when(auth()->user()->profilable_type == Dpaf::class, function ($query) {
+            $projets = $this->repository->getModel()->whereNotIn('statut', [StatutIdee::PRET, StatutIdee::IDEE_DE_PROJET, StatutIdee::EN_COURS_DE_MATURATION])->when(auth()->user()->profilable_type == Dpaf::class, function ($query) {
                 $query->where("ministereId", Auth::user()->profilable->ministere->id);
             })->when(auth()->user()->profilable_type == Organisation::class, function ($query) {
                 $ministereId = Auth::user()->profilable->ministere->id;
@@ -136,7 +138,7 @@ class ProjetService extends BaseService implements ProjetServiceInterface
                 ->latest()
                 ->get();
 
-            return ($this->resourceClass::collection($projets))
+            return (ProjetsMatureResource::collection($projets))
                 ->additional([
                     'message' => 'Projets matures récupérés avec succès.',
                     'total' => $projets->count()
@@ -257,7 +259,7 @@ class ProjetService extends BaseService implements ProjetServiceInterface
             return response()->json([
                 'success' => true,
                 'message' => 'Projet récupéré avec succès.',
-                'data' => new ProjetResource($projet)
+                'data' => new ProjetMatureResource($projet)
             ], 200);
         } catch (Exception $e) {
             return $this->errorResponse($e);
