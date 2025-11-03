@@ -77,7 +77,7 @@ class ProjetService extends BaseService implements ProjetServiceInterface
                 ->get();*/
 
             // NOUVEAU CODE (simplifié et clarifié)
-            $projets = $this->repository->getModel()->whereNot('statut', StatutIdee::PRET)->when(auth()->user()->profilable_type == Dpaf::class, function ($query) {
+            $projets = $this->repository->getModel()->whereNotIn('statut', [StatutIdee::PRET/* , StatutIdee::IDEE_DE_PROJET, StatutIdee::EN_COURS_DE_MATURATION */])->when(auth()->user()->profilable_type == Dpaf::class, function ($query) {
                 $query->where("ministereId", Auth::user()->profilable->ministere->id);
             })->when(auth()->user()->profilable_type == Organisation::class, function ($query) {
                 $ministereId = Auth::user()->profilable->ministere->id;

@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\PhasesIdee;
+use App\Enums\SousPhaseIdee;
 use App\Enums\StatutIdee;
 use App\Http\Resources\projets\integration\ProjetResource;
 use Illuminate\Http\JsonResponse;
@@ -123,12 +125,23 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
             }
 
             // Récupérer le projet
-            $projet = $this->repository->find($projetId);
+            //$projet = $this->repository->find($projetId);
+            $projet = $this->repository->getModel()
+                ->where('id', $projetId)
+                ->whereIn('statut', [
+                    StatutIdee::IDEE_DE_PROJET,
+                    StatutIdee::PRET,
+                    StatutIdee::SELECTION,
+                    StatutIdee::EN_ATTENTE_DE_PROGRAMMATION,
+                    StatutIdee::EN_COURS_EXECUTION,
+                    StatutIdee::CLOTURE
+                ])
+                ->first();
 
             if (!$projet) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Projet non trouvé.',
+                    'message' => 'Projet non trouvé ou non éligible pour cette opération.',
                 ], 404);
             }
 
@@ -144,14 +157,52 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
             }
 
             // Mettre à jour le statut
-            $projet->statut = $nouveauStatut;
+            //$projet->statut = $nouveauStatut;
+            // Mettre le statut de l’idée de projet en BROUILLON (et non SOUMISE)
+            $projet->update([
+                'statut' => $nouveauStatut, // <— statut à définir selon ton Enum
+                'sous_phase' => SousPhaseIdee::redaction, // <— statut à définir selon ton Enum
+                'phase' => PhasesIdee::identification, // <— statut à définir selon ton Enum
+                'est_soumise' => false, // <— statut à définir selon ton Enum
+                'est_coherent' => false, // <— statut à définir selon ton Enum
+            ]);
 
             // Mettre à jour le flag "est_ancien" si fourni
             if (isset($data['est_ancien'])) {
                 $projet->est_ancien = $est_ancien;
+
+                $projet->save();
             }
 
-            $projet->save();
+            // 🧠 Cas spécial : Si le nouveau statut = IDEE_DE_PROJET
+            if ($nouveauStatut === StatutIdee::IDEE_DE_PROJET->value) {
+                // Vérifie si le projet a une idée de projet associée
+                if ($projet->ideeProjet) {
+                    // Mettre le statut de l’idée de projet en BROUILLON (et non SOUMISE)
+                    $projet->ideeProjet->update([
+                        'statut' => StatutIdee::BROUILLON, // <— statut à définir selon ton Enum
+                        'sous_phase' => SousPhaseIdee::redaction, // <— statut à définir selon ton Enum
+                        'phase' => PhasesIdee::identification, // <— statut à définir selon ton Enum
+                        'est_soumise' => false, // <— statut à définir selon ton Enum
+                        'est_coherent' => false, // <— statut à définir selon ton Enum
+                        'est_ancien' => $projet->est_ancien
+                    ]);
+                }
+            }
+
+            // 🔸 Si le nouveau statut est "CLOTURE", on le gère comme un abandon
+            elseif ($nouveauStatut === StatutIdee::CLOTURE) {
+                $nouveauStatut = StatutIdee::CLOTURE;
+
+                $projet->update([
+                    'date_fin_etude' => now(),
+                    'statut' => $nouveauStatut,
+                    'decision' => [
+                        'decision' => "Cloturé",
+                        'message' => 'Projet clôturé (traité comme cloturé) avec succès.'
+                    ]
+                ]);
+            }
 
             // Créer un commentaire avec tag d'identification SIGFP si fourni
             if (isset($data['commentaire']) && !empty($data['commentaire'])) {

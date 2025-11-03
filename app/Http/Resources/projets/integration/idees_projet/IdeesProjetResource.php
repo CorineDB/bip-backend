@@ -26,6 +26,7 @@ class IdeesProjetResource extends BaseApiResource
             'identifiant_bip' => $this->identifiant_bip,
             'identifiant_sigfp' => $this->identifiant_sigfp,
             'sigle' => $this->sigle,
+            'est_ancien' => $this->est_ancien,
             'titre_projet' => $this->titre_projet,
             'porteur_projet' => $this->porteur_projet,
             'est_un_projet' => $this->projet ? true : false,

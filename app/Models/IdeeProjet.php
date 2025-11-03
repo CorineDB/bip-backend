@@ -93,7 +93,8 @@ class IdeeProjet extends Model
         "titre_projet",
         'canevas_appreciation_pertinence',
         'canevas_climatique',
-        'canevas_amc'
+        'canevas_amc',
+        'est_ancien'
     ];
 
     /**
@@ -106,6 +107,7 @@ class IdeeProjet extends Model
         'phase'     => PhasesIdee::class,
         'sous_phase'     => SousPhaseIdee::class,
         'type_projet'     => TypesProjet::class,
+        'est_ancien'      => 'boolean',
         // Seules les vraies colonnes JSON selon la migration
         'decision' => 'array',
         'cout_estimatif_projet' => 'array',

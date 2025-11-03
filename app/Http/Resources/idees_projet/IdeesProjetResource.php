@@ -29,6 +29,7 @@ class IdeesProjetResource extends BaseApiResource
             'projetId' => $this->when($this->projet, function(){
                 return $this->projet->hashed_id;
             }),
+            'est_ancien' => $this->est_ancien,
 
             // Statuts et phases
             'statut' => $this->statut?->value ?? $this->statut,

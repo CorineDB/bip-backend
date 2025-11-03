@@ -19,10 +19,12 @@ class TypeProgrammeResource extends BaseApiResource
             "id" => $this->hashed_id,
             "type_programme"=> $this->type_programme,
             "slug"=> $this->slug,
+            "type" => $this->parent ? "composant-programme" : "programme",
             "programme_ou_composant"=> $this->when($this->parent, function() {
                 return [
                     "id" => $this->parent->hashed_id,
-                    "type_programme"=> $this->parent->type_programme
+                    "type_programme"=> $this->parent->type_programme,
+                    "type" => $this->parent->parent ? "composant-programme" : "programme",
                 ];
             })
         ];

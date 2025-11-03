@@ -27,7 +27,15 @@ class UpdateProjetStatusRequest extends FormRequest
             'statut' => [
                 'required',
                 'string',
-                Rule::in(StatutIdee::values())
+                Rule::in([
+                    StatutIdee::PRET,
+                    StatutIdee::SELECTION,
+                    StatutIdee::EN_ATTENTE_DE_PROGRAMMATION,
+                    StatutIdee::EN_COURS_EXECUTION,
+                    StatutIdee::CLOTURE,
+                    StatutIdee::IDEE_DE_PROJET,
+                    StatutIdee::EN_COURS_DE_MATURATION
+                ])
             ],
             'est_ancien' => [
                 'sometimes',
@@ -40,6 +48,24 @@ class UpdateProjetStatusRequest extends FormRequest
                 'max:1000'
             ]
         ];
+    }
+
+    /**
+     * Ajouter une validation personnalisée après la validation de base.
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $statut = $this->input('statut');
+            $estAncien = filter_var($this->input('est_ancien'), FILTER_VALIDATE_BOOLEAN);
+
+            if ($statut === StatutIdee::IDEE_DE_PROJET->value && !$estAncien) {
+                $validator->errors()->add(
+                    'est_ancien',
+                    'Le champ est_ancien doit être vrai lorsque le statut est "IDEE_DE_PROJET".'
+                );
+            }
+        });
     }
 
     /**
