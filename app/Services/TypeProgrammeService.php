@@ -30,7 +30,7 @@ class TypeProgrammeService extends BaseService implements TypeProgrammeServiceIn
 
     public function programmes(): JsonResponse {
         try {
-            $data = $this->repository->getModel()->whereNull('typeId')->get();
+            $data = $this->repository->getModel()->whereNull('typeId')->whereNull("deleted_at")->get();
 
             return ProgrammeResource::collection($data)->response();
         } catch (Exception $e) {
@@ -40,7 +40,7 @@ class TypeProgrammeService extends BaseService implements TypeProgrammeServiceIn
 
     public function composants_de_programme($idProgramme): JsonResponse {
         try {
-            $data = $this->repository->getModel()->where('typeId', $idProgramme)->get();
+            $data = $this->repository->getModel()->where('typeId', $idProgramme)->whereNull("deleted_at")->get();
 
             return TypeProgrammeResource::collection($data)->response();
         } catch (Exception $e) {
@@ -50,7 +50,7 @@ class TypeProgrammeService extends BaseService implements TypeProgrammeServiceIn
 
     public function composants_composants_de_programme($idComposantProgramme): JsonResponse{
         try {
-            $data = $this->repository->getModel()->where('typeId', $idComposantProgramme)->get();
+            $data = $this->repository->getModel()->where('typeId', $idComposantProgramme)->whereNull("deleted_at")->get();
 
             return TypeProgrammeResource::collection($data)->response();
         } catch (Exception $e) {
