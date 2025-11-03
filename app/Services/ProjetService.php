@@ -137,7 +137,7 @@ class ProjetService extends BaseService implements ProjetServiceInterface
                 ->latest()
                 ->get();
 
-            return (ProjetMatureResource::collection($projets))
+            return ($this->resourceClass::collection($projets))
                 ->additional([
                     'message' => 'Projets matures récupérés avec succès.',
                     'total' => $projets->count()
