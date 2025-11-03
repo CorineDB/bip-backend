@@ -4,6 +4,7 @@ namespace App\Http\Resources\projets;
 
 use App\Http\Resources\BaseApiResource;
 use App\Http\Resources\idees_projet\IdeesResource;
+use App\Http\Resources\LieuInterventionResource;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -105,6 +106,7 @@ class ProjetMatureResource extends BaseApiResource
             'flux_tresorerie' => $this->flux_tresorerie,
             'taux_actualisation' => $this->taux_actualisation,
 
+            'lieux_intervention' => LieuInterventionResource::collection($this->lieuxIntervention),
             // Timestamps
             'created_at' => Carbon::parse($this->created_at)->format("Y-m-d H:i:s"),
             'updated_at' => Carbon::parse($this->updated_at)->format("Y-m-d H:i:s"),
