@@ -22,8 +22,7 @@ class ProjetService extends BaseService implements ProjetServiceInterface
 
     public function __construct(
         ProjetRepositoryInterface $repository
-    )
-    {
+    ) {
         parent::__construct($repository);
     }
 
@@ -98,7 +97,21 @@ class ProjetService extends BaseService implements ProjetServiceInterface
                 elseif (auth()->user()->type == "organisation") {
                 }
             })->when(auth()->user()->profilable_type == Dgpd::class, function ($query) {
-                //$query->whereIn("statut", [StatutIdee::ANALYSE, StatutIdee::AMC, StatutIdee::VALIDATION]);
+                $query->whereIn("statut", [
+                    StatutIdee::EVALUATION_NOTE->value,
+                    StatutIdee::VALIDATION_NOTE_AMELIORER->value,
+                    StatutIdee::R_VALIDATION_NOTE_AMELIORER->value,
+                    StatutIdee::VALIDATION_PROFIL->value,
+                    StatutIdee::EVALUATION_TDR_PF->value,
+                    StatutIdee::VALIDATION_PF->value,
+                    StatutIdee::R_TDR_PREFAISABILITE->value,
+
+                    StatutIdee::EVALUATION_TDR_F->value,
+                    StatutIdee::VALIDATION_F->value,
+                    StatutIdee::R_TDR_FAISABILITE->value,
+                    StatutIdee::RAPPORT->value,
+                    StatutIdee::ABANDON->value
+                ]);
             })->latest()->get();
 
             return ($this->resourceClass::collection($projets))
@@ -119,7 +132,7 @@ class ProjetService extends BaseService implements ProjetServiceInterface
     {
         try {
             $projets = $this->repository->getModel()
-                ->where('statut', StatutIdee::PRET)
+                ->whereIn('statut', [StatutIdee::PRET, StatutIdee::SELECTION, StatutIdee::EN_ATTENTE_DE_PROGRAMMATION, StatutIdee::EN_COURS_EXECUTION, StatutIdee::CLOTURE])
                 ->latest()
                 ->get();
 
@@ -195,7 +208,7 @@ class ProjetService extends BaseService implements ProjetServiceInterface
                     'piliers_pag',
 
                     // Fichiers attachés
-                    'fichiers' => function($query) {
+                    'fichiers' => function ($query) {
                         $query->active()->ordered();
                     },
 
@@ -210,12 +223,42 @@ class ProjetService extends BaseService implements ProjetServiceInterface
 
             return (new ProjetResource($projet))
                 ->response();
-
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Projet non trouvé.',
             ], 404);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function getProjetAMaturite(int $projetId): JsonResponse
+    {
+        try {
+            $projet = $this->repository->getModel()
+                ->where('id', $projetId)
+                ->whereIn('statut', [
+                    StatutIdee::PRET,
+                    StatutIdee::SELECTION,
+                    StatutIdee::EN_ATTENTE_DE_PROGRAMMATION,
+                    StatutIdee::EN_COURS_EXECUTION,
+                    StatutIdee::CLOTURE
+                ])
+                ->first();
+
+            if (!$projet) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Projet non trouvé ou non éligible (statut invalide).',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Projet récupéré avec succès.',
+                'data' => new ProjetResource($projet)
+            ], 200);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }

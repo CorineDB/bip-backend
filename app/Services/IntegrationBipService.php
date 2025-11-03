@@ -30,7 +30,7 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
     {
         try {
             $projets = $this->repository->getModel()
-                ->where('statut', StatutIdee::PRET)
+                ->whereIn('statut', [StatutIdee::PRET, StatutIdee::SELECTION, StatutIdee::EN_ATTENTE_DE_PROGRAMMATION, StatutIdee::EN_COURS_EXECUTION, StatutIdee::CLOTURE])
                 ->latest()
                 ->get();
 
@@ -47,7 +47,7 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
 
     /**
      * Récupérer un projet spécifique par son ID
-     */
+     *//*
     public function getProjet(int $projetId): JsonResponse
     {
         try {
@@ -65,11 +65,41 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
                 'message' => 'Projet récupéré avec succès.',
                 'data' => new ProjetResource($projet)
             ], 200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    } */
+    public function getProjet(int $projetId): JsonResponse
+    {
+        try {
+            $projet = $this->repository->getModel()
+                ->where('id', $projetId)
+                ->whereIn('statut', [
+                    StatutIdee::PRET,
+                    StatutIdee::SELECTION,
+                    StatutIdee::EN_ATTENTE_DE_PROGRAMMATION,
+                    StatutIdee::EN_COURS_EXECUTION,
+                    StatutIdee::CLOTURE
+                ])
+                ->first();
 
+            if (!$projet) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Projet non trouvé ou non éligible (statut invalide).',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Projet récupéré avec succès.',
+                'data' => new ProjetResource($projet)
+            ], 200);
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }
     }
+
 
     /**
      * Mettre à jour le statut d'un projet
@@ -140,7 +170,6 @@ class IntegrationBipService extends BaseService implements IntegrationBipService
                 'message' => 'Statut du projet mis à jour avec succès.',
                 'data' => new ProjetResource($projet)
             ], 200);
-
         } catch (Exception $e) {
             return $this->errorResponse($e);
         }

@@ -1,0 +1,2676 @@
+{
+    "nom": "Fiche de remplissage d'une idée de projet",
+    "description": "Formulaire de rédaction d'une idée de projet",
+    "categorieId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+    "type": "formulaire",
+    "sections": [
+        {
+            "id": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+            "key": "informations-generales",
+            "intitule": "Origine du projet",
+            "description": "Informations Générales",
+            "ordre_affichage": 1,
+            "type": "formulaire",
+            "parentSectionId": null,
+            "champs": [
+                {
+                    "id": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "label": "Titre du projet",
+                    "info": "",
+                    "key": "titre_projet",
+                    "attribut": "titre_projet",
+                    "placeholder": "Saisissez le titre de votre projet",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 1,
+                    "type_champ": "text",
+                    "sectionId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": 255,
+                            "min_length": 1
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": true
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": true,
+                    "type": "text",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "QWm8og1A3yK8qOQWNZPza2lmJL04oejLgnpnbBD6Arw5EvR71gMYkGVxXanZbwyM",
+                    "label": "Code du projet",
+                    "info": "",
+                    "key": "identifiant_bip",
+                    "attribut": "identifiant_bip",
+                    "placeholder": "Identifiant du projet dans BIP",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 2,
+                    "type_champ": "text",
+                    "sectionId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": 50,
+                            "min_length": 1
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "text",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "label": "Sigle du projet",
+                    "info": "",
+                    "key": "sigle",
+                    "attribut": "sigle",
+                    "placeholder": "Acronyme du projet",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 2,
+                    "type_champ": "text",
+                    "sectionId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": 50,
+                            "min_length": 1
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "text",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "XeyqwQRz7MXnxGvZDNQwy5ORBro1g8pbl9JAYe6lVbEW3mq42Lk0KzPabrnG5o0V",
+                    "label": "Categorie de projet",
+                    "info": "",
+                    "key": "categorieId",
+                    "attribut": "categorieId",
+                    "placeholder": "Selectionnez la categorie de l'idée de projet",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 3,
+                    "type_champ": "select",
+                    "sectionId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": null,
+                            "min_length": 1
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": true,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "vJG1B0yaz8o1naR4qWQMlbPZx0eAKNdWAjykYm3627JVXEgrvDw5BOGLrXb62k4Z",
+                    "label": "Origine du projet",
+                    "info": "",
+                    "key": "origine",
+                    "attribut": "origine",
+                    "placeholder": "D'où vient l'idée de ce projet ?",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 4,
+                    "type_champ": "textarea",
+                    "sectionId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": 1500,
+                            "min_length": 20
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "mZkVANvDOyGrZBvwAkol2M6xYWQe3Xj2Rj14JVgNza0mnPD7bK5R8EqLz7loMxBG",
+                    "label": "Objectifs de developpement durable",
+                    "info": "",
+                    "key": "odds",
+                    "attribut": "odds",
+                    "placeholder": "Sélectionnez un ODD",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 1,
+                    "type_champ": "select",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRlljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2b",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": [],
+                            "multiple": true
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Fondement",
+                        "description": "Action de la stratégie/Plan/Programme",
+                        "id": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRlljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2b"
+                    }
+                },
+                {
+                    "id": "ZNBqA5XLAWxEXBkzK8VGZglmQa36NMdGgdqRr72Yn1DO4Lyb05evPJwogPM0eKx4",
+                    "label": "Cibles des odds",
+                    "info": "",
+                    "key": "cibles",
+                    "attribut": "cibles",
+                    "placeholder": "Sélectionnez les cibles",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 2,
+                    "type_champ": "select",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRlljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2b",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": [],
+                            "multiple": true
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Fondement",
+                        "description": "Action de la stratégie/Plan/Programme",
+                        "id": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRlljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2b"
+                    }
+                },
+                {
+                    "id": "63nkVKAJR81eOPL3AGZ0BvoX2xn7rm91ZdWaJMYNKl64kbqw5VyzDEQgvg2LMrya",
+                    "label": "Orientations stratégique du PND",
+                    "info": "",
+                    "key": "orientations_strategiques",
+                    "attribut": "orientations_strategiques",
+                    "placeholder": "Choisissez une orientation",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 1,
+                    "type_champ": "select",
+                    "sectionId": "gx8L5zbOJk0A2GbNZQ4BR5zPnEyLq1dO82p3rw6x8KWYeMVXlgmO7aoDvw4VAm3X",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": [],
+                            "multiple": true
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Plan National de Developpement",
+                        "description": "Coherence avec Plan National de developpement",
+                        "id": "gx8L5zbOJk0A2GbNZQ4BR5zPnEyLq1dO82p3rw6x8KWYeMVXlgmO7aoDvw4VAm3X"
+                    }
+                },
+                {
+                    "id": "4koXZBz8XmevDbOB2RkNrGgo46Mw5PdaX9A8LEnqxVWYz7Q0y1JlZK3abaey1YRm",
+                    "label": "Objectifs stratégique du PND",
+                    "info": "",
+                    "key": "objectifs_strategiques",
+                    "attribut": "objectifs_strategiques",
+                    "placeholder": "Choisissez un objectif",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 2,
+                    "type_champ": "select",
+                    "sectionId": "gx8L5zbOJk0A2GbNZQ4BR5zPnEyLq1dO82p3rw6x8KWYeMVXlgmO7aoDvw4VAm3X",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": [],
+                            "multiple": true
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Plan National de Developpement",
+                        "description": "Coherence avec Plan National de developpement",
+                        "id": "gx8L5zbOJk0A2GbNZQ4BR5zPnEyLq1dO82p3rw6x8KWYeMVXlgmO7aoDvw4VAm3X"
+                    }
+                },
+                {
+                    "id": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZ39xY1EnmkDQew6M4BoWbrzyPJqORXDQY",
+                    "label": "Résultats stratégique du PND",
+                    "info": "",
+                    "key": "resultats_strategiques",
+                    "attribut": "resultats_strategiques",
+                    "placeholder": "Choisissez un résultat",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 3,
+                    "type_champ": "select",
+                    "sectionId": "gx8L5zbOJk0A2GbNZQ4BR5zPnEyLq1dO82p3rw6x8KWYeMVXlgmO7aoDvw4VAm3X",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": [],
+                            "multiple": true
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Plan National de Developpement",
+                        "description": "Coherence avec Plan National de developpement",
+                        "id": "gx8L5zbOJk0A2GbNZQ4BR5zPnEyLq1dO82p3rw6x8KWYeMVXlgmO7aoDvw4VAm3X"
+                    }
+                },
+                {
+                    "id": "gx8L5zbOJk0A2GbNZQ4BR5zPnEyLq1dO293rw6x8KWYeMVXlgmO7aoDvw4VAm3X7",
+                    "label": "Piliers du PAG",
+                    "info": "",
+                    "key": "piliers_pag",
+                    "attribut": "piliers_pag",
+                    "placeholder": "Choisissez les piliers",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 1,
+                    "type_champ": "select",
+                    "sectionId": "JgNzGVBZw6QGvYXbMm4o7LBEOe1nz2dVP6jAZK8DrxW0l3g5JRykNqaVPn7XO3e8",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": [],
+                            "multiple": true
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Programme d'Action du Gouvernement",
+                        "description": "Alignement au programme d'action du Gouvernement",
+                        "id": "JgNzGVBZw6QGvYXbMm4o7LBEOe1nz2dVP6jAZK8DrxW0l3g5JRykNqaVPn7XO3e8"
+                    }
+                },
+                {
+                    "id": "JgNzGVBZw6QGvYXbMm4o7LBEOe1nz2dV6dAZK8DrxW0l3g5JRykNqaVPn7XO3e80",
+                    "label": "Axes du PAG",
+                    "info": "",
+                    "key": "axes_pag",
+                    "attribut": "axes_pag",
+                    "placeholder": "Choisissez les axes du pags",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 2,
+                    "type_champ": "select",
+                    "sectionId": "JgNzGVBZw6QGvYXbMm4o7LBEOe1nz2dVP6jAZK8DrxW0l3g5JRykNqaVPn7XO3e8",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": [],
+                            "multiple": true
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Programme d'Action du Gouvernement",
+                        "description": "Alignement au programme d'action du Gouvernement",
+                        "id": "JgNzGVBZw6QGvYXbMm4o7LBEOe1nz2dVP6jAZK8DrxW0l3g5JRykNqaVPn7XO3e8"
+                    }
+                },
+                {
+                    "id": "yYgm7DVKZ5wJlPVBKqGrg3RXyENA1MprOjeDxv8WQL74zabonYm02O6k1z4QvB5N",
+                    "label": "Actions du PAG",
+                    "info": "",
+                    "key": "actions_pag",
+                    "attribut": "actions_pag",
+                    "placeholder": "Choisissez une action",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 3,
+                    "type_champ": "select",
+                    "sectionId": "JgNzGVBZw6QGvYXbMm4o7LBEOe1nz2dVP6jAZK8DrxW0l3g5JRykNqaVPn7XO3e8",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": [],
+                            "multiple": true
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Programme d'Action du Gouvernement",
+                        "description": "Alignement au programme d'action du Gouvernement",
+                        "id": "JgNzGVBZw6QGvYXbMm4o7LBEOe1nz2dVP6jAZK8DrxW0l3g5JRykNqaVPn7XO3e8"
+                    }
+                },
+                {
+                    "id": "eXyxW7nPelK3NvXDQE17JkM2VO6gAyjw09rb5G0azxqmWR8PB4wnLZYob2RKZ6MQ",
+                    "label": "Situation actuelle",
+                    "info": "Problématique et/ou besoins",
+                    "key": "situation_actuelle",
+                    "attribut": "situation_actuelle",
+                    "placeholder": "Décrivez la situation actuelle",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 1,
+                    "type_champ": "textarea",
+                    "sectionId": "XeyqwQRz7MXnxGvZDNQwy5ORBro1g8pbqldJAYe6lVbEW3mq42Lk0KzPabrnG5o0",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": 2000,
+                            "min_length": 20
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Autres",
+                        "description": " ",
+                        "id": "XeyqwQRz7MXnxGvZDNQwy5ORBro1g8pbqldJAYe6lVbEW3mq42Lk0KzPabrnG5o0"
+                    }
+                },
+                {
+                    "id": "3g5mlyXMXxZLJQNem14lKwRyvOBrD6pYqpY2GnWEMg7a3AVobq0k58Pz0VQPrkzR",
+                    "label": "Situation désirée",
+                    "info": "Finalité, Buts",
+                    "key": "situation_desiree",
+                    "attribut": "situation_desiree",
+                    "placeholder": "Décrivez la situation visée",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 2,
+                    "type_champ": "textarea",
+                    "sectionId": "XeyqwQRz7MXnxGvZDNQwy5ORBro1g8pbqldJAYe6lVbEW3mq42Lk0KzPabrnG5o0",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": 2000,
+                            "min_length": 20
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Autres",
+                        "description": " ",
+                        "id": "XeyqwQRz7MXnxGvZDNQwy5ORBro1g8pbqldJAYe6lVbEW3mq42Lk0KzPabrnG5o0"
+                    }
+                },
+                {
+                    "id": "wZN6G3Qm64ma5xEgBXQOGJbRDnlyer9JZ9731NkLqP2Mo0wWV8KYzZAvoPbzMXV4",
+                    "label": "Contraintes à respecter et gérer",
+                    "info": "",
+                    "key": "contraintes",
+                    "attribut": "contraintes",
+                    "placeholder": "Identifiez les principales contraintes",
+                    "is_required": false,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 3,
+                    "type_champ": "textarea",
+                    "sectionId": "XeyqwQRz7MXnxGvZDNQwy5ORBro1g8pbqldJAYe6lVbEW3mq42Lk0KzPabrnG5o0",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": 1000,
+                            "min_length": 10
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Autres",
+                        "description": " ",
+                        "id": "XeyqwQRz7MXnxGvZDNQwy5ORBro1g8pbqldJAYe6lVbEW3mq42Lk0KzPabrnG5o0"
+                    }
+                }
+            ],
+            "sous_sections": [
+                {
+                    "id": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRlljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2b",
+                    "key": "fondement",
+                    "intitule": "Fondement",
+                    "description": "Action de la stratégie/Plan/Programme",
+                    "ordre_affichage": 10,
+                    "type": "formulaire",
+                    "parentSectionId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "champs": [
+                        {
+                            "id": "mZkVANvDOyGrZBvwAkol2M6xYWQe3Xj2Rj14JVgNza0mnPD7bK5R8EqLz7loMxBG",
+                            "label": "Objectifs de developpement durable",
+                            "info": "",
+                            "key": "odds",
+                            "attribut": "odds",
+                            "placeholder": "Sélectionnez un ODD",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 1,
+                            "type_champ": "select",
+                            "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRlljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2b",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": [],
+                                    "multiple": true
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "ZNBqA5XLAWxEXBkzK8VGZglmQa36NMdGgdqRr72Yn1DO4Lyb05evPJwogPM0eKx4",
+                            "label": "Cibles des odds",
+                            "info": "",
+                            "key": "cibles",
+                            "attribut": "cibles",
+                            "placeholder": "Sélectionnez les cibles",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 2,
+                            "type_champ": "select",
+                            "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRlljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2b",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": [],
+                                    "multiple": true
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        }
+                    ]
+                },
+                {
+                    "id": "gx8L5zbOJk0A2GbNZQ4BR5zPnEyLq1dO82p3rw6x8KWYeMVXlgmO7aoDvw4VAm3X",
+                    "key": "plan-national-de-developpement",
+                    "intitule": "Plan National de Developpement",
+                    "description": "Coherence avec Plan National de developpement",
+                    "ordre_affichage": 11,
+                    "type": "formulaire",
+                    "parentSectionId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "champs": [
+                        {
+                            "id": "63nkVKAJR81eOPL3AGZ0BvoX2xn7rm91ZdWaJMYNKl64kbqw5VyzDEQgvg2LMrya",
+                            "label": "Orientations stratégique du PND",
+                            "info": "",
+                            "key": "orientations_strategiques",
+                            "attribut": "orientations_strategiques",
+                            "placeholder": "Choisissez une orientation",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 1,
+                            "type_champ": "select",
+                            "sectionId": "gx8L5zbOJk0A2GbNZQ4BR5zPnEyLq1dO82p3rw6x8KWYeMVXlgmO7aoDvw4VAm3X",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": [],
+                                    "multiple": true
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "4koXZBz8XmevDbOB2RkNrGgo46Mw5PdaX9A8LEnqxVWYz7Q0y1JlZK3abaey1YRm",
+                            "label": "Objectifs stratégique du PND",
+                            "info": "",
+                            "key": "objectifs_strategiques",
+                            "attribut": "objectifs_strategiques",
+                            "placeholder": "Choisissez un objectif",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 2,
+                            "type_champ": "select",
+                            "sectionId": "gx8L5zbOJk0A2GbNZQ4BR5zPnEyLq1dO82p3rw6x8KWYeMVXlgmO7aoDvw4VAm3X",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": [],
+                                    "multiple": true
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZ39xY1EnmkDQew6M4BoWbrzyPJqORXDQY",
+                            "label": "Résultats stratégique du PND",
+                            "info": "",
+                            "key": "resultats_strategiques",
+                            "attribut": "resultats_strategiques",
+                            "placeholder": "Choisissez un résultat",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 3,
+                            "type_champ": "select",
+                            "sectionId": "gx8L5zbOJk0A2GbNZQ4BR5zPnEyLq1dO82p3rw6x8KWYeMVXlgmO7aoDvw4VAm3X",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": [],
+                                    "multiple": true
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        }
+                    ]
+                },
+                {
+                    "id": "JgNzGVBZw6QGvYXbMm4o7LBEOe1nz2dVP6jAZK8DrxW0l3g5JRykNqaVPn7XO3e8",
+                    "key": "programme-d-action-du-gouvernement",
+                    "intitule": "Programme d'Action du Gouvernement",
+                    "description": "Alignement au programme d'action du Gouvernement",
+                    "ordre_affichage": 12,
+                    "type": "formulaire",
+                    "parentSectionId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "champs": [
+                        {
+                            "id": "gx8L5zbOJk0A2GbNZQ4BR5zPnEyLq1dO293rw6x8KWYeMVXlgmO7aoDvw4VAm3X7",
+                            "label": "Piliers du PAG",
+                            "info": "",
+                            "key": "piliers_pag",
+                            "attribut": "piliers_pag",
+                            "placeholder": "Choisissez les piliers",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 1,
+                            "type_champ": "select",
+                            "sectionId": "JgNzGVBZw6QGvYXbMm4o7LBEOe1nz2dVP6jAZK8DrxW0l3g5JRykNqaVPn7XO3e8",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": [],
+                                    "multiple": true
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "JgNzGVBZw6QGvYXbMm4o7LBEOe1nz2dV6dAZK8DrxW0l3g5JRykNqaVPn7XO3e80",
+                            "label": "Axes du PAG",
+                            "info": "",
+                            "key": "axes_pag",
+                            "attribut": "axes_pag",
+                            "placeholder": "Choisissez les axes du pags",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 2,
+                            "type_champ": "select",
+                            "sectionId": "JgNzGVBZw6QGvYXbMm4o7LBEOe1nz2dVP6jAZK8DrxW0l3g5JRykNqaVPn7XO3e8",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": [],
+                                    "multiple": true
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "yYgm7DVKZ5wJlPVBKqGrg3RXyENA1MprOjeDxv8WQL74zabonYm02O6k1z4QvB5N",
+                            "label": "Actions du PAG",
+                            "info": "",
+                            "key": "actions_pag",
+                            "attribut": "actions_pag",
+                            "placeholder": "Choisissez une action",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 3,
+                            "type_champ": "select",
+                            "sectionId": "JgNzGVBZw6QGvYXbMm4o7LBEOe1nz2dVP6jAZK8DrxW0l3g5JRykNqaVPn7XO3e8",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": [],
+                                    "multiple": true
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        }
+                    ]
+                },
+                {
+                    "id": "XeyqwQRz7MXnxGvZDNQwy5ORBro1g8pbqldJAYe6lVbEW3mq42Lk0KzPabrnG5o0",
+                    "key": "",
+                    "intitule": "Autres",
+                    "description": " ",
+                    "ordre_affichage": 13,
+                    "type": "formulaire",
+                    "parentSectionId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "champs": [
+                        {
+                            "id": "eXyxW7nPelK3NvXDQE17JkM2VO6gAyjw09rb5G0azxqmWR8PB4wnLZYob2RKZ6MQ",
+                            "label": "Situation actuelle",
+                            "info": "Problématique et/ou besoins",
+                            "key": "situation_actuelle",
+                            "attribut": "situation_actuelle",
+                            "placeholder": "Décrivez la situation actuelle",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 1,
+                            "type_champ": "textarea",
+                            "sectionId": "XeyqwQRz7MXnxGvZDNQwy5ORBro1g8pbqldJAYe6lVbEW3mq42Lk0KzPabrnG5o0",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "max_length": 2000,
+                                    "min_length": 20
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "3g5mlyXMXxZLJQNem14lKwRyvOBrD6pYqpY2GnWEMg7a3AVobq0k58Pz0VQPrkzR",
+                            "label": "Situation désirée",
+                            "info": "Finalité, Buts",
+                            "key": "situation_desiree",
+                            "attribut": "situation_desiree",
+                            "placeholder": "Décrivez la situation visée",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 2,
+                            "type_champ": "textarea",
+                            "sectionId": "XeyqwQRz7MXnxGvZDNQwy5ORBro1g8pbqldJAYe6lVbEW3mq42Lk0KzPabrnG5o0",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "max_length": 2000,
+                                    "min_length": 20
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "wZN6G3Qm64ma5xEgBXQOGJbRDnlyer9JZ9731NkLqP2Mo0wWV8KYzZAvoPbzMXV4",
+                            "label": "Contraintes à respecter et gérer",
+                            "info": "",
+                            "key": "contraintes",
+                            "attribut": "contraintes",
+                            "placeholder": "Identifiez les principales contraintes",
+                            "is_required": false,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 3,
+                            "type_champ": "textarea",
+                            "sectionId": "XeyqwQRz7MXnxGvZDNQwy5ORBro1g8pbqldJAYe6lVbEW3mq42Lk0KzPabrnG5o0",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "max_length": 1000,
+                                    "min_length": 10
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+            "key": "secteur-d-activite-et-localisation",
+            "intitule": "Description sommaire de l’idée de projet",
+            "description": "Description sommaire de l’idée de projet",
+            "ordre_affichage": 2,
+            "type": "formulaire",
+            "parentSectionId": null,
+            "champs": [
+                {
+                    "id": "kYW3Dlgz7lQeD8qB0K1omyPwbaNRAEdNDjXgxLz6Z5OYk3GrWV4vMJn22mvRMaoA",
+                    "label": "Description générale du projet",
+                    "info": "(Contexte & objectifs]",
+                    "key": "description_projet",
+                    "attribut": "description_projet",
+                    "placeholder": "Description détaillée du projet",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 1,
+                    "type_champ": "textarea",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "rows": 3,
+                            "max_length": 3000,
+                            "min_length": 50
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "max": 3000,
+                            "min": 50,
+                            "required": true
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "qZYBnaeVnyr4X1DmxPQY0avgzKOZBA9xWjV23LGqWJ6kw5bM8R7loeNEQGNRKOzv",
+                    "label": "Objectif Specifiques",
+                    "info": "",
+                    "key": "objectifs_specifiques",
+                    "attribut": "objectifs_specifiques",
+                    "placeholder": "Décrivez l'objectif principal du projet",
+                    "is_required": false,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 2,
+                    "type_champ": "textarea",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "rows": 3,
+                            "max_length": 5000,
+                            "min_length": 20
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "WnMvZyJxA6anPlGEJOzBwme0bqoX1Mjn79W7xN3kK4DR2r5V8ygvQYLZo1Ae2Lq3",
+                    "label": "Durée du projet",
+                    "info": "En Annee",
+                    "key": "duree",
+                    "attribut": "duree",
+                    "placeholder": "Ex: 5 ans",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 3,
+                    "type_champ": "number",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": null,
+                            "min_length": 1
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "number",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "QJvAmnBeJ78WVe5YvZKQXkExGbMz0qpQPdNro6Ran2l3DgPBmLOyA14wR6852klM",
+                    "label": "Echéancier des principaux extrants",
+                    "info": "(Indicateurs de réalisations physiques]",
+                    "key": "echeancier",
+                    "attribut": "echeancier",
+                    "placeholder": "",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 4,
+                    "type_champ": "textarea",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "rows": 3,
+                            "max_length": 3000,
+                            "min_length": 50
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "max": 3000,
+                            "min": 50,
+                            "required": true
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "glK0Vbw2XrJkZ0o8E4DyeO6VQNAmKv9lMdn5Y372PwRWq1xgGbBaMlLzMrG561OD",
+                    "label": "Description des principaux extrants",
+                    "info": "(spécifications techniques]",
+                    "key": "description_extrants",
+                    "attribut": "description_extrants",
+                    "placeholder": "Description détaillée des principaux extrants du projet",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 5,
+                    "type_champ": "textarea",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "rows": 3,
+                            "max_length": 3000,
+                            "min_length": 50
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "max": 3000,
+                            "min": 50,
+                            "required": true
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "JwBNxkmalP2kJDBm5oVrwaW1zG8XYLjEwdRx630Q74yMKZnevAgNqObEvE245GY6",
+                    "label": "Caractéristiques techniques",
+                    "info": "",
+                    "key": "caracteristiques_techniques",
+                    "attribut": "caracteristiques_techniques",
+                    "placeholder": "Caractéristiques techniques",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 6,
+                    "type_champ": "textarea",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "rows": 3,
+                            "max_length": 2000,
+                            "min_length": 10
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "max": 2000,
+                            "min": 10,
+                            "required": true
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "ZQqYNJw15EzKyOxr8Z2NeJRm3MGBPWdDEpDQAlL6V1oXYb0vna4qg7kwnkLmPgxz",
+                    "label": "Résultats attendus",
+                    "info": "",
+                    "key": "resultats_attendus",
+                    "attribut": "resultats_attendus",
+                    "placeholder": "Décrivez les résultats attendus",
+                    "is_required": false,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 7,
+                    "type_champ": "textarea",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "rows": 2,
+                            "max_length": 2000,
+                            "min_length": 20
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "O3aQz0DwJ24wLBG3qVyoevWb86DQlZ9yzdMk7Y5raER0nNXAK1xOPgzm2P6BLqKr",
+                    "label": "Impact environnemental",
+                    "info": "",
+                    "key": "impact_environnement",
+                    "attribut": "impact_environnement",
+                    "placeholder": "Impact sur l'environnement",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 8,
+                    "type_champ": "textarea",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "rows": 3,
+                            "max_length": 1500,
+                            "min_length": 10
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "max": 1500,
+                            "min": 10,
+                            "required": true
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "BkN1mW5wn4YZbzQAX7vaVm6K0JW32BpM8Pdlw1N8OkMoLy5DrRPxGqgeEbxnqO0v",
+                    "label": "Aspects organisationnels",
+                    "info": "",
+                    "key": "aspect_organisationnel",
+                    "attribut": "aspect_organisationnel",
+                    "placeholder": "",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 9,
+                    "type_champ": "textarea",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "rows": 3,
+                            "max_length": 1500,
+                            "min_length": 10
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "max": 1500,
+                            "min": 10,
+                            "required": true
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "RqLJGBMeaxeMvEPO0gzyZJ38B2XNqVdmbpbYDrAmGnKl6L4R517wkWoQE0N2b865",
+                    "label": "Estimation des coûts et benefices",
+                    "info": "",
+                    "key": "estimation_couts",
+                    "attribut": "estimation_couts",
+                    "placeholder": "",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 10,
+                    "type_champ": "textarea",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "rows": 3,
+                            "max_length": 1500,
+                            "min_length": 10
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "max": 1500,
+                            "min": 10,
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkkdGAx4zngQy2wa3lr7J16Rko6KO8QAE",
+                    "label": "Risques immédiats",
+                    "info": "",
+                    "key": "risques_immediats",
+                    "attribut": "risques_immediats",
+                    "placeholder": "Risques identifiés",
+                    "is_required": false,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 11,
+                    "type_champ": "textarea",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "rows": 2,
+                            "max_length": 1500,
+                            "min_length": 10
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "max": 1500,
+                            "min": 10,
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "XeyqwQRz7MXnxGvZDNQwy5ORBro1g8pbblpJAYe6lVbEW3mq42Lk0KzPabrnG5o0",
+                    "label": "Autre solutions alternatives considere et non retenues",
+                    "info": "",
+                    "key": "description",
+                    "attribut": "description",
+                    "placeholder": "Autre solutions alternatives",
+                    "is_required": false,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 12,
+                    "type_champ": "textarea",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": 1500,
+                            "min_length": 10
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "WnMvZyJxA6anPlGEJOzBwme0bqoX1Mjnb7jW7xN3kK4DR2r5V8ygvQYLZo1Ae2Lq",
+                    "label": "Conclusions",
+                    "info": "",
+                    "key": "conclusions",
+                    "attribut": "conclusions",
+                    "placeholder": "Conclusions générales",
+                    "is_required": false,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 13,
+                    "type_champ": "textarea",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": 1500,
+                            "min_length": 10
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRAl9J4awW0KQ6yrv1X8OqLlN5g0Q71A2b",
+                    "label": "Description sommaire",
+                    "info": "",
+                    "key": "sommaire",
+                    "attribut": "sommaire",
+                    "placeholder": "Description sommaire",
+                    "is_required": false,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 14,
+                    "type_champ": "textarea",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": 1500,
+                            "min_length": 10
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "glK0Vbw2XrJkZ0o8E4DyeO6VQNAmKv9lKDjn5Y372PwRWq1xgGbBaMlLzMrG561O",
+                    "label": "Demandeur",
+                    "info": "Porteur de projet",
+                    "key": "demandeur",
+                    "attribut": "demandeur",
+                    "placeholder": "Porteur de projet",
+                    "is_required": false,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 15,
+                    "type_champ": "text",
+                    "sectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": 1500,
+                            "min_length": 10
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "min": 0,
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "text",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "ZoaLBkymovb6gDV5NE0WRezy7PaBn3jqodXO1QmZ8AqM2wLKJlG4xrYkAq7GJW4e",
+                    "label": "Grand Secteur",
+                    "info": "",
+                    "key": "grand_secteur",
+                    "attribut": "grand_secteur",
+                    "placeholder": "Choisissez un grand secteur",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 1,
+                    "type_champ": "select",
+                    "sectionId": "4koXZBz8XmevDbOB2RkNrGgo46Mw5Pda6XpA8LEnqxVWYz7Q0y1JlZK3abaey1YR",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": []
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Secteur d'intervention",
+                        "description": "Entites Thematique",
+                        "id": "4koXZBz8XmevDbOB2RkNrGgo46Mw5Pda6XpA8LEnqxVWYz7Q0y1JlZK3abaey1YR"
+                    }
+                },
+                {
+                    "id": "l8o140myB5vlVgNy0mxqJL17MQKro8pogpzeWEwDPRAa34bn6O2YXkGZeKPRNOLQ",
+                    "label": "Secteur",
+                    "info": "",
+                    "key": "secteur",
+                    "attribut": "secteur",
+                    "placeholder": "Choisissez un secteur",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 2,
+                    "type_champ": "select",
+                    "sectionId": "4koXZBz8XmevDbOB2RkNrGgo46Mw5Pda6XpA8LEnqxVWYz7Q0y1JlZK3abaey1YR",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": []
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Secteur d'intervention",
+                        "description": "Entites Thematique",
+                        "id": "4koXZBz8XmevDbOB2RkNrGgo46Mw5Pda6XpA8LEnqxVWYz7Q0y1JlZK3abaey1YR"
+                    }
+                },
+                {
+                    "id": "lo6OnqzAkXYq4oraLmbzQGO17KR6JB94rpnWvexAPND5ygZ3Ewl028MVkLWRQ4JE",
+                    "label": "Sous Secteur",
+                    "info": "",
+                    "key": "secteurId",
+                    "attribut": "secteurId",
+                    "placeholder": "Choisissez un sous secteur",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 3,
+                    "type_champ": "select",
+                    "sectionId": "4koXZBz8XmevDbOB2RkNrGgo46Mw5Pda6XpA8LEnqxVWYz7Q0y1JlZK3abaey1YR",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": []
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Secteur d'intervention",
+                        "description": "Entites Thematique",
+                        "id": "4koXZBz8XmevDbOB2RkNrGgo46Mw5Pda6XpA8LEnqxVWYz7Q0y1JlZK3abaey1YR"
+                    }
+                },
+                {
+                    "id": "AzWVLYG4woKk6XvNELQAm0aOerlPZYd8g9DyqgnVM4WB175JRx8G3b2zQ7lPB6ZD",
+                    "label": "Départements",
+                    "info": "",
+                    "key": "departements",
+                    "attribut": "departements",
+                    "placeholder": "Choisissez un département",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 1,
+                    "type_champ": "select",
+                    "sectionId": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZk39xY1EnmkDQew6M4BoWbrzyPJqORXDQ",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": [],
+                            "multiple": true
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "min": 0,
+                            "array": true,
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Zone d'intervention",
+                        "description": "Localisation",
+                        "id": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZk39xY1EnmkDQew6M4BoWbrzyPJqORXDQ"
+                    }
+                },
+                {
+                    "id": "GqVRX5grP61rRnmDxVYbAeZ8X7LKEQdKyjMaOGzq54BklJ2Nvyow3Wg0nQkW3NEL",
+                    "label": "Communes",
+                    "info": "",
+                    "key": "communes",
+                    "attribut": "communes",
+                    "placeholder": "Choisissez une commune",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 2,
+                    "type_champ": "select",
+                    "sectionId": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZk39xY1EnmkDQew6M4BoWbrzyPJqORXDQ",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": [],
+                            "multiple": true
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "min": 0,
+                            "array": true,
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Zone d'intervention",
+                        "description": "Localisation",
+                        "id": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZk39xY1EnmkDQew6M4BoWbrzyPJqORXDQ"
+                    }
+                },
+                {
+                    "id": "XAW34mebBMKb3Ek7OL1Vlgqm208e4XpkvdxAYPDaGJ6nR5zWyvoZwrQNyQZkEGr5",
+                    "label": "Arrondissements",
+                    "info": "",
+                    "key": "arrondissements",
+                    "attribut": "arrondissements",
+                    "placeholder": "Choisissez un arrondissement",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 3,
+                    "type_champ": "select",
+                    "sectionId": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZk39xY1EnmkDQew6M4BoWbrzyPJqORXDQ",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": [],
+                            "multiple": true
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "min": 0,
+                            "array": true,
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Zone d'intervention",
+                        "description": "Localisation",
+                        "id": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZk39xY1EnmkDQew6M4BoWbrzyPJqORXDQ"
+                    }
+                },
+                {
+                    "id": "74q5By1DO4VePDrEZNA7WLYbK05M38p6GjyB1QJ6wmRaq2kzxvonlgGXaMNo3zQx",
+                    "label": "Villages",
+                    "info": "",
+                    "key": "villages",
+                    "attribut": "villages",
+                    "placeholder": "Selectionnez les villages",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 4,
+                    "type_champ": "select",
+                    "sectionId": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZk39xY1EnmkDQew6M4BoWbrzyPJqORXDQ",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "multiple": true,
+                            "min_length": 1
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "min": 0,
+                            "array": true,
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Zone d'intervention",
+                        "description": "Localisation",
+                        "id": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZk39xY1EnmkDQew6M4BoWbrzyPJqORXDQ"
+                    }
+                }
+            ],
+            "sous_sections": [
+                {
+                    "id": "4koXZBz8XmevDbOB2RkNrGgo46Mw5Pda6XpA8LEnqxVWYz7Q0y1JlZK3abaey1YR",
+                    "key": "secteur",
+                    "intitule": "Secteur d'intervention",
+                    "description": "Entites Thematique",
+                    "ordre_affichage": 1,
+                    "type": "formulaire",
+                    "parentSectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "champs": [
+                        {
+                            "id": "ZoaLBkymovb6gDV5NE0WRezy7PaBn3jqodXO1QmZ8AqM2wLKJlG4xrYkAq7GJW4e",
+                            "label": "Grand Secteur",
+                            "info": "",
+                            "key": "grand_secteur",
+                            "attribut": "grand_secteur",
+                            "placeholder": "Choisissez un grand secteur",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 1,
+                            "type_champ": "select",
+                            "sectionId": "4koXZBz8XmevDbOB2RkNrGgo46Mw5Pda6XpA8LEnqxVWYz7Q0y1JlZK3abaey1YR",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": []
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "l8o140myB5vlVgNy0mxqJL17MQKro8pogpzeWEwDPRAa34bn6O2YXkGZeKPRNOLQ",
+                            "label": "Secteur",
+                            "info": "",
+                            "key": "secteur",
+                            "attribut": "secteur",
+                            "placeholder": "Choisissez un secteur",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 2,
+                            "type_champ": "select",
+                            "sectionId": "4koXZBz8XmevDbOB2RkNrGgo46Mw5Pda6XpA8LEnqxVWYz7Q0y1JlZK3abaey1YR",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": []
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "lo6OnqzAkXYq4oraLmbzQGO17KR6JB94rpnWvexAPND5ygZ3Ewl028MVkLWRQ4JE",
+                            "label": "Sous Secteur",
+                            "info": "",
+                            "key": "secteurId",
+                            "attribut": "secteurId",
+                            "placeholder": "Choisissez un sous secteur",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 3,
+                            "type_champ": "select",
+                            "sectionId": "4koXZBz8XmevDbOB2RkNrGgo46Mw5Pda6XpA8LEnqxVWYz7Q0y1JlZK3abaey1YR",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": []
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        }
+                    ]
+                },
+                {
+                    "id": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZk39xY1EnmkDQew6M4BoWbrzyPJqORXDQ",
+                    "key": "localisation",
+                    "intitule": "Zone d'intervention",
+                    "description": "Localisation",
+                    "ordre_affichage": 2,
+                    "type": "formulaire",
+                    "parentSectionId": "4WPXxovNeVxmMk37EBzRZoP2GbYnADdRljJ4awW0KQ6yrv1X8OqLlN5g0Q71A2ba",
+                    "champs": [
+                        {
+                            "id": "AzWVLYG4woKk6XvNELQAm0aOerlPZYd8g9DyqgnVM4WB175JRx8G3b2zQ7lPB6ZD",
+                            "label": "Départements",
+                            "info": "",
+                            "key": "departements",
+                            "attribut": "departements",
+                            "placeholder": "Choisissez un département",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 1,
+                            "type_champ": "select",
+                            "sectionId": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZk39xY1EnmkDQew6M4BoWbrzyPJqORXDQ",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": [],
+                                    "multiple": true
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "min": 0,
+                                    "array": true,
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "GqVRX5grP61rRnmDxVYbAeZ8X7LKEQdKyjMaOGzq54BklJ2Nvyow3Wg0nQkW3NEL",
+                            "label": "Communes",
+                            "info": "",
+                            "key": "communes",
+                            "attribut": "communes",
+                            "placeholder": "Choisissez une commune",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 2,
+                            "type_champ": "select",
+                            "sectionId": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZk39xY1EnmkDQew6M4BoWbrzyPJqORXDQ",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": [],
+                                    "multiple": true
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "min": 0,
+                                    "array": true,
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "XAW34mebBMKb3Ek7OL1Vlgqm208e4XpkvdxAYPDaGJ6nR5zWyvoZwrQNyQZkEGr5",
+                            "label": "Arrondissements",
+                            "info": "",
+                            "key": "arrondissements",
+                            "attribut": "arrondissements",
+                            "placeholder": "Choisissez un arrondissement",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 3,
+                            "type_champ": "select",
+                            "sectionId": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZk39xY1EnmkDQew6M4BoWbrzyPJqORXDQ",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": [],
+                                    "multiple": true
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "min": 0,
+                                    "array": true,
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "74q5By1DO4VePDrEZNA7WLYbK05M38p6GjyB1QJ6wmRaq2kzxvonlgGXaMNo3zQx",
+                            "label": "Villages",
+                            "info": "",
+                            "key": "villages",
+                            "attribut": "villages",
+                            "placeholder": "Selectionnez les villages",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 4,
+                            "type_champ": "select",
+                            "sectionId": "nGBLgKm0KV20GZNlvqaOJ738AgRXL5jZk39xY1EnmkDQew6M4BoWbrzyPJqORXDQ",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "multiple": true,
+                                    "min_length": 1
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "min": 0,
+                                    "array": true,
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "WnMvZyJxA6anPlGEJOzBwme0bqoX1Mjn79W7xN3kK4DR2r5V8ygvQYLZo1Ae2Lq3",
+            "key": "financement-et-beneficiaires",
+            "intitule": "Financement et Bénéficiaires",
+            "description": "Financement et Bénéficiaires",
+            "ordre_affichage": 3,
+            "type": "formulaire",
+            "parentSectionId": null,
+            "champs": [
+                {
+                    "id": "B3EG0gAkxEDN3en41Y5mqrG7yMBAV0d51dvlLb2XJaQz8gWwZoKPR6OkOaenbw57",
+                    "label": "Coût estimatif du projet",
+                    "info": "",
+                    "key": "cout_estimatif_projet",
+                    "attribut": "cout_estimatif_projet",
+                    "placeholder": "0",
+                    "is_required": true,
+                    "default_value": 0,
+                    "isEvaluated": false,
+                    "ordre_affichage": 1,
+                    "type_champ": "number",
+                    "sectionId": "WnMvZyJxA6anPlGEJOzBwme0bqoX1Mjn79W7xN3kK4DR2r5V8ygvQYLZo1Ae2Lq3",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max": null,
+                            "min": 0,
+                            "step": 1
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "number",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "nVAwDmqNNxa3vDXYG258eZErKQmPz4j0e96AgykMlROVJ7b1nw0qoWLBgGW5K2aQ",
+                    "label": "Coût en dollar canadien",
+                    "info": "",
+                    "key": "cout_dollar_canadien",
+                    "attribut": "cout_dollar_canadien",
+                    "placeholder": "0",
+                    "is_required": true,
+                    "default_value": 0,
+                    "isEvaluated": false,
+                    "ordre_affichage": 2,
+                    "type_champ": "number",
+                    "sectionId": "WnMvZyJxA6anPlGEJOzBwme0bqoX1Mjn79W7xN3kK4DR2r5V8ygvQYLZo1Ae2Lq3",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max": null,
+                            "min": 0,
+                            "step": 1
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "number",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "5rYRmlveMe2zEZRDKyY7xrgPmklbQqpAJjL4wJBVo3X5aNWv1n086OGAnN4Kw8DO",
+                    "label": "Coût en dollar americain",
+                    "info": "",
+                    "key": "cout_dollar_americain",
+                    "attribut": "cout_dollar_americain",
+                    "placeholder": "0",
+                    "is_required": true,
+                    "default_value": 0,
+                    "isEvaluated": false,
+                    "ordre_affichage": 3,
+                    "type_champ": "number",
+                    "sectionId": "WnMvZyJxA6anPlGEJOzBwme0bqoX1Mjn79W7xN3kK4DR2r5V8ygvQYLZo1Ae2Lq3",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max": null,
+                            "min": 0,
+                            "step": 1
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "number",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "m6NYxXKLKLve4r6GaX0BkQ5oWOnYgMdgR9w82lxAzPy1D3JVZmbRNEq7nr0WbM7Q",
+                    "label": "Coût en euro",
+                    "info": "",
+                    "key": "cout_euro",
+                    "attribut": "cout_euro",
+                    "placeholder": "0",
+                    "is_required": true,
+                    "default_value": 0,
+                    "isEvaluated": false,
+                    "ordre_affichage": 4,
+                    "type_champ": "number",
+                    "sectionId": "WnMvZyJxA6anPlGEJOzBwme0bqoX1Mjn79W7xN3kK4DR2r5V8ygvQYLZo1Ae2Lq3",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max": null,
+                            "min": 0,
+                            "step": 1
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "number",
+                    "champStandard": true,
+                    "sectionGroup": null
+                },
+                {
+                    "id": "W68QYBNRVlGwYO0b3JxWXN18AvBoyzjzJjrk47LP6D5KMnZRamQE2gqeeZn3Gvr7",
+                    "label": "Types de financement",
+                    "info": "",
+                    "key": "types_financement",
+                    "attribut": "types_financement",
+                    "placeholder": "Choisissez un type",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 1,
+                    "type_champ": "select",
+                    "sectionId": "yYgm7DVKZ5wJlPVBKqGrg3RXyENA1MprEOdeDxv8WQL74zabonYm02O6k1z4QvB5",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": [],
+                            "multiple": true
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "min": 0,
+                            "array": true,
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Financements",
+                        "description": "Financements",
+                        "id": "yYgm7DVKZ5wJlPVBKqGrg3RXyENA1MprEOdeDxv8WQL74zabonYm02O6k1z4QvB5"
+                    }
+                },
+                {
+                    "id": "Oq1RbDvoG6ogXxJ53kq4DlKZemWYaV9v5j7R218w0AbPvyQzNLBEnrOMg78zG42l",
+                    "label": "Natures du financement",
+                    "info": "",
+                    "key": "natures_financement",
+                    "attribut": "natures_financement",
+                    "placeholder": "Choisissez une nature",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 2,
+                    "type_champ": "select",
+                    "sectionId": "yYgm7DVKZ5wJlPVBKqGrg3RXyENA1MprEOdeDxv8WQL74zabonYm02O6k1z4QvB5",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": [],
+                            "multiple": true
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "min": 0,
+                            "array": true,
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Financements",
+                        "description": "Financements",
+                        "id": "yYgm7DVKZ5wJlPVBKqGrg3RXyENA1MprEOdeDxv8WQL74zabonYm02O6k1z4QvB5"
+                    }
+                },
+                {
+                    "id": "0Z4YmqGE48ek2EMB5Da3NwJRgX1x7V9e7pyqlmZPrW6KoYGLAb0nQzOvA7oN6n8k",
+                    "label": "Sources de financement",
+                    "info": "",
+                    "key": "sources_financement",
+                    "attribut": "sources_financement",
+                    "placeholder": "Choisissez une source",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 3,
+                    "type_champ": "select",
+                    "sectionId": "yYgm7DVKZ5wJlPVBKqGrg3RXyENA1MprEOdeDxv8WQL74zabonYm02O6k1z4QvB5",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "options": [],
+                            "multiple": true
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "min": 0,
+                            "array": true,
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "select",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Financements",
+                        "description": "Financements",
+                        "id": "yYgm7DVKZ5wJlPVBKqGrg3RXyENA1MprEOdeDxv8WQL74zabonYm02O6k1z4QvB5"
+                    }
+                },
+                {
+                    "id": "4xyR3m78wE8JmvDeOL4y5RNg6nZlGzpBx97bxW2qX1rM3QBYVKPaAo0kvlAGgwBr",
+                    "label": "Public cible",
+                    "info": "",
+                    "key": "public_cible",
+                    "attribut": "public_cible",
+                    "placeholder": "Décrivez le public cible du projet",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 1,
+                    "type_champ": "textarea",
+                    "sectionId": "W68QYBNRVlGwYO0b3JxWXN18AvBoyzjzmJprk47LP6D5KMnZRamQE2gqeeZn3Gvr",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": 1000,
+                            "min_length": 10
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "max": 1000,
+                            "min": 10,
+                            "string": true,
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Beneficiaires",
+                        "description": "Beneficiaires",
+                        "id": "W68QYBNRVlGwYO0b3JxWXN18AvBoyzjzmJprk47LP6D5KMnZRamQE2gqeeZn3Gvr"
+                    }
+                },
+                {
+                    "id": "5EOWLgKmRvn7gQOP3GBVro4keNyLqY93EpKXJ5M812DEzAblw6Zx0Wam6r7GAJMB",
+                    "label": "Constats majeurs",
+                    "info": "",
+                    "key": "constats_majeurs",
+                    "attribut": "constats_majeurs",
+                    "placeholder": "",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 2,
+                    "type_champ": "textarea",
+                    "sectionId": "W68QYBNRVlGwYO0b3JxWXN18AvBoyzjzmJprk47LP6D5KMnZRamQE2gqeeZn3Gvr",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": 1000,
+                            "min_length": 10
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "max": 1000,
+                            "min": 10,
+                            "string": true,
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Beneficiaires",
+                        "description": "Beneficiaires",
+                        "id": "W68QYBNRVlGwYO0b3JxWXN18AvBoyzjzmJprk47LP6D5KMnZRamQE2gqeeZn3Gvr"
+                    }
+                },
+                {
+                    "id": "Yqv2lBEWkq8WNE6R1z5aXBvVAG0eYPpP5jxOQyblKw74LJmgrZ2MnDo3m13OxeNQ",
+                    "label": "Parties prenantes",
+                    "info": "",
+                    "key": "parties_prenantes",
+                    "attribut": "parties_prenantes",
+                    "placeholder": "Identifiez les parties prenantes impliquées",
+                    "is_required": true,
+                    "default_value": null,
+                    "isEvaluated": false,
+                    "ordre_affichage": 3,
+                    "type_champ": "textarea",
+                    "sectionId": "W68QYBNRVlGwYO0b3JxWXN18AvBoyzjzmJprk47LP6D5KMnZRamQE2gqeeZn3Gvr",
+                    "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                    "meta_options": {
+                        "configs": {
+                            "max_length": 1000,
+                            "min_length": 10
+                        },
+                        "conditions": {
+                            "disable": false,
+                            "visible": true,
+                            "conditions": []
+                        },
+                        "validations_rules": {
+                            "min": 0,
+                            "array": true,
+                            "required": false
+                        }
+                    },
+                    "champ_standard": true,
+                    "startWithNewLine": false,
+                    "type": "textarea",
+                    "champStandard": true,
+                    "sectionGroup": {
+                        "title": "Beneficiaires",
+                        "description": "Beneficiaires",
+                        "id": "W68QYBNRVlGwYO0b3JxWXN18AvBoyzjzmJprk47LP6D5KMnZRamQE2gqeeZn3Gvr"
+                    }
+                }
+            ],
+            "sous_sections": [
+                {
+                    "id": "yYgm7DVKZ5wJlPVBKqGrg3RXyENA1MprEOdeDxv8WQL74zabonYm02O6k1z4QvB5",
+                    "key": "financements",
+                    "intitule": "Financements",
+                    "description": "Financements",
+                    "ordre_affichage": 1,
+                    "type": "formulaire",
+                    "parentSectionId": "WnMvZyJxA6anPlGEJOzBwme0bqoX1Mjn79W7xN3kK4DR2r5V8ygvQYLZo1Ae2Lq3",
+                    "champs": [
+                        {
+                            "id": "W68QYBNRVlGwYO0b3JxWXN18AvBoyzjzJjrk47LP6D5KMnZRamQE2gqeeZn3Gvr7",
+                            "label": "Types de financement",
+                            "info": "",
+                            "key": "types_financement",
+                            "attribut": "types_financement",
+                            "placeholder": "Choisissez un type",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 1,
+                            "type_champ": "select",
+                            "sectionId": "yYgm7DVKZ5wJlPVBKqGrg3RXyENA1MprEOdeDxv8WQL74zabonYm02O6k1z4QvB5",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": [],
+                                    "multiple": true
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "min": 0,
+                                    "array": true,
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "Oq1RbDvoG6ogXxJ53kq4DlKZemWYaV9v5j7R218w0AbPvyQzNLBEnrOMg78zG42l",
+                            "label": "Natures du financement",
+                            "info": "",
+                            "key": "natures_financement",
+                            "attribut": "natures_financement",
+                            "placeholder": "Choisissez une nature",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 2,
+                            "type_champ": "select",
+                            "sectionId": "yYgm7DVKZ5wJlPVBKqGrg3RXyENA1MprEOdeDxv8WQL74zabonYm02O6k1z4QvB5",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": [],
+                                    "multiple": true
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "min": 0,
+                                    "array": true,
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "0Z4YmqGE48ek2EMB5Da3NwJRgX1x7V9e7pyqlmZPrW6KoYGLAb0nQzOvA7oN6n8k",
+                            "label": "Sources de financement",
+                            "info": "",
+                            "key": "sources_financement",
+                            "attribut": "sources_financement",
+                            "placeholder": "Choisissez une source",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 3,
+                            "type_champ": "select",
+                            "sectionId": "yYgm7DVKZ5wJlPVBKqGrg3RXyENA1MprEOdeDxv8WQL74zabonYm02O6k1z4QvB5",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "options": [],
+                                    "multiple": true
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "min": 0,
+                                    "array": true,
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        }
+                    ]
+                },
+                {
+                    "id": "W68QYBNRVlGwYO0b3JxWXN18AvBoyzjzmJprk47LP6D5KMnZRamQE2gqeeZn3Gvr",
+                    "key": "beneficiaires",
+                    "intitule": "Beneficiaires",
+                    "description": "Beneficiaires",
+                    "ordre_affichage": 2,
+                    "type": "formulaire",
+                    "parentSectionId": "WnMvZyJxA6anPlGEJOzBwme0bqoX1Mjn79W7xN3kK4DR2r5V8ygvQYLZo1Ae2Lq3",
+                    "champs": [
+                        {
+                            "id": "4xyR3m78wE8JmvDeOL4y5RNg6nZlGzpBx97bxW2qX1rM3QBYVKPaAo0kvlAGgwBr",
+                            "label": "Public cible",
+                            "info": "",
+                            "key": "public_cible",
+                            "attribut": "public_cible",
+                            "placeholder": "Décrivez le public cible du projet",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 1,
+                            "type_champ": "textarea",
+                            "sectionId": "W68QYBNRVlGwYO0b3JxWXN18AvBoyzjzmJprk47LP6D5KMnZRamQE2gqeeZn3Gvr",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "max_length": 1000,
+                                    "min_length": 10
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "max": 1000,
+                                    "min": 10,
+                                    "string": true,
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "5EOWLgKmRvn7gQOP3GBVro4keNyLqY93EpKXJ5M812DEzAblw6Zx0Wam6r7GAJMB",
+                            "label": "Constats majeurs",
+                            "info": "",
+                            "key": "constats_majeurs",
+                            "attribut": "constats_majeurs",
+                            "placeholder": "",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 2,
+                            "type_champ": "textarea",
+                            "sectionId": "W68QYBNRVlGwYO0b3JxWXN18AvBoyzjzmJprk47LP6D5KMnZRamQE2gqeeZn3Gvr",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "max_length": 1000,
+                                    "min_length": 10
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "max": 1000,
+                                    "min": 10,
+                                    "string": true,
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        },
+                        {
+                            "id": "Yqv2lBEWkq8WNE6R1z5aXBvVAG0eYPpP5jxOQyblKw74LJmgrZ2MnDo3m13OxeNQ",
+                            "label": "Parties prenantes",
+                            "info": "",
+                            "key": "parties_prenantes",
+                            "attribut": "parties_prenantes",
+                            "placeholder": "Identifiez les parties prenantes impliquées",
+                            "is_required": true,
+                            "default_value": null,
+                            "isEvaluated": false,
+                            "ordre_affichage": 3,
+                            "type_champ": "textarea",
+                            "sectionId": "W68QYBNRVlGwYO0b3JxWXN18AvBoyzjzmJprk47LP6D5KMnZRamQE2gqeeZn3Gvr",
+                            "documentId": "k35w42MlKDEZbN8XqYmvMVOWe0P5BLpXkdGAx4zngQy2wa3lr7J16Rko6KO8QAEg",
+                            "meta_options": {
+                                "configs": {
+                                    "max_length": 1000,
+                                    "min_length": 10
+                                },
+                                "conditions": {
+                                    "disable": false,
+                                    "visible": true,
+                                    "conditions": []
+                                },
+                                "validations_rules": {
+                                    "min": 0,
+                                    "array": true,
+                                    "required": false
+                                }
+                            },
+                            "champ_standard": true,
+                            "startWithNewLine": false
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

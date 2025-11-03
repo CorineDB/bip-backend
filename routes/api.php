@@ -213,6 +213,8 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             ->name('projets.selectionnable');
         Route::get('/projets-mature', [ProjetController::class, 'projetsArrivesAMaturite'])
             ->name('projets.mature');
+        Route::get('/projets-mature/{projetId}', [ProjetController::class, 'getProjetAMaturite'])
+            ->name('projet.mature');
 
         // Routes pour les notes conceptuelles des projets
         Route::prefix('projets')->group(function () {

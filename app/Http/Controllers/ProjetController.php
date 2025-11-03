@@ -57,4 +57,12 @@ class ProjetController extends Controller
     {
         return $this->service->getProjetsArrivesAMaturite();
     }
+
+    /**
+     * Récupérer un projet mature (arrivé à maturité - statut = PRET)
+     */
+    public function getProjetAMaturite($id): JsonResponse
+    {
+        return $this->service->getProjetAMaturite($id);
+    }
 }
