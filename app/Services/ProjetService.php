@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\StatutIdee;
-use App\Http\Resources\projets\ProjetMatureResource;
 use App\Http\Resources\projets\ProjetResource;
 use App\Http\Resources\projets\ProjetsResource;
 use App\Models\Dgpd;
@@ -258,7 +257,7 @@ class ProjetService extends BaseService implements ProjetServiceInterface
             return response()->json([
                 'success' => true,
                 'message' => 'Projet récupéré avec succès.',
-                'data' => new ProjetMatureResource($projet)
+                'data' => new ProjetResource($projet)
             ], 200);
         } catch (Exception $e) {
             return $this->errorResponse($e);
