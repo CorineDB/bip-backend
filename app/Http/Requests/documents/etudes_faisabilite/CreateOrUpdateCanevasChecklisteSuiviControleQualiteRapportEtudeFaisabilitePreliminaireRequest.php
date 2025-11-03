@@ -155,6 +155,35 @@ class CreateOrUpdateCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilite
             'guide_suivi.*.libelle'        => 'required|string|max:255',
             'guide_suivi.*.option'   => 'required|string|max:255',
             'guide_suivi.*.description'    => 'nullable|string|max:1000',
+
+            // Validation de evaluation_configs - Structure dynamique des règles d'évaluation
+            'evaluation_configs'                        => 'nullable|array',
+
+            // Section results - Résultats possibles de l'évaluation
+            'evaluation_configs.results'                => 'nullable|array',
+            'evaluation_configs.results.*.value'        => 'required_with:evaluation_configs.results|string|max:255',
+            'evaluation_configs.results.*.label'        => 'required_with:evaluation_configs.results|string|max:255',
+            'evaluation_configs.results.*.statut_suivant' => 'nullable|string|max:255',
+            'evaluation_configs.results.*.message'      => 'nullable|string|max:1000',
+            'evaluation_configs.results.*.metadata'     => 'nullable|array',
+
+            // Section rules - Règles de décision dynamiques
+            'evaluation_configs.rules'                  => 'nullable|array',
+            'evaluation_configs.rules.reference'        => 'nullable|string|max:500',
+            'evaluation_configs.rules.decision_algorithm' => 'nullable|string|max:100',
+            'evaluation_configs.rules.evaluation_required_fields' => 'nullable|array',
+
+            // Conditions de décision
+            'evaluation_configs.rules.conditions'       => 'nullable|array',
+            'evaluation_configs.rules.conditions.*.priority' => 'required_with:evaluation_configs.rules.conditions|integer|min:1',
+            'evaluation_configs.rules.conditions.*.name' => 'required_with:evaluation_configs.rules.conditions|string|max:255',
+            'evaluation_configs.rules.conditions.*.appreciations_concernees' => 'required_with:evaluation_configs.rules.conditions|array',
+            'evaluation_configs.rules.conditions.*.condition' => 'required_with:evaluation_configs.rules.conditions|array',
+            'evaluation_configs.rules.conditions.*.condition.type' => 'required_with:evaluation_configs.rules.conditions.*.condition|string|in:comparison,and,or,default',
+            'evaluation_configs.rules.conditions.*.result' => 'required_with:evaluation_configs.rules.conditions|string|max:255',
+            'evaluation_configs.rules.conditions.*.message' => 'nullable|string|max:1000',
+            'evaluation_configs.rules.conditions.*.recommandations' => 'nullable|array',
+
             // Forms array - structure flexible avec validation récursive
             'forms' => 'required|array|min:1',
             'forms.*' => 'required|array',
@@ -180,7 +209,106 @@ class CreateOrUpdateCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilite
 
             // Validation de l'ordre d'affichage unique par niveau
             $this->validateOrderPerLevel($validator);
+
+            // Validation de la cohérence de evaluation_configs
+            $this->validateEvaluationConfigsCoherence($validator);
         });
+    }
+
+    /**
+     * Valide la cohérence de la configuration evaluation_configs
+     */
+    private function validateEvaluationConfigsCoherence($validator)
+    {
+        // Récupérer les valeurs d'appreciation du guide_suivi
+        $guideSuivi = $this->input('guide_suivi', []);
+        $validAppreciations = collect($guideSuivi)->pluck('option')->filter()->toArray();
+
+        // Récupérer les résultats possibles
+        $validResults = collect($this->input('evaluation_configs.results', []))->pluck('value')->filter()->toArray();
+
+        // Valider les conditions de décision
+        $conditions = $this->input('evaluation_configs.rules.conditions', []);
+        if (!empty($conditions)) {
+            foreach ($conditions as $index => $condition) {
+                // Vérifier que appreciations_concernees référence des appréciations valides
+                $appreciationsConcernees = $condition['appreciations_concernees'] ?? [];
+                foreach ($appreciationsConcernees as $appreciation) {
+                    if (!in_array($appreciation, $validAppreciations)) {
+                        $validator->errors()->add(
+                            "evaluation_configs.rules.conditions.{$index}.appreciations_concernees",
+                            "L'appréciation '{$appreciation}' n'est pas définie dans guide_suivi. " .
+                            "Appréciations valides: " . implode(', ', $validAppreciations)
+                        );
+                    }
+                }
+
+                // Vérifier que le result correspond à un résultat valide (si results est défini)
+                if (!empty($validResults)) {
+                    $result = $condition['result'] ?? null;
+                    if ($result && !in_array($result, $validResults)) {
+                        $validator->errors()->add(
+                            "evaluation_configs.rules.conditions.{$index}.result",
+                            "Le résultat '{$result}' n'est pas défini dans evaluation_configs.results. " .
+                            "Résultats valides: " . implode(', ', $validResults)
+                        );
+                    }
+                }
+
+                // Vérifier que les conditions qui ne sont pas 'default' ont bien une structure valide
+                if (isset($condition['condition']['type']) && $condition['condition']['type'] !== 'default') {
+                    $this->validateConditionStructure($condition['condition'], "evaluation_configs.rules.conditions.{$index}.condition", $validator);
+                }
+            }
+
+            // Vérifier qu'il y a au moins une condition 'default' avec la priorité la plus basse
+            $hasDefault = collect($conditions)->contains(function($cond) {
+                return ($cond['condition']['type'] ?? '') === 'default';
+            });
+
+            if (!$hasDefault) {
+                $validator->errors()->add(
+                    'evaluation_configs.rules.conditions',
+                    'Au moins une condition avec type "default" est requise comme condition par défaut.'
+                );
+            }
+        }
+    }
+
+    /**
+     * Valide la structure d'une condition (comparison, and, or)
+     */
+    private function validateConditionStructure($condition, $path, $validator)
+    {
+        $type = $condition['type'] ?? null;
+
+        if ($type === 'comparison') {
+            // Vérifier les champs requis pour une comparaison
+            if (empty($condition['field'])) {
+                $validator->errors()->add("{$path}.field", "Le champ 'field' est obligatoire pour une condition de type 'comparison'.");
+            }
+            if (empty($condition['operator'])) {
+                $validator->errors()->add("{$path}.operator", "Le champ 'operator' est obligatoire pour une condition de type 'comparison'.");
+            }
+            if (!isset($condition['value']) && !isset($condition['value_field'])) {
+                $validator->errors()->add("{$path}", "Soit 'value' soit 'value_field' doit être défini pour une condition de type 'comparison'.");
+            }
+            // Valider l'opérateur
+            $validOperators = ['>', '>=', '<', '<=', '==', '!='];
+            if (isset($condition['operator']) && !in_array($condition['operator'], $validOperators)) {
+                $validator->errors()->add("{$path}.operator", "L'opérateur '{$condition['operator']}' n'est pas valide. Opérateurs valides: " . implode(', ', $validOperators));
+            }
+        } elseif ($type === 'and' || $type === 'or') {
+            // Vérifier que 'conditions' est un tableau non vide
+            if (empty($condition['conditions']) || !is_array($condition['conditions'])) {
+                $validator->errors()->add("{$path}.conditions", "Le champ 'conditions' doit être un tableau non vide pour une condition de type '{$type}'.");
+            } else {
+                // Valider récursivement les sous-conditions
+                foreach ($condition['conditions'] as $subIndex => $subCondition) {
+                    $this->validateConditionStructure($subCondition, "{$path}.conditions.{$subIndex}", $validator);
+                }
+            }
+        }
     }
 
     /**

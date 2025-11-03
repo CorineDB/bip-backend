@@ -26,7 +26,10 @@ class TypeProgrammeResource extends BaseApiResource
                     "type_programme"=> $this->parent->type_programme,
                     "type" => $this->parent->parent ? "composant-programme" : "programme",
                 ];
-            })
+            }),
+            "created_at"=> $this->created_at,
+            "updated_at"=> $this->updated_at,
+            "deleted_at"=> $this->deleted_at,
         ];
     }
 

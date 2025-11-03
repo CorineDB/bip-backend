@@ -151,63 +151,32 @@ class CreateOrUpdateCanevasAppreciationNoteConceptuelleRequest extends FormReque
             'guide_notation.*.description'    => 'nullable|string|max:1000',
             'accept_text'                       => 'required|string|min:10',
 
-            // Validation de evaluation_configs - Configuration paramétrable des règles et algorithmes
-            'evaluation_configs'                                      => 'required|array',
-            'evaluation_configs.criteres_evaluation'                  => 'required|array',
+            // Validation de evaluation_configs - Structure dynamique des règles d'évaluation
+            'evaluation_configs'                        => 'nullable|array',
 
-            // Configuration de base
-            'evaluation_configs.criteres_evaluation.commentaire_obligatoire' => 'nullable|boolean',
-            'evaluation_configs.criteres_evaluation.seuil_acceptation' => 'required|integer|min:0',
+            // Section results - Résultats possibles de l'évaluation
+            'evaluation_configs.results'                => 'nullable|array',
+            'evaluation_configs.results.*.value'        => 'required_with:evaluation_configs.results|string|max:255',
+            'evaluation_configs.results.*.label'        => 'required_with:evaluation_configs.results|string|max:255',
+            'evaluation_configs.results.*.statut_suivant' => 'nullable|string|max:255',
+            'evaluation_configs.results.*.message'      => 'nullable|string|max:1000',
 
-            // Règles de décision paramétrables avec notifications intégrées
-            'evaluation_configs.criteres_evaluation.regles_decision'   => 'required|array',
+            // Section rules - Règles de décision dynamiques
+            'evaluation_configs.rules'                  => 'nullable|array',
+            'evaluation_configs.rules.reference'        => 'nullable|string|max:500',
+            'evaluation_configs.rules.decision_algorithm' => 'nullable|string|max:100',
+            'evaluation_configs.rules.evaluation_required_fields' => 'nullable|array',
 
-            // Règle PASSE
-            'evaluation_configs.criteres_evaluation.regles_decision.passe' => 'required|array',
-            'evaluation_configs.criteres_evaluation.regles_decision.passe.condition' => 'required|string|max:255',
-            'evaluation_configs.criteres_evaluation.regles_decision.passe.description' => 'required|string|max:1000',
-            'evaluation_configs.criteres_evaluation.regles_decision.passe.message' => 'required|string|max:500',
-            'evaluation_configs.criteres_evaluation.regles_decision.passe.statut_final' => 'required|string|max:100',
-            'evaluation_configs.criteres_evaluation.regles_decision.passe.notification' => 'required|array',
-            'evaluation_configs.criteres_evaluation.regles_decision.passe.notification.titre' => 'required|string|max:255',
-            'evaluation_configs.criteres_evaluation.regles_decision.passe.notification.message' => 'required|string|max:1000',
-            'evaluation_configs.criteres_evaluation.regles_decision.passe.notification.type' => 'required|string|in:success,info,warning,error',
-
-            // Règle RETOUR
-            'evaluation_configs.criteres_evaluation.regles_decision.retour' => 'required|array',
-            'evaluation_configs.criteres_evaluation.regles_decision.retour.condition' => 'required|string|max:255',
-            'evaluation_configs.criteres_evaluation.regles_decision.retour.description' => 'required|string|max:1000',
-            'evaluation_configs.criteres_evaluation.regles_decision.retour.message' => 'required|string|max:500',
-            'evaluation_configs.criteres_evaluation.regles_decision.retour.statut_final' => 'required|string|max:100',
-            'evaluation_configs.criteres_evaluation.regles_decision.retour.max_retour_allowed' => 'required|integer|min:0',
-            'evaluation_configs.criteres_evaluation.regles_decision.retour.notification' => 'required|array',
-            'evaluation_configs.criteres_evaluation.regles_decision.retour.notification.titre' => 'required|string|max:255',
-            'evaluation_configs.criteres_evaluation.regles_decision.retour.notification.message' => 'required|string|max:1000',
-            'evaluation_configs.criteres_evaluation.regles_decision.retour.notification.type' => 'required|string|in:success,info,warning,error',
-
-            // Règle NON ACCEPTE
-            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte' => 'required|array',
-            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.condition' => 'required|string|max:255',
-            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.description' => 'required|string|max:1000',
-            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.message' => 'required|string|max:500',
-            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.statut_final' => 'required|string|max:100',
-            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.triggers' => 'required|array',
-            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.notification' => 'required|array',
-            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.notification.titre' => 'required|string|max:255',
-            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.notification.message' => 'required|string|max:1000',
-            'evaluation_configs.criteres_evaluation.regles_decision.non_accepte.notification.type' => 'required|string|in:success,info,warning,error',
-
-            // Algorithme de décision paramétrable (étapes d'évaluation)
-            'evaluation_configs.criteres_evaluation.algorithme_decision' => 'required|array',
-            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes' => 'required|array',
-            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.ordre' => 'required|integer|min:1',
-            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.condition' => 'required|string|max:255',
-            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.description' => 'required|string|max:1000',
-            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.action_si_echec' => 'nullable|string|max:100',
-            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.action_si_respecte' => 'nullable|string|max:100',
-            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.action_si_depassement' => 'nullable|string|max:100',
-            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.seuil_max' => 'nullable|integer|min:0',
-            'evaluation_configs.criteres_evaluation.algorithme_decision.etapes.*.logique' => 'nullable|array',
+            // Conditions de décision
+            'evaluation_configs.rules.conditions'       => 'nullable|array',
+            'evaluation_configs.rules.conditions.*.priority' => 'required_with:evaluation_configs.rules.conditions|integer|min:1',
+            'evaluation_configs.rules.conditions.*.name' => 'required_with:evaluation_configs.rules.conditions|string|max:255',
+            'evaluation_configs.rules.conditions.*.appreciations_concernees' => 'required_with:evaluation_configs.rules.conditions|array',
+            'evaluation_configs.rules.conditions.*.condition' => 'required_with:evaluation_configs.rules.conditions|array',
+            'evaluation_configs.rules.conditions.*.condition.type' => 'required_with:evaluation_configs.rules.conditions.*.condition|string|in:comparison,and,or,default',
+            'evaluation_configs.rules.conditions.*.result' => 'required_with:evaluation_configs.rules.conditions|string|max:255',
+            'evaluation_configs.rules.conditions.*.message' => 'nullable|string|max:1000',
+            'evaluation_configs.rules.conditions.*.recommandations' => 'nullable|array',
 
             // Forms array - structure flexible avec validation récursive
             'forms' => 'required|array|min:1',
@@ -242,50 +211,96 @@ class CreateOrUpdateCanevasAppreciationNoteConceptuelleRequest extends FormReque
     }
 
     /**
-     * Valide la cohérence entre guide_notation et regles_decision
+     * Valide la cohérence de la configuration evaluation_configs
      */
     private function validateEvaluationConfigsCoherence($validator)
     {
         // Récupérer les valeurs d'appreciation du guide_notation
         $guideNotation = $this->input('guide_notation', []);
-        $appreciations = collect($guideNotation)->pluck('appreciation')->toArray();
+        $validAppreciations = collect($guideNotation)->pluck('appreciation')->filter()->toArray();
 
-        // Vérifier si evaluation_configs.criteres_evaluation.regles_decision existe
-        $reglesDecision = $this->input('evaluation_configs.criteres_evaluation.regles_decision', []);
+        // Récupérer les résultats possibles
+        $validResults = collect($this->input('evaluation_configs.results', []))->pluck('value')->filter()->toArray();
 
-        if (!empty($reglesDecision)) {
-            $reglesKeys = array_keys($reglesDecision);
+        // Valider les conditions de décision
+        $conditions = $this->input('evaluation_configs.rules.conditions', []);
+        if (!empty($conditions)) {
+            foreach ($conditions as $index => $condition) {
+                // Vérifier que appreciations_concernees référence des appréciations valides
+                $appreciationsConcernees = $condition['appreciations_concernees'] ?? [];
+                foreach ($appreciationsConcernees as $appreciation) {
+                    if (!in_array($appreciation, $validAppreciations)) {
+                        $validator->errors()->add(
+                            "evaluation_configs.rules.conditions.{$index}.appreciations_concernees",
+                            "L'appréciation '{$appreciation}' n'est pas définie dans guide_notation. " .
+                            "Appréciations valides: " . implode(', ', $validAppreciations)
+                        );
+                    }
+                }
 
-            // Vérifier que chaque appréciation du guide a une règle correspondante
-            foreach ($appreciations as $appreciation) {
-                if (!in_array($appreciation, $reglesKeys)) {
-                    $validator->errors()->add('evaluation_configs.criteres_evaluation.regles_decision',
-                        "La règle de décision pour l'appréciation '{$appreciation}' est manquante. " .
-                        "Chaque appréciation du guide_notation doit avoir une règle de décision correspondante.");
+                // Vérifier que le result correspond à un résultat valide (si results est défini)
+                if (!empty($validResults)) {
+                    $result = $condition['result'] ?? null;
+                    if ($result && !in_array($result, $validResults)) {
+                        $validator->errors()->add(
+                            "evaluation_configs.rules.conditions.{$index}.result",
+                            "Le résultat '{$result}' n'est pas défini dans evaluation_configs.results. " .
+                            "Résultats valides: " . implode(', ', $validResults)
+                        );
+                    }
+                }
+
+                // Vérifier que les conditions qui ne sont pas 'default' ont bien une structure valide
+                if (isset($condition['condition']['type']) && $condition['condition']['type'] !== 'default') {
+                    $this->validateConditionStructure($condition['condition'], "evaluation_configs.rules.conditions.{$index}.condition", $validator);
                 }
             }
+
+            // Vérifier qu'il y a au moins une condition 'default' avec la priorité la plus basse
+            $hasDefault = collect($conditions)->contains(function($cond) {
+                return ($cond['condition']['type'] ?? '') === 'default';
+            });
+
+            if (!$hasDefault) {
+                $validator->errors()->add(
+                    'evaluation_configs.rules.conditions',
+                    'Au moins une condition avec type "default" est requise comme condition par défaut.'
+                );
+            }
         }
+    }
 
-        // Validation de l'algorithme de décision
-        $algorithme = $this->input('evaluation_configs.criteres_evaluation.algorithme_decision.etapes', []);
-        if (!empty($algorithme)) {
-            // Vérifier que les actions référencent des règles valides
-            $actionsValides = array_merge($appreciations, ['check_final', 'check_next']);
+    /**
+     * Valide la structure d'une condition (comparison, and, or)
+     */
+    private function validateConditionStructure($condition, $path, $validator)
+    {
+        $type = $condition['type'] ?? null;
 
-            foreach ($algorithme as $index => $etape) {
-                if (isset($etape['action_si_echec']) && !in_array($etape['action_si_echec'], $actionsValides)) {
-                    $validator->errors()->add("evaluation_configs.criteres_evaluation.algorithme_decision.etapes.{$index}.action_si_echec",
-                        "L'action '{$etape['action_si_echec']}' n'est pas valide. Utilisez une des appréciations définies: " . implode(', ', $appreciations));
-                }
-
-                if (isset($etape['action_si_respecte']) && !in_array($etape['action_si_respecte'], $actionsValides)) {
-                    $validator->errors()->add("evaluation_configs.criteres_evaluation.algorithme_decision.etapes.{$index}.action_si_respecte",
-                        "L'action '{$etape['action_si_respecte']}' n'est pas valide.");
-                }
-
-                if (isset($etape['action_si_depassement']) && !in_array($etape['action_si_depassement'], $actionsValides)) {
-                    $validator->errors()->add("evaluation_configs.criteres_evaluation.algorithme_decision.etapes.{$index}.action_si_depassement",
-                        "L'action '{$etape['action_si_depassement']}' n'est pas valide.");
+        if ($type === 'comparison') {
+            // Vérifier les champs requis pour une comparaison
+            if (empty($condition['field'])) {
+                $validator->errors()->add("{$path}.field", "Le champ 'field' est obligatoire pour une condition de type 'comparison'.");
+            }
+            if (empty($condition['operator'])) {
+                $validator->errors()->add("{$path}.operator", "Le champ 'operator' est obligatoire pour une condition de type 'comparison'.");
+            }
+            if (!isset($condition['value']) && !isset($condition['value_field'])) {
+                $validator->errors()->add("{$path}", "Soit 'value' soit 'value_field' doit être défini pour une condition de type 'comparison'.");
+            }
+            // Valider l'opérateur
+            $validOperators = ['>', '>=', '<', '<=', '==', '!='];
+            if (isset($condition['operator']) && !in_array($condition['operator'], $validOperators)) {
+                $validator->errors()->add("{$path}.operator", "L'opérateur '{$condition['operator']}' n'est pas valide. Opérateurs valides: " . implode(', ', $validOperators));
+            }
+        } elseif ($type === 'and' || $type === 'or') {
+            // Vérifier que 'conditions' est un tableau non vide
+            if (empty($condition['conditions']) || !is_array($condition['conditions'])) {
+                $validator->errors()->add("{$path}.conditions", "Le champ 'conditions' doit être un tableau non vide pour une condition de type '{$type}'.");
+            } else {
+                // Valider récursivement les sous-conditions
+                foreach ($condition['conditions'] as $subIndex => $subCondition) {
+                    $this->validateConditionStructure($subCondition, "{$path}.conditions.{$subIndex}", $validator);
                 }
             }
         }

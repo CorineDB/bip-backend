@@ -2347,12 +2347,19 @@ class DocumentService extends BaseService implements DocumentServiceInterface
                 // Récupérer la configuration existante ou créer une nouvelle
                 $evaluationConfigs = $canevas->evaluation_configs ?? [];
 
+                // Mettre à jour guide_suivi si fourni
                 if (isset($data['guide_suivi'])) {
-
-                    // Mettre à jour les options de notation
                     $evaluationConfigs['guide_suivi'] = $data['guide_suivi'];
+                }
 
-                    // Sauvegarder la configuration
+                // Mettre à jour toute la structure evaluation_configs si fournie
+                if (isset($data['evaluation_configs'])) {
+                    // Fusionner avec la configuration existante
+                    $evaluationConfigs = array_replace_recursive($evaluationConfigs, $data['evaluation_configs']);
+                }
+
+                // Sauvegarder toute la configuration en une seule fois
+                if (isset($data['guide_suivi']) || isset($data['evaluation_configs'])) {
                     $canevas->update(['evaluation_configs' => $evaluationConfigs]);
                 }
 
