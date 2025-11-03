@@ -18,6 +18,7 @@ class ProgrammeResource extends BaseApiResource
         return [
             "id" => $this->hashed_id,
             "slug"=> $this->slug,
+            "type" => "programme",
             "type_programme"=> $this->type_programme
         ];
     }
