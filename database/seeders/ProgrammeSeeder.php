@@ -93,7 +93,7 @@ class ProgrammeSeeder extends Seeder
             ]
         ];
 
-        DB::table("types_programme")->truncate();
+        /* DB::table("types_programme")->truncate(); */
         $pag = TypeProgramme::updateOrCreate([
             'slug' => 'pag'
         ], [
@@ -269,7 +269,7 @@ class ProgrammeSeeder extends Seeder
 
         //** PND */
 
-        $pnd_comp = [
+        /*$pnd_comp = [
             "Faire du capital humain le levier de développement" => [
                 "objectifs" => [
                     "Renforcer le capital humain et améliorer le bien-être" => [
@@ -466,9 +466,9 @@ class ProgrammeSeeder extends Seeder
                 }
                 $objectifCount++;
             }
-        }
+        }*/
 
-        $grands_secteur = [
+        /*$grands_secteur = [
             'Infrastructures et cadre de vie' => [
                 'Transport' => [
                     'Routes' => [
@@ -1035,6 +1035,6 @@ class ProgrammeSeeder extends Seeder
                     }
                 }
             }
-        }
+        }*/
     }
 }
