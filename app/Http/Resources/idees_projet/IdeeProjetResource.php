@@ -119,6 +119,7 @@ class IdeeProjetResource extends BaseApiResource
                         'type_programme' => $composant->typeProgramme->hashed_id ?? null
                     ];
             }),
+            'programmes' => $this->programmes(),
 
             'lieux_intervention' => LieuInterventionResource::collection($this->lieuxIntervention),
 

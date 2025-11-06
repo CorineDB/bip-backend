@@ -166,6 +166,8 @@ class ProjetResource extends BaseApiResource
                 ];
             }),
 
+            'programmes' => $this->programmes(),
+
             'lieux_intervention' => LieuInterventionResource::collection($this->lieuxIntervention),
 
             'types_intervention' => $this->whenLoaded('typesIntervention', function () {
