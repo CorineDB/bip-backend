@@ -29,6 +29,17 @@ class IdeeProjetController extends Controller
         }
     }
 
+    public function dashboard(FilterIdeeRequest $request): JsonResponse
+    {
+        if ($request->filled('statut')) {
+            $statuts = is_array($request->statut) ? $request->statut : [$request->statut];
+            return $this->service->filterBy($statuts);
+        }
+        else{
+            return $this->service->dashboard();
+        }
+    }
+
     public function show($id): JsonResponse
     {
         return $this->service->find($id);

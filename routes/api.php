@@ -204,6 +204,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::controller(IdeeProjetController::class)->group(function () {
             Route::get('demandeurs-idees-projet', 'demandeurs');
             Route::get('?statut=', 'filterByStatut');
+            Route::get('dashboard', 'dashboard');
         });
 
         Route::apiResource('projets', ProjetController::class)->only(['index', 'show']);
