@@ -177,7 +177,7 @@ class CreateOrUpdateCanevasChecklisteSuiviControleQualiteRapportEtudeFaisabilite
             'evaluation_configs.rules.conditions'       => 'nullable|array',
             'evaluation_configs.rules.conditions.*.priority' => 'required_with:evaluation_configs.rules.conditions|integer|min:1',
             'evaluation_configs.rules.conditions.*.name' => 'required_with:evaluation_configs.rules.conditions|string|max:255',
-            'evaluation_configs.rules.conditions.*.appreciations_concernees' => 'required_with:evaluation_configs.rules.conditions|array',
+            'evaluation_configs.rules.conditions.*.appreciations_concernees' => 'nullable|array', //  'required_with:evaluation_configs.rules.conditions|array',
             'evaluation_configs.rules.conditions.*.condition' => 'required_with:evaluation_configs.rules.conditions|array',
             'evaluation_configs.rules.conditions.*.condition.type' => 'required_with:evaluation_configs.rules.conditions.*.condition|string|in:comparison,and,or,default',
             'evaluation_configs.rules.conditions.*.result' => 'required_with:evaluation_configs.rules.conditions|string|max:255',
