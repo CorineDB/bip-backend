@@ -647,4 +647,75 @@ class IdeeProjet extends Model
             ];
         });
     }
+
+    /**
+     * Remonte jusqu'au TypeProgramme racine (programme)
+     *
+     * @param \App\Models\TypeProgramme|null $typeProgramme
+     * @return \App\Models\TypeProgramme|null
+     */
+    private function getProgrammeRacine($typeProgramme)
+    {
+        if (!$typeProgramme) {
+            return null;
+        }
+
+        // Remonter jusqu'au programme racine (celui sans parent)
+        while ($typeProgramme->parent) {
+            $typeProgramme = $typeProgramme->parent;
+        }
+
+        return $typeProgramme;
+    }
+
+    /**
+     * Construit la hiérarchie descendante des TypeProgramme avec leurs composants
+     *
+     * @param \App\Models\TypeProgramme $typeProgramme
+     * @return array
+     */
+    private function buildProgrammeHierarchieDescendante($typeProgramme)
+    {
+        // Charger les composants associés à ce TypeProgramme
+        $composants = $typeProgramme->composantsProgramme->map(function ($composant) {
+            return [
+                'id' => $composant->hashed_id,
+                'intitule' => $composant->intitule,
+                'indice' => $composant->indice,
+            ];
+        });
+
+        // Charger les enfants (sous-types) avec leurs composants
+        $children = $typeProgramme->children->map(function ($child) {
+            return $this->buildProgrammeHierarchieDescendante($child);
+        });
+
+        return [
+            'id' => $typeProgramme->hashed_id,
+            'type_programme' => $typeProgramme->type_programme,
+            'slug' => $typeProgramme->slug,
+            'type' => $typeProgramme->parent ? "composant-programme" : "programme",
+            'composants' => $composants,
+            'enfants' => $children->isEmpty() ? [] : $children,
+        ];
+    }
+
+    /**
+     * Retourne la hiérarchie complète des programmes depuis les composants
+     * Remonte jusqu'au programme racine puis redescend avec tous les composants
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function programmes()
+    {
+        // Récupérer tous les programmes racines uniques depuis les composants
+        $programmesRacines = $this->composants->map(function ($composant) {
+            return $this->getProgrammeRacine($composant->typeProgramme);
+        })->filter()->unique('id');
+
+        // Pour chaque programme racine, construire la hiérarchie descendante complète
+        return $programmesRacines->map(function ($programmeRacine) {
+            return $this->buildProgrammeHierarchieDescendante($programmeRacine);
+        });
+    }
 }

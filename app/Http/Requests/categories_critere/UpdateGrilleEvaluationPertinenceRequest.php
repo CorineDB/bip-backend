@@ -29,7 +29,6 @@ class UpdateGrilleEvaluationPertinenceRequest extends FormRequest
         // Récupérer le projet avec ses relations
         $this->categorie = app(CategorieCritereRepository::class)->findByAttribute('slug', 'grille-evaluation-pertinence-idee-projet');
         //throw new \Exception("document referentiel : " . $this->categorie->documentsReferentiel->count(), 403);
-
     }
 
     public function rules(): array
