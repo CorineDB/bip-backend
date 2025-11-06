@@ -158,6 +158,8 @@ class ProjetResource extends BaseApiResource
 
             'sources_de_financement' => $this->whenLoaded('sources_de_financement', FinancementResource::collection($this->sources_de_financement)),
 
+            'financements' => $this->types_financement(),
+
             'composants' => $this->composants->map(function ($composant) {
                 return [
                     'id' => $composant->hashed_id,
