@@ -119,6 +119,36 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
         }
     }
 
+    public function dashboard(): JsonResponse
+    {
+        try {
+
+            // NOUVEAU CODE (simplifié et clarifié)
+            $item = $this->repository->getModel()->when(auth()->user()->profilable_type == Dpaf::class, function ($query) {
+                $query->where("ministereId", Auth::user()->profilable->ministere->id);
+            })->when(auth()->user()->profilable_type == Organisation::class, function ($query) {
+                $ministereId = Auth::user()->profilable->ministere->id;
+
+                // Filtrer par ministère pour tous les utilisateurs d'organisation
+                $query->where("ministereId", $ministereId);
+
+                // Responsable de projet : uniquement ses propres idées de son ministère
+                if (auth()->user()->type == "responsable-projet") {
+                    $query->where("responsableId", Auth::user()->id);
+                }
+                // Organisation : toutes les idées du ministère
+                elseif (auth()->user()->type == "organisation") {
+                }
+            })->when(auth()->user()->profilable_type == Dgpd::class, function ($query) {
+
+            })->latest()->get();
+
+            return ($this->resourceClass::collection($item))->response();
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
     public function filterBy(array $filterParam): JsonResponse
     {
         try {
