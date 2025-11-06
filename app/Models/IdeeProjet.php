@@ -681,7 +681,7 @@ class IdeeProjet extends Model
             return [
                 'id' => $composant->hashed_id,
                 'intitule' => $composant->intitule,
-                'indice' => $composant->indice,
+                //'indice' => $composant->indice,
             ];
         });
 
@@ -695,8 +695,8 @@ class IdeeProjet extends Model
             'type_programme' => $typeProgramme->type_programme,
             'slug' => $typeProgramme->slug,
             'type' => $typeProgramme->parent ? "composant-programme" : "programme",
-            'composants' => $composants,
-            'enfants' => $children->isEmpty() ? [] : $children,
+            'composants_data' => $composants,
+            'composants' => $children->isEmpty() ? [] : $children,
         ];
     }
 
@@ -716,6 +716,68 @@ class IdeeProjet extends Model
         // Pour chaque programme racine, construire la hiérarchie descendante complète
         return $programmesRacines->map(function ($programmeRacine) {
             return $this->buildProgrammeHierarchieDescendante($programmeRacine);
+        });
+    }
+
+    /**
+     * Remonte jusqu'au Financement racine (type)
+     *
+     * @param \App\Models\Financement|null $financement
+     * @return \App\Models\Financement|null
+     */
+    private function getFinancementRacine($financement)
+    {
+        if (!$financement) {
+            return null;
+        }
+
+        // Remonter jusqu'au type racine (celui sans parent)
+        while ($financement->parent) {
+            $financement = $financement->parent;
+        }
+
+        return $financement;
+    }
+
+    /**
+     * Construit la hiérarchie descendante des Financements
+     *
+     * @param \App\Models\Financement $financement
+     * @return array
+     */
+    private function buildFinancementHierarchieDescendante($financement)
+    {
+        // Charger les enfants (natures ou sources) récursivement
+        $children = $financement->children->map(function ($child) {
+            return $this->buildFinancementHierarchieDescendante($child);
+        });
+
+        return [
+            'id' => $financement->hashed_id,
+            'nom' => $financement->nom,
+            'nom_usuel' => $financement->nom_usuel,
+            'slug' => $financement->slug,
+            'type' => $financement->type?->value ?? $financement->type,
+            'enfants' => $children->isEmpty() ? [] : $children,
+        ];
+    }
+
+    /**
+     * Retourne la hiérarchie complète des financements depuis les sources
+     * Remonte jusqu'au type racine puis redescend avec toutes les natures et sources
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function types_financement()
+    {
+        // Récupérer tous les types racines uniques depuis les sources de financement
+        $typesRacines = $this->sources_de_financement->map(function ($source) {
+            return $this->getFinancementRacine($source);
+        })->filter()->unique('id');
+
+        // Pour chaque type racine, construire la hiérarchie descendante complète
+        return $typesRacines->map(function ($typeRacine) {
+            return $this->buildFinancementHierarchieDescendante($typeRacine);
         });
     }
 }
