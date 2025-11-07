@@ -509,9 +509,9 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             'orientations_strategiques',
             'resultats_strategiques',
             'objectifs_strategiques',
+            'piliers_pag',
             'axes_pag',
             'actions_pag',
-            'piliers_pag',
         ];
 
         /**
