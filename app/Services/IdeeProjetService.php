@@ -124,7 +124,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
         try {
 
             // NOUVEAU CODE (simplifié et clarifié)
-            $item = $this->repository->getModel()->when(auth()->user()->profilable_type == Dpaf::class, function ($query) {
+            $item = $this->repository->getModel()->whereNot('statut', StatutIdee::NOTE_CONCEPTUEL)->when(auth()->user()->profilable_type == Dpaf::class, function ($query) {
                 $query->where("ministereId", Auth::user()->profilable->ministere->id);
             })->when(auth()->user()->profilable_type == Organisation::class, function ($query) {
                 $ministereId = Auth::user()->profilable->ministere->id;
