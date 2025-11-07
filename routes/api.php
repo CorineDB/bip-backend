@@ -666,6 +666,10 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
             return response()->json(\App\Enums\TypesCanevas::options());
         });
 
+        Route::get('/types-projet', function () {
+            return response()->json(\App\Enums\TypesProjet::options());
+        });
+
         Route::get('/types-template', function () {
             return response()->json(\App\Enums\TypesTemplate::options());
         });
