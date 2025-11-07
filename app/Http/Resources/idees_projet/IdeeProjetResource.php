@@ -100,7 +100,13 @@ class IdeeProjetResource extends BaseApiResource
 
             'champs' => $this->getFormattedChamps(),
             // Relations principales (loaded when needed)
-            'secteur' => $this->whenLoaded('secteur'),
+            'sous_secteur' => $this->whenLoaded('secteur'),
+            'secteur' => $this->whenLoaded('secteur', function(){
+                return $this->secteur->parent;
+            }),
+            'grand_secteur' => $this->whenLoaded('secteur', function(){
+                return $this->secteur->parent->parent;
+            }),
             'ministere' => $this->whenLoaded('ministere'),
             'categorie' => $this->whenLoaded('categorie'),
             'responsable' => $this->whenLoaded('responsable'),
