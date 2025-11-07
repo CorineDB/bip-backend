@@ -412,6 +412,11 @@ class Projet extends Model
         return $this->morphMany(Evaluation::class, 'projetable')->where("type_evaluation", "amc");
     }
 
+    public function evaluationsPertinence()
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')->where("type_evaluation", "pertinence");
+    }
+
     /**
      * Récupérer le dernier rapport de faisabilité
      */
@@ -423,6 +428,11 @@ class Projet extends Model
     public function evaluationAMC()
     {
         return $this->evaluationsAMC()->latest('created_at');
+    }
+
+    public function evaluationPertinence()
+    {
+        return $this->evaluationsPertinence()->latest('created_at');
     }
 
     public function tdrs_prefaisabilite()

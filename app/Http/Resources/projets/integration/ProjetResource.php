@@ -39,9 +39,14 @@ class ProjetResource extends BaseApiResource
             'titre_projet' => $this->titre_projet,
             'est_a_haut_risque' => $this->est_a_haut_risque,
             'est_dur' => $this->est_dur,
+            'est_mou' => $this->est_mou,
             'est_ancien' => $this->est_ancien,
             'info_etude_prefaisabilite' => $this->info_etude_prefaisabilite,
             'info_etude_faisabilite' => $this->info_etude_faisabilite,
+            'resume_tdr_prefaisabilite' => $this->resume_tdr_prefaisabilite,
+            'resume_tdr_faisabilite' => $this->resume_tdr_faisabilite,
+            'info_cabinet_etude_prefaisabilite' => $this->info_cabinet_etude_prefaisabilite,
+            'info_cabinet_etude_faisabilite' => $this->info_cabinet_etude_faisabilite,
 
             // Statuts et phases
             'statut' => $this->statut?->value ?? $this->statut,
@@ -83,6 +88,7 @@ class ProjetResource extends BaseApiResource
             // Scores d'évaluation
             'score_climatique' => $this->score_climatique,
             'score_amc' => $this->score_amc,
+            'score_pertinence' => $this->score_pertinence,
 
             // Dates importantes
             'date_debut_etude' => $this->date_debut_etude,
@@ -101,7 +107,16 @@ class ProjetResource extends BaseApiResource
             'objectifs_specifiques' => $this->objectifs_specifiques ?? [],
             'resultats_attendus' => $this->resultats_attendus ?? [],
             'body_projet' => $this->body_projet ?? [],
+            'mesures_adaptation' => $this->mesures_adaptation ?? [],
             'description_decision' => $this->description_decision,
+
+            // Données financières
+            'investissement_initial' => $this->investissement_initial,
+            'van' => $this->van,
+            'tri' => $this->tri,
+            'flux_tresorerie' => $this->flux_tresorerie ?? [],
+            'duree_vie' => $this->duree_vie,
+            'taux_actualisation' => $this->taux_actualisation,
             /*
 
             'champs' => $this->champs->map(function ($champ) {
@@ -129,6 +144,7 @@ class ProjetResource extends BaseApiResource
 
             'evaluationClimatique' => $this->evaluationClimatique->first() ? new EvaluationResource($this->evaluationClimatique->first()) : null,
             'evaluationAmc' => $this->evaluationAMC->first() ? new EvaluationResource($this->evaluationAMC->first()) : null,
+            'evaluationPertinence' => $this->evaluationPertinence->first() ? new EvaluationResource($this->evaluationPertinence->first()) : null,
 
             'noteConceptuelle' => array_merge(
                 (new NoteConceptuelleResource($this->noteConceptuelle))->toArray(request()),
@@ -180,8 +196,10 @@ class ProjetResource extends BaseApiResource
                 return */ $this->rapportPrefaisabilite->first() ? new RapportResource($this->rapportPrefaisabilite->first()->load(['fichiersRapport', 'procesVerbaux', 'documentsAnnexes'])) : null/* ;
             }) */,
 
+            'rapport_faisabilite_preliminaire' => $this->rapportFaisabilitePreliminaire->first() ? new RapportResource($this->rapportFaisabilitePreliminaire->first()->load(['fichiersRapport', 'procesVerbaux', 'documentsAnnexes'])) : null,
+
             'rapport_faisabilite' => /* $this->whenLoaded('rapportFaisabilite', function() {
-                return */ $this->rapportFaisabilite->first() ? new RapportResource($this->rapportFaisabilite->first()) : null/* ;
+                return */ $this->rapportFaisabilite->first() ? new RapportResource($this->rapportFaisabilite->first()->load(['fichiersRapport', 'procesVerbaux', 'documentsAnnexes'])) : null/* ;
             }) */,
 
             'rapport_evaluation_ex_ante' => /* $this->whenLoaded('rapportEvaluationExAnte', function() {
@@ -193,20 +211,14 @@ class ProjetResource extends BaseApiResource
 
             'sources_de_financement' => /* $this->whenLoaded('sources_de_financement',  */ FinancementResource::collection($this->sources_de_financement)/* ) */,
 
+            'financements' => $this->types_financement(),
+
             'orientations_strategique_png' => $this->orientations_strategique_png,
             'objectifs_strategique_png' => $this->objectifs_strategique_png,
             'resultats_strategique_png' => $this->resultats_strategique_png,
             'piliers_pag' => $this->piliers_pag,
             'axes_pag' => $this->axes_pag,
             'actions_pag' => $this->actions_pag,
-            'composants' => $this->composants->map(function ($composant) {
-                return [
-                    'id' => $composant->id,
-                    'intitule' => $composant->intitule,
-                    'type_programme_id' => $composant->typeProgramme->id ?? null,
-                    'intitule_composant_programme' => $composant->typeProgramme->type_programme ?? null
-                ];
-            }),
 
             'lieux_intervention' => LieuInterventionResource::collection($this->lieuxIntervention),
 
