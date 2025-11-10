@@ -3,6 +3,7 @@
 namespace App\Http\Resources\projets;
 
 use App\Http\Resources\BaseApiResource;
+use App\Http\Resources\FichierResource;
 use App\Http\Resources\idees_projet\IdeesResource;
 use App\Http\Resources\LieuInterventionResource;
 use Carbon\Carbon;
@@ -105,6 +106,90 @@ class ProjetMatureResource extends BaseApiResource
             'van' => $this->van,
             'flux_tresorerie' => $this->flux_tresorerie,
             'taux_actualisation' => $this->taux_actualisation,
+
+            // Fichiers Note conceptuelle
+            'fichiers_note_conceptuelle' => $this->noteConceptuelle?->fichiers
+                ? FichierResource::collection($this->noteConceptuelle->fichiers->sortBy('ordre'))
+                : [],
+
+            // Fichiers TDRs
+            'fichiers_tdr_prefaisabilite' => $this->tdrPrefaisabilite?->first()?->fichiers ? [
+                'fichier_tdr' => $this->tdrPrefaisabilite->first()->fichiers->where('metadata.type_document', 'tdr-prefaisabilite')->first()
+                    ? new FichierResource($this->tdrPrefaisabilite->first()->fichiers->where('metadata.type_document', 'tdr-prefaisabilite')->first())
+                    : null,
+                'autres_documents' => FichierResource::collection(
+                    $this->tdrPrefaisabilite->first()->fichiers->where('metadata.type_document', 'autre-document-prefaisabilite')->values()
+                ),
+            ] : ['fichier_tdr' => null, 'autres_documents' => []],
+
+            'fichiers_tdr_faisabilite' => $this->tdrFaisabilite?->first()?->fichiers ? [
+                'fichier_tdr' => $this->tdrFaisabilite->first()->fichiers->where('metadata.type_document', 'tdr-faisabilite')->first()
+                    ? new FichierResource($this->tdrFaisabilite->first()->fichiers->where('metadata.type_document', 'tdr-faisabilite')->first())
+                    : null,
+                'autres_documents' => FichierResource::collection(
+                    $this->tdrFaisabilite->first()->fichiers->where('metadata.type_document', 'autre-document-faisabilite')->values()
+                ),
+            ] : ['fichier_tdr' => null, 'autres_documents' => []],
+
+            // Fichiers Rapports
+            'fichiers_rapport_faisabilite_preliminaire' => $this->when($this->est_mou, function () {
+                $rapport = $this->rapportFaisabilitePreliminaire?->first();
+                return $rapport?->fichiers ? [
+                    'fichiers_rapport' => FichierResource::collection($rapport->fichiers->where('categorie', 'rapport-faisabilite-preliminaire')->values()),
+                    'proces_verbaux' => FichierResource::collection($rapport->fichiers->where('categorie', 'proces-verbal')->values()),
+                    'liste_presence' => $rapport->fichiers->where('categorie', 'liste-presence')->first()
+                        ? new FichierResource($rapport->fichiers->where('categorie', 'liste-presence')->first())
+                        : null,
+                    'documents_annexes' => FichierResource::collection($rapport->fichiers->where('categorie', 'document-annexe')->values()),
+                ] : [
+                    'fichiers_rapport' => [],
+                    'proces_verbaux' => [],
+                    'liste_presence' => null,
+                    'documents_annexes' => []
+                ];
+            }),
+
+            'fichiers_rapport_prefaisabilite' => $this->rapportPrefaisabilite?->first()?->fichiers ? [
+                'fichiers_rapport' => FichierResource::collection($this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'rapport-prefaisabilite')->values()),
+                'proces_verbaux' => FichierResource::collection($this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'proces-verbal')->values()),
+                'liste_presence' => $this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'liste-presence')->first()
+                    ? new FichierResource($this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'liste-presence')->first())
+                    : null,
+                'documents_annexes' => FichierResource::collection($this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'document-annexe')->values()),
+            ] : [
+                'fichiers_rapport' => [],
+                'proces_verbaux' => [],
+                'liste_presence' => null,
+                'documents_annexes' => [],
+            ],
+
+            'fichiers_rapport_faisabilite' => $this->rapportFaisabilite?->first()?->fichiers ? [
+                'fichiers_rapport' => FichierResource::collection($this->rapportFaisabilite->first()->fichiers->where('categorie', 'rapport-faisabilite')->values()),
+                'proces_verbaux' => FichierResource::collection($this->rapportFaisabilite->first()->fichiers->where('categorie', 'proces-verbal')->values()),
+                'liste_presence' => $this->rapportFaisabilite->first()->fichiers->where('categorie', 'liste-presence')->first()
+                    ? new FichierResource($this->rapportFaisabilite->first()->fichiers->where('categorie', 'liste-presence')->first())
+                    : null,
+                'documents_annexes' => FichierResource::collection($this->rapportFaisabilite->first()->fichiers->where('categorie', 'document-annexe')->values()),
+            ] : [
+                'fichiers_rapport' => [],
+                'proces_verbaux' => [],
+                'liste_presence' => null,
+                'documents_annexes' => [],
+            ],
+
+            'fichiers_rapport_evaluation_ex_ante' => $this->rapportEvaluationExAnte?->first()?->fichiers ? [
+                'fichiers_rapport' => FichierResource::collection($this->rapportEvaluationExAnte->first()->fichiers->where('categorie', 'rapport-evaluation-ex-ante')->values()),
+                'proces_verbaux' => FichierResource::collection($this->rapportEvaluationExAnte->first()->fichiers->where('categorie', 'proces-verbal')->values()),
+                'liste_presence' => $this->rapportEvaluationExAnte->first()->fichiers->where('categorie', 'liste-presence')->first()
+                    ? new FichierResource($this->rapportEvaluationExAnte->first()->fichiers->where('categorie', 'liste-presence')->first())
+                    : null,
+                'documents_annexes' => FichierResource::collection($this->rapportEvaluationExAnte->first()->fichiers->where('categorie', 'document-annexe')->values()),
+            ] : [
+                'fichiers_rapport' => [],
+                'proces_verbaux' => [],
+                'liste_presence' => null,
+                'documents_annexes' => [],
+            ],
 
             'lieux_intervention' => LieuInterventionResource::collection($this->lieuxIntervention),
             // Timestamps
