@@ -4,6 +4,7 @@ namespace App\Http\Resources\projets;
 
 use App\Http\Resources\BaseApiResource;
 use App\Http\Resources\CibleResource;
+use App\Http\Resources\FichierResource;
 use App\Http\Resources\FinancementResource;
 use App\Http\Resources\idees_projet\IdeeProjetResource;
 use App\Http\Resources\LieuInterventionResource;
@@ -119,6 +120,9 @@ class ProjetResource extends BaseApiResource
             'porteur_projet' => $this->porteur_projet,
             'ideeProjet' => new IdeeProjetResource($this->ideeProjet),
             'noteConceptuelle' => new NoteConceptuelleResource($this->noteConceptuelle),
+            'fichiers_note_conceptuelle' => $this->noteConceptuelle?->fichiers
+                ? FichierResource::collection($this->noteConceptuelle->fichiers->sortBy('ordre'))
+                : [],
             'duree_vie' => $this->duree_vie,
             'investissement_initial' => $this->investissement_initial,
             'tri' => $this->tri,
@@ -130,28 +134,101 @@ class ProjetResource extends BaseApiResource
             'tdr_prefaisabilite' => $this->whenLoaded('tdrPrefaisabilite', function () {
                 return $this->tdrPrefaisabilite->first() ? new TdrResource($this->tdrPrefaisabilite->first()) : null;
             }),
+            'fichiers_tdr_prefaisabilite' => $this->tdrPrefaisabilite?->first()?->fichiers ? [
+                'fichier_tdr' => $this->tdrPrefaisabilite->first()->fichiers->where('metadata.type_document', 'tdr-prefaisabilite')->first()
+                    ? new FichierResource($this->tdrPrefaisabilite->first()->fichiers->where('metadata.type_document', 'tdr-prefaisabilite')->first())
+                    : null,
+                'autres_documents' => FichierResource::collection(
+                    $this->tdrPrefaisabilite->first()->fichiers->where('metadata.type_document', 'autre-document-prefaisabilite')->values()
+                ),
+            ] : ['fichier_tdr' => null, 'autres_documents' => []],
+
             'tdr_faisabilite' => $this->whenLoaded('tdrFaisabilite', function () {
                 return $this->tdrFaisabilite->first() ? new TdrResource($this->tdrFaisabilite->first()) : null;
             }),
+            'fichiers_tdr_faisabilite' => $this->tdrFaisabilite?->first()?->fichiers ? [
+                'fichier_tdr' => $this->tdrFaisabilite->first()->fichiers->where('metadata.type_document', 'tdr-faisabilite')->first()
+                    ? new FichierResource($this->tdrFaisabilite->first()->fichiers->where('metadata.type_document', 'tdr-faisabilite')->first())
+                    : null,
+                'autres_documents' => FichierResource::collection(
+                    $this->tdrFaisabilite->first()->fichiers->where('metadata.type_document', 'autre-document-faisabilite')->values()
+                ),
+            ] : ['fichier_tdr' => null, 'autres_documents' => []],
 
-            // Rapports faisabilite) preliminaire
+            // Rapport faisabilite preliminaire (etude de profil)
             'rapport_faisabilite_preliminaire' => $this->when($this->est_mou, function () {
-                $rapportFaisabilitePreliminaire = $this->rapportFaisabilitePreliminaire->first();
-                return $rapportFaisabilitePreliminaire ? new RapportResource($rapportFaisabilitePreliminaire) : null;
+                return $this->whenLoaded('rapportFaisabilitePreliminaire', function () {
+                    return $this->rapportFaisabilitePreliminaire->first() ? new RapportResource($this->rapportFaisabilitePreliminaire->first()) : null;
+                });
+            }),
+            'fichiers_rapport_faisabilite_preliminaire' => $this->when($this->est_mou, function () {
+                $rapport = $this->rapportFaisabilitePreliminaire?->first();
+                return $rapport?->fichiers ? [
+                    'fichiers_rapport' => FichierResource::collection($rapport->fichiers->where('categorie', 'rapport-faisabilite-preliminaire')->values()),
+                    'proces_verbaux' => FichierResource::collection($rapport->fichiers->where('categorie', 'proces-verbal')->values()),
+                    'liste_presence' => $rapport->fichiers->where('categorie', 'liste-presence')->first()
+                        ? new FichierResource($rapport->fichiers->where('categorie', 'liste-presence')->first())
+                        : null,
+                    'documents_annexes' => FichierResource::collection($rapport->fichiers->where('categorie', 'document-annexe')->values())
+                ] : [
+                    'fichiers_rapport' => [],
+                    'proces_verbaux' => [],
+                    'liste_presence' => null,
+                    'documents_annexes' => []
+                ];
             }),
 
             // Rapports etudes (prefaisabilite et faisabilite)
             'rapport_prefaisabilite' => $this->whenLoaded('rapportPrefaisabilite', function () {
                 return $this->rapportPrefaisabilite->first() ? new RapportResource($this->rapportPrefaisabilite->first()) : null;
             }),
+            'fichiers_rapport_prefaisabilite' => $this->rapportPrefaisabilite?->first()?->fichiers ? [
+                'fichiers_rapport' => FichierResource::collection($this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'rapport-prefaisabilite')->values()),
+                'proces_verbaux' => FichierResource::collection($this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'proces-verbal')->values()),
+                'liste_presence' => $this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'liste-presence')->first()
+                    ? new FichierResource($this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'liste-presence')->first())
+                    : null,
+                'documents_annexes' => FichierResource::collection($this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'document-annexe')->values())
+            ] : [
+                'fichiers_rapport' => [],
+                'proces_verbaux' => [],
+                'liste_presence' => null,
+                'documents_annexes' => []
+            ],
 
             'rapport_faisabilite' => $this->whenLoaded('rapportFaisabilite', function () {
                 return $this->rapportFaisabilite->first() ? new RapportResource($this->rapportFaisabilite->first()) : null;
             }),
+            'fichiers_rapport_faisabilite' => $this->rapportFaisabilite?->first()?->fichiers ? [
+                'fichiers_rapport' => FichierResource::collection($this->rapportFaisabilite->first()->fichiers->where('categorie', 'rapport-faisabilite')->values()),
+                'proces_verbaux' => FichierResource::collection($this->rapportFaisabilite->first()->fichiers->where('categorie', 'proces-verbal')->values()),
+                'liste_presence' => $this->rapportFaisabilite->first()->fichiers->where('categorie', 'liste-presence')->first()
+                    ? new FichierResource($this->rapportFaisabilite->first()->fichiers->where('categorie', 'liste-presence')->first())
+                    : null,
+                'documents_annexes' => FichierResource::collection($this->rapportFaisabilite->first()->fichiers->where('categorie', 'document-annexe')->values()),
+            ] : [
+                'fichiers_rapport' => [],
+                'proces_verbaux' => [],
+                'liste_presence' => null,
+                'documents_annexes' => [],
+            ],
 
             'rapport_evaluation_ex_ante' => $this->whenLoaded('rapportEvaluationExAnte', function () {
                 return $this->rapportEvaluationExAnte->first() ? new RapportResource($this->rapportEvaluationExAnte->first()) : null;
             }),
+            'fichiers_rapport_evaluation_ex_ante' => $this->rapportEvaluationExAnte?->first()?->fichiers ? [
+                'fichiers_rapport' => FichierResource::collection($this->rapportEvaluationExAnte->first()->fichiers->where('categorie', 'rapport-evaluation-ex-ante')->values()),
+                'proces_verbaux' => FichierResource::collection($this->rapportEvaluationExAnte->first()->fichiers->where('categorie', 'proces-verbal')->values()),
+                'liste_presence' => $this->rapportEvaluationExAnte->first()->fichiers->where('categorie', 'liste-presence')->first()
+                    ? new FichierResource($this->rapportEvaluationExAnte->first()->fichiers->where('categorie', 'liste-presence')->first())
+                    : null,
+                'documents_annexes' => FichierResource::collection($this->rapportEvaluationExAnte->first()->fichiers->where('categorie', 'document-annexe')->values()),
+            ] : [
+                'fichiers_rapport' => [],
+                'proces_verbaux' => [],
+                'liste_presence' => null,
+                'documents_annexes' => [],
+            ],
 
             'cibles' => $this->whenLoaded('cibles', CibleResource::collection($this->cibles)),
             'odds' => $this->whenLoaded('odds', OddResource::collection($this->odds)),
