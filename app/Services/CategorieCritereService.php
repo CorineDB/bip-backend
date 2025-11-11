@@ -394,7 +394,11 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                 ], 404);
             }
 
-            return (new $this->resourceClass($grille->load(['notations', 'fichiers'])))->response();
+            return (new $this->resourceClass($grille->load([
+                'notations' => function ($query) {
+                    $query()
+                        ->orderByRaw('CAST(valeur AS INTEGER) ASC');
+                }, 'fichiers'])))->response();
 
             return response()->json($responseData);
         } catch (Exception $e) {
