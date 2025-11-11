@@ -24,7 +24,7 @@ class CategorieCritereResource extends BaseApiResource
             'criteres' => CritereResource::collection($this->criteres),
             'notations' => $this->when($this->notations, function() {
                 return NotationResource::collection($this->notations()
-                        ->orderByRaw('CAST(valeur AS UNSIGNED) ASC')->get());
+                        ->orderByRaw('CAST(valeur AS INTEGER) ASC')->get());
             }),
             'total_ponderation' => $this->whenLoaded('criteres', function () {
                 return $this->criteres->sum('ponderation');
