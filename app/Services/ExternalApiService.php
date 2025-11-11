@@ -757,12 +757,12 @@ class ExternalApiService
             'informationCabinet' => [
                 'nom' => $rapportFaisabilite?->info_cabinet_etude['nom_cabinet'] ?? 'Non défini',
                 'pays' => $rapportFaisabilite?->info_cabinet_etude?->pays ?? 'Bénin',
-                'info_details_cabinet' => $rapportFaisabilite?->info_cabinet_etude,
+                //'info_details_cabinet' => $rapportFaisabilite?->info_cabinet_etude,
             ],
             'informationFinancement' => [
                 'source' => $projet?->info_etude_faisabilite['est_finance'] ? 'Fond de financement de preparation' : 'Non financee',
                 'montant' => (float) ($projet?->info_etude_faisabilite['montant'] ?? 0),
-                'info_details_etude' => $projet?->info_etude_faisabilite,
+                //'info_details_etude' => $projet?->info_etude_faisabilite,
             ],
             'lienTdr' => $premierFichierTdr ? $this->genererLienFichier($premierFichierTdr) : null,
             'lienExcelAppreciation' => null,
