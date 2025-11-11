@@ -418,13 +418,27 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             }
 
             // Load the grille with criteres, notations and evaluations for the specific idee projet
-            $grille->load([
+            /*$grille->load([
                 'criteres.notations',
                 'criteres.evaluations' => function ($query) use ($ideeProjetId) {
                     $query->where('projetable_type', 'App\\Models\\IdeeProjet')
                         ->where('projetable_id', $ideeProjetId);
                 },
                 'notations'
+            ]);*/
+
+            // Load the grille with criteres, notations (ordered by valeur) and evaluations for the specific idee projet
+            $grille->load([
+                'criteres.notations' => function ($query) {
+                    $query->orderBy('valeur', 'asc'); // ou 'desc' selon ton besoin
+                },
+                'criteres.evaluations' => function ($query) use ($ideeProjetId) {
+                    $query->where('projetable_type', 'App\\Models\\IdeeProjet')
+                        ->where('projetable_id', $ideeProjetId);
+                },
+                'notations' => function ($query) {
+                    $query->orderBy('valeur', 'asc');
+                }
             ]);
 
             return (new $this->resourceClass($grille))
@@ -607,7 +621,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
             // Charger la checklist avec les critères et notations filtrés par secteur
             $checklistCategorie->load([
-                'criteres' => function($query) use ($secteurIdPourFiltrage) {
+                'criteres' => function ($query) use ($secteurIdPourFiltrage) {
                     $query->withNotationsDuSecteur($secteurIdPourFiltrage);
                 },
                 'fichiers'
@@ -891,8 +905,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                     ->where('categorie', 'guide-referentiel-pertinence')
                     ->whereNotIn('nom_original', $nomsFilesSoumis)
                     ->forceDelete();
-            }
-            else{
+            } else {
                 throw ValidationException::withMessages(['documents_referentiel' => "Veuillez preciser le documents referentiel d'evaluation de l'idee de projet"], 422);
             }
 
@@ -1206,28 +1219,28 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             ]);
 
             // 4. Sous-sous-dossier selon le type
-            $nomSousDossier = match($type) {
+            $nomSousDossier = match ($type) {
                 'appreciation' => 'Analyse preliminaire de l\'impact climatique',
                 'amc' => 'Analyse multicritere',
                 'pertinence' => 'Evaluation de pertinence',
                 default => 'Analyse multicritere'
             };
 
-            $descriptionSousDossier = match($type) {
+            $descriptionSousDossier = match ($type) {
                 'appreciation' => 'Documents pour l\'analyse préliminaire de l\'impact climatique des projets',
                 'amc' => 'Documents pour l\'analyse multicritère (AMC) des projets',
                 'pertinence' => 'Documents pour l\'évaluation de pertinence des idées de projet',
                 default => 'Documents pour l\'analyse multicritère (AMC) des projets'
             };
 
-            $couleurSousDossier = match($type) {
+            $couleurSousDossier = match ($type) {
                 'appreciation' => '#DC2626',
                 'amc' => '#7C3AED',
                 'pertinence' => '#059669',
                 default => '#7C3AED'
             };
 
-            $iconeSousDossier = match($type) {
+            $iconeSousDossier = match ($type) {
                 'appreciation' => 'fire',
                 'amc' => 'adjustments',
                 'pertinence' => 'clipboard-check',
@@ -1249,7 +1262,6 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             ]);
 
             return $sousSousDossier;
-
         } catch (\Exception $e) {
             // En cas d'erreur, retourner null et laisser le fichier sans dossier
             \Log::warning('Erreur lors de la création de la structure de dossiers canevas', [
