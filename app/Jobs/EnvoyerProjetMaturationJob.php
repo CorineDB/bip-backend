@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Projet;
+use App\Models\User;
 use App\Services\ExternalApiService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -41,7 +42,7 @@ class EnvoyerProjetMaturationJob implements ShouldQueue
 
     protected int $projetId;
     protected array $additionalData;
-    protected int $userId;
+    protected int $userId = 0;
 
     /**
      * Create a new job instance.
@@ -53,7 +54,7 @@ class EnvoyerProjetMaturationJob implements ShouldQueue
     ) {
         $this->projetId = $projetId;
         $this->additionalData = $additionalData;
-        $this->userId = $userId ?? auth()->id();
+        $this->userId = $userId ?? User::first()->id;
     }
 
     /**
@@ -119,7 +120,7 @@ class EnvoyerProjetMaturationJob implements ShouldQueue
         // Envoyer une notification par email aux administrateurs
         try {
             $projet = Projet::find($this->projetId);
-            $user = \App\Models\User::find($this->userId);
+            $user = \App\Models\User::first();
 
             if ($user) {
                 $user->notify(new ErreurEnvoiProjetNotification(
