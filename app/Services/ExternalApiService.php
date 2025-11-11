@@ -122,7 +122,7 @@ class ExternalApiService
                 'type' => $rapport->type,
                 'intitule' => $rapport->intitule,
                 'statut' => $rapport->statut,
-                'decision' => $rapport->decision,
+                'decision' => $this->normaliserDecision($rapport->decision),
                 'recommandation' => $rapport->recommandation,
                 'date_soumission' => $rapport->date_soumission?->toIso8601String(),
                 'date_validation' => $rapport->date_validation?->toIso8601String(),
@@ -625,7 +625,7 @@ class ExternalApiService
             ->first();
 
         if ($evaluation) {
-            $decisionEtudeProfil = $evaluation->evaluation['decision'];
+            $decisionEtudeProfil = $this->normaliserDecision($evaluation->evaluation['decision'] ?? null);
         } else {
             $decisionEtudeProfil = 'N/A';
         }
@@ -635,7 +635,7 @@ class ExternalApiService
             'fichiersJoints' => $fichiersJoints,
             'lienNoteConceptuelle' => null,
             'lienAppreciationNote' => null,
-            'decisionEtudeProfil' => $decisionEtudeProfil, //$noteConceptuelle?->decision ?? 'EN_COURS',
+            'decisionEtudeProfil' => $decisionEtudeProfil,
         ];
     }
 
@@ -704,7 +704,7 @@ class ExternalApiService
             'lienListePresence' => $premierFichierListePresence ? $this->genererLienFichier($premierFichierListePresence) : null,
             'fichiersJoints' => $this->construireFichiersJoints($rapportPrefaisabilite),
             'syntheseRecommandation' => $rapportPrefaisabilite?->recommandation ?? '',
-            'decisionEtude' => $rapportPrefaisabilite?->decision ?? 'EN_COURS',
+            'decisionEtude' => $this->normaliserDecision($rapportPrefaisabilite?->decision),
             'commentaireDecision' => $rapportPrefaisabilite?->commentaire ?? '',
         ];
     }
@@ -771,7 +771,7 @@ class ExternalApiService
             'lienListePresence' => $premierFichierListePresence ? $this->genererLienFichier($premierFichierListePresence) : null,
             'fichiersJoints' => $this->construireFichiersJoints($rapportFaisabilite),
             'syntheseRecommandation' => $rapportFaisabilite?->recommandation ?? '',
-            'decisionEtude' => $rapportFaisabilite?->decision ?? 'EN_COURS',
+            'decisionEtude' => $this->normaliserDecision($rapportFaisabilite?->decision),
             'commentaireDecision' => $premierFichierRapport?->commentaire ?? '',
         ];
     }
@@ -786,8 +786,30 @@ class ExternalApiService
 
         return [
             'fichiersJoints' => $rapport ? $this->construireFichiersJoints($rapport) : [],
-            'decisionEvaluation' => $rapport?->decision ?? 'EN_COURS',
+            'decisionEvaluation' => $this->normaliserDecision($rapport?->decision),
         ];
+    }
+
+    /**
+     * Normaliser une décision (peut être string ou array avec action/date/validateur)
+     *
+     * @param mixed $decision
+     * @return string
+     */
+    protected function normaliserDecision($decision): string
+    {
+        // Si la décision est null, retourner EN_COURS
+        if ($decision === null) {
+            return 'EN_COURS';
+        }
+
+        // Si c'est un tableau, extraire la clé 'action'
+        if (is_array($decision)) {
+            return $decision['action'] ?? 'EN_COURS';
+        }
+
+        // Si c'est une string, la retourner directement
+        return (string) $decision;
     }
 
     /**
