@@ -23,8 +23,7 @@ class CategorieCritereResource extends BaseApiResource
             'is_mandatory' => $this->is_mandatory,
             'criteres' => CritereResource::collection($this->criteres),
             'notations' => $this->when($this->notations, function() {
-                return NotationResource::collection($this->notations()
-                        ->orderByRaw('CAST(valeur AS INTEGER) ASC')->get());
+                return NotationResource::collection($this->notations);
             }),
             'total_ponderation' => $this->whenLoaded('criteres', function () {
                 return $this->criteres->sum('ponderation');
