@@ -396,7 +396,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
 
             return (new $this->resourceClass($grille->load([
                 'notations' => function ($query) {
-                    $query()
+                    $query
                         ->orderByRaw('CAST(valeur AS INTEGER) ASC');
                 }, 'fichiers'])))->response();
 
@@ -441,7 +441,7 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
                         ->where('projetable_id', $ideeProjetId);
                 },
                 'notations' => function ($query) {
-                    $query()
+                    $query
                         ->orderByRaw('CAST(valeur AS INTEGER) ASC');
                 }
             ]);
