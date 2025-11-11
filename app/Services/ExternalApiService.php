@@ -690,12 +690,12 @@ class ExternalApiService
             'informationCabinet' => [
                 'nom' => $rapportPrefaisabilite?->info_cabinet_etude['nom_cabinet'] ?? 'Non défini',
                 'pays' => $rapportPrefaisabilite?->info_cabinet_etude?->pays ?? 'Bénin',
-                'info_details_cabinet' => $rapportPrefaisabilite?->info_cabinet_etude,
+                //'info_details_cabinet' => $rapportPrefaisabilite?->info_cabinet_etude,
             ],
             'informationFinancement' => [
                 'source' => $projet?->info_etude_prefaisabilite['est_finance'] ? 'Fond de financement de preparation' : 'Non financee',
                 'montant' => (float) ($projet?->info_etude_prefaisabilite['montant'] ?? 0),
-                'info_details_etude' => $projet?->info_etude_prefaisabilite,
+                //'info_details_etude' => $projet?->info_etude_prefaisabilite,
             ],
             'lienTdr' => $premierFichierTdr ? $this->genererLienFichier($premierFichierTdr) : null,
             'lienExcelAppreciation' => null,
