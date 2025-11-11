@@ -183,12 +183,12 @@ class ProjetResource extends BaseApiResource
                 return $this->rapportPrefaisabilite->first() ? new RapportResource($this->rapportPrefaisabilite->first()) : null;
             }),
             'fichiers_rapport_prefaisabilite' => $this->rapportPrefaisabilite?->first()?->fichiers ? [
-                'fichiers_rapport' => FichierResource::collection($this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'rapport-prefaisabilite')->values()),
-                'proces_verbaux' => FichierResource::collection($this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'proces-verbal')->values()),
+                'fichiers_rapport' => FichierResource::collection($this->rapportPrefaisabilite->first()->fichiersRapport/* fichiers->where('categorie', 'rapport-prefaisabilite')->values() */),
+                'proces_verbaux' => FichierResource::collection($this->rapportPrefaisabilite->first()->procesVerbaux/* fichiers->where('categorie', 'proces-verbal')->values() */),
                 'liste_presence' => $this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'liste-presence')->first()
                     ? new FichierResource($this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'liste-presence')->first())
                     : null,
-                'documents_annexes' => FichierResource::collection($this->rapportPrefaisabilite->first()->fichiers->where('categorie', 'document-annexe')->values())
+                'documents_annexes' => FichierResource::collection($this->rapportPrefaisabilite->first()->documentsAnnexes/* fichiers->where('categorie', 'document-annexe')->values() */)
             ] : [
                 'fichiers_rapport' => [],
                 'proces_verbaux' => [],

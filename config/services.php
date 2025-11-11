@@ -58,5 +58,12 @@ return [
         'redirect' => env('GOV_REDIRECT_URI'),
     ],
 
+    'external_api' => [
+        'base_url' => env('EXTERNAL_API_BASE_URL', 'https://sigfp.reforme.topsystem-group.com'),
+        'api_key' => env('EXTERNAL_API_KEY'),
+        'timeout' => env('EXTERNAL_API_TIMEOUT', 30),
+        'retry_times' => env('EXTERNAL_API_RETRY_TIMES', 3),
+        'retry_delay' => env('EXTERNAL_API_RETRY_DELAY', 1000), // en millisecondes
+    ],
 
 ];

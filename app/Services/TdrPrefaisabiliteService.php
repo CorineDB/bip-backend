@@ -44,6 +44,7 @@ use App\Http\Resources\ChecklistMesuresAdaptationSecteurResource;
 use App\Http\Resources\EvaluationResource;
 use App\Http\Resources\projets\integration\ProjetsResource;
 use App\Repositories\CategorieCritereRepository;
+use App\Jobs\EnvoyerProjetMaturationJob;
 
 class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteServiceInterface
 {
@@ -3888,6 +3889,17 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Envoyer une notification
             $this->envoyerNotificationValidationFinale($projet, $data['action'], $data);
+
+            // Communiquer avec le système externe SIGFP si validation
+            if ($data['action'] === 'valider') {
+                // Dispatcher le job pour envoyer les données au système externe
+                // Le job gère automatiquement les retry et les notifications d'erreur
+                EnvoyerProjetMaturationJob::dispatch(
+                    $projet->id,
+                    $data,
+                    auth()->id()
+                );
+            }
 
             return response()->json([
                 'success' => true,
