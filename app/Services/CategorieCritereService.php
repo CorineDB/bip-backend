@@ -430,14 +430,15 @@ class CategorieCritereService extends BaseService implements CategorieCritereSer
             // Load the grille with criteres, notations (ordered by valeur) and evaluations for the specific idee projet
             $grille->load([
                 'criteres.notations' => function ($query) {
-                    $query->orderBy('valeur', 'asc'); // ou 'desc' selon ton besoin
+                    $query->orderByRaw('CAST(valeur AS INTEGER) ASC'); // ou 'desc' selon ton besoin
                 },
                 'criteres.evaluations' => function ($query) use ($ideeProjetId) {
                     $query->where('projetable_type', 'App\\Models\\IdeeProjet')
                         ->where('projetable_id', $ideeProjetId);
                 },
                 'notations' => function ($query) {
-                    $query->orderBy('valeur', 'asc');
+                    $query()
+                        ->orderByRaw('CAST(valeur AS INTEGER) ASC');
                 }
             ]);
 
