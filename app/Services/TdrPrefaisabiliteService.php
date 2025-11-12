@@ -3895,9 +3895,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 // Dispatcher le job pour envoyer les données au système externe
                 // Le job gère automatiquement les retry et les notifications d'erreur
                 EnvoyerProjetMaturationJob::dispatch(
-                    $projet->id,
-                    $data,
-                    auth()->id()
+                    $projet->id
                 );
             }
 

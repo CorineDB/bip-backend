@@ -1002,7 +1002,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $aggregatedScores = $evaluation->aggregateScoresByCritere($evaluationCriteres);
             $finalResults = $this->calculateFinalResults($aggregatedScores);
 
-            $grilleEvaluation = CategorieCritere::where('slug', 'evaluation-preliminaire-multi-projet-impact-climatique')->first();
+            //$grilleEvaluation = CategorieCritere::where('slug', 'evaluation-preliminaire-multi-projet-impact-climatique')->first();
+
+            $grilleEvaluation = $this->categorieCritereRepository->getCanevasEvaluationClimatique();
 
             // Mettre à jour l'évaluation avec les résultats finaux
             $evaluation->update([
@@ -3259,7 +3261,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $aggregatedScores = $evaluation->aggregateScoresByCritere($evaluationCriteres);
             $finalResults = $this->calculateFinalResults($aggregatedScores, "pertinence");
 
-            $grilleEvaluation = CategorieCritere::where('slug', 'grille-evaluation-pertinence-idee-projet')->first();
+            //$grilleEvaluation = CategorieCritere::where('slug', 'grille-evaluation-pertinence-idee-projet')->first();
+
+            $grilleEvaluation = $this->categorieCritereRepository->getCanevasEvaluationDePertinence();
 
             $ideeProjet->update([
                 'score_pertinence' => $finalResults['score_final_pondere'],
@@ -3396,8 +3400,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
             $aggregatedScores = $evaluation->aggregateScoresByCritere($evaluationCriteres);
             $finalResults = $this->calculateFinalResults($aggregatedScores, "pertinence");
 
-            $grilleEvaluation = CategorieCritere::where('slug', 'grille-evaluation-pertinence-idee-projet')->first();
+            //$grilleEvaluation = CategorieCritere::where('slug', 'grille-evaluation-pertinence-idee-projet')->first();
 
+            $grilleEvaluation = $this->categorieCritereRepository->getCanevasEvaluationDePertinence();
             // Mettre à jour l'évaluation avec les résultats finaux
             $evaluation->update([
                 'resultats_evaluation' => $finalResults,

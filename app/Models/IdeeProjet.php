@@ -388,16 +388,17 @@ class IdeeProjet extends Model
 
     public function evaluationsClimatique()
     {
-        return $this->morphMany(Evaluation::class, 'projetable')->where("type", "climatique");
+        return $this->morphMany(Evaluation::class, 'projetable')->where("type_evaluation", "climatique");
     }
 
     public function evaluationsPertinence()
     {
-        return $this->morphMany(Evaluation::class, 'projetable')->where("type", "pertinence");
+        return $this->morphMany(Evaluation::class, 'projetable')->where("type_evaluation", "pertinence");
     }
 
     public function evaluationPertinence()
     {
+        return $this->evaluationsPertinence()->latest('created_at');
         /* return $this->morphOne(Evaluation::class, 'projetable')->where("type", "pertinence")
                 ->orderBy('created_at', 'desc')
                 ->first(); */
@@ -409,7 +410,20 @@ class IdeeProjet extends Model
 
     public function evaluationsAMC()
     {
-        return $this->morphMany(Evaluation::class, 'projetable')->where("type", "amc");
+        return $this->morphMany(Evaluation::class, 'projetable')->where("type_evaluation", "amc");
+    }
+
+    /**
+     * Récupérer le dernier rapport de faisabilité
+     */
+    public function evaluationClimatique()
+    {
+        return $this->evaluationsClimatique()->latest('created_at');
+    }
+
+    public function evaluationAMC()
+    {
+        return $this->evaluationsAMC()->latest('created_at');
     }
 
     /**

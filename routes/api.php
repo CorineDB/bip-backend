@@ -208,7 +208,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         });
 
         Route::apiResource('projets', ProjetController::class)->only(['index', 'show']);
-
+        
         // Routes pour filtrer les projets par maturité
         Route::get('/projets-selectionnable', [ProjetController::class, 'projetsEnCoursMaturation'])
             ->name('projets.selectionnable');
