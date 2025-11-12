@@ -689,7 +689,7 @@ class ExternalApiService
             'dateFin' => $this->formatDate($tdrPrefaisabilite?->date_fin),
             'informationCabinet' => [
                 'nom' => $rapportPrefaisabilite?->info_cabinet_etude['nom_cabinet'] ?? 'Non défini',
-                'pays' => $rapportPrefaisabilite?->info_cabinet_etude?->pays ?? 'Bénin',
+                'pays' => $rapportPrefaisabilite?->info_cabinet_etude['adresse_cabinet'] ?? 'Bénin',
                 //'info_details_cabinet' => $rapportPrefaisabilite?->info_cabinet_etude,
             ],
             'informationFinancement' => [
@@ -756,7 +756,7 @@ class ExternalApiService
             'dateFin' => $this->formatDate($tdrFaisabilite?->date_fin),
             'informationCabinet' => [
                 'nom' => $rapportFaisabilite?->info_cabinet_etude['nom_cabinet'] ?? 'Non défini',
-                'pays' => $rapportFaisabilite?->info_cabinet_etude?->pays ?? 'Bénin',
+                'pays' => $rapportFaisabilite?->info_cabinet_etude['adresse_cabinet'] ?? 'Bénin',
                 //'info_details_cabinet' => $rapportFaisabilite?->info_cabinet_etude,
             ],
             'informationFinancement' => [
