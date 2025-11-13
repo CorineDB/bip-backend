@@ -260,6 +260,11 @@ def create_resultats_section(sheet, row, last_question_row):
     row10 = row + 9 # Raisons et recommandations
     row11 = row + 10 # Vide
     row12 = row + 11 # Note non conforme
+    row13 = row + 12 # Seules raisons possibles
+    row14 = row + 13 # Raison 1
+    row15 = row + 14 # Raison 2
+    row16 = row + 15 # Raison 3
+    row17 = row + 16 # Raison(s) (fusionné sur 2 lignes)
 
     # ========== LIGNE 1: Titre ==========
     sheet.merge_cells(f'A{row1}:E{row1}')
@@ -368,6 +373,52 @@ def create_resultats_section(sheet, row, last_question_row):
 
     sheet.row_dimensions[row12].height = 15.0
 
+    # ========== LIGNE 13: Seules raisons possibles de rejet ==========
+    cell_a13 = sheet[f'A{row13}']
+    cell_a13.value = "Seules raisons possibles de rejet :"
+    cell_a13.font = Font(bold=True, size=10, color='FF000000')
+    cell_a13.alignment = Alignment(horizontal='left', vertical='center')
+    cell_a13.border = Border(left=Side(style='medium'))
+
+    sheet.row_dimensions[row13].height = 15.0
+
+    # ========== LIGNE 14: Raison 1 ==========
+    cell_a14 = sheet[f'A{row14}']
+    cell_a14.value = "1. Si des rubriques n'ont pas été renseignées"
+    cell_a14.font = Font(bold=False, size=10, color='FF000000')
+    cell_a14.alignment = Alignment(horizontal='left', vertical='center')
+    cell_a14.border = Border(left=Side(style='medium'))
+
+    sheet.row_dimensions[row14].height = 15.0
+
+    # ========== LIGNE 15: Raison 2 ==========
+    cell_a15 = sheet[f'A{row15}']
+    cell_a15.value = "2. Si le contenu d'une rubrique a été rejeté"
+    cell_a15.font = Font(bold=False, size=10, color='FF000000')
+    cell_a15.alignment = Alignment(horizontal='left', vertical='center')
+    cell_a15.border = Border(left=Side(style='medium'))
+
+    sheet.row_dimensions[row15].height = 15.0
+
+    # ========== LIGNE 16: Raison 3 ==========
+    cell_a16 = sheet[f'A{row16}']
+    cell_a16.value = "3. Si 06 ou plus des rubriques ont fait objet de réserve"
+    cell_a16.font = Font(bold=False, size=10, color='FF000000')
+    cell_a16.alignment = Alignment(horizontal='left', vertical='center')
+    cell_a16.border = Border(left=Side(style='medium'))
+
+    sheet.row_dimensions[row16].height = 15.0
+
+    # ========== LIGNE 17-18: Raison(s) (fusionné sur 2 lignes) ==========
+    sheet.merge_cells(f'A{row17}:B{row17 + 1}')
+    cell_a17 = sheet[f'A{row17}']
+    cell_a17.value = "Raison(s) :"
+    cell_a17.font = Font(bold=True, size=12, color='FFFF0000')  # Rouge
+    cell_a17.alignment = Alignment(horizontal='left', vertical='top')
+    cell_a17.border = Border(left=Side(style='medium'))
+
+    sheet.row_dimensions[row17].height = 85.5
+
 def main():
     if len(sys.argv) != 4:
         print("Usage: python3 generate_appreciation_excel.py <data_json> <template_path> <output_path>")
@@ -430,7 +481,7 @@ def main():
 
     # Ajouter la section "Résultats de l'examen"
     create_resultats_section(sheet, current_row, last_question_row)
-    current_row += 12  # La section résultats prend 12 lignes
+    current_row += 18  # La section résultats prend 18 lignes (12 + 6 nouvelles lignes)
 
     # Sauvegarder
     wb.save(output_path)
