@@ -242,191 +242,176 @@ def create_proposant_section(sheet, row, proposant_data):
 
 def create_resultats_section(sheet, row, last_question_row, resultat_global=''):
     """
-    Créer la section 'Résultats de l'examen'
-    Ligne 1: Titre (A:E, fond vert, texte blanc)
-    Lignes 2-4: Compteurs avec formules COUNTIF
-    Ligne 5: "Le résultat de l'examen est donc le suivant :"
-    Lignes 6-9: Options de décision avec champs raisons/recommandations
+    Créer la section 'Résultats de l'examen' avec seulement les détails pertinents
+    selon le resultat_global.
 
     Args:
-        resultat_global: 'passe', 'retour', ou 'non_accepte' pour cocher l'option appropriée
+        resultat_global:
+            - 'passe': Affiche uniquement "Note conceptuelle conforme"
+            - 'retour': Affiche "Avis réservé" + "Raisons et recommandations"
+            - 'non_accepte': Affiche "Note non conforme" + raisons de rejet + Raison(s)
+            - '': Affiche tout sans cocher
+
+    Returns:
+        Nombre de lignes créées
     """
-    row1 = row      # Titre
-    row2 = row + 1  # Validées
-    row3 = row + 2  # Réservées
-    row4 = row + 3  # Rejetées
-    row5 = row + 4  # "Le résultat..."
-    row6 = row + 5  # Vide
-    row7 = row + 6  # Note conforme
-    row8 = row + 7  # Vide
-    row9 = row + 8  # Avis réservé
-    row10 = row + 9 # Raisons et recommandations
-    row11 = row + 10 # Vide
-    row12 = row + 11 # Note non conforme
-    row13 = row + 12 # Seules raisons possibles
-    row14 = row + 13 # Raison 1
-    row15 = row + 14 # Raison 2
-    row16 = row + 15 # Raison 3
-    row17 = row + 16 # Raison(s) (fusionné sur 2 lignes)
+    current_row = row
 
     # ========== LIGNE 1: Titre ==========
-    sheet.merge_cells(f'A{row1}:E{row1}')
-    cell_a1 = sheet[f'A{row1}']
-    cell_a1.value = "Résultats de l'examen"
-    cell_a1.font = Font(bold=True, size=14, color='FFFFFFFF')  # Texte blanc
-    cell_a1.fill = PatternFill(start_color='FF09A493', end_color='FF09A493', fill_type='solid')  # Fond vert
-    cell_a1.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-    cell_a1.border = Border(
-        left=Side(style='medium'),
-        right=Side(style='thin'),
-        top=Side(style='thin'),
-        bottom=Side(style='thin')
-    )
-    sheet.row_dimensions[row1].height = 34.5
+    sheet.merge_cells(f'A{current_row}:E{current_row}')
+    cell = sheet[f'A{current_row}']
+    cell.value = "Résultats de l'examen"
+    cell.font = Font(bold=True, size=14, color='FFFFFFFF')
+    cell.fill = PatternFill(start_color='FF09A493', end_color='FF09A493', fill_type='solid')
+    cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    cell.border = Border(left=Side(style='medium'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+    sheet.row_dimensions[current_row].height = 34.5
+    current_row += 1
 
     # ========== LIGNE 2: Nombre de rubriques validées ==========
-    cell_a2 = sheet[f'A{row2}']
-    cell_a2.value = "Nombre de rubriques validées"
-    cell_a2.font = Font(bold=True, size=13)
-    cell_a2.alignment = Alignment(horizontal='left', vertical='center')
-    cell_a2.border = Border(left=Side(style='medium'))
+    cell_a = sheet[f'A{current_row}']
+    cell_a.value = "Nombre de rubriques validées"
+    cell_a.font = Font(bold=True, size=13)
+    cell_a.alignment = Alignment(horizontal='left', vertical='center')
+    cell_a.border = Border(left=Side(style='medium'))
 
-    cell_b2 = sheet[f'B{row2}']
-    cell_b2.value = f'=COUNTIF(C$14:C${last_question_row},"Validé")'
-    cell_b2.font = Font(bold=True, size=13)
-    cell_b2.alignment = Alignment(horizontal='left', vertical='center')
-
-    sheet.row_dimensions[row2].height = 24.75
+    cell_b = sheet[f'B{current_row}']
+    cell_b.value = f'=COUNTIF(C$14:C${last_question_row},"Validé")'
+    cell_b.font = Font(bold=True, size=13)
+    cell_b.alignment = Alignment(horizontal='left', vertical='center')
+    sheet.row_dimensions[current_row].height = 24.75
+    current_row += 1
 
     # ========== LIGNE 3: Nombre de rubriques réservées ==========
-    cell_a3 = sheet[f'A{row3}']
-    cell_a3.value = "Nombre de rubriques ayant fait objet de réserve"
-    cell_a3.font = Font(bold=True, size=13)
-    cell_a3.alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
-    cell_a3.border = Border(left=Side(style='medium'))
+    cell_a = sheet[f'A{current_row}']
+    cell_a.value = "Nombre de rubriques ayant fait objet de réserve"
+    cell_a.font = Font(bold=True, size=13)
+    cell_a.alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
+    cell_a.border = Border(left=Side(style='medium'))
 
-    cell_b3 = sheet[f'B{row3}']
-    cell_b3.value = f'=COUNTIF(C$14:C${last_question_row},"Réservé")'
-    cell_b3.font = Font(bold=True, size=13)
-    cell_b3.alignment = Alignment(horizontal='left', vertical='center')
-
-    sheet.row_dimensions[row3].height = 15.75
+    cell_b = sheet[f'B{current_row}']
+    cell_b.value = f'=COUNTIF(C$14:C${last_question_row},"Réservé")'
+    cell_b.font = Font(bold=True, size=13)
+    cell_b.alignment = Alignment(horizontal='left', vertical='center')
+    sheet.row_dimensions[current_row].height = 15.75
+    current_row += 1
 
     # ========== LIGNE 4: Nombre de rubriques rejetées ==========
-    cell_a4 = sheet[f'A{row4}']
-    cell_a4.value = "Nombre de rubriques rejetées"
-    cell_a4.font = Font(bold=True, size=13)
-    cell_a4.alignment = Alignment(horizontal='left', vertical='center')
-    cell_a4.border = Border(left=Side(style='medium'))
+    cell_a = sheet[f'A{current_row}']
+    cell_a.value = "Nombre de rubriques rejetées"
+    cell_a.font = Font(bold=True, size=13)
+    cell_a.alignment = Alignment(horizontal='left', vertical='center')
+    cell_a.border = Border(left=Side(style='medium'))
 
-    cell_b4 = sheet[f'B{row4}']
-    cell_b4.value = f'=COUNTIF(C$14:C${last_question_row},"Rejeté")'
-    cell_b4.font = Font(bold=True, size=13)
-    cell_b4.alignment = Alignment(horizontal='left', vertical='center')
-
-    sheet.row_dimensions[row4].height = 24.75
+    cell_b = sheet[f'B{current_row}']
+    cell_b.value = f'=COUNTIF(C$14:C${last_question_row},"Rejeté")'
+    cell_b.font = Font(bold=True, size=13)
+    cell_b.alignment = Alignment(horizontal='left', vertical='center')
+    sheet.row_dimensions[current_row].height = 24.75
+    current_row += 1
 
     # ========== LIGNE 5: "Le résultat de l'examen..." ==========
-    sheet.merge_cells(f'A{row5}:B{row5 + 1}')
-    cell_a5 = sheet[f'A{row5}']
-    cell_a5.value = "Le résultat de l'examen est donc le suivant :"
-    cell_a5.font = Font(bold=True, size=13)
-    cell_a5.fill = PatternFill(start_color='FF09A493', end_color='FF09A493', fill_type='solid')
-    cell_a5.alignment = Alignment(horizontal='left', vertical='center')
-    cell_a5.border = Border(left=Side(style='medium'))
+    sheet.merge_cells(f'A{current_row}:B{current_row + 1}')
+    cell = sheet[f'A{current_row}']
+    cell.value = "Le résultat de l'examen est donc le suivant :"
+    cell.font = Font(bold=True, size=13)
+    cell.fill = PatternFill(start_color='FF09A493', end_color='FF09A493', fill_type='solid')
+    cell.alignment = Alignment(horizontal='left', vertical='center')
+    cell.border = Border(left=Side(style='medium'))
+    sheet.row_dimensions[current_row].height = 15.0
+    current_row += 2  # +1 pour la ligne vide
 
-    sheet.row_dimensions[row5].height = 15.0
+    # Créer uniquement les lignes pertinentes selon resultat_global
+    if resultat_global == 'passe':
+        # ========== LIGNE 7: Note conceptuelle conforme ==========
+        sheet.merge_cells(f'A{current_row}:B{current_row + 1}')
+        cell = sheet[f'A{current_row}']
+        cell.value = "(X) Note conceptuelle conforme (toutes les rubriques validées)"
+        cell.font = Font(bold=True, size=12, color='FF00B050')
+        cell.alignment = Alignment(horizontal='left', vertical='center')
+        cell.border = Border(left=Side(style='medium'))
+        sheet.row_dimensions[current_row].height = 24.75
+        current_row += 2
 
-    # ========== LIGNE 7: Note conceptuelle conforme ==========
-    sheet.merge_cells(f'A{row7}:B{row7 + 1}')
-    cell_a7 = sheet[f'A{row7}']
-    # Cocher automatiquement si resultat_global == 'passe'
-    checkbox = "(X)" if resultat_global == 'passe' else "( )"
-    cell_a7.value = f"{checkbox} Note conceptuelle conforme (toutes les rubriques validées)"
-    cell_a7.font = Font(bold=True, size=12, color='FF00B050')  # Vert
-    cell_a7.alignment = Alignment(horizontal='left', vertical='center')
-    cell_a7.border = Border(left=Side(style='medium'))
+    elif resultat_global == 'retour':
+        # ========== LIGNE 9: Avis réservé ==========
+        sheet.merge_cells(f'A{current_row}:B{current_row}')
+        cell = sheet[f'A{current_row}']
+        cell.value = "(X) Avis réservé sur la note conceptuelle (avis réservé)"
+        cell.font = Font(bold=True, size=12, color='FFED7D31')
+        cell.alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
+        cell.border = Border(left=Side(style='medium'))
+        sheet.row_dimensions[current_row].height = 30.0
+        current_row += 1
 
-    sheet.row_dimensions[row7].height = 24.75
+        # ========== LIGNE 10: Raisons et recommandations ==========
+        sheet.merge_cells(f'A{current_row}:B{current_row + 1}')
+        cell = sheet[f'A{current_row}']
+        cell.value = "Raisons et recommandations d'amélioration :"
+        cell.font = Font(bold=True, size=12, color='FFED7D31')
+        cell.alignment = Alignment(horizontal='left', vertical='top')
+        cell.border = Border(left=Side(style='medium'))
+        sheet.row_dimensions[current_row].height = 48.0
+        current_row += 2
 
-    # ========== LIGNE 9: Avis réservé ==========
-    sheet.merge_cells(f'A{row9}:B{row9}')
-    cell_a9 = sheet[f'A{row9}']
-    # Cocher automatiquement si resultat_global == 'retour'
-    checkbox = "(X)" if resultat_global == 'retour' else "( )"
-    cell_a9.value = f"{checkbox} Avis réservé sur la note conceptuelle (avis réservé)"
-    cell_a9.font = Font(bold=True, size=12, color='FFED7D31')  # Orange
-    cell_a9.alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
-    cell_a9.border = Border(left=Side(style='medium'))
+    elif resultat_global == 'non_accepte':
+        # ========== LIGNE 12: Note non conforme ==========
+        cell = sheet[f'A{current_row}']
+        cell.value = "(X) Note conceptuelle non conforme (rejet)"
+        cell.font = Font(bold=True, size=12, color='FFFF0000')
+        cell.alignment = Alignment(horizontal='left', vertical='center')
+        cell.border = Border(left=Side(style='medium'))
+        sheet.row_dimensions[current_row].height = 15.0
+        current_row += 1
 
-    sheet.row_dimensions[row9].height = 30.0
+        # ========== LIGNE 13: Seules raisons possibles de rejet ==========
+        cell = sheet[f'A{current_row}']
+        cell.value = "Seules raisons possibles de rejet :"
+        cell.font = Font(bold=True, size=10, color='FF000000')
+        cell.alignment = Alignment(horizontal='left', vertical='center')
+        cell.border = Border(left=Side(style='medium'))
+        sheet.row_dimensions[current_row].height = 15.0
+        current_row += 1
 
-    # ========== LIGNE 10: Raisons et recommandations ==========
-    sheet.merge_cells(f'A{row10}:B{row10 + 1}')
-    cell_a10 = sheet[f'A{row10}']
-    cell_a10.value = "Raisons et recommandations d'amélioration :"
-    cell_a10.font = Font(bold=True, size=12, color='FFED7D31')  # Orange
-    cell_a10.alignment = Alignment(horizontal='left', vertical='top')
-    cell_a10.border = Border(left=Side(style='medium'))
+        # ========== LIGNE 14: Raison 1 ==========
+        cell = sheet[f'A{current_row}']
+        cell.value = "1. Si des rubriques n'ont pas été renseignées"
+        cell.font = Font(bold=False, size=10, color='FF000000')
+        cell.alignment = Alignment(horizontal='left', vertical='center')
+        cell.border = Border(left=Side(style='medium'))
+        sheet.row_dimensions[current_row].height = 15.0
+        current_row += 1
 
-    sheet.row_dimensions[row10].height = 48.0
+        # ========== LIGNE 15: Raison 2 ==========
+        cell = sheet[f'A{current_row}']
+        cell.value = "2. Si le contenu d'une rubrique a été rejeté"
+        cell.font = Font(bold=False, size=10, color='FF000000')
+        cell.alignment = Alignment(horizontal='left', vertical='center')
+        cell.border = Border(left=Side(style='medium'))
+        sheet.row_dimensions[current_row].height = 15.0
+        current_row += 1
 
-    # ========== LIGNE 12: Note non conforme ==========
-    cell_a12 = sheet[f'A{row12}']
-    # Cocher automatiquement si resultat_global == 'non_accepte'
-    checkbox = "(X)" if resultat_global == 'non_accepte' else "( )"
-    cell_a12.value = f"{checkbox} Note conceptuelle non conforme (rejet)"
-    cell_a12.font = Font(bold=True, size=12, color='FFFF0000')  # Rouge
-    cell_a12.alignment = Alignment(horizontal='left', vertical='center')
-    cell_a12.border = Border(left=Side(style='medium'))
+        # ========== LIGNE 16: Raison 3 ==========
+        cell = sheet[f'A{current_row}']
+        cell.value = "3. Si 06 ou plus des rubriques ont fait objet de réserve"
+        cell.font = Font(bold=False, size=10, color='FF000000')
+        cell.alignment = Alignment(horizontal='left', vertical='center')
+        cell.border = Border(left=Side(style='medium'))
+        sheet.row_dimensions[current_row].height = 15.0
+        current_row += 1
 
-    sheet.row_dimensions[row12].height = 15.0
+        # ========== LIGNE 17-18: Raison(s) (fusionné sur 2 lignes) ==========
+        sheet.merge_cells(f'A{current_row}:B{current_row + 1}')
+        cell = sheet[f'A{current_row}']
+        cell.value = "Raison(s) :"
+        cell.font = Font(bold=True, size=12, color='FFFF0000')
+        cell.alignment = Alignment(horizontal='left', vertical='top')
+        cell.border = Border(left=Side(style='medium'))
+        sheet.row_dimensions[current_row].height = 85.5
+        current_row += 2
 
-    # ========== LIGNE 13: Seules raisons possibles de rejet ==========
-    cell_a13 = sheet[f'A{row13}']
-    cell_a13.value = "Seules raisons possibles de rejet :"
-    cell_a13.font = Font(bold=True, size=10, color='FF000000')
-    cell_a13.alignment = Alignment(horizontal='left', vertical='center')
-    cell_a13.border = Border(left=Side(style='medium'))
-
-    sheet.row_dimensions[row13].height = 15.0
-
-    # ========== LIGNE 14: Raison 1 ==========
-    cell_a14 = sheet[f'A{row14}']
-    cell_a14.value = "1. Si des rubriques n'ont pas été renseignées"
-    cell_a14.font = Font(bold=False, size=10, color='FF000000')
-    cell_a14.alignment = Alignment(horizontal='left', vertical='center')
-    cell_a14.border = Border(left=Side(style='medium'))
-
-    sheet.row_dimensions[row14].height = 15.0
-
-    # ========== LIGNE 15: Raison 2 ==========
-    cell_a15 = sheet[f'A{row15}']
-    cell_a15.value = "2. Si le contenu d'une rubrique a été rejeté"
-    cell_a15.font = Font(bold=False, size=10, color='FF000000')
-    cell_a15.alignment = Alignment(horizontal='left', vertical='center')
-    cell_a15.border = Border(left=Side(style='medium'))
-
-    sheet.row_dimensions[row15].height = 15.0
-
-    # ========== LIGNE 16: Raison 3 ==========
-    cell_a16 = sheet[f'A{row16}']
-    cell_a16.value = "3. Si 06 ou plus des rubriques ont fait objet de réserve"
-    cell_a16.font = Font(bold=False, size=10, color='FF000000')
-    cell_a16.alignment = Alignment(horizontal='left', vertical='center')
-    cell_a16.border = Border(left=Side(style='medium'))
-
-    sheet.row_dimensions[row16].height = 15.0
-
-    # ========== LIGNE 17-18: Raison(s) (fusionné sur 2 lignes) ==========
-    sheet.merge_cells(f'A{row17}:B{row17 + 1}')
-    cell_a17 = sheet[f'A{row17}']
-    cell_a17.value = "Raison(s) :"
-    cell_a17.font = Font(bold=True, size=12, color='FFFF0000')  # Rouge
-    cell_a17.alignment = Alignment(horizontal='left', vertical='top')
-    cell_a17.border = Border(left=Side(style='medium'))
-
-    sheet.row_dimensions[row17].height = 85.5
+    # Retourner le nombre de lignes créées
+    return current_row - row
 
 def main():
     if len(sys.argv) != 4:
@@ -490,8 +475,8 @@ def main():
 
     # Ajouter la section "Résultats de l'examen"
     resultat_global = data.get('resultat_global', '')
-    create_resultats_section(sheet, current_row, last_question_row, resultat_global)
-    current_row += 18  # La section résultats prend 18 lignes (12 + 6 nouvelles lignes)
+    lines_created = create_resultats_section(sheet, current_row, last_question_row, resultat_global)
+    current_row += lines_created
 
     # Sauvegarder
     wb.save(output_path)
