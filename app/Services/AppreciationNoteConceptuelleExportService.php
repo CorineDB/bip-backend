@@ -21,7 +21,21 @@ class AppreciationNoteConceptuelleExportService
 
         // Récupérer le canevas et les données d'évaluation
         $canevas = $noteConceptuelle->canevas_appreciation_note_conceptuelle;
-        $evaluations = $noteConceptuelle->appreciation_note_conceptuelle ?? [];
+
+        // Récupérer l'évaluation terminée ou en cours
+        $evaluationData = $noteConceptuelle->evaluationTermine() ?? ($noteConceptuelle->evaluationEnCours() ?? []);
+
+        // Si l'évaluation existe, récupérer les données via la clé 'champs_evalues'
+        // et les convertir en tableau associatif indexé par attribut
+        $evaluations = [];
+        if (!empty($evaluationData['champs_evalues'])) {
+            foreach ($evaluationData['champs_evalues'] as $champ) {
+                $evaluations[$champ['attribut']] = [
+                    'commentaire' => $champ['commentaire_evaluateur'] ?? '',
+                    'appreciation' => $champ['appreciation'] ?? '',
+                ];
+            }
+        }
 
         if (!$canevas) {
             throw new \Exception("Aucun canevas d'appréciation trouvé");
@@ -115,8 +129,8 @@ class AppreciationNoteConceptuelleExportService
      */
     private function prepareDataForExport(Projet $projet, NoteConceptuelle $noteConceptuelle, array $canevas, array $evaluations): array
     {
-        // Récupérer les informations du proposant/rédacteur
-        $redacteur = $noteConceptuelle->redacteur;
+        // Récupérer les informations du proposant/responsable
+        $responsable = $projet->responsable;
         $ministere = $projet->ministere;
 
         // Coût du projet
@@ -137,9 +151,9 @@ class AppreciationNoteConceptuelleExportService
             ],
             'accept_text' => $canevas['evaluation_configs']['accept_text'] ?? '',
             'proposant' => [
-                'nom' => $redacteur ? ($redacteur->personne->nom . ' ' . $redacteur->personne->prenom) : '',
-                'telephone' => $redacteur?->telephone ?? '',
-                'email' => $redacteur->personne->email ?? '',
+                'nom' => $responsable ? ($responsable->personne->nom . ' ' . $responsable->personne->prenom) : '',
+                'telephone' => $responsable?->telephone ?? '',
+                'email' => $responsable->email ?? '',
                 'ministere' => $ministere->nom ?? '',
             ],
             'elements' => [],
