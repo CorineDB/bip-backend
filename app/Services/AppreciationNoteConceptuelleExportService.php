@@ -115,13 +115,31 @@ class AppreciationNoteConceptuelleExportService
      */
     private function prepareDataForExport(Projet $projet, NoteConceptuelle $noteConceptuelle, array $canevas, array $evaluations): array
     {
+        // Récupérer les informations du proposant/rédacteur
+        $redacteur = $noteConceptuelle->redacteur;
+        $ministere = $projet->ministere;
+
+        // Coût du projet
+        if (!empty($projet->cout_estimatif_projet)) {
+            $coutEstimatif = is_array($projet->cout_estimatif_projet)
+                ? ($projet->cout_estimatif_projet['montant'] ?? '')
+                : $projet->cout_estimatif_projet;
+
+        }
+
         $data = [
             'header' => [
-                'titre_projet' => $projet->titre ?? '',
+                'titre_projet' => $projet->titre_projet ?? '',
                 'identifiant_bip' => $projet->identifiant_bip ?? '',
-                'cout_total' => $projet->cout_total ? number_format($projet->cout_total, 0, ',', ' ') . ' FCFA' : '',
+                'cout_total' => $coutEstimatif ? number_format($coutEstimatif, 0, ',', ' ') . ' FCFA' : '',
                 'date_demarrage' => $noteConceptuelle->date_demarrage_etude ?? '',
                 'date_achevement' => $noteConceptuelle->date_achevement_etude ?? '',
+            ],
+            'proposant' => [
+                'nom' => $redacteur ? ($redacteur->personne->nom . ' ' . $redacteur->personne->prenom) : '',
+                'telephone' => $redacteur?->telephone ?? '',
+                'email' => $redacteur->personne->email ?? '',
+                'ministere' => $ministere->nom ?? '',
             ],
             'elements' => [],
         ];

@@ -161,7 +161,8 @@ def create_proposant_section(sheet, row, proposant_data):
     # ========== LIGNE 2: Nom, Téléphone, Email ==========
     # Colonne A: "Proposition de projet préparée par (Nom) :"
     cell_a2 = sheet[f'A{row2}']
-    cell_a2.value = "Proposition de projet préparée par (Nom) :"
+    nom_proposant = proposant_data.get('nom', '')
+    cell_a2.value = f"Proposition de projet préparée par (Nom) :\n{nom_proposant}"
     cell_a2.font = Font(bold=True, size=12, color='FF222A35')
     cell_a2.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
     cell_a2.border = Border(left=Side(style='medium'), top=Side(style='thin'))
@@ -169,7 +170,8 @@ def create_proposant_section(sheet, row, proposant_data):
     # Colonne B: Téléphone (fusionné sur 2 lignes)
     sheet.merge_cells(f'B{row2}:B{row3}')
     cell_b2 = sheet[f'B{row2}']
-    cell_b2.value = f"Téléphone:\n{proposant_data.get('telephone', '')}"
+    telephone = proposant_data.get('telephone', '')
+    cell_b2.value = f"Téléphone:\n{telephone}" if telephone else "Téléphone:"
     cell_b2.font = Font(bold=True, size=12, color='FF222A35')
     cell_b2.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
     cell_b2.border = Border(top=Side(style='thin'), bottom=Side(style='thin'))
@@ -177,7 +179,8 @@ def create_proposant_section(sheet, row, proposant_data):
     # Colonne C:E fusionnées - Email (sur 2 lignes)
     sheet.merge_cells(f'C{row2}:E{row3}')
     cell_c2 = sheet[f'C{row2}']
-    cell_c2.value = f"E-mail:\n{proposant_data.get('email', '')}"
+    email = proposant_data.get('email', '')
+    cell_c2.value = f"E-mail:\n{email}" if email else "E-mail:"
     cell_c2.font = Font(bold=True, size=12, color='FF222A35')
     cell_c2.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
     cell_c2.border = Border(
