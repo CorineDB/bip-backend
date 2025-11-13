@@ -34,7 +34,7 @@ class ProjectExportService
         // Générer le nom de stockage
         $category = 'fiche_idee_projet';
         $extension = 'pdf';
-        $storageName = $this->generateStorageName($category, $project->id, $extension);
+        $storageName = $this->generateStorageName($category, $project->identifiant_bip, $extension);
 
         // Hasher l'identifiant BIP pour le stockage physique
         $identifiantBip = $project->identifiant_bip;
@@ -56,7 +56,7 @@ class ProjectExportService
         Storage::disk('local')->put($storedPath, $pdfContent);
 
         // Générer le hash d'accès
-        $hashAcces = $this->generateFileAccessHash($project->id, $storageName, $category);
+        $hashAcces = $this->generateFileAccessHash($project->hashed_id, $storageName, $category);
 
         // Vérifier si une fiche existe déjà pour ce projet
         $existingFiche = $project->fichiers()
@@ -111,7 +111,7 @@ class ProjectExportService
     /**
      * Générer un nom de stockage selon la catégorie
      */
-    private function generateStorageName(string $category, int $projectId, string $extension): string
+    private function generateStorageName(string $category, string $projectId, string $extension): string
     {
         $prefix = match ($category) {
             'fiche_idee_projet' => 'fiche_idee_projet',
@@ -124,7 +124,7 @@ class ProjectExportService
     /**
      * Générer le hash d'accès public pour un fichier
      */
-    private function generateFileAccessHash(int $projectId, string $storageName, string $category): string
+    private function generateFileAccessHash(string $projectId, string $storageName, string $category): string
     {
         return hash('sha256', $projectId . $storageName . $category . config('app.key'));
     }

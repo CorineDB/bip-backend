@@ -53,7 +53,7 @@ class EvaluationExportService
         // Générer le nom de stockage
         $category = 'evaluation_pertinence';
         $extension = 'xlsx';
-        $storageName = $this->generateStorageName($category, $evaluation->id, $extension);
+        $storageName = $this->generateStorageName($category, $project->identifiant_bip, $extension);
 
         // Sauvegarder temporairement pour obtenir le contenu
         $tempPath = storage_path('app/temp/' . $storageName);
@@ -84,7 +84,7 @@ class EvaluationExportService
         Storage::disk('local')->put($storedPath, $fileContent);
 
         // Générer le hash d'accès
-        $hashAcces = $this->generateFileAccessHash($project->id, $storageName, $category);
+        $hashAcces = $this->generateFileAccessHash($project->hashed_id, $storageName, $category);
 
         // Vérifier si un export existe déjà pour ce projet
         $existingFile = $project->fichiers()
@@ -391,7 +391,7 @@ class EvaluationExportService
         // Générer le nom de stockage
         $category = 'evaluation_climatique';
         $extension = 'xlsx';
-        $storageName = $this->generateStorageName($category, $evaluation->id, $extension);
+        $storageName = $this->generateStorageName($category, $evaluation->hashed_id, $extension);
 
         // Sauvegarder temporairement pour obtenir le contenu
         $tempPath = storage_path('app/temp/' . $storageName);
@@ -422,7 +422,7 @@ class EvaluationExportService
         Storage::disk('local')->put($storedPath, $fileContent);
 
         // Générer le hash d'accès
-        $hashAcces = $this->generateFileAccessHash($project->id, $storageName, $category);
+        $hashAcces = $this->generateFileAccessHash($project->hashed_id, $storageName, $category);
 
         // Vérifier si un export existe déjà pour ce projet
         $existingFile = $project->fichiers()
@@ -520,8 +520,7 @@ class EvaluationExportService
             }
 
             // Colonnes J, K, L, M... : Les notations
-            if (!empty($critere['notations'])) {
-
+            if (!empty($critere['notations']) && is_array($critere['notations'])) {
                 $colIndex = 0;
 
                 foreach ($critere['notations'] as $notation) {
@@ -634,7 +633,7 @@ class EvaluationExportService
     /**
      * Générer un nom de stockage selon la catégorie
      */
-    private function generateStorageName(string $category, int $evaluationId, string $extension): string
+    private function generateStorageName(string $category, string $evaluationId, string $extension): string
     {
         $prefix = match ($category) {
             'evaluation_pertinence' => 'eval_pertinence',
@@ -649,7 +648,7 @@ class EvaluationExportService
     /**
      * Générer le hash d'accès public pour un fichier
      */
-    private function generateFileAccessHash(int $evaluationId, string $storageName, string $category): string
+    private function generateFileAccessHash(string $evaluationId, string $storageName, string $category): string
     {
         return hash('sha256', $evaluationId . $storageName . $category . config('app.key'));
     }
