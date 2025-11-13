@@ -28,6 +28,8 @@ class AppreciationNoteConceptuelleExportService
         // Si l'évaluation existe, récupérer les données via la propriété 'evaluation'
         // qui contient un tableau avec la clé 'champs_evalues'
         $evaluations = [];
+        $resultatsEvaluation = [];
+
         if ($evaluationModel) {
             $evaluationData = $evaluationModel->evaluation ?? [];
 
@@ -39,6 +41,9 @@ class AppreciationNoteConceptuelleExportService
                     ];
                 }
             }
+
+            // Récupérer les résultats de l'évaluation
+            $resultatsEvaluation = $evaluationModel->resultats_evaluation ?? [];
         }
 
         if (!$canevas) {
@@ -46,7 +51,7 @@ class AppreciationNoteConceptuelleExportService
         }
 
         // Préparer les données pour le script Python
-        $data = $this->prepareDataForExport($projet, $noteConceptuelle, $canevas, $evaluations);
+        $data = $this->prepareDataForExport($projet, $noteConceptuelle, $canevas, $evaluations, $resultatsEvaluation);
 
         // Chemins des fichiers
         $templatePath = base_path('canevas/O-5_Template_Appreciation_Clean.xlsx');
@@ -131,7 +136,7 @@ class AppreciationNoteConceptuelleExportService
     /**
      * Préparer les données pour l'export Excel (format JSON)
      */
-    private function prepareDataForExport(Projet $projet, NoteConceptuelle $noteConceptuelle, array $canevas, array $evaluations): array
+    private function prepareDataForExport(Projet $projet, NoteConceptuelle $noteConceptuelle, array $canevas, array $evaluations, array $resultatsEvaluation): array
     {
         // Récupérer les informations du proposant/responsable
         $responsable = $projet->responsable;
@@ -160,6 +165,7 @@ class AppreciationNoteConceptuelleExportService
                 'email' => $responsable->email ?? '',
                 'ministere' => $ministere->nom ?? '',
             ],
+            'resultat_global' => $resultatsEvaluation['resultat_global'] ?? '',
             'elements' => [],
         ];
 

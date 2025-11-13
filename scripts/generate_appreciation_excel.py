@@ -240,13 +240,16 @@ def create_proposant_section(sheet, row, proposant_data):
 
     sheet.row_dimensions[row3].height = 30.0
 
-def create_resultats_section(sheet, row, last_question_row):
+def create_resultats_section(sheet, row, last_question_row, resultat_global=''):
     """
     Créer la section 'Résultats de l'examen'
     Ligne 1: Titre (A:E, fond vert, texte blanc)
     Lignes 2-4: Compteurs avec formules COUNTIF
     Ligne 5: "Le résultat de l'examen est donc le suivant :"
     Lignes 6-9: Options de décision avec champs raisons/recommandations
+
+    Args:
+        resultat_global: 'passe', 'retour', ou 'non_accepte' pour cocher l'option appropriée
     """
     row1 = row      # Titre
     row2 = row + 1  # Validées
@@ -337,7 +340,9 @@ def create_resultats_section(sheet, row, last_question_row):
     # ========== LIGNE 7: Note conceptuelle conforme ==========
     sheet.merge_cells(f'A{row7}:B{row7 + 1}')
     cell_a7 = sheet[f'A{row7}']
-    cell_a7.value = "( ) Note conceptuelle conforme (toutes les rubriques validées)"
+    # Cocher automatiquement si resultat_global == 'passe'
+    checkbox = "(X)" if resultat_global == 'passe' else "( )"
+    cell_a7.value = f"{checkbox} Note conceptuelle conforme (toutes les rubriques validées)"
     cell_a7.font = Font(bold=True, size=12, color='FF00B050')  # Vert
     cell_a7.alignment = Alignment(horizontal='left', vertical='center')
     cell_a7.border = Border(left=Side(style='medium'))
@@ -347,7 +352,9 @@ def create_resultats_section(sheet, row, last_question_row):
     # ========== LIGNE 9: Avis réservé ==========
     sheet.merge_cells(f'A{row9}:B{row9}')
     cell_a9 = sheet[f'A{row9}']
-    cell_a9.value = "( ) Avis réservé sur la note conceptuelle (avis réservé)"
+    # Cocher automatiquement si resultat_global == 'retour'
+    checkbox = "(X)" if resultat_global == 'retour' else "( )"
+    cell_a9.value = f"{checkbox} Avis réservé sur la note conceptuelle (avis réservé)"
     cell_a9.font = Font(bold=True, size=12, color='FFED7D31')  # Orange
     cell_a9.alignment = Alignment(horizontal='left', vertical='center', wrap_text=True)
     cell_a9.border = Border(left=Side(style='medium'))
@@ -366,7 +373,9 @@ def create_resultats_section(sheet, row, last_question_row):
 
     # ========== LIGNE 12: Note non conforme ==========
     cell_a12 = sheet[f'A{row12}']
-    cell_a12.value = "( ) Note conceptuelle non conforme (rejet)"
+    # Cocher automatiquement si resultat_global == 'non_accepte'
+    checkbox = "(X)" if resultat_global == 'non_accepte' else "( )"
+    cell_a12.value = f"{checkbox} Note conceptuelle non conforme (rejet)"
     cell_a12.font = Font(bold=True, size=12, color='FFFF0000')  # Rouge
     cell_a12.alignment = Alignment(horizontal='left', vertical='center')
     cell_a12.border = Border(left=Side(style='medium'))
@@ -480,7 +489,8 @@ def main():
     current_row += 3  # La section proposant prend 3 lignes
 
     # Ajouter la section "Résultats de l'examen"
-    create_resultats_section(sheet, current_row, last_question_row)
+    resultat_global = data.get('resultat_global', '')
+    create_resultats_section(sheet, current_row, last_question_row, resultat_global)
     current_row += 18  # La section résultats prend 18 lignes (12 + 6 nouvelles lignes)
 
     # Sauvegarder
