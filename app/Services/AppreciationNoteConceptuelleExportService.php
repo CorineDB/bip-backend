@@ -23,17 +23,21 @@ class AppreciationNoteConceptuelleExportService
         $canevas = $noteConceptuelle->canevas_appreciation_note_conceptuelle;
 
         // Récupérer l'évaluation terminée ou en cours
-        $evaluationData = $noteConceptuelle->evaluationTermine() ?? ($noteConceptuelle->evaluationEnCours() ?? []);
+        $evaluationModel = $noteConceptuelle->evaluationTermine() ?? $noteConceptuelle->evaluationEnCours();
 
-        // Si l'évaluation existe, récupérer les données via la clé 'champs_evalues'
-        // et les convertir en tableau associatif indexé par attribut
+        // Si l'évaluation existe, récupérer les données via la propriété 'evaluation'
+        // qui contient un tableau avec la clé 'champs_evalues'
         $evaluations = [];
-        if (!empty($evaluationData['champs_evalues'])) {
-            foreach ($evaluationData['champs_evalues'] as $champ) {
-                $evaluations[$champ['attribut']] = [
-                    'commentaire' => $champ['commentaire_evaluateur'] ?? '',
-                    'appreciation' => $champ['appreciation'] ?? '',
-                ];
+        if ($evaluationModel) {
+            $evaluationData = $evaluationModel->evaluation ?? [];
+
+            if (!empty($evaluationData['champs_evalues'])) {
+                foreach ($evaluationData['champs_evalues'] as $champ) {
+                    $evaluations[$champ['attribut']] = [
+                        'commentaire' => $champ['commentaire_evaluateur'] ?? '',
+                        'appreciation' => $champ['appreciation'] ?? '',
+                    ];
+                }
             }
         }
 
@@ -177,6 +181,7 @@ class AppreciationNoteConceptuelleExportService
                             // Récupérer l'évaluation pour ce champ
                             $evaluation = $evaluations[$element['attribut']] ?? null;
                             $commentaire = $evaluation['commentaire'] ?? '';
+                            $appreciation = $evaluation['appreciation'] ?? '';
 
                             // Construire le guide de notation à partir des options
                             $options = $element['meta_options']['configs']['options'] ?? [];
@@ -189,6 +194,7 @@ class AppreciationNoteConceptuelleExportService
                                 'type' => 'question',
                                 'title' => $element['label'],
                                 'comment' => $commentaire,
+                                'appreciation' => $appreciation,
                                 'guide' => implode("\n", $guide),
                             ];
                         }

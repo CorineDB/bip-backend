@@ -115,9 +115,19 @@ def create_question_rows(sheet, row, question_data):
     # Bordure pour B (fusionné avec A)
     sheet[f'B{row2}'].border = Border(top=Side(style='thin'), bottom=Side(style='thin'))
 
-    # Colonne C: Bouton de validation (fond cyan)
+    # Colonne C: Bouton de validation avec appréciation (fond cyan)
     cell_c = sheet[f'C{row2}']
-    cell_c.value = '[ Valider le statut ]'
+    appreciation = question_data.get('appreciation', '')
+
+    # Mapper les valeurs d'appréciation
+    appreciation_map = {
+        'passe': 'Validé',
+        'retour': 'Réservé',
+        'non_accepte': 'Rejeté',
+    }
+
+    appreciation_text = appreciation_map.get(appreciation, '[ Valider le statut ]')
+    cell_c.value = appreciation_text
     cell_c.font = Font(bold=True, size=12, color='FF000000')
     cell_c.fill = PatternFill(start_color='FFEBFFFC', end_color='FFEBFFFC', fill_type='solid')  # Cyan
     cell_c.alignment = Alignment(vertical='top', wrap_text=True)
