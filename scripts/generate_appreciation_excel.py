@@ -133,6 +133,77 @@ def create_question_rows(sheet, row, question_data):
     # Hauteur ligne 2
     sheet.row_dimensions[row2].height = 85.5
 
+def create_proposant_section(sheet, row, proposant_data):
+    """
+    Créer la section 'À remplir par le proposant du projet'
+    Ligne 1: Titre (A:E, fond cyan FFEBFFFC, texte vert FF09A493)
+    Ligne 2-3: Informations du proposant (Nom, Téléphone, Email, Ministère)
+    """
+    row1 = row
+    row2 = row + 1
+    row3 = row + 2
+
+    # ========== LIGNE 1: Titre de la section ==========
+    sheet.merge_cells(f'A{row1}:E{row1}')
+    cell_a1 = sheet[f'A{row1}']
+    cell_a1.value = "À remplir par le proposant du projet"
+    cell_a1.font = Font(bold=True, size=14, color='FF09A493')  # Texte vert
+    cell_a1.fill = PatternFill(start_color='FFEBFFFC', end_color='FFEBFFFC', fill_type='solid')  # Fond cyan
+    cell_a1.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    cell_a1.border = Border(
+        left=Side(style='medium'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    sheet.row_dimensions[row1].height = 25.5
+
+    # ========== LIGNE 2: Nom, Téléphone, Email ==========
+    # Colonne A: "Proposition de projet préparée par (Nom) :"
+    cell_a2 = sheet[f'A{row2}']
+    cell_a2.value = "Proposition de projet préparée par (Nom) :"
+    cell_a2.font = Font(bold=True, size=12, color='FF222A35')
+    cell_a2.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
+    cell_a2.border = Border(left=Side(style='medium'), top=Side(style='thin'))
+
+    # Colonne B: Téléphone (fusionné sur 2 lignes)
+    sheet.merge_cells(f'B{row2}:B{row3}')
+    cell_b2 = sheet[f'B{row2}']
+    cell_b2.value = f"Téléphone:\n{proposant_data.get('telephone', '')}"
+    cell_b2.font = Font(bold=True, size=12, color='FF222A35')
+    cell_b2.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
+    cell_b2.border = Border(top=Side(style='thin'), bottom=Side(style='thin'))
+
+    # Colonne C:E fusionnées - Email (sur 2 lignes)
+    sheet.merge_cells(f'C{row2}:E{row3}')
+    cell_c2 = sheet[f'C{row2}']
+    cell_c2.value = f"E-mail:\n{proposant_data.get('email', '')}"
+    cell_c2.font = Font(bold=True, size=12, color='FF222A35')
+    cell_c2.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
+    cell_c2.border = Border(
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    sheet.row_dimensions[row2].height = 18.0
+
+    # ========== LIGNE 3: Nom du ministère ==========
+    cell_a3 = sheet[f'A{row3}']
+    cell_a3.value = f"Nom du ministère :\n{proposant_data.get('ministere', '')}"
+    cell_a3.font = Font(bold=True, size=12, color='FF222A35')
+    cell_a3.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
+    cell_a3.border = Border(
+        left=Side(style='medium'),
+        bottom=Side(style='thin')
+    )
+
+    # Bordures pour B et C:E déjà fusionnées
+    sheet[f'B{row3}'].border = Border(bottom=Side(style='thin'))
+    sheet[f'C{row3}'].border = Border(right=Side(style='thin'), bottom=Side(style='thin'))
+
+    sheet.row_dimensions[row3].height = 30.0
+
 def main():
     if len(sys.argv) != 4:
         print("Usage: python3 generate_appreciation_excel.py <data_json> <template_path> <output_path>")
@@ -183,11 +254,16 @@ def main():
     # La dernière ligne de question pour les formules
     last_question_row = current_row - 1
 
-    # Les formules sont maintenant à la ligne current_row (juste après les questions)
+    # Ajouter la section "À remplir par le proposant du projet"
+    proposant_data = data.get('proposant', {})
+    create_proposant_section(sheet, current_row, proposant_data)
+    current_row += 3  # La section proposant prend 3 lignes
+
+    # Les formules sont maintenant à la ligne current_row (juste après la section proposant)
     # Dans le template propre, la section CONCLUSION commence à la ligne 14
     # Donc il faut décaler en fonction du nombre de lignes ajoutées
     total_rows_added = current_row - 14
-    formula_row_offset = 14 + total_rows_added  # La conclusion commence après toutes les questions
+    formula_row_offset = 14 + total_rows_added  # La conclusion commence après toutes les questions et la section proposant
 
     # Mettre à jour les formules de conclusion
     sheet[f'B{formula_row_offset}'] = f'=COUNTIF(C$14:C${last_question_row},"Validé")'
