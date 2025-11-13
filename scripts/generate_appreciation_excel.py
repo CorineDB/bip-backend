@@ -133,6 +133,29 @@ def create_question_rows(sheet, row, question_data):
     # Hauteur ligne 2
     sheet.row_dimensions[row2].height = 85.5
 
+def create_accept_text_row(sheet, row, accept_text):
+    """
+    Créer la ligne de termes de référence (accept_text)
+    Ligne unique avec fusion A:E, texte wrap, hauteur 58.5
+    """
+    # Fusionner A:E
+    sheet.merge_cells(f'A{row}:E{row}')
+
+    # Cellule A avec le texte
+    cell_a = sheet[f'A{row}']
+    cell_a.value = accept_text
+    cell_a.font = Font(bold=False, size=11)
+    cell_a.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
+    cell_a.border = Border(
+        left=Side(style='medium'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    # Hauteur de ligne
+    sheet.row_dimensions[row].height = 58.5
+
 def create_proposant_section(sheet, row, proposant_data):
     """
     Créer la section 'À remplir par le proposant du projet'
@@ -256,6 +279,11 @@ def main():
 
     # La dernière ligne de question pour les formules
     last_question_row = current_row - 1
+
+    # Ajouter la ligne de termes de référence (accept_text)
+    accept_text = data.get('accept_text', "En remplissant et en transmettant cette note conceptuelle de projet, je confirme que les informations sont complètes et exactes à ma connaissance. Je reconnais également que le fait de fournir intentionnellement des informations inexactes ou trompeuses peut entraîner des sanctions à mon encontre.")
+    create_accept_text_row(sheet, current_row, accept_text)
+    current_row += 1  # La ligne accept_text prend 1 ligne
 
     # Ajouter la section "À remplir par le proposant du projet"
     proposant_data = data.get('proposant', {})

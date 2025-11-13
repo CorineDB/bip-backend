@@ -135,6 +135,7 @@ class AppreciationNoteConceptuelleExportService
                 'date_demarrage' => $noteConceptuelle->date_demarrage_etude ?? '',
                 'date_achevement' => $noteConceptuelle->date_achevement_etude ?? '',
             ],
+            'accept_text' => $canevas['evaluation_configs']['accept_text'] ?? '',
             'proposant' => [
                 'nom' => $redacteur ? ($redacteur->personne->nom . ' ' . $redacteur->personne->prenom) : '',
                 'telephone' => $redacteur?->telephone ?? '',
