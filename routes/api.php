@@ -358,7 +358,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         });
 
         Route::prefix('canevas-appreciation-rapport-ex-ante')->group(function () {
-            Route::get('', [DocumentController::class, 'canevasAppreciationRapportExAnte']);
+            Route::get('', [DocumentController::class, 'canevasAppreciationRapportFinalExAnte']);
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasAppreciationRapportExAnte']);
         });
 

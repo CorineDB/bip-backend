@@ -2,11 +2,27 @@
 
 namespace App\Http\Requests\projets\evaluation_ex_ante;
 
+use App\Models\Champ;
 use App\Models\Dgpd;
+use App\Repositories\Contracts\RapportRepositoryInterface;
+use App\Repositories\DocumentRepository;
+use App\Rules\HashedExists;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ValiderRapportFinalRequest extends FormRequest
 {
+    protected $canevas = null;
+
+    protected $champs = [];
+
+    protected $champsAEvaluer = [];
+
+    protected $appreciations = [];
+
+    protected $champsDejaPassés = [];
+
+    protected $champsNonPasses = [];
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -51,7 +67,18 @@ class ValiderRapportFinalRequest extends FormRequest
      */
     public function messages(): array
     {
+        $minRequis = count($this->champsNonPasses);
         return [
+            'evaluations_champs.required' => 'Les évaluations des champs sont obligatoires.',
+            'evaluations_champs.array' => 'Les évaluations doivent être un tableau.',
+            'evaluations_champs.min' => $minRequis > 0
+                ? "Vous devez évaluer au minimum {$minRequis} champ(s) (les champs non passés)."
+                : 'Au moins une évaluation de champ est requise.',
+            'evaluations_champs.*.appreciation.required' => 'Une appréciation est obligatoire pour chaque champ.',
+            'evaluations_champs.*.appreciation.in' => 'L\'appréciation doit être : Passe, Retour, ou Non accepté.',
+            'evaluations_champs.*.commentaire.required' => 'Un commentaire est obligatoire pour chaque évaluation.',
+            'evaluations_champs.*.commentaire.min' => 'Le commentaire doit contenir au moins 10 caractères.',
+            'evaluations_champs.*.commentaire.max' => 'Le commentaire ne peut dépasser 500 caractères.',
             'action.required' => 'L\'action de validation est obligatoire.',
             'action.in' => 'Action invalide. Actions possibles: reviser, abandonner.',
             'commentaire.string' => 'Le commentaire doit être du texte.',
@@ -64,6 +91,62 @@ class ValiderRapportFinalRequest extends FormRequest
             'checklist_controle.*.commentaire.string' => 'Le commentaire du critère doit être du texte.',
             'checklist_controle.*.commentaire.max' => 'Le commentaire du critère ne peut dépasser 500 caractères.'
         ];
+    }
+
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $evaluer = $this->input('evaluer', false);
+            $evaluationsChamps = $this->input('evaluations_champs', []);
+
+            // Si evaluer = false, on n'impose pas les validations strictes
+            if (!$evaluer) {
+                return;
+            }
+
+            // 1. Vérifier que TOUS les champs du canevas ont été évalués
+            $champsEvaluesIds = collect($evaluationsChamps)->pluck('champ_id')->toArray();
+            //$champsManquants = array_diff($this->champs, $champsEvaluesIds);
+
+            $champs = $this->canevas?->all_champs->pluck("id")->toArray();
+
+            $champsManquants = array_diff($champs, $champsEvaluesIds);
+
+            if (!empty($champsManquants)) {
+                $validator->errors()->add(
+                    'evaluations_champs',
+                    'Tous les champs du canevas doivent être évalués avant de finaliser. Il manque ' . count($champsManquants) . ' champ(s).'
+                );
+            }
+
+            // 2. Vérifier que les champs soumis ont une appréciation valide
+            // (Important si un champ "passé" a été modifié à null en brouillon)
+            foreach ($evaluationsChamps as $index => $evaluation) {
+                $champId = $evaluation['champ_id'] ?? null;
+                $appreciation = $evaluation['appreciation'] ?? null;
+                $commentaire = $evaluation['commentaire'] ?? null;
+
+                // Si l'appréciation est vide, c'est une erreur en mode finalisation
+                if (empty($appreciation)) {
+                    $validator->errors()->add(
+                        "evaluations_champs.{$index}.appreciation",
+                        "L'appréciation est obligatoire pour tous les champs lors de la finalisation."
+                    );
+                }
+
+                // Si l'appréciation n'est pas "passe", le commentaire est obligatoire
+                if ($appreciation && $appreciation !== 'oui' && empty($commentaire)) {
+                    $validator->errors()->add(
+                        "evaluations_champs.{$index}.commentaire",
+                        "Un commentaire est obligatoire pour les appréciations autres que 'Passé'."
+                    );
+                }
+            }
+        });
     }
 
     /**
@@ -88,5 +171,54 @@ class ValiderRapportFinalRequest extends FormRequest
             'reprendre' => 'Reprendre l\'étude de faisabilité - Le projet retourne à la soumission du rapport',
             'abandonner' => 'Abandonner le projet - Le projet est définitivement abandonné'
         ];
+    }
+
+
+    public function prepareForValidation()
+    {
+        $this->canevas = $canevas = app()->make(DocumentRepository::class)->getModel()
+            ->where('type', 'checklist')
+            ->whereHas('categorie', fn($q) => $q->where('slug', 'canevas-appreciation-rapport-finale'))
+            ->orderBy('created_at', 'desc')->first();
+
+        $evaluationConfigs = $canevas?->evaluation_configs;
+
+        $this->appreciations = collect($evaluationConfigs['options_notation'] ?? [])->pluck('appreciation')->toArray();
+
+        //$this->champs = $canevas->all_champs->pluck("id")->toArray();
+        $this->champs = $canevas->all_champs->pluck("hashed_id")->toArray();
+
+        // Récupérer l'évaluation en cours pour identifier les champs déjà passés
+        // SEULEMENT si le TDR a un parent (réévaluation après retour/rejet)
+        $rapportId = $this->route('rapportId') ?? null;
+
+        if ($rapportId) {
+            $rapportRepository = app()->make(RapportRepositoryInterface::class);
+            $rapport = $rapportRepository->find($rapportId);
+
+            // Vérifier si c'est une réévaluation (le TDR a un parent) et qu'il est de type 'prefaisabilite'
+            if ($rapport && $rapport->type === 'prefaisabilite' && $rapport->parentId) {
+                // Récupérer l'évaluation en cours
+                $evaluationEnCours = $rapport->evaluationEnCours();
+
+                if ($evaluationEnCours && !empty($evaluationEnCours->evaluation)) {
+                    // Récupérer les champs déjà marqués comme "passé" depuis le JSON evaluation
+                    $champsEvalues = $evaluationEnCours->evaluation['champs_evalues'] ?? [];
+
+                    $this->champsDejaPassés = collect($champsEvalues)
+                        ->filter(function ($champ) {
+                            return isset($champ['appreciation']) && $champ['appreciation'] === 'oui';
+                        })
+                        ->pluck('champ_id')
+                        ->toArray();
+                }
+            }
+        }
+
+        // Calculer les champs non passés (pour le minimum requis)
+        $this->champsNonPasses = array_diff($this->champs, $this->champsDejaPassés);
+
+        // Tous les champs peuvent être soumis (même ceux déjà passés peuvent être réévalués)
+        $this->champsAEvaluer = $this->champs;
     }
 }

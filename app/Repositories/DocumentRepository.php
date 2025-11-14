@@ -166,7 +166,7 @@ class DocumentRepository extends BaseRepository implements DocumentRepositoryInt
     public function getCanevasAppreciationRapportFinale()
     {
         return $this->model->whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-appreciation-rapport-final');
+            $query->where('slug', 'canevas-appreciation-rapport-finale');
         })
             ->where('type', 'checklist')
             ->with([

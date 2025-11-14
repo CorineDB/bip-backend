@@ -120,7 +120,7 @@ class CanevasAppreciationTdrResource extends BaseApiResource
     {
         return array_merge(parent::with($request), [
             'meta' => [
-                'type' => 'canevas_note_conceptuelle',
+                'type' => 'canevas_appreciation',
                 'version' => '1.0',
                 'structure' => 'forms_recursive'
             ],

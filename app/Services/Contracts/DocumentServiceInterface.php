@@ -54,13 +54,12 @@ interface DocumentServiceInterface extends AbstractServiceInterface
     /**
      * Récupérer le canevas d'appréciation des rapports d'evaluation ex-ante
      */
-    public function canevasAppreciationRapportFinal(): JsonResponse;
+    public function canevasAppreciationRapportFinalExAnte(): JsonResponse;
 
     /**
      * Créer ou mettre à jour le canevas d'appréciation des rapports d'evaluation ex-ante
      */
-    public function createOrUpdateCanevasAppreciationRapportFinal(array $data): JsonResponse;
-
+    public function createOrUpdateCanevasAppreciationRapportFinalExAnte(array $data): JsonResponse;
 
     /*
     public function canevasRedactionTdrPrefaisabilite(): JsonResponse;

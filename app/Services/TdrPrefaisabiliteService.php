@@ -2644,13 +2644,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     {
         // Récupérer une évaluation en cours existante ou en créer une nouvelle pour ce Rapport
         $evaluationEnCours = $rapport->evaluations()
-            ->where('type_evaluation', 'validation-final-evaluation-ex-ante')
+            ->where('type_evaluation', 'appreciation-rapport-evaluation-ex-ante')
             ->where('statut', 0) // En cours
             ->first();
 
         if (!$evaluationEnCours) {
             $evaluationData = [
-                'type_evaluation' => 'validation-final-evaluation-ex-ante',
+                'type_evaluation' => 'appreciation-rapport-evaluation-ex-ante',
                 'evaluateur_id' => auth()->id(),
                 'evaluation' => [],
                 'resultats_evaluation' => [],
@@ -3883,15 +3883,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ], 422);
             }
 
-            // Valider l'action demandée
-            $actionsPermises = ['valider', 'corriger'];
-            if (!isset($data['action']) || !in_array($data['action'], $actionsPermises)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Action invalide. Actions possibles: valider, corriger.'
-                ], 422);
-            }
-
             // Récupérer le dernier rapport d'évaluation ex-ante soumis
             $rapportExistant = \App\Models\Rapport::where('projet_id', $projet->id)
                 ->where('type', 'evaluation_ex_ante')
@@ -3906,34 +3897,150 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ], 422);
             }
 
+            // Vérifier que les données d'appréciation sont fournies si évaluation finalisée
+            if ($data["evaluer"]) {
+                if (!isset($data['evaluations_champs'])) {
+                    throw ValidationException::withMessages(["evaluations_champs" => "Veuillez apprécier le canevas d'appréciation du rapport final"]);
+                }
+
+                if (!isset($data["accept_term"])) {
+                    throw ValidationException::withMessages([
+                        "accept_term" => "Vous devez accepter les termes pour poursuivre l'appréciation."
+                    ]);
+                }
+
+                // Valider l'action demandée
+                $actionsPermises = ['valider', 'corriger'];
+                if (!isset($data['action']) || !in_array($data['action'], $actionsPermises)) {
+                    throw ValidationException::withMessages([
+                        "action" => "Action invalide. Actions possibles: valider, corriger."
+                    ]);
+                }
+            }
+
+            // Enregistrer accept_term si fourni
+            if (isset($data["accept_term"])) {
+                $rapportExistant->update([
+                    "accept_term" => $data["accept_term"]
+                ]);
+            }
+
+            // Créer ou mettre à jour l'évaluation du rapport avec les appréciations
+            $evaluation = $this->creerEvaluationRapportFinal($rapportExistant, $data);
+
+            // Calculer le résultat de l'appréciation (oui/non)
+            $resultatsAppreciation = $this->calculerResultatAppreciationRapportFinal($evaluation, $data);
+
+            // Préparer l'évaluation complète pour enregistrement
+            $evaluationComplete = [
+                'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationRapportFinal()->all_champs)->map(function ($champ) use ($evaluation) {
+                    $champEvalue = collect($evaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
+                    return [
+                        'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
+                        'champ_id' => $champ?->hashed_id,
+                        'label' => $champ?->label,
+                        'attribut' => $champ?->attribut,
+                        'ordre_affichage' => $champ?->ordre_affichage,
+                        'type_champ' => $champ?->type_champ,
+                        'appreciation' => $champEvalue ? $champEvalue?->pivot?->note : null,
+                        'commentaire_evaluateur' => $champEvalue ? $champEvalue?->pivot?->commentaires : null,
+                        'date_appreciation' => $champEvalue ? $champEvalue?->pivot?->date_note : null,
+                    ];
+                })->toArray(),
+                'statistiques' => $resultatsAppreciation,
+                'date_evaluation' => now(),
+                'confirme_par' => $data["evaluer"] ? new UserResource(auth()->user()) : null
+            ];
+
+            // Mettre à jour l'évaluation avec les données complètes
+            $evaluation->fill([
+                'resultats_evaluation' => $resultatsAppreciation,
+                'evaluation' => $evaluationComplete
+            ]);
+            $evaluation->save();
+
             $nouveauStatut = null;
             $messageAction = '';
+            $actionFinale = null;
 
-            // Créer une évaluation pour tracer la validation
-            $evaluationValidation = $projet->evaluations()->create([
-                'type_evaluation' => 'validation-final-evaluation-ex-ante',
-                'projetable_type' => get_class($projet),
-                'projetable_id' => $projet->id,
-                'date_debut_evaluation' => now(),
-                'date_fin_evaluation' => now(),
-                'valider_le' => now(),
-                'evaluateur_id' => auth()->id(),
-                'valider_par' => auth()->id(),
-                'commentaire' => $data['commentaire'] ?? '',
-                'evaluation' => $data,
-                'resultats_evaluation' => $data['action'],
-                'statut' => 1
-            ]);
+            // Si l'évaluation est finalisée, déterminer l'action finale
+            if ($data["evaluer"]) {
+                // Mettre à jour l'évaluation avec validateur
+                $evaluation->fill([
+                    'valider_par' => auth()->id(),
+                    'valider_le' => now(),
+                    'date_fin_evaluation' => now(),
+                    'statut' => 1
+                ]);
+                $evaluation->save();
+
+                // Enregistrer le canevas d'appréciation dans le rapport
+                $rapportExistant->canevas_appreciation_rapport_final = (new \App\Http\Resources\CanevasAppreciationTdrResource($this->documentRepository->getCanevasAppreciationRapportFinal()))->toArray(request());
+                $rapportExistant->save();
+
+                // Déterminer l'action finale selon le résultat de l'appréciation ET la décision de l'utilisateur
+                // Pour valider: il faut que l'appréciation soit "oui" (tous les critères à "oui")
+                // ET que la décision de validation soit "valider"
+                if ($resultatsAppreciation['resultat_global'] === 'oui' && $data['action'] === 'valider') {
+                    $actionFinale = 'valider';
+                } else {
+                    $actionFinale = 'corriger';
+                }
+            }
+
+            // Créer ou récupérer une évaluation pour tracer la validation au niveau projet
+            $evaluationValidation = $projet->evaluations()
+                ->where('type_evaluation', 'validation-finale-evaluation-ex-ante')
+                ->where('statut', 0) // En cours
+                ->first();
+
+            if (!$evaluationValidation) {
+                $evaluationValidation = $projet->evaluations()->create([
+                    'type_evaluation' => 'validation-finale-evaluation-ex-ante',
+                    'projetable_type' => get_class($projet),
+                    'projetable_id' => $projet->id,
+                    'date_debut_evaluation' => now(),
+                    'date_fin_evaluation' => null,
+                    'valider_le' => null,
+                    'evaluateur_id' => auth()->id(),
+                    'valider_par' => null,
+                    'commentaire' => $data['commentaire'] ?? '',
+                    'evaluation' => $evaluationComplete,
+                    'resultats_evaluation' => [],
+                    'statut' => 0
+                ]);
+            } else {
+                // Mettre à jour l'évaluation existante
+                $evaluationValidation->update([
+                    'commentaire' => $data['commentaire'] ?? $evaluationValidation->commentaire,
+                    'evaluation' => $evaluationComplete,
+                ]);
+            }
+
+            // Finaliser l'évaluation si demandé
+            if ($data["evaluer"]) {
+                $evaluationValidation->update([
+                    'date_fin_evaluation' => now(),
+                    'valider_le' => now(),
+                    'valider_par' => auth()->id(),
+                    'resultats_evaluation' => $actionFinale,
+                    'statut' => 1
+                ]);
+            }
 
             // Mettre à jour le rapport existant avec la date de validation et la décision
-            $rapportExistant->update([
-                'date_validation' => now(),
-                'decision' => $data['action'],
-                'commentaire_validation' => $data['commentaire'] ?? null
-            ]);
+            if ($data["evaluer"]) {
+                $rapportExistant->update([
+                    'date_validation' => now(),
+                    'decision' => $actionFinale,
+                    'commentaire_validation' => $data['commentaire'] ?? null
+                ]);
+            }
 
-            switch ($data['action']) {
-                case 'valider':
+            // Traiter l'action finale uniquement si l'évaluation est finalisée
+            if ($data["evaluer"]) {
+                switch ($actionFinale) {
+                    case 'valider':
                     // Projet validé → Prêt pour sélection
                     $nouveauStatut = StatutIdee::PRET;
                     $projet->update([
@@ -3969,54 +4076,59 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                     break;
             }
 
-            // Enregistrer le workflow et la décision
-            $this->enregistrerWorkflow($projet, $nouveauStatut);
-            $this->enregistrerDecision(
-                $projet,
-                "Validation finale du rapport - " . ucfirst($data['action']),
-                $data['commentaire'] ?? $messageAction,
-                auth()->user()->personne->id
-            );
+                // Enregistrer le workflow et la décision
+                $this->enregistrerWorkflow($projet, $nouveauStatut);
+                $this->enregistrerDecision(
+                    $projet,
+                    "Validation finale du rapport - " . ucfirst($actionFinale),
+                    $data['commentaire'] ?? $messageAction,
+                    auth()->user()->personne->id
+                );
+            }
 
             DB::commit();
 
-            // Déclencher l'événement de validation
-            event(new RapportEvaluationExAnteValide(
-                $rapportExistant,
-                $projet,
-                $evaluationValidation,
-                auth()->user(),
-                $data['action']
-            ));
+            // Déclencher les événements et jobs uniquement si l'évaluation est finalisée
+            if ($data["evaluer"]) {
+                // Déclencher l'événement de validation
+                event(new RapportEvaluationExAnteValide(
+                    $rapportExistant,
+                    $projet,
+                    $evaluationValidation,
+                    auth()->user(),
+                    $actionFinale
+                ));
 
-            // Dispatcher le job d'export d'appréciation du rapport final
-            ExportAppreciationJob::dispatch($projet->id, 'rapport-final-prefaisabilite', auth()->id());
+                // Envoyer une notification
+                $this->envoyerNotificationValidationFinale($projet, $actionFinale, $data);
 
-            // Envoyer une notification
-            $this->envoyerNotificationValidationFinale($projet, $data['action'], $data);
-
-            // Communiquer avec le système externe SIGFP si validation
-            if ($data['action'] === 'valider') {
-                // Dispatcher le job pour envoyer les données au système externe
-                // Le job gère automatiquement les retry et les notifications d'erreur
-                EnvoyerProjetMaturationJob::dispatch(
-                    $projet->id
-                );
+                // Communiquer avec le système externe SIGFP si validation
+                if ($actionFinale === 'valider') {
+                    // Dispatcher le job pour envoyer les données au système externe
+                    // Le job gère automatiquement les retry et les notifications d'erreur
+                    EnvoyerProjetMaturationJob::dispatch(
+                        $projet->id
+                    );
+                }
             }
 
             return response()->json([
                 'success' => true,
-                'message' => $messageAction,
+                'message' => $data["evaluer"] ? $messageAction : 'Appréciation enregistrée avec succès',
                 'data' => [
-                    'projet_id' => $projet->id,
-                    'action' => $data['action'],
+                    'evaluation_id' => $evaluation->hashed_id,
+                    'evaluation_validation_id' => $evaluationValidation->hashed_id,
+                    'projet_id' => $projet->hashed_id,
+                    'action' => $actionFinale ?? 'en_cours',
                     'ancien_statut' => StatutIdee::RAPPORT->value,
-                    'nouveau_statut' => $nouveauStatut->value,
+                    'nouveau_statut' => $nouveauStatut ? $nouveauStatut->value : StatutIdee::RAPPORT->value,
+                    'appreciation_rapport' => $resultatsAppreciation,
                     'commentaire' => $data['commentaire'] ?? null,
-                    'valide_par' => auth()->id(),
-                    'valide_le' => now()->format('d/m/Y H:i:s'),
-                    'date_fin_etude' => $data['action'] === 'valider' ? now()->format('d/m/Y H:i:s') : null,
-                    'pret_pour_selection' => $data['action'] === 'valider'
+                    'valide_par' => $data["evaluer"] ? auth()->user()->hashed_id : null,
+                    'valide_le' => $data["evaluer"] ? now()->format('d/m/Y H:i:s') : null,
+                    'date_fin_etude' => ($data["evaluer"] && $actionFinale === 'valider') ? now()->format('d/m/Y H:i:s') : null,
+                    'pret_pour_selection' => ($data["evaluer"] && $actionFinale === 'valider'),
+                    'statistiques' => $resultatsAppreciation
                 ]
             ]);
         } catch (Exception $e) {

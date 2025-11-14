@@ -669,9 +669,9 @@ class DocumentController extends Controller
     /**
      * Récupérer le canevas d'appréciation des rapports d'evaluation ex-ante
      */
-    public function canevasAppreciationRapportExAnte(): JsonResponse
+    public function canevasAppreciationRapportFinalExAnte(): JsonResponse
     {
-        return $this->service->canevasAppreciationRapportExAnte();
+        return $this->service->canevasAppreciationRapportFinalExAnte();
     }
 
     /**
@@ -679,6 +679,6 @@ class DocumentController extends Controller
      */
     public function createOrUpdateCanevasAppreciationRapportExAnte(CreateOrUpdateCanevasAppreciationRapportExAnteRequest $request): JsonResponse
     {
-        return $this->service->createOrUpdateCanevasAppreciationRapportExAnte($request->all());
+        return $this->service->createOrUpdateCanevasAppreciationRapportFinalExAnte($request->all());
     }
 }

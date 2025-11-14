@@ -3005,7 +3005,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
     /**
      * Récupérer le canevas d'appréciation des notes conceptuelle
      */
-    public function canevasAppreciationRapportExAnte(): JsonResponse
+    public function canevasAppreciationRapportFinalExAnte(): JsonResponse
     {
         try {
             // Récupérer le canevas d'appréciation des notes conceptuelle unique
@@ -3040,25 +3040,26 @@ class DocumentService extends BaseService implements DocumentServiceInterface
     /**
      * Créer ou mettre à jour le canevas d'appréciation des notes conceptuelle
      */
-    public function createOrUpdateCanevasAppreciationRapportFinal(array $data): JsonResponse
+    public function createOrUpdateCanevasAppreciationRapportFinalExAnte(array $data): JsonResponse
     {
         try {
             DB::beginTransaction();
 
             $canevas = $this->repository->getCanevasAppreciationRapportFinale();
 
+
             $categorieDocument = CategorieDocument::firstOrCreate([
-                'slug' => 'canevas-appreciation-rapport-final'
+                'slug' => 'canevas-appreciation-rapport-finale'
             ], [
                 'nom' => "Canevas d'appréciation des rapports d'evaluation ex-ante",
-                'slug' => 'canevas-appreciation-rapport-final',
+                'slug' => 'canevas-appreciation-rapport-finale',
                 'description' => 'Formulaire d\'appréciation rapports d\'evaluation ex-ante',
                 'format' => 'document'
             ]);
 
             $data['categorieId'] = $categorieDocument->id;
             $data["type"] = "checklist";
-            $data["slug"] = "canevas-appreciation-rapport-final";
+            $data["slug"] = "canevas-appreciation-rapport-finale";
 
             if ($canevas) {
                 // Mode mise à jour intelligente
@@ -3147,6 +3148,7 @@ class DocumentService extends BaseService implements DocumentServiceInterface
 
                 // Recharger avec relations
                 $document = $this->repository->getCanevasAppreciationRapportFinale();
+
 
                 return (new CanevasAppreciationTdrResource($document))
                     ->additional(['message' => 'Canevas d\'appréciation des rapports d\'evaluation ex-ante créé avec succès.'])

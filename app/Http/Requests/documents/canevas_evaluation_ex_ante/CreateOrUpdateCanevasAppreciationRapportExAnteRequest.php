@@ -20,7 +20,7 @@ class CreateOrUpdateCanevasAppreciationRapportExAnteRequest extends FormRequest
     public function prepareForValidation()
     {
         $this->canevas_appreciation_tdr_faisabilite = Document::whereHas('categorie', function ($query) {
-            $query->where('slug', 'canevas-appreciation-rapport-final');
+            $query->where('slug', 'canevas-appreciation-rapport-finale');
         })
         ->where('type', 'checklist')
         ->orderBy('created_at', 'desc')
@@ -134,7 +134,7 @@ class CreateOrUpdateCanevasAppreciationRapportExAnteRequest extends FormRequest
                 function ($attribute, $value, $fail) {
                     $exists = Document::where('nom', $value)
                         ->whereHas('categorie', function ($query) {
-                            $query->where('slug', 'canevas-appreciation-rapport-final');
+                            $query->where('slug', 'canevas-appreciation-rapport-finale');
                         })->when($this->canevas_appreciation_tdr_faisabilite, function($query){
                             $query->where("id","<>", $this->canevas_appreciation_tdr_faisabilite->id);
                         })->exists();
