@@ -3989,6 +3989,9 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $data['action']
             ));
 
+            // Dispatcher le job d'export d'appréciation du rapport final
+            ExportAppreciationJob::dispatch($projet->id, 'rapport-final-prefaisabilite', auth()->id());
+
             // Envoyer une notification
             $this->envoyerNotificationValidationFinale($projet, $data['action'], $data);
 
