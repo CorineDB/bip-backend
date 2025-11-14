@@ -1,0 +1,1894 @@
+
+ ▐▛███▜▌   Claude Code v2.0.37
+▝▜█████▛▘  Sonnet 4.5 · Claude Pro
+  ▘▘ ▝▝    /home/unknow/GDIZ/apps/backend_api
+
+> Il reste plus beaucou de token donc le dernier module on doit gerer intelligement a commencer par la generation du seeder de 
+                    '--class' => 'Database\\Seeders\\CanevasAppreciationRapportFinaleSeeder' prend exemple sur le seeder de 
+                    '--class' => 'Database\\Seeders\\CanevasAppreciationNoteConceptuelleSeeder', les criteres d'appreciation des rapports sont expliquer ici : 2.1 Les critères 
+d’appréciation des
+rapports d’évaluation ex-ante
+Un critère est un élément de référence qui permet de juger, d’estimer, de définir quelque
+chose. Plusieurs critères sont nécessaires pour évaluer toutes les dimensions d’une question
+d’évaluation.
+La mise en place des critères et d’une échelle de notation vise à faire converger les arbitrages à
+l’appréciation qualitative des rapports d’analyses de faisabilité vers une pratique de référence et
+de limiter les risques de subjectivisme dans l’analyse desdits rapport.
+Dans le souci de faciliter les analyses de la qualité des REFP, les aspects suivants sont à
+contrôler :
+1. Le rapport a-t-il présenté une évaluation des résultats pertinents prévisibles de la
+réalisation des objectifs du projet ?
+2. Le rapport est-il cohérent ? les données sont-elles exhaustives et fiables ?
+3.
+Le rapport a-t-il présenté une évaluation rationnelle de la durabilité des résultats ?
+4. Les recommandations de faisabilité ou de non faisabilité, émises dans le rapport
+sont-elles justifiées au regard des informations fournies ?
+5. Les recommandations d’ordre général précisent-elles les mesures nécessaires
+pour corriger les menaces/situations critiques ou bien faciliter l’exécution future du
+projet (« qui ? », « quoi ? », « où ? », « quand ? ») émises dans le rapport. Si oui, ces
+mesures peuvent elle être mises en oeuvre ?
+6. Comment le rapport présente-t-il les coûts actualisés du projet par source de
+financement? (coûts totaux et par activité)
+7. Le rapport propose-t-il un système de suivi-évaluation du projet et son mécanisme
+de mise en œuvre efficace ?
+8. Le rapport est-il bien rédigé ? (Clarté de la langue et de la grammaire)
+9. Toutes les annexes nécessaires ont-elles été insérées ?
+10. Tous les aspects de l’analyse de faisabilité mentionnés dans les tdr/cahier de
+charge de la mission ont-ils été abordés de manière adéquate ?
+Selon le décret qui constitue le cadre juridique, les rapports d’évaluation et/ou de faisabilité
+doivent faire ressortir entre autres :
+→
+Un modèle de financement et une programmation financière du coût
+d’objectif sur la durée de vie du projet ;
+→
+Une estimation des dépenses fiscales ;
+→
+Une évaluation sociale intégrant la dimension genre ;
+→
+Une analyse de sensibilité et de vulnérabilité face au changement
+climatique ;
+→
+Une analyse des risques associés au projet d’investissements public ;
+→
+La politique de maintenance et d’entretien des actifs projetés ainsi que
+une estimation du coût y afférent. 
+  ⎿  ⧉ Selected 2 lines from app/Services/DocumentService.php in Visual Studio Code
+
+● Je vais créer le seeder pour l'appréciation du rapport final en me basant sur le seeder existant. Laissez-moi d'abord examiner la structure du seeder de référence.
+
+● Read(database/seeders/CanevasAppreciationNoteConceptuelleSeeder.php)
+  ⎿  Error: File content (27191 tokens) exceeds maximum allowed tokens (25000). Please use offset and limit parameters to read specific portions of the file, or use the GrepTool to search for 
+     specific content.
+
+● Read(database/seeders/CanevasAppreciationNoteConceptuelleSeeder.php)
+  ⎿  Read 150 lines
+
+● Search(pattern: "element_type.*=>.*'section'", path: "database/seeders/CanevasAppreciationNoteConceptuelleSeeder.php", output_mode: "content")
+  ⎿  Found 3 lines (ctrl+o to expand)
+
+● Read(database/seeders/CanevasAppreciationNoteConceptuelleSeeder.php)
+  ⎿  Read 50 lines
+
+● Read(database/seeders/CanevasAppreciationNoteConceptuelleSeeder.php)
+  ⎿  Read 50 lines
+
+● Parfait, je comprends la structure. Je vais créer le seeder pour l'appréciation du rapport final en adaptant les 10 critères d'appréciation que vous avez fournis. Laissez-moi créer ce
+  seeder de manière optimale.
+
+● Write(database/seeders/CanevasAppreciationRapportFinaleSeeder.php)
+  ⎿  User rejected write to database/seeders/CanevasAppreciationRapportFinaleSeeder.php
+         1 +  <?php
+         2 +  
+         3 +  namespace Database\Seeders;
+         4 +  
+         5 +  use App\Models\CategorieDocument;
+         6 +  use App\Models\Document;
+         7 +  use Illuminate\Database\Seeder;
+         8 +  use Illuminate\Support\Facades\DB;
+         9 +  
+        10 +  class CanevasAppreciationRapportFinaleSeeder extends Seeder
+        11 +  {
+        12 +      protected $documentData = [
+        13 +          'nom' => 'Check liste d\'appréciation des rapports d\'évaluation ex-ante',
+        14 +          'slug' => 'canevas-appreciation-rapport-finale',
+        15 +          'description' => 'Check liste standardisée pour l\'appréciation et l\'évaluation des rapports d\'évaluation ex-ante (faisabilité)',
+        16 +          'type' => 'checklist',
+        17 +          'evaluation_configs' => [
+        18 +              'criteres_evaluation' => [
+        19 +                  'commentaire_obligatoire' => true,
+        20 +                  'seuil_acceptation' => 0,
+        21 +                  'regles_decision' => [
+        22 +                      'passe' => [
+        23 +                          'condition' => 'all_passed',
+        24 +                          'description' => 'Le rapport d\'évaluation ex-ante est validé',
+        25 +                          'message' => 'Tous les critères ont été évalués positivement',
+        26 +                          'statut_final' => 'valide',
+        27 +                          'notification' => [
+        28 +                              'titre' => 'Rapport d\'évaluation ex-ante validé',
+        29 +                              'message' => 'Le rapport d\'évaluation ex-ante a été validé avec succès',
+        30 +                              'type' => 'success',
+        31 +                          ],
+        32 +                      ],
+        33 +                      'retour' => [
+        34 +                          'condition' => 'has_retour_but_acceptable',
+        35 +                          'description' => 'Réservé pour un travail supplémentaire',
+        36 +                          'message' => 'Des améliorations sont nécessaires avant validation',
+        37 +                          'statut_final' => 'retour_travail_supplementaire',
+        38 +                          'max_retour_allowed' => 5,
+        39 +                          'notification' => [
+        40 +                              'titre' => 'Rapport d\'évaluation ex-ante à améliorer',
+        41 +                              'message' => 'Le rapport nécessite des améliorations avant validation',
+        42 +                              'type' => 'warning',
+        43 +                          ],
+        44 +                      ],
+        45 +                      'non_accepte' => [
+        46 +                          'condition' => 'has_rejection_or_too_many_retour',
+        47 +                          'description' => 'Rejeté',
+        48 +                          'message' => 'Le rapport ne répond pas aux critères minimums',
+        49 +                          'statut_final' => 'rejete',
+        50 +                          'triggers' => [
+        51 +                              'incomplete_questions' => 'Si des critères n\'ont pas été complétés',
+        52 +                              'has_non_accepte' => 'Si un critère a été évalué comme « Rejeté »',
+        53 +                              'too_many_retour' => 'Si 6 ou plus des critères ont été évalués comme « Réservé »',
+        54 +                          ],
+        55 +                          'notification' => [
+        56 +                              'titre' => 'Rapport d\'évaluation ex-ante rejeté',
+        57 +                              'message' => 'Le rapport ne répond pas aux critères minimums requis',
+        58 +                              'type' => 'error',
+        59 +                          ],
+        60 +                      ],
+        61 +                  ],
+        62 +                  'algorithme_decision' => [
+        63 +                      'etapes' => [
+        64 +                          [
+        65 +                              'ordre' => 1,
+        66 +                              'condition' => 'check_completude',
+        67 +                              'description' => 'Vérifier que tous les critères ont une évaluation',
+        68 +                              'action_si_echec' => 'non_accepte',
+        69 +                          ],
+        70 +                          [
+        71 +                              'ordre' => 2,
+        72 +                              'condition' => 'check_non_accepte',
+        73 +                              'description' => 'Vérifier qu\'aucun critère n\'a été évalué comme \'non_accepte\'',
+        74 +                              'action_si_echec' => 'non_accepte',
+        75 +                          ],
+        76 +                          [
+        77 +                              'ordre' => 3,
+        78 +                              'condition' => 'count_retour',
+        79 +                              'description' => 'Compter le nombre de \'retour\'',
+        80 +                              'seuil_max' => 5,
+        81 +                              'action_si_depassement' => 'non_accepte',
+        82 +                              'action_si_respecte' => 'check_final',
+        83 +                          ],
+        84 +                          [
+        85 +                              'ordre' => 4,
+        86 +                              'condition' => 'check_final',
+        87 +                              'description' => 'Déterminer le résultat final',
+        88 +                              'logique' => [
+        89 +                                  'si_aucun_retour' => 'passe',
+        90 +                                  'si_retour_dans_limite' => 'retour',
+        91 +                              ],
+        92 +                          ],
+        93 +                      ],
+        94 +                  ],
+        95 +              ],
+        96 +              'guide_notation' => [
+        97 +                  [
+        98 +                      'appreciation' => 'passe',
+        99 +                      'libelle' => 'Validé',
+       100 +                      'description' => 'Répond aux critères d\'acceptation',
+       101 +                      'couleur' => '#22c55e',
+       102 +                  ],
+       103 +                  [
+       104 +                      'appreciation' => 'retour',
+       105 +                      'libelle' => 'Réservé',
+       106 +                      'description' => 'Nécessite des améliorations ou éclaircissements',
+       107 +                      'couleur' => '#f59e0b',
+       108 +                  ],
+       109 +                  [
+       110 +                      'appreciation' => 'non_accepte',
+       111 +                      'libelle' => 'Rejeté',
+       112 +                      'description' => 'Ne répond pas aux critères minimums',
+       113 +                      'couleur' => '#ef4444',
+       114 +                  ],
+       115 +              ],
+       116 +              'accept_text' => 'En soumettant cette évaluation du rapport d\'évaluation ex-ante, je confirme avoir examiné tous les aspects requis de manière rigoureuse et 
+           + objective. Je reconnais que mon évaluation contribue à la décision finale concernant la faisabilité du projet.',
+       117 +          ],
+       118 +          'forms' => [
+       119 +              [
+       120 +                  'element_type' => 'section',
+       121 +                  'ordre_affichage' => 1,
+       122 +                  'key' => 'section-evaluation-resultats',
+       123 +                  'intitule' => 'Évaluation des résultats et cohérence',
+       124 +                  'description' => 'Évaluation de la pertinence des résultats prévisibles et de la cohérence du rapport',
+       125 +                  'type' => 'formulaire',
+       126 +                  'elements' => [
+       127 +                      [
+       128 +                          'element_type' => 'field',
+       129 +                          'ordre_affichage' => 1,
+       130 +                          'label' => 'Le rapport a-t-il présenté une évaluation des résultats pertinents prévisibles de la réalisation des objectifs du projet ?',
+       131 +                          'info' => 'Vérifier si le rapport identifie clairement les résultats attendus, les indicateurs de performance, et si l\'évaluation des résultats est
+           +  alignée avec les objectifs du projet. Les résultats doivent être mesurables, réalistes et pertinents.',
+       132 +                          'key' => 'evaluation_resultats_previsibles',
+       133 +                          'attribut' => 'evaluation_resultats_previsibles',
+       134 +                          'placeholder' => 'Évaluation de la présentation des résultats pertinents prévisibles',
+       135 +                          'is_required' => true,
+       136 +                          'default_value' => NULL,
+       137 +                          'isEvaluated' => true,
+       138 +                          'type_champ' => 'radio',
+       139 +                          'meta_options' => [
+       140 +                              'configs' => [
+       141 +                                  'options' => [
+       142 +                                      [
+       143 +                                          'label' => 'Validé',
+       144 +                                          'value' => 'passe',
+       145 +                                          'description' => 'Le rapport présente une évaluation claire et pertinente des résultats prévisibles avec des indicateurs mesurables 
+           + alignés sur les objectifs du projet.',
+       146 +                                      ],
+       147 +                                      [
+       148 +                                          'label' => 'Réservé',
+       149 +                                          'value' => 'retour',
+       150 +                                          'description' => 'Les résultats prévisibles sont mentionnés mais manquent de clarté, de détails ou de mesurabilité. Des 
+           + améliorations sont nécessaires.',
+       151 +                                      ],
+       152 +                                      [
+       153 +                                          'label' => 'Rejeté',
+       154 +                                          'value' => 'non_accepte',
+       155 +                                          'description' => 'Le rapport ne présente pas d\'évaluation des résultats prévisibles ou l\'évaluation est inadéquate et non alignée 
+           + avec les objectifs.',
+       156 +                                      ],
+       157 +                                  ],
+       158 +                              ],
+       159 +                              'conditions' => [
+       160 +                                  'disable' => false,
+       161 +                                  'visible' => true,
+       162 +                                  'conditions' => [],
+       163 +                              ],
+       164 +                              'validations_rules' => [
+       165 +                                  'in' => [
+       166 +                                      'non_accepte',
+       167 +                                      'passe',
+       168 +                                      'retour',
+       169 +                                  ],
+       170 +                              ],
+       171 +                          ],
+       172 +                      ],
+       173 +                      [
+       174 +                          'element_type' => 'field',
+       175 +                          'ordre_affichage' => 2,
+       176 +                          'label' => 'Le rapport est-il cohérent ? Les données sont-elles exhaustives et fiables ?',
+       177 +                          'info' => 'Vérifier la cohérence interne du rapport : absence de contradictions, logique d\'enchaînement des sections, qualité et exhaustivité des 
+           + données (sources citées, méthodologie claire), et fiabilité des informations fournies.',
+       178 +                          'key' => 'coherence_exhaustivite_donnees',
+       179 +                          'attribut' => 'coherence_exhaustivite_donnees',
+       180 +                          'placeholder' => 'Évaluation de la cohérence et de la fiabilité des données',
+       181 +                          'is_required' => true,
+       182 +                          'default_value' => NULL,
+       183 +                          'isEvaluated' => true,
+       184 +                          'type_champ' => 'radio',
+       185 +                          'meta_options' => [
+       186 +                              'configs' => [
+       187 +                                  'options' => [
+       188 +                                      [
+       189 +                                          'label' => 'Validé',
+       190 +                                          'value' => 'passe',
+       191 +                                          'description' => 'Le rapport est parfaitement cohérent, les données sont exhaustives, sourcées et fiables. La méthodologie est 
+           + claire.',
+       192 +                                      ],
+       193 +                                      [
+       194 +                                          'label' => 'Réservé',
+       195 +                                          'value' => 'retour',
+       196 +                                          'description' => 'Le rapport présente une cohérence générale mais comporte des lacunes dans les données ou des incohérences mineures
+           +  à corriger.',
+       197 +                                      ],
+       198 +                                      [
+       199 +                                          'label' => 'Rejeté',
+       200 +                                          'value' => 'non_accepte',
+       201 +                                          'description' => 'Le rapport manque de cohérence, contient des contradictions importantes, ou les données sont incomplètes et non 
+           + fiables.',
+       202 +                                      ],
+       203 +                                  ],
+       204 +                              ],
+       205 +                              'conditions' => [
+       206 +                                  'disable' => false,
+       207 +                                  'visible' => true,
+       208 +                                  'conditions' => [],
+       209 +                              ],
+       210 +                              'validations_rules' => [
+       211 +                                  'in' => [
+       212 +                                      'non_accepte',
+       213 +                                      'passe',
+       214 +                                      'retour',
+       215 +                                  ],
+       216 +                              ],
+       217 +                          ],
+       218 +                      ],
+       219 +                      [
+       220 +                          'element_type' => 'field',
+       221 +                          'ordre_affichage' => 3,
+       222 +                          'label' => 'Le rapport a-t-il présenté une évaluation rationnelle de la durabilité des résultats ?',
+       223 +                          'info' => 'Vérifier si le rapport évalue la pérennité des résultats du projet après sa mise en œuvre : viabilité financière, institutionnelle, 
+           + technique et environnementale. L\'analyse doit inclure les facteurs de risque et les mesures d\'atténuation.',
+       224 +                          'key' => 'evaluation_durabilite_resultats',
+       225 +                          'attribut' => 'evaluation_durabilite_resultats',
+       226 +                          'placeholder' => 'Évaluation de la durabilité des résultats',
+       227 +                          'is_required' => true,
+       228 +                          'default_value' => NULL,
+       229 +                          'isEvaluated' => true,
+       230 +                          'type_champ' => 'radio',
+       231 +                          'meta_options' => [
+       232 +                              'configs' => [
+       233 +                                  'options' => [
+       234 +                                      [
+       235 +                                          'label' => 'Validé',
+       236 +                                          'value' => 'passe',
+       237 +                                          'description' => 'Le rapport présente une évaluation rationnelle et complète de la durabilité (financière, institutionnelle, 
+           + technique, environnementale) avec mesures d\'atténuation des risques.',
+       238 +                                      ],
+       239 +                                      [
+       240 +                                          'label' => 'Réservé',
+       241 +                                          'value' => 'retour',
+       242 +                                          'description' => 'La durabilité est abordée mais l\'évaluation manque de profondeur ou certains aspects ne sont pas suffisamment 
+           + analysés.',
+       243 +                                      ],
+       244 +                                      [
+       245 +                                          'label' => 'Rejeté',
+       246 +                                          'value' => 'non_accepte',
+       247 +                                          'description' => 'Le rapport ne présente pas d\'évaluation de la durabilité ou l\'évaluation est superficielle et non rationnelle.',
+       248 +                                      ],
+       249 +                                  ],
+       250 +                              ],
+       251 +                              'conditions' => [
+       252 +                                  'disable' => false,
+       253 +                                  'visible' => true,
+       254 +                                  'conditions' => [],
+       255 +                              ],
+       256 +                              'validations_rules' => [
+       257 +                                  'in' => [
+       258 +                                      'non_accepte',
+       259 +                                      'passe',
+       260 +                                      'retour',
+       261 +                                  ],
+       262 +                              ],
+       263 +                          ],
+       264 +                      ],
+       265 +                  ],
+       266 +              ],
+       267 +              [
+       268 +                  'element_type' => 'section',
+       269 +                  'ordre_affichage' => 2,
+       270 +                  'key' => 'section-recommandations',
+       271 +                  'intitule' => 'Recommandations et mesures correctives',
+       272 +                  'description' => 'Évaluation de la qualité et de la pertinence des recommandations',
+       273 +                  'type' => 'formulaire',
+       274 +                  'elements' => [
+       275 +                      [
+       276 +                          'element_type' => 'field',
+       277 +                          'ordre_affichage' => 1,
+       278 +                          'label' => 'Les recommandations de faisabilité ou de non faisabilité émises dans le rapport sont-elles justifiées au regard des informations 
+           + fournies ?',
+       279 +                          'info' => 'Vérifier si les conclusions et recommandations du rapport (faisable/non faisable) sont logiquement déduites des analyses présentées, 
+           + supportées par des preuves et des arguments solides.',
+       280 +                          'key' => 'justification_recommandations',
+       281 +                          'attribut' => 'justification_recommandations',
+       282 +                          'placeholder' => 'Évaluation de la justification des recommandations',
+       283 +                          'is_required' => true,
+       284 +                          'default_value' => NULL,
+       285 +                          'isEvaluated' => true,
+       286 +                          'type_champ' => 'radio',
+       287 +                          'meta_options' => [
+       288 +                              'configs' => [
+       289 +                                  'options' => [
+       290 +                                      [
+       291 +                                          'label' => 'Validé',
+       292 +                                          'value' => 'passe',
+       293 +                                          'description' => 'Les recommandations sont parfaitement justifiées, logiques et cohérentes avec les analyses et informations 
+           + présentées dans le rapport.',
+       294 +                                      ],
+       295 +                                      [
+       296 +                                          'label' => 'Réservé',
+       297 +                                          'value' => 'retour',
+       298 +                                          'description' => 'Les recommandations sont globalement justifiées mais certaines nécessitent des clarifications ou un renforcement 
+           + argumentaire.',
+       299 +                                      ],
+       300 +                                      [
+       301 +                                          'label' => 'Rejeté',
+       302 +                                          'value' => 'non_accepte',
+       303 +                                          'description' => 'Les recommandations ne sont pas justifiées, sont contradictoires avec les analyses ou manquent de fondement.',
+       304 +                                      ],
+       305 +                                  ],
+       306 +                              ],
+       307 +                              'conditions' => [
+       308 +                                  'disable' => false,
+       309 +                                  'visible' => true,
+       310 +                                  'conditions' => [],
+       311 +                              ],
+       312 +                              'validations_rules' => [
+       313 +                                  'in' => [
+       314 +                                      'non_accepte',
+       315 +                                      'passe',
+       316 +                                      'retour',
+       317 +                                  ],
+       318 +                              ],
+       319 +                          ],
+       320 +                      ],
+       321 +                      [
+       322 +                          'element_type' => 'field',
+       323 +                          'ordre_affichage' => 2,
+       324 +                          'label' => 'Les recommandations d\'ordre général précisent-elles les mesures nécessaires pour corriger les menaces/situations critiques ou faciliter
+           +  l\'exécution future du projet (« qui ? », « quoi ? », « où ? », « quand ? ») ? Ces mesures peuvent-elles être mises en œuvre ?',
+       325 +                          'info' => 'Vérifier si les recommandations sont opérationnelles et précises : acteurs responsables identifiés, actions concrètes définies, 
+           + localisation, calendrier. Évaluer également la faisabilité pratique de mise en œuvre de ces mesures.',
+       326 +                          'key' => 'precision_mesures_correctives',
+       327 +                          'attribut' => 'precision_mesures_correctives',
+       328 +                          'placeholder' => 'Évaluation de la précision et faisabilité des mesures correctives',
+       329 +                          'is_required' => true,
+       330 +                          'default_value' => NULL,
+       331 +                          'isEvaluated' => true,
+       332 +                          'type_champ' => 'radio',
+       333 +                          'meta_options' => [
+       334 +                              'configs' => [
+       335 +                                  'options' => [
+       336 +                                      [
+       337 +                                          'label' => 'Validé',
+       338 +                                          'value' => 'passe',
+       339 +                                          'description' => 'Les recommandations sont précises (qui, quoi, où, quand), opérationnelles et les mesures proposées sont réalistes 
+           + et réalisables.',
+       340 +                                      ],
+       341 +                                      [
+       342 +                                          'label' => 'Réservé',
+       343 +                                          'value' => 'retour',
+       344 +                                          'description' => 'Les recommandations sont présentes mais manquent de précision sur certains aspects (acteurs, calendrier, etc.) ou 
+           + la faisabilité nécessite des clarifications.',
+       345 +                                      ],
+       346 +                                      [
+       347 +                                          'label' => 'Rejeté',
+       348 +                                          'value' => 'non_accepte',
+       349 +                                          'description' => 'Les recommandations sont vagues, imprécises, ou les mesures proposées sont irréalistes et non réalisables.',
+       350 +                                      ],
+       351 +                                  ],
+       352 +                              ],
+       353 +                              'conditions' => [
+       354 +                                  'disable' => false,
+       355 +                                  'visible' => true,
+       356 +                                  'conditions' => [],
+       357 +                              ],
+       358 +                              'validations_rules' => [
+       359 +                                  'in' => [
+       360 +                                      'non_accepte',
+       361 +                                      'passe',
+       362 +                                      'retour',
+       363 +                                  ],
+       364 +                              ],
+       365 +                          ],
+       366 +                      ],
+       367 +                  ],
+       368 +              ],
+       369 +              [
+       370 +                  'element_type' => 'section',
+       371 +                  'ordre_affichage' => 3,
+       372 +                  'key' => 'section-aspects-financiers',
+       373 +                  'intitule' => 'Aspects financiers et suivi-évaluation',
+       374 +                  'description' => 'Évaluation des aspects financiers et du système de suivi-évaluation',
+       375 +                  'type' => 'formulaire',
+       376 +                  'elements' => [
+       377 +                      [
+       378 +                          'element_type' => 'field',
+       379 +                          'ordre_affichage' => 1,
+       380 +                          'label' => 'Comment le rapport présente-t-il les coûts actualisés du projet par source de financement ? (coûts totaux et par activité)',
+       381 +                          'info' => 'Vérifier si le rapport présente de manière claire et détaillée les coûts du projet : ventilation par source de financement, actualisation
+           +  des coûts, décomposition par activité. Vérifier également la présence d\'un modèle de financement et d\'une programmation financière sur la durée de vie du projet.',
+       382 +                          'key' => 'presentation_couts_actualises',
+       383 +                          'attribut' => 'presentation_couts_actualises',
+       384 +                          'placeholder' => 'Évaluation de la présentation des coûts actualisés',
+       385 +                          'is_required' => true,
+       386 +                          'default_value' => NULL,
+       387 +                          'isEvaluated' => true,
+       388 +                          'type_champ' => 'radio',
+       389 +                          'meta_options' => [
+       390 +                              'configs' => [
+       391 +                                  'options' => [
+       392 +                                      [
+       393 +                                          'label' => 'Validé',
+       394 +                                          'value' => 'passe',
+       395 +                                          'description' => 'Les coûts sont présentés de manière claire, détaillée et actualisée, avec ventilation par source de financement et
+           +  par activité. Un modèle de financement et une programmation financière sont inclus.',
+       396 +                                      ],
+       397 +                                      [
+       398 +                                          'label' => 'Réservé',
+       399 +                                          'value' => 'retour',
+       400 +                                          'description' => 'Les coûts sont présentés mais la ventilation est incomplète ou certains aspects financiers nécessitent des 
+           + clarifications.',
+       401 +                                      ],
+       402 +                                      [
+       403 +                                          'label' => 'Rejeté',
+       404 +                                          'value' => 'non_accepte',
+       405 +                                          'description' => 'La présentation des coûts est absente, incomplète ou confuse. Le modèle de financement est absent ou inadéquat.',
+       406 +                                      ],
+       407 +                                  ],
+       408 +                              ],
+       409 +                              'conditions' => [
+       410 +                                  'disable' => false,
+       411 +                                  'visible' => true,
+       412 +                                  'conditions' => [],
+       413 +                              ],
+       414 +                              'validations_rules' => [
+       415 +                                  'in' => [
+       416 +                                      'non_accepte',
+       417 +                                      'passe',
+       418 +                                      'retour',
+       419 +                                  ],
+       420 +                              ],
+       421 +                          ],
+       422 +                      ],
+       423 +                      [
+       424 +                          'element_type' => 'field',
+       425 +                          'ordre_affichage' => 2,
+       426 +                          'label' => 'Le rapport propose-t-il un système de suivi-évaluation du projet et son mécanisme de mise en œuvre efficace ?',
+       427 +                          'info' => 'Vérifier si le rapport présente un cadre de suivi-évaluation complet : indicateurs de performance, sources de vérification, 
+           + responsabilités, fréquence de collecte, mécanismes de reporting. Le système doit être pratique et réaliste.',
+       428 +                          'key' => 'systeme_suivi_evaluation',
+       429 +                          'attribut' => 'systeme_suivi_evaluation',
+       430 +                          'placeholder' => 'Évaluation du système de suivi-évaluation',
+       431 +                          'is_required' => true,
+       432 +                          'default_value' => NULL,
+       433 +                          'isEvaluated' => true,
+       434 +                          'type_champ' => 'radio',
+       435 +                          'meta_options' => [
+       436 +                              'configs' => [
+       437 +                                  'options' => [
+       438 +                                      [
+       439 +                                          'label' => 'Validé',
+       440 +                                          'value' => 'passe',
+       441 +                                          'description' => 'Un système de suivi-évaluation complet est proposé avec indicateurs clairs, sources de vérification, 
+           + responsabilités et mécanisme de mise en œuvre efficace.',
+       442 +                                      ],
+       443 +                                      [
+       444 +                                          'label' => 'Réservé',
+       445 +                                          'value' => 'retour',
+       446 +                                          'description' => 'Un système de suivi-évaluation est proposé mais nécessite des améliorations au niveau des indicateurs, des 
+           + responsabilités ou du mécanisme de mise en œuvre.',
+       447 +                                      ],
+       448 +                                      [
+       449 +                                          'label' => 'Rejeté',
+       450 +                                          'value' => 'non_accepte',
+       451 +                                          'description' => 'Le système de suivi-évaluation est absent, inadéquat ou non réaliste.',
+       452 +                                      ],
+       453 +                                  ],
+       454 +                              ],
+       455 +                              'conditions' => [
+       456 +                                  'disable' => false,
+       457 +                                  'visible' => true,
+       458 +                                  'conditions' => [],
+       459 +                              ],
+       460 +                              'validations_rules' => [
+       461 +                                  'in' => [
+       462 +                                      'non_accepte',
+       463 +                                      'passe',
+       464 +                                      'retour',
+       465 +                                  ],
+       466 +                              ],
+       467 +                          ],
+       468 +                      ],
+       469 +                  ],
+       470 +              ],
+       471 +              [
+       472 +                  'element_type' => 'section',
+       473 +                  'ordre_affichage' => 4,
+       474 +                  'key' => 'section-qualite-redaction',
+       475 +                  'intitule' => 'Qualité de la rédaction et conformité',
+       476 +                  'description' => 'Évaluation de la qualité rédactionnelle et de la conformité aux exigences',
+       477 +                  'type' => 'formulaire',
+       478 +                  'elements' => [
+       479 +                      [
+       480 +                          'element_type' => 'field',
+       481 +                          'ordre_affichage' => 1,
+       482 +                          'label' => 'Le rapport est-il bien rédigé ? (Clarté de la langue et de la grammaire)',
+       483 +                          'info' => 'Vérifier la qualité rédactionnelle du rapport : langue claire, grammaire correcte, structure logique, absence de fautes d\'orthographe, 
+           + style professionnel adapté au contexte.',
+       484 +                          'key' => 'qualite_redaction',
+       485 +                          'attribut' => 'qualite_redaction',
+       486 +                          'placeholder' => 'Évaluation de la qualité de la rédaction',
+       487 +                          'is_required' => true,
+       488 +                          'default_value' => NULL,
+       489 +                          'isEvaluated' => true,
+       490 +                          'type_champ' => 'radio',
+       491 +                          'meta_options' => [
+       492 +                              'configs' => [
+       493 +                                  'options' => [
+       494 +                                      [
+       495 +                                          'label' => 'Validé',
+       496 +                                          'value' => 'passe',
+       497 +                                          'description' => 'Le rapport est bien rédigé, clair, avec une langue et une grammaire correctes. La structure est logique et le 
+           + style est professionnel.',
+       498 +                                      ],
+       499 +                                      [
+       500 +                                          'label' => 'Réservé',
+       501 +                                          'value' => 'retour',
+       502 +                                          'description' => 'Le rapport est globalement bien rédigé mais comporte quelques erreurs ou imprécisions de langue qui nécessitent 
+           + une révision.',
+       503 +                                      ],
+       504 +                                      [
+       505 +                                          'label' => 'Rejeté',
+       506 +                                          'value' => 'non_accepte',
+       507 +                                          'description' => 'Le rapport présente de nombreuses erreurs de langue, de grammaire ou d\'orthographe qui nuisent à sa 
+           + compréhension.',
+       508 +                                      ],
+       509 +                                  ],
+       510 +                              ],
+       511 +                              'conditions' => [
+       512 +                                  'disable' => false,
+       513 +                                  'visible' => true,
+       514 +                                  'conditions' => [],
+       515 +                              ],
+       516 +                              'validations_rules' => [
+       517 +                                  'in' => [
+       518 +                                      'non_accepte',
+       519 +                                      'passe',
+       520 +                                      'retour',
+       521 +                                  ],
+       522 +                              ],
+       523 +                          ],
+       524 +                      ],
+       525 +                      [
+       526 +                          'element_type' => 'field',
+       527 +                          'ordre_affichage' => 2,
+       528 +                          'label' => 'Toutes les annexes nécessaires ont-elles été insérées ?',
+       529 +                          'info' => 'Vérifier la présence de toutes les annexes requises : documents justificatifs, tableaux détaillés, cartes, plans, études complémentaires,
+           +  termes de référence, etc. Les annexes doivent être référencées dans le texte principal.',
+       530 +                          'key' => 'presence_annexes',
+       531 +                          'attribut' => 'presence_annexes',
+       532 +                          'placeholder' => 'Évaluation de la présence des annexes',
+       533 +                          'is_required' => true,
+       534 +                          'default_value' => NULL,
+       535 +                          'isEvaluated' => true,
+       536 +                          'type_champ' => 'radio',
+       537 +                          'meta_options' => [
+       538 +                              'configs' => [
+       539 +                                  'options' => [
+       540 +                                      [
+       541 +                                          'label' => 'Validé',
+       542 +                                          'value' => 'passe',
+       543 +                                          'description' => 'Toutes les annexes nécessaires sont présentes, correctement référencées et pertinentes.',
+       544 +                                      ],
+       545 +                                      [
+       546 +                                          'label' => 'Réservé',
+       547 +                                          'value' => 'retour',
+       548 +                                          'description' => 'Les annexes sont présentes mais certaines sont manquantes ou nécessitent des compléments.',
+       549 +                                      ],
+       550 +                                      [
+       551 +                                          'label' => 'Rejeté',
+       552 +                                          'value' => 'non_accepte',
+       553 +                                          'description' => 'Les annexes sont absentes ou largement incomplètes.',
+       554 +                                      ],
+       555 +                                  ],
+       556 +                              ],
+       557 +                              'conditions' => [
+       558 +                                  'disable' => false,
+       559 +                                  'visible' => true,
+       560 +                                  'conditions' => [],
+       561 +                              ],
+       562 +                              'validations_rules' => [
+       563 +                                  'in' => [
+       564 +                                      'non_accepte',
+       565 +                                      'passe',
+       566 +                                      'retour',
+       567 +                                  ],
+       568 +                              ],
+       569 +                          ],
+       570 +                      ],
+       571 +                      [
+       572 +                          'element_type' => 'field',
+       573 +                          'ordre_affichage' => 3,
+       574 +                          'label' => 'Tous les aspects de l\'analyse de faisabilité mentionnés dans les TDR/cahier de charge de la mission ont-ils été abordés de manière 
+           + adéquate ?',
+       575 +                          'info' => 'Vérifier si le rapport couvre tous les aspects mentionnés dans les termes de référence : conformité intégrale aux exigences, traitement 
+           + adéquat de chaque point, profondeur d\'analyse suffisante.',
+       576 +                          'key' => 'conformite_tdr',
+       577 +                          'attribut' => 'conformite_tdr',
+       578 +                          'placeholder' => 'Évaluation de la conformité aux TDR',
+       579 +                          'is_required' => true,
+       580 +                          'default_value' => NULL,
+       581 +                          'isEvaluated' => true,
+       582 +                          'type_champ' => 'radio',
+       583 +                          'meta_options' => [
+       584 +                              'configs' => [
+       585 +                                  'options' => [
+       586 +                                      [
+       587 +                                          'label' => 'Validé',
+       588 +                                          'value' => 'passe',
+       589 +                                          'description' => 'Tous les aspects mentionnés dans les TDR sont abordés de manière complète et adéquate.',
+       590 +                                      ],
+       591 +                                      [
+       592 +                                          'label' => 'Réservé',
+       593 +                                          'value' => 'retour',
+       594 +                                          'description' => 'La plupart des aspects sont abordés mais certains nécessitent un approfondissement ou des compléments.',
+       595 +                                      ],
+       596 +                                      [
+       597 +                                          'label' => 'Rejeté',
+       598 +                                          'value' => 'non_accepte',
+       599 +                                          'description' => 'Des aspects importants des TDR ne sont pas abordés ou sont traités de manière superficielle.',
+       600 +                                      ],
+       601 +                                  ],
+       602 +                              ],
+       603 +                              'conditions' => [
+       604 +                                  'disable' => false,
+       605 +                                  'visible' => true,
+       606 +                                  'conditions' => [],
+       607 +                              ],
+       608 +                              'validations_rules' => [
+       609 +                                  'in' => [
+       610 +                                      'non_accepte',
+       611 +                                      'passe',
+       612 +                                      'retour',
+       613 +                                  ],
+       614 +                              ],
+       615 +                          ],
+       616 +                      ],
+       617 +                  ],
+       618 +              ],
+       619 +              [
+       620 +                  'element_type' => 'section',
+       621 +                  'ordre_affichage' => 5,
+       622 +                  'key' => 'section-exigences-juridiques',
+       623 +                  'intitule' => 'Exigences du cadre juridique',
+       624 +                  'description' => 'Vérification de la conformité aux exigences réglementaires',
+       625 +                  'type' => 'formulaire',
+       626 +                  'elements' => [
+       627 +                      [
+       628 +                          'element_type' => 'field',
+       629 +                          'ordre_affichage' => 1,
+       630 +                          'label' => 'Le rapport présente-t-il un modèle de financement et une programmation financière du coût d\'objectif sur la durée de vie du projet ?',
+       631 +                          'info' => 'Vérifier la présence d\'un modèle de financement détaillé et d\'une programmation financière couvrant toute la durée de vie du projet, 
+           + conformément aux exigences du décret.',
+       632 +                          'key' => 'modele_financement_programmation',
+       633 +                          'attribut' => 'modele_financement_programmation',
+       634 +                          'placeholder' => 'Évaluation du modèle de financement et de la programmation',
+       635 +                          'is_required' => true,
+       636 +                          'default_value' => NULL,
+       637 +                          'isEvaluated' => true,
+       638 +                          'type_champ' => 'radio',
+       639 +                          'meta_options' => [
+       640 +                              'configs' => [
+       641 +                                  'options' => [
+       642 +                                      [
+       643 +                                          'label' => 'Validé',
+       644 +                                          'value' => 'passe',
+       645 +                                          'description' => 'Un modèle de financement complet et une programmation financière détaillée sur toute la durée de vie du projet 
+           + sont présentés.',
+       646 +                                      ],
+       647 +                                      [
+       648 +                                          'label' => 'Réservé',
+       649 +                                          'value' => 'retour',
+       650 +                                          'description' => 'Un modèle de financement est présenté mais nécessite des compléments ou des clarifications.',
+       651 +                                      ],
+       652 +                                      [
+       653 +                                          'label' => 'Rejeté',
+       654 +                                          'value' => 'non_accepte',
+       655 +                                          'description' => 'Le modèle de financement ou la programmation financière est absent ou inadéquat.',
+       656 +                                      ],
+       657 +                                  ],
+       658 +                              ],
+       659 +                              'conditions' => [
+       660 +                                  'disable' => false,
+       661 +                                  'visible' => true,
+       662 +                                  'conditions' => [],
+       663 +                              ],
+       664 +                              'validations_rules' => [
+       665 +                                  'in' => [
+       666 +                                      'non_accepte',
+       667 +                                      'passe',
+       668 +                                      'retour',
+       669 +                                  ],
+       670 +                              ],
+       671 +                          ],
+       672 +                      ],
+       673 +                      [
+       674 +                          'element_type' => 'field',
+       675 +                          'ordre_affichage' => 2,
+       676 +                          'label' => 'Le rapport inclut-il une estimation des dépenses fiscales ?',
+       677 +                          'info' => 'Vérifier la présence d\'une estimation détaillée des dépenses fiscales associées au projet, conformément aux exigences réglementaires.',
+       678 +                          'key' => 'estimation_depenses_fiscales',
+       679 +                          'attribut' => 'estimation_depenses_fiscales',
+       680 +                          'placeholder' => 'Évaluation de l\'estimation des dépenses fiscales',
+       681 +                          'is_required' => true,
+       682 +                          'default_value' => NULL,
+       683 +                          'isEvaluated' => true,
+       684 +                          'type_champ' => 'radio',
+       685 +                          'meta_options' => [
+       686 +                              'configs' => [
+       687 +                                  'options' => [
+       688 +                                      [
+       689 +                                          'label' => 'Validé',
+       690 +                                          'value' => 'passe',
+       691 +                                          'description' => 'Une estimation détaillée et justifiée des dépenses fiscales est incluse dans le rapport.',
+       692 +                                      ],
+       693 +                                      [
+       694 +                                          'label' => 'Réservé',
+       695 +                                          'value' => 'retour',
+       696 +                                          'description' => 'Une estimation est présente mais nécessite des précisions ou des justifications complémentaires.',
+       697 +                                      ],
+       698 +                                      [
+       699 +                                          'label' => 'Rejeté',
+       700 +                                          'value' => 'non_accepte',
+       701 +                                          'description' => 'L\'estimation des dépenses fiscales est absente ou manifestement inadéquate.',
+       702 +                                      ],
+       703 +                                  ],
+       704 +                              ],
+       705 +                              'conditions' => [
+       706 +                                  'disable' => false,
+       707 +                                  'visible' => true,
+       708 +                                  'conditions' => [],
+       709 +                              ],
+       710 +                              'validations_rules' => [
+       711 +                                  'in' => [
+       712 +                                      'non_accepte',
+       713 +                                      'passe',
+       714 +                                      'retour',
+       715 +                                  ],
+       716 +                              ],
+       717 +                          ],
+       718 +                      ],
+       719 +                      [
+       720 +                          'element_type' => 'field',
+       721 +                          'ordre_affichage' => 3,
+       722 +                          'label' => 'Le rapport présente-t-il une évaluation sociale intégrant la dimension genre ?',
+       723 +                          'info' => 'Vérifier la présence d\'une évaluation sociale qui analyse les impacts du projet sur les différents groupes sociaux, avec une attention 
+           + particulière à la dimension genre (impacts différenciés sur les hommes et les femmes, inclusion, équité).',
+       724 +                          'key' => 'evaluation_sociale_genre',
+       725 +                          'attribut' => 'evaluation_sociale_genre',
+       726 +                          'placeholder' => 'Évaluation de la dimension sociale et genre',
+       727 +                          'is_required' => true,
+       728 +                          'default_value' => NULL,
+       729 +                          'isEvaluated' => true,
+       730 +                          'type_champ' => 'radio',
+       731 +                          'meta_options' => [
+       732 +                              'configs' => [
+       733 +                                  'options' => [
+       734 +                                      [
+       735 +                                          'label' => 'Validé',
+       736 +                                          'value' => 'passe',
+       737 +                                          'description' => 'Une évaluation sociale complète intégrant une analyse détaillée de la dimension genre est présentée.',
+       738 +                                      ],
+       739 +                                      [
+       740 +                                          'label' => 'Réservé',
+       741 +                                          'value' => 'retour',
+       742 +                                          'description' => 'Une évaluation sociale est présente mais l\'analyse de la dimension genre est superficielle ou nécessite des 
+           + approfondissements.',
+       743 +                                      ],
+       744 +                                      [
+       745 +                                          'label' => 'Rejeté',
+       746 +                                          'value' => 'non_accepte',
+       747 +                                          'description' => 'L\'évaluation sociale ou la dimension genre est absente ou totalement inadéquate.',
+       748 +                                      ],
+       749 +                                  ],
+       750 +                              ],
+       751 +                              'conditions' => [
+       752 +                                  'disable' => false,
+       753 +                                  'visible' => true,
+       754 +                                  'conditions' => [],
+       755 +                              ],
+       756 +                              'validations_rules' => [
+       757 +                                  'in' => [
+       758 +                                      'non_accepte',
+       759 +                                      'passe',
+       760 +                                      'retour',
+       761 +                                  ],
+       762 +                              ],
+       763 +                          ],
+       764 +                      ],
+       765 +                      [
+       766 +                          'element_type' => 'field',
+       767 +                          'ordre_affichage' => 4,
+       768 +                          'label' => 'Le rapport inclut-il une analyse de sensibilité et de vulnérabilité face au changement climatique ?',
+       769 +                          'info' => 'Vérifier la présence d\'une analyse de la sensibilité du projet au changement climatique et de sa vulnérabilité, incluant des mesures 
+           + d\'adaptation et de résilience climatique.',
+       770 +                          'key' => 'analyse_changement_climatique',
+       771 +                          'attribut' => 'analyse_changement_climatique',
+       772 +                          'placeholder' => 'Évaluation de l\'analyse climatique',
+       773 +                          'is_required' => true,
+       774 +                          'default_value' => NULL,
+       775 +                          'isEvaluated' => true,
+       776 +                          'type_champ' => 'radio',
+       777 +                          'meta_options' => [
+       778 +                              'configs' => [
+       779 +                                  'options' => [
+       780 +                                      [
+       781 +                                          'label' => 'Validé',
+       782 +                                          'value' => 'passe',
+       783 +                                          'description' => 'Une analyse complète de la sensibilité et vulnérabilité climatique est présentée avec des mesures d\'adaptation 
+           + appropriées.',
+       784 +                                      ],
+       785 +                                      [
+       786 +                                          'label' => 'Réservé',
+       787 +                                          'value' => 'retour',
+       788 +                                          'description' => 'Une analyse climatique est présente mais nécessite des approfondissements ou des précisions sur les mesures 
+           + d\'adaptation.',
+       789 +                                      ],
+       790 +                                      [
+       791 +                                          'label' => 'Rejeté',
+       792 +                                          'value' => 'non_accepte',
+       793 +                                          'description' => 'L\'analyse de sensibilité et vulnérabilité climatique est absente ou manifestement insuffisante.',
+       794 +                                      ],
+       795 +                                  ],
+       796 +                              ],
+       797 +                              'conditions' => [
+       798 +                                  'disable' => false,
+       799 +                                  'visible' => true,
+       800 +                                  'conditions' => [],
+       801 +                              ],
+       802 +                              'validations_rules' => [
+       803 +                                  'in' => [
+       804 +                                      'non_accepte',
+       805 +                                      'passe',
+       806 +                                      'retour',
+       807 +                                  ],
+       808 +                              ],
+       809 +                          ],
+       810 +                      ],
+       811 +                      [
+       812 +                          'element_type' => 'field',
+       813 +                          'ordre_affichage' => 5,
+       814 +                          'label' => 'Le rapport présente-t-il une analyse des risques associés au projet d\'investissement public ?',
+       815 +                          'info' => 'Vérifier la présence d\'une analyse complète des risques : identification, évaluation (probabilité et impact), mesures d\'atténuation, 
+           + plan de gestion des risques.',
+       816 +                          'key' => 'analyse_risques',
+       817 +                          'attribut' => 'analyse_risques',
+       818 +                          'placeholder' => 'Évaluation de l\'analyse des risques',
+       819 +                          'is_required' => true,
+       820 +                          'default_value' => NULL,
+       821 +                          'isEvaluated' => true,
+       822 +                          'type_champ' => 'radio',
+       823 +                          'meta_options' => [
+       824 +                              'configs' => [
+       825 +                                  'options' => [
+       826 +                                      [
+       827 +                                          'label' => 'Validé',
+       828 +                                          'value' => 'passe',
+       829 +                                          'description' => 'Une analyse complète des risques avec identification, évaluation, mesures d\'atténuation et plan de gestion est 
+           + présentée.',
+       830 +                                      ],
+       831 +                                      [
+       832 +                                          'label' => 'Réservé',
+       833 +                                          'value' => 'retour',
+       834 +                                          'description' => 'Une analyse des risques est présente mais certains aspects nécessitent des compléments ou des clarifications.',
+       835 +                                      ],
+       836 +                                      [
+       837 +                                          'label' => 'Rejeté',
+       838 +                                          'value' => 'non_accepte',
+       839 +                                          'description' => 'L\'analyse des risques est absente, incomplète ou superficielle.',
+       840 +                                      ],
+       841 +                                  ],
+       842 +                              ],
+       843 +                              'conditions' => [
+       844 +                                  'disable' => false,
+       845 +                                  'visible' => true,
+       846 +                                  'conditions' => [],
+       847 +                              ],
+       848 +                              'validations_rules' => [
+       849 +                                  'in' => [
+       850 +                                      'non_accepte',
+       851 +                                      'passe',
+       852 +                                      'retour',
+       853 +                                  ],
+       854 +                              ],
+       855 +                          ],
+       856 +                      ],
+       857 +                      [
+       858 +                          'element_type' => 'field',
+       859 +                          'ordre_affichage' => 6,
+       860 +                          'label' => 'Le rapport inclut-il une politique de maintenance et d\'entretien des actifs projetés ainsi qu\'une estimation du coût y afférent ?',
+       861 +                          'info' => 'Vérifier la présence d\'une politique de maintenance et d\'entretien des infrastructures/équipements du projet, incluant les 
+           + responsabilités, la fréquence, les procédures et une estimation détaillée des coûts récurrents.',
+       862 +                          'key' => 'politique_maintenance',
+       863 +                          'attribut' => 'politique_maintenance',
+       864 +                          'placeholder' => 'Évaluation de la politique de maintenance',
+       865 +                          'is_required' => true,
+       866 +                          'default_value' => NULL,
+       867 +                          'isEvaluated' => true,
+       868 +                          'type_champ' => 'radio',
+       869 +                          'meta_options' => [
+       870 +                              'configs' => [
+       871 +                                  'options' => [
+       872 +                                      [
+       873 +                                          'label' => 'Validé',
+       874 +                                          'value' => 'passe',
+       875 +                                          'description' => 'Une politique de maintenance complète est présentée avec estimation détaillée des coûts, responsabilités et 
+           + procédures clairement définies.',
+       876 +                                      ],
+       877 +                                      [
+       878 +                                          'label' => 'Réservé',
+       879 +                                          'value' => 'retour',
+       880 +                                          'description' => 'Une politique de maintenance est présente mais nécessite des précisions sur les coûts, les responsabilités ou les 
+           + procédures.',
+       881 +                                      ],
+       882 +                                      [
+       883 +                                          'label' => 'Rejeté',
+       884 +                                          'value' => 'non_accepte',
+       885 +                                          'description' => 'La politique de maintenance ou l\'estimation des coûts est absente ou manifestement inadéquate.',
+       886 +                                      ],
+       887 +                                  ],
+       888 +                              ],
+       889 +                              'conditions' => [
+       890 +                                  'disable' => false,
+       891 +                                  'visible' => true,
+       892 +                                  'conditions' => [],
+       893 +                              ],
+       894 +                              'validations_rules' => [
+       895 +                                  'in' => [
+       896 +                                      'non_accepte',
+       897 +                                      'passe',
+       898 +                                      'retour',
+       899 +                                  ],
+       900 +                              ],
+       901 +                          ],
+       902 +                      ],
+       903 +                  ],
+       904 +              ],
+       905 +          ],
+       906 +      ];
+       907 +  
+       908 +      /**
+       909 +       * Run the database seeds.
+       910 +       */
+       911 +      public function run(): void
+       912 +      {
+       913 +          DB::beginTransaction();
+       914 +  
+       915 +          try {
+       916 +              // Vérifier si le document existe déjà
+       917 +              $existingDocument = Document::where('slug', $this->documentData['slug'])->first();
+       918 +  
+       919 +              if ($existingDocument) {
+       920 +                  $this->command->info('Le document "' . $this->documentData['slug'] . '" existe déjà. Mise à jour...');
+       921 +  
+       922 +                  // Mettre à jour le document existant
+       923 +                  $existingDocument->update([
+       924 +                      'nom' => $this->documentData['nom'],
+       925 +                      'description' => $this->documentData['description'],
+       926 +                      'type' => $this->documentData['type'],
+       927 +                      'evaluation_configs' => $this->documentData['evaluation_configs'],
+       928 +                      'forms' => $this->documentData['forms'],
+       929 +                  ]);
+       930 +  
+       931 +                  $document = $existingDocument;
+       932 +              } else {
+       933 +                  // Créer le document
+       934 +                  $document = Document::create([
+       935 +                      'nom' => $this->documentData['nom'],
+       936 +                      'slug' => $this->documentData['slug'],
+       937 +                      'description' => $this->documentData['description'],
+       938 +                      'type' => $this->documentData['type'],
+       939 +                      'evaluation_configs' => $this->documentData['evaluation_configs'],
+       940 +                      'forms' => $this->documentData['forms'],
+       941 +                  ]);
+       942 +  
+       943 +                  $this->command->info('Document "' . $this->documentData['slug'] . '" créé avec succès.');
+       944 +              }
+       945 +  
+       946 +              DB::commit();
+       947 +  
+       948 +              $this->command->info('Seeder CanevasAppreciationRapportFinaleSeeder exécuté avec succès!');
+       949 +              $this->command->info('Document ID: ' . $document->id);
+       950 +          } catch (\Exception $e) {
+       951 +              DB::rollBack();
+       952 +              $this->command->error('Erreur lors du seeding: ' . $e->getMessage());
+       953 +              throw $e;
+       954 +          }
+       955 +      }
+       956 +  }
+
+> les options pour ce check liste sont juste oui et non donc met a jour 
+
+● Read(app/Http/Requests/documents/canevas_evaluation_ex_ante/CreateOrUpdateCanevasAppreciationRapportExAnteRequest.php)
+  ⎿  Read 608 lines
+
+● Je vais créer le seeder avec des options "oui" et "non" pour une checklist plus simple:
+
+● Write(database/seeders/CanevasAppreciationRapportFinaleSeeder.php)
+  ⎿  User rejected write to database/seeders/CanevasAppreciationRapportFinaleSeeder.php
+         1 +  <?php
+         2 +  
+         3 +  namespace Database\Seeders;
+         4 +  
+         5 +  use App\Models\CategorieDocument;
+         6 +  use App\Models\Document;
+         7 +  use Illuminate\Database\Seeder;
+         8 +  use Illuminate\Support\Facades\DB;
+         9 +  
+        10 +  class CanevasAppreciationRapportFinaleSeeder extends Seeder
+        11 +  {
+        12 +      protected $documentData = [
+        13 +          'nom' => 'Check liste d\'appréciation des rapports d\'évaluation ex-ante',
+        14 +          'slug' => 'canevas-appreciation-rapport-finale',
+        15 +          'description' => 'Check liste standardisée pour l\'appréciation et l\'évaluation des rapports d\'évaluation ex-ante (faisabilité)',
+        16 +          'type' => 'checklist',
+        17 +          'evaluation_configs' => [
+        18 +              'results' => [
+        19 +                  [
+        20 +                      'value' => 'valide',
+        21 +                      'label' => 'Rapport validé',
+        22 +                      'statut_suivant' => 'valide',
+        23 +                      'message' => 'Le rapport d\'évaluation ex-ante répond à tous les critères requis',
+        24 +                  ],
+        25 +                  [
+        26 +                      'value' => 'non_valide',
+        27 +                      'label' => 'Rapport non validé',
+        28 +                      'statut_suivant' => 'rejete',
+        29 +                      'message' => 'Le rapport d\'évaluation ex-ante ne répond pas aux critères minimums',
+        30 +                  ],
+        31 +              ],
+        32 +              'rules' => [
+        33 +                  'reference' => 'Selon les critères d\'appréciation des rapports d\'évaluation ex-ante définis par le cadre juridique',
+        34 +                  'decision_algorithm' => 'all_yes_required',
+        35 +                  'evaluation_required_fields' => [],
+        36 +                  'conditions' => [
+        37 +                      [
+        38 +                          'priority' => 1,
+        39 +                          'name' => 'Tous les critères sont satisfaits (oui)',
+        40 +                          'appreciations_concernees' => ['oui'],
+        41 +                          'condition' => [
+        42 +                              'type' => 'comparison',
+        43 +                              'field' => 'count_oui',
+        44 +                              'operator' => '==',
+        45 +                              'value_field' => 'total_questions',
+        46 +                          ],
+        47 +                          'result' => 'valide',
+        48 +                          'message' => 'Tous les critères d\'appréciation sont satisfaits. Le rapport est validé.',
+        49 +                          'recommandations' => [
+        50 +                              'Le rapport d\'évaluation ex-ante peut être approuvé',
+        51 +                              'Procéder aux étapes suivantes du processus de maturation',
+        52 +                          ],
+        53 +                      ],
+        54 +                      [
+        55 +                          'priority' => 2,
+        56 +                          'name' => 'Condition par défaut',
+        57 +                          'appreciations_concernees' => [],
+        58 +                          'condition' => [
+        59 +                              'type' => 'default',
+        60 +                          ],
+        61 +                          'result' => 'non_valide',
+        62 +                          'message' => 'Au moins un critère n\'est pas satisfait. Le rapport ne peut pas être validé.',
+        63 +                          'recommandations' => [
+        64 +                              'Identifier les critères non satisfaits',
+        65 +                              'Demander des clarifications ou compléments au consultant',
+        66 +                              'Réviser le rapport pour répondre aux exigences',
+        67 +                          ],
+        68 +                      ],
+        69 +                  ],
+        70 +              ],
+        71 +          ],
+        72 +          'guide_notation' => [
+        73 +              [
+        74 +                  'appreciation' => 'oui',
+        75 +                  'libelle' => 'Oui',
+        76 +                  'description' => 'Le critère est satisfait',
+        77 +                  'couleur' => '#22c55e',
+        78 +              ],
+        79 +              [
+        80 +                  'appreciation' => 'non',
+        81 +                  'libelle' => 'Non',
+        82 +                  'description' => 'Le critère n\'est pas satisfait',
+        83 +                  'couleur' => '#ef4444',
+        84 +              ],
+        85 +          ],
+        86 +          'accept_text' => 'En soumettant cette évaluation du rapport d\'évaluation ex-ante, je confirme avoir examiné tous les aspects requis de manière rigoureuse et 
+           + objective. Je reconnais que mon évaluation contribue à la décision finale concernant la faisabilité du projet.',
+        87 +          'forms' => [
+        88 +              [
+        89 +                  'element_type' => 'section',
+        90 +                  'ordre_affichage' => 1,
+        91 +                  'key' => 'section-evaluation-resultats',
+        92 +                  'intitule' => 'Évaluation des résultats et cohérence',
+        93 +                  'description' => 'Évaluation de la pertinence des résultats prévisibles et de la cohérence du rapport',
+        94 +                  'type' => 'formulaire',
+        95 +                  'elements' => [
+        96 +                      [
+        97 +                          'element_type' => 'field',
+        98 +                          'ordre_affichage' => 1,
+        99 +                          'label' => 'Le rapport a-t-il présenté une évaluation des résultats pertinents prévisibles de la réalisation des objectifs du projet ?',
+       100 +                          'info' => 'Vérifier si le rapport identifie clairement les résultats attendus, les indicateurs de performance, et si l\'évaluation des résultats est
+           +  alignée avec les objectifs du projet. Les résultats doivent être mesurables, réalistes et pertinents.',
+       101 +                          'key' => 'evaluation_resultats_previsibles',
+       102 +                          'attribut' => 'evaluation_resultats_previsibles',
+       103 +                          'placeholder' => 'Évaluation de la présentation des résultats pertinents prévisibles',
+       104 +                          'is_required' => true,
+       105 +                          'default_value' => NULL,
+       106 +                          'isEvaluated' => true,
+       107 +                          'type_champ' => 'radio',
+       108 +                          'meta_options' => [
+       109 +                              'configs' => [
+       110 +                                  'options' => [
+       111 +                                      [
+       112 +                                          'label' => 'Oui',
+       113 +                                          'value' => 'oui',
+       114 +                                          'description' => 'Le rapport présente une évaluation claire et pertinente des résultats prévisibles',
+       115 +                                      ],
+       116 +                                      [
+       117 +                                          'label' => 'Non',
+       118 +                                          'value' => 'non',
+       119 +                                          'description' => 'Le rapport ne présente pas d\'évaluation adéquate des résultats prévisibles',
+       120 +                                      ],
+       121 +                                  ],
+       122 +                              ],
+       123 +                              'conditions' => [
+       124 +                                  'disable' => false,
+       125 +                                  'visible' => true,
+       126 +                                  'conditions' => [],
+       127 +                              ],
+       128 +                              'validations_rules' => [
+       129 +                                  'in' => ['non', 'oui'],
+       130 +                              ],
+       131 +                          ],
+       132 +                      ],
+       133 +                      [
+       134 +                          'element_type' => 'field',
+       135 +                          'ordre_affichage' => 2,
+       136 +                          'label' => 'Le rapport est-il cohérent ? Les données sont-elles exhaustives et fiables ?',
+       137 +                          'info' => 'Vérifier la cohérence interne du rapport : absence de contradictions, logique d\'enchaînement des sections, qualité et exhaustivité des 
+           + données (sources citées, méthodologie claire), et fiabilité des informations fournies.',
+       138 +                          'key' => 'coherence_exhaustivite_donnees',
+       139 +                          'attribut' => 'coherence_exhaustivite_donnees',
+       140 +                          'placeholder' => 'Évaluation de la cohérence et de la fiabilité des données',
+       141 +                          'is_required' => true,
+       142 +                          'default_value' => NULL,
+       143 +                          'isEvaluated' => true,
+       144 +                          'type_champ' => 'radio',
+       145 +                          'meta_options' => [
+       146 +                              'configs' => [
+       147 +                                  'options' => [
+       148 +                                      [
+       149 +                                          'label' => 'Oui',
+       150 +                                          'value' => 'oui',
+       151 +                                          'description' => 'Le rapport est cohérent, les données sont exhaustives et fiables',
+       152 +                                      ],
+       153 +                                      [
+       154 +                                          'label' => 'Non',
+       155 +                                          'value' => 'non',
+       156 +                                          'description' => 'Le rapport manque de cohérence ou les données sont incomplètes',
+       157 +                                      ],
+       158 +                                  ],
+       159 +                              ],
+       160 +                              'conditions' => [
+       161 +                                  'disable' => false,
+       162 +                                  'visible' => true,
+       163 +                                  'conditions' => [],
+       164 +                              ],
+       165 +                              'validations_rules' => [
+       166 +                                  'in' => ['non', 'oui'],
+       167 +                              ],
+       168 +                          ],
+       169 +                      ],
+       170 +                      [
+       171 +                          'element_type' => 'field',
+       172 +                          'ordre_affichage' => 3,
+       173 +                          'label' => 'Le rapport a-t-il présenté une évaluation rationnelle de la durabilité des résultats ?',
+       174 +                          'info' => 'Vérifier si le rapport évalue la pérennité des résultats du projet : viabilité financière, institutionnelle, technique et 
+           + environnementale. L\'analyse doit inclure les facteurs de risque et les mesures d\'atténuation.',
+       175 +                          'key' => 'evaluation_durabilite_resultats',
+       176 +                          'attribut' => 'evaluation_durabilite_resultats',
+       177 +                          'placeholder' => 'Évaluation de la durabilité des résultats',
+       178 +                          'is_required' => true,
+       179 +                          'default_value' => NULL,
+       180 +                          'isEvaluated' => true,
+       181 +                          'type_champ' => 'radio',
+       182 +                          'meta_options' => [
+       183 +                              'configs' => [
+       184 +                                  'options' => [
+       185 +                                      [
+       186 +                                          'label' => 'Oui',
+       187 +                                          'value' => 'oui',
+       188 +                                          'description' => 'Le rapport présente une évaluation rationnelle de la durabilité',
+       189 +                                      ],
+       190 +                                      [
+       191 +                                          'label' => 'Non',
+       192 +                                          'value' => 'non',
+       193 +                                          'description' => 'Le rapport ne présente pas d\'évaluation adéquate de la durabilité',
+       194 +                                      ],
+       195 +                                  ],
+       196 +                              ],
+       197 +                              'conditions' => [
+       198 +                                  'disable' => false,
+       199 +                                  'visible' => true,
+       200 +                                  'conditions' => [],
+       201 +                              ],
+       202 +                              'validations_rules' => [
+       203 +                                  'in' => ['non', 'oui'],
+       204 +                              ],
+       205 +                          ],
+       206 +                      ],
+       207 +                  ],
+       208 +              ],
+       209 +              [
+       210 +                  'element_type' => 'section',
+       211 +                  'ordre_affichage' => 2,
+       212 +                  'key' => 'section-recommandations',
+       213 +                  'intitule' => 'Recommandations et mesures correctives',
+       214 +                  'description' => 'Évaluation de la qualité et de la pertinence des recommandations',
+       215 +                  'type' => 'formulaire',
+       216 +                  'elements' => [
+       217 +                      [
+       218 +                          'element_type' => 'field',
+       219 +                          'ordre_affichage' => 1,
+       220 +                          'label' => 'Les recommandations de faisabilité ou de non faisabilité émises dans le rapport sont-elles justifiées au regard des informations 
+           + fournies ?',
+       221 +                          'info' => 'Vérifier si les conclusions et recommandations du rapport (faisable/non faisable) sont logiquement déduites des analyses présentées, 
+           + supportées par des preuves et des arguments solides.',
+       222 +                          'key' => 'justification_recommandations',
+       223 +                          'attribut' => 'justification_recommandations',
+       224 +                          'placeholder' => 'Évaluation de la justification des recommandations',
+       225 +                          'is_required' => true,
+       226 +                          'default_value' => NULL,
+       227 +                          'isEvaluated' => true,
+       228 +                          'type_champ' => 'radio',
+       229 +                          'meta_options' => [
+       230 +                              'configs' => [
+       231 +                                  'options' => [
+       232 +                                      [
+       233 +                                          'label' => 'Oui',
+       234 +                                          'value' => 'oui',
+       235 +                                          'description' => 'Les recommandations sont justifiées et cohérentes',
+       236 +                                      ],
+       237 +                                      [
+       238 +                                          'label' => 'Non',
+       239 +                                          'value' => 'non',
+       240 +                                          'description' => 'Les recommandations ne sont pas suffisamment justifiées',
+       241 +                                      ],
+       242 +                                  ],
+       243 +                              ],
+       244 +                              'conditions' => [
+       245 +                                  'disable' => false,
+       246 +                                  'visible' => true,
+       247 +                                  'conditions' => [],
+       248 +                              ],
+       249 +                              'validations_rules' => [
+       250 +                                  'in' => ['non', 'oui'],
+       251 +                              ],
+       252 +                          ],
+       253 +                      ],
+       254 +                      [
+       255 +                          'element_type' => 'field',
+       256 +                          'ordre_affichage' => 2,
+       257 +                          'label' => 'Les recommandations d\'ordre général précisent-elles les mesures nécessaires (« qui ? », « quoi ? », « où ? », « quand ? ») et ces 
+           + mesures peuvent-elles être mises en œuvre ?',
+       258 +                          'info' => 'Vérifier si les recommandations sont opérationnelles et précises : acteurs responsables identifiés, actions concrètes définies, 
+           + localisation, calendrier. Évaluer également la faisabilité pratique.',
+       259 +                          'key' => 'precision_mesures_correctives',
+       260 +                          'attribut' => 'precision_mesures_correctives',
+       261 +                          'placeholder' => 'Évaluation de la précision et faisabilité des mesures',
+       262 +                          'is_required' => true,
+       263 +                          'default_value' => NULL,
+       264 +                          'isEvaluated' => true,
+       265 +                          'type_champ' => 'radio',
+       266 +                          'meta_options' => [
+       267 +                              'configs' => [
+       268 +                                  'options' => [
+       269 +                                      [
+       270 +                                          'label' => 'Oui',
+       271 +                                          'value' => 'oui',
+       272 +                                          'description' => 'Les recommandations sont précises et réalisables',
+       273 +                                      ],
+       274 +                                      [
+       275 +                                          'label' => 'Non',
+       276 +                                          'value' => 'non',
+       277 +                                          'description' => 'Les recommandations manquent de précision ou ne sont pas réalisables',
+       278 +                                      ],
+       279 +                                  ],
+       280 +                              ],
+       281 +                              'conditions' => [
+       282 +                                  'disable' => false,
+       283 +                                  'visible' => true,
+       284 +                                  'conditions' => [],
+       285 +                              ],
+       286 +                              'validations_rules' => [
+       287 +                                  'in' => ['non', 'oui'],
+       288 +                              ],
+       289 +                          ],
+       290 +                      ],
+       291 +                  ],
+       292 +              ],
+       293 +              [
+       294 +                  'element_type' => 'section',
+       295 +                  'ordre_affichage' => 3,
+       296 +                  'key' => 'section-aspects-financiers',
+       297 +                  'intitule' => 'Aspects financiers et suivi-évaluation',
+       298 +                  'description' => 'Évaluation des aspects financiers et du système de suivi-évaluation',
+       299 +                  'type' => 'formulaire',
+       300 +                  'elements' => [
+       301 +                      [
+       302 +                          'element_type' => 'field',
+       303 +                          'ordre_affichage' => 1,
+       304 +                          'label' => 'Le rapport présente-t-il les coûts actualisés du projet par source de financement (coûts totaux et par activité) ?',
+       305 +                          'info' => 'Vérifier si le rapport présente de manière claire et détaillée les coûts : ventilation par source de financement, actualisation, 
+           + décomposition par activité, modèle de financement et programmation financière.',
+       306 +                          'key' => 'presentation_couts_actualises',
+       307 +                          'attribut' => 'presentation_couts_actualises',
+       308 +                          'placeholder' => 'Évaluation de la présentation des coûts',
+       309 +                          'is_required' => true,
+       310 +                          'default_value' => NULL,
+       311 +                          'isEvaluated' => true,
+       312 +                          'type_champ' => 'radio',
+       313 +                          'meta_options' => [
+       314 +                              'configs' => [
+       315 +                                  'options' => [
+       316 +                                      [
+       317 +                                          'label' => 'Oui',
+       318 +                                          'value' => 'oui',
+       319 +                                          'description' => 'Les coûts sont présentés de manière claire et détaillée',
+       320 +                                      ],
+       321 +                                      [
+       322 +                                          'label' => 'Non',
+       323 +                                          'value' => 'non',
+       324 +                                          'description' => 'La présentation des coûts est absente ou inadéquate',
+       325 +                                      ],
+       326 +                                  ],
+       327 +                              ],
+       328 +                              'conditions' => [
+       329 +                                  'disable' => false,
+       330 +                                  'visible' => true,
+       331 +                                  'conditions' => [],
+       332 +                              ],
+       333 +                              'validations_rules' => [
+       334 +                                  'in' => ['non', 'oui'],
+       335 +                              ],
+       336 +                          ],
+       337 +                      ],
+       338 +                      [
+       339 +                          'element_type' => 'field',
+       340 +                          'ordre_affichage' => 2,
+       341 +                          'label' => 'Le rapport propose-t-il un système de suivi-évaluation du projet et son mécanisme de mise en œuvre efficace ?',
+       342 +                          'info' => 'Vérifier si le rapport présente un cadre de suivi-évaluation complet : indicateurs de performance, sources de vérification, 
+           + responsabilités, fréquence de collecte, mécanismes de reporting.',
+       343 +                          'key' => 'systeme_suivi_evaluation',
+       344 +                          'attribut' => 'systeme_suivi_evaluation',
+       345 +                          'placeholder' => 'Évaluation du système de suivi-évaluation',
+       346 +                          'is_required' => true,
+       347 +                          'default_value' => NULL,
+       348 +                          'isEvaluated' => true,
+       349 +                          'type_champ' => 'radio',
+       350 +                          'meta_options' => [
+       351 +                              'configs' => [
+       352 +                                  'options' => [
+       353 +                                      [
+       354 +                                          'label' => 'Oui',
+       355 +                                          'value' => 'oui',
+       356 +                                          'description' => 'Un système de suivi-évaluation complet est proposé',
+       357 +                                      ],
+       358 +                                      [
+       359 +                                          'label' => 'Non',
+       360 +                                          'value' => 'non',
+       361 +                                          'description' => 'Le système de suivi-évaluation est absent ou inadéquat',
+       362 +                                      ],
+       363 +                                  ],
+       364 +                              ],
+       365 +                              'conditions' => [
+       366 +                                  'disable' => false,
+       367 +                                  'visible' => true,
+       368 +                                  'conditions' => [],
+       369 +                              ],
+       370 +                              'validations_rules' => [
+       371 +                                  'in' => ['non', 'oui'],
+       372 +                              ],
+       373 +                          ],
+       374 +                      ],
+       375 +                  ],
+       376 +              ],
+       377 +              [
+       378 +                  'element_type' => 'section',
+       379 +                  'ordre_affichage' => 4,
+       380 +                  'key' => 'section-qualite-redaction',
+       381 +                  'intitule' => 'Qualité de la rédaction et conformité',
+       382 +                  'description' => 'Évaluation de la qualité rédactionnelle et de la conformité aux exigences',
+       383 +                  'type' => 'formulaire',
+       384 +                  'elements' => [
+       385 +                      [
+       386 +                          'element_type' => 'field',
+       387 +                          'ordre_affichage' => 1,
+       388 +                          'label' => 'Le rapport est-il bien rédigé ? (Clarté de la langue et de la grammaire)',
+       389 +                          'info' => 'Vérifier la qualité rédactionnelle : langue claire, grammaire correcte, structure logique, absence de fautes, style professionnel.',
+       390 +                          'key' => 'qualite_redaction',
+       391 +                          'attribut' => 'qualite_redaction',
+       392 +                          'placeholder' => 'Évaluation de la qualité de la rédaction',
+       393 +                          'is_required' => true,
+       394 +                          'default_value' => NULL,
+       395 +                          'isEvaluated' => true,
+       396 +                          'type_champ' => 'radio',
+       397 +                          'meta_options' => [
+       398 +                              'configs' => [
+       399 +                                  'options' => [
+       400 +                                      [
+       401 +                                          'label' => 'Oui',
+       402 +                                          'value' => 'oui',
+       403 +                                          'description' => 'Le rapport est bien rédigé avec une langue et une grammaire correctes',
+       404 +                                      ],
+       405 +                                      [
+       406 +                                          'label' => 'Non',
+       407 +                                          'value' => 'non',
+       408 +                                          'description' => 'Le rapport présente des erreurs de langue qui nuisent à sa compréhension',
+       409 +                                      ],
+       410 +                                  ],
+       411 +                              ],
+       412 +                              'conditions' => [
+       413 +                                  'disable' => false,
+       414 +                                  'visible' => true,
+       415 +                                  'conditions' => [],
+       416 +                              ],
+       417 +                              'validations_rules' => [
+       418 +                                  'in' => ['non', 'oui'],
+       419 +                              ],
+       420 +                          ],
+       421 +                      ],
+       422 +                      [
+       423 +                          'element_type' => 'field',
+       424 +                          'ordre_affichage' => 2,
+       425 +                          'label' => 'Toutes les annexes nécessaires ont-elles été insérées ?',
+       426 +                          'info' => 'Vérifier la présence de toutes les annexes requises : documents justificatifs, tableaux détaillés, cartes, plans, études complémentaires,
+           +  termes de référence.',
+       427 +                          'key' => 'presence_annexes',
+       428 +                          'attribut' => 'presence_annexes',
+       429 +                          'placeholder' => 'Évaluation de la présence des annexes',
+       430 +                          'is_required' => true,
+       431 +                          'default_value' => NULL,
+       432 +                          'isEvaluated' => true,
+       433 +                          'type_champ' => 'radio',
+       434 +                          'meta_options' => [
+       435 +                              'configs' => [
+       436 +                                  'options' => [
+       437 +                                      [
+       438 +                                          'label' => 'Oui',
+       439 +                                          'value' => 'oui',
+       440 +                                          'description' => 'Toutes les annexes nécessaires sont présentes',
+       441 +                                      ],
+       442 +                                      [
+       443 +                                          'label' => 'Non',
+       444 +                                          'value' => 'non',
+       445 +                                          'description' => 'Les annexes sont absentes ou incomplètes',
+       446 +                                      ],
+       447 +                                  ],
+       448 +                              ],
+       449 +                              'conditions' => [
+       450 +                                  'disable' => false,
+       451 +                                  'visible' => true,
+       452 +                                  'conditions' => [],
+       453 +                              ],
+       454 +                              'validations_rules' => [
+       455 +                                  'in' => ['non', 'oui'],
+       456 +                              ],
+       457 +                          ],
+       458 +                      ],
+       459 +                      [
+       460 +                          'element_type' => 'field',
+       461 +                          'ordre_affichage' => 3,
+       462 +                          'label' => 'Tous les aspects de l\'analyse de faisabilité mentionnés dans les TDR/cahier de charge ont-ils été abordés de manière adéquate ?',
+       463 +                          'info' => 'Vérifier si le rapport couvre tous les aspects des termes de référence avec une profondeur d\'analyse suffisante.',
+       464 +                          'key' => 'conformite_tdr',
+       465 +                          'attribut' => 'conformite_tdr',
+       466 +                          'placeholder' => 'Évaluation de la conformité aux TDR',
+       467 +                          'is_required' => true,
+       468 +                          'default_value' => NULL,
+       469 +                          'isEvaluated' => true,
+       470 +                          'type_champ' => 'radio',
+       471 +                          'meta_options' => [
+       472 +                              'configs' => [
+       473 +                                  'options' => [
+       474 +                                      [
+       475 +                                          'label' => 'Oui',
+       476 +                                          'value' => 'oui',
+       477 +                                          'description' => 'Tous les aspects des TDR sont abordés de manière adéquate',
+       478 +                                      ],
+       479 +                                      [
+       480 +                                          'label' => 'Non',
+       481 +                                          'value' => 'non',
+       482 +                                          'description' => 'Des aspects des TDR ne sont pas abordés ou sont superficiels',
+       483 +                                      ],
+       484 +                                  ],
+       485 +                              ],
+       486 +                              'conditions' => [
+       487 +                                  'disable' => false,
+       488 +                                  'visible' => true,
+       489 +                                  'conditions' => [],
+       490 +                              ],
+       491 +                              'validations_rules' => [
+       492 +                                  'in' => ['non', 'oui'],
+       493 +                              ],
+       494 +                          ],
+       495 +                      ],
+       496 +                  ],
+       497 +              ],
+       498 +              [
+       499 +                  'element_type' => 'section',
+       500 +                  'ordre_affichage' => 5,
+       501 +                  'key' => 'section-exigences-juridiques',
+       502 +                  'intitule' => 'Conformité aux exigences du cadre juridique',
+       503 +                  'description' => 'Vérification de la présence des éléments requis par le décret',
+       504 +                  'type' => 'formulaire',
+       505 +                  'elements' => [
+       506 +                      [
+       507 +                          'element_type' => 'field',
+       508 +                          'ordre_affichage' => 1,
+       509 +                          'label' => 'Le rapport présente-t-il un modèle de financement et une programmation financière sur la durée de vie du projet ?',
+       510 +                          'info' => 'Conformément au décret, vérifier la présence d\'un modèle de financement détaillé et d\'une programmation financière.',
+       511 +                          'key' => 'modele_financement_programmation',
+       512 +                          'attribut' => 'modele_financement_programmation',
+       513 +                          'placeholder' => 'Évaluation du modèle de financement',
+       514 +                          'is_required' => true,
+       515 +                          'default_value' => NULL,
+       516 +                          'isEvaluated' => true,
+       517 +                          'type_champ' => 'radio',
+       518 +                          'meta_options' => [
+       519 +                              'configs' => [
+       520 +                                  'options' => [
+       521 +                                      [
+       522 +                                          'label' => 'Oui',
+       523 +                                          'value' => 'oui',
+       524 +                                          'description' => 'Un modèle de financement complet est présenté',
+       525 +                                      ],
+       526 +                                      [
+       527 +                                          'label' => 'Non',
+       528 +                                          'value' => 'non',
+       529 +                                          'description' => 'Le modèle de financement est absent ou inadéquat',
+       530 +                                      ],
+       531 +                                  ],
+       532 +                              ],
+       533 +                              'conditions' => [
+       534 +                                  'disable' => false,
+       535 +                                  'visible' => true,
+       536 +                                  'conditions' => [],
+       537 +                              ],
+       538 +                              'validations_rules' => [
+       539 +                                  'in' => ['non', 'oui'],
+       540 +                              ],
+       541 +                          ],
+       542 +                      ],
+       543 +                      [
+       544 +                          'element_type' => 'field',
+       545 +                          'ordre_affichage' => 2,
+       546 +                          'label' => 'Le rapport inclut-il une estimation des dépenses fiscales ?',
+       547 +                          'info' => 'Vérifier la présence d\'une estimation détaillée des dépenses fiscales, conformément aux exigences réglementaires.',
+       548 +                          'key' => 'estimation_depenses_fiscales',
+       549 +                          'attribut' => 'estimation_depenses_fiscales',
+       550 +                          'placeholder' => 'Évaluation de l\'estimation des dépenses fiscales',
+       551 +                          'is_required' => true,
+       552 +                          'default_value' => NULL,
+       553 +                          'isEvaluated' => true,
+       554 +                          'type_champ' => 'radio',
+       555 +                          'meta_options' => [
+       556 +                              'configs' => [
+       557 +                                  'options' => [
+       558 +                                      [
+       559 +                                          'label' => 'Oui',
+       560 +                                          'value' => 'oui',
+       561 +                                          'description' => 'Une estimation des dépenses fiscales est incluse',
+       562 +                                      ],
+       563 +                                      [
+       564 +                                          'label' => 'Non',
+       565 +                                          'value' => 'non',
+       566 +                                          'description' => 'L\'estimation des dépenses fiscales est absente',
+       567 +                                      ],
+       568 +                                  ],
+       569 +                              ],
+       570 +                              'conditions' => [
+       571 +                                  'disable' => false,
+       572 +                                  'visible' => true,
+       573 +                                  'conditions' => [],
+       574 +                              ],
+       575 +                              'validations_rules' => [
+       576 +                                  'in' => ['non', 'oui'],
+       577 +                              ],
+       578 +                          ],
+       579 +                      ],
+       580 +                      [
+       581 +                          'element_type' => 'field',
+       582 +                          'ordre_affichage' => 3,
+       583 +                          'label' => 'Le rapport présente-t-il une évaluation sociale intégrant la dimension genre ?',
+       584 +                          'info' => 'Vérifier la présence d\'une évaluation sociale analysant les impacts sur les différents groupes, avec attention à la dimension genre.',
+       585 +                          'key' => 'evaluation_sociale_genre',
+       586 +                          'attribut' => 'evaluation_sociale_genre',
+       587 +                          'placeholder' => 'Évaluation sociale et genre',
+       588 +                          'is_required' => true,
+       589 +                          'default_value' => NULL,
+       590 +                          'isEvaluated' => true,
+       591 +                          'type_champ' => 'radio',
+       592 +                          'meta_options' => [
+       593 +                              'configs' => [
+       594 +                                  'options' => [
+       595 +                                      [
+       596 +                                          'label' => 'Oui',
+       597 +                                          'value' => 'oui',
+       598 +                                          'description' => 'Une évaluation sociale intégrant le genre est présentée',
+       599 +                                      ],
+       600 +                                      [
+       601 +                                          'label' => 'Non',
+       602 +                                          'value' => 'non',
+       603 +                                          'description' => 'L\'évaluation sociale ou la dimension genre est absente',
+       604 +                                      ],
+       605 +                                  ],
+       606 +                              ],
+       607 +                              'conditions' => [
+       608 +                                  'disable' => false,
+       609 +                                  'visible' => true,
+       610 +                                  'conditions' => [],
+       611 +                              ],
+       612 +                              'validations_rules' => [
+       613 +                                  'in' => ['non', 'oui'],
+       614 +                              ],
+       615 +                          ],
+       616 +                      ],
+       617 +                      [
+       618 +                          'element_type' => 'field',
+       619 +                          'ordre_affichage' => 4,
+       620 +                          'label' => 'Le rapport inclut-il une analyse de sensibilité et de vulnérabilité face au changement climatique ?',
+       621 +                          'info' => 'Vérifier la présence d\'une analyse climatique incluant des mesures d\'adaptation et de résilience.',
+       622 +                          'key' => 'analyse_changement_climatique',
+       623 +                          'attribut' => 'analyse_changement_climatique',
+       624 +                          'placeholder' => 'Analyse climatique',
+       625 +                          'is_required' => true,
+       626 +                          'default_value' => NULL,
+       627 +                          'isEvaluated' => true,
+       628 +                          'type_champ' => 'radio',
+       629 +                          'meta_options' => [
+       630 +                              'configs' => [
+       631 +                                  'options' => [
+       632 +                                      [
+       633 +                                          'label' => 'Oui',
+       634 +                                          'value' => 'oui',
+       635 +                                          'description' => 'Une analyse de sensibilité climatique est présentée',
+       636 +                                      ],
+       637 +                                      [
+       638 +                                          'label' => 'Non',
+       639 +                                          'value' => 'non',
+       640 +                                          'description' => 'L\'analyse climatique est absente ou insuffisante',
+       641 +                                      ],
+       642 +                                  ],
+       643 +                              ],
+       644 +                              'conditions' => [
+       645 +                                  'disable' => false,
+       646 +                                  'visible' => true,
+       647 +                                  'conditions' => [],
+       648 +                              ],
+       649 +                              'validations_rules' => [
+       650 +                                  'in' => ['non', 'oui'],
+       651 +                              ],
+       652 +                          ],
+       653 +                      ],
+       654 +                      [
+       655 +                          'element_type' => 'field',
+       656 +                          'ordre_affichage' => 5,
+       657 +                          'label' => 'Le rapport présente-t-il une analyse des risques associés au projet d\'investissement public ?',
+       658 +                          'info' => 'Vérifier la présence d\'une analyse complète des risques : identification, évaluation, mesures d\'atténuation, plan de gestion.',
+       659 +                          'key' => 'analyse_risques',
+       660 +                          'attribut' => 'analyse_risques',
+       661 +                          'placeholder' => 'Analyse des risques',
+       662 +                          'is_required' => true,
+       663 +                          'default_value' => NULL,
+       664 +                          'isEvaluated' => true,
+       665 +                          'type_champ' => 'radio',
+       666 +                          'meta_options' => [
+       667 +                              'configs' => [
+       668 +                                  'options' => [
+       669 +                                      [
+       670 +                                          'label' => 'Oui',
+       671 +                                          'value' => 'oui',
+       672 +                                          'description' => 'Une analyse complète des risques est présentée',
+       673 +                                      ],
+       674 +                                      [
+       675 +                                          'label' => 'Non',
+       676 +                                          'value' => 'non',
+       677 +                                          'description' => 'L\'analyse des risques est absente ou incomplète',
+       678 +                                      ],
+       679 +                                  ],
+       680 +                              ],
+       681 +                              'conditions' => [
+       682 +                                  'disable' => false,
+       683 +                                  'visible' => true,
+       684 +                                  'conditions' => [],
+       685 +                              ],
+       686 +                              'validations_rules' => [
+       687 +                                  'in' => ['non', 'oui'],
+       688 +                              ],
+       689 +                          ],
+       690 +                      ],
+       691 +                      [
+       692 +                          'element_type' => 'field',
+       693 +                          'ordre_affichage' => 6,
+       694 +                          'label' => 'Le rapport inclut-il une politique de maintenance et d\'entretien des actifs avec estimation des coûts ?',
+       695 +                          'info' => 'Vérifier la présence d\'une politique de maintenance incluant responsabilités, procédures et estimation des coûts récurrents.',
+       696 +                          'key' => 'politique_maintenance',
+       697 +                          'attribut' => 'politique_maintenance',
+       698 +                          'placeholder' => 'Politique de maintenance',
+       699 +                          'is_required' => true,
+       700 +                          'default_value' => NULL,
+       701 +                          'isEvaluated' => true,
+       702 +                          'type_champ' => 'radio',
+       703 +                          'meta_options' => [
+       704 +                              'configs' => [
+       705 +                                  'options' => [
+       706 +                                      [
+       707 +                                          'label' => 'Oui',
+       708 +                                          'value' => 'oui',
+       709 +                                          'description' => 'Une politique de maintenance complète est présentée',
+       710 +                                      ],
+       711 +                                      [
+       712 +                                          'label' => 'Non',
+       713 +                                          'value' => 'non',
+       714 +                                          'description' => 'La politique de maintenance est absente ou inadéquate',
+       715 +                                      ],
+       716 +                                  ],
+       717 +                              ],
+       718 +                              'conditions' => [
+       719 +                                  'disable' => false,
+       720 +                                  'visible' => true,
+       721 +                                  'conditions' => [],
+       722 +                              ],
+       723 +                              'validations_rules' => [
+       724 +                                  'in' => ['non', 'oui'],
+       725 +                              ],
+       726 +                          ],
+       727 +                      ],
+       728 +                  ],
+       729 +              ],
+       730 +          ],
+       731 +      ];
+       732 +  
+       733 +      /**
+       734 +       * Run the database seeds.
+       735 +       */
+       736 +      public function run(): void
+       737 +      {
+       738 +          DB::beginTransaction();
+       739 +  
+       740 +          try {
+       741 +              // Vérifier si le document existe déjà
+       742 +              $existingDocument = Document::where('slug', $this->documentData['slug'])->first();
+       743 +  
+       744 +              if ($existingDocument) {
+       745 +                  $this->command->info('Le document "' . $this->documentData['slug'] . '" existe déjà. Mise à jour...');
+       746 +  
+       747 +                  // Mettre à jour le document existant
+       748 +                  $existingDocument->update([
+       749 +                      'nom' => $this->documentData['nom'],
+       750 +                      'description' => $this->documentData['description'],
+       751 +                      'type' => $this->documentData['type'],
+       752 +                      'evaluation_configs' => $this->documentData['evaluation_configs'],
+       753 +                      'guide_notation' => $this->documentData['guide_notation'],
+       754 +                      'accept_text' => $this->documentData['accept_text'],
+       755 +                      'forms' => $this->documentData['forms'],
+       756 +                  ]);
+       757 +  
+       758 +                  $document = $existingDocument;
+       759 +              } else {
+       760 +                  // Créer le document
+       761 +                  $document = Document::create([
+       762 +                      'nom' => $this->documentData['nom'],
+       763 +                      'slug' => $this->documentData['slug'],
+       764 +                      'description' => $this->documentData['description'],
+       765 +                      'type' => $this->documentData['type'],
+       766 +                      'evaluation_configs' => $this->documentData['evaluation_configs'],
+       767 +                      'guide_notation' => $this->documentData['guide_notation'],
+       768 +                      'accept_text' => $this->documentData['accept_text'],
+       769 +                      'forms' => $this->documentData['forms'],
+       770 +                  ]);
+       771 +  
+       772 +                  $this->command->info('Document "' . $this->documentData['slug'] . '" créé avec succès.');
+       773 +              }
+       774 +  
+       775 +              DB::commit();
+       776 +  
+       777 +              $this->command->info('Seeder CanevasAppreciationRapportFinaleSeeder exécuté avec succès!');
+       778 +              $this->command->info('Document ID: ' . $document->id);
+       779 +              $this->command->info('Total de critères: 16 questions réparties en 5 sections');
+       780 +          } catch (\Exception $e) {
+       781 +              DB::rollBack();
+       782 +              $this->command->error('Erreur lors du seeding: ' . $e->getMessage());
+       783 +              throw $e;
+       784 +          }
+       785 +      }
+       786 +  }
+
+> super bien gerer mais value attendu est oui et non pas valide, ni non_valide, ni passe, etc. 
+  ⎿  Session limit reached ∙ resets 10am
+     /upgrade to increase your usage limit.
+
+
+
