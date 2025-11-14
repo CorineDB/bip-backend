@@ -523,6 +523,9 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
                     $resultatsEvaluation
                 ));
 
+                // Dispatcher le job d'export d'appréciation
+                ExportAppreciationJob::dispatch($projet->id, 'tdr-faisabilite', auth()->id());
+
                 // Envoyer une notification
                 $this->envoyerNotificationEvaluation($projet, $resultatsEvaluation);
             }
@@ -3858,35 +3861,5 @@ class TdrFaisabiliteService extends BaseService implements TdrFaisabiliteService
         ]);
 
         return $fichierCree;
-    }
-
-    /**
-     * Dispatcher un job d'export d'appréciation TDR faisabilité en arrière-plan
-     *
-     * @param int $projetId
-     * @return array
-     */
-    public function dispatchAppreciationExportJob(int $projetId): array
-    {
-        try {
-            ExportAppreciationJob::dispatch($projetId, 'tdr-faisabilite', auth()->id());
-
-            return [
-                'success' => true,
-                'message' => "L'export de l'appréciation du TDR de faisabilité a été mis en file d'attente. Vous serez notifié une fois terminé.",
-                'job' => 'ExportAppreciationJob',
-                'type' => 'tdr-faisabilite'
-            ];
-        } catch (Exception $e) {
-            \Log::error("Erreur lors du dispatch du job d'export d'appréciation TDR faisabilité", [
-                'projet_id' => $projetId,
-                'error' => $e->getMessage()
-            ]);
-
-            return [
-                'success' => false,
-                'message' => "Erreur lors de la mise en file d'attente de l'export: " . $e->getMessage()
-            ];
-        }
     }
 }
