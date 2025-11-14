@@ -554,15 +554,22 @@ class ExternalApiService
         // L'évaluation climatique est contenue dans l'évaluation AMC
         $evalAmc = $projet->evaluationAMC->first();
 
+        $evalClimatique = $projet->ideeProjet->evaluationClimatiqueExporter;
+
+        $fichiersJoints = $evalClimatique ? [
+            'nomFichier' => $evalClimatique?->nom_stockage ?? 'fichier',
+            'lienFichier' => $this->genererLienFichier($evalClimatique),
+        ] : [];
+
         return [
             'scoreClimatique' => (float) ($projet->score_climatique ?? 0),
             'criteres' => collect(data_get($evalAmc, 'evaluation.climatique.evaluation_effectuer', []))->map(function ($critere) {
                 //dd($critere);
                 return [
-                    "nomCritere" => $critere["critere"]["intitule"],//"Capacité institutionnelle",
+                    "nomCritere" => $critere["critere"]["intitule"], //"Capacité institutionnelle",
                     //"nomCritere" => "Capacité institutionnelle",
-                    "notation" =>$critere["note"],
-                    "ponderation" =>$critere["critere"]["ponderation"]
+                    "notation" => $critere["note"],
+                    "ponderation" => $critere["critere"]["ponderation"]
                 ];
             })->toArray(),
 
@@ -573,7 +580,7 @@ class ExternalApiService
                     "ponderation" => $critere["critere"]["ponderation"]
                 ];
             })->toArray(),*/
-            'fichiersJoints' => $this->construireFichiersJoints($evalAmc),
+            'fichiersJoints' => array_merge($fichiersJoints, $this->construireFichiersJoints($evalAmc)),
         ];
     }
 
@@ -585,16 +592,23 @@ class ExternalApiService
         // Utiliser la relation comme dans ProjetResource
         $evalAmc = $projet->evaluationAMC->first();
 
+        $amcExporter = $projet->ideeProjet->AMCExporter;
+
+        $fichiersJoints = $amcExporter ? [
+            'nomFichier' => $amcExporter?->nom_stockage ?? 'fichier',
+            'lienFichier' => $this->genererLienFichier($amcExporter),
+        ] : [];
+
         return [
             'scoreAmc' => (float) ($projet->score_amc ?? 0),
             'criteres' => collect(data_get($evalAmc, 'evaluation.amc', []))->map(function ($critere) {
                 return [
-                    "nomCritere" => $critere["critere"]["intitule"],//"Capacité institutionnelle",
-                    "notation" => $critere["note"],//$critere["note"],
+                    "nomCritere" => $critere["critere"]["intitule"], //"Capacité institutionnelle",
+                    "notation" => $critere["note"], //$critere["note"],
                     "ponderation" => $critere["critere"]["ponderation"]
                 ];
             })->toArray(),
-            'fichiersJoints' => $this->construireFichiersJoints($evalAmc),
+            'fichiersJoints' => array_merge($fichiersJoints, $this->construireFichiersJoints($evalAmc))
         ];
     }
 
@@ -633,8 +647,8 @@ class ExternalApiService
         return [
             'resume' => "", //json_encode($noteConceptuelle?->note_conceptuelle) ?? '',
             'fichiersJoints' => $fichiersJoints,
-            'lienNoteConceptuelle' => null,
-            'lienAppreciationNote' => null,
+            'lienNoteConceptuelle' => $noteConceptuelle->noteConceptuelleExporter ? $this->genererLienFichier($noteConceptuelle->noteConceptuelleExporter) : null,
+            'lienAppreciationNote' => $noteConceptuelle->appreciationExporter ? $this->genererLienFichier($noteConceptuelle->appreciationExporter) : null,
             'decisionEtudeProfil' => $decisionEtudeProfil,
         ];
     }
@@ -698,7 +712,7 @@ class ExternalApiService
                 //'info_details_etude' => $projet?->info_etude_prefaisabilite,
             ],
             'lienTdr' => $premierFichierTdr ? $this->genererLienFichier($premierFichierTdr) : null,
-            'lienExcelAppreciation' => null,
+            'lienExcelAppreciation' => ($tdrPrefaisabilite && $tdrPrefaisabilite->fichierAppreciationTdr) ? $this->genererLienFichier($tdrPrefaisabilite->fichierAppreciationTdr) : null,
             'lienRapportTeleverse' => $premierFichierRapport ? $this->genererLienFichier($premierFichierRapport) : null,
             'lienProcesVerbal' => $premierFichierProcesVerbal ? $this->genererLienFichier($premierFichierProcesVerbal) : null,
             'lienListePresence' => $premierFichierListePresence ? $this->genererLienFichier($premierFichierListePresence) : null,
@@ -716,6 +730,7 @@ class ExternalApiService
     {
         // Utiliser les relations comme dans ProjetResource
         $tdrFaisabilite = $projet->tdrFaisabilite->first();
+
         $rapportFaisabilite = $projet->rapportFaisabilite->first();
 
         // Récupérer le premier fichier du TDR
@@ -765,7 +780,8 @@ class ExternalApiService
                 //'info_details_etude' => $projet?->info_etude_faisabilite,
             ],
             'lienTdr' => $premierFichierTdr ? $this->genererLienFichier($premierFichierTdr) : null,
-            'lienExcelAppreciation' => null,
+            //'lienExcelAppreciation' => null,
+            'lienExcelAppreciation' => ($tdrFaisabilite && $tdrFaisabilite->fichierAppreciationTdr) ? $this->genererLienFichier($tdrFaisabilite->fichierAppreciationTdr) : null,
             'lienRapportTeleverse' => $premierFichierRapport ? $this->genererLienFichier($premierFichierRapport) : null,
             'lienProcesVerbal' => $premierFichierProcesVerbal ? $this->genererLienFichier($premierFichierProcesVerbal) : null,
             'lienListePresence' => $premierFichierListePresence ? $this->genererLienFichier($premierFichierListePresence) : null,

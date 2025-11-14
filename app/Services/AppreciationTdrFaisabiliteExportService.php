@@ -2,34 +2,59 @@
 
 namespace App\Services;
 
+use App\Http\Resources\CanevasAppreciationTdrResource;
+use App\Http\Resources\DocumentResource;
 use App\Models\Projet;
-use App\Models\NoteConceptuelle;
+use App\Models\Tdr;
+use App\Repositories\DocumentRepository;
 use Illuminate\Support\Facades\Storage;
 
-class AppreciationNoteConceptuelleExportService
+class AppreciationTdrFaisabiliteExportService
 {
     /**
-     * Exporter l'appréciation de la note conceptuelle vers Excel
+     * Exporter l'appréciation du TDR de faisabilité vers Excel
      */
     public function export(Projet $projet): array
     {
-        $noteConceptuelle = $projet->noteConceptuelle;
+        $tdrFaisabilite = $projet->tdrFaisabilite->first();//tdrs()->where('type', 'faisabilite')->first();
 
-        if (!$noteConceptuelle) {
-            throw new \Exception("Le projet n'a pas de note conceptuelle");
+        if (!$tdrFaisabilite) {
+            throw new \Exception("Le projet n'a pas de TDR de faisabilité");
         }
 
-        // Récupérer le canevas et les données d'évaluation
-        $canevas = $noteConceptuelle->canevas_appreciation_note_conceptuelle;
-
         // Récupérer l'évaluation terminée ou en cours
-        $evaluationModel = $noteConceptuelle->evaluationTermine() ?? $noteConceptuelle->evaluationEnCours();
+        $evaluationModel = $tdrFaisabilite->evaluationFaisabiliteTerminer() ?? $tdrFaisabilite->evaluationFaisabiliteEnCours();
+
+        // Récupérer le canevas - d'abord depuis le TDR, puis depuis l'évaluation, puis depuis le modèle CanevasEvaluation
+        $canevas = $tdrFaisabilite->canevas_appreciation_tdr;
+
+        if (!$canevas && $evaluationModel && $evaluationModel->canevas) {
+            $canevas = $evaluationModel->canevas;
+        }
+
+        if (!$canevas) {
+
+            $canevasModel = (app(DocumentRepository::class)->getCanevasAppreciationTdrFaisabilite());
+
+            if ($canevasModel) {
+                $canevas = (new CanevasAppreciationTdrResource($canevasModel))->toArray(request());
+            }
+
+            elseif (!$canevasModel) {
+                throw new \Exception("Aucun canevas d'appréciation trouvé pour le TDR de faisabilité");
+            }
+        }
 
         // Si l'évaluation existe, récupérer les données
         $evaluations = [];
         $resultatsEvaluation = [];
         if ($evaluationModel) {
             $evaluationData = $evaluationModel->evaluation ?? [];
+
+            if (is_string($evaluationData)) {
+                $decoded = json_decode($evaluationData, true);
+                $evaluationData = is_array($decoded) ? $decoded : [];
+            }
             if (!empty($evaluationData['champs_evalues'])) {
                 foreach ($evaluationData['champs_evalues'] as $champ) {
                     $evaluations[$champ['attribut']] = [
@@ -41,18 +66,14 @@ class AppreciationNoteConceptuelleExportService
             $resultatsEvaluation = $evaluationModel->resultats_evaluation ?? [];
         }
 
-        if (!$canevas) {
-            throw new \Exception("Aucun canevas d'appréciation trouvé");
-        }
-
         // Préparer les données pour le script Python
-        $data = $this->prepareDataForExport($projet, $noteConceptuelle, $canevas, $evaluations, $resultatsEvaluation);
+        $data = $this->prepareDataForExport($projet, $tdrFaisabilite, $canevas, $evaluations, $resultatsEvaluation);
 
         // Chemins
-        $templatePath = base_path('canevas/O-5_Template_Appreciation_Clean.xlsx');
+        $templatePath = base_path('canevas/O-5_Template_Appreciation_Clean.xlsx'); // TODO: Use a specific template for TDR Faisabilite if available
         $pythonScript = base_path('scripts/generate_appreciation_excel.py');
         $identifiantBip = $projet->identifiant_bip ?? 'PROJET-' . $projet->id;
-        $storageName = 'appreciation_note_conceptuelle_' . $identifiantBip . '.xlsx';
+        $storageName = 'appreciation_tdr_faisabilite_' . $identifiantBip . '.xlsx';
         $tempPath = storage_path('app/temp/' . $storageName);
 
         if (!file_exists(dirname($tempPath))) {
@@ -78,7 +99,7 @@ class AppreciationNoteConceptuelleExportService
             exec($command, $output, $returnCode);
 
             if ($returnCode !== 0) {
-                throw new \Exception("Erreur lors de l'exécution du script Python: " . implode("\n", $output));
+                throw new \Exception("Erreur lors de l'exécution du script Python: " . implode("\n\n\n", $output));
             }
 
             // Lire le contenu du fichier généré
@@ -92,46 +113,41 @@ class AppreciationNoteConceptuelleExportService
 
             // Stocker le fichier final
             $hashedIdentifiantBip = hash('sha256', $identifiantBip);
-            $storagePath = "projets/{$hashedIdentifiantBip}/evaluation_ex_ante/etude_profil/note_conceptuelle";
+            $storagePath = "projets/{$hashedIdentifiantBip}/evaluation_ex_ante/etude_faisabilite/tdr";
+            Storage::makeDirectory($storagePath); // Ensure the directory exists
             $storedPath = "{$storagePath}/{$storageName}";
             Storage::disk('local')->put($storedPath, $fileContent);
 
             // Générer le hash d'accès
-            $hashAcces = $this->generateFileAccessHash($projet->hashed_id, $storageName, 'appreciation-note-conceptuelle');
+            $hashAcces = $this->generateFileAccessHash($projet->hashed_id, $storageName, 'appreciation-tdr-faisabilite');
 
-            // Vérifier et supprimer l'ancien export
-            $existingFile = $noteConceptuelle->fichiers()
-                ->where('categorie', 'appreciation_note_conceptuelle')
-                ->first();
-
-            if ($existingFile) {
-                //Storage::disk('local')->delete($existingFile->chemin);
-                //$existingFile->delete();
-            }
-
-            // Créer la nouvelle entrée dans la table fichiers
-            $fichier = $noteConceptuelle->fichiers()->create([
-                'nom_original' => $storageName,
-                'nom_stockage' => $storageName,
-                'chemin' => $storedPath,
-                'extension' => 'xlsx',
-                'mime_type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'taille' => $fileSize,
-                'hash_md5' => $md5Hash,
-                'hash_acces' => $hashAcces,
-                'description' => 'Export Excel - Appréciation de la Note Conceptuelle',
-                'metadata' => [
-                    'type_document' => 'appreciation-note-conceptuelle',
-                    'note_conceptuelle_id' => $noteConceptuelle->id,
-                    'projet_id' => $projet->id,
-                    'genere_par' => auth()->id() ?? 1, // System user as fallback
-                    'genere_le' => now(),
+            // Mettre à jour ou créer l'enregistrement dans la base de données
+            $fichier = $tdrFaisabilite->fichiers()->updateOrCreate(
+                [
+                    'categorie' => 'appreciation_tdr_faisabilite',
+                    'fichier_attachable_id' => $tdrFaisabilite->id,
+                    'fichier_attachable_type' => Tdr::class,
                 ],
-                'fichier_attachable_id' => $noteConceptuelle->id,
-                'fichier_attachable_type' => NoteConceptuelle::class,
-                'categorie' => 'appreciation_note_conceptuelle',
-                'uploaded_by' => auth()->id() ?? 1, // System user as fallback
-            ]);
+                [
+                    'nom_original' => $storageName,
+                    'nom_stockage' => $storageName,
+                    'chemin' => $storedPath,
+                    'extension' => 'xlsx',
+                    'mime_type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'taille' => $fileSize,
+                    'hash_md5' => $md5Hash,
+                    'hash_acces' => $hashAcces,
+                    'description' => 'Export Excel - Appréciation du TDR de Faisabilité',
+                    'metadata' => [
+                        'type_document' => 'appreciation-tdr-faisabilite',
+                        'tdr_faisabilite_id' => $tdrFaisabilite->id,
+                        'projet_id' => $projet->id,
+                        'genere_par' => auth()->id() ?? 1,
+                        'genere_le' => now(),
+                    ],
+                    'uploaded_by' => auth()->id() ?? 1,
+                ]
+            );
 
             return [
                 'success' => true,
@@ -153,7 +169,7 @@ class AppreciationNoteConceptuelleExportService
     /**
      * Préparer les données pour l'export Excel (format JSON)
      */
-    private function prepareDataForExport(Projet $projet, NoteConceptuelle $noteConceptuelle, array $canevas, array $evaluations, array $resultatsEvaluation): array
+    private function prepareDataForExport(Projet $projet, Tdr $tdrFaisabilite, array $canevas, array $evaluations, array $resultatsEvaluation): array
     {
         // Récupérer les informations du proposant/responsable
         $responsable = $projet->responsable;
@@ -174,8 +190,8 @@ class AppreciationNoteConceptuelleExportService
                 'titre_projet' => $projet->titre_projet ?? '',
                 'identifiant_bip' => $projet->identifiant_bip ?? '',
                 'cout_total' => $coutEstimatif,
-                'date_demarrage' => $noteConceptuelle->date_demarrage_etude ?? '',
-                'date_achevement' => $noteConceptuelle->date_achevement_etude ?? '',
+                'date_demarrage' => $tdrFaisabilite->date_demarrage_etude ?? '',
+                'date_achevement' => $tdrFaisabilite->date_achevement_etude ?? '',
             ],
             'accept_text' => $canevas['evaluation_configs']['accept_text'] ?? '',
             'proposant' => [
@@ -251,5 +267,4 @@ class AppreciationNoteConceptuelleExportService
     {
         return hash('sha256', $projetId . $storageName . $category . config('app.key'));
     }
-
 }

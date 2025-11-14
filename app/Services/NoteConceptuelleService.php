@@ -40,6 +40,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use App\Jobs\ExportNoteConceptuelleJob;
+use App\Jobs\ExportAppreciationJob;
 
 class NoteConceptuelleService extends BaseService implements NoteConceptuelleServiceInterface
 {
@@ -4947,5 +4949,65 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
         $this->removeSpecificFiles($fichierIdentique);
 
         return $fichierCree;
+    }
+
+    /**
+     * Dispatcher un job d'export de note conceptuelle en arrière-plan
+     *
+     * @param int $ideeProjetId
+     * @return array
+     */
+    public function dispatchExportJob(int $ideeProjetId): array
+    {
+        try {
+            ExportNoteConceptuelleJob::dispatch($ideeProjetId, auth()->id());
+
+            return [
+                'success' => true,
+                'message' => "L'export de la note conceptuelle a été mis en file d'attente. Vous serez notifié une fois terminé.",
+                'job' => 'ExportNoteConceptuelleJob'
+            ];
+        } catch (Exception $e) {
+            \Log::error("Erreur lors du dispatch du job d'export de note conceptuelle", [
+                'idee_projet_id' => $ideeProjetId,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => "Erreur lors de la mise en file d'attente de l'export: " . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Dispatcher un job d'export d'appréciation de note conceptuelle en arrière-plan
+     *
+     * @param int $projetId
+     * @return array
+     */
+    public function dispatchAppreciationExportJob(int $projetId): array
+    {
+        try {
+            ExportAppreciationJob::dispatch($projetId, 'note-conceptuelle', auth()->id());
+
+            return [
+                'success' => true,
+                'message' => "L'export de l'appréciation de la note conceptuelle a été mis en file d'attente. Vous serez notifié une fois terminé.",
+                'job' => 'ExportAppreciationJob',
+                'type' => 'note-conceptuelle'
+            ];
+        } catch (Exception $e) {
+            \Log::error("Erreur lors du dispatch du job d'export d'appréciation", [
+                'projet_id' => $projetId,
+                'type' => 'note-conceptuelle',
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => "Erreur lors de la mise en file d'attente de l'export: " . $e->getMessage()
+            ];
+        }
     }
 }

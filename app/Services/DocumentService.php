@@ -3000,4 +3000,162 @@ class DocumentService extends BaseService implements DocumentServiceInterface
             return $this->errorResponse($e);
         }
     }
+
+
+    /**
+     * Récupérer le canevas d'appréciation des notes conceptuelle
+     */
+    public function canevasAppreciationRapportExAnte(): JsonResponse
+    {
+        try {
+            // Récupérer le canevas d'appréciation des notes conceptuelle unique
+            $canevas = $this->repository->getCanevasAppreciationRapportFinale();
+
+            if (!$canevas) {
+                // Lancer le seeder si rien n’existe
+                Artisan::call('db:seed', [
+                    '--class' => 'Database\\Seeders\\CanevasAppreciationRapportFinaleSeeder',
+                ]);
+
+                // Recharger après le seed
+                $canevas = $this->repository->getCanevasAppreciationRapportFinale();
+
+                if (!$canevas) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Impossible de trouver ou créer le canevas d\'appréciation des rapports d\'evaluation ex-ante trouvé."
+                    ], 404);
+                }
+            }
+
+            return (new CanevasAppreciationTdrResource($canevas))
+                ->additional(['message' => 'Canevas d\'appréciation des rapports d\'evaluation ex-ante récupéré avec succès.'])
+                ->response()
+                ->setStatusCode(200);
+        } catch (Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas d'appréciation des notes conceptuelle
+     */
+    public function createOrUpdateCanevasAppreciationRapportFinal(array $data): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $canevas = $this->repository->getCanevasAppreciationRapportFinale();
+
+            $categorieDocument = CategorieDocument::firstOrCreate([
+                'slug' => 'canevas-appreciation-rapport-final'
+            ], [
+                'nom' => "Canevas d'appréciation des rapports d'evaluation ex-ante",
+                'slug' => 'canevas-appreciation-rapport-final',
+                'description' => 'Formulaire d\'appréciation rapports d\'evaluation ex-ante',
+                'format' => 'document'
+            ]);
+
+            $data['categorieId'] = $categorieDocument->id;
+            $data["type"] = "checklist";
+            $data["slug"] = "canevas-appreciation-rapport-final";
+
+            if ($canevas) {
+                // Mode mise à jour intelligente
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+                $canevas->fill($documentData);
+                $canevas->save();
+                $canevas->refresh();
+
+                // Récupérer la configuration existante ou créer une nouvelle
+                $evaluationConfigs = $canevas->evaluation_configs ?? [];
+
+                // Mettre à jour guide_notation si fourni
+                if (isset($data['guide_notation'])) {
+                    $evaluationConfigs['guide_notation'] = $data['guide_notation'];
+                }
+
+                // Mettre à jour accept_text si fourni
+                if (isset($data['accept_text'])) {
+                    $evaluationConfigs['accept_text'] = $data['accept_text'];
+                }
+
+                // Mettre à jour toute la structure evaluation_configs si fournie
+                if (isset($data['evaluation_configs'])) {
+                    // Fusionner avec la configuration existante
+                    $evaluationConfigs = array_replace_recursive($evaluationConfigs, $data['evaluation_configs']);
+                }
+
+                // Sauvegarder toute la configuration en une seule fois
+                if (isset($data['guide_notation']) || isset($data['accept_text']) || isset($data['evaluation_configs'])) {
+                    $canevas->update(['evaluation_configs' => $evaluationConfigs]);
+                }
+
+                // Collecter tous les IDs présents dans le payload
+                $payloadIds = $this->collectAllIds($data['forms'] ?? []);
+
+                // Traiter la structure forms avec mise à jour intelligente
+                $this->processFormsDataWithUpdate($canevas, $data['forms'] ?? [], $payloadIds);
+
+                // Regénérer la structure après les modifications
+                $this->structureService->generateAndSaveStructure($canevas);
+
+                DB::commit();
+
+                $canevas->refresh();
+
+                // Recharger avec relations
+                $canevas = $this->repository->getCanevasAppreciationRapportFinale();
+
+                return (new CanevasAppreciationTdrResource($canevas))
+                    ->additional(['message' => 'Canevas d\'appréciation des rapports d\'evaluation ex-ante mis à jour avec succès.'])
+                    ->response()
+                    ->setStatusCode(200);
+            } else {
+                // Mode création
+                $documentData = collect($data)->except(['forms', 'id'])->toArray();
+
+                // Construire evaluation_configs complet
+                $evaluationConfigs = [];
+
+                if (isset($data['guide_notation'])) {
+                    $evaluationConfigs['guide_notation'] = $data['guide_notation'];
+                }
+
+                if (isset($data['accept_text'])) {
+                    $evaluationConfigs['accept_text'] = $data['accept_text'];
+                }
+
+                if (isset($data['evaluation_configs'])) {
+                    // Fusionner avec les données déjà définies
+                    $evaluationConfigs = array_replace_recursive($evaluationConfigs, $data['evaluation_configs']);
+                }
+
+                if (!empty($evaluationConfigs)) {
+                    $documentData['evaluation_configs'] = $evaluationConfigs;
+                }
+
+                $document = $this->repository->create($documentData);
+
+                // Traiter la structure forms (création)
+                $this->processFormsData($document, $data['forms'] ?? []);
+
+                // Générer et sauvegarder la structure JSON
+                $this->structureService->generateAndSaveStructure($document);
+
+                DB::commit();
+
+                // Recharger avec relations
+                $document = $this->repository->getCanevasAppreciationRapportFinale();
+
+                return (new CanevasAppreciationTdrResource($document))
+                    ->additional(['message' => 'Canevas d\'appréciation des rapports d\'evaluation ex-ante créé avec succès.'])
+                    ->response()
+                    ->setStatusCode(201);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse($e);
+        }
+    }
 }

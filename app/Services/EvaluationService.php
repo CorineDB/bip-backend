@@ -46,6 +46,7 @@ use App\Http\Resources\idees_projet\IdeesProjetResource;
 use App\Http\Resources\UserResource;
 use App\Models\IdeeProjet;
 use App\Repositories\Contracts\CategorieCritereRepositoryInterface;
+use App\Jobs\ExportEvaluationJob;
 
 class EvaluationService extends BaseService implements EvaluationServiceInterface
 {
@@ -3779,6 +3780,38 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         } catch (Exception $e) {
             \Log::error('Erreur lors de la mise à jour du score de pertinence: ' . $e->getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Dispatcher un job d'export d'évaluation en arrière-plan
+     *
+     * @param int $ideeProjetId
+     * @param string $type Type d'évaluation (climatique ou pertinence)
+     * @return array
+     */
+    public function dispatchExportJob(int $ideeProjetId, string $type): array
+    {
+        try {
+            ExportEvaluationJob::dispatch($ideeProjetId, $type, auth()->id());
+
+            return [
+                'success' => true,
+                'message' => "L'export de l'évaluation {$type} a été mis en file d'attente. Vous serez notifié une fois terminé.",
+                'job' => 'ExportEvaluationJob',
+                'type' => $type
+            ];
+        } catch (Exception $e) {
+            \Log::error("Erreur lors du dispatch du job d'export d'évaluation", [
+                'idee_projet_id' => $ideeProjetId,
+                'type' => $type,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => "Erreur lors de la mise en file d'attente de l'export: " . $e->getMessage()
+            ];
         }
     }
 }

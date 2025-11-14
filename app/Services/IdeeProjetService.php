@@ -23,6 +23,7 @@ use App\Models\Organisation;
 use App\Models\User;
 use App\Models\Evaluation;
 use Illuminate\Support\Facades\Auth;
+use App\Jobs\ExportProjectPdfJob;
 
 class IdeeProjetService extends BaseService implements IdeeProjetServiceInterface
 {
@@ -1358,6 +1359,35 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             if ($e->getCode() != 23000 && !str_contains($e->getMessage(), 'Duplicate')) {
                 throw $e;
             }
+        }
+    }
+
+    /**
+     * Dispatcher un job d'export PDF en arrière-plan
+     *
+     * @param int $ideeProjetId
+     * @return array
+     */
+    public function dispatchExportPdfJob(int $ideeProjetId): array
+    {
+        try {
+            ExportProjectPdfJob::dispatch($ideeProjetId, auth()->id());
+
+            return [
+                'success' => true,
+                'message' => "L'export PDF a été mis en file d'attente. Vous serez notifié une fois terminé.",
+                'job' => 'ExportProjectPdfJob'
+            ];
+        } catch (Exception $e) {
+            \Log::error("Erreur lors du dispatch du job d'export PDF", [
+                'idee_projet_id' => $ideeProjetId,
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => "Erreur lors de la mise en file d'attente de l'export: " . $e->getMessage()
+            ];
         }
     }
 
