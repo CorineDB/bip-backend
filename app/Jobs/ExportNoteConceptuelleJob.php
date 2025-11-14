@@ -43,10 +43,17 @@ class ExportNoteConceptuelleJob implements ShouldQueue
 
             $ideeProjet = IdeeProjet::findOrFail($this->ideeProjetId);
 
-            $result = $exportService->export($ideeProjet);
+            $projet = $ideeProjet->projet;
+
+            if (!$projet) {
+                throw new \Exception("L'idée de projet {$this->ideeProjetId} n'a pas de projet associé");
+            }
+
+            $result = $exportService->exportNoteConceptuelle($projet);
 
             Log::info("Export note conceptuelle réussi", [
                 'idee_projet_id' => $this->ideeProjetId,
+                'projet_id' => $projet->id,
                 'file_name' => $result['file_name'] ?? null
             ]);
 

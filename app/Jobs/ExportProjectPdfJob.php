@@ -43,12 +43,13 @@ class ExportProjectPdfJob implements ShouldQueue
 
             $ideeProjet = IdeeProjet::findOrFail($this->ideeProjetId);
 
-            $result = $exportService->exportToPdf($ideeProjet);
+            // La méthode exportToPdf génère le fichier et le sauvegarde dans la base de données
+            // Elle retourne une Response (download) mais nous l'ignorons dans le contexte du job
+            $exportService->exportToPdf($ideeProjet);
 
             Log::info("Export PDF projet réussi", [
                 'idee_projet_id' => $this->ideeProjetId,
-                'file_path' => $result['path'] ?? null,
-                'size' => $result['size'] ?? null
+                'identifiant_bip' => $ideeProjet->identifiant_bip
             ]);
 
         } catch (\Exception $e) {

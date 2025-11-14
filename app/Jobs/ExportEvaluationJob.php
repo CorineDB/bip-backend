@@ -44,14 +44,37 @@ class ExportEvaluationJob implements ShouldQueue
                 'user_id' => $this->userId
             ]);
 
-            $ideeProjet = IdeeProjet::findOrFail($this->ideeProjetId);
+            // Charger le projet avec ses relations
+            $ideeProjet = IdeeProjet::with([
+                'ministere',
+                'evaluationPertinence',
+                'evaluationAMC'
+            ])->findOrFail($this->ideeProjetId);
 
-            $result = $exportService->export($ideeProjet, $this->type);
+            // Récupérer l'évaluation appropriée selon le type
+            $evaluation = match($this->type) {
+                'pertinence' => $ideeProjet->evaluationPertinence->first(),
+                'climatique' => $ideeProjet->evaluationAMC->first(),
+                'amc' => $ideeProjet->evaluationAMC->first(),
+                default => null
+            };
+
+            if (!$evaluation) {
+                throw new \Exception("Aucune évaluation de type '{$this->type}' trouvée pour le projet {$this->ideeProjetId}");
+            }
+
+            // Appeler la méthode appropriée selon le type
+            $storedPath = match($this->type) {
+                'pertinence' => $exportService->exportPertinenceToExcel($evaluation),
+                'climatique' => $exportService->exportClimatiqueToExcel($evaluation),
+                default => throw new \Exception("Type d'évaluation non supporté: {$this->type}")
+            };
 
             Log::info("Export évaluation réussi", [
                 'idee_projet_id' => $this->ideeProjetId,
                 'type' => $this->type,
-                'file_name' => $result['file_name'] ?? null
+                'identifiant_bip' => $ideeProjet->identifiant_bip,
+                'stored_path' => $storedPath
             ]);
 
         } catch (\Exception $e) {
