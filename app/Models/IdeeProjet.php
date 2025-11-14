@@ -10,6 +10,7 @@ use App\Traits\HashableId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class IdeeProjet extends Model
 {
@@ -153,8 +154,7 @@ class IdeeProjet extends Model
     {
         parent::boot();
 
-        static::deleting(function ($model) {
-        });
+        static::deleting(function ($model) {});
 
         static::saving(function ($model) {
             // Nettoyer les valeurs JSON vides avant la sauvegarde
@@ -168,10 +168,16 @@ class IdeeProjet extends Model
     protected function cleanJsonAttributes(): void
     {
         $jsonColumns = [
-            'decision', 'cout_estimatif_projet', 'ficheIdee',
-            'parties_prenantes', 'objectifs_specifiques',
-            'resultats_attendus', 'body_projet', 'canevas_appreciation_pertinence',
-            'canevas_climatique', 'canevas_amc'
+            'decision',
+            'cout_estimatif_projet',
+            'ficheIdee',
+            'parties_prenantes',
+            'objectifs_specifiques',
+            'resultats_attendus',
+            'body_projet',
+            'canevas_appreciation_pertinence',
+            'canevas_climatique',
+            'canevas_amc'
         ];
 
         foreach ($jsonColumns as $column) {
@@ -254,12 +260,11 @@ class IdeeProjet extends Model
     public function workflows()
     {
         return $this->morphMany(Workflow::class, 'projetable');
-
     }
 
     public function secteur()
     {
-        return $this->belongsTo(Secteur::class, 'secteurId')->where('type', "sous-secteur")->whereHas('parent', function($query){
+        return $this->belongsTo(Secteur::class, 'secteurId')->where('type', "sous-secteur")->whereHas('parent', function ($query) {
             $query->where('type', 'secteur');
         });
     }
@@ -337,41 +342,41 @@ class IdeeProjet extends Model
 
     public function orientations_strategique_png()
     {
-        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
+        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function ($query) {
             $query->where('slug', 'orientation-strategique-pnd');
         });
     }
 
     public function objectifs_strategique_png()
     {
-        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
+        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function ($query) {
             $query->where('slug', 'objectif-strategique-pnd');
         });
     }
     public function resultats_strategique_png()
     {
-        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
+        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function ($query) {
             $query->where('slug', 'resultats-strategique-pnd');
         });
     }
 
     public function axes_pag()
     {
-        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
+        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function ($query) {
             $query->where('slug', 'axe-pag');
         });
     }
 
     public function actions_pag()
     {
-        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
+        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function ($query) {
             $query->where('slug', 'action-pag');
         });
     }
 
     public function piliers_pag()
     {
-        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
+        return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function ($query) {
             $query->where('slug', 'pilier-pag');
         });
     }
@@ -403,8 +408,8 @@ class IdeeProjet extends Model
                 ->orderBy('created_at', 'desc')
                 ->first(); */
         return $this->morphOne(Evaluation::class, 'projetable')
-                    ->where('type_evaluation', 'pertinence')
-                    ->latestOfMany(); // ✅ équivalent à orderBy('created_at', 'desc')->first()
+            ->where('type_evaluation', 'pertinence')
+            ->latestOfMany(); // ✅ équivalent à orderBy('created_at', 'desc')->first()
 
     }
 
@@ -523,9 +528,9 @@ class IdeeProjet extends Model
             'orientations_strategiques' => 'orientations_strategique_png',
             'resultats_strategiques' => 'resultats_strategique_png',
             'objectifs_strategiques' => 'objectifs_strategique_png',
-            'piliers_pag'=>'piliers_pag',
-            'axes_pag'=>'axes_pag',
-            'actions_pag'=>'actions_pag',
+            'piliers_pag' => 'piliers_pag',
+            'axes_pag' => 'axes_pag',
+            'actions_pag' => 'actions_pag',
 
             'cibles' => 'cibles',
             'odds' => 'odds',
@@ -534,10 +539,10 @@ class IdeeProjet extends Model
             'types_financement' => Financement::class,*/
 
             // dans lieuxIntervention
-            'departements'=> 'lieuxIntervention', // dans lieuxIntervention est disponible via la cle departementId
-            'communes'=> 'lieuxIntervention',// dans lieuxIntervention est disponible via la cle communeId
-            'arrondissements' => 'lieuxIntervention',// dans lieuxIntervention est disponible via la cle arrondissementId
-            'villages' => 'lieuxIntervention',// dans lieuxIntervention est disponible via la cle villageId
+            'departements' => 'lieuxIntervention', // dans lieuxIntervention est disponible via la cle departementId
+            'communes' => 'lieuxIntervention', // dans lieuxIntervention est disponible via la cle communeId
+            'arrondissements' => 'lieuxIntervention', // dans lieuxIntervention est disponible via la cle arrondissementId
+            'villages' => 'lieuxIntervention', // dans lieuxIntervention est disponible via la cle villageId
         ];
     }
 
@@ -793,5 +798,65 @@ class IdeeProjet extends Model
         return $typesRacines->map(function ($typeRacine) {
             return $this->buildFinancementHierarchieDescendante($typeRacine);
         });
+    }
+
+    /**
+     * Obtenir les fichiers appreciation tdr
+     */
+    public function ficheIdeeProjet(): MorphOne
+    {
+        return $this->morphOne(
+            Fichier::class,
+            'fichierAttachable',
+            'fichier_attachable_type',
+            'fichier_attachable_id'
+        )
+            ->byCategorie('fiche_idee_projet')
+            ->latestOfMany();
+        return $this->fichiers()->orderBy("created_at", "desc")->byCategorie('fiche_idee_projet');
+    }
+
+    /**
+     * Obtenir les fichiers appreciation tdr
+     */
+    public function evaluationPertinenceExporter(): MorphOne
+    {
+        return $this->morphOne(
+            Fichier::class,
+            'fichierAttachable',
+            'fichier_attachable_type',
+            'fichier_attachable_id'
+        )
+            ->byCategorie('evaluation_pertinence')->orderBy("created_at", "desc");
+    }
+
+
+    /**
+     * Obtenir les fichiers appreciation tdr
+     */
+    public function evaluationClimatiqueExporter(): MorphOne
+    {
+        return $this->morphOne(
+            Fichier::class,
+            'fichierAttachable',
+            'fichier_attachable_type',
+            'fichier_attachable_id'
+        )
+            ->byCategorie('evaluation_climatique')->orderBy("created_at", "desc");
+    }
+
+
+    /**
+     * Obtenir les fichiers appreciation tdr
+     */
+    public function AMCExporter(): MorphOne
+    {
+        return $this->morphOne(
+            Fichier::class,
+            'fichierAttachable',
+            'fichier_attachable_type',
+            'fichier_attachable_id'
+        )
+            ->byCategorie('evaluation_amc')->orderBy("created_at", "desc");
     }
 }

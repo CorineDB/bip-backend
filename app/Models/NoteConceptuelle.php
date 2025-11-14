@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class NoteConceptuelle extends Model
 {
@@ -103,9 +104,9 @@ class NoteConceptuelle extends Model
     public function historique_des_notes_conceptuelle()
     {
         return $this->hasMany(NoteConceptuelle::class, 'projetId', 'projetId')
-                    ->where('id', '!=', $this->id)
-                    ->where('statut', '!=', 0)->whereHas("children")
-                    ->orderBy('created_at', 'desc');
+            ->where('id', '!=', $this->id)
+            ->where('statut', '!=', 0)->whereHas("children")
+            ->orderBy('created_at', 'desc');
     }
 
     /**
@@ -113,7 +114,7 @@ class NoteConceptuelle extends Model
      */
     public function historique_des_evaluations_notes_conceptuelle()
     {
-        return $this->historique_des_notes_conceptuelle()->with(["evaluations" => function($query){
+        return $this->historique_des_notes_conceptuelle()->with(["evaluations" => function ($query) {
             $query->where("type_evaluation", "note-conceptuelle")->where('statut', '=', 1)->whereHas("childEvaluations")->orderBy("created_at", "desc");
         }]);
     }
@@ -123,7 +124,7 @@ class NoteConceptuelle extends Model
      */
     public function historique_validation()
     {
-        return $this->historique_des_notes_conceptuelle()->with(["evaluations" => function($query){
+        return $this->historique_des_notes_conceptuelle()->with(["evaluations" => function ($query) {
             $query->where("type_evaluation", "validation-etude-profil")->where('statut', '=', 1)->whereHas("childEvaluations")->orderBy("created_at", "desc");
         }]);
     }
@@ -196,5 +197,35 @@ class NoteConceptuelle extends Model
         return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id')
             ->active()
             ->ordered();
+    }
+
+    /**
+     * Obtenir les fichiers appreciation tdr
+     */
+    public function appreciationExporter(): MorphOne
+    {
+        return $this->morphOne(
+            Fichier::class,
+            'fichierAttachable',
+            'fichier_attachable_type',
+            'fichier_attachable_id'
+        )
+            ->byCategorie('appreciation_note_conceptuelle')->orderBy("created_at", "desc");
+            //->latestOfMany();
+    }
+
+    /**
+     * Obtenir les fichiers appreciation tdr
+     */
+    public function noteConceptuelleExporter(): MorphOne
+    {
+        return $this->morphOne(
+            Fichier::class,
+            'fichierAttachable',
+            'fichier_attachable_type',
+            'fichier_attachable_id'
+        )
+            ->byCategorie('note-conceptuelle-export')->orderBy("created_at", "desc");
+            //->latestOfMany();
     }
 }

@@ -208,7 +208,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         });
 
         Route::apiResource('projets', ProjetController::class)->only(['index', 'show']);
-        
+
         // Routes pour filtrer les projets par maturité
         Route::get('/projets-selectionnable', [ProjetController::class, 'projetsEnCoursMaturation'])
             ->name('projets.selectionnable');
@@ -355,6 +355,11 @@ Route::group(['middleware' => ['cors', 'json.response'], 'as' => 'api.'], functi
         Route::prefix('canevas-appreciation-tdr-faisabilite')->group(function () {
             Route::get('', [DocumentController::class, 'canevasAppreciationTdrFaisabilite']);
             Route::post('', [DocumentController::class, 'createOrUpdateCanevasAppreciationTdrFaisabilite']);
+        });
+
+        Route::prefix('canevas-appreciation-rapport-ex-ante')->group(function () {
+            Route::get('', [DocumentController::class, 'canevasAppreciationRapportExAnte']);
+            Route::post('', [DocumentController::class, 'createOrUpdateCanevasAppreciationRapportExAnte']);
         });
 
         Route::prefix('canevas-checklist-suivi-rapport-prefaisabilite')->group(function () {

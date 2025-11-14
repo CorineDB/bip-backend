@@ -50,6 +50,18 @@ interface DocumentServiceInterface extends AbstractServiceInterface
      */
     public function createOrUpdateCanevasAppreciationTdrFaisabilite(array $data): JsonResponse;
 
+
+    /**
+     * Récupérer le canevas d'appréciation des rapports d'evaluation ex-ante
+     */
+    public function canevasAppreciationRapportFinal(): JsonResponse;
+
+    /**
+     * Créer ou mettre à jour le canevas d'appréciation des rapports d'evaluation ex-ante
+     */
+    public function createOrUpdateCanevasAppreciationRapportFinal(array $data): JsonResponse;
+
+
     /*
     public function canevasRedactionTdrPrefaisabilite(): JsonResponse;
 

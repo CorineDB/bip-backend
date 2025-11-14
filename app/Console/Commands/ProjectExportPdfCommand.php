@@ -60,7 +60,7 @@ class ProjectExportPdfCommand extends Command
             return 1;
         }
 
-        $this->info("Exportation du projet '{$projet->titre}' en cours...");
+        $this->info("Exportation du projet '{$projet->titre_projet}' en cours...");
 
         // Appeler exportToPdf qui gère maintenant le stockage automatiquement
         $this->projectExportService->exportToPdf($projet);

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Tdr extends Model
 {
@@ -184,11 +185,32 @@ class Tdr extends Model
         $typeEvaluation = match ($this->type) {
             'prefaisabilite' => 'tdr-prefaisabilite',
             'faisabilite' => 'tdr-faisabilite',
-            default => 'tdr-'.$this->type
+            default => 'tdr-' . $this->type
         };
 
         return $this->fichiers()->byCategorie($typeEvaluation);
         return $this->fichiers()->byCategorie('tdr-prefaisabilite');
+    }
+
+    /**
+     * Obtenir les fichiers appreciation tdr
+     */
+    public function fichierAppreciationTdr(): MorphOne
+    {
+        $typeEvaluation = match ($this->type) {
+            'prefaisabilite' => 'appreciation_tdr_prefaisabilite',
+            'faisabilite' => 'appreciation_tdr_faisabilite',
+            default => 'appreciation_tdr_' . $this->type
+        };
+
+        return $this->morphOne(
+            Fichier::class,
+            'fichierAttachable',
+            'fichier_attachable_type',
+            'fichier_attachable_id'
+        )
+            ->byCategorie($typeEvaluation)->orderBy("created_at", "desc");
+        return $this->fichiers()->orderBy("created_at", "desc")->byCategorie($typeEvaluation);
     }
 
     /**
@@ -216,10 +238,10 @@ class Tdr extends Model
     public function historique_des_tdrs_prefaisabilite()
     {
         return $this->hasMany(Tdr::class, 'projet_id', 'projet_id')
-                    //->where('id', '!=', $this->id)
-                    ->where('statut', '<>', 'brouillon')->whereHas("versions")
-                    ->where('type', 'prefaisabilite')
-                    ->orderBy('created_at', 'desc');
+            //->where('id', '!=', $this->id)
+            ->where('statut', '<>', 'brouillon')->whereHas("versions")
+            ->where('type', 'prefaisabilite')
+            ->orderBy('created_at', 'desc');
     }
 
     /**
@@ -227,7 +249,7 @@ class Tdr extends Model
      */
     public function historique_des_evaluations_tdrs_prefaisabilite()
     {
-        return $this->historique_des_tdrs_prefaisabilite()->with(["evaluations" => function($query){
+        return $this->historique_des_tdrs_prefaisabilite()->with(["evaluations" => function ($query) {
             $query->where("type_evaluation", "tdr-prefaisabilite")->where('statut', 1)->whereHas("childEvaluations")->orderBy("created_at", "desc");
         }]);
     }
@@ -238,11 +260,11 @@ class Tdr extends Model
     public function historique_des_tdrs_faisabilite()
     {
         return $this->hasMany(Tdr::class, 'projet_id', 'projet_id')
-                    /*->where('id', '!=', $this->id)
+            /*->where('id', '!=', $this->id)
                     ->where('statut', 1)*/
-                    ->where('statut', '<>', 'brouillon')->whereHas("versions")
-                    ->where('type', 'faisabilite')
-                    ->orderBy('created_at', 'desc');
+            ->where('statut', '<>', 'brouillon')->whereHas("versions")
+            ->where('type', 'faisabilite')
+            ->orderBy('created_at', 'desc');
     }
 
     /**
@@ -250,7 +272,7 @@ class Tdr extends Model
      */
     public function historique_des_evaluations_tdrs_faisabilite()
     {
-        return $this->historique_des_tdrs_faisabilite()->with(["evaluations" => function($query){
+        return $this->historique_des_tdrs_faisabilite()->with(["evaluations" => function ($query) {
             $query->where("type_evaluation", "tdr-faisabilite")->where('statut', 1)->whereHas("childEvaluations")->orderBy("created_at", "desc");
         }]);
     }
@@ -327,7 +349,7 @@ class Tdr extends Model
         $typeEvaluation = match ($this->type) {
             'prefaisabilite' => 'tdr-prefaisabilite',
             'faisabilite' => 'tdr-faisabilite',
-            default => 'tdr-'.$this->type
+            default => 'tdr-' . $this->type
         };
 
         return $this->evaluations()->evaluationTermine($typeEvaluation)->first();
@@ -342,7 +364,7 @@ class Tdr extends Model
         $typeEvaluation = match ($this->type) {
             'prefaisabilite' => 'tdr-prefaisabilite',
             'faisabilite' => 'tdr-faisabilite',
-            default => 'tdr-'.$this->type
+            default => 'tdr-' . $this->type
         };
 
         return $this->evaluations()->evaluationsEnCours($typeEvaluation)->first();
@@ -356,7 +378,7 @@ class Tdr extends Model
         $typeEvaluation = match ($this->type) {
             'prefaisabilite' => 'tdr-prefaisabilite',
             'faisabilite' => 'tdr-faisabilite',
-            default => 'tdr-'.$this->type
+            default => 'tdr-' . $this->type
         };
 
         return $this->evaluations()->evaluationParent($typeEvaluation)->first();
@@ -450,14 +472,14 @@ class Tdr extends Model
      */
     public function scopeSearch(Builder $query, string $search): Builder
     {
-        return $query->where(function($q) use ($search) {
+        return $query->where(function ($q) use ($search) {
             $q->where('resume', 'LIKE', "%{$search}%")
-              ->orWhere('commentaire_evaluation', 'LIKE', "%{$search}%")
-              ->orWhere('commentaire_validation', 'LIKE', "%{$search}%")
-              ->orWhere('commentaire_decision', 'LIKE', "%{$search}%")
-              ->orWhereHas('projet', function($subQ) use ($search) {
-                  $subQ->where('titre_projet', 'LIKE', "%{$search}%");
-              });
+                ->orWhere('commentaire_evaluation', 'LIKE', "%{$search}%")
+                ->orWhere('commentaire_validation', 'LIKE', "%{$search}%")
+                ->orWhere('commentaire_decision', 'LIKE', "%{$search}%")
+                ->orWhereHas('projet', function ($subQ) use ($search) {
+                    $subQ->where('titre_projet', 'LIKE', "%{$search}%");
+                });
         });
     }
 
@@ -469,7 +491,7 @@ class Tdr extends Model
     public function peutEtreSoumis(): bool
     {
         return $this->statut === 'brouillon' &&
-               !empty($this->resume);
+            !empty($this->resume);
     }
 
     /**

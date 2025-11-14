@@ -22,9 +22,27 @@ class ValiderRapportFinalRequest extends FormRequest
      */
     public function rules(): array
     {
+        $evaluer = $this->input('evaluer', true);
+
+        // Déterminer le nombre minimum et maximum de champs à évaluer
+        // Si evaluer = true : on doit évaluer AU MINIMUM tous les champs non-passés
+        // Si evaluer = false : on peut évaluer partiellement (brouillon)
+        $minChamps = $evaluer ? count($this->champsNonPasses) : 0;
+        $maxChamps = count($this->champs); // Maximum = tous les champs du canevas
+
         return [
+            'evaluer' => 'required|boolean',
+
+            'evaluations_champs' => 'required_unless:evaluer,0|array|min:' . $minChamps . '|max:' . $maxChamps,
+            'evaluations_champs.*.champ_id' => ['required_with:evaluations_champs', 'in:' . implode(',', $this->champsAEvaluer), new HashedExists(Champ::class)],
+            'evaluations_champs.*.appreciation' => ($evaluer ? 'required' : 'nullable') . '|in:' . implode(",", $this->appreciations),
+            'evaluations_champs.*.commentaire' => 'nullable|string|min:10',
+
+            // ✅ accept_term doit être "true" si est_soumise est true
+            'accept_term'               => 'required_unless:evaluer,0|boolean' . ($evaluer  ? '|accepted' : ''),
+
             'action' => 'required|string|in:valider,corriger',
-            'commentaire' => 'nullable|string|max:2000'
+            'commentaire' => 'nullable|string|max:2000',
         ];
     }
 

@@ -55,6 +55,7 @@ class ExportEvaluationCommand extends Command
         $evaluation = match($type) {
             'pertinence' => $project->evaluationPertinence->first(),
             'climatique' => $project->evaluationAMC->first(),
+            'amc' => $project->evaluationAMC->first(),
             default => null
         };
 

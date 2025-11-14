@@ -1110,7 +1110,7 @@ class NoteConceptuelleService extends BaseService implements NoteConceptuelleSer
                 ));
 
                 // Dispatcher le job d'export si l'évaluation est finalisée
-                if ($evaluationEnCours->statut == 1) {
+                if ($data['evaluer']) {
                     ExportAppreciationJob::dispatch($noteConceptuelle->projet->id, 'note-conceptuelle', auth()->id());
                 }
             }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\documents\canevas_evaluation_ex_ante\CreateOrUpdateCanevasAppreciationRapportExAnteRequest;
 use App\Http\Requests\documents\canevas_redaction_note_conceptuelle\CreateOrUpdateCanevasAppreciationNoteConceptuelleRequest;
 use App\Http\Requests\documents\CreateOrUpdateCanevasAppreciationTdrRequest;
 use App\Http\Requests\documents\CreateOrUpdateCanevasAppreciationTdrPrefaisabiliteRequest;
@@ -663,5 +664,21 @@ class DocumentController extends Controller
     public function createOrUpdateCanevasAppreciationNoteConceptuelle(CreateOrUpdateCanevasAppreciationNoteConceptuelleRequest $request): JsonResponse
     {
         return $this->service->createOrUpdateCanevasAppreciationNoteConceptuelle($request->all());
+    }
+
+    /**
+     * Récupérer le canevas d'appréciation des rapports d'evaluation ex-ante
+     */
+    public function canevasAppreciationRapportExAnte(): JsonResponse
+    {
+        return $this->service->canevasAppreciationRapportExAnte();
+    }
+
+    /**
+     * Créer ou mettre à jour le canevas d'appréciation des rapports d'evaluation ex-ante
+     */
+    public function createOrUpdateCanevasAppreciationRapportExAnte(CreateOrUpdateCanevasAppreciationRapportExAnteRequest $request): JsonResponse
+    {
+        return $this->service->createOrUpdateCanevasAppreciationRapportExAnte($request->all());
     }
 }
