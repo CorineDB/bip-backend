@@ -172,6 +172,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $this->enregistrerWorkflow($ideeProjet, StatutIdee::ANALYSE);
                 $this->enregistrerDecision($ideeProjet, 'Validation par Responsable hiérarchique', $attributs["commentaire"] ?? 'Idée validée pour analyse multicritères');
 
+                // Dispatcher les jobs d'export des évaluations
+                ExportEvaluationJob::dispatch($ideeProjetId, 'climatique', auth()->id());
+                ExportEvaluationJob::dispatch($ideeProjetId, 'pertinence', auth()->id());
+
                 // CODE COMMENTÉ - Redondant car l'évaluation climatique est déjà finalisée (statut = 1)
                 // et le champ evaluation est maintenant correctement rempli par soumettreEvaluationClimatique()
                 // et finalizeEvaluation(). Cette mise à jour n'est plus nécessaire.
@@ -843,9 +847,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'valider_le' => now(),
                 'statut' => 1  // Marquer comme terminée
             ]);
-
-            // Dispatcher le job d'export de l'évaluation climatique
-            ExportEvaluationJob::dispatch($ideeProjet->id, 'climatique', auth()->id());
 
             // Notifier le Responsable que l'évaluation climatique est terminée
             $responsable = $ideeProjet->responsable;
@@ -3285,9 +3286,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'date_fin_evaluation'   => now(),
                 'statut' => 1  // Marquer comme terminée
             ]);
-
-            // Dispatcher le job d'export de l'évaluation de pertinence
-            ExportEvaluationJob::dispatch($ideeProjet->id, 'pertinence', auth()->id());
 
             // Notifier le Responsable que l'évaluation de pertinence est terminée
             // Note: Ajouter les notifications pour pertinence si nécessaire
