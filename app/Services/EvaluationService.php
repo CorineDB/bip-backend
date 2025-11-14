@@ -844,6 +844,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'statut' => 1  // Marquer comme terminée
             ]);
 
+            // Dispatcher le job d'export de l'évaluation climatique
+            ExportEvaluationJob::dispatch($ideeProjet->id, 'climatique', auth()->id());
+
             // Notifier le Responsable que l'évaluation climatique est terminée
             $responsable = $ideeProjet->responsable;
             if ($responsable) {
@@ -3282,6 +3285,9 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 'date_fin_evaluation'   => now(),
                 'statut' => 1  // Marquer comme terminée
             ]);
+
+            // Dispatcher le job d'export de l'évaluation de pertinence
+            ExportEvaluationJob::dispatch($ideeProjet->id, 'pertinence', auth()->id());
 
             // Notifier le Responsable que l'évaluation de pertinence est terminée
             // Note: Ajouter les notifications pour pertinence si nécessaire
