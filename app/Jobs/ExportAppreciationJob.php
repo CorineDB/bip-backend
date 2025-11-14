@@ -6,6 +6,7 @@ use App\Models\Projet;
 use App\Services\AppreciationNoteConceptuelleExportService;
 use App\Services\AppreciationTdrFaisabiliteExportService;
 use App\Services\AppreciationTdrPrefaisabiliteExportService;
+use App\Services\AppreciationRapportFinalExportService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -59,7 +60,8 @@ class ExportAppreciationJob implements ShouldQueue
     public function handle(
         AppreciationNoteConceptuelleExportService $noteConceptuelleService,
         AppreciationTdrFaisabiliteExportService $tdrFaisabiliteService,
-        AppreciationTdrPrefaisabiliteExportService $tdrPrefaisabiliteService
+        AppreciationTdrPrefaisabiliteExportService $tdrPrefaisabiliteService,
+        AppreciationRapportFinalExportService $rapportFinalService
     ): void
     {
         try {
@@ -92,6 +94,17 @@ class ExportAppreciationJob implements ShouldQueue
                         throw new \Exception("Le projet n'a pas de TDR de préfaisabilité");
                     }
                     $result = $tdrPrefaisabiliteService->export($projet);
+                    break;
+
+                case 'rapport-final-prefaisabilite':
+                    $rapport = \App\Models\Rapport::where('projet_id', $projet->id)
+                        ->where('type', 'evaluation_ex_ante')
+                        ->latest('created_at')
+                        ->first();
+                    if (!$rapport) {
+                        throw new \Exception("Le projet n'a pas de rapport d'évaluation ex-ante");
+                    }
+                    $result = $rapportFinalService->export($projet);
                     break;
 
                 default:
