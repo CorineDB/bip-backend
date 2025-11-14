@@ -1181,6 +1181,9 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                 if ($idee->est_coherent === true && $idee->statut == StatutIdee::BROUILLON) {
                     $this->creerEvaluationClimatique($idee);
                 }
+
+                // Dispatcher le job d'export PDF de la fiche
+                ExportProjectPdfJob::dispatch($idee->id, auth()->id());
             }
 
 
