@@ -15,8 +15,12 @@ class ProjectExportService
 {
     /**
      * Export en PDF avec table des matières
+     *
+     * @param IdeeProjet $project
+     * @param bool $returnResponse Si true, retourne une Response de téléchargement. Si false, retourne un array avec les infos du fichier.
+     * @return \Illuminate\Http\Response|array
      */
-    public function exportToPdf(IdeeProjet $project)
+    public function exportToPdf(IdeeProjet $project, bool $returnResponse = true)
     {
         $data = [
             'project' => $project,
@@ -76,7 +80,7 @@ class ProjectExportService
         }
 
         // Créer l'entrée dans la table fichiers
-        $project->fichiers()->create([
+        $fichier = $project->fichiers()->create([
             'nom_original' => "fiche_idee_projet_{$identifiantBip}.pdf",
             'nom_stockage' => $storageName,
             'chemin' => $storedPath,
@@ -105,7 +109,34 @@ class ProjectExportService
             'is_active' => true
         ]);
 
+        // Si appelé depuis un job, retourner un array avec les infos
+        if (!$returnResponse) {
+            return [
+                'success' => true,
+                'fichier_id' => $fichier->id,
+                'storage_path' => $storedPath,
+                'file_name' => $storageName,
+                'size' => $fileSize,
+                'size_formatted' => $this->formatBytes($fileSize),
+                'md5' => $hashMd5,
+            ];
+        }
+
+        // Sinon, retourner la Response de téléchargement
         return $pdf->download("fiche_projet_{$project->identifiant_bip}.pdf");
+    }
+
+    /**
+     * Formater les bytes en taille lisible
+     */
+    private function formatBytes(int $bytes, int $precision = 2): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+        $bytes /= (1 << (10 * $pow));
+        return round($bytes, $precision) . ' ' . $units[$pow];
     }
 
     /**
