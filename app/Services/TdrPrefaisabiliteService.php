@@ -2638,6 +2638,104 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     }
 
     /**
+     * Créer une évaluation pour le rapport final
+     */
+    private function creerEvaluationRapportFinal(\App\Models\Rapport $rapport, array $data): \App\Models\Evaluation
+    {
+        // Récupérer une évaluation en cours existante ou en créer une nouvelle pour ce Rapport
+        $evaluationEnCours = $rapport->evaluations()
+            ->where('type_evaluation', 'validation-final-evaluation-ex-ante')
+            ->where('statut', 0) // En cours
+            ->first();
+
+        if (!$evaluationEnCours) {
+            $evaluationData = [
+                'type_evaluation' => 'validation-final-evaluation-ex-ante',
+                'evaluateur_id' => auth()->id(),
+                'evaluation' => [],
+                'resultats_evaluation' => [],
+                'date_debut_evaluation' => now(),
+                'date_fin_evaluation' => null,
+                'statut' => 0, // En cours
+                'id_evaluation' => null // Pas de parent direct pour l'instant
+            ];
+            $evaluationEnCours = $rapport->evaluations()->create($evaluationData);
+        }
+
+        // Enregistrer les appréciations pour chaque champ
+        if (isset($data['evaluations_champs'])) {
+            $syncData = [];
+            foreach ($data['evaluations_champs'] as $evaluationChamp) {
+                $syncData[$evaluationChamp['champ_id']] = [
+                    'note' => $evaluationChamp['appreciation'],
+                    'date_note' => now(),
+                    'commentaires' => $evaluationChamp['commentaire'] ?? null,
+                ];
+            }
+            $evaluationEnCours->champs_evalue()->syncWithoutDetaching($syncData);
+        }
+
+        // Enregistrer le commentaire global si fourni
+        if (isset($data['commentaire'])) {
+            $evaluationEnCours->fill(['commentaire' => $data['commentaire']]);
+            $evaluationEnCours->save();
+        }
+
+        $evaluationEnCours->refresh();
+        return $evaluationEnCours;
+    }
+
+    /**
+     * Calculer le résultat d'appréciation du rapport final (oui/non)
+     */
+    private function calculerResultatAppreciationRapportFinal(\App\Models\Evaluation $evaluation, array $data): array
+    {
+        $evaluationsChamps = $data['evaluations_champs'] ?? [];
+
+        $nombreOui = 0;
+        $nombreNon = 0;
+        $totalChamps = count($evaluationsChamps);
+
+        foreach ($evaluationsChamps as $evalChamp) {
+            $appreciation = $evalChamp['appreciation'] ?? null;
+            if ($appreciation === 'oui') {
+                $nombreOui++;
+            } elseif ($appreciation === 'non') {
+                $nombreNon++;
+            }
+        }
+
+        // Règle: Si au moins un champ est "non", le résultat global est "non".
+        // Sinon, si tous les champs sont "oui", le résultat global est "oui".
+        if ($nombreNon > 0) {
+            return [
+                'resultat_global' => 'non',
+                'message_resultat' => 'Le rapport final n\'est pas validé. Des corrections sont nécessaires.',
+                'nombre_oui' => $nombreOui,
+                'nombre_non' => $nombreNon,
+                'total_champs' => $totalChamps
+            ];
+        } elseif ($nombreOui === $totalChamps && $totalChamps > 0) {
+            return [
+                'resultat_global' => 'oui',
+                'message_resultat' => 'Le rapport final est validé avec succès.',
+                'nombre_oui' => $nombreOui,
+                'nombre_non' => $nombreNon,
+                'total_champs' => $totalChamps
+            ];
+        } else {
+            // Cas où il n'y a pas de champs ou des appréciations manquantes
+            return [
+                'resultat_global' => 'non', // Par défaut, si incomplet, c'est non
+                'message_resultat' => 'Appréciation incomplète ou invalide.',
+                'nombre_oui' => $nombreOui,
+                'nombre_non' => $nombreNon,
+                'total_champs' => $totalChamps
+            ];
+        }
+    }
+
+    /**
      * Calculer le résultat d'évaluation selon les règles SFD-011
      */
     private function calculerResultatEvaluationTdr($evaluation, array $data): array
