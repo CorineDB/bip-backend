@@ -4,6 +4,7 @@ namespace App\Http\Resources\idees_projet;
 
 use App\Http\Resources\BaseApiResource;
 use App\Http\Resources\CibleResource;
+use App\Http\Resources\EvaluationResource;
 use App\Http\Resources\FinancementResource;
 use App\Http\Resources\LieuInterventionResource;
 use App\Http\Resources\OddResource;
@@ -130,6 +131,20 @@ class IdeeProjetResource extends BaseApiResource
             'programmes' => $this->programmes(),
 
             'lieux_intervention' => LieuInterventionResource::collection($this->lieuxIntervention),
+
+            // Dernières évaluations
+            'evaluation_climatique' => $this->whenLoaded('evaluationsClimatique', function() {
+                $latest = $this->evaluationsClimatique->sortByDesc('created_at')->first();
+                return $latest ? new EvaluationResource($latest) : null;
+            }),
+            'evaluation_pertinence' => $this->whenLoaded('evaluationsPertinence', function() {
+                $latest = $this->evaluationsPertinence->sortByDesc('created_at')->first();
+                return $latest ? new EvaluationResource($latest) : null;
+            }),
+            'evaluation_amc' => $this->whenLoaded('evaluationsAMC', function() {
+                $latest = $this->evaluationsAMC->sortByDesc('created_at')->first();
+                return $latest ? new EvaluationResource($latest) : null;
+            }),
 
             'types_intervention' => $this->whenLoaded('typesIntervention', function () {
                 return $this->typesIntervention->map(function ($type) {
