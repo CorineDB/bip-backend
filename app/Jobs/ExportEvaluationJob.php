@@ -102,7 +102,8 @@ class ExportEvaluationJob implements ShouldQueue
 
             $storedPath = match($this->type) {
                 'pertinence' => $exportService->exportPertinenceToExcel($evaluation),
-                'climatique', 'amc' => $exportService->exportClimatiqueToExcel($evaluation),
+                'climatique' => $exportService->exportClimatiqueToExcel($evaluation, 'climatique'),
+                'amc' => $exportService->exportClimatiqueToExcel($evaluation, 'amc'),
                 default => throw new \Exception("Type d'évaluation non supporté: {$this->type}")
             };
 
