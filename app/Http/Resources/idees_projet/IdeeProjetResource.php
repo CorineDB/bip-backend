@@ -133,18 +133,15 @@ class IdeeProjetResource extends BaseApiResource
             'lieux_intervention' => LieuInterventionResource::collection($this->lieuxIntervention),
 
             // Dernières évaluations
-            'evaluation_climatique' => $this->whenLoaded('evaluationsClimatique', function() {
-                $latest = $this->evaluationsClimatique->sortByDesc('created_at')->first();
-                return $latest ? new EvaluationResource($latest) : null;
-            }),
-            'evaluation_pertinence' => $this->whenLoaded('evaluationsPertinence', function() {
-                $latest = $this->evaluationsPertinence->sortByDesc('created_at')->first();
-                return $latest ? new EvaluationResource($latest) : null;
-            }),
-            'evaluation_amc' => $this->whenLoaded('evaluationsAMC', function() {
-                $latest = $this->evaluationsAMC->sortByDesc('created_at')->first();
-                return $latest ? new EvaluationResource($latest) : null;
-            }),
+            'evaluation_climatique' => $this->evaluationClimatique()->first()
+                ? new EvaluationResource($this->evaluationClimatique()->first())
+                : null,
+            'evaluation_pertinence' => $this->evaluationPertinence()->first()
+                ? new EvaluationResource($this->evaluationPertinence()->first())
+                : null,
+            'evaluation_amc' => $this->evaluationAMC()->first()
+                ? new EvaluationResource($this->evaluationAMC()->first())
+                : null,
 
             'types_intervention' => $this->whenLoaded('typesIntervention', function () {
                 return $this->typesIntervention->map(function ($type) {
