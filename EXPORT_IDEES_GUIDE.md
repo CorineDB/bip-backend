@@ -2,7 +2,7 @@
 
 Cette commande permet d'exporter automatiquement les fichiers (fiche, pertinence, climatique, AMC) pour les idées de projet existantes en dispatchant les jobs appropriés.
 
-**Important**: Par défaut, seules les IdeeProjet qui ont un **Projet associé** et dont le **statut est 'note_conceptuel'** sont exportées.
+**Important**: Par défaut, seules les IdeeProjet qui ont un **Projet associé** et dont le **statut est '03a_NoteConceptuel'** sont exportées.
 
 ## Commande
 
@@ -29,16 +29,16 @@ php artisan idees:export-files --ids=120,121,122
 ```
 
 ### `--statut=`
-Filtrer par statut (ex: analyse, validation, note_conceptuel).
+Filtrer par statut (ex: 01_Analyse, 02_Validation, 03a_NoteConceptuel).
 
-**Par défaut**: Si cette option n'est pas spécifiée, seules les IdeeProjet avec le statut 'note_conceptuel' sont exportées.
+**Par défaut**: Si cette option n'est pas spécifiée, seules les IdeeProjet avec le statut '03a_NoteConceptuel' sont exportées.
 
 **Exemple:**
 ```bash
 # Exporter uniquement les IdeeProjet en statut validation
-php artisan idees:export-files --statut=validation
+php artisan idees:export-files --statut=02_Validation
 
-# Sans option --statut, seules les IdeeProjet avec statut 'note_conceptuel' sont exportées
+# Sans option --statut, seules les IdeeProjet avec statut '03a_NoteConceptuel' sont exportées
 php artisan idees:export-files --limit=10
 ```
 
@@ -114,14 +114,14 @@ php artisan idees:export-files --limit=20 --types=fiche
 ### 4. Exporter les évaluations pour les idées en validation
 
 ```bash
-php artisan idees:export-files --statut=validation --types=pertinence --types=climatique
+php artisan idees:export-files --statut=02_Validation --types=pertinence --types=climatique
 ```
 
 **Résultat:**
 - Exporte uniquement pertinence et climatique
-- Pour toutes les idées au statut "validation"
+- Pour toutes les idées au statut "02_Validation"
 
-### 5. Exporter toutes les évaluations pour toutes les idées avec statut 'note_conceptuel'
+### 5. Exporter toutes les évaluations pour toutes les idées avec statut '03a_NoteConceptuel'
 
 ```bash
 php artisan idees:export-files
@@ -129,7 +129,7 @@ php artisan idees:export-files
 
 **Résultat:**
 - Exporte fiche + pertinence + climatique + AMC
-- Pour TOUTES les IdeeProjet qui ont un Projet associé et statut 'note_conceptuel'
+- Pour TOUTES les IdeeProjet qui ont un Projet associé et statut '03a_NoteConceptuel'
 - ⚠️ Attention: peut générer beaucoup de jobs!
 
 ### 6. Exporter pour plusieurs IDs spécifiques
@@ -191,17 +191,17 @@ php artisan queue:work
 2. **Ou exporter par statut:**
    ```bash
    # D'abord les idées en validation
-   php artisan idees:export-files --statut=validation
+   php artisan idees:export-files --statut=02_Validation
 
    # Puis les autres statuts
-   php artisan idees:export-files --statut=analyse
+   php artisan idees:export-files --statut=01_Analyse
    ```
 
 ## Notes importantes
 
 ### Filtrage par défaut
 - **Projet associé**: Seules les IdeeProjet qui ont un Projet associé sont exportées
-- **Statut**: Par défaut, seules les IdeeProjet avec statut 'note_conceptuel' sont exportées (sauf si --statut est spécifié)
+- **Statut**: Par défaut, seules les IdeeProjet avec statut '03a_NoteConceptuel' sont exportées (sauf si --statut est spécifié)
 - Utilisez --statut pour filtrer par un autre statut
 
 ### Évaluations exportées uniquement si terminées

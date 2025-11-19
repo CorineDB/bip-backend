@@ -19,7 +19,7 @@ class ExportIdeeProjetFilesCommand extends Command
     protected $signature = 'idees:export-files
                             {--limit= : Limiter le nombre d\'idées à traiter}
                             {--ids= : IDs spécifiques séparés par des virgules}
-                            {--statut= : Filtrer par statut (ex: analyse,validation,note_conceptuel)}
+                            {--statut= : Filtrer par statut (ex: 01_Analyse,02_Validation,03a_NoteConceptuel)}
                             {--dry-run : Mode test sans dispatcher les jobs}
                             {--types=* : Types d\'exports à effectuer (fiche,pertinence,climatique,amc). Par défaut: tous}
                             {--force : Forcer l\'export même si les fichiers existent déjà}';
@@ -80,13 +80,13 @@ class ExportIdeeProjetFilesCommand extends Command
             $this->info("🔍 Filtrage par IDs: " . implode(', ', $idArray));
         }
 
-        // Filtrer par statut si spécifié, sinon par défaut 'note_conceptuel'
+        // Filtrer par statut si spécifié, sinon par défaut '03a_NoteConceptuel'
         if ($statut) {
             $query->where('statut', $statut);
             $this->info("🔍 Filtrage par statut: {$statut}");
         } else {
-            $query->where('statut', 'note_conceptuel');
-            $this->info("🔍 Filtrage par statut: note_conceptuel (par défaut)");
+            $query->where('statut', '03a_NoteConceptuel');
+            $this->info("🔍 Filtrage par statut: 03a_NoteConceptuel (par défaut)");
         }
 
         // Appliquer la limite si spécifiée
