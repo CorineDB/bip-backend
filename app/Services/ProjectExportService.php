@@ -29,7 +29,7 @@ class ProjectExportService
             'fondementData' => $this->construireFondement($project)
         ];
 
-        $pdf = PDF::loadView('exports.project-idea-with-toc', $data);
+        $pdf = Pdf::loadView('exports.project-idea-with-toc', $data);
         $pdf->setPaper('A4', 'portrait');
 
         // Options pour numérotation des pages
