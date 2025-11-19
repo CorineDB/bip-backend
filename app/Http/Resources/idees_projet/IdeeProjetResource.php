@@ -4,7 +4,6 @@ namespace App\Http\Resources\idees_projet;
 
 use App\Http\Resources\BaseApiResource;
 use App\Http\Resources\CibleResource;
-use App\Http\Resources\EvaluationResource;
 use App\Http\Resources\FinancementResource;
 use App\Http\Resources\LieuInterventionResource;
 use App\Http\Resources\OddResource;
@@ -133,15 +132,9 @@ class IdeeProjetResource extends BaseApiResource
             'lieux_intervention' => LieuInterventionResource::collection($this->lieuxIntervention),
 
             // Dernières évaluations
-            'evaluation_climatique' => $this->evaluationClimatique()->first()
-                ? new EvaluationResource($this->evaluationClimatique()->first())
-                : null,
-            'evaluation_pertinence' => $this->evaluationPertinence()->first()
-                ? new EvaluationResource($this->evaluationPertinence()->first())
-                : null,
-            'evaluation_amc' => $this->evaluationAMC()->first()
-                ? new EvaluationResource($this->evaluationAMC()->first())
-                : null,
+            'evaluation_climatique' => $this->evaluationClimatique()->first(),
+            'evaluation_pertinence' => $this->evaluationPertinence()->first(),
+            'evaluation_amc' => $this->evaluationAMC()->first(),
 
             'types_intervention' => $this->whenLoaded('typesIntervention', function () {
                 return $this->typesIntervention->map(function ($type) {
