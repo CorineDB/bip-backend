@@ -125,24 +125,27 @@ Cela garantit que :
 
 ## 🔗 Mise à jour automatique des Projets liés
 
-Lorsqu'une IdeeProjet a un Projet associé (relation `ideeProjetId`), la commande met automatiquement à jour **aussi** le `formData` du Projet.
+Lorsqu'une IdeeProjet a un Projet associé (relation `ideeProjetId`), la commande **copie automatiquement** le `formData` enrichi de l'IdeeProjet vers le Projet.
 
 ### Fonctionnement
 
 ```php
 // Pour chaque IdeeProjet mise à jour
 if ($idee->projet) {
-    // Mise à jour automatique du Projet lié
-    $projet->ficheIdee["formData"] = $projet->getFormDataWithRelations();
+    // Copie du formData de l'IdeeProjet vers le Projet lié
+    $projet->ficheIdee["formData"] = $idee->ficheIdee["formData"];
 }
 ```
 
+**Important** : Le Projet hérite du `formData` de son IdeeProjet source, garantissant une cohérence parfaite entre les deux entités.
+
 ### Avantages
 
+- ✅ Cohérence parfaite : Projet et IdeeProjet ont le même formData
 - ✅ Synchronisation automatique entre IdeeProjet et Projet
 - ✅ Pas besoin de commande séparée pour les Projets
 - ✅ Gestion d'erreur indépendante (n'affecte pas l'IdeeProjet si échec)
-- ✅ Performance optimisée avec eager loading
+- ✅ Performance optimisée : simple copie, pas de regeneration
 
 ### Gestion des erreurs
 

@@ -61,9 +61,7 @@ class UpdateIdeeProjetFormDataCommand extends Command
         $query = IdeeProjet::query()->with([
             'champs',
             'lieuxIntervention',
-            'projet' => function ($query) {
-                $query->with(['champs', 'lieuxIntervention']);
-            }
+            'projet' // Juste charger le projet, pas besoin de ses relations
         ]);
 
         // Filtrer par IDs spécifiques si fournis
@@ -212,6 +210,7 @@ class UpdateIdeeProjetFormDataCommand extends Command
 
     /**
      * Mettre à jour le Projet lié si existant
+     * Copie le formData de l'IdeeProjet vers le Projet
      */
     private function updateProjetIfExists(\App\Models\IdeeProjet $idee): void
     {
@@ -233,8 +232,8 @@ class UpdateIdeeProjetFormDataCommand extends Command
                     $ficheIdee["form"] = new DocumentResource($this->documentRepository->getFicheIdee());
                 }
 
-                // Mettre à jour le formData enrichi (toujours)
-                $ficheIdee["formData"] = $projet->getFormDataWithRelations();
+                // Copier le formData enrichi de l'IdeeProjet vers le Projet
+                $ficheIdee["formData"] = $idee->ficheIdee["formData"] ?? [];
 
                 // Mettre à jour
                 $projet->ficheIdee = $ficheIdee;
