@@ -561,8 +561,8 @@ class IdeeProjet extends Model
             'cibles' => 'cibles',
             'odds' => 'odds',
             'sources_financement' => 'sources_de_financement',
-            /*'natures_financement' => Financement::class,
-            'types_financement' => Financement::class,*/
+            'natures_financement' => 'financement_direct',
+            'types_financement' => 'financement_direct',
 
             // dans lieuxIntervention
             'departements' => 'lieuxIntervention', // dans lieuxIntervention est disponible via la cle departementId
@@ -622,6 +622,24 @@ class IdeeProjet extends Model
                             ->toArray();
                     }
                 }
+                // Cas spécial pour natures_financement et types_financement
+                elseif ($mapping === 'financement_direct') {
+                    // Parser les IDs depuis la valeur (peut être "1,2,3" ou [1,2,3] ou "1")
+                    $ids = $this->parseFinancementIds($value);
+
+                    if (!empty($ids)) {
+                        $financements = Financement::whereIn('id', $ids)->get();
+
+                        $value = $financements->map(function ($financement) {
+                            return [
+                                'id' => $financement->hashed_id,
+                                'nom' => $financement->nom
+                            ];
+                        })->toArray();
+                    } else {
+                        $value = [];
+                    }
+                }
                 // Relations standard
                 else {
                     if (method_exists($this, $mapping)) {
@@ -674,6 +692,8 @@ class IdeeProjet extends Model
             'secteurId' => 'nom',
             'categorieId' => 'categorie',
             'sources_financement' => 'nom',
+            'natures_financement' => 'nom',
+            'types_financement' => 'nom',
             // PND et PAG utilisent 'intitule'
             'orientations_strategiques' => 'intitule',
             'objectifs_strategiques' => 'intitule',
@@ -684,6 +704,38 @@ class IdeeProjet extends Model
         ];
 
         return $nameMapping[$attribut] ?? null;
+    }
+
+    /**
+     * Parser les IDs de financement depuis différents formats
+     * Gère: "1,2,3", [1,2,3], "1", 1, etc.
+     */
+    private function parseFinancementIds($value): array
+    {
+        // Si c'est déjà un array
+        if (is_array($value)) {
+            return array_filter($value, 'is_numeric');
+        }
+
+        // Si c'est une chaîne
+        if (is_string($value)) {
+            // Vérifier si c'est du JSON
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return array_filter($decoded, 'is_numeric');
+            }
+
+            // Sinon, splitter par virgule
+            $ids = explode(',', $value);
+            return array_filter(array_map('trim', $ids), 'is_numeric');
+        }
+
+        // Si c'est un nombre unique
+        if (is_numeric($value)) {
+            return [(int) $value];
+        }
+
+        return [];
     }
 
     /**
