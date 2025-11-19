@@ -213,9 +213,9 @@ class ProjetResource extends BaseApiResource
 
             'financements' => $this->types_financement(),
 
-            'orientations_strategique_png' => $this->orientations_strategique_png,
-            'objectifs_strategique_png' => $this->objectifs_strategique_png,
-            'resultats_strategique_png' => $this->resultats_strategique_png,
+            'orientations_strategique_pnd' => $this->orientations_strategique_pnd,
+            'objectifs_strategique_pnd' => $this->objectifs_strategique_pnd,
+            'resultats_strategique_pnd' => $this->resultats_strategique_pnd,
             'piliers_pag' => $this->piliers_pag,
             'axes_pag' => $this->axes_pag,
             'actions_pag' => $this->actions_pag,

@@ -202,9 +202,9 @@ class ProjetService extends BaseService implements ProjetServiceInterface
                     'typesIntervention',
 
                     // Relations programmes
-                    'orientations_strategique_png',
-                    'objectifs_strategique_png',
-                    'resultats_strategique_png',
+                    'orientations_strategique_pnd',
+                    'objectifs_strategique_pnd',
+                    'resultats_strategique_pnd',
                     'axes_pag',
                     'actions_pag',
                     'piliers_pag',

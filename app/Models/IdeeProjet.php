@@ -340,20 +340,20 @@ class IdeeProjet extends Model
             ->withTimestamps();
     }
 
-    public function orientations_strategique_png()
+    public function orientations_strategique_pnd()
     {
         return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function ($query) {
             $query->where('slug', 'orientation-strategique-pnd');
         });
     }
 
-    public function objectifs_strategique_png()
+    public function objectifs_strategique_pnd()
     {
         return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function ($query) {
             $query->where('slug', 'objectif-strategique-pnd');
         });
     }
-    public function resultats_strategique_png()
+    public function resultats_strategique_pnd()
     {
         return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function ($query) {
             $query->where('slug', 'resultats-strategique-pnd');
@@ -551,9 +551,9 @@ class IdeeProjet extends Model
             'categorieId' => 'categorie',
 
 
-            'orientations_strategiques' => 'orientations_strategique_png',
-            'resultats_strategiques' => 'resultats_strategique_png',
-            'objectifs_strategiques' => 'objectifs_strategique_png',
+            'orientations_strategiques' => 'orientations_strategique_pnd',
+            'resultats_strategiques' => 'resultats_strategique_pnd',
+            'objectifs_strategiques' => 'objectifs_strategique_pnd',
             'piliers_pag' => 'piliers_pag',
             'axes_pag' => 'axes_pag',
             'actions_pag' => 'actions_pag',

@@ -310,18 +310,18 @@ class ExternalApiService
             return $cible->cible ?? $cible->nom;
         })->filter()->values()->toArray();
 
-        // Récupérer les orientations_strategique_png
-        $orientations_strategique_png = $projet->orientations_strategique_png->map(function ($orientation_strategique_png) {
+        // Récupérer les orientations_strategique_pnd
+        $orientations_strategique_pnd = $projet->orientations_strategique_pnd->map(function ($orientation_strategique_png) {
             return $orientation_strategique_png->intitule;
         })->filter()->values()->toArray();
 
-        // Récupérer les objectifs_strategique_png
-        $objectifs_strategique_png = $projet->objectifs_strategique_png->map(function ($objectif_strategique_png) {
+        // Récupérer les objectifs_strategique_pnd
+        $objectifs_strategique_pnd = $projet->objectifs_strategique_pnd->map(function ($objectif_strategique_png) {
             return $objectif_strategique_png->intitule;
         })->filter()->values()->toArray();
 
-        // Récupérer les resultats_strategique_png
-        $resultats_strategique_png = $projet->resultats_strategique_png->map(function ($resultat_strategique_png) {
+        // Récupérer les resultats_strategique_pnd
+        $resultats_strategique_pnd = $projet->resultats_strategique_pnd->map(function ($resultat_strategique_png) {
             return $resultat_strategique_png->intitule;
         })->filter()->values()->toArray();
 
@@ -344,11 +344,11 @@ class ExternalApiService
             'odds' => !empty($odds) ? $odds : [],
             'cibles' => !empty($cibles) ? $cibles : [],
             'informationsPND' => [
-                'orientationsStrategiques' => !empty($orientations_strategique_png) ? $orientations_strategique_png : [],
-                'objectifsStrategiques' => !empty($objectifs_strategique_png) ? $objectifs_strategique_png : [],
-                //'resultatsStrategiques' => !empty($resultats_strategique_png) ? $resultats_strategique_png : [],
-                //$projet->orientations_strategique_png ?? [],
-                //'objectifsStrategiques' => $projet->objectifs_strategique_png ?? [],
+                'orientationsStrategiques' => !empty($orientations_strategique_pnd) ? $orientations_strategique_pnd : [],
+                'objectifsStrategiques' => !empty($objectifs_strategique_pnd) ? $objectifs_strategique_pnd : [],
+                //'resultatsStrategiques' => !empty($resultats_strategique_pnd) ? $resultats_strategique_pnd : [],
+                //$projet->orientations_strategique_pnd ?? [],
+                //'objectifsStrategiques' => $projet->objectifs_strategique_pnd ?? [],
             ],
             'informationsPAG' => [
                 /*'piliersStrategiques' => $projet->piliers_pag ?? [],

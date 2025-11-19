@@ -146,8 +146,8 @@ class ExportProjectCommand extends Command
             'ministere',
             'odds',
             'cibles',
-            'orientations_strategique_png',
-            'objectifs_strategique_png',
+            'orientations_strategique_pnd',
+            'objectifs_strategique_pnd',
             'piliers_pag',
             'axes_pag',
             'actions_pag'
