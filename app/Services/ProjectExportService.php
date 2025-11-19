@@ -85,13 +85,12 @@ class ProjectExportService
                 'old_chemin' => $existingFiche->chemin
             ]);
 
-            // Supprimer l'ancien fichier physique
-            $oldFilePath = storage_path("app/private/{$existingFiche->chemin}");
-            $deleted = $this->deleteFileSecurely($oldFilePath);
+            // Supprimer l'ancien fichier physique via Storage
+            $deleted = $this->deleteFileSecurely($existingFiche->chemin);
 
             if (!$deleted) {
                 \Log::warning("⚠️ [ProjectExportService] Ancien fichier non supprimé, mais on continue", [
-                    'old_file_path' => $oldFilePath
+                    'old_storage_path' => $existingFiche->chemin
                 ]);
             }
 
@@ -189,36 +188,35 @@ class ProjectExportService
     }
 
     /**
-     * Supprimer un fichier de manière sécurisée
+     * Supprimer un fichier de manière sécurisée via Storage
      */
-    private function deleteFileSecurely(string $filePath): bool
+    private function deleteFileSecurely(string $storagePath): bool
     {
-        if (!file_exists($filePath)) {
+        if (!Storage::disk('local')->exists($storagePath)) {
             \Log::warning("⚠️ [ProjectExportService] Fichier déjà supprimé", [
-                'file_path' => $filePath
+                'storage_path' => $storagePath
             ]);
             return true; // Considéré comme succès car le fichier n'existe plus
         }
 
         try {
-            $success = @unlink($filePath); // @ pour supprimer le warning
+            $success = Storage::disk('local')->delete($storagePath);
 
             if (!$success) {
                 \Log::error("❌ [ProjectExportService] Échec suppression fichier", [
-                    'file_path' => $filePath,
-                    'error' => error_get_last()
+                    'storage_path' => $storagePath
                 ]);
                 return false;
             }
 
             \Log::info("🗑️ [ProjectExportService] Fichier supprimé", [
-                'file_path' => $filePath
+                'storage_path' => $storagePath
             ]);
             return true;
 
         } catch (\Exception $e) {
             \Log::error("❌ [ProjectExportService] Exception lors de la suppression", [
-                'file_path' => $filePath,
+                'storage_path' => $storagePath,
                 'error' => $e->getMessage()
             ]);
             return false;
