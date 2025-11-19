@@ -231,7 +231,8 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             // Déclencher l'event seulement si l'idée est soumise
             if (isset($data['est_soumise']) && $data['est_soumise'] === true) {
-                event(new IdeeProjetCree($idee));
+                // Supprimer les relations chargées pour éviter les erreurs de sérialisation dans la queue
+                event(new IdeeProjetCree($idee->withoutRelations()));
             }
 
             return (new $this->resourceClass($idee))
@@ -1183,7 +1184,8 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                 $ancienEtatSoumise !== $nouvelEtatSoumise &&
                 $nouvelEtatSoumise === true
             ) {
-                event(new IdeeProjetCree($idee));
+                // Supprimer les relations chargées pour éviter les erreurs de sérialisation dans la queue
+                event(new IdeeProjetCree($idee->withoutRelations()));
             }
 
             return (new $this->resourceClass($idee))
