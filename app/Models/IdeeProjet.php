@@ -490,14 +490,22 @@ class IdeeProjet extends Model
         return $this->historiqueEvaluations("validation-idee-projet-a-projet");
     }
 
+    public function validationsPreliminaire()
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')->where("type_evaluation", "validation-idee-projet");
+    }
+
+    public function validationsFinale()
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')->where("type_evaluation", "validation-idee-projet-a-projet");
+    }
+
     /**
      * Récupérer la dernière validation préliminaire
      */
     public function validationPreliminaire()
     {
-        return $this->morphMany(Evaluation::class, 'projetable')
-            ->where("type_evaluation", "validation-idee-projet")
-            ->latest('created_at');
+        return $this->validationsPreliminaire()->latest('created_at');
     }
 
     /**
@@ -505,9 +513,7 @@ class IdeeProjet extends Model
      */
     public function validationFinale()
     {
-        return $this->morphMany(Evaluation::class, 'projetable')
-            ->where("type_evaluation", "validation-idee-projet-a-projet")
-            ->latest('created_at');
+        return $this->validationsFinale()->latest('created_at');
     }
 
     public function fichiers()
