@@ -119,13 +119,15 @@ class UpdateIdeeProjetFormDataCommand extends Command
                     DB::beginTransaction();
 
                     try {
-                        // Construire la nouvelle structure ficheIdee
-                        $ficheIdee = [];
+                        // Récupérer la structure ficheIdee existante ou créer une nouvelle
+                        $ficheIdee = $idee->ficheIdee ?? [];
 
-                        // Ajouter le form (document)
-                        $ficheIdee["form"] = new DocumentResource($this->documentRepository->getFicheIdee());
+                        // Ajouter le form SEULEMENT s'il n'existe pas ou est vide
+                        if (empty($ficheIdee["form"])) {
+                            $ficheIdee["form"] = new DocumentResource($this->documentRepository->getFicheIdee());
+                        }
 
-                        // Ajouter le formData enrichi
+                        // Mettre à jour le formData enrichi (toujours)
                         $ficheIdee["formData"] = $idee->getFormDataWithRelations();
 
                         // Mettre à jour

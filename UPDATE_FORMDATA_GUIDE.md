@@ -4,7 +4,9 @@ Cette commande permet de mettre à jour le `ficheIdee["formData"]` de toutes les
 
 ## 🎯 Qu'est-ce qui est enrichi ?
 
-La commande met à jour les champs relationnels pour qu'ils contiennent des objets complets au lieu de simples IDs :
+La commande met à jour **uniquement** le `formData` dans `ficheIdee`. Le `form` existant n'est **jamais écrasé** (seulement créé s'il est vide).
+
+Les champs relationnels dans `formData` sont enrichis pour contenir des objets complets au lieu de simples IDs :
 
 ### Financements (hiérarchie à 3 niveaux)
 - `types_financement` → Financements où `type='type'`
@@ -98,6 +100,26 @@ php artisan idees:update-formdata --ids=1,2,3 --dry-run
 La commande détecte automatiquement si le `formData` contient déjà des objets enrichis (`{id, nom}`) et ignore ces idées pour éviter les doublons.
 
 Pour forcer la mise à jour quand même, utilisez l'option `--force`.
+
+## 🛡️ Préservation du form existant
+
+**Important** : La commande préserve TOUJOURS le `ficheIdee["form"]` existant. Elle ne le crée que s'il est vide ou inexistant.
+
+```php
+// Comportement de la commande
+if (empty($ficheIdee["form"])) {
+    // Créer le form SEULEMENT s'il n'existe pas
+    $ficheIdee["form"] = ...;
+}
+
+// Toujours mettre à jour formData
+$ficheIdee["formData"] = $idee->getFormDataWithRelations();
+```
+
+Cela garantit que :
+- ✅ Aucune donnée `form` existante n'est perdue
+- ✅ Seul le `formData` est enrichi
+- ✅ La structure `form` personnalisée est préservée
 
 ## ⚠️ Recommandations
 
