@@ -672,7 +672,7 @@ class IdeeProjet extends Model
             'cibles' => 'cible',
             'odds' => 'odd',
             'secteurId' => 'nom',
-            'categorieId' => 'nom',
+            'categorieId' => 'categorie',
             'sources_financement' => 'nom',
             // PND et PAG utilisent 'intitule'
             'orientations_strategiques' => 'intitule',
