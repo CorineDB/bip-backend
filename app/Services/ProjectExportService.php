@@ -149,7 +149,10 @@ class ProjectExportService
             default => $category
         };
 
-        return $prefix . '_' . $projectId . '_' . time() . '.' . $extension;
+        // Remplacer les slashes pour éviter de créer des sous-dossiers non désirés
+        $sanitizedId = str_replace('/', '_', $projectId);
+
+        return $prefix . '_' . $sanitizedId . '_' . time() . '.' . $extension;
     }
 
     /**
