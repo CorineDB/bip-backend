@@ -172,10 +172,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $this->enregistrerWorkflow($ideeProjet, StatutIdee::ANALYSE);
                 $this->enregistrerDecision($ideeProjet, 'Validation par Responsable hiérarchique', $attributs["commentaire"] ?? 'Idée validée pour analyse multicritères');
 
-                // Dispatcher les jobs d'export des évaluations
-                ExportEvaluationJob::dispatch($ideeProjetId, 'climatique', auth()->id());
-                ExportEvaluationJob::dispatch($ideeProjetId, 'pertinence', auth()->id());
-
                 // CODE COMMENTÉ - Redondant car l'évaluation climatique est déjà finalisée (statut = 1)
                 // et le champ evaluation est maintenant correctement rempli par soumettreEvaluationClimatique()
                 // et finalizeEvaluation(). Cette mise à jour n'est plus nécessaire.
@@ -445,6 +441,10 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 // Enregistrer le workflow et la décision
                 $this->enregistrerWorkflow($ideeProjet, StatutIdee::NOTE_CONCEPTUEL);
                 $this->enregistrerDecision($ideeProjet, 'Validation finale par analyste DGPD', $attributs["commentaire"] ?? 'Idée transformée en projet');
+
+                // Dispatcher les jobs d'export des évaluations
+                ExportEvaluationJob::dispatch($ideeProjetId, 'climatique', auth()->id());
+                ExportEvaluationJob::dispatch($ideeProjetId, 'pertinence', auth()->id());
 
                 // Déclencher l'event pour dupliquer vers un projet seulement si validé
                 event(new IdeeProjetTransformee($ideeProjet));
