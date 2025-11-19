@@ -765,7 +765,10 @@ class EvaluationExportService
             default => $category
         };
 
-        return $prefix . '_' . $evaluationId . '_' . time() . '.' . $extension;
+        // Remplacer les slashes pour éviter de créer des sous-dossiers non désirés
+        $sanitizedId = str_replace('/', '_', $evaluationId);
+
+        return $prefix . '_' . $sanitizedId . '_' . time() . '.' . $extension;
     }
 
     /**
