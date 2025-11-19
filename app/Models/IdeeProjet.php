@@ -490,6 +490,26 @@ class IdeeProjet extends Model
         return $this->historiqueEvaluations("validation-idee-projet-a-projet");
     }
 
+    /**
+     * Récupérer la dernière validation préliminaire
+     */
+    public function validationPreliminaire()
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')
+            ->where("type_evaluation", "validation-idee-projet")
+            ->latest('created_at');
+    }
+
+    /**
+     * Récupérer la dernière validation finale (DGPD)
+     */
+    public function validationFinale()
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')
+            ->where("type_evaluation", "validation-idee-projet-a-projet")
+            ->latest('created_at');
+    }
+
     public function fichiers()
     {
         return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id')

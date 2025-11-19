@@ -136,6 +136,10 @@ class IdeeProjetResource extends BaseApiResource
             'evaluation_pertinence' => $this->evaluationPertinence()->first(),
             'evaluation_amc' => $this->evaluationAMC()->first(),
 
+            // Dernières validations
+            'validation_preliminaire' => $this->validationPreliminaire()->first(),
+            'validation_finale' => $this->validationFinale()->first(),
+
             'types_intervention' => $this->whenLoaded('typesIntervention', function () {
                 return $this->typesIntervention->map(function ($type) {
                     return [
