@@ -573,6 +573,94 @@ class IdeeProjet extends Model
     }
 
     /**
+     * Retourner les champs avec les objets simplifiés des relations pour formData
+     * Utilisé pour le ficheIdee["formData"]
+     */
+    public function getFormDataWithRelations()
+    {
+        return $this->champs->map(function ($champ) {
+            $value = $champ->pivot->valeur;
+            $attribut = $champ->attribut;
+
+            // Utiliser le mapping relationshipChamps()
+            $relationMappings = $this->relationshipChamps();
+
+            // Si c'est un champ relationnel, enrichir avec les objets simplifiés
+            if (isset($relationMappings[$attribut]) && $value) {
+                $mapping = $relationMappings[$attribut];
+
+                // Cas spécial pour lieuxIntervention
+                if ($mapping === 'lieuxIntervention') {
+                    if (!$this->relationLoaded('lieuxIntervention')) {
+                        $this->load('lieuxIntervention');
+                    }
+
+                    $lieuMapping = [
+                        'departements' => ['column' => 'departementId', 'model' => Departement::class],
+                        'communes' => ['column' => 'communeId', 'model' => Commune::class],
+                        'arrondissements' => ['column' => 'arrondissementId', 'model' => Arrondissement::class],
+                        'villages' => ['column' => 'villageId', 'model' => Village::class],
+                    ];
+
+                    if (isset($lieuMapping[$attribut])) {
+                        $columnName = $lieuMapping[$attribut]['column'];
+                        $modelClass = $lieuMapping[$attribut]['model'];
+
+                        $value = $this->lieuxIntervention
+                            ->pluck($columnName)
+                            ->filter()
+                            ->unique()
+                            ->map(function ($relatedId) use ($modelClass) {
+                                $entity = $modelClass::find($relatedId);
+                                return $entity ? [
+                                    'id' => $entity->hashed_id,
+                                    'nom' => $entity->nom
+                                ] : null;
+                            })
+                            ->filter()
+                            ->values()
+                            ->toArray();
+                    }
+                }
+                // Relations standard
+                else {
+                    if (method_exists($this, $mapping)) {
+                        if (!$this->relationLoaded($mapping)) {
+                            $this->load($mapping);
+                        }
+
+                        $related = $this->$mapping;
+
+                        // Collection (many-to-many)
+                        if (is_a($related, \Illuminate\Database\Eloquent\Collection::class)) {
+                            $value = $related->map(function ($item) {
+                                return [
+                                    'id' => $item->hashed_id,
+                                    'nom' => $item->nom ?? $item->intitule ?? $item->libelle ?? $item->titre ?? null
+                                ];
+                            })->toArray();
+                        }
+                        // Relation belongsTo simple
+                        elseif ($related) {
+                            $value = [
+                                'id' => $related->hashed_id,
+                                'nom' => $related->nom ?? $related->intitule ?? $related->libelle ?? $related->titre ?? null
+                            ];
+                        }
+                    }
+                }
+            }
+
+            return [
+                'id' => $champ->hashed_id,
+                'attribut' => $attribut,
+                'value' => $value,
+                'pivot_id' => $champ->pivot->hashed_id
+            ];
+        });
+    }
+
+    /**
      * Retourner les champs formatés avec les hashed_ids pour les relations
      */
     public function getFormattedChamps()
