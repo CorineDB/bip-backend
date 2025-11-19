@@ -997,16 +997,31 @@ class Projet extends Model
 
     /**
      * Construit la hiérarchie descendante des Financements
+     * Filtre pour ne retourner que les financements liés à ce Projet
      *
      * @param \App\Models\Financement $financement
-     * @return array
+     * @return array|null
      */
     private function buildFinancementHierarchieDescendante($financement)
     {
+        // Récupérer les IDs des sources de financement de ce Projet
+        $sourcesIds = $this->sources_de_financement->pluck('id')->toArray();
+
         // Charger les enfants (natures ou sources) récursivement
-        $children = $financement->children->map(function ($child) {
-            return $this->buildFinancementHierarchieDescendante($child);
-        });
+        // Filtrer pour ne garder que les enfants liés
+        $children = $financement->children
+            ->map(function ($child) {
+                return $this->buildFinancementHierarchieDescendante($child);
+            })
+            ->filter(); // Enlever les null (enfants non liés)
+
+        // Vérifier si ce financement est directement lié (si c'est une source)
+        $isDirectlyLinked = in_array($financement->id, $sourcesIds);
+
+        // Si pas lié directement et aucun enfant lié, retourner null
+        if (!$isDirectlyLinked && $children->isEmpty()) {
+            return null;
+        }
 
         return [
             'id' => $financement->hashed_id,
@@ -1014,13 +1029,13 @@ class Projet extends Model
             'nom_usuel' => $financement->nom_usuel,
             'slug' => $financement->slug,
             'type' => $financement->type?->value ?? $financement->type,
-            'enfants' => $children->isEmpty() ? [] : $children,
+            'enfants' => $children->isEmpty() ? [] : $children->values(),
         ];
     }
 
     /**
      * Retourne la hiérarchie complète des financements depuis les sources
-     * Remonte jusqu'au type racine puis redescend avec toutes les natures et sources
+     * Remonte jusqu'au type racine puis redescend avec SEULEMENT les financements liés à ce Projet
      *
      * @return \Illuminate\Support\Collection
      */
@@ -1031,9 +1046,12 @@ class Projet extends Model
             return $this->getFinancementRacine($source);
         })->filter()->unique('id');
 
-        // Pour chaque type racine, construire la hiérarchie descendante complète
-        return $typesRacines->map(function ($typeRacine) {
-            return $this->buildFinancementHierarchieDescendante($typeRacine);
-        });
+        // Pour chaque type racine, construire la hiérarchie descendante filtrée
+        return $typesRacines
+            ->map(function ($typeRacine) {
+                return $this->buildFinancementHierarchieDescendante($typeRacine);
+            })
+            ->filter() // Enlever les null (types sans financements liés)
+            ->values(); // Réindexer le tableau
     }
 }
