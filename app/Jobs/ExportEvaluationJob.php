@@ -38,20 +38,35 @@ class ExportEvaluationJob implements ShouldQueue
     public function handle(EvaluationExportService $exportService): void
     {
         try {
-            Log::info("Début export évaluation", [
+            Log::info("📤 [ExportEvaluationJob] Début export évaluation", [
                 'idee_projet_id' => $this->ideeProjetId,
                 'type' => $this->type,
-                'user_id' => $this->userId
+                'user_id' => $this->userId,
+                'attempt' => $this->attempts()
             ]);
 
             // Charger le projet avec ses relations
+            Log::info("📋 [ExportEvaluationJob] Chargement du projet", [
+                'idee_projet_id' => $this->ideeProjetId
+            ]);
+
             $ideeProjet = IdeeProjet::with([
                 'ministere',
                 'evaluationPertinence',
                 'evaluationAMC'
             ])->findOrFail($this->ideeProjetId);
 
+            Log::info("✅ [ExportEvaluationJob] Projet chargé", [
+                'idee_projet_id' => $this->ideeProjetId,
+                'identifiant_bip' => $ideeProjet->identifiant_bip,
+                'titre' => $ideeProjet->titre_projet
+            ]);
+
             // Récupérer l'évaluation appropriée selon le type
+            Log::info("🔍 [ExportEvaluationJob] Recherche de l'évaluation", [
+                'type' => $this->type
+            ]);
+
             $evaluation = match($this->type) {
                 'pertinence' => $ideeProjet->evaluationPertinence->first(),
                 'climatique' => $ideeProjet->evaluationAMC->first(),
@@ -60,29 +75,48 @@ class ExportEvaluationJob implements ShouldQueue
             };
 
             if (!$evaluation) {
+                Log::warning("⚠️ [ExportEvaluationJob] Aucune évaluation trouvée", [
+                    'idee_projet_id' => $this->ideeProjetId,
+                    'type' => $this->type
+                ]);
                 throw new \Exception("Aucune évaluation de type '{$this->type}' trouvée pour le projet {$this->ideeProjetId}");
             }
 
+            Log::info("✅ [ExportEvaluationJob] Évaluation trouvée", [
+                'evaluation_id' => $evaluation->id,
+                'type' => $this->type,
+                'statut' => $evaluation->statut
+            ]);
+
             // Appeler la méthode appropriée selon le type
+            Log::info("📝 [ExportEvaluationJob] Appel du service d'export", [
+                'type' => $this->type,
+                'method' => $this->type === 'pertinence' ? 'exportPertinenceToExcel' : 'exportClimatiqueToExcel'
+            ]);
+
             $storedPath = match($this->type) {
                 'pertinence' => $exportService->exportPertinenceToExcel($evaluation),
                 'climatique' => $exportService->exportClimatiqueToExcel($evaluation),
                 default => throw new \Exception("Type d'évaluation non supporté: {$this->type}")
             };
 
-            Log::info("Export évaluation réussi", [
+            Log::info("✅ [ExportEvaluationJob] Export évaluation réussi", [
                 'idee_projet_id' => $this->ideeProjetId,
                 'type' => $this->type,
                 'identifiant_bip' => $ideeProjet->identifiant_bip,
-                'stored_path' => $storedPath
+                'stored_path' => $storedPath,
+                'attempt' => $this->attempts()
             ]);
 
         } catch (\Exception $e) {
-            Log::error("Échec export évaluation", [
+            Log::error("❌ [ExportEvaluationJob] Échec export évaluation", [
                 'idee_projet_id' => $this->ideeProjetId,
                 'type' => $this->type,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'attempt' => $this->attempts(),
+                'max_tries' => $this->tries
             ]);
 
             throw $e;
