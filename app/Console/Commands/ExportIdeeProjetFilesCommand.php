@@ -69,6 +69,10 @@ class ExportIdeeProjetFilesCommand extends Command
         // Construire la requête
         $query = IdeeProjet::query();
 
+        // Filtrer uniquement les IdeeProjet qui ont un Projet associé
+        $query->has('projet');
+        $this->info("🔍 Filtrage: IdeeProjet avec Projet associé uniquement");
+
         // Filtrer par IDs si spécifié
         if ($ids) {
             $idArray = array_map('trim', explode(',', $ids));
@@ -76,10 +80,13 @@ class ExportIdeeProjetFilesCommand extends Command
             $this->info("🔍 Filtrage par IDs: " . implode(', ', $idArray));
         }
 
-        // Filtrer par statut si spécifié
+        // Filtrer par statut si spécifié, sinon par défaut 'note_conceptuel'
         if ($statut) {
             $query->where('statut', $statut);
             $this->info("🔍 Filtrage par statut: {$statut}");
+        } else {
+            $query->where('statut', 'note_conceptuel');
+            $this->info("🔍 Filtrage par statut: note_conceptuel (par défaut)");
         }
 
         // Appliquer la limite si spécifiée

@@ -2,6 +2,8 @@
 
 Cette commande permet d'exporter automatiquement les fichiers (fiche, pertinence, climatique, AMC) pour les idées de projet existantes en dispatchant les jobs appropriés.
 
+**Important**: Par défaut, seules les IdeeProjet qui ont un **Projet associé** et dont le **statut est 'note_conceptuel'** sont exportées.
+
 ## Commande
 
 ```bash
@@ -29,9 +31,15 @@ php artisan idees:export-files --ids=120,121,122
 ### `--statut=`
 Filtrer par statut (ex: analyse, validation, note_conceptuel).
 
+**Par défaut**: Si cette option n'est pas spécifiée, seules les IdeeProjet avec le statut 'note_conceptuel' sont exportées.
+
 **Exemple:**
 ```bash
+# Exporter uniquement les IdeeProjet en statut validation
 php artisan idees:export-files --statut=validation
+
+# Sans option --statut, seules les IdeeProjet avec statut 'note_conceptuel' sont exportées
+php artisan idees:export-files --limit=10
 ```
 
 ### `--dry-run`
@@ -113,7 +121,7 @@ php artisan idees:export-files --statut=validation --types=pertinence --types=cl
 - Exporte uniquement pertinence et climatique
 - Pour toutes les idées au statut "validation"
 
-### 5. Exporter toutes les évaluations pour toutes les idées
+### 5. Exporter toutes les évaluations pour toutes les idées avec statut 'note_conceptuel'
 
 ```bash
 php artisan idees:export-files
@@ -121,7 +129,7 @@ php artisan idees:export-files
 
 **Résultat:**
 - Exporte fiche + pertinence + climatique + AMC
-- Pour TOUTES les idées de projet
+- Pour TOUTES les IdeeProjet qui ont un Projet associé et statut 'note_conceptuel'
 - ⚠️ Attention: peut générer beaucoup de jobs!
 
 ### 6. Exporter pour plusieurs IDs spécifiques
@@ -190,6 +198,11 @@ php artisan queue:work
    ```
 
 ## Notes importantes
+
+### Filtrage par défaut
+- **Projet associé**: Seules les IdeeProjet qui ont un Projet associé sont exportées
+- **Statut**: Par défaut, seules les IdeeProjet avec statut 'note_conceptuel' sont exportées (sauf si --statut est spécifié)
+- Utilisez --statut pour filtrer par un autre statut
 
 ### Évaluations exportées uniquement si terminées
 - La commande ne dispatche les jobs d'export d'évaluations que si `statut = 1` (terminée)
