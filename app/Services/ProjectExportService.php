@@ -57,7 +57,12 @@ class ProjectExportService
 
         // Utiliser Storage::disk('local')->put pour stocker
         $storedPath = "{$storagePath}/{$storageName}";
-        Storage::disk('local')->put($storedPath, $pdfContent);
+        $success = Storage::disk('local')->put($storedPath, $pdfContent);
+
+        // Vérifier que le fichier a bien été créé
+        if (!$success) {
+            throw new \Exception("Impossible de sauvegarder le fichier PDF à {$storedPath}");
+        }
 
         // Générer le hash d'accès
         $hashAcces = $this->generateFileAccessHash($project->hashed_id, $storageName, $category);

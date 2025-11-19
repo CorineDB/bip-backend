@@ -128,7 +128,12 @@ class EvaluationExportService
         // Stocker le fichier selon la structure hashée (même dossier que la fiche)
         $storagePath = "projets/{$hashedIdentifiantBip}/identification";
         $storedPath = "{$storagePath}/{$storageName}";
-        Storage::disk('local')->put($storedPath, $fileContent);
+        $success = Storage::disk('local')->put($storedPath, $fileContent);
+
+        // Vérifier que le fichier a bien été créé
+        if (!$success) {
+            throw new \Exception("Impossible de sauvegarder le fichier d'évaluation à {$storedPath}");
+        }
 
         \Log::info("✅ [EvaluationExportService] Fichier stocké", [
             'stored_path' => $storedPath,
@@ -522,7 +527,12 @@ class EvaluationExportService
         // Stocker le fichier selon la structure hashée (même dossier que la fiche)
         $storagePath = "projets/{$hashedIdentifiantBip}/identification";
         $storedPath = "{$storagePath}/{$storageName}";
-        Storage::disk('local')->put($storedPath, $fileContent);
+        $success = Storage::disk('local')->put($storedPath, $fileContent);
+
+        // Vérifier que le fichier a bien été créé
+        if (!$success) {
+            throw new \Exception("Impossible de sauvegarder le fichier climatique à {$storedPath}");
+        }
 
         \Log::info("✅ [EvaluationExportService] Fichier climatique stocké", [
             'stored_path' => $storedPath,
