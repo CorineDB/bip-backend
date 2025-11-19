@@ -186,15 +186,11 @@ class NotificationTdrFaisabiliteSoumis extends Notification implements ShouldQue
      */
     protected function getActionUrl(): string
     {
+        $path = env("CLIENT_APP_URL") ?? config("app.url");
         return match($this->typeDestinataire) {
-            'dgpd_evaluation' => '/projets/' . $this->projet->hashed_id . '/evaluation-tdr-prefaisabilite',
-            'dpaf_supervision', 'equipe_organisation' => '/projets/' . $this->projet->hashed_id . '/tdr/' . $this->tdr->hashed_id,
-            'soumetteur_confirmation' => '/projets/' . $this->projet->hashed_id,
-            default => '/projets/' . $this->projet->hashed_id,
-            
-            'redacteur_resultat', 'equipe_organisation' => $path . '/dashbaord/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
-            'dpaf_supervision' => $path . '/dashbaord/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
-            'evaluateur_confirmation' => $path . '/dashbaord/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
+            'dgpd_evaluation' => $path . '/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
+            'dpaf_supervision', 'equipe_organisation' => $path . '/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
+            'soumetteur_confirmation' => $path . '/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
             default => $path . '/dashboard/projet/' . $this->projet->hashed_id,
         };
     }

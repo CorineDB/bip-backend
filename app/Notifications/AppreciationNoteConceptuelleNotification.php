@@ -228,11 +228,11 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
 
             case 'chef_projet_evaluation_terminee':
             case 'redacteur_info':
-                return '{$path}/projet/' . $this->projet->hashed_id . '/resultat-evaluation-note-conceptuelle/' . $this->noteConceptuelle->hashed_id . '/evaluations';
+                return "{$path}/projet/" . $this->projet->hashed_id . '/resultat-evaluation-note-conceptuelle/' . $this->noteConceptuelle->hashed_id . '/evaluations';
 
             case 'dpaf_supervision':
             default:
-                return '{$path}/projet/' . $this->projet->hashed_id;
+                return "{$path}/projet/" . $this->projet->hashed_id;
         }
     }
 

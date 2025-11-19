@@ -190,9 +190,9 @@ class NotificationTdrFaisabiliteEvalue extends Notification implements ShouldQue
     {
         $path = env("CLIENT_APP_URL") ?? config("app.url");
         return match($this->typeDestinataire) {
-            'redacteur_resultat', 'equipe_organisation' => $path . '/dashbaord/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
-            'dpaf_supervision' => $path . '/dashbaord/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
-            'evaluateur_confirmation' => $path . '/dashbaord/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
+            'redacteur_resultat', 'equipe_organisation' => $path . '/dashboard/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
+            'dpaf_supervision' => $path . '/dashboard/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
+            'evaluateur_confirmation' => $path . '/dashboard/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
             default => $path . '/dashboard/projet/' . $this->projet->hashed_id,
         };
     }

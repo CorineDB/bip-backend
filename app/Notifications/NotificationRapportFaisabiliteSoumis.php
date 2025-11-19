@@ -190,8 +190,8 @@ class NotificationRapportFaisabiliteSoumis extends Notification implements Shoul
         $path = env("CLIENT_APP_URL") ?? config("app.url");
         return match($this->typeDestinataire) {
             'dgpd_validation' => $path . '/projet/' . $this->projet->hashed_id . '/details-validation-faisabilite',
-            'dpaf_supervision', 'equipe_organisation' => $path . '/projet/' . $this->projet->hashed_id . "details-soumission-rapport-faisabilite",
-            'soumetteur_confirmation' => $path . '/projet/' . $this->projet->hashed_id . "details-soumission-rapport-faisabilite",
+            'dpaf_supervision', 'equipe_organisation' => $path . '/projet/' . $this->projet->hashed_id . '/details-soumission-rapport-faisabilite',
+            'soumetteur_confirmation' => $path . '/projet/' . $this->projet->hashed_id . '/details-soumission-rapport-faisabilite',
             default => $path . '/dashboard/projet/' . $this->projet->hashed_id,
         };
     }
