@@ -776,8 +776,12 @@ class EvaluationExportService
             default => $category
         };
 
-        // Remplacer les slashes pour éviter de créer des sous-dossiers non désirés
-        $sanitizedId = str_replace('/', '_', $evaluationId);
+        // Sanitize: remplacer les caractères problématiques
+        $sanitizedId = str_replace(['/', ' ', "\t", "\n", "\r"], '_', $evaluationId);
+        // Supprimer les underscores multiples consécutifs
+        $sanitizedId = preg_replace('/_+/', '_', $sanitizedId);
+        // Supprimer les underscores au début/fin
+        $sanitizedId = trim($sanitizedId, '_');
 
         return $prefix . '_' . $sanitizedId . '_' . time() . '.' . $extension;
     }
