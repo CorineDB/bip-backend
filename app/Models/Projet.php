@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\EnumTypeFinancement;
+use App\Enums\EnumTypeSecteur;
 use App\Enums\PhasesIdee;
 use App\Enums\SousPhaseIdee;
 use App\Enums\StatutIdee;
@@ -1053,5 +1055,244 @@ class Projet extends Model
             })
             ->filter() // Enlever les null (types sans financements liés)
             ->values(); // Réindexer le tableau
+    }
+
+    /**
+     * Extraire toutes les relations des données de champs
+     */
+    protected function relationshipChamps(): array
+    {
+        return [
+            'secteurId' => 'secteur',
+            'grand_secteur' => 'secteur_direct',
+            'secteur' => 'secteur_direct',
+            'categorieId' => 'categorie',
+
+            'orientations_strategiques' => 'orientations_strategique_pnd',
+            'resultats_strategiques' => 'resultats_strategique_pnd',
+            'objectifs_strategiques' => 'objectifs_strategique_pnd',
+            'piliers_pag' => 'piliers_pag',
+            'axes_pag' => 'axes_pag',
+            'actions_pag' => 'actions_pag',
+
+            'cibles' => 'cibles',
+            'odds' => 'odds',
+            'sources_financement' => 'sources_de_financement',
+            'natures_financement' => 'financement_direct',
+            'types_financement' => 'financement_direct',
+
+            // dans lieuxIntervention
+            'departements' => 'lieuxIntervention',
+            'communes' => 'lieuxIntervention',
+            'arrondissements' => 'lieuxIntervention',
+            'villages' => 'lieuxIntervention',
+        ];
+    }
+
+    /**
+     * Retourner les champs avec les objets simplifiés des relations pour formData
+     * Utilisé pour le ficheIdee["formData"]
+     */
+    public function getFormDataWithRelations()
+    {
+        return $this->champs->map(function ($champ) {
+            $value = $champ->pivot->valeur;
+            $attribut = $champ->attribut;
+
+            // Utiliser le mapping relationshipChamps()
+            $relationMappings = $this->relationshipChamps();
+
+            // Si c'est un champ relationnel, enrichir avec les objets simplifiés
+            if (isset($relationMappings[$attribut]) && $value) {
+                $mapping = $relationMappings[$attribut];
+
+                // Cas spécial pour lieuxIntervention
+                if ($mapping === 'lieuxIntervention') {
+                    if (!$this->relationLoaded('lieuxIntervention')) {
+                        $this->load('lieuxIntervention');
+                    }
+
+                    $lieuMapping = [
+                        'departements' => ['column' => 'departementId', 'model' => Departement::class],
+                        'communes' => ['column' => 'communeId', 'model' => Commune::class],
+                        'arrondissements' => ['column' => 'arrondissementId', 'model' => Arrondissement::class],
+                        'villages' => ['column' => 'villageId', 'model' => Village::class],
+                    ];
+
+                    if (isset($lieuMapping[$attribut])) {
+                        $columnName = $lieuMapping[$attribut]['column'];
+                        $modelClass = $lieuMapping[$attribut]['model'];
+
+                        $value = $this->lieuxIntervention
+                            ->pluck($columnName)
+                            ->filter()
+                            ->unique()
+                            ->map(function ($relatedId) use ($modelClass) {
+                                $entity = $modelClass::find($relatedId);
+                                return $entity ? [
+                                    'id' => $entity->hashed_id,
+                                    'nom' => $entity->nom
+                                ] : null;
+                            })
+                            ->filter()
+                            ->values()
+                            ->toArray();
+                    }
+                }
+                // Cas spécial pour natures_financement et types_financement
+                elseif ($mapping === 'financement_direct') {
+                    $ids = $this->parseIds($value);
+
+                    if (!empty($ids)) {
+                        $typeAttendu = match($attribut) {
+                            'types_financement' => EnumTypeFinancement::TYPE,
+                            'natures_financement' => EnumTypeFinancement::NATURE,
+                            default => null
+                        };
+
+                        $query = Financement::whereIn('id', $ids);
+
+                        if ($typeAttendu) {
+                            $query->where('type', $typeAttendu);
+                        }
+
+                        $financements = $query->get();
+
+                        $value = $financements->map(function ($financement) {
+                            return [
+                                'id' => $financement->hashed_id,
+                                'nom' => $financement->nom
+                            ];
+                        })->toArray();
+                    } else {
+                        $value = [];
+                    }
+                }
+                // Cas spécial pour grand_secteur et secteur
+                elseif ($mapping === 'secteur_direct') {
+                    $ids = $this->parseIds($value);
+
+                    if (!empty($ids)) {
+                        $typeAttendu = match($attribut) {
+                            'grand_secteur' => EnumTypeSecteur::GRAND_SECTEUR,
+                            'secteur' => EnumTypeSecteur::SECTEUR,
+                            default => null
+                        };
+
+                        $query = Secteur::whereIn('id', $ids);
+
+                        if ($typeAttendu) {
+                            $query->where('type', $typeAttendu);
+                        }
+
+                        $secteurs = $query->get();
+
+                        $value = $secteurs->map(function ($secteur) {
+                            return [
+                                'id' => $secteur->hashed_id,
+                                'nom' => $secteur->nom
+                            ];
+                        })->toArray();
+                    } else {
+                        $value = [];
+                    }
+                }
+                // Relations standard
+                else {
+                    if (method_exists($this, $mapping)) {
+                        if (!$this->relationLoaded($mapping)) {
+                            $this->load($mapping);
+                        }
+
+                        $related = $this->$mapping;
+
+                        $nameAttribute = $this->getNameAttributeForRelation($attribut);
+
+                        // Collection (many-to-many)
+                        if (is_a($related, \Illuminate\Database\Eloquent\Collection::class)) {
+                            $value = $related->map(function ($item) use ($nameAttribute) {
+                                return [
+                                    'id' => $item->hashed_id,
+                                    'nom' => $item->$nameAttribute ?? $item->nom ?? $item->intitule ?? $item->libelle ?? $item->titre ?? null
+                                ];
+                            })->toArray();
+                        }
+                        // Relation belongsTo simple
+                        elseif ($related) {
+                            $value = [
+                                'id' => $related->hashed_id,
+                                'nom' => $related->$nameAttribute ?? $related->nom ?? $related->intitule ?? $related->libelle ?? $related->titre ?? null
+                            ];
+                        }
+                    }
+                }
+            }
+
+            return [
+                'id' => $champ->hashed_id,
+                'attribut' => $attribut,
+                'value' => $value,
+                'pivot_id' => $champ->pivot->hashed_id
+            ];
+        });
+    }
+
+    /**
+     * Obtenir l'attribut de nom selon le type de relation
+     */
+    private function getNameAttributeForRelation(string $attribut): ?string
+    {
+        $nameMapping = [
+            'cibles' => 'cible',
+            'odds' => 'odd',
+            'secteurId' => 'nom',
+            'grand_secteur' => 'nom',
+            'secteur' => 'nom',
+            'categorieId' => 'categorie',
+            'sources_financement' => 'nom',
+            'natures_financement' => 'nom',
+            'types_financement' => 'nom',
+            'orientations_strategiques' => 'intitule',
+            'objectifs_strategiques' => 'intitule',
+            'resultats_strategiques' => 'intitule',
+            'piliers_pag' => 'intitule',
+            'axes_pag' => 'intitule',
+            'actions_pag' => 'intitule',
+        ];
+
+        return $nameMapping[$attribut] ?? null;
+    }
+
+    /**
+     * Parser les IDs depuis différents formats
+     * Gère: "1,2,3", [1,2,3], "1", 1, etc.
+     * Utilisé pour financements, secteurs, etc.
+     */
+    private function parseIds($value): array
+    {
+        // Si c'est déjà un array
+        if (is_array($value)) {
+            return array_filter($value, 'is_numeric');
+        }
+
+        // Si c'est une chaîne
+        if (is_string($value)) {
+            // Vérifier si c'est du JSON
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return array_filter($decoded, 'is_numeric');
+            }
+
+            // Sinon, splitter par virgule
+            $ids = explode(',', $value);
+            return array_filter(array_map('trim', $ids), 'is_numeric');
+        }
+
+        // Si c'est un nombre unique
+        if (is_numeric($value)) {
+            return [(int) $value];
+        }
+
+        return [];
     }
 }

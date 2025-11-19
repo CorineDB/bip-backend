@@ -58,7 +58,11 @@ class UpdateIdeeProjetFormDataCommand extends Command
         }
 
         // Construction de la requête
-        $query = IdeeProjet::query()->with(['champs', 'lieuxIntervention']);
+        $query = IdeeProjet::query()->with([
+            'champs',
+            'lieuxIntervention',
+            'projet' // Juste charger le projet, pas besoin de ses relations
+        ]);
 
         // Filtrer par IDs spécifiques si fournis
         if ($idsOption) {
@@ -136,6 +140,11 @@ class UpdateIdeeProjetFormDataCommand extends Command
 
                         DB::commit();
                         $updated++;
+
+                        // Mettre à jour le Projet lié si existant
+                        if ($idee->relationLoaded('projet') || $idee->projet) {
+                            $this->updateProjetIfExists($idee);
+                        }
                     } catch (\Exception $e) {
                         DB::rollBack();
                         throw $e;
@@ -197,6 +206,48 @@ class UpdateIdeeProjetFormDataCommand extends Command
         }
 
         return $errors > 0 ? Command::FAILURE : Command::SUCCESS;
+    }
+
+    /**
+     * Mettre à jour le Projet lié si existant
+     * Copie le formData de l'IdeeProjet vers le Projet
+     */
+    private function updateProjetIfExists(\App\Models\IdeeProjet $idee): void
+    {
+        try {
+            $projet = $idee->projet;
+
+            if (!$projet) {
+                return;
+            }
+
+            DB::beginTransaction();
+
+            try {
+                // Récupérer la structure ficheIdee existante ou créer une nouvelle
+                $ficheIdee = $projet->ficheIdee ?? [];
+
+                // Ajouter le form SEULEMENT s'il n'existe pas ou est vide
+                if (empty($ficheIdee["form"])) {
+                    $ficheIdee["form"] = new DocumentResource($this->documentRepository->getFicheIdee());
+                }
+
+                // Copier le formData enrichi de l'IdeeProjet vers le Projet
+                $ficheIdee["formData"] = $idee->ficheIdee["formData"] ?? [];
+
+                // Mettre à jour
+                $projet->ficheIdee = $ficheIdee;
+                $projet->save();
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                // Logger l'erreur mais ne pas bloquer le traitement
+                $this->warn("⚠️  Erreur lors de la mise à jour du Projet lié (ID: {$projet->id}): " . $e->getMessage());
+            }
+        } catch (\Exception $e) {
+            // Ignorer silencieusement si relation non chargée
+        }
     }
 
     /**

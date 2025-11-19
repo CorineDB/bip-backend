@@ -6,6 +6,8 @@ Cette commande permet de mettre à jour le `ficheIdee["formData"]` de toutes les
 
 La commande met à jour **uniquement** le `formData` dans `ficheIdee`. Le `form` existant n'est **jamais écrasé** (seulement créé s'il est vide).
 
+**Important** : Si une IdeeProjet a un **Projet lié** (relation `projet`), la commande mettra également à jour automatiquement le `formData` du Projet.
+
 Les champs relationnels dans `formData` sont enrichis pour contenir des objets complets au lieu de simples IDs :
 
 ### Financements (hiérarchie à 3 niveaux)
@@ -120,6 +122,37 @@ Cela garantit que :
 - ✅ Aucune donnée `form` existante n'est perdue
 - ✅ Seul le `formData` est enrichi
 - ✅ La structure `form` personnalisée est préservée
+
+## 🔗 Mise à jour automatique des Projets liés
+
+Lorsqu'une IdeeProjet a un Projet associé (relation `ideeProjetId`), la commande **copie automatiquement** le `formData` enrichi de l'IdeeProjet vers le Projet.
+
+### Fonctionnement
+
+```php
+// Pour chaque IdeeProjet mise à jour
+if ($idee->projet) {
+    // Copie du formData de l'IdeeProjet vers le Projet lié
+    $projet->ficheIdee["formData"] = $idee->ficheIdee["formData"];
+}
+```
+
+**Important** : Le Projet hérite du `formData` de son IdeeProjet source, garantissant une cohérence parfaite entre les deux entités.
+
+### Avantages
+
+- ✅ Cohérence parfaite : Projet et IdeeProjet ont le même formData
+- ✅ Synchronisation automatique entre IdeeProjet et Projet
+- ✅ Pas besoin de commande séparée pour les Projets
+- ✅ Gestion d'erreur indépendante (n'affecte pas l'IdeeProjet si échec)
+- ✅ Performance optimisée : simple copie, pas de regeneration
+
+### Gestion des erreurs
+
+Si la mise à jour du Projet échoue :
+- ⚠️ Un avertissement est affiché
+- ✅ L'IdeeProjet reste mise à jour
+- ✅ Le traitement continue pour les autres IdeeProjet
 
 ## ⚠️ Recommandations
 
