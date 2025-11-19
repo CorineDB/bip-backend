@@ -57,6 +57,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
      */
     public function toMail($notifiable): MailMessage
     {
+        $path = env("CLIENT_APP_URL") ?? config("app.url");
         $mailMessage = new MailMessage();
         $evaluateurNomComplet = $this->evaluateur->personne->prenom . ' ' . $this->evaluateur->personne->nom;
 
@@ -70,7 +71,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
                     ->line('**Note :** ' . $this->noteConceptuelle->intitule)
                     ->line('**Évaluateur :** ' . $evaluateurNomComplet)
                     ->line('**Type d\'appréciation :** ' . $this->getTypeAppreciationLabel())
-                    ->action('Suivre l\'évaluation', $this->getActionUrl())
+                    ->action('Suivre l\'évaluation', url($this->getActionUrl()))
                     ->line('Vous serez notifié une fois l\'évaluation terminée.');
 
             case 'dpaf_supervision':
@@ -82,7 +83,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
                     ->line('**Note :** ' . $this->noteConceptuelle->intitule)
                     ->line('**Évaluateur :** ' . $evaluateurNomComplet)
                     ->line('**Rédacteur :** ' . ($this->noteConceptuelle->redacteur->nom ?? 'N/A'))
-                    ->action('Voir le projet', url('/projets/' . $this->projet->id))
+                    ->action('Voir le projet', url("{$path}/dashboard/projet/" . $this->projet->hashed_id))
                     ->line('Cette notification vous est envoyée à titre de supervision.');
 
             case 'dgpd_collegial':
@@ -94,7 +95,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
                     ->line('**Note :** ' . $this->noteConceptuelle->intitule)
                     ->line('**Évaluateur :** ' . $evaluateurNomComplet)
                     ->line('**Ministère :** ' . ($this->projet->ministere->nom ?? 'N/A'))
-                    ->action('Consulter l\'évaluation', $this->getActionUrl())
+                    ->action('Consulter l\'évaluation', url($this->getActionUrl()))
                     ->line('Notification d\'information collégiale.');
 
             case 'chef_projet_evaluation_terminee':
@@ -110,7 +111,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
                     ->line('**Score :** ' . $score)
                     ->line('**Décision :** ' . ucfirst($decision))
                     ->line('**Évaluateur :** ' . $evaluateurNomComplet)
-                    ->action('Voir les résultats', $this->getActionUrl())
+                    ->action('Voir les résultats', url($this->getActionUrl()))
                     ->line('Vous pouvez maintenant consulter les détails de l\'évaluation.');
 
             case 'evaluateur_confirmation':
@@ -122,7 +123,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
                     ->line('**Note :** ' . $this->noteConceptuelle->intitule)
                     ->line('**Type d\'appréciation :** ' . $this->getTypeAppreciationLabel())
                     ->line('**Statut :** ' . ucfirst($this->evaluation->statut ?? 'en cours'))
-                    ->action('Continuer l\'évaluation', $this->getActionUrl())
+                    ->action('Continuer l\'évaluation', url($this->getActionUrl()))
                     ->line('Merci pour votre contribution à l\'évaluation des projets.');
 
             default:
@@ -130,7 +131,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
                     ->subject('Appréciation Note Conceptuelle')
                     ->greeting('Bonjour ' . $notifiable->personne->prenom . ',')
                     ->line('Une appréciation de note conceptuelle a été créée.')
-                    ->action('Voir les détails', $this->getActionUrl());
+                    ->action('Voir les détails', url($this->getActionUrl()));
         }
     }
 
@@ -164,7 +165,7 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
             'score' => $this->evaluation->score ?? null,
             'decision' => $this->evaluation->decision ?? null,
             'message' => $this->getMessage(),
-            'action_url' => $this->getActionUrl(),
+            'action_url' => url($this->getActionUrl()),
             'action_text' => $this->getActionText(),
             'date_appreciation' => $this->evaluation->created_at->format('d/m/Y H:i'),
             'priorite' => $this->getPriorite(),
@@ -218,18 +219,20 @@ class AppreciationNoteConceptuelleNotification extends Notification implements S
      */
     protected function getActionUrl(): string
     {
+        $path = env("CLIENT_APP_URL") ?? config("app.url");
+
         switch ($this->typeDestinataire) {
             case 'evaluateur_confirmation':
             case 'dgpd_collegial':
-                return '/evaluations/' . $this->evaluation->id . '/edit';
+                return "{$path}/evaluations/" . $this->evaluation->hashed_id;
 
             case 'chef_projet_evaluation_terminee':
             case 'redacteur_info':
-                return '/projets/' . $this->projet->id . '/notes/' . $this->noteConceptuelle->id . '/evaluations';
+                return '{$path}/projet/' . $this->projet->hashed_id . '/resultat-evaluation-note-conceptuelle/' . $this->noteConceptuelle->hashed_id . '/evaluations';
 
             case 'dpaf_supervision':
             default:
-                return '/projets/' . $this->projet->id;
+                return '{$path}/projet/' . $this->projet->hashed_id;
         }
     }
 

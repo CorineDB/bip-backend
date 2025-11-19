@@ -48,12 +48,13 @@ class NotificationRedactionNoteConceptuelleNotification extends Notification imp
             ->when($this->projet, function ($message) {
                 return $message->line('ID du projet créé: ' . $this->projet->hashed_id);
             })
-            ->action("Rédiger la note conceptuelle", url("{$path}/projets/" . ($this->projet->hashed_id ?? $this->ideeProjet->hashed_id) . "/note-conceptuelle"))
+            ->action("Rédiger la note conceptuelle", url("{$path}/projet/" . ($this->projet->hashed_id) . "/detail-note-conceptuelle"))
             ->line('Cette étape est cruciale pour la suite du développement du projet.');
     }
 
     public function toBroadcast($notifiable)
     {
+        $path = env("CLIENT_APP_URL") ?? config("app.url");
         return new BroadcastMessage([
             'type' => 'redaction_note_conceptuelle',
             'title' => 'Rédaction de note conceptuelle',
@@ -67,7 +68,7 @@ class NotificationRedactionNoteConceptuelleNotification extends Notification imp
                 'date_validation' => now()->toISOString(),
                 'action_requise' => 'redaction_note_conceptuelle',
             ],
-            'action_url' => '/projets/' . ($this->projet->hashed_id ?? $this->ideeProjet->hashed_id) . '/note-conceptuelle',
+            'action_url' => $path . '/projet/' . $this->projet->hashed_id . '/detail-note-conceptuelle',
         ]);
     }
 
@@ -76,6 +77,7 @@ class NotificationRedactionNoteConceptuelleNotification extends Notification imp
      */
     public function toDatabase($notifiable): array
     {
+        $path = env("CLIENT_APP_URL") ?? config("app.url");
         return [
             'type' => 'redaction_note_conceptuelle',
             'title' => 'Rédaction de note conceptuelle requise',
@@ -89,7 +91,7 @@ class NotificationRedactionNoteConceptuelleNotification extends Notification imp
                 'date_validation' => now()->toISOString(),
                 'action_requise' => 'redaction_note_conceptuelle',
             ],
-            'action_url' => '/projets/' . ($this->projet->hashed_id ?? $this->ideeProjet->hashed_id) . '/note-conceptuelle',
+            'action_url' => $path . '/projet/' . $this->projet->hashed_id . '/detail-note-conceptuelle',
         ];
     }
 }

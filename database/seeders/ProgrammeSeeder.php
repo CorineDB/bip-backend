@@ -210,13 +210,12 @@ class ProgrammeSeeder extends Seeder
              */
             // Création du pilier
             $pilierModel = ComposantProgramme::updateOrCreate([
-                'slug' => SlugHelper::generate(Str::slug($pilierData)),
+                'intitule' => $pilierData,
+                'typeId' => $pilier->id
             ], [
                 'indice' => $pilierCount,
-                'intitule' => $pilierData,
-                "slug" => Str::slug($pilierData),
+                'slug' => SlugHelper::generate(Str::slug($pilierData)),
                 'parentId' => null,
-                "typeId" => $pilier->id
             ]);
 
             $axeCount = 1;
@@ -269,7 +268,7 @@ class ProgrammeSeeder extends Seeder
 
         //** PND */
 
-        /*$pnd_comp = [
+        $pnd_comp = [
             "Faire du capital humain le levier de développement" => [
                 "objectifs" => [
                     "Renforcer le capital humain et améliorer le bien-être" => [
@@ -466,9 +465,9 @@ class ProgrammeSeeder extends Seeder
                 }
                 $objectifCount++;
             }
-        }*/
+        }
 
-        /*$grands_secteur = [
+        $grands_secteur = [
             'Infrastructures et cadre de vie' => [
                 'Transport' => [
                     'Routes' => [
@@ -1035,6 +1034,6 @@ class ProgrammeSeeder extends Seeder
                     }
                 }
             }
-        }*/
+        }
     }
 }

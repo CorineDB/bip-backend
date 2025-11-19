@@ -71,7 +71,7 @@ class NotificationRapportEvaluationExAnteSoumis extends Notification implements 
                 return $mail->line('**Type :** Resoumission après révision');
             })
             ->line($this->getActionMessage())
-            ->action($this->getActionText(), $this->getActionUrl())
+            ->action($this->getActionText(), url($this->getActionUrl()))
             ->line('Merci pour votre engagement !');
     }
 
@@ -92,7 +92,7 @@ class NotificationRapportEvaluationExAnteSoumis extends Notification implements 
             'soumetteur_name' => $this->soumetteurNomComplet,
             'est_resoumission' => $this->estResoumission,
             'type_destinataire' => $this->typeDestinataire,
-            'action_url' => $this->getActionUrl(),
+            'action_url' => url($this->getActionUrl()),
             'action_text' => $this->getActionText(),
             'action_message' => $this->getActionMessage(),
             'priorite' => $this->getPriorite(),
@@ -122,7 +122,7 @@ class NotificationRapportEvaluationExAnteSoumis extends Notification implements 
             'soumetteur_name' => $this->soumetteurNomComplet,
             'est_resoumission' => $this->estResoumission,
             'type_destinataire' => $this->typeDestinataire,
-            'action_url' => $this->getActionUrl(),
+            'action_url' => url($this->getActionUrl()),
             'action_text' => $this->getActionText(),
             'priorite' => $this->getPriorite(),
             'date_soumission' => $this->rapport->date_soumission?->toDateTimeString(),
@@ -187,11 +187,12 @@ class NotificationRapportEvaluationExAnteSoumis extends Notification implements 
      */
     protected function getActionUrl(): string
     {
+        $path = env("CLIENT_APP_URL") ?? config("app.url");
         return match($this->typeDestinataire) {
-            'dgpd_validation' => '/projets/' . $this->projet->hashed_id . '/validation-rapport-evaluation-ex-ante',
-            'dpaf_supervision', 'equipe_organisation' => '/projets/' . $this->projet->hashed_id . '/rapports/' . $this->rapport->hashed_id,
-            'soumetteur_confirmation' => '/projets/' . $this->projet->hashed_id,
-            default => '/projets/' . $this->projet->hashed_id,
+            'dgpd_validation' => $path . '/projet/' . $this->projet->hashed_id . '/validation-final-projet',
+            'dpaf_supervision', 'equipe_organisation' => $path . '/projet/' . $this->projet->hashed_id . '/details-rapport-ex-ante',
+            'soumetteur_confirmation' => $path . '/projet/' . $this->projet->hashed_id . '/details-rapport-ex-ante',
+            default => $path . '/dashboard/projet/' . $this->projet->hashed_id,
         };
     }
 

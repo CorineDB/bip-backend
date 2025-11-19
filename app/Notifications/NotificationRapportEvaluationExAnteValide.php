@@ -190,12 +190,11 @@ class NotificationRapportEvaluationExAnteValide extends Notification implements 
      */
     protected function getActionUrl(): string
     {
+        $path = env("CLIENT_APP_URL") ?? config("app.url");
         return match($this->typeDestinataire) {
-            'dpaf_supervision', 'dgpd_info' => '/projets/' . $this->projet->hashed_id . '/rapports/' . $this->rapport->hashed_id,
-            'equipe_organisation', 'soumetteur_confirmation' => $this->decision === 'valider'
-                ? '/projets/' . $this->projet->hashed_id
-                : '/projets/' . $this->projet->hashed_id . '/rapports/' . $this->rapport->hashed_id . '/ameliorer',
-            default => '/projets/' . $this->projet->hashed_id,
+            'dpaf_supervision', 'dgpd_info' => $path . '/projet/' . $this->projet->hashed_id . '/validation-final-projet',
+            'equipe_organisation', 'soumetteur_confirmation' => $path . '/projet/' . $this->projet->hashed_id . '/validation-final-projet',
+            default => $path . '/dashboard/projet/' . $this->projet->hashed_id,
         };
     }
 

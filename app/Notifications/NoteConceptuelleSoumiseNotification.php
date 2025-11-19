@@ -47,6 +47,8 @@ class NoteConceptuelleSoumiseNotification extends Notification implements Should
      */
     public function toMail($notifiable): MailMessage
     {
+        $path = env("CLIENT_APP_URL") ?? config("app.url");
+
         $mailMessage = new MailMessage();
 
         switch ($this->typeDestinataire) {
@@ -58,7 +60,7 @@ class NoteConceptuelleSoumiseNotification extends Notification implements Should
                     ->line('**Projet :** ' . $this->projet->titre_projet)
                     ->line('**Note :** ' . $this->noteConceptuelle->intitule)
                     ->line('Elle sera évaluée par la DGPD dans les prochains jours.')
-                    ->action('Voir la note', url('/projet/' . $this->projet->hashed_id . '/detail-note-conceptuelle'))// . $this->noteConceptuelle->hashed_id))
+                    ->action('Voir la note', url($path.'/projet/' . $this->projet->hashed_id . '/detail-note-conceptuelle'))// . $this->noteConceptuelle->hashed_id))
                     ->line('Merci pour votre soumission.');
 
             case 'evaluation_requise':
@@ -70,8 +72,8 @@ class NoteConceptuelleSoumiseNotification extends Notification implements Should
                     ->line('**Ministère :** ' . ($this->projet->ministere->nom ?? 'N/A'))
                     ->line('**Soumise par :** ' . ($this->noteConceptuelle->redacteur->personne->nom ?? 'N/A') . ' ' . ($this->noteConceptuelle->redacteur->personne->prenom ?? ''))
 
-                    ->action('Voir la note', url('/projet/' . $this->projet->hashed_id . '/detail-note-conceptuelle'))
-                    ->action('Évaluer maintenant', url('/projet/' . $this->projet->hashed_id . '/resultat-evaluation-note-conceptuelle' . $this->noteConceptuelle->hashed_id))
+                    ->action('Voir la note', url($path.'/projet/' . $this->projet->hashed_id . '/detail-note-conceptuelle'))
+                    ->action('Évaluer maintenant', url($path.'/projet/' . $this->projet->hashed_id . '/resultat-evaluation-note-conceptuelle' . $this->noteConceptuelle->hashed_id))
                     ->line('Veuillez procéder à l\'évaluation dans les meilleurs délais.');
 
             case 'information':
@@ -83,7 +85,7 @@ class NoteConceptuelleSoumiseNotification extends Notification implements Should
                     ->line('**Projet :** ' . $this->projet->titre_projet)
                     ->line('**Ministère :** ' . ($this->projet->ministere->nom ?? 'N/A'))
                     ->line('**Soumise par :** ' . ($this->noteConceptuelle->redacteur->personne->nom ?? 'N/A'))
-                    ->action('Voir les détails', url('/dashboard/projet/' . $this->projet->hashed_id))
+                    ->action('Voir les détails', url($path.'/dashboard/projet/' . $this->projet->hashed_id))
                     ->line('Notification d\'information.');
         }
     }
@@ -147,16 +149,19 @@ class NoteConceptuelleSoumiseNotification extends Notification implements Should
      */
     protected function getActionUrl(): string
     {
+        $path = env("CLIENT_APP_URL") ?? config("app.url");
         switch ($this->typeDestinataire) {
             case 'evaluation_requise':
-                return '/evaluations/notes/' . $this->noteConceptuelle->hashed_id;
+                return $path.'/projet/' . $this->projet->hashed_id . '/resultat-evaluation-note-conceptuelle' . $this->noteConceptuelle->hashed_id;
+                //'/evaluations/notes/' . $this->noteConceptuelle->hashed_id;
 
             case 'confirmation':
-                return '/projets/' . $this->projet->hashed_id . '/notes/' . $this->noteConceptuelle->hashed_id;
+                return $path.'/projet/' . $this->projet->hashed_id . '/detail-note-conceptuelle';
+                //'/projets/' . $this->projet->hashed_id . '/notes/' . $this->noteConceptuelle->hashed_id;
 
             case 'information':
             default:
-                return '/projets/' . $this->projet->hashed_id;
+                return $path.'/dashboard/projet/' . $this->projet->hashed_id; //'/projets/' . $this->projet->hashed_id;
         }
     }
 

@@ -74,7 +74,7 @@ class NotificationTdrFaisabiliteEvalue extends Notification implements ShouldQue
                 return $mail->line('**Observation :** ' . $this->resultatsEvaluation['message_resultat']);
             })
             ->line($this->getActionMessage())
-            ->action($this->getActionText(), $this->getActionUrl())
+            ->action($this->getActionText(), url($this->getActionUrl()))
             ->line('Merci pour votre engagement !');
     }
 
@@ -97,7 +97,7 @@ class NotificationTdrFaisabiliteEvalue extends Notification implements ShouldQue
             'resultat_global' => $this->resultatsEvaluation['resultat_global'] ?? null,
             'resultat_label' => $this->getResultatLabel(),
             'type_destinataire' => $this->typeDestinataire,
-            'action_url' => $this->getActionUrl(),
+            'action_url' => url($this->getActionUrl()),
             'action_text' => $this->getActionText(),
             'action_message' => $this->getActionMessage(),
             'priorite' => $this->getPriorite(),
@@ -129,7 +129,7 @@ class NotificationTdrFaisabiliteEvalue extends Notification implements ShouldQue
             'resultat_global' => $this->resultatsEvaluation['resultat_global'] ?? null,
             'resultat_label' => $this->getResultatLabel(),
             'type_destinataire' => $this->typeDestinataire,
-            'action_url' => $this->getActionUrl(),
+            'action_url' => url($this->getActionUrl()),
             'action_text' => $this->getActionText(),
             'priorite' => $this->getPriorite(),
             'date_evaluation' => now()->toDateTimeString(),
@@ -188,11 +188,12 @@ class NotificationTdrFaisabiliteEvalue extends Notification implements ShouldQue
      */
     protected function getActionUrl(): string
     {
+        $path = env("CLIENT_APP_URL") ?? config("app.url");
         return match($this->typeDestinataire) {
-            'redacteur_resultat', 'equipe_organisation' => '/projets/' . $this->projet->hashed_id . '/tdr/' . $this->tdr->hashed_id . '/evaluation',
-            'dpaf_supervision' => '/projets/' . $this->projet->hashed_id . '/supervision',
-            'evaluateur_confirmation' => '/projets/' . $this->projet->hashed_id . '/evaluations',
-            default => '/projets/' . $this->projet->hashed_id,
+            'redacteur_resultat', 'equipe_organisation' => $path . '/dashbaord/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
+            'dpaf_supervision' => $path . '/dashbaord/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
+            'evaluateur_confirmation' => $path . '/dashbaord/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-faisabilite',
+            default => $path . '/dashboard/projet/' . $this->projet->hashed_id,
         };
     }
 

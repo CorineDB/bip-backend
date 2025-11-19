@@ -76,7 +76,7 @@ class NotificationEtudePrefaisabiliteValidee extends Notification implements Sho
                 return $mail->line('**Commentaire :** ' . $this->evaluation->commentaire);
             })
             ->line($this->getActionMessage())
-            ->action($this->getActionText(), $this->getActionUrl())
+            ->action($this->getActionText(), url($this->getActionUrl()))
             ->line('Merci pour votre engagement !');
     }
 
@@ -100,7 +100,7 @@ class NotificationEtudePrefaisabiliteValidee extends Notification implements Sho
             'decision_label' => $this->getDecisionLabel(),
             'commentaire' => $this->evaluation->commentaire,
             'type_destinataire' => $this->typeDestinataire,
-            'action_url' => $this->getActionUrl(),
+            'action_url' => url($this->getActionUrl()),
             'action_text' => $this->getActionText(),
             'action_message' => $this->getActionMessage(),
             'priorite' => $this->getPriorite(),
@@ -131,7 +131,7 @@ class NotificationEtudePrefaisabiliteValidee extends Notification implements Sho
             'decision' => $this->decision,
             'decision_label' => $this->getDecisionLabel(),
             'type_destinataire' => $this->typeDestinataire,
-            'action_url' => $this->getActionUrl(),
+            'action_url' => url($this->getActionUrl()),
             'action_text' => $this->getActionText(),
             'priorite' => $this->getPriorite(),
             'date_validation' => now()->toDateTimeString(),
@@ -203,10 +203,11 @@ class NotificationEtudePrefaisabiliteValidee extends Notification implements Sho
      */
     protected function getActionUrl(): string
     {
+        $path = env("CLIENT_APP_URL") ?? config("app.url");
         return match($this->typeDestinataire) {
-            'charge_faisabilite_action' => '/projets/' . $this->projet->hashed_id . '/faisabilite',
-            'validateur_confirmation' => '/projets/' . $this->projet->hashed_id . '/evaluations',
-            default => '/projets/' . $this->projet->hashed_id,
+            'charge_faisabilite_action' => $path.'/projet/' . $this->projet->hashed_id . '/details-validations-etude-prefaisabilite',
+            'validateur_confirmation' => $path.'/projet/' . $this->projet->hashed_id . '/details-validations-etude-prefaisabilite',
+            default => $path.'/dashboard/projet/' . $this->projet->hashed_id
         };
     }
 
