@@ -140,6 +140,12 @@ class IdeeProjetResource extends BaseApiResource
             'validation_preliminaire' => $this->validationPreliminaire()->first(),
             'validation_finale' => $this->validationFinale()->first(),
 
+            // Fichiers exportés
+            'fiche_idee_projet_export' => $this->ficheIdeeProjet,
+            'evaluation_climatique_export' => $this->evaluationClimatiqueExporter,
+            'evaluation_pertinence_export' => $this->evaluationPertinenceExporter,
+            'evaluation_amc_export' => $this->AMCExporter,
+
             'types_intervention' => $this->whenLoaded('typesIntervention', function () {
                 return $this->typesIntervention->map(function ($type) {
                     return [
