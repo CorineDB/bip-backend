@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EnumTypeFinancement;
+use App\Enums\EnumTypeSecteur;
 use App\Enums\PhasesIdee;
 use App\Enums\SousPhaseIdee;
 use App\Enums\StatutIdee;
@@ -547,8 +548,8 @@ class IdeeProjet extends Model
     {
         return [
             'secteurId' => 'secteur',
-            /*'grand_secteur' =>  Secteur::class,
-            'secteur' =>  Secteur::class,*/
+            'grand_secteur' => 'secteur_direct',
+            'secteur' => 'secteur_direct',
             'categorieId' => 'categorie',
 
 
@@ -626,7 +627,7 @@ class IdeeProjet extends Model
                 // Cas spécial pour natures_financement et types_financement
                 elseif ($mapping === 'financement_direct') {
                     // Parser les IDs depuis la valeur (peut être "1,2,3" ou [1,2,3] ou "1")
-                    $ids = $this->parseFinancementIds($value);
+                    $ids = $this->parseIds($value);
 
                     if (!empty($ids)) {
                         // Déterminer le type attendu selon l'attribut
@@ -650,6 +651,39 @@ class IdeeProjet extends Model
                             return [
                                 'id' => $financement->hashed_id,
                                 'nom' => $financement->nom
+                            ];
+                        })->toArray();
+                    } else {
+                        $value = [];
+                    }
+                }
+                // Cas spécial pour grand_secteur et secteur
+                elseif ($mapping === 'secteur_direct') {
+                    // Parser les IDs depuis la valeur (peut être "1,2,3" ou [1,2,3] ou "1")
+                    $ids = $this->parseIds($value);
+
+                    if (!empty($ids)) {
+                        // Déterminer le type attendu selon l'attribut
+                        // Hiérarchie: GRAND_SECTEUR (parent) → SECTEUR (enfant) → SOUS_SECTEUR (petit-enfant)
+                        $typeAttendu = match($attribut) {
+                            'grand_secteur' => EnumTypeSecteur::GRAND_SECTEUR,
+                            'secteur' => EnumTypeSecteur::SECTEUR,
+                            default => null
+                        };
+
+                        $query = Secteur::whereIn('id', $ids);
+
+                        // Filtrer par type si défini pour garantir l'intégrité
+                        if ($typeAttendu) {
+                            $query->where('type', $typeAttendu);
+                        }
+
+                        $secteurs = $query->get();
+
+                        $value = $secteurs->map(function ($secteur) {
+                            return [
+                                'id' => $secteur->hashed_id,
+                                'nom' => $secteur->nom
                             ];
                         })->toArray();
                     } else {
@@ -706,6 +740,8 @@ class IdeeProjet extends Model
             'cibles' => 'cible',
             'odds' => 'odd',
             'secteurId' => 'nom',
+            'grand_secteur' => 'nom',
+            'secteur' => 'nom',
             'categorieId' => 'categorie',
             'sources_financement' => 'nom',
             'natures_financement' => 'nom',
@@ -723,10 +759,11 @@ class IdeeProjet extends Model
     }
 
     /**
-     * Parser les IDs de financement depuis différents formats
+     * Parser les IDs depuis différents formats
      * Gère: "1,2,3", [1,2,3], "1", 1, etc.
+     * Utilisé pour financements, secteurs, etc.
      */
-    private function parseFinancementIds($value): array
+    private function parseIds($value): array
     {
         // Si c'est déjà un array
         if (is_array($value)) {
