@@ -631,12 +631,15 @@ class IdeeProjet extends Model
 
                         $related = $this->$mapping;
 
+                        // Déterminer l'attribut de nom selon le type de relation
+                        $nameAttribute = $this->getNameAttributeForRelation($attribut);
+
                         // Collection (many-to-many)
                         if (is_a($related, \Illuminate\Database\Eloquent\Collection::class)) {
-                            $value = $related->map(function ($item) {
+                            $value = $related->map(function ($item) use ($nameAttribute) {
                                 return [
                                     'id' => $item->hashed_id,
-                                    'nom' => $item->nom ?? $item->intitule ?? $item->libelle ?? $item->titre ?? null
+                                    'nom' => $item->$nameAttribute ?? $item->nom ?? $item->intitule ?? $item->libelle ?? $item->titre ?? null
                                 ];
                             })->toArray();
                         }
@@ -644,7 +647,7 @@ class IdeeProjet extends Model
                         elseif ($related) {
                             $value = [
                                 'id' => $related->hashed_id,
-                                'nom' => $related->nom ?? $related->intitule ?? $related->libelle ?? $related->titre ?? null
+                                'nom' => $related->$nameAttribute ?? $related->nom ?? $related->intitule ?? $related->libelle ?? $related->titre ?? null
                             ];
                         }
                     }
@@ -658,6 +661,29 @@ class IdeeProjet extends Model
                 'pivot_id' => $champ->pivot->hashed_id
             ];
         });
+    }
+
+    /**
+     * Obtenir l'attribut de nom selon le type de relation
+     */
+    private function getNameAttributeForRelation(string $attribut): ?string
+    {
+        $nameMapping = [
+            'cibles' => 'cible',
+            'odds' => 'odd',
+            'secteurId' => 'nom',
+            'categorieId' => 'nom',
+            'sources_financement' => 'nom',
+            // PND et PAG utilisent 'intitule'
+            'orientations_strategiques' => 'intitule',
+            'objectifs_strategiques' => 'intitule',
+            'resultats_strategiques' => 'intitule',
+            'piliers_pag' => 'intitule',
+            'axes_pag' => 'intitule',
+            'actions_pag' => 'intitule',
+        ];
+
+        return $nameMapping[$attribut] ?? null;
     }
 
     /**
