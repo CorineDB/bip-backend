@@ -64,6 +64,12 @@ class ProjectExportService
             throw new \Exception("Impossible de sauvegarder le fichier PDF à {$storedPath}");
         }
 
+        \Log::info("✅ [ProjectExportService] Fichier PDF stocké", [
+            'stored_path' => $storedPath,
+            'size' => $fileSize,
+            'hash_md5' => $hashMd5
+        ]);
+
         // Générer le hash d'accès
         $hashAcces = $this->generateFileAccessHash($project->hashed_id, $storageName, $category);
 
@@ -74,8 +80,13 @@ class ProjectExportService
             ->first();
 
         if ($existingFiche) {
+            \Log::info("🔄 [ProjectExportService] Remplacement de l'ancienne fiche", [
+                'old_file_id' => $existingFiche->id,
+                'old_chemin' => $existingFiche->chemin
+            ]);
+
             // Supprimer l'ancien fichier physique
-            $oldFilePath = storage_path("app/{$existingFiche->chemin}");
+            $oldFilePath = storage_path("app/private/{$existingFiche->chemin}");
             if (file_exists($oldFilePath)) {
                 unlink($oldFilePath);
             }
@@ -83,6 +94,8 @@ class ProjectExportService
             // Supprimer l'entrée de la base de données
             $existingFiche->delete();
         }
+
+        \Log::info("📝 [ProjectExportService] Création de l'entrée en base de données");
 
         // Créer l'entrée dans la table fichiers
         $fichier = $project->fichiers()->create([
@@ -112,6 +125,13 @@ class ProjectExportService
             'uploaded_by' => $project->responsableId ?? auth()->id(),
             'is_public' => false,
             'is_active' => true
+        ]);
+
+        \Log::info("✅ [ProjectExportService] Export fiche PDF terminé avec succès", [
+            'fichier_id' => $fichier->id,
+            'stored_path' => $storedPath,
+            'project_id' => $project->id,
+            'identifiant_bip' => $project->identifiant_bip
         ]);
 
         // Si appelé depuis un job, retourner un array avec les infos
