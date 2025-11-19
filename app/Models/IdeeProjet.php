@@ -680,14 +680,26 @@ class IdeeProjet extends Model
 
                         $secteurs = $query->get();
 
-                        $value = $secteurs->map(function ($secteur) {
-                            return [
-                                'id' => $secteur->hashed_id,
-                                'nom' => $secteur->nom
+                        // grand_secteur et secteur sont des valeurs uniques, retourner un objet
+                        // (pas un array d'objets)
+                        if (in_array($attribut, ['grand_secteur', 'secteur']) && $secteurs->isNotEmpty()) {
+                            $value = [
+                                'id' => $secteurs->first()->hashed_id,
+                                'nom' => $secteurs->first()->nom
                             ];
-                        })->toArray();
+                        } else {
+                            // Pour les autres cas (si besoin), retourner un array
+                            $value = $secteurs->map(function ($secteur) {
+                                return [
+                                    'id' => $secteur->hashed_id,
+                                    'nom' => $secteur->nom
+                                ];
+                            })->toArray();
+                        }
                     } else {
-                        $value = [];
+                        // grand_secteur et secteur: retourner null ou objet vide
+                        // Autres: retourner array vide
+                        $value = in_array($attribut, ['grand_secteur', 'secteur']) ? null : [];
                     }
                 }
                 // Relations standard
@@ -760,27 +772,39 @@ class IdeeProjet extends Model
 
     /**
      * Parser les IDs depuis différents formats
-     * Gère: "1,2,3", [1,2,3], "1", 1, etc.
+     * Gère: "1,2,3", [1,2,3], "1", 1, hashed IDs, etc.
      * Utilisé pour financements, secteurs, etc.
      */
     private function parseIds($value): array
     {
         // Si c'est déjà un array
         if (is_array($value)) {
-            return array_filter($value, 'is_numeric');
+            // Accepter à la fois les IDs numériques et les hashed IDs (strings non vides)
+            return array_filter($value, function($id) {
+                return is_numeric($id) || (is_string($id) && !empty(trim($id)));
+            });
         }
 
         // Si c'est une chaîne
         if (is_string($value)) {
+            $value = trim($value);
+            if (empty($value)) {
+                return [];
+            }
+
             // Vérifier si c'est du JSON
             $decoded = json_decode($value, true);
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                return array_filter($decoded, 'is_numeric');
+                return array_filter($decoded, function($id) {
+                    return is_numeric($id) || (is_string($id) && !empty(trim($id)));
+                });
             }
 
             // Sinon, splitter par virgule
             $ids = explode(',', $value);
-            return array_filter(array_map('trim', $ids), 'is_numeric');
+            return array_filter(array_map('trim', $ids), function($id) {
+                return is_numeric($id) || (!empty($id) && is_string($id));
+            });
         }
 
         // Si c'est un nombre unique
