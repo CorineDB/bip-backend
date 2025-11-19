@@ -98,16 +98,12 @@ class EvaluationExportService
             'category' => $category
         ]);
 
-        // Sauvegarder temporairement pour obtenir le contenu
-        $tempPath = storage_path('app/temp/' . $storageName);
+        // Utiliser le dossier temporaire du système (évite les problèmes de permissions)
+        $tempPath = sys_get_temp_dir() . '/' . $storageName;
 
-        // Créer le dossier temp s'il n'existe pas
-        if (!file_exists(dirname($tempPath))) {
-            mkdir(dirname($tempPath), 0755, true);
-            \Log::info("📁 [EvaluationExportService] Dossier temp créé", [
-                'path' => dirname($tempPath)
-            ]);
-        }
+        \Log::info("📁 [EvaluationExportService] Chemin temporaire", [
+            'temp_path' => $tempPath
+        ]);
 
         $writer = new Xlsx($spreadsheet);
         $writer->save($tempPath);
@@ -491,16 +487,25 @@ class EvaluationExportService
         $extension = 'xlsx';
         $storageName = $this->generateStorageName($category, $evaluation->hashed_id, $extension);
 
-        // Sauvegarder temporairement pour obtenir le contenu
-        $tempPath = storage_path('app/temp/' . $storageName);
+        \Log::info("💾 [EvaluationExportService] Sauvegarde du fichier climatique", [
+            'storage_name' => $storageName,
+            'category' => $category
+        ]);
 
-        // Créer le dossier temp s'il n'existe pas
-        if (!file_exists(dirname($tempPath))) {
-            mkdir(dirname($tempPath), 0755, true);
-        }
+        // Utiliser le dossier temporaire du système (évite les problèmes de permissions)
+        $tempPath = sys_get_temp_dir() . '/' . $storageName;
+
+        \Log::info("📁 [EvaluationExportService] Chemin temporaire climatique", [
+            'temp_path' => $tempPath
+        ]);
 
         $writer = new Xlsx($spreadsheet);
         $writer->save($tempPath);
+
+        \Log::info("✅ [EvaluationExportService] Fichier temporaire climatique créé", [
+            'temp_path' => $tempPath,
+            'size' => filesize($tempPath)
+        ]);
 
         // Lire le contenu du fichier
         $fileContent = file_get_contents($tempPath);
@@ -519,6 +524,12 @@ class EvaluationExportService
         $storedPath = "{$storagePath}/{$storageName}";
         Storage::disk('local')->put($storedPath, $fileContent);
 
+        \Log::info("✅ [EvaluationExportService] Fichier climatique stocké", [
+            'stored_path' => $storedPath,
+            'size' => $fileSize,
+            'hash_md5' => $hashMd5
+        ]);
+
         // Générer le hash d'accès
         $hashAcces = $this->generateFileAccessHash($project->hashed_id, $storageName, $category);
 
@@ -529,6 +540,11 @@ class EvaluationExportService
             ->first();
 
         if ($existingFile) {
+            \Log::info("🔄 [EvaluationExportService] Remplacement de l'ancien fichier climatique", [
+                'old_file_id' => $existingFile->id,
+                'old_chemin' => $existingFile->chemin
+            ]);
+
             // Supprimer l'ancien fichier physique
             $oldFilePath = storage_path("app/private/{$existingFile->chemin}");
             if (file_exists($oldFilePath)) {
@@ -539,8 +555,10 @@ class EvaluationExportService
             $existingFile->delete();
         }
 
+        \Log::info("📝 [EvaluationExportService] Création de l'entrée en base de données (climatique)");
+
         // Créer l'entrée dans la table fichiers (relié à l'IdeeProjet)
-        $project->fichiers()->create([
+        $fichier = $project->fichiers()->create([
             'nom_original' => "evaluation_climatique_{$identifiantBip}.xlsx",
             'nom_stockage' => $storageName,
             'chemin' => $storedPath,
@@ -568,6 +586,13 @@ class EvaluationExportService
             'uploaded_by' => $project->responsableId ?? auth()->id(),
             'is_public' => false,
             'is_active' => true
+        ]);
+
+        \Log::info("✅ [EvaluationExportService] Export climatique terminé avec succès", [
+            'fichier_id' => $fichier->id,
+            'stored_path' => $storedPath,
+            'project_id' => $project->id,
+            'identifiant_bip' => $project->identifiant_bip
         ]);
 
         return $storedPath;
