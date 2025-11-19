@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\StatutIdee;
-use App\Http\Resources\DocumentResource;
 use App\Http\Resources\EvaluationCritereResource;
 use Illuminate\Http\JsonResponse;
 use Exception;
@@ -47,7 +46,6 @@ use App\Http\Resources\idees_projet\IdeesProjetResource;
 use App\Http\Resources\UserResource;
 use App\Models\IdeeProjet;
 use App\Repositories\Contracts\CategorieCritereRepositoryInterface;
-use App\Repositories\Contracts\DocumentRepositoryInterface;
 use App\Jobs\ExportEvaluationJob;
 
 class EvaluationService extends BaseService implements EvaluationServiceInterface
@@ -56,18 +54,15 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
     protected BaseRepositoryInterface $repository;
     protected CategorieCritereRepositoryInterface $categorieCritereRepository;
     protected IdeeProjetRepositoryInterface $ideeProjetRepository;
-    protected DocumentRepositoryInterface $documentRepository;
 
     public function __construct(
         EvaluationRepositoryInterface $repository,
         IdeeProjetRepositoryInterface $ideeProjetRepository,
-        CategorieCritereRepositoryInterface $categorieCritereRepository,
-        DocumentRepositoryInterface $documentRepository
+        CategorieCritereRepositoryInterface $categorieCritereRepository
     ) {
         parent::__construct($repository);
         $this->categorieCritereRepository = $categorieCritereRepository;
         $this->ideeProjetRepository = $ideeProjetRepository;
-        $this->documentRepository = $documentRepository;
     }
 
     protected function getResourceClass(): string
@@ -180,9 +175,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 // Dispatcher les jobs d'export des évaluations
                 ExportEvaluationJob::dispatch($ideeProjetId, 'climatique', auth()->id());
                 ExportEvaluationJob::dispatch($ideeProjetId, 'pertinence', auth()->id());
-
-                // Mettre à jour le formData enrichi de l'IdeeProjet
-                $this->updateFormDataEnrichi($ideeProjet);
 
                 // CODE COMMENTÉ - Redondant car l'évaluation climatique est déjà finalisée (statut = 1)
                 // et le champ evaluation est maintenant correctement rempli par soumettreEvaluationClimatique()
@@ -3792,82 +3784,6 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
         } catch (Exception $e) {
             \Log::error('Erreur lors de la mise à jour du score de pertinence: ' . $e->getMessage());
             return false;
-        }
-    }
-
-    /**
-     * Mettre à jour le formData enrichi de l'IdeeProjet et du Projet lié
-     *
-     * @param IdeeProjet $ideeProjet
-     * @return void
-     */
-    private function updateFormDataEnrichi(IdeeProjet $ideeProjet): void
-    {
-        try {
-            // Charger les relations nécessaires si pas déjà chargées
-            if (!$ideeProjet->relationLoaded('champs')) {
-                $ideeProjet->load('champs');
-            }
-            if (!$ideeProjet->relationLoaded('lieuxIntervention')) {
-                $ideeProjet->load('lieuxIntervention');
-            }
-
-            // Récupérer la structure ficheIdee existante
-            $ficheIdee = $ideeProjet->ficheIdee ?? [];
-
-            // Ajouter le form SEULEMENT s'il n'existe pas ou est vide
-            if (empty($ficheIdee["form"])) {
-                $ficheIdee["form"] = new DocumentResource($this->documentRepository->getFicheIdee());
-            }
-
-            // Mettre à jour le formData enrichi
-            $ficheIdee["formData"] = $ideeProjet->getFormDataWithRelations();
-
-            // Sauvegarder
-            $ideeProjet->ficheIdee = $ficheIdee;
-            $ideeProjet->save();
-
-            // Mettre à jour le Projet lié si existant
-            if ($ideeProjet->relationLoaded('projet') || $ideeProjet->projet) {
-                $this->updateProjetFormData($ideeProjet);
-            }
-        } catch (Exception $e) {
-            \Log::warning("Erreur lors de la mise à jour du formData enrichi pour IdeeProjet {$ideeProjet->id}: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * Mettre à jour le formData du Projet lié
-     * Copie le formData de l'IdeeProjet vers le Projet
-     *
-     * @param IdeeProjet $ideeProjet
-     * @return void
-     */
-    private function updateProjetFormData(IdeeProjet $ideeProjet): void
-    {
-        try {
-            $projet = $ideeProjet->projet;
-
-            if (!$projet) {
-                return;
-            }
-
-            // Récupérer la structure ficheIdee existante du Projet
-            $ficheIdee = $projet->ficheIdee ?? [];
-
-            // Ajouter le form SEULEMENT s'il n'existe pas ou est vide
-            if (empty($ficheIdee["form"])) {
-                $ficheIdee["form"] = new DocumentResource($this->documentRepository->getFicheIdee());
-            }
-
-            // Copier le formData enrichi de l'IdeeProjet vers le Projet
-            $ficheIdee["formData"] = $ideeProjet->ficheIdee["formData"] ?? [];
-
-            // Sauvegarder
-            $projet->ficheIdee = $ficheIdee;
-            $projet->save();
-        } catch (Exception $e) {
-            \Log::warning("Erreur lors de la mise à jour du formData du Projet lié (ID: {$projet->id}): " . $e->getMessage());
         }
     }
 }
