@@ -190,8 +190,8 @@ class NotificationRapportPrefaisabiliteSoumis extends Notification implements Sh
         $path = env("CLIENT_APP_URL") ?? config("app.url");
         return match($this->typeDestinataire) {
             'dgpd_validation' => $path . '/projet/' . $this->projet->hashed_id . '/details-validations-etude-prefaisabilite',
-            'dpaf_supervision', 'equipe_organisation' => $path . '/projet/' . $this->projet->hashed_id . "details-soumission-rapport-prefaisabilite",
-            'soumetteur_confirmation' => $path . '/projet/' . $this->projet->hashed_id . "details-soumission-rapport-prefaisabilite",
+            'dpaf_supervision', 'equipe_organisation' => $path . '/projet/' . $this->projet->hashed_id . '/details-soumission-rapport-prefaisabilite',
+            'soumetteur_confirmation' => $path . '/projet/' . $this->projet->hashed_id . '/details-soumission-rapport-prefaisabilite',
             default => $path . '/dashboard/projet/' . $this->projet->hashed_id,
         };
     }

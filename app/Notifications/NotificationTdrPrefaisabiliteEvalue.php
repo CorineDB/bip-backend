@@ -188,11 +188,12 @@ class NotificationTdrPrefaisabiliteEvalue extends Notification implements Should
      */
     protected function getActionUrl(): string
     {
+        $path = env("CLIENT_APP_URL") ?? config("app.url");
         return match($this->typeDestinataire) {
-            'redacteur_resultat', 'equipe_organisation' => '/projets/' . $this->projet->hashed_id . '/tdr/' . $this->tdr->hashed_id . '/evaluation',
-            'dpaf_supervision' => '/projets/' . $this->projet->hashed_id . '/supervision',
-            'evaluateur_confirmation' => '/projets/' . $this->projet->hashed_id . '/evaluations',
-            default => '/projets/' . $this->projet->hashed_id,
+            'redacteur_resultat', 'equipe_organisation' => $path . '/dashboard/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-prefaisabilite',
+            'dpaf_supervision' => $path . '/dashboard/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-prefaisabilite',
+            'evaluateur_confirmation' => $path . '/dashboard/projet/' . $this->projet->hashed_id . '/detail-appreciation-tdr-prefaisabilite',
+            default => $path . '/dashboard/projet/' . $this->projet->hashed_id,
         };
     }
 
