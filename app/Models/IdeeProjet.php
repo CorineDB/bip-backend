@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EnumTypeFinancement;
 use App\Enums\PhasesIdee;
 use App\Enums\SousPhaseIdee;
 use App\Enums\StatutIdee;
@@ -628,7 +629,22 @@ class IdeeProjet extends Model
                     $ids = $this->parseFinancementIds($value);
 
                     if (!empty($ids)) {
-                        $financements = Financement::whereIn('id', $ids)->get();
+                        // Déterminer le type attendu selon l'attribut
+                        // Hiérarchie: TYPE (parent) → NATURE (enfant) → SOURCE (petit-enfant)
+                        $typeAttendu = match($attribut) {
+                            'types_financement' => EnumTypeFinancement::TYPE,
+                            'natures_financement' => EnumTypeFinancement::NATURE,
+                            default => null
+                        };
+
+                        $query = Financement::whereIn('id', $ids);
+
+                        // Filtrer par type si défini pour garantir l'intégrité
+                        if ($typeAttendu) {
+                            $query->where('type', $typeAttendu);
+                        }
+
+                        $financements = $query->get();
 
                         $value = $financements->map(function ($financement) {
                             return [
