@@ -158,11 +158,15 @@ class EvaluationExportService
 
             // Supprimer l'ancien fichier physique
             $oldFilePath = storage_path("app/private/{$existingFile->chemin}");
-            if (file_exists($oldFilePath)) {
-                unlink($oldFilePath);
+            $deleted = $this->deleteFileSecurely($oldFilePath);
+
+            if (!$deleted) {
+                \Log::warning("⚠️ [EvaluationExportService] Ancien fichier non supprimé, mais on continue", [
+                    'old_file_path' => $oldFilePath
+                ]);
             }
 
-            // Supprimer l'entrée de la base de données
+            // Supprimer l'entrée de la base de données même si la suppression physique échoue
             $existingFile->delete();
         }
 
@@ -558,11 +562,15 @@ class EvaluationExportService
 
             // Supprimer l'ancien fichier physique
             $oldFilePath = storage_path("app/private/{$existingFile->chemin}");
-            if (file_exists($oldFilePath)) {
-                unlink($oldFilePath);
+            $deleted = $this->deleteFileSecurely($oldFilePath);
+
+            if (!$deleted) {
+                \Log::warning("⚠️ [EvaluationExportService] Ancien fichier climatique non supprimé, mais on continue", [
+                    'old_file_path' => $oldFilePath
+                ]);
             }
 
-            // Supprimer l'entrée de la base de données
+            // Supprimer l'entrée de la base de données même si la suppression physique échoue
             $existingFile->delete();
         }
 
@@ -784,6 +792,43 @@ class EvaluationExportService
         $sanitizedId = trim($sanitizedId, '_');
 
         return $prefix . '_' . $sanitizedId . '_' . time() . '.' . $extension;
+    }
+
+    /**
+     * Supprimer un fichier de manière sécurisée
+     */
+    private function deleteFileSecurely(string $filePath): bool
+    {
+        if (!file_exists($filePath)) {
+            \Log::warning("⚠️ [EvaluationExportService] Fichier déjà supprimé", [
+                'file_path' => $filePath
+            ]);
+            return true; // Considéré comme succès car le fichier n'existe plus
+        }
+
+        try {
+            $success = @unlink($filePath); // @ pour supprimer le warning
+
+            if (!$success) {
+                \Log::error("❌ [EvaluationExportService] Échec suppression fichier", [
+                    'file_path' => $filePath,
+                    'error' => error_get_last()
+                ]);
+                return false;
+            }
+
+            \Log::info("🗑️ [EvaluationExportService] Fichier supprimé", [
+                'file_path' => $filePath
+            ]);
+            return true;
+
+        } catch (\Exception $e) {
+            \Log::error("❌ [EvaluationExportService] Exception lors de la suppression", [
+                'file_path' => $filePath,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
     }
 
     /**
