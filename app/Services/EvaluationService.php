@@ -442,13 +442,13 @@ class EvaluationService extends BaseService implements EvaluationServiceInterfac
                 $this->enregistrerWorkflow($ideeProjet, StatutIdee::NOTE_CONCEPTUEL);
                 $this->enregistrerDecision($ideeProjet, 'Validation finale par analyste DGPD', $attributs["commentaire"] ?? 'Idée transformée en projet');
 
-                // Dispatcher les jobs d'export des évaluations
-                ExportEvaluationJob::dispatch($ideeProjetId, 'climatique', auth()->id());
-                ExportEvaluationJob::dispatch($ideeProjetId, 'pertinence', auth()->id());
-
                 // Déclencher l'event pour dupliquer vers un projet seulement si validé
                 event(new IdeeProjetTransformee($ideeProjet));
                 //IdeeProjetTransformee::dispatch($ideeProjet);
+
+                // Dispatcher les jobs d'export des évaluations (après la création du projet)
+                ExportEvaluationJob::dispatch($ideeProjetId, 'climatique', auth()->id());
+                ExportEvaluationJob::dispatch($ideeProjetId, 'pertinence', auth()->id());
             } else {
                 $ideeProjet->update([
                     'score_amc' => 0,
