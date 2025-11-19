@@ -422,12 +422,13 @@ class EvaluationExportService
     /**
      * Export l'évaluation climatique au format Excel
      */
-    public function exportClimatiqueToExcel(Evaluation $evaluation)
+    public function exportClimatiqueToExcel(Evaluation $evaluation, string $type = 'climatique')
     {
         \Log::info("📊 [EvaluationExportService] Début export climatique", [
             'evaluation_id' => $evaluation->id,
             'projetable_type' => $evaluation->projetable_type,
-            'projetable_id' => $evaluation->projetable_id
+            'projetable_id' => $evaluation->projetable_id,
+            'type' => $type
         ]);
 
         // Charger le template Excel
@@ -487,8 +488,8 @@ class EvaluationExportService
         $resultSheet = $spreadsheet->getSheet(1);
         $this->fillClimatiqueCriteres($resultSheet, $project, $evaluationClimatique, $canevas);
 
-        // Générer le nom de stockage
-        $category = 'evaluation_climatique';
+        // Générer le nom de stockage selon le type
+        $category = $type === 'amc' ? 'evaluation_amc' : 'evaluation_climatique';
         $extension = 'xlsx';
         $storageName = $this->generateStorageName($category, $evaluation->hashed_id, $extension);
 
