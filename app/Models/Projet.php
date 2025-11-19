@@ -1144,26 +1144,33 @@ class Projet extends Model
                     $ids = $this->parseIds($value);
 
                     if (!empty($ids)) {
-                        $typeAttendu = match($attribut) {
-                            'types_financement' => EnumTypeFinancement::TYPE,
-                            'natures_financement' => EnumTypeFinancement::NATURE,
-                            default => null
-                        };
+                        // Décoder les hashed IDs en IDs numériques pour la requête SQL
+                        $numericIds = $this->decodeIds($ids, Financement::class);
 
-                        $query = Financement::whereIn('id', $ids);
+                        if (!empty($numericIds)) {
+                            $typeAttendu = match($attribut) {
+                                'types_financement' => EnumTypeFinancement::TYPE,
+                                'natures_financement' => EnumTypeFinancement::NATURE,
+                                default => null
+                            };
 
-                        if ($typeAttendu) {
-                            $query->where('type', $typeAttendu);
+                            $query = Financement::whereIn('id', $numericIds);
+
+                            if ($typeAttendu) {
+                                $query->where('type', $typeAttendu);
+                            }
+
+                            $financements = $query->get();
+
+                            $value = $financements->map(function ($financement) {
+                                return [
+                                    'id' => $financement->hashed_id,
+                                    'nom' => $financement->nom
+                                ];
+                            })->toArray();
+                        } else {
+                            $value = [];
                         }
-
-                        $financements = $query->get();
-
-                        $value = $financements->map(function ($financement) {
-                            return [
-                                'id' => $financement->hashed_id,
-                                'nom' => $financement->nom
-                            ];
-                        })->toArray();
                     } else {
                         $value = [];
                     }
@@ -1173,35 +1180,44 @@ class Projet extends Model
                     $ids = $this->parseIds($value);
 
                     if (!empty($ids)) {
-                        $typeAttendu = match($attribut) {
-                            'grand_secteur' => EnumTypeSecteur::GRAND_SECTEUR,
-                            'secteur' => EnumTypeSecteur::SECTEUR,
-                            default => null
-                        };
+                        // Décoder les hashed IDs en IDs numériques pour la requête SQL
+                        $numericIds = $this->decodeIds($ids, Secteur::class);
 
-                        $query = Secteur::whereIn('id', $ids);
+                        if (!empty($numericIds)) {
+                            $typeAttendu = match($attribut) {
+                                'grand_secteur' => EnumTypeSecteur::GRAND_SECTEUR,
+                                'secteur' => EnumTypeSecteur::SECTEUR,
+                                default => null
+                            };
 
-                        if ($typeAttendu) {
-                            $query->where('type', $typeAttendu);
-                        }
+                            $query = Secteur::whereIn('id', $numericIds);
 
-                        $secteurs = $query->get();
+                            if ($typeAttendu) {
+                                $query->where('type', $typeAttendu);
+                            }
 
-                        // grand_secteur et secteur sont des valeurs uniques, retourner un objet
-                        // (pas un array d'objets)
-                        if (in_array($attribut, ['grand_secteur', 'secteur']) && $secteurs->isNotEmpty()) {
-                            $value = [
-                                'id' => $secteurs->first()->hashed_id,
-                                'nom' => $secteurs->first()->nom
-                            ];
-                        } else {
-                            // Pour les autres cas (si besoin), retourner un array
-                            $value = $secteurs->map(function ($secteur) {
-                                return [
-                                    'id' => $secteur->hashed_id,
-                                    'nom' => $secteur->nom
+                            $secteurs = $query->get();
+
+                            // grand_secteur et secteur sont des valeurs uniques, retourner un objet
+                            // (pas un array d'objets)
+                            if (in_array($attribut, ['grand_secteur', 'secteur']) && $secteurs->isNotEmpty()) {
+                                $value = [
+                                    'id' => $secteurs->first()->hashed_id,
+                                    'nom' => $secteurs->first()->nom
                                 ];
-                            })->toArray();
+                            } else {
+                                // Pour les autres cas (si besoin), retourner un array
+                                $value = $secteurs->map(function ($secteur) {
+                                    return [
+                                        'id' => $secteur->hashed_id,
+                                        'nom' => $secteur->nom
+                                    ];
+                                })->toArray();
+                            }
+                        } else {
+                            // grand_secteur et secteur: retourner null ou objet vide
+                            // Autres: retourner array vide
+                            $value = in_array($attribut, ['grand_secteur', 'secteur']) ? null : [];
                         }
                     } else {
                         // grand_secteur et secteur: retourner null ou objet vide
@@ -1318,5 +1334,24 @@ class Projet extends Model
         }
 
         return [];
+    }
+
+    /**
+     * Décoder un tableau d'IDs (numériques ou hashés) en IDs numériques
+     * Utilisé avant les requêtes whereIn()
+     */
+    private function decodeIds(array $ids, string $modelClass): array
+    {
+        return array_values(array_filter(array_map(function ($id) use ($modelClass) {
+            // Si c'est déjà numérique, le retourner tel quel
+            if (is_numeric($id)) {
+                return (int) $id;
+            }
+            // Si c'est un hashed ID (string), le décoder
+            if (is_string($id) && !empty(trim($id)) && method_exists($modelClass, 'unhashId')) {
+                return $modelClass::unhashId($id);
+            }
+            return null;
+        }, $ids)));
     }
 }
