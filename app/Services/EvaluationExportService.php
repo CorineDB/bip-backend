@@ -15,45 +15,88 @@ class EvaluationExportService
      */
     public function exportPertinenceToExcel(Evaluation $evaluation)
     {
+        \Log::info("📊 [EvaluationExportService] Début export pertinence", [
+            'evaluation_id' => $evaluation->id,
+            'projetable_type' => $evaluation->projetable_type,
+            'projetable_id' => $evaluation->projetable_id
+        ]);
+
         // Charger le template Excel
         $templatePath = base_path('canevas/O-3_Évaluation de la pertinence_18-06-2025-rev MN.xlsx');
 
+        \Log::info("📂 [EvaluationExportService] Vérification du template", [
+            'template_path' => $templatePath,
+            'exists' => file_exists($templatePath)
+        ]);
+
         if (!file_exists($templatePath)) {
+            \Log::error("❌ [EvaluationExportService] Template introuvable", [
+                'template_path' => $templatePath
+            ]);
             throw new \Exception("Template de canevas introuvable: {$templatePath}");
         }
 
+        \Log::info("📄 [EvaluationExportService] Chargement du spreadsheet");
+
         // Charger le spreadsheet depuis le template
         $spreadsheet = IOFactory::load($templatePath);
+
+        \Log::info("✅ [EvaluationExportService] Spreadsheet chargé");
 
         // Récupérer le projet
         $project = $evaluation->projetable;
 
         if (!$project instanceof IdeeProjet) {
+            \Log::error("❌ [EvaluationExportService] Type de projet invalide", [
+                'projetable_type' => get_class($project)
+            ]);
             throw new \Exception("L'évaluation doit être liée à une IdeeProjet");
         }
+
+        \Log::info("✅ [EvaluationExportService] Projet récupéré", [
+            'project_id' => $project->id,
+            'identifiant_bip' => $project->identifiant_bip,
+            'titre' => $project->titre_projet
+        ]);
 
         // Récupérer le canevas et l'évaluation depuis le projet
         $canevas = $project->canevas_appreciation_pertinence;
         $evaluationPertinence = $project->evaluationPertinence->first();
 
         if (!$evaluationPertinence) {
+            \Log::error("❌ [EvaluationExportService] Aucune évaluation de pertinence", [
+                'project_id' => $project->id
+            ]);
             throw new \Exception("Aucune évaluation de pertinence trouvée pour ce projet");
         }
+
+        \Log::info("📝 [EvaluationExportService] Remplissage des feuilles Excel", [
+            'nb_sheets' => $spreadsheet->getSheetCount()
+        ]);
 
         // Feuille 0: Page de couverture - Informations du projet et canevas
         $coverSheet = $spreadsheet->getSheet(0);
         $this->fillProjectInfo($coverSheet, $project);
         $this->fillCanevasInfo($coverSheet, $canevas);
 
+        \Log::info("✅ [EvaluationExportService] Feuille 0 (couverture) remplie");
+
         // Feuille 1: PERTINENCE - Résultats de l'évaluation
         $resultSheet = $spreadsheet->getSheet(1);
         $this->fillPertinenceCriteres($resultSheet, $project, $evaluationPertinence);
         $this->fillAggregatedScores($resultSheet, $evaluationPertinence);
 
+        \Log::info("✅ [EvaluationExportService] Feuille 1 (résultats) remplie");
+
         // Générer le nom de stockage
         $category = 'evaluation_pertinence';
         $extension = 'xlsx';
         $storageName = $this->generateStorageName($category, $project->identifiant_bip, $extension);
+
+        \Log::info("💾 [EvaluationExportService] Sauvegarde du fichier", [
+            'storage_name' => $storageName,
+            'category' => $category
+        ]);
 
         // Sauvegarder temporairement pour obtenir le contenu
         $tempPath = storage_path('app/temp/' . $storageName);
@@ -61,10 +104,18 @@ class EvaluationExportService
         // Créer le dossier temp s'il n'existe pas
         if (!file_exists(dirname($tempPath))) {
             mkdir(dirname($tempPath), 0755, true);
+            \Log::info("📁 [EvaluationExportService] Dossier temp créé", [
+                'path' => dirname($tempPath)
+            ]);
         }
 
         $writer = new Xlsx($spreadsheet);
         $writer->save($tempPath);
+
+        \Log::info("✅ [EvaluationExportService] Fichier temporaire créé", [
+            'temp_path' => $tempPath,
+            'size' => filesize($tempPath)
+        ]);
 
         // Lire le contenu du fichier
         $fileContent = file_get_contents($tempPath);
@@ -83,6 +134,12 @@ class EvaluationExportService
         $storedPath = "{$storagePath}/{$storageName}";
         Storage::disk('local')->put($storedPath, $fileContent);
 
+        \Log::info("✅ [EvaluationExportService] Fichier stocké", [
+            'stored_path' => $storedPath,
+            'size' => $fileSize,
+            'hash_md5' => $hashMd5
+        ]);
+
         // Générer le hash d'accès
         $hashAcces = $this->generateFileAccessHash($project->hashed_id, $storageName, $category);
 
@@ -93,6 +150,11 @@ class EvaluationExportService
             ->first();
 
         if ($existingFile) {
+            \Log::info("🔄 [EvaluationExportService] Remplacement de l'ancien fichier", [
+                'old_file_id' => $existingFile->id,
+                'old_chemin' => $existingFile->chemin
+            ]);
+
             // Supprimer l'ancien fichier physique
             $oldFilePath = storage_path("app/private/{$existingFile->chemin}");
             if (file_exists($oldFilePath)) {
@@ -103,8 +165,10 @@ class EvaluationExportService
             $existingFile->delete();
         }
 
+        \Log::info("📝 [EvaluationExportService] Création de l'entrée en base de données (pertinence)");
+
         // Créer l'entrée dans la table fichiers (relié à l'IdeeProjet)
-        $project->fichiers()->create([
+        $fichier = $project->fichiers()->create([
             'nom_original' => "evaluation_pertinence_{$identifiantBip}.xlsx",
             'nom_stockage' => $storageName,
             'chemin' => $storedPath,
@@ -132,6 +196,13 @@ class EvaluationExportService
             'uploaded_by' => $project->responsableId ?? auth()->id(),
             'is_public' => false,
             'is_active' => true
+        ]);
+
+        \Log::info("✅ [EvaluationExportService] Export pertinence terminé avec succès", [
+            'fichier_id' => $fichier->id,
+            'stored_path' => $storedPath,
+            'project_id' => $project->id,
+            'identifiant_bip' => $project->identifiant_bip
         ]);
 
         return $storedPath;
@@ -352,22 +423,49 @@ class EvaluationExportService
      */
     public function exportClimatiqueToExcel(Evaluation $evaluation)
     {
+        \Log::info("📊 [EvaluationExportService] Début export climatique", [
+            'evaluation_id' => $evaluation->id,
+            'projetable_type' => $evaluation->projetable_type,
+            'projetable_id' => $evaluation->projetable_id
+        ]);
+
         // Charger le template Excel
         $templatePath = base_path('canevas/C-1a_Evaluation_climatique.xlsx');
 
+        \Log::info("📂 [EvaluationExportService] Vérification du template climatique", [
+            'template_path' => $templatePath,
+            'exists' => file_exists($templatePath)
+        ]);
+
         if (!file_exists($templatePath)) {
+            \Log::error("❌ [EvaluationExportService] Template climatique introuvable", [
+                'template_path' => $templatePath
+            ]);
             throw new \Exception("Template de canevas introuvable: {$templatePath}");
         }
 
+        \Log::info("📄 [EvaluationExportService] Chargement du spreadsheet climatique");
+
         // Charger le spreadsheet depuis le template
         $spreadsheet = IOFactory::load($templatePath);
+
+        \Log::info("✅ [EvaluationExportService] Spreadsheet climatique chargé");
 
         // Récupérer le projet
         $project = $evaluation->projetable;
 
         if (!$project instanceof IdeeProjet) {
+            \Log::error("❌ [EvaluationExportService] Type de projet invalide (climatique)", [
+                'projetable_type' => get_class($project)
+            ]);
             throw new \Exception("L'évaluation doit être liée à une IdeeProjet");
         }
+
+        \Log::info("✅ [EvaluationExportService] Projet climatique récupéré", [
+            'project_id' => $project->id,
+            'identifiant_bip' => $project->identifiant_bip,
+            'titre' => $project->titre_projet
+        ]);
 
         // Récupérer le canevas et l'évaluation depuis le projet
         $canevas = $project->canevas_climatique;
