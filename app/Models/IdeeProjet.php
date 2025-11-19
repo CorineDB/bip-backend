@@ -340,20 +340,20 @@ class IdeeProjet extends Model
             ->withTimestamps();
     }
 
-    public function orientations_strategique_png()
+    public function orientations_strategique_pnd()
     {
         return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function ($query) {
             $query->where('slug', 'orientation-strategique-pnd');
         });
     }
 
-    public function objectifs_strategique_png()
+    public function objectifs_strategique_pnd()
     {
         return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function ($query) {
             $query->where('slug', 'objectif-strategique-pnd');
         });
     }
-    public function resultats_strategique_png()
+    public function resultats_strategique_pnd()
     {
         return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function ($query) {
             $query->where('slug', 'resultats-strategique-pnd');
@@ -490,6 +490,32 @@ class IdeeProjet extends Model
         return $this->historiqueEvaluations("validation-idee-projet-a-projet");
     }
 
+    public function validationsPreliminaire()
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')->where("type_evaluation", "validation-idee-projet");
+    }
+
+    public function validationsFinale()
+    {
+        return $this->morphMany(Evaluation::class, 'projetable')->where("type_evaluation", "validation-idee-projet-a-projet");
+    }
+
+    /**
+     * Récupérer la dernière validation préliminaire
+     */
+    public function validationPreliminaire()
+    {
+        return $this->validationsPreliminaire()->latest('created_at');
+    }
+
+    /**
+     * Récupérer la dernière validation finale (DGPD)
+     */
+    public function validationFinale()
+    {
+        return $this->validationsFinale()->latest('created_at');
+    }
+
     public function fichiers()
     {
         return $this->morphMany(Fichier::class, 'fichierAttachable', 'fichier_attachable_type', 'fichier_attachable_id')
@@ -525,9 +551,9 @@ class IdeeProjet extends Model
             'categorieId' => 'categorie',
 
 
-            'orientations_strategiques' => 'orientations_strategique_png',
-            'resultats_strategiques' => 'resultats_strategique_png',
-            'objectifs_strategiques' => 'objectifs_strategique_png',
+            'orientations_strategiques' => 'orientations_strategique_pnd',
+            'resultats_strategiques' => 'resultats_strategique_pnd',
+            'objectifs_strategiques' => 'objectifs_strategique_pnd',
             'piliers_pag' => 'piliers_pag',
             'axes_pag' => 'axes_pag',
             'actions_pag' => 'actions_pag',
@@ -544,6 +570,94 @@ class IdeeProjet extends Model
             'arrondissements' => 'lieuxIntervention', // dans lieuxIntervention est disponible via la cle arrondissementId
             'villages' => 'lieuxIntervention', // dans lieuxIntervention est disponible via la cle villageId
         ];
+    }
+
+    /**
+     * Retourner les champs avec les objets simplifiés des relations pour formData
+     * Utilisé pour le ficheIdee["formData"]
+     */
+    public function getFormDataWithRelations()
+    {
+        return $this->champs->map(function ($champ) {
+            $value = $champ->pivot->valeur;
+            $attribut = $champ->attribut;
+
+            // Utiliser le mapping relationshipChamps()
+            $relationMappings = $this->relationshipChamps();
+
+            // Si c'est un champ relationnel, enrichir avec les objets simplifiés
+            if (isset($relationMappings[$attribut]) && $value) {
+                $mapping = $relationMappings[$attribut];
+
+                // Cas spécial pour lieuxIntervention
+                if ($mapping === 'lieuxIntervention') {
+                    if (!$this->relationLoaded('lieuxIntervention')) {
+                        $this->load('lieuxIntervention');
+                    }
+
+                    $lieuMapping = [
+                        'departements' => ['column' => 'departementId', 'model' => Departement::class],
+                        'communes' => ['column' => 'communeId', 'model' => Commune::class],
+                        'arrondissements' => ['column' => 'arrondissementId', 'model' => Arrondissement::class],
+                        'villages' => ['column' => 'villageId', 'model' => Village::class],
+                    ];
+
+                    if (isset($lieuMapping[$attribut])) {
+                        $columnName = $lieuMapping[$attribut]['column'];
+                        $modelClass = $lieuMapping[$attribut]['model'];
+
+                        $value = $this->lieuxIntervention
+                            ->pluck($columnName)
+                            ->filter()
+                            ->unique()
+                            ->map(function ($relatedId) use ($modelClass) {
+                                $entity = $modelClass::find($relatedId);
+                                return $entity ? [
+                                    'id' => $entity->hashed_id,
+                                    'nom' => $entity->nom
+                                ] : null;
+                            })
+                            ->filter()
+                            ->values()
+                            ->toArray();
+                    }
+                }
+                // Relations standard
+                else {
+                    if (method_exists($this, $mapping)) {
+                        if (!$this->relationLoaded($mapping)) {
+                            $this->load($mapping);
+                        }
+
+                        $related = $this->$mapping;
+
+                        // Collection (many-to-many)
+                        if (is_a($related, \Illuminate\Database\Eloquent\Collection::class)) {
+                            $value = $related->map(function ($item) {
+                                return [
+                                    'id' => $item->hashed_id,
+                                    'nom' => $item->nom ?? $item->intitule ?? $item->libelle ?? $item->titre ?? null
+                                ];
+                            })->toArray();
+                        }
+                        // Relation belongsTo simple
+                        elseif ($related) {
+                            $value = [
+                                'id' => $related->hashed_id,
+                                'nom' => $related->nom ?? $related->intitule ?? $related->libelle ?? $related->titre ?? null
+                            ];
+                        }
+                    }
+                }
+            }
+
+            return [
+                'id' => $champ->hashed_id,
+                'attribut' => $attribut,
+                'value' => $value,
+                'pivot_id' => $champ->pivot->hashed_id
+            ];
+        });
     }
 
     /**
@@ -689,25 +803,39 @@ class IdeeProjet extends Model
 
     /**
      * Construit la hiérarchie descendante des TypeProgramme avec leurs composants
+     * Filtre pour ne retourner que les composants liés à cette IdeeProjet
      *
      * @param \App\Models\TypeProgramme $typeProgramme
-     * @return array
+     * @return array|null
      */
     private function buildProgrammeHierarchieDescendante($typeProgramme)
     {
-        // Charger les composants associés à ce TypeProgramme
-        $composants = $typeProgramme->composantsProgramme->map(function ($composant) {
-            return [
-                'id' => $composant->hashed_id,
-                'intitule' => $composant->intitule,
-                //'indice' => $composant->indice,
-            ];
-        });
+        // Récupérer les IDs des composants de cette IdeeProjet
+        $composantsIds = $this->composants->pluck('id')->toArray();
+
+        // Filtrer les composants pour ne garder que ceux liés à cette IdeeProjet
+        $composants = $typeProgramme->composantsProgramme
+            ->whereIn('id', $composantsIds)
+            ->map(function ($composant) {
+                return [
+                    'id' => $composant->hashed_id,
+                    'intitule' => $composant->intitule,
+                    //'indice' => $composant->indice,
+                ];
+            });
 
         // Charger les enfants (sous-types) avec leurs composants
-        $children = $typeProgramme->children->map(function ($child) {
-            return $this->buildProgrammeHierarchieDescendante($child);
-        });
+        // Filtrer pour ne garder que les enfants qui ont des composants liés
+        $children = $typeProgramme->children
+            ->map(function ($child) {
+                return $this->buildProgrammeHierarchieDescendante($child);
+            })
+            ->filter(); // Enlever les null (enfants sans composants)
+
+        // Si ce TypeProgramme n'a aucun composant lié et aucun enfant avec composants, retourner null
+        if ($composants->isEmpty() && $children->isEmpty()) {
+            return null;
+        }
 
         return [
             'id' => $typeProgramme->hashed_id,
@@ -715,13 +843,13 @@ class IdeeProjet extends Model
             'slug' => $typeProgramme->slug,
             'type' => $typeProgramme->parent ? "composant-programme" : "programme",
             'composants_data' => $composants,
-            'composants' => $children->isEmpty() ? [] : $children,
+            'composants' => $children->isEmpty() ? [] : $children->values(),
         ];
     }
 
     /**
      * Retourne la hiérarchie complète des programmes depuis les composants
-     * Remonte jusqu'au programme racine puis redescend avec tous les composants
+     * Remonte jusqu'au programme racine puis redescend avec SEULEMENT les composants liés à cette IdeeProjet
      *
      * @return \Illuminate\Support\Collection
      */
@@ -732,10 +860,13 @@ class IdeeProjet extends Model
             return $this->getProgrammeRacine($composant->typeProgramme);
         })->filter()->unique('id');
 
-        // Pour chaque programme racine, construire la hiérarchie descendante complète
-        return $programmesRacines->map(function ($programmeRacine) {
-            return $this->buildProgrammeHierarchieDescendante($programmeRacine);
-        });
+        // Pour chaque programme racine, construire la hiérarchie descendante filtrée
+        return $programmesRacines
+            ->map(function ($programmeRacine) {
+                return $this->buildProgrammeHierarchieDescendante($programmeRacine);
+            })
+            ->filter() // Enlever les null (programmes sans composants liés)
+            ->values(); // Réindexer le tableau
     }
 
     /**
@@ -760,16 +891,31 @@ class IdeeProjet extends Model
 
     /**
      * Construit la hiérarchie descendante des Financements
+     * Filtre pour ne retourner que les financements liés à cette IdeeProjet
      *
      * @param \App\Models\Financement $financement
-     * @return array
+     * @return array|null
      */
     private function buildFinancementHierarchieDescendante($financement)
     {
+        // Récupérer les IDs des sources de financement de cette IdeeProjet
+        $sourcesIds = $this->sources_de_financement->pluck('id')->toArray();
+
         // Charger les enfants (natures ou sources) récursivement
-        $children = $financement->children->map(function ($child) {
-            return $this->buildFinancementHierarchieDescendante($child);
-        });
+        // Filtrer pour ne garder que les enfants liés
+        $children = $financement->children
+            ->map(function ($child) {
+                return $this->buildFinancementHierarchieDescendante($child);
+            })
+            ->filter(); // Enlever les null (enfants non liés)
+
+        // Vérifier si ce financement est directement lié (si c'est une source)
+        $isDirectlyLinked = in_array($financement->id, $sourcesIds);
+
+        // Si pas lié directement et aucun enfant lié, retourner null
+        if (!$isDirectlyLinked && $children->isEmpty()) {
+            return null;
+        }
 
         return [
             'id' => $financement->hashed_id,
@@ -777,13 +923,13 @@ class IdeeProjet extends Model
             'nom_usuel' => $financement->nom_usuel,
             'slug' => $financement->slug,
             'type' => $financement->type?->value ?? $financement->type,
-            'enfants' => $children->isEmpty() ? [] : $children,
+            'enfants' => $children->isEmpty() ? [] : $children->values(),
         ];
     }
 
     /**
      * Retourne la hiérarchie complète des financements depuis les sources
-     * Remonte jusqu'au type racine puis redescend avec toutes les natures et sources
+     * Remonte jusqu'au type racine puis redescend avec SEULEMENT les financements liés à cette IdeeProjet
      *
      * @return \Illuminate\Support\Collection
      */
@@ -794,10 +940,13 @@ class IdeeProjet extends Model
             return $this->getFinancementRacine($source);
         })->filter()->unique('id');
 
-        // Pour chaque type racine, construire la hiérarchie descendante complète
-        return $typesRacines->map(function ($typeRacine) {
-            return $this->buildFinancementHierarchieDescendante($typeRacine);
-        });
+        // Pour chaque type racine, construire la hiérarchie descendante filtrée
+        return $typesRacines
+            ->map(function ($typeRacine) {
+                return $this->buildFinancementHierarchieDescendante($typeRacine);
+            })
+            ->filter() // Enlever les null (types sans financements liés)
+            ->values(); // Réindexer le tableau
     }
 
     /**

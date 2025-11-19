@@ -4,6 +4,7 @@ namespace App\Http\Resources\idees_projet;
 
 use App\Http\Resources\BaseApiResource;
 use App\Http\Resources\CibleResource;
+use App\Http\Resources\FichierResource;
 use App\Http\Resources\FinancementResource;
 use App\Http\Resources\LieuInterventionResource;
 use App\Http\Resources\OddResource;
@@ -130,6 +131,29 @@ class IdeeProjetResource extends BaseApiResource
             'programmes' => $this->programmes(),
 
             'lieux_intervention' => LieuInterventionResource::collection($this->lieuxIntervention),
+
+            // Dernières évaluations
+            'evaluation_climatique' => $this->evaluationClimatique()->first(),
+            'evaluation_pertinence' => $this->evaluationPertinence()->first(),
+            'evaluation_amc' => $this->evaluationAMC()->first(),
+
+            // Dernières validations
+            'validation_preliminaire' => $this->validationPreliminaire()->first(),
+            'validation_finale' => $this->validationFinale()->first(),
+
+            // Fichiers exportés
+            'fiche_idee_projet_export' => $this->ficheIdeeProjet
+                ? new FichierResource($this->ficheIdeeProjet)
+                : null,
+            'evaluation_climatique_export' => $this->evaluationClimatiqueExporter
+                ? new FichierResource($this->evaluationClimatiqueExporter)
+                : null,
+            'evaluation_pertinence_export' => $this->evaluationPertinenceExporter
+                ? new FichierResource($this->evaluationPertinenceExporter)
+                : null,
+            'evaluation_amc_export' => $this->AMCExporter
+                ? new FichierResource($this->AMCExporter)
+                : null,
 
             'types_intervention' => $this->whenLoaded('typesIntervention', function () {
                 return $this->typesIntervention->map(function ($type) {

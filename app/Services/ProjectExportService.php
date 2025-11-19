@@ -413,11 +413,11 @@ class ProjectExportService
             return $cible->cible ?? $cible->nom;
         })->filter()->values()->toArray();
 
-        $orientations_strategique_png = $project->orientations_strategique_png->map(function ($orientation_strategique_png) {
+        $orientations_strategique_pnd = $project->orientations_strategique_pnd->map(function ($orientation_strategique_png) {
             return $orientation_strategique_png->intitule;
         })->filter()->values()->toArray();
 
-        $objectifs_strategique_png = $project->objectifs_strategique_png->map(function ($objectif_strategique_png) {
+        $objectifs_strategique_pnd = $project->objectifs_strategique_pnd->map(function ($objectif_strategique_png) {
             return $objectif_strategique_png->intitule;
         })->filter()->values()->toArray();
 
@@ -437,8 +437,8 @@ class ProjectExportService
             'odds' => !empty($odds) ? $odds : [],
             'cibles' => !empty($cibles) ? $cibles : [],
             'informationsPND' => [
-                'orientationsStrategiques' => !empty($orientations_strategique_png) ? $orientations_strategique_png : [],
-                'objectifsStrategiques' => !empty($objectifs_strategique_png) ? $objectifs_strategique_png : [],
+                'orientationsStrategiques' => !empty($orientations_strategique_pnd) ? $orientations_strategique_pnd : [],
+                'objectifsStrategiques' => !empty($objectifs_strategique_pnd) ? $objectifs_strategique_pnd : [],
             ],
             'informationsPAG' => [
                 'piliersStrategiques' => !empty($piliers_pag) ? $piliers_pag : [],

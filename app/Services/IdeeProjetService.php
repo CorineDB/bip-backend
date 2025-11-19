@@ -218,13 +218,8 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             $ficheIdee["form"] = new DocumentResource($this->documentRepository->getFicheIdee());
 
-            $ficheIdee["formData"] = $idee->champs->map(function ($champ) {
-                return [
-                    'id' => $champ->hashed_id,
-                    'attribut' => $champ->attribut,
-                    'value' => $champ->pivot->valeur
-                ];
-            });
+            // Utiliser la méthode qui enrichit les relations avec des objets simplifiés
+            $ficheIdee["formData"] = $idee->getFormDataWithRelations();
 
             $idee->ficheIdee = $ficheIdee;
 
@@ -1148,13 +1143,8 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             $ficheIdee["form"] = new DocumentResource($this->documentRepository->getFicheIdee());
 
-            $ficheIdee["formData"] = $idee->champs->map(function ($champ) {
-                return [
-                    'id' => $champ->hashed_id,
-                    'attribut' => $champ->attribut,
-                    'value' => $champ->pivot->valeur
-                ];
-            });
+            // Utiliser la méthode qui enrichit les relations avec des objets simplifiés
+            $ficheIdee["formData"] = $idee->getFormDataWithRelations();
 
             $idee->ficheIdee = $ficheIdee;
 

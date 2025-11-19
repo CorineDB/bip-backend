@@ -338,21 +338,21 @@ class Projet extends Model
             ->withTimestamps();
     }
 
-    public function orientations_strategique_png()
+    public function orientations_strategique_pnd()
     {
         return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
             $query->where('slug', 'orientation-strategique-pnd');
         });
     }
 
-    public function objectifs_strategique_png()
+    public function objectifs_strategique_pnd()
     {
         return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
             $query->where('slug', 'objectif-strategique-pnd');
         });
     }
 
-    public function resultats_strategique_png()
+    public function resultats_strategique_pnd()
     {
         return $this->morphToMany(ComposantProgramme::class, 'projetable', 'composants_projet', 'projetable_id', 'composantId')->whereHas('typeProgramme', function($query){
             $query->where('slug', 'resultats-strategique-pnd');
@@ -910,24 +910,38 @@ class Projet extends Model
 
     /**
      * Construit la hiérarchie descendante des TypeProgramme avec leurs composants
+     * Filtre pour ne retourner que les composants liés à ce Projet
      *
      * @param \App\Models\TypeProgramme $typeProgramme
-     * @return array
+     * @return array|null
      */
     private function buildProgrammeHierarchieDescendante($typeProgramme)
     {
-        // Charger les composants associés à ce TypeProgramme
-        $composants = $typeProgramme->composantsProgramme->map(function ($composant) {
-            return [
-                'id' => $composant->hashed_id,
-                'intitule' => $composant->intitule
-            ];
-        });
+        // Récupérer les IDs des composants de ce Projet
+        $composantsIds = $this->composants->pluck('id')->toArray();
+
+        // Filtrer les composants pour ne garder que ceux liés à ce Projet
+        $composants = $typeProgramme->composantsProgramme
+            ->whereIn('id', $composantsIds)
+            ->map(function ($composant) {
+                return [
+                    'id' => $composant->hashed_id,
+                    'intitule' => $composant->intitule
+                ];
+            });
 
         // Charger les enfants (sous-types) avec leurs composants
-        $children = $typeProgramme->children->map(function ($child) {
-            return $this->buildProgrammeHierarchieDescendante($child);
-        });
+        // Filtrer pour ne garder que les enfants qui ont des composants liés
+        $children = $typeProgramme->children
+            ->map(function ($child) {
+                return $this->buildProgrammeHierarchieDescendante($child);
+            })
+            ->filter(); // Enlever les null (enfants sans composants)
+
+        // Si ce TypeProgramme n'a aucun composant lié et aucun enfant avec composants, retourner null
+        if ($composants->isEmpty() && $children->isEmpty()) {
+            return null;
+        }
 
         return [
             'id' => $typeProgramme->hashed_id,
@@ -935,13 +949,13 @@ class Projet extends Model
             'slug' => $typeProgramme->slug,
             'type' => $typeProgramme->parent ? "composant-programme" : "programme",
             'composants_data' => $composants,
-            'composants' => $children->isEmpty() ? [] : $children,
+            'composants' => $children->isEmpty() ? [] : $children->values(),
         ];
     }
 
     /**
      * Retourne la hiérarchie complète des programmes depuis les composants
-     * Remonte jusqu'au programme racine puis redescend avec tous les composants
+     * Remonte jusqu'au programme racine puis redescend avec SEULEMENT les composants liés à ce Projet
      *
      * @return \Illuminate\Support\Collection
      */
@@ -952,10 +966,13 @@ class Projet extends Model
             return $this->getProgrammeRacine($composant->typeProgramme);
         })->filter()->unique('id');
 
-        // Pour chaque programme racine, construire la hiérarchie descendante complète
-        return $programmesRacines->map(function ($programmeRacine) {
-            return $this->buildProgrammeHierarchieDescendante($programmeRacine);
-        });
+        // Pour chaque programme racine, construire la hiérarchie descendante filtrée
+        return $programmesRacines
+            ->map(function ($programmeRacine) {
+                return $this->buildProgrammeHierarchieDescendante($programmeRacine);
+            })
+            ->filter() // Enlever les null (programmes sans composants liés)
+            ->values(); // Réindexer le tableau
     }
 
     /**
@@ -980,16 +997,31 @@ class Projet extends Model
 
     /**
      * Construit la hiérarchie descendante des Financements
+     * Filtre pour ne retourner que les financements liés à ce Projet
      *
      * @param \App\Models\Financement $financement
-     * @return array
+     * @return array|null
      */
     private function buildFinancementHierarchieDescendante($financement)
     {
+        // Récupérer les IDs des sources de financement de ce Projet
+        $sourcesIds = $this->sources_de_financement->pluck('id')->toArray();
+
         // Charger les enfants (natures ou sources) récursivement
-        $children = $financement->children->map(function ($child) {
-            return $this->buildFinancementHierarchieDescendante($child);
-        });
+        // Filtrer pour ne garder que les enfants liés
+        $children = $financement->children
+            ->map(function ($child) {
+                return $this->buildFinancementHierarchieDescendante($child);
+            })
+            ->filter(); // Enlever les null (enfants non liés)
+
+        // Vérifier si ce financement est directement lié (si c'est une source)
+        $isDirectlyLinked = in_array($financement->id, $sourcesIds);
+
+        // Si pas lié directement et aucun enfant lié, retourner null
+        if (!$isDirectlyLinked && $children->isEmpty()) {
+            return null;
+        }
 
         return [
             'id' => $financement->hashed_id,
@@ -997,13 +1029,13 @@ class Projet extends Model
             'nom_usuel' => $financement->nom_usuel,
             'slug' => $financement->slug,
             'type' => $financement->type?->value ?? $financement->type,
-            'enfants' => $children->isEmpty() ? [] : $children,
+            'enfants' => $children->isEmpty() ? [] : $children->values(),
         ];
     }
 
     /**
      * Retourne la hiérarchie complète des financements depuis les sources
-     * Remonte jusqu'au type racine puis redescend avec toutes les natures et sources
+     * Remonte jusqu'au type racine puis redescend avec SEULEMENT les financements liés à ce Projet
      *
      * @return \Illuminate\Support\Collection
      */
@@ -1014,9 +1046,12 @@ class Projet extends Model
             return $this->getFinancementRacine($source);
         })->filter()->unique('id');
 
-        // Pour chaque type racine, construire la hiérarchie descendante complète
-        return $typesRacines->map(function ($typeRacine) {
-            return $this->buildFinancementHierarchieDescendante($typeRacine);
-        });
+        // Pour chaque type racine, construire la hiérarchie descendante filtrée
+        return $typesRacines
+            ->map(function ($typeRacine) {
+                return $this->buildFinancementHierarchieDescendante($typeRacine);
+            })
+            ->filter() // Enlever les null (types sans financements liés)
+            ->values(); // Réindexer le tableau
     }
 }
