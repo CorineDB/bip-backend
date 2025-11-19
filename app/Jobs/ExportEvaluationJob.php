@@ -89,14 +89,20 @@ class ExportEvaluationJob implements ShouldQueue
             ]);
 
             // Appeler la méthode appropriée selon le type
+            $methodName = match($this->type) {
+                'pertinence' => 'exportPertinenceToExcel',
+                'climatique', 'amc' => 'exportClimatiqueToExcel',
+                default => throw new \Exception("Type d'évaluation non supporté: {$this->type}")
+            };
+
             Log::info("📝 [ExportEvaluationJob] Appel du service d'export", [
                 'type' => $this->type,
-                'method' => $this->type === 'pertinence' ? 'exportPertinenceToExcel' : 'exportClimatiqueToExcel'
+                'method' => $methodName
             ]);
 
             $storedPath = match($this->type) {
                 'pertinence' => $exportService->exportPertinenceToExcel($evaluation),
-                'climatique' => $exportService->exportClimatiqueToExcel($evaluation),
+                'climatique', 'amc' => $exportService->exportClimatiqueToExcel($evaluation),
                 default => throw new \Exception("Type d'évaluation non supporté: {$this->type}")
             };
 
