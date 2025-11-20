@@ -69,6 +69,7 @@ class RapportResource extends BaseApiResource
                 $historiqueRelation = match($this->type) {
                     'prefaisabilite' => 'historique_des_evaluations_rapports_prefaisabilite',
                     'faisabilite' => 'historique_des_evaluations_rapports_faisabilite',
+                    'evaluation_ex_ante' => 'historique_des_evaluations_rapports_evaluation_ex_ante',
                     default => null
                 };
 
