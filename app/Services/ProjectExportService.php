@@ -85,20 +85,21 @@ class ProjectExportService
                 'old_chemin' => $existingFiche->chemin
             ]);
 
-            // NOTE: Suppression physique désactivée car le nom de fichier contient un timestamp
-            // Les anciens fichiers restent sur le disque mais ne sont plus référencés en DB
-            // Si vous voulez activer la suppression physique, décommentez le code ci-dessous:
+            // NOTE: Suppression désactivée (physique et DB) car le nom de fichier contient un timestamp
+            // Les anciens fichiers ET leurs entrées DB restent pour garder l'historique complet
+            // Si vous voulez activer la suppression, décommentez le code ci-dessous:
             /*
+            // Supprimer le fichier physique
             $deleted = $this->deleteFileSecurely($existingFiche->chemin);
             if (!$deleted) {
                 \Log::warning("⚠️ [ProjectExportService] Ancien fichier non supprimé, mais on continue", [
                     'old_storage_path' => $existingFiche->chemin
                 ]);
             }
-            */
 
             // Supprimer l'entrée de la base de données
             $existingFiche->delete();
+            */
         }
 
         \Log::info("📝 [ProjectExportService] Création de l'entrée en base de données");

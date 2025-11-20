@@ -156,20 +156,21 @@ class EvaluationExportService
                 'old_chemin' => $existingFile->chemin
             ]);
 
-            // NOTE: Suppression physique désactivée car le nom de fichier contient un timestamp
-            // Les anciens fichiers restent sur le disque mais ne sont plus référencés en DB
-            // Si vous voulez activer la suppression physique, décommentez le code ci-dessous:
+            // NOTE: Suppression désactivée (physique et DB) car le nom de fichier contient un timestamp
+            // Les anciens fichiers ET leurs entrées DB restent pour garder l'historique complet
+            // Si vous voulez activer la suppression, décommentez le code ci-dessous:
             /*
+            // Supprimer le fichier physique
             $deleted = $this->deleteFileSecurely($existingFile->chemin);
             if (!$deleted) {
                 \Log::warning("⚠️ [EvaluationExportService] Ancien fichier non supprimé, mais on continue", [
                     'old_storage_path' => $existingFile->chemin
                 ]);
             }
-            */
 
             // Supprimer l'entrée de la base de données
             $existingFile->delete();
+            */
         }
 
         \Log::info("📝 [EvaluationExportService] Création de l'entrée en base de données (pertinence)");
@@ -562,20 +563,21 @@ class EvaluationExportService
                 'old_chemin' => $existingFile->chemin
             ]);
 
-            // NOTE: Suppression physique désactivée car le nom de fichier contient un timestamp
-            // Les anciens fichiers restent sur le disque mais ne sont plus référencés en DB
-            // Si vous voulez activer la suppression physique, décommentez le code ci-dessous:
+            // NOTE: Suppression désactivée (physique et DB) car le nom de fichier contient un timestamp
+            // Les anciens fichiers ET leurs entrées DB restent pour garder l'historique complet
+            // Si vous voulez activer la suppression, décommentez le code ci-dessous:
             /*
+            // Supprimer le fichier physique
             $deleted = $this->deleteFileSecurely($existingFile->chemin);
             if (!$deleted) {
                 \Log::warning("⚠️ [EvaluationExportService] Ancien fichier climatique non supprimé, mais on continue", [
                     'old_storage_path' => $existingFile->chemin
                 ]);
             }
-            */
 
             // Supprimer l'entrée de la base de données
             $existingFile->delete();
+            */
         }
 
         \Log::info("📝 [EvaluationExportService] Création de l'entrée en base de données (climatique)");
