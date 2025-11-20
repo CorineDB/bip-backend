@@ -4226,34 +4226,25 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            // Récupérer le dernier suivi du rapport actuel
-            $suiviRapport = $rapportEvaluationExAnte?->evaluations()
+            // Récupérer le dernier suivi du rapport actuel (bypass la relation evaluations() qui filtre par type)
+            $suiviRapport = $rapportEvaluationExAnte ? \App\Models\Evaluation::where('projetable_type', \App\Models\Rapport::class)
+                ->where('projetable_id', $rapportEvaluationExAnte->id)
                 ->where('type_evaluation', 'appreciation-rapport-evaluation-ex-ante')
-                ->where('statut', 1) // Seulement les évaluations terminées
                 ->with(['champs_evalue', 'evaluateur', 'validator'])
                 ->orderBy('created_at', 'desc')
-                ->first();
+                ->first() : null;
 
             // Récupérer l'historique complet des suivis de TOUS les rapports finaux du projet
-            $tousLesRapports = \App\Models\Rapport::where('projet_id', $projet->id)
+            $rapportIds = \App\Models\Rapport::where('projet_id', $projet->id)
                 ->where('type', 'evaluation_ex_ante')
+                ->pluck('id');
+
+            $historiqueSuivisProjet = \App\Models\Evaluation::where('projetable_type', \App\Models\Rapport::class)
+                ->whereIn('projetable_id', $rapportIds)
+                ->where('type_evaluation', 'appreciation-rapport-evaluation-ex-ante')
+                ->with(['champs_evalue', 'evaluateur', 'validator'])
                 ->orderBy('created_at', 'desc')
                 ->get();
-
-            $historiqueSuivisProjet = collect([]);
-            foreach ($tousLesRapports as $rapport) {
-                $suivis = $rapport->evaluations()
-                    ->where('type_evaluation', 'appreciation-rapport-evaluation-ex-ante')
-                    ->where('statut', 1) // Seulement les évaluations terminées
-                    ->with(['champs_evalue', 'evaluateur', 'validator'])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $historiqueSuivisProjet = $historiqueSuivisProjet->merge($suivis);
-            }
-
-            // Trier l'historique complet par date de création (desc)
-            $historiqueSuivisProjet = $historiqueSuivisProjet->sortByDesc('created_at')->values();
 
             return response()->json([
                 'success' => true,
