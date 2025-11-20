@@ -138,11 +138,11 @@ class ValiderRapportFinalRequest extends FormRequest
                     );
                 }
 
-                // Si l'appréciation n'est pas "passe", le commentaire est obligatoire
+                // Si l'appréciation n'est pas "oui", le commentaire est obligatoire
                 if ($appreciation && $appreciation !== 'oui' && empty($commentaire)) {
                     $validator->errors()->add(
                         "evaluations_champs.{$index}.commentaire",
-                        "Un commentaire est obligatoire pour les appréciations autres que 'Passé'."
+                        "Un commentaire est obligatoire pour les appréciations autres que 'Oui'."
                     );
                 }
             }
