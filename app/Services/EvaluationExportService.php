@@ -144,28 +144,35 @@ class EvaluationExportService
         // Générer le hash d'accès
         $hashAcces = $this->generateFileAccessHash($project->hashed_id, $storageName, $category);
 
-        // Vérifier si un export existe déjà pour ce projet
-        $existingFile = $project->fichiers()
+        // Vérifier si des exports existent déjà pour ce projet (peut être plusieurs si suppression était commentée)
+        $existingFiles = $project->fichiers()
             ->where('categorie', $category)
             ->where('fichier_attachable_type', IdeeProjet::class)
-            ->first();
+            ->get();
 
-        if ($existingFile) {
-            \Log::info("🔄 [EvaluationExportService] Remplacement de l'ancien fichier", [
-                'old_file_id' => $existingFile->id,
-                'old_chemin' => $existingFile->chemin
+        if ($existingFiles->isNotEmpty()) {
+            \Log::info("🔄 [EvaluationExportService] Suppression des anciens fichiers", [
+                'category' => $category,
+                'count' => $existingFiles->count()
             ]);
 
-            // Supprimer le fichier physique
-            $deleted = $this->deleteFileSecurely($existingFile->chemin);
-            if (!$deleted) {
-                \Log::warning("⚠️ [EvaluationExportService] Ancien fichier non supprimé, mais on continue", [
-                    'old_storage_path' => $existingFile->chemin
+            foreach ($existingFiles as $existingFile) {
+                \Log::info("🗑️ [EvaluationExportService] Suppression fichier", [
+                    'old_file_id' => $existingFile->id,
+                    'old_chemin' => $existingFile->chemin
                 ]);
-            }
 
-            // Supprimer l'entrée de la base de données
-            $existingFile->delete();
+                // Supprimer le fichier physique
+                $deleted = $this->deleteFileSecurely($existingFile->chemin);
+                if (!$deleted) {
+                    \Log::warning("⚠️ [EvaluationExportService] Ancien fichier non supprimé, mais on continue", [
+                        'old_storage_path' => $existingFile->chemin
+                    ]);
+                }
+
+                // Supprimer l'entrée de la base de données
+                $existingFile->delete();
+            }
         }
 
         \Log::info("📝 [EvaluationExportService] Création de l'entrée en base de données (pertinence)");
@@ -546,28 +553,35 @@ class EvaluationExportService
         // Générer le hash d'accès
         $hashAcces = $this->generateFileAccessHash($project->hashed_id, $storageName, $category);
 
-        // Vérifier si un export existe déjà pour ce projet
-        $existingFile = $project->fichiers()
+        // Vérifier si des exports existent déjà pour ce projet (peut être plusieurs si suppression était commentée)
+        $existingFiles = $project->fichiers()
             ->where('categorie', $category)
             ->where('fichier_attachable_type', IdeeProjet::class)
-            ->first();
+            ->get();
 
-        if ($existingFile) {
-            \Log::info("🔄 [EvaluationExportService] Remplacement de l'ancien fichier climatique", [
-                'old_file_id' => $existingFile->id,
-                'old_chemin' => $existingFile->chemin
+        if ($existingFiles->isNotEmpty()) {
+            \Log::info("🔄 [EvaluationExportService] Suppression des anciens fichiers climatiques", [
+                'category' => $category,
+                'count' => $existingFiles->count()
             ]);
 
-            // Supprimer le fichier physique
-            $deleted = $this->deleteFileSecurely($existingFile->chemin);
-            if (!$deleted) {
-                \Log::warning("⚠️ [EvaluationExportService] Ancien fichier climatique non supprimé, mais on continue", [
-                    'old_storage_path' => $existingFile->chemin
+            foreach ($existingFiles as $existingFile) {
+                \Log::info("🗑️ [EvaluationExportService] Suppression fichier climatique", [
+                    'old_file_id' => $existingFile->id,
+                    'old_chemin' => $existingFile->chemin
                 ]);
-            }
 
-            // Supprimer l'entrée de la base de données
-            $existingFile->delete();
+                // Supprimer le fichier physique
+                $deleted = $this->deleteFileSecurely($existingFile->chemin);
+                if (!$deleted) {
+                    \Log::warning("⚠️ [EvaluationExportService] Ancien fichier climatique non supprimé, mais on continue", [
+                        'old_storage_path' => $existingFile->chemin
+                    ]);
+                }
+
+                // Supprimer l'entrée de la base de données
+                $existingFile->delete();
+            }
         }
 
         \Log::info("📝 [EvaluationExportService] Création de l'entrée en base de données (climatique)");
