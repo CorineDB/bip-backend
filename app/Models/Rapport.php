@@ -68,7 +68,10 @@ class Rapport extends Model
         'tri',
         'flux_tresorerie',
         'duree_vie',
-        'taux_actualisation'
+        'taux_actualisation',
+
+        // Canevas d'appréciation pour rapport final d'évaluation ex-ante
+        'canevas_appreciation_rapport_final'
     ];
 
     /**
@@ -97,6 +100,8 @@ class Rapport extends Model
         'checklist_suivi_analyse_faisabilite_financiere' => 'array',
         'checklist_suivi_etude_analyse_impact_environnementale_et_sociale' => 'array',
         'checklist_suivi_assurance_qualite_rapport_etude_faisabilite' => 'array',
+        // Canevas d'appréciation pour rapport final d'évaluation ex-ante
+        'canevas_appreciation_rapport_final' => 'array',
         'date_soumission' => 'datetime',
         'date_validation' => 'datetime',
     ];
@@ -338,6 +343,27 @@ class Rapport extends Model
     {
         return $this->historique_des_rapports_faisabilite()->with(["evaluations" => function ($query) {
             $query->where("type_evaluation", "rapport-faisabilite")->where('statut', '=', 1)->whereHas("childEvaluations")->orderBy("created_at", "desc");
+        }]);
+    }
+
+    /**
+     * Relation avec tous les rapports d'évaluation ex-ante du projet
+     */
+    public function historique_des_rapports_evaluation_ex_ante()
+    {
+        return $this->hasMany(Rapport::class, 'projet_id', 'projet_id')
+            ->where('type', 'evaluation_ex_ante')
+            ->where('statut', '<>', 'brouillon')->whereHas("enfants")
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Relation avec toutes les évaluations des rapports d'évaluation ex-ante du projet
+     */
+    public function historique_des_evaluations_rapports_evaluation_ex_ante()
+    {
+        return $this->historique_des_rapports_evaluation_ex_ante()->with(["evaluations" => function ($query) {
+            $query->where("type_evaluation", "validation-finale-evaluation-ex-ante")->where('statut', '=', 1)->whereHas("childEvaluations")->orderBy("created_at", "desc");
         }]);
     }
 
