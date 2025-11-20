@@ -156,10 +156,6 @@ class EvaluationExportService
                 'old_chemin' => $existingFile->chemin
             ]);
 
-            // NOTE: Suppression désactivée (physique et DB) car le nom de fichier contient un timestamp
-            // Les anciens fichiers ET leurs entrées DB restent pour garder l'historique complet
-            // Si vous voulez activer la suppression, décommentez le code ci-dessous:
-            /*
             // Supprimer le fichier physique
             $deleted = $this->deleteFileSecurely($existingFile->chemin);
             if (!$deleted) {
@@ -170,7 +166,6 @@ class EvaluationExportService
 
             // Supprimer l'entrée de la base de données
             $existingFile->delete();
-            */
         }
 
         \Log::info("📝 [EvaluationExportService] Création de l'entrée en base de données (pertinence)");
@@ -563,10 +558,6 @@ class EvaluationExportService
                 'old_chemin' => $existingFile->chemin
             ]);
 
-            // NOTE: Suppression désactivée (physique et DB) car le nom de fichier contient un timestamp
-            // Les anciens fichiers ET leurs entrées DB restent pour garder l'historique complet
-            // Si vous voulez activer la suppression, décommentez le code ci-dessous:
-            /*
             // Supprimer le fichier physique
             $deleted = $this->deleteFileSecurely($existingFile->chemin);
             if (!$deleted) {
@@ -577,7 +568,6 @@ class EvaluationExportService
 
             // Supprimer l'entrée de la base de données
             $existingFile->delete();
-            */
         }
 
         \Log::info("📝 [EvaluationExportService] Création de l'entrée en base de données (climatique)");
