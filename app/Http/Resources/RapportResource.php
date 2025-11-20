@@ -51,6 +51,7 @@ class RapportResource extends BaseApiResource
                 'checklist_suivi_analyse_faisabilite_financiere'           => $this->checklist_suivi_analyse_faisabilite_financiere,
                 'checklist_suivi_etude_analyse_impact_environnementale_et_sociale' => $this->checklist_suivi_etude_analyse_impact_environnementale_et_sociale,
             ]),
+            'canevas_appreciation_rapport_final' => $this->when($this->type === "evaluation_ex_ante", fn() => $this->canevas_appreciation_rapport_final),
             'projet' => $this->whenLoaded('projet', function () {
                 return new ProjetsResource($this->projet);
             }),
@@ -64,21 +65,53 @@ class RapportResource extends BaseApiResource
             'historique_des_rapports' => $this->whenLoaded('historique', fn() => RapportResource::collection($this->historique)),
 
 
-            'historique_des_evaluations_rapports' => $this->whenLoaded('evaluations', function () {
-                return $this->historique_des_evaluations_rapports_faisabilite->pluck("evaluations")->collapse()->map(function ($evaluation) {
+            'historique_des_evaluations_rapports' => $this->when($this->type, function () {
+                $historiqueRelation = match($this->type) {
+                    'prefaisabilite' => 'historique_des_evaluations_rapports_prefaisabilite',
+                    'faisabilite' => 'historique_des_evaluations_rapports_faisabilite',
+                    'evaluation_ex_ante' => 'historique_des_evaluations_rapports_evaluation_ex_ante',
+                    default => null
+                };
+
+                if (!$historiqueRelation || !$this->relationLoaded($historiqueRelation)) {
+                    return [];
+                }
+
+                return $this->{$historiqueRelation}->pluck("evaluations")->collapse()->map(function ($evaluation) {
                     return [
                         'id' => $evaluation->hashed_id,
                         'type_evaluation' => $evaluation->type_evaluation,
                         'date_debut_evaluation' => $evaluation->date_debut_evaluation ? \Carbon\Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:m:i") : null,
                         'date_fin_evaluation' => $evaluation->date_fin_evaluation ? \Carbon\Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:m:i") : null,
                         'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:m:i") : null,
-                        'valider_par' => $evaluation->validator?->hashed_id, //$evaluation->valider_par,
+                        'valider_par' => $evaluation->validator?->hashed_id,
                         'commentaire' => $evaluation->commentaire,
                         'evaluation' => $evaluation->evaluation,
                         'resultats_evaluation' => $evaluation->resultats_evaluation,
                         'statut' => $evaluation->statut
                     ];
                 });
+            }),
+
+            // Évaluation en cours pour le rapport ex-ante
+            'evaluation_en_cours' => $this->when($this->type === "evaluation_ex_ante", function () {
+                $evaluation = $this->evaluationEnCours();
+                if (!$evaluation) {
+                    return null;
+                }
+                return [
+                    'id' => $evaluation->hashed_id,
+                    'type_evaluation' => $evaluation->type_evaluation,
+                    'date_debut_evaluation' => $evaluation->date_debut_evaluation ? \Carbon\Carbon::parse($evaluation->date_debut_evaluation)->format("d/m/Y H:i:s") : null,
+                    'date_fin_evaluation' => $evaluation->date_fin_evaluation ? \Carbon\Carbon::parse($evaluation->date_fin_evaluation)->format("d/m/Y H:i:s") : null,
+                    'valider_le' => $evaluation->valider_le ? \Carbon\Carbon::parse($evaluation->valider_le)->format("d/m/Y H:i:s") : null,
+                    'valider_par' => $evaluation->validator?->hashed_id,
+                    'evaluateur' => $evaluation->evaluateur ? new UserResource($evaluation->evaluateur) : null,
+                    'commentaire' => $evaluation->commentaire,
+                    'evaluation' => $evaluation->evaluation,
+                    'resultats_evaluation' => $evaluation->resultats_evaluation,
+                    'statut' => $evaluation->statut
+                ];
             }),
 
             // Checklists de mesures d'adaptation (si projet à haut risque)
