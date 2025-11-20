@@ -156,16 +156,19 @@ class EvaluationExportService
                 'old_chemin' => $existingFile->chemin
             ]);
 
-            // Supprimer l'ancien fichier physique via Storage
+            // NOTE: Suppression physique désactivée car le nom de fichier contient un timestamp
+            // Les anciens fichiers restent sur le disque mais ne sont plus référencés en DB
+            // Si vous voulez activer la suppression physique, décommentez le code ci-dessous:
+            /*
             $deleted = $this->deleteFileSecurely($existingFile->chemin);
-
             if (!$deleted) {
                 \Log::warning("⚠️ [EvaluationExportService] Ancien fichier non supprimé, mais on continue", [
                     'old_storage_path' => $existingFile->chemin
                 ]);
             }
+            */
 
-            // Supprimer l'entrée de la base de données même si la suppression physique échoue
+            // Supprimer l'entrée de la base de données
             $existingFile->delete();
         }
 
@@ -559,16 +562,19 @@ class EvaluationExportService
                 'old_chemin' => $existingFile->chemin
             ]);
 
-            // Supprimer l'ancien fichier physique via Storage
+            // NOTE: Suppression physique désactivée car le nom de fichier contient un timestamp
+            // Les anciens fichiers restent sur le disque mais ne sont plus référencés en DB
+            // Si vous voulez activer la suppression physique, décommentez le code ci-dessous:
+            /*
             $deleted = $this->deleteFileSecurely($existingFile->chemin);
-
             if (!$deleted) {
                 \Log::warning("⚠️ [EvaluationExportService] Ancien fichier climatique non supprimé, mais on continue", [
                     'old_storage_path' => $existingFile->chemin
                 ]);
             }
+            */
 
-            // Supprimer l'entrée de la base de données même si la suppression physique échoue
+            // Supprimer l'entrée de la base de données
             $existingFile->delete();
         }
 
