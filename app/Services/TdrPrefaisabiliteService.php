@@ -2643,7 +2643,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     private function creerEvaluationRapportFinal(\App\Models\Rapport $rapport, array $data): \App\Models\Evaluation
     {
         // Récupérer une évaluation en cours existante ou en créer une nouvelle pour ce Rapport
-        $evaluationEnCours = $rapport->evaluations()
+        $evaluationEnCours = \App\Models\Evaluation::where('projetable_type', \App\Models\Rapport::class)
+            ->where('projetable_id', $rapport->id)
             ->where('type_evaluation', 'appreciation-rapport-evaluation-ex-ante')
             ->where('statut', 0) // En cours
             ->first();
@@ -2651,6 +2652,8 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
         if (!$evaluationEnCours) {
             $evaluationData = [
                 'type_evaluation' => 'appreciation-rapport-evaluation-ex-ante',
+                'projetable_type' => \App\Models\Rapport::class,
+                'projetable_id' => $rapport->id,
                 'evaluateur_id' => auth()->id(),
                 'evaluation' => [],
                 'resultats_evaluation' => [],
@@ -2659,7 +2662,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 'statut' => 0, // En cours
                 'id_evaluation' => null // Pas de parent direct pour l'instant
             ];
-            $evaluationEnCours = $rapport->evaluations()->create($evaluationData);
+            $evaluationEnCours = \App\Models\Evaluation::create($evaluationData);
         }
 
         // Enregistrer les appréciations pour chaque champ
