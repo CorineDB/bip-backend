@@ -4130,23 +4130,46 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 }
             }
 
+            // Recharger les relations pour la réponse
+            $rapportExistant->load(['fichiersRapport', 'soumisPar', 'projet', 'champs', 'documentsAnnexes', 'historique', 'historique_des_evaluations_rapports_evaluation_ex_ante']);
+            $evaluation->refresh()->load(['champs_evalue', 'evaluateur', 'validator']);
+            $evaluationValidation->refresh()->load(['evaluateur', 'validator']);
+
             return response()->json([
                 'success' => true,
                 'message' => $data["evaluer"] ? $messageAction : 'Appréciation enregistrée avec succès',
                 'data' => [
-                    'evaluation_id' => $evaluation->hashed_id,
-                    'evaluation_validation_id' => $evaluationValidation->hashed_id,
-                    'projet_id' => $projet->hashed_id,
+                    'rapport' => new \App\Http\Resources\RapportResource($rapportExistant),
+                    'evaluation_validation' => [
+                        'id' => $evaluationValidation->hashed_id,
+                        'type_evaluation' => $evaluationValidation->type_evaluation,
+                        'evaluation' => $evaluationValidation->evaluation,
+                        'decision' => $evaluationValidation->resultats_evaluation,
+                        'commentaire' => $evaluationValidation->commentaire,
+                        'statut' => $evaluationValidation->statut, // 0=en cours, 1=terminée
+                        'date_debut' => $evaluationValidation->date_debut_evaluation?->format('Y-m-d H:i:s'),
+                        'date_fin' => $evaluationValidation->date_fin_evaluation?->format('Y-m-d H:i:s'),
+                        'valider_le' => $evaluationValidation->valider_le?->format('d/m/Y H:i:s'),
+                        'valider_par' => $evaluationValidation->validator ? new \App\Http\Resources\UserResource($evaluationValidation->validator) : null,
+                        'evaluateur' => $evaluationValidation->evaluateur ? new \App\Http\Resources\UserResource($evaluationValidation->evaluateur) : null,
+                    ],
+                    'suivi_rapport' => [
+                        'id' => $evaluation->hashed_id,
+                        'type_evaluation' => $evaluation->type_evaluation,
+                        'evaluation' => $evaluation->evaluation,
+                        'resultats_evaluation' => $evaluation->resultats_evaluation,
+                        'commentaire' => $evaluation->commentaire,
+                        'statut' => $evaluation->statut, // 0=en cours, 1=terminée
+                        'date_debut' => $evaluation->date_debut_evaluation?->format('Y-m-d H:i:s'),
+                        'date_fin' => $evaluation->date_fin_evaluation?->format('Y-m-d H:i:s'),
+                        'valider_le' => $evaluation->valider_le?->format('d/m/Y H:i:s'),
+                        'valider_par' => $evaluation->validator ? new \App\Http\Resources\UserResource($evaluation->validator) : null,
+                        'evaluateur' => $evaluation->evaluateur ? new \App\Http\Resources\UserResource($evaluation->evaluateur) : null,
+                    ],
                     'action' => $actionFinale ?? 'en_cours',
                     'ancien_statut' => StatutIdee::RAPPORT->value,
                     'nouveau_statut' => $nouveauStatut ? $nouveauStatut->value : StatutIdee::RAPPORT->value,
-                    'appreciation_rapport' => $resultatsAppreciation,
-                    'commentaire' => $data['commentaire'] ?? null,
-                    'valide_par' => $data["evaluer"] ? auth()->user()->hashed_id : null,
-                    'valide_le' => $data["evaluer"] ? now()->format('d/m/Y H:i:s') : null,
-                    'date_fin_etude' => ($data["evaluer"] && $actionFinale === 'valider') ? now()->format('d/m/Y H:i:s') : null,
                     'pret_pour_selection' => ($data["evaluer"] && $actionFinale === 'valider'),
-                    'statistiques' => $resultatsAppreciation
                 ]
             ]);
         } catch (Exception $e) {
