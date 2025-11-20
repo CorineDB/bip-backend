@@ -515,7 +515,7 @@ class Rapport extends Model
         $typeEvaluation = match ($this->type) {
             'prefaisabilite' => 'validation-etude-prefaisabilite',
             'faisabilite' => 'validation-etude-faisabilite',
-            'evaluation_ex_ante' => 'validation-final-evaluation-ex-ante',
+            'evaluation_ex_ante' => 'validation-finale-evaluation-ex-ante',
             'faisabilite-preliminaire' => 'controle-qualite-rapport-faisabilite-preliminaire',
             default => $this->type
         };
@@ -528,7 +528,7 @@ class Rapport extends Model
         $typeEvaluation = match ($this->type) {
             'prefaisabilite' => 'validation-etude-prefaisabilite',
             'faisabilite' => 'validation-etude-faisabilite',
-            'evaluation_ex_ante' => 'validation-final-evaluation-ex-ante',
+            'evaluation_ex_ante' => 'validation-finale-evaluation-ex-ante',
             'faisabilite-preliminaire' => 'controle-qualite-rapport-faisabilite-preliminaire',
             default => $this->type
         };
@@ -541,7 +541,7 @@ class Rapport extends Model
         $typeEvaluation = match ($this->type) {
             'prefaisabilite' => 'validation-etude-prefaisabilite',
             'faisabilite' => 'validation-etude-faisabilite',
-            'evaluation_ex_ante' => 'validation-final-evaluation-ex-ante',
+            'evaluation_ex_ante' => 'validation-finale-evaluation-ex-ante',
             'faisabilite-preliminaire' => 'controle-qualite-rapport-faisabilite-preliminaire',
             default => $this->type
         };
@@ -554,7 +554,7 @@ class Rapport extends Model
         $typeEvaluation = match ($this->type) {
             'prefaisabilite' => 'validation-etude-prefaisabilite',
             'faisabilite' => 'validation-etude-faisabilite',
-            'evaluation_ex_ante' => 'validation-final-evaluation-ex-ante',
+            'evaluation_ex_ante' => 'validation-finale-evaluation-ex-ante',
             'faisabilite-preliminaire' => 'controle-qualite-rapport-faisabilite-preliminaire',
             default => $this->type
         };

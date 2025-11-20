@@ -4198,7 +4198,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Pour le statut VALIDATION_PF, récupérer l'évaluation de validation
             $evaluationValidation = $projet->evaluations()
-                ->where('type_evaluation', 'validation-final-evaluation-ex-ante')
+                ->where('type_evaluation', 'validation-finale-evaluation-ex-ante')
                 ->orderBy('created_at', 'desc')
                 ->first();
 
@@ -4417,14 +4417,14 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     {
         // Récupérer l'évaluation parent (la dernière évaluation terminée)
         $evaluationParent = $projet->evaluations()
-            ->where('type_evaluation', 'validation-final-evaluation-ex-ante')
+            ->where('type_evaluation', 'validation-finale-evaluation-ex-ante')
             ->where('statut', 1) // Évaluation terminée
             ->orderBy('created_at', 'desc')
             ->first();
 
         // Créer une nouvelle évaluation avec statut = -1 (en attente de validation)
         $nouvelleEvaluation = $projet->evaluations()->create([
-            'type_evaluation' => 'validation-final-evaluation-ex-ante',
+            'type_evaluation' => 'validation-finale-evaluation-ex-ante',
             'evaluateur_id' => null, // Sera assigné lors de l'évaluation
             'evaluation' => [],
             'resultats_evaluation' => null,
