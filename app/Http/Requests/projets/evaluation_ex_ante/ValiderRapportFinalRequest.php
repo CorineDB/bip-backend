@@ -75,7 +75,7 @@ class ValiderRapportFinalRequest extends FormRequest
                 ? "Vous devez évaluer au minimum {$minRequis} champ(s) (les champs non passés)."
                 : 'Au moins une évaluation de champ est requise.',
             'evaluations_champs.*.appreciation.required' => 'Une appréciation est obligatoire pour chaque champ.',
-            'evaluations_champs.*.appreciation.in' => 'L\'appréciation doit être : Passe, Retour, ou Non accepté.',
+            'evaluations_champs.*.appreciation.in' => 'L\'appréciation doit être : ' . implode(', ', array_map('ucfirst', $this->appreciations)) . '.',
             'evaluations_champs.*.commentaire.required' => 'Un commentaire est obligatoire pour chaque évaluation.',
             'evaluations_champs.*.commentaire.min' => 'Le commentaire doit contenir au moins 10 caractères.',
             'evaluations_champs.*.commentaire.max' => 'Le commentaire ne peut dépasser 500 caractères.',
@@ -183,7 +183,7 @@ class ValiderRapportFinalRequest extends FormRequest
 
         $evaluationConfigs = $canevas?->evaluation_configs;
 
-        $this->appreciations = collect($evaluationConfigs['options_notation'] ?? [])->pluck('appreciation')->toArray();
+        $this->appreciations = collect($evaluationConfigs['guide_notation'] ?? [])->pluck('appreciation')->toArray();
 
         //$this->champs = $canevas->all_champs->pluck("id")->toArray();
         $this->champs = $canevas->all_champs->pluck("hashed_id")->toArray();
