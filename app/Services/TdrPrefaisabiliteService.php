@@ -4135,13 +4135,6 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             $evaluation->refresh()->load(['champs_evalue', 'evaluateur', 'validator']);
             $evaluationValidation->refresh()->load(['evaluateur', 'validator']);
 
-            // Récupérer l'historique complet des appréciations du rapport
-            $historiqueSuivis = $rapportExistant->evaluations()
-                ->where('type_evaluation', 'appreciation-rapport-evaluation-ex-ante')
-                ->with(['champs_evalue', 'evaluateur', 'validator'])
-                ->orderBy('created_at', 'desc')
-                ->get();
-
             return response()->json([
                 'success' => true,
                 'message' => $data["evaluer"] ? $messageAction : 'Appréciation enregistrée avec succès',
@@ -4160,21 +4153,19 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'valider_par' => $evaluationValidation->validator ? new \App\Http\Resources\UserResource($evaluationValidation->validator) : null,
                         'evaluateur' => $evaluationValidation->evaluateur ? new \App\Http\Resources\UserResource($evaluationValidation->evaluateur) : null,
                     ],
-                    'historique_suivis_rapport' => $historiqueSuivis->map(function ($suivi) {
-                        return [
-                            'id' => $suivi->hashed_id,
-                            'type_evaluation' => $suivi->type_evaluation,
-                            'evaluation' => $suivi->evaluation,
-                            'resultats_evaluation' => $suivi->resultats_evaluation,
-                            'commentaire' => $suivi->commentaire,
-                            'statut' => $suivi->statut, // 0=en cours, 1=terminée
-                            'date_debut' => $suivi->date_debut_evaluation?->format('Y-m-d H:i:s'),
-                            'date_fin' => $suivi->date_fin_evaluation?->format('Y-m-d H:i:s'),
-                            'valider_le' => $suivi->valider_le?->format('d/m/Y H:i:s'),
-                            'valider_par' => $suivi->validator ? new \App\Http\Resources\UserResource($suivi->validator) : null,
-                            'evaluateur' => $suivi->evaluateur ? new \App\Http\Resources\UserResource($suivi->evaluateur) : null,
-                        ];
-                    })->toArray(),
+                    'suivi_rapport' => [
+                        'id' => $evaluation->hashed_id,
+                        'type_evaluation' => $evaluation->type_evaluation,
+                        'evaluation' => $evaluation->evaluation,
+                        'resultats_evaluation' => $evaluation->resultats_evaluation,
+                        'commentaire' => $evaluation->commentaire,
+                        'statut' => $evaluation->statut, // 0=en cours, 1=terminée
+                        'date_debut' => $evaluation->date_debut_evaluation?->format('Y-m-d H:i:s'),
+                        'date_fin' => $evaluation->date_fin_evaluation?->format('Y-m-d H:i:s'),
+                        'valider_le' => $evaluation->valider_le?->format('d/m/Y H:i:s'),
+                        'valider_par' => $evaluation->validator ? new \App\Http\Resources\UserResource($evaluation->validator) : null,
+                        'evaluateur' => $evaluation->evaluateur ? new \App\Http\Resources\UserResource($evaluation->evaluateur) : null,
+                    ],
                     'action' => $actionFinale ?? 'en_cours',
                     'ancien_statut' => StatutIdee::RAPPORT->value,
                     'nouveau_statut' => $nouveauStatut ? $nouveauStatut->value : StatutIdee::RAPPORT->value,
@@ -4235,12 +4226,32 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            // Récupérer l'historique complet des appréciations du rapport
-            $historiqueSuivis = $rapportEvaluationExAnte?->evaluations()
+            // Récupérer le dernier suivi du rapport actuel
+            $suiviRapport = $rapportEvaluationExAnte?->evaluations()
                 ->where('type_evaluation', 'appreciation-rapport-evaluation-ex-ante')
                 ->with(['champs_evalue', 'evaluateur', 'validator'])
                 ->orderBy('created_at', 'desc')
-                ->get() ?? collect([]);
+                ->first();
+
+            // Récupérer l'historique complet des suivis de TOUS les rapports finaux du projet
+            $tousLesRapports = \App\Models\Rapport::where('projet_id', $projet->id)
+                ->where('type', 'evaluation_ex_ante')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $historiqueSuivisProjet = collect([]);
+            foreach ($tousLesRapports as $rapport) {
+                $suivis = $rapport->evaluations()
+                    ->where('type_evaluation', 'appreciation-rapport-evaluation-ex-ante')
+                    ->with(['champs_evalue', 'evaluateur', 'validator'])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                $historiqueSuivisProjet = $historiqueSuivisProjet->merge($suivis);
+            }
+
+            // Trier l'historique complet par date de création (desc)
+            $historiqueSuivisProjet = $historiqueSuivisProjet->sortByDesc('created_at')->values();
 
             return response()->json([
                 'success' => true,
@@ -4262,7 +4273,20 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                         'evaluateur' => $evaluationValidation->evaluateur ? new UserResource($evaluationValidation->evaluateur) : null,
                         'historique_evaluations' => EvaluationResource::collection($evaluationValidation->historique_evaluations ?? [])
                     ] : null,
-                    'historique_suivis_rapport' => $historiqueSuivis->map(function ($suivi) {
+                    'suivi_rapport' => $suiviRapport ? [
+                        'id' => $suiviRapport->hashed_id,
+                        'type_evaluation' => $suiviRapport->type_evaluation,
+                        'evaluation' => $suiviRapport->evaluation,
+                        'resultats_evaluation' => $suiviRapport->resultats_evaluation,
+                        'commentaire' => $suiviRapport->commentaire,
+                        'statut' => $suiviRapport->statut, // 0=en cours, 1=terminée
+                        'date_debut' => $suiviRapport->date_debut_evaluation?->format('Y-m-d H:i:s'),
+                        'date_fin' => $suiviRapport->date_fin_evaluation?->format('Y-m-d H:i:s'),
+                        'valider_le' => $suiviRapport->valider_le?->format('d/m/Y H:i:s'),
+                        'valider_par' => $suiviRapport->validator ? new UserResource($suiviRapport->validator) : null,
+                        'evaluateur' => $suiviRapport->evaluateur ? new UserResource($suiviRapport->evaluateur) : null,
+                    ] : null,
+                    'historique_suivis_rapports_projet' => $historiqueSuivisProjet->map(function ($suivi) {
                         return [
                             'id' => $suivi->hashed_id,
                             'type_evaluation' => $suivi->type_evaluation,
