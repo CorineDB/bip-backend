@@ -57,7 +57,7 @@ class ValiderRapportFinalRequest extends FormRequest
             // ✅ accept_term doit être "true" si est_soumise est true
             'accept_term'               => 'required_unless:evaluer,0|boolean' . ($evaluer  ? '|accepted' : ''),
 
-            'action' => 'required|string|in:valider,corriger',
+            'action' => 'required_if:evaluer,1|string|in:valider,corriger',
             'commentaire' => 'nullable|string|max:2000',
         ];
     }
@@ -79,8 +79,8 @@ class ValiderRapportFinalRequest extends FormRequest
             'evaluations_champs.*.commentaire.required' => 'Un commentaire est obligatoire pour chaque évaluation.',
             'evaluations_champs.*.commentaire.min' => 'Le commentaire doit contenir au moins 10 caractères.',
             'evaluations_champs.*.commentaire.max' => 'Le commentaire ne peut dépasser 500 caractères.',
-            'action.required' => 'L\'action de validation est obligatoire.',
-            'action.in' => 'Action invalide. Actions possibles: reviser, abandonner.',
+            'action.required_if' => 'L\'action de validation est obligatoire lors de la finalisation.',
+            'action.in' => 'Action invalide. Actions possibles: valider, corriger.',
             'commentaire.string' => 'Le commentaire doit être du texte.',
             'commentaire.max' => 'Le commentaire ne peut dépasser 2000 caractères.',
             'checklist_controle.array' => 'La checklist de contrôle doit être un tableau.',
@@ -189,15 +189,18 @@ class ValiderRapportFinalRequest extends FormRequest
         $this->champs = $canevas->all_champs->pluck("hashed_id")->toArray();
 
         // Récupérer l'évaluation en cours pour identifier les champs déjà passés
-        // SEULEMENT si le TDR a un parent (réévaluation après retour/rejet)
-        $rapportId = $this->route('rapportId') ?? null;
+        // SEULEMENT si le rapport a un parent (réévaluation après retour/rejet)
+        $projetId = $this->route('projetId') ?? null;
 
-        if ($rapportId) {
-            $rapportRepository = app()->make(RapportRepositoryInterface::class);
-            $rapport = $rapportRepository->find($rapportId);
+        if ($projetId) {
+            // Récupérer le dernier rapport d'évaluation ex-ante pour ce projet
+            $rapport = \App\Models\Rapport::where('projet_id', $projetId)
+                ->where('type', 'evaluation_ex_ante')
+                ->latest('created_at')
+                ->first();
 
-            // Vérifier si c'est une réévaluation (le TDR a un parent) et qu'il est de type 'prefaisabilite'
-            if ($rapport && $rapport->type === 'prefaisabilite' && $rapport->parentId) {
+            // Vérifier si c'est une réévaluation (le rapport a un parent)
+            if ($rapport && $rapport->parentId) {
                 // Récupérer l'évaluation en cours
                 $evaluationEnCours = $rapport->evaluationEnCours();
 
