@@ -73,28 +73,34 @@ class ProjectExportService
         // Générer le hash d'accès
         $hashAcces = $this->generateFileAccessHash($project->hashed_id, $storageName, $category);
 
-        // Vérifier si une fiche existe déjà pour ce projet
-        $existingFiche = $project->fichiers()
+        // Vérifier si des fiches existent déjà pour ce projet (peut être plusieurs si suppression était commentée)
+        $existingFiches = $project->fichiers()
             ->where('categorie', $category)
             ->where('fichier_attachable_type', IdeeProjet::class)
-            ->first();
+            ->get();
 
-        if ($existingFiche) {
-            \Log::info("🔄 [ProjectExportService] Remplacement de l'ancienne fiche", [
-                'old_file_id' => $existingFiche->id,
-                'old_chemin' => $existingFiche->chemin
+        if ($existingFiches->isNotEmpty()) {
+            \Log::info("🔄 [ProjectExportService] Suppression des anciennes fiches", [
+                'count' => $existingFiches->count()
             ]);
 
-            // Supprimer le fichier physique
-            $deleted = $this->deleteFileSecurely($existingFiche->chemin);
-            if (!$deleted) {
-                \Log::warning("⚠️ [ProjectExportService] Ancien fichier non supprimé, mais on continue", [
-                    'old_storage_path' => $existingFiche->chemin
+            foreach ($existingFiches as $existingFiche) {
+                \Log::info("🗑️ [ProjectExportService] Suppression fiche", [
+                    'old_file_id' => $existingFiche->id,
+                    'old_chemin' => $existingFiche->chemin
                 ]);
-            }
 
-            // Supprimer l'entrée de la base de données
-            $existingFiche->delete();
+                // Supprimer le fichier physique
+                $deleted = $this->deleteFileSecurely($existingFiche->chemin);
+                if (!$deleted) {
+                    \Log::warning("⚠️ [ProjectExportService] Ancien fichier non supprimé, mais on continue", [
+                        'old_storage_path' => $existingFiche->chemin
+                    ]);
+                }
+
+                // Supprimer l'entrée de la base de données
+                $existingFiche->delete();
+            }
         }
 
         \Log::info("📝 [ProjectExportService] Création de l'entrée en base de données");
