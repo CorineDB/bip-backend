@@ -4229,6 +4229,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             // Récupérer le dernier suivi du rapport actuel
             $suiviRapport = $rapportEvaluationExAnte?->evaluations()
                 ->where('type_evaluation', 'appreciation-rapport-evaluation-ex-ante')
+                ->where('statut', 1) // Seulement les évaluations terminées
                 ->with(['champs_evalue', 'evaluateur', 'validator'])
                 ->orderBy('created_at', 'desc')
                 ->first();
@@ -4243,6 +4244,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             foreach ($tousLesRapports as $rapport) {
                 $suivis = $rapport->evaluations()
                     ->where('type_evaluation', 'appreciation-rapport-evaluation-ex-ante')
+                    ->where('statut', 1) // Seulement les évaluations terminées
                     ->with(['champs_evalue', 'evaluateur', 'validator'])
                     ->orderBy('created_at', 'desc')
                     ->get();
