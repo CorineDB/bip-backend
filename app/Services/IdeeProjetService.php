@@ -230,10 +230,13 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
             DB::commit();
 
             // Déclencher l'event seulement si l'idée est soumise
+            // NOTE: Event désactivé - décommentez si vous voulez activer les notifications/listeners
+            /*
             if (isset($data['est_soumise']) && $data['est_soumise'] === true) {
                 // Supprimer les relations chargées pour éviter les erreurs de sérialisation dans la queue
                 event(new IdeeProjetCree($idee->withoutRelations()));
             }
+            */
 
             return (new $this->resourceClass($idee))
                 ->additional(['message' => 'Idée de projet sauvegardée avec succès.'])
@@ -1180,6 +1183,8 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
 
             DB::commit();
 
+            // NOTE: Event désactivé - décommentez si vous voulez activer les notifications/listeners
+            /*
             if (
                 $ancienEtatSoumise !== $nouvelEtatSoumise &&
                 $nouvelEtatSoumise === true
@@ -1187,6 +1192,7 @@ class IdeeProjetService extends BaseService implements IdeeProjetServiceInterfac
                 // Supprimer les relations chargées pour éviter les erreurs de sérialisation dans la queue
                 event(new IdeeProjetCree($idee->withoutRelations()));
             }
+            */
 
             return (new $this->resourceClass($idee))
                 ->additional(['message' => 'Idée de projet sauvegardée avec succès.'])
