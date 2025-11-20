@@ -2692,9 +2692,13 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
     {
         $evaluationsChamps = $data['evaluations_champs'] ?? [];
 
+        // Récupérer le nombre total de champs du canevas (pas juste ceux évalués)
+        $canevas = $this->documentRepository->getCanevasAppreciationRapportFinale();
+        $totalChampsRequis = $canevas->all_champs->count();
+
         $nombreOui = 0;
         $nombreNon = 0;
-        $totalChamps = count($evaluationsChamps);
+        $champsEvalues = count($evaluationsChamps);
 
         foreach ($evaluationsChamps as $evalChamp) {
             $appreciation = $evalChamp['appreciation'] ?? null;
@@ -2705,32 +2709,38 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
             }
         }
 
-        // Règle: Si au moins un champ est "non", le résultat global est "non".
-        // Sinon, si tous les champs sont "oui", le résultat global est "oui".
+        // Règle stricte: TOUS les champs du canevas doivent être "oui" pour valider
+        // 1. Si au moins un champ est "non" → non validé
         if ($nombreNon > 0) {
             return [
                 'resultat_global' => 'non',
                 'message_resultat' => 'Le rapport final n\'est pas validé. Des corrections sont nécessaires.',
                 'nombre_oui' => $nombreOui,
                 'nombre_non' => $nombreNon,
-                'total_champs' => $totalChamps
+                'champs_evalues' => $champsEvalues,
+                'total_champs' => $totalChampsRequis
             ];
-        } elseif ($nombreOui === $totalChamps && $totalChamps > 0) {
+        }
+        // 2. Si TOUS les champs du canevas sont évalués à "oui" → validé
+        elseif ($nombreOui === $totalChampsRequis) {
             return [
                 'resultat_global' => 'oui',
                 'message_resultat' => 'Le rapport final est validé avec succès.',
                 'nombre_oui' => $nombreOui,
                 'nombre_non' => $nombreNon,
-                'total_champs' => $totalChamps
+                'champs_evalues' => $champsEvalues,
+                'total_champs' => $totalChampsRequis
             ];
-        } else {
-            // Cas où il n'y a pas de champs ou des appréciations manquantes
+        }
+        // 3. Sinon (évaluation incomplète ou appréciations manquantes) → non validé
+        else {
             return [
-                'resultat_global' => 'non', // Par défaut, si incomplet, c'est non
-                'message_resultat' => 'Appréciation incomplète ou invalide.',
+                'resultat_global' => 'non',
+                'message_resultat' => 'Appréciation incomplète. Tous les critères doivent être évalués.',
                 'nombre_oui' => $nombreOui,
                 'nombre_non' => $nombreNon,
-                'total_champs' => $totalChamps
+                'champs_evalues' => $champsEvalues,
+                'total_champs' => $totalChampsRequis
             ];
         }
     }
@@ -3933,7 +3943,7 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
 
             // Préparer l'évaluation complète pour enregistrement
             $evaluationComplete = [
-                'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationRapportFinal()->all_champs)->map(function ($champ) use ($evaluation) {
+                'champs_evalues' => collect($this->documentRepository->getCanevasAppreciationRapportFinale()->all_champs)->map(function ($champ) use ($evaluation) {
                     $champEvalue = collect($evaluation->champs_evalue)->firstWhere('attribut', $champ['attribut']);
                     return [
                         'id' => $champEvalue ? $champEvalue?->pivot?->hashed_id : null,
@@ -3975,15 +3985,23 @@ class TdrPrefaisabiliteService extends BaseService implements TdrPrefaisabiliteS
                 $evaluation->save();
 
                 // Enregistrer le canevas d'appréciation dans le rapport
-                $rapportExistant->canevas_appreciation_rapport_final = (new \App\Http\Resources\CanevasAppreciationTdrResource($this->documentRepository->getCanevasAppreciationRapportFinal()))->toArray(request());
+                $rapportExistant->canevas_appreciation_rapport_final = (new \App\Http\Resources\CanevasAppreciationTdrResource($this->documentRepository->getCanevasAppreciationRapportFinale()))->toArray(request());
                 $rapportExistant->save();
 
                 // Déterminer l'action finale selon le résultat de l'appréciation ET la décision de l'utilisateur
-                // Pour valider: il faut que l'appréciation soit "oui" (tous les critères à "oui")
-                // ET que la décision de validation soit "valider"
-                if ($resultatsAppreciation['resultat_global'] === 'oui' && $data['action'] === 'valider') {
+                // RÈGLE STRICTE: On ne peut valider QUE si tous les critères sont à "oui"
+                if ($data['action'] === 'valider') {
+                    // Vérifier que tous les critères sont satisfaits
+                    if ($resultatsAppreciation['resultat_global'] !== 'oui') {
+                        throw new Exception(
+                            "Impossible de valider le rapport : tous les critères d'appréciation doivent être satisfaits (oui). " .
+                            "Actuellement : {$resultatsAppreciation['nombre_oui']}/{$resultatsAppreciation['total_champs']} critères satisfaits.",
+                            422
+                        );
+                    }
                     $actionFinale = 'valider';
                 } else {
+                    // Action = 'corriger'
                     $actionFinale = 'corriger';
                 }
             }
