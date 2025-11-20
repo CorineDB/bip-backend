@@ -51,12 +51,7 @@ class RapportResource extends BaseApiResource
                 'checklist_suivi_analyse_faisabilite_financiere'           => $this->checklist_suivi_analyse_faisabilite_financiere,
                 'checklist_suivi_etude_analyse_impact_environnementale_et_sociale' => $this->checklist_suivi_etude_analyse_impact_environnementale_et_sociale,
             ]),
-            'canevas_appreciation_rapport_final' => $this->when($this->type === "evaluation_ex_ante" && $this->canevas_appreciation_rapport_final, function () {
-                // Convertir le tableau JSON en objet Document pour la resource
-                $canevas = app()->make(\App\Repositories\Contracts\DocumentRepositoryInterface::class)
-                    ->getCanevasAppreciationRapportFinale();
-                return $canevas ? new CanevasAppreciationTdrResource($canevas) : $this->canevas_appreciation_rapport_final;
-            }),
+            'canevas_appreciation_rapport_final' => $this->when($this->type === "evaluation_ex_ante", fn() => $this->canevas_appreciation_rapport_final),
             'projet' => $this->whenLoaded('projet', function () {
                 return new ProjetsResource($this->projet);
             }),
